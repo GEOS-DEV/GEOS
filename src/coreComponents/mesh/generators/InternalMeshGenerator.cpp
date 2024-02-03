@@ -160,7 +160,7 @@ void InternalMeshGenerator::postProcessInput()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( m_elementType.size() != m_numElePerBox.size() )
+  if( LvArray::integerConversion< int >( m_elementType.size() ) != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
@@ -197,7 +197,7 @@ void InternalMeshGenerator::postProcessInput()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != LvArray::integerConversion< localIndex >( m_regionNames.size()) )
     {
       if( m_regionNames.size() == 1 )
       {

@@ -78,7 +78,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
 
     string_array const & setNames = fs.getSetNames();
-    for( localIndex i = 0; i < setNames.size(); ++i )
+    for( size_t i = 0; i < setNames.size(); ++i )
     {
       isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;

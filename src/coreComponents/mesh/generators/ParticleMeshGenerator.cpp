@@ -170,7 +170,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
     std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one
                                                                 // material since MPM will only be doing single phase mechanics for now
-    for( auto i=0; i<particleBlockNames.size(); i++ )
+    for( size_t i=0; i<particleBlockNames.size(); i++ )
     {
       blockMaterialMap[particleBlockNames[i]] = materialMap[material];
     }
@@ -314,7 +314,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one
                                                                 // material since MPM will only be doing single phase mechanics for now
     int size = 0;
-    for( auto i=0; i<particleBlockNames.size(); i++ )
+    for( size_t i=0; i<particleBlockNames.size(); i++ )
     {
       size += sizeMap[particleBlockNames[i]];
     }

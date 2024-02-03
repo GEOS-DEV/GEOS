@@ -176,7 +176,7 @@ Wrapper< string_array > & createStringArrayView( Group & parent, const string & 
   EXPECT_EQ( static_cast< uint >(view.size() ), arr.size() );
 
   string_array & view_data = view.reference();
-  for( localIndex i = 0; i < arr.size(); ++i )
+  for( size_t i = 0; i < arr.size(); ++i )
   {
     view_data[i] = arr[i];
   }

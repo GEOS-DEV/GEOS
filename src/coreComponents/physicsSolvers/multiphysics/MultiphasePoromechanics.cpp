@@ -305,7 +305,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
     this->solidMechanicsSolver()->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
   string_array const & flowTargetRegionNames =
     this->flowSolver()->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
-  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                               poromechanicsTargetRegionNames[i] )
