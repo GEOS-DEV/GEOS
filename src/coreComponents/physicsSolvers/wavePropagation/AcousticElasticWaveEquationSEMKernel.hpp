@@ -64,12 +64,14 @@ struct CouplingKernel
         // check that one of the region is the fluid subregion for the fluid -> solid coupling term
         if((er0 == regionIndex && esr0 == subRegionIndex) || (er1 == regionIndex && esr1 == subRegionIndex))
         {
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          // only the four corners of the mesh face are needed to compute the Jacobian
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex i = 0; i < 3; ++i )
             {
-              xLocal[a][i] = nodeCoords( facesToNodes( f, a ), i );
+              xLocal[a][i] = nodeCoords( nodeIndex, i );
             }
           }
 
