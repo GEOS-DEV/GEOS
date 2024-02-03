@@ -46,6 +46,7 @@ void HypreInterface::initialize()
   HYPRE_DeviceInitialize();
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
+  HYPRE_SetPrintErrorMode( 1 );
 }
 
 void HypreInterface::finalize()
