@@ -220,19 +220,18 @@ struct MassMatrixKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );
@@ -291,17 +290,19 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          // only the four corners of the mesh face are needed to compute the Jacobian
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
 
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
@@ -366,20 +367,21 @@ struct StressComputation
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
       mu[k] = density[k] * pow( velocityVs[k], 2 );
       lambda[k] = density[k] * pow( velocityVp[k], 2 ) - 2.0*mu[k];
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemxx[numNodesPerElem] = {0.0};
       real32 uelemyy[numNodesPerElem] = {0.0};
       real32 uelemzz[numNodesPerElem] = {0.0};
@@ -406,7 +408,7 @@ struct StressComputation
         uelemyz[i] = massLoc*stressyz[k][i];
       }
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
 
         //Volume integral
@@ -541,19 +543,18 @@ struct VelocityComputation
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemx[numNodesPerElem] = {0.0};
       real32 uelemy[numNodesPerElem] = {0.0};
       real32 uelemz[numNodesPerElem] = {0.0};
@@ -561,7 +562,7 @@ struct VelocityComputation
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
 
 
