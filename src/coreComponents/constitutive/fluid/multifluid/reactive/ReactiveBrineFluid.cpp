@@ -131,7 +131,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< string_array > phase1InputParams;
+  std::vector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models

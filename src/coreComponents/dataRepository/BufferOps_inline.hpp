@@ -270,6 +270,22 @@ PackArray( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename T_indices >
+typename std::enable_if< is_packable< T >, localIndex >::type
+PackByIndex( buffer_unit_type * & buffer,
+             std::vector< T > const & var,
+             const T_indices & indices )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
+  for( auto a = 0; a < indices.size(); ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[indices[a]] );
+  }
+  return sizeOfPackedChars;
+}
+
+
+
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
@@ -580,6 +596,24 @@ UnpackArray( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               std::vector< T > & var,
+               T_indices const & indices )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numUnpackedIndices;
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
+
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[ a ] ] );
+  }
+  return sizeOfUnpackedChars;
+}
+
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,

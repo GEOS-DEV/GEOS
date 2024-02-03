@@ -97,7 +97,7 @@ template< typename T >
 constexpr bool is_packable = is_packable_helper< T >::value;
 
 template< typename T >
-constexpr bool is_packable_by_index = is_packable_array< T >;
+constexpr bool is_packable_by_index = is_packable_array< T > || is_packable_vector< T >;
 
 template< typename >
 constexpr bool is_map_packable_by_index = false;
@@ -224,6 +224,13 @@ PackArray( buffer_unit_type * & buffer,
 
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
+//------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename T_indices >
+typename std::enable_if< is_packable< T >, localIndex >::type
+PackByIndex( buffer_unit_type * & buffer,
+             std::vector< T > const & var,
+             const T_indices & indices );
+
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
@@ -370,6 +377,13 @@ UnpackArray( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
+//------------------------------------------------------------------------------
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               std::vector< T > & var,
+               T_indices const & indices );
+
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
