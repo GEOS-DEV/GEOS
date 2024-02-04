@@ -125,7 +125,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -152,7 +152,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -369,7 +369,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
 
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -494,7 +494,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
 
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -529,7 +529,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     // loop over the wells
@@ -916,7 +916,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1028,7 +1028,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -1081,7 +1081,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1156,7 +1156,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1211,7 +1211,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
 
@@ -1278,7 +1278,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
   real64 scalingFactor = 1.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                         [&]( localIndex const,
@@ -1317,7 +1317,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   integer localCheck = 1;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,
@@ -1354,7 +1354,7 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     // TODO: change the way we access the flowSolver here
@@ -1493,7 +1493,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     // synchronize
     FieldIdentifiers fieldsToBeSync;
@@ -1516,7 +1516,7 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1555,7 +1555,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1599,7 +1599,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1700,7 +1700,7 @@ void CompositionalMultiphaseWell::shutDownWell( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1787,7 +1787,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1850,7 +1850,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();

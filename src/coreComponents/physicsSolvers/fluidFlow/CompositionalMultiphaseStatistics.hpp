@@ -129,7 +129,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers

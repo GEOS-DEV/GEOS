@@ -77,8 +77,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
 
-    array1d< string > const & setNames = fs.getSetNames();
-    for( localIndex i = 0; i < setNames.size(); ++i )
+    string_array const & setNames = fs.getSetNames();
+    for( size_t i = 0; i < setNames.size(); ++i )
     {
       isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;
@@ -167,7 +167,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     if( areAllSetsMissing )
     {
       // loop again over the map to collect the set names
-      array1d< string > missingSetNames;
+      string_array missingSetNames;
       for( auto const & mapEntry : isTargetSetCreated )
       {
         missingSetNames.emplace_back( mapEntry.first );

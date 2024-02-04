@@ -267,7 +267,7 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, arrayView1d< string const > const & regionNames );
+  void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, string_array const & regionNames );
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables

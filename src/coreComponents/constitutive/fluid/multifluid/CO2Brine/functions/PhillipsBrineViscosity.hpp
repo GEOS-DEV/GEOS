@@ -150,7 +150,7 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
   real64 const viscMultiplier = m_coef0 + m_coef1 * temperature;
   real64 const dViscMultiplier_dTemperature = m_coef1;
   value = pureWaterVisc * viscMultiplier;
-  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  LvArray::setValueOfSlice( dValue, 0.0 );
   dValue[Deriv::dP] = 0.0;
   dValue[Deriv::dT] = dPureWaterVisc_dTemperature * viscMultiplier + pureWaterVisc * dViscMultiplier_dTemperature;
 

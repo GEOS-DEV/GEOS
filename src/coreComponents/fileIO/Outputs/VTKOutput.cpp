@@ -92,8 +92,8 @@ VTKOutput::~VTKOutput()
 void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
-  m_writer.setFieldNames( m_fieldNames.toViewConst() );
-  m_writer.setLevelNames( m_levelNames.toViewConst() );
+  m_writer.setFieldNames( m_fieldNames );
+  m_writer.setLevelNames( m_levelNames );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
 
   string const fieldNamesString = viewKeysStruct::fieldNames;

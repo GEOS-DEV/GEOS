@@ -49,7 +49,7 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & )
+                                                              string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerWrapper< NodeStatistics >( viewKeyStruct::nodeStatisticsString() ).
@@ -80,7 +80,7 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & )
+                                                                          string_array const & )
   {
     // current time is time_n + dt
     computeNodeStatistics( mesh, time_n + dt );

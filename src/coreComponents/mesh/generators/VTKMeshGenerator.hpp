@@ -134,7 +134,7 @@ private:
   string m_mainBlockName;
 
   /// Name of the face blocks to be imported (for multi-block files).
-  array1d< string > m_faceBlockNames;
+  string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
   std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;

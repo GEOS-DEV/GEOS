@@ -93,8 +93,10 @@ localIndex Pack( buffer_unit_type * & buffer, const string & var )
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T >
-localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
+template< bool DO_PACKING, typename T, typename SET >
+localIndex
+PackSet( buffer_unit_type * & buffer,
+         SET const & var )
 {
   const localIndex length = LvArray::integerConversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
@@ -123,6 +125,21 @@ Pack( buffer_unit_type * & buffer,
   const localIndex length = var.size();
   T const * const data = var.data();
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, length );
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T >
+inline
+localIndex
+Pack( buffer_unit_type * & buffer,
+      std::vector< T > const & var )
+{
+  size_t const length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+  for( T const & str : var )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, str );
+  }
   return sizeOfPackedChars;
 }
 
@@ -255,6 +272,22 @@ PackArray( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename T_indices >
+typename std::enable_if< is_packable< T >, localIndex >::type
+PackByIndex( buffer_unit_type * & buffer,
+             std::vector< T > const & var,
+             const T_indices & indices )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
+  for( auto a = 0; a < indices.size(); ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[indices[a]] );
+  }
+  return sizeOfPackedChars;
+}
+
+
+
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
 typename std::enable_if< is_packable< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
@@ -344,10 +377,10 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename T >
+template< typename T, typename SET >
 localIndex
-Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var )
+UnpackSet( buffer_unit_type const * & buffer,
+           SET & var )
 {
   var.clear();
   localIndex set_length;
@@ -378,6 +411,22 @@ Unpack( buffer_unit_type const * & buffer,
   }
 
   sizeOfUnpackedChars += UnpackPointer( buffer, var.data(), var.size() );
+  return sizeOfUnpackedChars;
+}
+
+
+template< typename T >
+typename std::enable_if< is_packable< T >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        std::vector< T > & var )
+{
+  size_t length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  var.resize( length );
+  for( T & val : var )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, val );
+  }
   return sizeOfUnpackedChars;
 }
 
@@ -549,6 +598,24 @@ UnpackArray( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               std::vector< T > & var,
+               T_indices const & indices )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numUnpackedIndices;
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
+
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[ a ] ] );
+  }
+  return sizeOfUnpackedChars;
+}
+
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,

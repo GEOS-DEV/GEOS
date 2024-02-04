@@ -535,10 +535,9 @@ void ProblemManager::postProcessInput()
   }
 }
 
-
 void ProblemManager::initializationOrder( string_array & order )
 {
-  SortedArray< string > usedNames;
+  set< string > usedNames;
 
 
   {
@@ -577,14 +576,14 @@ void ProblemManager::generateMesh()
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+  map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
-    array1d< string > junk;
+    string_array junk;
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
@@ -592,7 +591,7 @@ void ProblemManager::generateMesh()
 
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
-                               junk.toViewConst() );
+                               junk );
     }
     else
     {
@@ -601,7 +600,7 @@ void ProblemManager::generateMesh()
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
                                nullptr,
-                               junk.toViewConst() );
+                               junk );
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
       elemManager.generateWells( cellBlockManager, baseMesh );
@@ -629,7 +628,7 @@ void ProblemManager::generateMesh()
       {
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
-        arrayView1d< string const > const regionNames = discretizationPair.second;
+        string_array const & regionNames = discretizationPair.second;
         CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
@@ -724,11 +723,11 @@ void ProblemManager::applyNumericalMethods()
 
 
 
-map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+map< std::pair< string, Group const * const >, string_array const & >
 ProblemManager::getDiscretizations() const
 {
 
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const > meshDiscretizations;
+  map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
@@ -777,7 +776,7 @@ ProblemManager::getDiscretizations() const
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         CellBlockManagerABC const & cellBlockManager,
                                         Group const * const discretization,
-                                        arrayView1d< string const > const & )
+                                        string_array const & )
 {
   if( discretization != nullptr )
   {
@@ -845,7 +844,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         ParticleBlockManagerABC & particleBlockManager,
-                                        arrayView1d< string const > const & )
+                                        string_array const & )
 {
   ParticleManager & particleManager = meshLevel.getParticleManager();
 

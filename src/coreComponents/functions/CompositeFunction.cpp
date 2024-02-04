@@ -59,7 +59,7 @@ CompositeFunction::~CompositeFunction()
 void CompositeFunction::initializeFunction()
 {
   // Register variables
-  for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
+  for( auto ii=0u; ii<m_variableNames.size(); ++ii )
   {
     parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }

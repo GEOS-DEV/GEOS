@@ -102,7 +102,7 @@ class PVTFunctionBase
 public:
 
   PVTFunctionBase( string const & name,
-                   array1d< string > const & componentNames,
+                   string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight )
     :
     m_functionName( name ),
@@ -114,8 +114,8 @@ public:
 
   using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
                                                              string const &,
-                                                             array1d< string > const &,
-                                                             array1d< string > const &,
+                                                             string_array const &,
+                                                             string_array const &,
                                                              array1d< real64 > const &,
                                                              bool const >;
   static typename CatalogInterface::CatalogType & getCatalog()
@@ -144,7 +144,7 @@ protected:
   string m_functionName;
 
   /// Array storing the name of the components
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// Array storing the component molar weights
   array1d< real64 > m_componentMolarWeight;

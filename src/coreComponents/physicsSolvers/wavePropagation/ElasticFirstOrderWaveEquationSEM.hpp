@@ -138,7 +138,7 @@ private:
    * @param mesh mesh of the computational domain
    * @param regionNames name of the region you are currently on
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

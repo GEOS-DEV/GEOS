@@ -195,7 +195,7 @@ public:
    * @param[in] meshBodyName name of the meshBody
    * @return a list of the target regions on the meshBody
    */
-  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
+  string_array & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
    * @brief set the name of the field.
@@ -284,13 +284,13 @@ protected:
 
 
   /// name of the primary solution field
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
   /// name of the coefficient field
   string m_coeffName;
 
   /// names of target regions to build the stencil for
-  map< string, array1d< string > > m_targetRegions;
+  map< string, string_array > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

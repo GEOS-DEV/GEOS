@@ -63,7 +63,7 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postProcessInput()
 {
-  auto const checkSizes = [this]( arrayView1d< string const > from, arrayView1d< string const > to,
+  auto const checkSizes = [this]( string_array const & from, string_array const & to,
                                   string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
@@ -75,7 +75,7 @@ void ExternalMeshGeneratorBase::postProcessInput()
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
 
-  auto const checkDuplicates = [this]( arrayView1d< string const > v, string const & key )
+  auto const checkDuplicates = [this]( string_array const & v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
@@ -89,19 +89,19 @@ void ExternalMeshGeneratorBase::postProcessInput()
   checkDuplicates( m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsInGEOSXString() );
 
   // Building the fields mapping from the two separated input/output vectors.
-  auto const buildMapping = [&]( arrayView1d< string const > from,
-                                 arrayView1d< string const > to ) -> std::map< string, string >
+  auto const buildMapping = [&]( string_array const & from,
+                                 string_array const & to ) -> std::map< string, string >
   {
     std::map< string, string > mapping;
-    for( int i = 0; i < from.size(); i++ )
+    for( size_t i = 0; i < from.size(); i++ )
     {
       mapping[from[i]] = to[i];
     }
     return mapping;
   };
 
-  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport.toViewConst(), m_volumicFieldsInGEOSX.toViewConst() );
-  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport.toViewConst(), m_surfacicFieldsInGEOSX.toViewConst() );
+  MeshGeneratorBase::m_volumicFields = buildMapping( m_volumicFieldsToImport, m_volumicFieldsInGEOSX );
+  MeshGeneratorBase::m_surfacicFields = buildMapping( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX );
 }
 
 } // namespace geos

@@ -489,13 +489,13 @@ private:
   // Table names
 
   /// Drainage relative permeability table names (one for each phase in the wetting-non-wetting pair)
-  array1d< string > m_drainageWettingNonWettingRelPermTableNames;
+  string_array m_drainageWettingNonWettingRelPermTableNames;
 
   /// Drainage relative permeability table names (one for each phase in the wetting-intermediate pair)
-  array1d< string > m_drainageWettingIntermediateRelPermTableNames;
+  string_array m_drainageWettingIntermediateRelPermTableNames;
 
   /// Drainage relative permeability table names (one for each phase in the non-wetting-intermediate pair)
-  array1d< string > m_drainageNonWettingIntermediateRelPermTableNames;
+  string_array m_drainageNonWettingIntermediateRelPermTableNames;
 
   /// Imbibition relative permeability table name for the wetting phase
   string m_imbibitionWettingRelPermTableName;

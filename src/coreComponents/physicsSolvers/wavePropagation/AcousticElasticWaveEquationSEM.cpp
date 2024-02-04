@@ -32,7 +32,7 @@ void AcousticElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     nodeManager.registerField< fields::CouplingVectorx >( getName() );
@@ -59,14 +59,14 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
   GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
-  m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-  m_elasRegions = elasSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  m_acousRegions = &(acousSolver->getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() ));
+  m_elasRegions = &(elasSolver->getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() ));
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
+                                                                string_array const & GEOS_UNUSED_PARAM( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -89,7 +89,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView1d< real32 > const couplingVectorz = nodeManager.getField< fields::CouplingVectorz >();
     couplingVectorz.zero();
 
-    elemManager.forElementRegions( m_acousRegions, [&] ( localIndex const regionIndex, ElementRegionBase const & elemRegion )
+    elemManager.forElementRegions( *m_acousRegions, [&] ( localIndex const regionIndex, ElementRegionBase const & elemRegion )
     {
       elemRegion.forElementSubRegionsIndex( [&]( localIndex const subRegionIndex, ElementSubRegionBase const & elementSubRegion )
       {
@@ -133,7 +133,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
+                                                                string_array const & GEOS_UNUSED_PARAM( regionNames ) )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -160,7 +160,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     real32 const dt2 = pow( dt, 2 );
 
-    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
+    elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, *m_elasRegions );
 
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
@@ -178,9 +178,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
     } );
 
-    elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
+    elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, *m_elasRegions );
 
-    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
+    acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, *m_acousRegions );
 
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
@@ -197,7 +197,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
       RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
     } );
 
-    acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
+    acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, *m_acousRegions );
 
     acousSolver->prepareNextTimestep( mesh );
     elasSolver->prepareNextTimestep( mesh );

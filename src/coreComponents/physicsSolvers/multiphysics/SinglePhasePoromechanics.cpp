@@ -130,11 +130,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  arrayView1d< string const > const & poromechanicsTargetRegionNames =
-    this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  string_array const & poromechanicsTargetRegionNames =
+    this->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    this->flowSolver()->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
+  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
@@ -210,7 +210,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
@@ -250,10 +250,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
 
   this->solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                               MeshLevel & mesh,
-                                                                                              arrayView1d< string const > const & regionNames )
+                                                                                              string_array const & regionNames )
   {
     // collect the target region of the mechanics solver not included in the poromechanics target regions
-    array1d< string > filteredRegionNames;
+    string_array filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
     for( string const & regionName : regionNames )
     {
@@ -274,7 +274,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                 dofManager,
-                                                                                filteredRegionNames.toViewConst(),
+                                                                                filteredRegionNames,
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
                                                                                 localRhs,
@@ -317,7 +317,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & dom
 {
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();

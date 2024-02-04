@@ -154,7 +154,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -202,7 +202,7 @@ void LaplaceBaseH1::
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
 
     fsManager.apply< NodeManager >( time,

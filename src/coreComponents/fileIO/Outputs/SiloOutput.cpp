@@ -138,7 +138,7 @@ bool SiloOutput::execute( real64 const time_n,
   silo.setWriteCellElementMesh( m_writeCellElementMesh );
   silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
   silo.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
-  silo.setFieldNames( m_fieldNames.toViewConst() );
+  silo.setFieldNames( m_fieldNames );
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.initialize( numFiles );
   silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );

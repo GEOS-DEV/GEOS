@@ -168,7 +168,7 @@ protected:
   virtual void validatePoreVolumes( DomainPartition const & domain ) const;
 
   virtual void precomputeData( MeshLevel & mesh,
-                               arrayView1d< string const > const & regionNames );
+                               string_array const & regionNames );
 
   virtual void initializePreSubGroups() override;
 

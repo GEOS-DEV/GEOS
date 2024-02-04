@@ -110,13 +110,13 @@ public:
   void updateState( DomainPartition & domain ) override final;
 
   void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
-                                                   arrayView1d< string const > const & regionNames,
+                                                   string_array const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
   void assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
-                                                                     arrayView1d< string const > const & regionNames,
+                                                                     string_array const & regionNames,
                                                                      DofManager const & dofManager,
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );

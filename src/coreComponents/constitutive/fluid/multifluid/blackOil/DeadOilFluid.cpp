@@ -84,7 +84,7 @@ void DeadOilFluid::readInputDataFromTableFunctions()
     errorIfPositiveValue( m_waterParams.compressibility, viewKeyStruct::waterCompressibilityString() );
   }
 
-  integer const numExpectedTables = (ipGas >= 0) ? 2 : 1;
+  size_t const numExpectedTables = (ipGas >= 0) ? 2 : 1;
   GEOS_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
                         GEOS_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
                         InputError );

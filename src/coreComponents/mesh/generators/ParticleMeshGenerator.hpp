@@ -99,10 +99,10 @@ private:
   Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
-  array1d< string > m_blockNames;
+  string_array m_blockNames;
 
   /// String array listing the particle types present
-  array1d< string > m_particleType;
+  string_array m_particleType;
 
 public:
 

@@ -77,7 +77,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   }
   else
   {
-    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
+    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion< localIndex >( m_setNames.size()), "Invalid collection index specified." );
     localIndex collectionSize = m_setsIndices[collectionIdx].size();
     if( ( m_onlyOnSetChange != 0 ) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
     {
@@ -96,7 +96,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
  * @return The set names, guarantied to be unique.
  * @note This function simply discards requested sets which are not available. No warning or error is provided...
  */
-std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, ObjectManagerBase const * omb )
+std::vector< string > getExistingWrapperNames( string_array const & setNames, ObjectManagerBase const * omb )
 {
   // Extract available wrapper names from `omb`.
   std::set< string > available;
@@ -146,7 +146,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // This is questionable but lets me define `setNames` as `const` variable.
   // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
   // So the `asOMB` function will not be called inappropriately and kill the simulation.
-  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), asOMB( targetGrp ) );
+  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );

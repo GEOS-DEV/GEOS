@@ -123,7 +123,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  arrayView1d< string const > const targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
+  string_array const & targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
   elemManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
                                                               [&]( localIndex,
                                                                    localIndex const ei,
@@ -995,7 +995,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
-  arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
+  string_array const & targetRegions = m_targetRegions.at( meshBodyName );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 

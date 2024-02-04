@@ -193,7 +193,7 @@ protected:
 private:
 
   /// String array of region names
-  array1d< string > m_regionNames;
+  string_array m_regionNames;
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];
@@ -205,7 +205,7 @@ private:
   globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
-  array1d< string > m_elementType;
+  string_array m_elementType;
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;

@@ -155,13 +155,13 @@ private:
   void createAllTableKernelWrappers();
 
   /// Relative permeability table names (one for each phase in the wetting-non-wetting pair)
-  array1d< string > m_wettingNonWettingRelPermTableNames;
+  string_array m_wettingNonWettingRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the wetting-intermediate pair)
-  array1d< string > m_wettingIntermediateRelPermTableNames;
+  string_array m_wettingIntermediateRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the non-wetting-intermediate pair)
-  array1d< string > m_nonWettingIntermediateRelPermTableNames;
+  string_array m_nonWettingIntermediateRelPermTableNames;
 
   /// Kernel wrappers for relative permeabilities in the following order:
   /// Two-phase flow:

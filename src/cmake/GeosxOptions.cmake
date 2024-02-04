@@ -125,7 +125,7 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
-                                 GNU "-Wno-unused-parameter -Wno-unused-variable -Wno-dangling-reference"
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
                                  CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                )
 

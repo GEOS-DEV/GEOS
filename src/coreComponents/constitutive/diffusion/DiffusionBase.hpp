@@ -113,7 +113,7 @@ public:
    * @brief Getter for the phase names
    * @return an arrayView of phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the phase diffusivity multipliers

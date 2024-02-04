@@ -563,7 +563,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         string_array const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -2031,7 +2031,7 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( int i=0; i < nodesetNames.size(); ++i )
+  for( size_t i=0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 

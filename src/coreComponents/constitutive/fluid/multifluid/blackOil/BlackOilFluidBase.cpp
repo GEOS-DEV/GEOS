@@ -188,7 +188,7 @@ void BlackOilFluidBase::postProcessInput()
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
-    GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+    GEOS_THROW_IF_NE_MSG( LvArray::integerConversion< size_t >( array.size()), m_phaseNames.size(),
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
   };

@@ -154,7 +154,7 @@ public:
 
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseTrappedVolFraction() const { return m_phaseTrappedVolFrac; }
 

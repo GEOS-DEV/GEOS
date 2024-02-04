@@ -112,7 +112,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -199,7 +199,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, string_array const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -418,7 +418,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     precomputeSourceAndReceiverTerm( mesh, regionNames );
 
@@ -596,7 +596,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                               integer const cycleNumber,
                                               DomainPartition &,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -670,7 +670,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                   integer const,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+                                                  string_array const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -765,7 +765,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
     synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
@@ -787,7 +787,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const ux_n   = nodeManager.getField< fields::Displacementx_n >();

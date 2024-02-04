@@ -219,7 +219,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
 
   using keys = TableRelativePermeabilityHysteresis::viewKeyStruct;
 
-  auto & drainageWaterGasTableNames = relPerm.getReference< array1d< string > >( keys::drainageWettingNonWettingRelPermTableNamesString() );
+  auto & drainageWaterGasTableNames = relPerm.getReference< string_array >( keys::drainageWettingNonWettingRelPermTableNamesString() );
   drainageWaterGasTableNames.resize( 2 );
   drainageWaterGasTableNames[0] = "drainageWater_swg"; drainageWaterGasTableNames[1] = "drainageGas_swg";
 

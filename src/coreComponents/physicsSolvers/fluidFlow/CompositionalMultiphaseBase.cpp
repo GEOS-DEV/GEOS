@@ -204,7 +204,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   // 0. Find a "reference" fluid model name (at this point, models are already attached to subregions)
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -255,7 +255,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & mesh,
-                                                   arrayView1d< string const > const & regionNames )
+                                                   string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -490,7 +490,7 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
     bc.setWaterPhaseIndex( waterPhaseIndex );
 
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
-    arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
+    string_array const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
     GEOS_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
                           getDataContext() << ": Mismatch in number of components between constitutive model "
@@ -519,7 +519,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   // 2. Set the value of temperature
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -545,7 +545,7 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -748,7 +748,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subReg
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                                                         DomainPartition & domain,
-                                                        arrayView1d< string const > const & regionNames )
+                                                        string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
 
@@ -987,7 +987,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
   std::set< string > regionFilter;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     for( string const & regionName : regionNames )
     {
@@ -1039,7 +1039,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       FunctionManager & functionManager = FunctionManager::getInstance();
 
       array1d< TableFunction::KernelWrapper > compFracTableWrappers;
-      arrayView1d< string const > compFracTableNames = fs.getComponentFractionVsElevationTableNames();
+      string_array const & compFracTableNames = fs.getComponentFractionVsElevationTableNames();
       for( integer ic = 0; ic < numComps; ++ic )
       {
         TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( compFracTableNames[ic] );
@@ -1062,7 +1062,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
-      arrayView1d< string const > componentNames = fs.getComponentNames();
+      string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
                      << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
@@ -1076,7 +1076,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       }
 
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
-      arrayView1d< string const > phaseNames = fluid.phaseNames();
+      string_array const & phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
                      getCatalogName() << " " << getDataContext() << ": phase name " <<
@@ -1193,7 +1193,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   // set mass fraction flag on fluid models
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { fields::flow::pressure::key(),
@@ -1247,7 +1247,7 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -1321,7 +1321,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1453,7 +1453,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time + dt,
@@ -1576,7 +1576,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     // map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
     map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
@@ -1724,7 +1724,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
 
     // 1. Apply pressure Dirichlet BCs, store in a separate field
@@ -1889,7 +1889,7 @@ void CompositionalMultiphaseBase::keepFlowVariablesConstantDuringInitStep( real6
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1966,7 +1966,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -2012,7 +2012,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -2108,7 +2108,7 @@ void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & dom
   // Step 1: reset the arrays involved in the computation of CFL numbers
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -2178,7 +2178,7 @@ void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & dom
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -2255,7 +2255,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames,
@@ -2308,7 +2308,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -2425,7 +2425,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
   real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion,
                                                 SurfaceElementSubRegion >( regionNames, [&]( localIndex const,

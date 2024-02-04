@@ -112,7 +112,7 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
 
   {
     NodeManager & nodeManager = mesh.getNodeManager();
@@ -198,7 +198,7 @@ void ElasticFirstOrderWaveEquationSEM::postProcessInput()
 }
 
 
-void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, string_array const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -333,7 +333,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     precomputeSourceAndReceiverTerm( mesh, regionNames );
 
@@ -515,7 +515,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
 
   {
 
@@ -669,7 +669,7 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

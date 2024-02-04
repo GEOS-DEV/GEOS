@@ -119,7 +119,7 @@ protected:
   R2SymTensor m_inputStress;
 
 //  /// names of the functions used to specify stress for the generation of tractions.
-//  array1d<string> m_stressFunctionNames;
+//  string_array m_stressFunctionNames;
 //
 //  bool m_useStressFunctions;
 //

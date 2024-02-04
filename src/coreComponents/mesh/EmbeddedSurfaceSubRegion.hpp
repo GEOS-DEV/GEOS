@@ -310,7 +310,7 @@ private:
   array1d< real64 > m_connectivityIndex;
 
   // Indices of geometric objects the element belongs to
-  array1d< string > m_parentPlaneName;
+  string_array m_parentPlaneName;
 
   /// Surfaces with ghost nodes
   std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;

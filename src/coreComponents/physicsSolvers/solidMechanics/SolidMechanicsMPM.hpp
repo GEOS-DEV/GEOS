@@ -153,7 +153,7 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );

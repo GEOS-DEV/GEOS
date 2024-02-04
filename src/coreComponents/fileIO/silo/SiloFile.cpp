@@ -820,7 +820,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
       int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
-      array1d< string > vBlockNames( size );
+      string_array vBlockNames( size );
       std::vector< char * > BlockNames( size );
       char currentDirectory[256];
 
@@ -2766,7 +2766,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
       }
     } );
 
-    for( localIndex a=0; a<materialNames.size(); ++a )
+    for( auto a=0u; a<materialNames.size(); ++a )
     {
       regionpnames[a] = const_cast< char * >(materialNames[a].c_str());
     }
