@@ -93,8 +93,10 @@ localIndex Pack( buffer_unit_type * & buffer, const string & var )
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T >
-localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
+template< bool DO_PACKING, typename T, typename SET >
+localIndex
+PackSet( buffer_unit_type * & buffer,
+         SET const & var )
 {
   const localIndex length = LvArray::integerConversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
@@ -375,10 +377,10 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename T >
+template< typename T, typename SET >
 localIndex
-Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var )
+UnpackSet( buffer_unit_type const * & buffer,
+           SET & var )
 {
   var.clear();
   localIndex set_length;

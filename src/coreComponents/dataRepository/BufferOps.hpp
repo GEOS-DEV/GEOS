@@ -74,6 +74,9 @@ constexpr bool is_packable_set = false;
 template< typename T >
 constexpr bool is_packable_set< SortedArray< T > > = is_packable_helper< T >::value;
 
+template< typename T >
+constexpr bool is_packable_set< set< T > > = is_packable_helper< T >::value;
+
 
 template< typename >
 constexpr bool is_packable_map = false;
@@ -129,10 +132,24 @@ Pack( buffer_unit_type * & buffer,
       const string & var );
 
 //------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename SET >
+localIndex
+PackSet( buffer_unit_type * & buffer,
+         SET const & var );
+
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      SortedArray< T > const & var );
+      SortedArray< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
+
+template< bool DO_PACKING, typename T >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      set< T > const & var )
+{ return PackSet< DO_PACKING, T >( buffer, var ); }
+
+
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -283,10 +300,23 @@ Unpack( buffer_unit_type const * & buffer,
         T & var );
 
 //------------------------------------------------------------------------------
+template< typename T, typename SET >
+localIndex
+UnpackSet( buffer_unit_type const * & buffer,
+           SET & var );
+
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var );
+        SortedArray< T > & var )
+{ return UnpackSet< T >( buffer, var ); }
+
+template< typename T >
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        set< T > & var )
+{ return UnpackSet< T >( buffer, var ); }
+
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, typename PERMUTATION >

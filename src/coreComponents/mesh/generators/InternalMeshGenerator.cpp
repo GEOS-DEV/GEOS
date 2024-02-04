@@ -818,7 +818,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     // Assign global numbers to elements
     regionOffset = 0;
-    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex

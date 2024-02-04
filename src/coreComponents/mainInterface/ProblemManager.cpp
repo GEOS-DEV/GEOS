@@ -535,10 +535,9 @@ void ProblemManager::postProcessInput()
   }
 }
 
-
 void ProblemManager::initializationOrder( string_array & order )
 {
-  SortedArray< string > usedNames;
+  set< string > usedNames;
 
 
   {
