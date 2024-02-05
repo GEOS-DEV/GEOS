@@ -217,7 +217,7 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      RUNS_ON: ubuntu-22.04
+      RUNS_ON: Runner_4core_16GB
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
