@@ -8,12 +8,16 @@ BlackOilFluid                                 node         :ref:`XML_BlackOilFlu
 BrooksCoreyBakerRelativePermeability          node         :ref:`XML_BrooksCoreyBakerRelativePermeability`          
 BrooksCoreyCapillaryPressure                  node         :ref:`XML_BrooksCoreyCapillaryPressure`                  
 BrooksCoreyRelativePermeability               node         :ref:`XML_BrooksCoreyRelativePermeability`               
+BrooksCoreyStone2RelativePermeability         node         :ref:`XML_BrooksCoreyStone2RelativePermeability`         
 CO2BrineEzrokhiFluid                          node         :ref:`XML_CO2BrineEzrokhiFluid`                          
 CO2BrineEzrokhiThermalFluid                   node         :ref:`XML_CO2BrineEzrokhiThermalFluid`                   
 CO2BrinePhillipsFluid                         node         :ref:`XML_CO2BrinePhillipsFluid`                         
 CO2BrinePhillipsThermalFluid                  node         :ref:`XML_CO2BrinePhillipsThermalFluid`                  
 CarmanKozenyPermeability                      node         :ref:`XML_CarmanKozenyPermeability`                      
+CeramicDamage                                 node         :ref:`XML_CeramicDamage`                                 
 CompositionalMultiphaseFluid                  node         :ref:`XML_CompositionalMultiphaseFluid`                  
+CompositonalTwoPhaseFluidPengRobinson         node         :ref:`XML_CompositonalTwoPhaseFluidPengRobinson`         
+CompositonalTwoPhaseFluidSoaveRedlichKwong    node         :ref:`XML_CompositonalTwoPhaseFluidSoaveRedlichKwong`    
 CompressibleSinglePhaseFluid                  node         :ref:`XML_CompressibleSinglePhaseFluid`                  
 CompressibleSolidCarmanKozenyPermeability     node         :ref:`XML_CompressibleSolidCarmanKozenyPermeability`     
 CompressibleSolidConstantPermeability         node         :ref:`XML_CompressibleSolidConstantPermeability`         
@@ -45,6 +49,7 @@ MultiPhaseVolumeWeightedThermalConductivity   node         :ref:`XML_MultiPhaseV
 NullModel                                     node         :ref:`XML_NullModel`                                     
 ParallelPlatesPermeability                    node         :ref:`XML_ParallelPlatesPermeability`                    
 ParticleFluid                                 node         :ref:`XML_ParticleFluid`                                 
+PerfectlyPlastic                              node         :ref:`XML_PerfectlyPlastic`                              
 PermeabilityBase                              node         :ref:`XML_PermeabilityBase`                              
 PorousDelftEgg                                node         :ref:`XML_PorousDelftEgg`                                
 PorousDruckerPrager                           node         :ref:`XML_PorousDruckerPrager`                           
@@ -69,6 +74,7 @@ TableRelativePermeabilityHysteresis           node         :ref:`XML_TableRelati
 ThermalCompressibleSinglePhaseFluid           node         :ref:`XML_ThermalCompressibleSinglePhaseFluid`           
 VanGenuchtenBakerRelativePermeability         node         :ref:`XML_VanGenuchtenBakerRelativePermeability`         
 VanGenuchtenCapillaryPressure                 node         :ref:`XML_VanGenuchtenCapillaryPressure`                 
+VanGenuchtenStone2RelativePermeability        node         :ref:`XML_VanGenuchtenStone2RelativePermeability`        
 ViscoDruckerPrager                            node         :ref:`XML_ViscoDruckerPrager`                            
 ViscoExtendedDruckerPrager                    node         :ref:`XML_ViscoExtendedDruckerPrager`                    
 ViscoModifiedCamClay                          node         :ref:`XML_ViscoModifiedCamClay`                          

@@ -17,11 +17,15 @@
  */
 
 #include "CompositionalProperties.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
 
 namespace constitutive
+{
+
+namespace compositional
 {
 
 /*
@@ -40,7 +44,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 & molarDensity )
 {
 
-  real64 vEos = gasConstant * temperature * compressibilityFactor / pressure;
+  real64 vEos = constants::gasConstant * temperature * compressibilityFactor / pressure;
   real64 vCorrected = vEos;
 
   for( integer ic = 0; ic < numComps; ++ic )
@@ -48,7 +52,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
     vCorrected += composition[ic] * volumeShift[ic];
   }
 
-  if( epsilon < vCorrected )
+  if( MultiFluidConstants::epsilon < vCorrected )
   {
     molarDensity = 1.0 / vCorrected;
   }
@@ -73,7 +77,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 & dMolarDensity_dt,
                                                    arraySlice1d< real64 > const & dMolarDensity_dz )
 {
-  if( molarDensity < epsilon )
+  if( molarDensity < MultiFluidConstants::epsilon )
   {
     dMolarDensity_dp = 0.0;
     dMolarDensity_dt = 0.0;
@@ -87,17 +91,17 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
   real64 dvCorrected_dx = 0.0;
 
   // Pressure derivative
-  dvCorrected_dx = gasConstant * temperature * (dCompressibilityFactor_dp - compressibilityFactor / pressure) / pressure;
+  dvCorrected_dx = constants::gasConstant * temperature * (dCompressibilityFactor_dp - compressibilityFactor / pressure) / pressure;
   dMolarDensity_dp = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Temperature derivative
-  dvCorrected_dx = gasConstant * (temperature * dCompressibilityFactor_dt + compressibilityFactor) / pressure;
+  dvCorrected_dx = constants::gasConstant * (temperature * dCompressibilityFactor_dt + compressibilityFactor) / pressure;
   dMolarDensity_dt = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    dvCorrected_dx = gasConstant * temperature * dCompressibilityFactor_dz[ic] / pressure + volumeShift[ic];
+    dvCorrected_dx = constants::gasConstant * temperature * dCompressibilityFactor_dz[ic] / pressure + volumeShift[ic];
     dMolarDensity_dz[ic] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }
@@ -140,6 +144,8 @@ void CompositionalProperties::computeMassDensity( integer const numComps,
     dMassDensity_dz[ic] = massDensity * dMolarDensity_dz[ic] / molarDensity + molecularWeight[ic] * molarDensity;
   }
 }
+
+} // namespace compositional
 
 } // namespace constitutive
 

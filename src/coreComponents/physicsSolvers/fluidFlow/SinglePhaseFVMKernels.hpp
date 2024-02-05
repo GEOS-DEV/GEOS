@@ -778,7 +778,7 @@ public:
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    m_fluidWrapper.compute( m_facePres[kf], faceDens, faceVisc );
+    SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );

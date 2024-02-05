@@ -124,8 +124,8 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    enthalpyTable->setTableCoordinates( tableCoords.getCoords() );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
@@ -171,8 +171,8 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    enthalpyTable->setTableCoordinates( temperatures );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableCoordinates( temperatures, { tableCoords.coordsUnits[1] } );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
@@ -183,7 +183,8 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 BrineEnthalpy::BrineEnthalpy( string const & name,
                               string_array const & inputParams,
                               string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
+                              array1d< real64 > const & componentMolarWeight,
+                              bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -196,6 +197,20 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
+    m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName() );
+  }
+}
+
+void BrineEnthalpy::checkTablesParameters( real64 const pressure,
+                                           real64 const temperature ) const
+{
+  m_brineEnthalpyTable->checkCoord( temperature, 0 );
+
+  m_CO2EnthalpyTable->checkCoord( pressure, 0 );
+  m_CO2EnthalpyTable->checkCoord( temperature, 1 );
 }
 
 
@@ -210,7 +225,7 @@ BrineEnthalpy::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // namespace PVTProps
 

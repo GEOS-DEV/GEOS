@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {
@@ -38,7 +39,7 @@ WellSolverBase::WellSolverBase( string const & name,
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
-  m_ratesOutputDir( name + "_rates" )
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -173,7 +174,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
   assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
