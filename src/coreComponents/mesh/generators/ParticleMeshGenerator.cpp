@@ -263,7 +263,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int npInBlock = 0; // Number of particles in this particle block
     for( localIndex i=0; i<numThisType; i++ ) // Find out which particles belong to the current particle block
     {
-      materialID = particleData[particleType][i][10]; // The particle file is configured such that the 11th column has the material ID
+      materialID = particleData[particleType][i][7]; // The particle file is configured such that the 11th column has the material ID
       if( materialID == blockMaterialMap[particleBlock.getName()] )
       {
         npInBlock++;
