@@ -53,14 +53,12 @@ public:
                        integer const phaseLiquidIndex )
     : FlashModelBaseUpdate( componentMolarWeight ),
     m_CO2SolubilityTable( CO2SolubilityTable.createKernelWrapper() ),
-    //m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
+    m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
     m_phaseLiquidIndex( phaseLiquidIndex )
-  {
-    GEOS_UNUSED_VAR( waterVapourisationTable );
-  }
+  {}
 
   template< int USD1 >
   GEOS_HOST_DEVICE
@@ -74,7 +72,7 @@ public:
   {
     FlashModelBaseUpdate::move( space, touch );
     m_CO2SolubilityTable.move( space, touch );
-    //m_WaterVapourisationTable.move( space, touch );
+    m_WaterVapourisationTable.move( space, touch );
   }
 
 protected:
@@ -86,7 +84,7 @@ protected:
   TableFunction::KernelWrapper m_CO2SolubilityTable;
 
   /// Table with water vapourisation as a function (P,T)
-  //TableFunction::KernelWrapper m_WaterVapourisationTable;
+  TableFunction::KernelWrapper m_WaterVapourisationTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -169,9 +167,9 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   real64 const input[2] = { pressure, temperature };
 
   real64 co2SolubilityDeriv[2]{};
-  real64 watSolubilityDeriv[2]{0.0, 0.0};
+  real64 watSolubilityDeriv[2]{};
   real64 co2Solubility = m_CO2SolubilityTable.compute( input, co2SolubilityDeriv );
-  real64 watSolubility = 0.0; //m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
+  real64 watSolubility = m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
 
   // Convert the solubility to mole/mole
   co2Solubility *= m_componentMolarWeight[m_waterIndex];
