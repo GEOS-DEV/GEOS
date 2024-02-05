@@ -1899,6 +1899,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_enableCohesiveLaws, "Compute reactions due to cohesive laws" );
   solverProfilingIf( "Compute reactions due to cohesive laws", m_enableCohesiveLaws == 1 );
   //#######################################################################################
+  // GEOS_LOG_RANK("Enabled cohesive laws?: " m_enabledCohesiveLaws << ", Reference laws?: " << m_referenceCohesiveZone ); // CC: debug
   if( m_enableCohesiveLaws == 1 )
   {
     // GEOS_LOG_RANK("Project particle surface normals to grid...");
@@ -2073,12 +2074,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   gridToParticle( dt, particleManager, nodeManager, domain, mesh );
 
 
-  // //#######################################################################################
-  // GEOS_LOG_RANK_IF( m_debugFlag == 1, "Compute kinetic energy" );
-  // solverProfiling( "Compute kinetic energy" );
-  // //#######################################################################################
-  // // 1/2*m*v^2 calculation, TODO add micro kinetic energy.
-  // computeKineticEnergy( particleManager );
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Compute kinetic energy" );
+  solverProfiling( "Compute kinetic energy" );
+  //#######################################################################################
+  // 1/2*m*v^2 calculation, TODO add micro kinetic energy.
+  computeKineticEnergy( particleManager );
 
 
   //#######################################################################################
@@ -2125,12 +2126,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //   computeArtificialViscosity( particleManager );
   // }
 
-//  //#######################################################################################
-//   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with old stress and Fdot" );
-//   solverProfiling( "Increment internalEnergy with old stress and Fdot" );
-//   //#######################################################################################
-//   computeInternalEnergyAndTemperature( dt,
-//                                        particleManager );
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with old stress and Fdot" );
+  solverProfiling( "Increment internalEnergy with old stress and Fdot" );
+  //#######################################################################################
+  computeInternalEnergyAndTemperature( dt,
+                                       particleManager );
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update constitutive model dependencies" );
@@ -2150,12 +2151,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   updateSolverDependencies( particleManager );
 
-//  //#######################################################################################
-//   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with new stress and Fdot" );
-//   solverProfiling( "Increment internalEnergy with new stress and Fdot" );
-//   //#######################################################################################
-//   computeInternalEnergyAndTemperature( dt,
-//                                        particleManager );
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with new stress and Fdot" );
+  solverProfiling( "Increment internalEnergy with new stress and Fdot" );
+  //#######################################################################################
+  computeInternalEnergyAndTemperature( dt,
+                                       particleManager );
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_boxAverageHistory == 1, "Compute and write box averages" );
@@ -3445,7 +3446,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
             {
               // Evaluate the separability criterion for the contact pair.
               int separable = 0;
-              if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] )
+              if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond to pairs for which a cohesive law is defined
               {
                 separable = 1;
                 frictionCoefficient = 0.0;
@@ -5466,6 +5467,9 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const gridCohesiveSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::cohesiveSurfaceNormalString() );
   
+  //CC: debug
+  // GEOS_LOG_RANK("Mapping mass for cohesive laws...");
+
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -5497,6 +5501,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           {
             nodeFlag = ( m_cohesiveFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridCohesiveSurfaceNormal[mappedNode], particleSurfaceNormal[p] ) < 0.0 ) ? 1 : 0; // 0 for "A" field, 1 for "B" field
           }
+          // CC: debug
+          // GEOS_LOG_RANK("p: " << p << ", g: " << mappedNode << ", CFP: " << m_cohesiveFieldPartitioning << ", gNormal: " << gridCohesiveSurfaceNormal[mappedNode] << ", pNormal: " << particleSurfaceNormal[p] << ", g.p: " << LvArray::tensorOps::AiBi< 3 >( gridCohesiveSurfaceNormal[mappedNode], particleSurfaceNormal[p] ) << ", nFlag: " << nodeFlag );
           int const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
           particleCohesiveFieldMapping[p][g] = fieldIndex;
