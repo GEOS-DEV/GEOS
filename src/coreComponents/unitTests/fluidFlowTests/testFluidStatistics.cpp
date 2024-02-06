@@ -135,7 +135,6 @@ public:
   {
     EXPECT_LT( m_timestepId, m_testSet->timestepCount ) << "The tested time-step count were higher than expected.";
     SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepStats" );
-    GEOS_LOG( GEOS_FMT( "TS[{}]: Start checking {}", m_timestepId, timestepStats.getName() ) );  //!\\ temp log
     timestepStats.forMeshLevelStatsWrapper( domain,
                                             [&] ( MeshLevel & meshLevel,
                                                   SourceFluxStatsAggregator::WrappedStats & )
@@ -144,7 +143,6 @@ public:
                                              [&] ( MeshLevel &,
                                                    SourceFluxStatsAggregator::WrappedStats & fluxStats )
       {
-        GEOS_LOG( GEOS_FMT( "TS[{}]: Check {}.{}", m_timestepId, fluxStats.getAggregatorName(), fluxStats.getFluxName() ) );//!\\ temp log
         if( fluxStats.getFluxName() == m_testSet->inputs.sourceFluxName )
         {
           checkTimestepFluxStats( fluxStats,
@@ -180,12 +178,6 @@ private:
                                std::vector< real64 > const & expectedMasses,
                                integer const expectedElementCount )
   {
-    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed mass = {} <=> expected mass {}",
-                        m_timestepId, stats.stats().m_producedMass, expectedMasses[m_timestepId] ) );//!\\ temp log
-    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed rate = {} <=> expected rate {}",
-                        m_timestepId, stats.stats().m_productionRate, expectedRates[m_timestepId] ) );//!\\ temp log
-    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed elements = {} <=> expected elements {}",
-                        m_timestepId, stats.stats().m_elementCount, expectedElementCount ) );//!\\ temp log
     EXPECT_DOUBLE_EQ( stats.stats().m_producedMass, expectedMasses[m_timestepId] ) << GEOS_FMT( "The flux named '{}' did not produce the expected mass.", stats.getFluxName() );
     EXPECT_DOUBLE_EQ( stats.stats().m_productionRate, expectedRates[m_timestepId] ) << GEOS_FMT( "The flux named '{}' did not produce at the expected rate.", stats.getFluxName() );
     EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount ) << GEOS_FMT( "The flux named '{}' did not produce in the expected elements.", stats.getFluxName() );
