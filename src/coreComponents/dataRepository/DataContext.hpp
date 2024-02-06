@@ -223,10 +223,4 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS
   }
 };
 
-template<>
-constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::dataRepository::DataContext, GEOS_FMT_NS::format_context >() -> bool
-{
-  return true;
-}
-
 #endif /* GEOS_DATAREPOSITORY_DATACONTEXT_HPP_ */
