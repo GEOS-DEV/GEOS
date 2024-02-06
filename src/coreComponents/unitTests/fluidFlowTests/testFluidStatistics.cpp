@@ -30,29 +30,81 @@ CommandLineOptions g_commandLineOptions;
 
 
 /**
- * @brief this struct is used to provide the input data to each tests
+ * @brief this struct is used to provide the input data of each fluid tests
  */
-struct TestParams
+struct TestInputs
 {
   string xmlInput;
 
   string sourceFluxName;
   string sinkFluxName;
 
+  std::vector< real64 > fluxRates;
+  real64 dt;
+  real64 sourceRateFactor;
+  real64 sinkRateFactor;
+  integer sourceElementsCount;
+  integer sinkElementsCount;
+};
+
+/**
+ * @brief this struct computes from the test inputs the values to expect from the simulation.
+ */
+struct TestSet
+{
+  TestInputs const inputs;
+
   // input values to test out
-  integer sourceElementsCount = 0;
-  integer sinkElementsCount = 0;
-  integer totalElementsCount = 0;
+  integer timestepCount;
+  integer totalElementsCount;
   std::vector< real64 > sourceRates;
   std::vector< real64 > sinkRates;
   std::vector< real64 > sourceMassProd;
   std::vector< real64 > sinkMassProd;
-  real64 sourceMeanRate = 0.0;
-  real64 sinkMeanRate = 0.0;
-  real64 totalSourceMassProd = 0.0;
-  real64 totalSinkMassProd = 0.0;
-  real64 totalMassProd = 0.0;
-  real64 totalMeanRate = 0.0;
+  std::vector< real64 > massDeltas;
+  real64 sourceMeanRate;
+  real64 sinkMeanRate;
+  real64 totalSourceMassProd;
+  real64 totalSinkMassProd;
+  real64 totalMassProd;
+  real64 totalMeanRate;
+
+  /**
+   * @brief Compute the expected statistics set
+   * @param inputParams the test simulation input parameters
+   */
+  TestSet( TestInputs const & inputParams ):
+    inputs( inputParams )
+  {
+    timestepCount = inputs.fluxRates.size();
+    sourceRates.resize( timestepCount );
+    sinkRates.resize( timestepCount );
+    sourceMassProd.resize( timestepCount );
+    sinkMassProd.resize( timestepCount );
+    massDeltas.resize( timestepCount );
+    for( size_t i = 0; i < inputs.fluxRates.size(); ++i )
+    {
+      // mass production / injection calculation
+      sourceRates[i] = inputs.fluxRates[i] * -1.0;
+      sourceMassProd[i] = inputs.fluxRates[i] * inputs.dt * -1.0;
+      totalSourceMassProd += sourceMassProd[i];
+      sinkRates[i] = inputs.fluxRates[i] * 4.0;
+      sinkMassProd[i] = inputs.fluxRates[i] * inputs.dt * 4.0;
+      massDeltas[i] = -( sourceMassProd[i] + sinkMassProd[i] );
+      totalSinkMassProd += sinkMassProd[i];
+      // rates accumulations
+      sourceMeanRate += inputs.fluxRates[i] * -1.0;
+      sinkMeanRate += inputs.fluxRates[i] * 4.0;
+    }
+    // mean rates calculation
+    real64 const ratesMeanDivisor = 1.0 / double( timestepCount - 1 );
+    sourceMeanRate *= ratesMeanDivisor;
+    sinkMeanRate *= ratesMeanDivisor;
+    // totals
+    totalMassProd = totalSinkMassProd + totalSourceMassProd;
+    totalMeanRate = sinkMeanRate + sourceMeanRate;
+    totalElementsCount = inputs.sourceElementsCount + inputs.sinkElementsCount;
+  }
 };
 
 
@@ -69,7 +121,8 @@ public:
   void postProcessInput() override
   {}
 
-  void setTestParams( TestParams const & inputTestParams ) { m_params = &inputTestParams; }
+  void setTestSet( TestSet const & testSet ) { m_testSet = &testSet; }
+  integer getTestedTimeStepCount() { return m_timestepId; }
 
   static string catalogName() { return "SinglePhaseStatsTimeStepChecker"; }
 
@@ -80,6 +133,7 @@ public:
                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition & domain )
   {
+    EXPECT_LT( m_timestepId, m_testSet->timestepCount ) << "The tested time-step count were higher than expected.";
     SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepStats" );
     GEOS_LOG( GEOS_FMT( "TS[{}]: Start checking {}", m_timestepId, timestepStats.getName() ) );  //!\\ temp log
     timestepStats.forMeshLevelStatsWrapper( domain,
@@ -91,19 +145,19 @@ public:
                                                    SourceFluxStatsAggregator::WrappedStats & fluxStats )
       {
         GEOS_LOG( GEOS_FMT( "TS[{}]: Check {}.{}", m_timestepId, fluxStats.getAggregatorName(), fluxStats.getFluxName() ) );//!\\ temp log
-        if( fluxStats.getFluxName() == m_params->sourceFluxName )
+        if( fluxStats.getFluxName() == m_testSet->inputs.sourceFluxName )
         {
-          checkTimestepFluxStats( fluxStats.stats(),
-                                  m_params->sourceRates,
-                                  m_params->sourceMassProd,
-                                  m_params->sourceElementsCount );
+          checkTimestepFluxStats( fluxStats,
+                                  m_testSet->sourceRates,
+                                  m_testSet->sourceMassProd,
+                                  m_testSet->inputs.sourceElementsCount );
         }
-        else if( fluxStats.getFluxName() == m_params->sinkFluxName )
+        else if( fluxStats.getFluxName() == m_testSet->inputs.sinkFluxName )
         {
-          checkTimestepFluxStats( fluxStats.stats(),
-                                  m_params->sinkRates,
-                                  m_params->sinkMassProd,
-                                  m_params->sinkElementsCount );
+          checkTimestepFluxStats( fluxStats,
+                                  m_testSet->sinkRates,
+                                  m_testSet->sinkMassProd,
+                                  m_testSet->inputs.sinkElementsCount );
         }
         else
         {
@@ -117,26 +171,24 @@ public:
     return false;
   }
 private:
-  TestParams const * m_params = nullptr;
+  TestSet const * m_testSet = nullptr;
   int m_timestepId = 0;
 
 
-  void checkTimestepFluxStats( SourceFluxStatsAggregator::StatData const & stats,
+  void checkTimestepFluxStats( SourceFluxStatsAggregator::WrappedStats const & stats,
                                std::vector< real64 > const & expectedRates,
                                std::vector< real64 > const & expectedMasses,
                                integer const expectedElementCount )
   {
     GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed mass = {} <=> expected mass {}",
-                        m_timestepId, stats.m_producedMass, expectedMasses[m_timestepId] ) );//!\\ temp log
+                        m_timestepId, stats.stats().m_producedMass, expectedMasses[m_timestepId] ) );//!\\ temp log
     GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed rate = {} <=> expected rate {}",
-                        m_timestepId, stats.m_productionRate, expectedRates[m_timestepId] ) );//!\\ temp log
+                        m_timestepId, stats.stats().m_productionRate, expectedRates[m_timestepId] ) );//!\\ temp log
     GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed elements = {} <=> expected elements {}",
-                        m_timestepId, stats.m_elementCount, expectedElementCount ) );//!\\ temp log
-    EXPECT_LT( m_timestepId, expectedRates.size());
-    EXPECT_LT( m_timestepId, expectedMasses.size());
-    EXPECT_DOUBLE_EQ( stats.m_producedMass, expectedMasses[m_timestepId] );
-    EXPECT_DOUBLE_EQ( stats.m_productionRate, expectedRates[m_timestepId] );
-    EXPECT_DOUBLE_EQ( stats.m_elementCount, expectedElementCount );
+                        m_timestepId, stats.stats().m_elementCount, expectedElementCount ) );//!\\ temp log
+    EXPECT_DOUBLE_EQ( stats.stats().m_producedMass, expectedMasses[m_timestepId] ) << GEOS_FMT( "The flux named '{}' did not produce the expected mass.", stats.getFluxName() );
+    EXPECT_DOUBLE_EQ( stats.stats().m_productionRate, expectedRates[m_timestepId] ) << GEOS_FMT( "The flux named '{}' did not produce at the expected rate.", stats.getFluxName() );
+    EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount ) << GEOS_FMT( "The flux named '{}' did not produce in the expected elements.", stats.getFluxName() );
   }
 };
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
@@ -148,11 +200,11 @@ namespace SinglePhaseFluxStatisticsTest
 {
 
 
-TestParams getXmlInput()
+TestSet getXmlInput()
 {
-  TestParams testParams;
+  TestInputs testInputs;
 
-  testParams.xmlInput =
+  testInputs.xmlInput =
     R"xml(
 <Problem>
 
@@ -299,58 +351,32 @@ TestParams getXmlInput()
 )xml";
 
 
-  testParams.sourceFluxName = "sourceFlux";
-  testParams.sinkFluxName = "sinkFlux";
+  testInputs.sourceFluxName = "sourceFlux";
+  testInputs.sinkFluxName = "sinkFlux";
+  testInputs.dt = 500.0;
+  testInputs.sourceElementsCount = 2;
+  testInputs.sinkElementsCount = 4;
 
-  // compute the expected statistics
-  {
-    static real64 const dt = 500.0;
+  // FluxRate table from 0.0s to 5000.0s
+  testInputs.fluxRates = { 0.000, 0.000, 0.767, 0.894, 0.561, 0.234, 0.194, 0.178, 0.162, 0.059, 0.000 };
 
-    //elements count
-    testParams.sourceElementsCount = 2;
-    testParams.sinkElementsCount = 4;
-    testParams.totalElementsCount = testParams.sourceElementsCount + testParams.sinkElementsCount;
+  // sink is 4x source production
+  testInputs.sourceRateFactor = -1.0;
+  testInputs.sinkRateFactor = 4.0;
 
-    // FluxRate table from 0.0s to 5000.0s
-    std::vector< real64 > const rates = { 0.000, 0.000, 0.767, 0.894, 0.561, 0.234, 0.194, 0.178, 0.162, 0.059, 0.000 };
-    testParams.sourceMassProd.reserve( rates.size() );
-    testParams.sinkMassProd.reserve( rates.size() );
-    for( size_t i = 0; i < rates.size(); ++i )
-    {
-      // mass injection / production calculation (sink is 4x source production)
-      testParams.sourceRates.push_back( rates[i] * -1.0 );
-      testParams.sourceMassProd.push_back( rates[i] * dt * -1.0 );
-      testParams.totalSourceMassProd += testParams.sourceMassProd.back();
-      testParams.sinkRates.push_back( rates[i] * 4.0 );
-      testParams.sinkMassProd.push_back( rates[i] * dt * 4.0 );
-      testParams.totalSinkMassProd += testParams.sinkMassProd.back();
-
-      // rates accumulation
-      testParams.sourceMeanRate += rates[i] * -1.0;
-      testParams.sinkMeanRate += rates[i] * 4.0;
-    }
-    // mean rates calculation
-    real64 const ratesMeanDivisor = 1.0 / double( rates.size() - 1 );
-    testParams.sourceMeanRate *= ratesMeanDivisor;
-    testParams.sinkMeanRate *= ratesMeanDivisor;
-    // totals
-    testParams.totalMassProd = testParams.totalSinkMassProd + testParams.totalSourceMassProd;
-    testParams.totalMeanRate = testParams.sinkMeanRate + testParams.sourceMeanRate;
-  }
-
-  return testParams;
+  return TestSet( testInputs );
 }
 
 TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 {
-  TestParams const testParams = getXmlInput();
+  static TestSet testSet = getXmlInput();
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
-  setupProblemFromXML( problem, testParams.xmlInput.data() );
+  setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( "/Tasks/timeStepChecker" );
-  timeStepChecker.setTestParams( testParams );
+  timeStepChecker.setTestSet( testSet );
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
@@ -359,6 +385,7 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
 
   // verification that the source flux statistics are correct over the whole simulation
+  EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
   wholeSimStats.forMeshLevelStatsWrapper( domain,
                                           [&] ( MeshLevel & meshLevel,
                                                 SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
@@ -367,17 +394,17 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
                                            [&] ( MeshLevel &,
                                                  SourceFluxStatsAggregator::WrappedStats & fluxStats )
     {
-      if( fluxStats.getFluxName() == testParams.sourceFluxName )
+      if( fluxStats.getFluxName() == testSet.inputs.sourceFluxName )
       {
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSourceMassProd ) << "The source flux did not inject the expected total mass.";
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sourceMeanRate ) << "The source flux did not inject at the expected rate.";
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sourceElementsCount ) << "The source flux did not target the expected elements.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testSet.totalSourceMassProd ) << "The source flux did not inject the expected total mass.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testSet.sourceMeanRate ) << "The source flux did not inject at the expected mean rate.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testSet.inputs.sourceElementsCount ) << "The source flux did not target the expected elements.";
       }
-      else if( fluxStats.getFluxName() == testParams.sinkFluxName )
+      else if( fluxStats.getFluxName() == testSet.inputs.sinkFluxName )
       {
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSinkMassProd ) << "The sink flux did not produce the expected total mass.";
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sinkMeanRate ) << "The sink flux did not produce at the expected rate.";
-        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sinkElementsCount ) << "The sink flux did not target the expected elements.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testSet.totalSinkMassProd ) << "The sink flux did not produce the expected total mass.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testSet.sinkMeanRate ) << "The sink flux did not produce at the expected mean rate.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testSet.inputs.sinkElementsCount ) << "The sink flux did not target the expected elements.";
       }
       else
       {
@@ -385,8 +412,8 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
       }
     } );
 
-    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass, testParams.totalMassProd ) << "The fluxes did not produce the expected total mass.";
-    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate, testParams.totalMeanRate ) << "The fluxes did not produce at the expected rate.";
+    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass, testSet.totalMassProd ) << "The fluxes did not produce the expected total mass.";
+    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate, testSet.totalMeanRate ) << "The fluxes did not produce at the expected rate.";
   } );
 }
 
@@ -394,11 +421,11 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 //////////////////////////////// Multiphase Flux Statistics Test ////////////////////////////////
 
 
-TestParams getMultiphaseXmlInput()
+TestInputs getMultiphaseXmlInput()
 {
-  TestParams testParams;
+  TestInputs testInputs;
 
-  testParams.xmlInput =
+  testInputs.xmlInput =
     R"xml(
 <Problem>
 
@@ -559,15 +586,15 @@ TestParams getMultiphaseXmlInput()
 )xml";
 
 
-  testParams.sourceFluxName = "sourceFlux";
-  testParams.sinkFluxName = "sinkFlux";
+  testInputs.sourceFluxName = "sourceFlux";
+  testInputs.sinkFluxName = "sinkFlux";
 
   // compute the expected statistics
   {
     //!\\ TODO
   }
 
-  return testParams;
+  return testInputs;
 }
 
 
