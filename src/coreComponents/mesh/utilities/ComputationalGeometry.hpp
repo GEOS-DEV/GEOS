@@ -560,6 +560,52 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   return result;
 }
 
+template< localIndex MAX_NODES >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 meanCurvature_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
+                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points )
+{
+  localIndex const numberOfPoints = pointsIndices.size();
+  if(MAX_NODES == 3 || numberOfPoints == 3)
+  {
+    return 0.0;
+  }
+  real64 center[3];
+  real64 averageNormal[3];
+  centroid_3DPolygon(pointsIndices, points, center, averageNormal);
+  real64 tangentVector1[ 3 ] = { averageNormal[ 2 ], 0.0, -averageNormal[ 0 ] };
+  LvArray::tensorOps::normalize<3>(tangentVector1);
+  real64 tangentVector2[ 3 ];
+  LvArray::tensorOps::crossProduct(tangentVector2, averageNormal, tangentVector1);
+
+  real64 pointsToPlaneDistance[MAX_NODES];
+  real64 vandermondeMatrix[MAX_NODES][3];
+  LvArray::tensorOps::fill<MAX_NODES,3>(vandermondeMatrix[MAX_NODES][3], 0.0);
+  for( localIndex p = 0; p < numberOfPoints; ++p )
+  {
+    real64 pointToCenterVector[3];
+    LvArray::tensorOps::copy<3>(pointToCenterVector, points[p]);
+    LvArray::tensorOps::subtract<3>(pointToCenterVector, center);
+    pointsToPlaneDistance[p] = LvArray::tensorOps::AiBi<3>(pointToCenterVector, averageNormal);
+    real64 pointsTangentialCoordinates[2];
+    pointsTangentialCoordinates[0] = LvArray::tensorOps::AiBi<3>(pointToCenterVector, tangentVector1);
+    pointsTangentialCoordinates[1] = LvArray::tensorOps::AiBi<3>(pointToCenterVector, tangentVector2);
+    vandermondeMatrix[p][0] = (pointsTangentialCoordinates[0] * pointsTangentialCoordinates[0]) * 0.5;
+    vandermondeMatrix[p][1] = (pointsTangentialCoordinates[1] * pointsTangentialCoordinates[1]) * 0.5;
+    vandermondeMatrix[p][2] =  pointsTangentialCoordinates[0] * pointsTangentialCoordinates[1];
+  }
+  real64 normalEquations[3][3];
+  LvArray::tensorOps::symRij_eq_AiAj<>()
+  Rij_eq_AkiAkj<3,MAX_NODES>(normalEquations, vandermondeMatrix);
+  real64 invNormalEquations[3][3];
+  LvArray::tensorOps::invert<3>(normalEquations);
+  real64 polynomialCoeffs[3];
+
+
+  return 0.0;
+}
+
 } /* namespace computationalGeometry */
 } /* namespace geos */
 
