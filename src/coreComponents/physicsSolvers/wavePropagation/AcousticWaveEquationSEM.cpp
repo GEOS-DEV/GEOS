@@ -966,18 +966,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   if( !m_usePML )
   {
     GEOS_MARK_SCOPE ( updateP );
-    // forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-    // {
-    //   localIndex const a = solverTargetNodesSet[n];
-    //   if( freeSurfaceNodeIndicator[a] != 1 )
-    //   {
-    //     p_np1[a] = p_n[a];
-    //     p_np1[a] *= 2.0 * mass[a];
-    //     p_np1[a] -= (mass[a] - 0.5 * dt * damping[a]) * p_nm1[a];
-    //     p_np1[a] += dt2 * (rhs[a] - stiffnessVector[a]);
-    //     p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
-    //   }
-    // } );
     AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
   }
