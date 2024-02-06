@@ -224,9 +224,9 @@ TEST_F( ElasticFirstOrderWaveEquationSEMTest, SeismoTrace )
   arrayView2d< real32 > const uxReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementxNp1AtReceiversString() ).toView();
   arrayView2d< real32 > const uyReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementyNp1AtReceiversString() ).toView();
   arrayView2d< real32 > const uzReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementzNp1AtReceiversString() ).toView();
-  arrayView2d< real32 > const sigmaxxReceivers = propagator->getReference< array2d<real32 > >(ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmaxxNp1AtReceiversString()).toView();
-  arrayView2d< real32 > const sigmayyReceivers = propagator->getReference< array2d<real32 > >(ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmayyNp1AtReceiversString()).toView();
-  arrayView2d< real32 > const sigmazzReceivers = propagator->getReference< array2d<real32 > >(ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmazzNp1AtReceiversString()).toView();
+  arrayView2d< real32 > const sigmaxxReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmaxxNp1AtReceiversString()).toView();
+  arrayView2d< real32 > const sigmayyReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmayyNp1AtReceiversString()).toView();
+  arrayView2d< real32 > const sigmazzReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmazzNp1AtReceiversString()).toView();
   // move it to CPU, if needed
   uxReceivers.move( LvArray::MemorySpace::host, false );
   uyReceivers.move( LvArray::MemorySpace::host, false );
