@@ -141,7 +141,7 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
     setSizedFromParent( 0 );
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-  contactRelationName = this->m_contactRelationName;
+  contactRelationName = this->m_contactRelationName; // TODO what is that?
   GEOS_ERROR_IF( contactRelationName.empty(),
                  GEOS_FMT( "{}: Solid model not found on subregion {}",
                            getDataContext(), subRegion.getName() ) );

@@ -1204,8 +1204,6 @@ SolidMechanicsLagrangianFEM::
   return totalResidualNorm;
 }
 
-
-
 void
 SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,

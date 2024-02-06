@@ -97,9 +97,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
+  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
-
 
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
@@ -722,17 +722,9 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
@@ -768,24 +760,14 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 {
   int hasConfigurationConverged = true;
 
-  using namespace fields::contact;
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-
-    // We want to update the configuration (fracture state in this case) and check if it has changed. If it hasn't changed
-    // then we know the configuartion loop has converged and we can return true.
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< fields::contact::dispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
@@ -809,6 +791,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       } );
     } );
   } );
+
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 

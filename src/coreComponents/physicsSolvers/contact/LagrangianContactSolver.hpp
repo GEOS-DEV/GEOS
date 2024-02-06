@@ -134,7 +134,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
-  string const & getContactRelationName() const { return m_contactRelationName; }
+  //string const & getContactRelationName() const { return m_contactRelationName; }
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
