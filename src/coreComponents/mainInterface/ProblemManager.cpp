@@ -194,7 +194,15 @@ void ProblemManager::parseCommandLineInput()
   OutputBase::setOutputDirectory( outputDirectory );
 
   string & xmlInputFileName = commandLine.getReference< string >( viewKeys.xmlInputFileName );
+
+  for( string const & xmlFile : opts.xmlInputFileNames )
+  {
+    string const absPath = getAbsolutePath( xmlFile );
+    GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
+  }
+
   xmlInputFileName = xmlWrapper::buildMultipleInputXML( opts.xmlInputFileNames, outputDirectory );
+
   string & controlledInputFileName = commandLine.getReference< string >( viewKeys.controlledInputFileName );
   controlledInputFileName = xmlWrapper::buildMultipleInputXML( opts.controlledInputFileNames, outputDirectory );
 
@@ -210,12 +218,12 @@ void ProblemManager::parseCommandLineInput()
     if( not xmlInputFileName.empty() )
     {
       xmlInputFileName = getAbsolutePath( xmlInputFileName );
-      Path::pathPrefix() = splitPath( xmlInputFileName ).first;
+      Path::setPathPrefix( splitPath( xmlInputFileName ).first );
     }
     if( not controlledInputFileName.empty() )
     {
       controlledInputFileName = getAbsolutePath( controlledInputFileName );
-      Path::pathPrefix() = splitPath( controlledInputFileName ).first;
+      Path::setPathPrefix( splitPath( controlledInputFileName ).first );
     }  }
 
   if( opts.traceDataMigration )

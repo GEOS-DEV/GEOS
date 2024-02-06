@@ -3,6 +3,7 @@
 ============================================= ==== ================================================================== 
 Name                                          Type Description                                                        
 ============================================= ==== ================================================================== 
+AcousticElasticSEM                            node :ref:`DATASTRUCTURE_AcousticElasticSEM`                            
 AcousticFirstOrderSEM                         node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                         
 AcousticSEM                                   node :ref:`DATASTRUCTURE_AcousticSEM`                                   
 AcousticVTISEM                                node :ref:`DATASTRUCTURE_AcousticVTISEM`                                
