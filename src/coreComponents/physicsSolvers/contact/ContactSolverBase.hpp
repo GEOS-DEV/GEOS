@@ -56,12 +56,11 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
-//  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
-
   void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 protected:
 
   //virtual void postProcessInput() override;
@@ -98,8 +97,6 @@ protected:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-//    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }

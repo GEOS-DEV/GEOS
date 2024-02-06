@@ -50,10 +50,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
-
-//  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-//    setInputFlag( dataRepository::InputFlags::FALSE );
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -178,10 +174,10 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     map< std::pair< string, string >, array1d< string > > meshTargets;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel const & meshLevel,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  arrayView1d< string const > const & )
     {
       array1d< string > regions;
-      regions.emplace_back(getFractureRegionName());
+      regions.emplace_back( getFractureRegionName());
 //      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
 //      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
 //                                                                      [&]( localIndex const,
@@ -570,7 +566,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
     forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion const & fractureRegion )
     {
       fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
-                                                                      {
+      {
         arrayView1d< globalIndex const > const &
         dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();

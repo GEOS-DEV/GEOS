@@ -5,7 +5,7 @@
     gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegionName="Fracture"
       initialDt="10"
       contactRelationName="fractureContact"

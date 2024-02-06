@@ -41,13 +41,8 @@ using namespace fields::contact;
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent ),
-//  m_solidSolver( nullptr ),
   m_setupSolidSolverDofs( true )
 {
-//  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-//    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-//    setInputFlag( InputFlags::REQUIRED ).
-//    setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
 //  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
 //    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -60,12 +55,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setDescription( "Name of the fracture region." );
 
 }
-
-//void ContactSolverBase::postProcessInput()
-//{
-//  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-//  SolverBase::postProcessInput();
-//}
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
@@ -226,6 +215,26 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                          domain.getNeighbors(),
                                                          true );
   } );
+}
+
+void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  if( dynamic_cast< CellElementSubRegion* >( &subRegion ) )
+  {
+    SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( subRegion );
+  }
+  else if( dynamic_cast< SurfaceElementSubRegion* >( &subRegion ) )
+  {
+    subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 );
+
+    string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
+    contactRelationName = SolverBase::getConstitutiveName< ContactBase >( subRegion );
+    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
+                                                          getDataContext(), subRegion.getDataContext() ) );
+  }
 }
 
 } /* namespace geos */

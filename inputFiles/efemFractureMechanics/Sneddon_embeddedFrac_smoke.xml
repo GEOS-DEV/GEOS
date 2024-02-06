@@ -11,7 +11,7 @@
   <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegionName="Fracture"
       initialDt="10"
       contactRelationName="fractureContact"
