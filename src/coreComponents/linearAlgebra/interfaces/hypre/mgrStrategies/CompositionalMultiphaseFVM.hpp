@@ -73,8 +73,8 @@ public:
     m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[1]         = 1;
     m_levelInterpType[1]          = MGRInterpolationType::injection;
-    m_levelRestrictType[1]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelRestrictType[1]        = MGRRestrictionType::blockColLumped; // True-IMPES
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkinRAI;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[1] = 1;
   }
