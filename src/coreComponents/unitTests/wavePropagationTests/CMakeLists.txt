@@ -1,7 +1,8 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testWavePropagation.cpp
-     testWavePropagationAcousticFirstOrder.cpp )
+     testWavePropagationAcousticFirstOrder.cpp
+     testWavePropagationElasticFirstOrder.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 

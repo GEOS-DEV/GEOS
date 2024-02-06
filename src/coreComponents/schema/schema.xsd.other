@@ -792,6 +792,18 @@
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--receiverRegion => Region containing the receivers-->
 		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sigmaxxNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxxNp1AtReceivers" type="real32_array2d" />
+		<!--sigmaxyNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxyNp1AtReceivers" type="real32_array2d" />
+		<!--sigmaxzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxzNp1AtReceivers" type="real32_array2d" />
+		<!--sigmayyNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmayyNp1AtReceivers" type="real32_array2d" />
+		<!--sigmayzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmayzNp1AtReceivers" type="real32_array2d" />
+		<!--sigmazzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmazzNp1AtReceivers" type="real32_array2d" />
 		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceElem => Element containing the sources-->
