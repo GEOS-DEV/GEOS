@@ -45,14 +45,17 @@ ContactSolverBase::ContactSolverBase( const string & name,
   m_setupSolidSolverDofs( true )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fracture region." );
 
@@ -210,7 +213,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_ERROR( "ExplicitStep non available for contact solvers." );
+  GEOS_ERROR( getDataContext() << ": ExplicitStep non available for contact solvers." );
   return dt;
 }
 

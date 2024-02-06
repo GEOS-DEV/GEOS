@@ -43,6 +43,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&inputGravityVector)[3] ):
   Base( nodeManager,
         edgeManager,
@@ -54,7 +55,8 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
         inputDofNumber,
         rankOffset,
         inputMatrix,
-        inputRhs ),
+        inputRhs,
+        inputDt ),
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
@@ -120,14 +122,13 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
-  real64 timeIncrement = 0.0;
   real64 stress[6] = {0};
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-  m_constitutiveUpdate.smallStrainUpdate( k, q, timeIncrement, strainInc, stress, stiffness );
+  m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
 
   stressModifier( stress );
   RAJA_UNROLL

@@ -24,6 +24,7 @@
 #include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
+#include "DuvautLionsSolid.hpp"
 #include "Damage.hpp"
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
@@ -45,18 +46,22 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
   m_solidInternalEnergyModelName()
 {
   registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the solid model." );
 
   registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the porosity model." );
 
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the permeability model." );
 
   registerWrapper( viewKeyStruct::solidInternalEnergyModelNameString(), &m_solidInternalEnergyModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Name of the solid internal energy model." );
 }

@@ -23,9 +23,11 @@
 
 #ifdef GEOSX_USE_FMT
 #define FMT_HEADER_ONLY
-#include <fmt/core.h>
-#include <fmt/chrono.h>
-#include <fmt/ranges.h>
+// Differentiate between standalone fmt path and umpire's fmt path
+#include "../include/fmt/core.h"
+#include "../include/fmt/chrono.h"
+#include "../include/fmt/ranges.h"
+#include "../include/fmt/xchar.h"
 #define GEOS_FMT_NS fmt
 #else // use C++20's <format>
 #include <format>
@@ -82,5 +84,24 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
  * @note Ensures the output buffer is zero-terminated (std::format_to_n doesn't)
  */
 #define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
+
+// The following workaround is needed to fix compilation with NVCC on some PowerPC machines.
+// The issue causes the following assertion error message:
+// "Cannot format an argument. To make type T formattable provide a formatter<T> specialization"
+// The standard definition of the has_const_formatter check of fmt fails due to a compiler bug, see the issue below:
+// https://github.com/fmtlib/fmt/issues/2746
+// The workaround was originally implemented in fmt:
+// https://github.com/fmtlib/fmt/commit/70de324aa801eaf52e94c402d526a3849797c620
+// but later removed:
+// https://github.com/fmtlib/fmt/commit/466e0650ec2d153d255a40ec230eb77d7f1c3334
+// This workaround bypasse the check for a const formatter whenever the foramt context GEOS_FMT_NS::format_context is used
+#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
+template< >
+constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::format_context >( ... ) -> bool
+{
+  return true;
+}
+#endif
+// End of the workaround for fmt compilation issues
 
 #endif //GEOS_COMMON_FORMAT_HPP_
