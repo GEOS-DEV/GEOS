@@ -143,17 +143,17 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
 
   registerWrapper( viewKeyStruct::linearDASVectorXString(), &m_linearDASVectorX ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "X component of the linear DAS direction vector" );
 
   registerWrapper( viewKeyStruct::linearDASVectorYString(), &m_linearDASVectorY ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Y component of the linear DAS direction vector" );
 
   registerWrapper( viewKeyStruct::linearDASVectorZString(), &m_linearDASVectorZ ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Z component of the linear DAS direction vector" );
 
