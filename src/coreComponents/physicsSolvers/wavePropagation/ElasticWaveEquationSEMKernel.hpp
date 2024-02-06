@@ -207,7 +207,7 @@ struct PrecomputeSourceAndReceiverKernel
         sampleIntegrationConstants[ 1 ] = 1.0;
       }
       /// for strain integration DAS (m_useDAS==1), take the average of strains to average strain data
-      else if( linearDASSamples == 1 )
+      else if( nSamples == 1 )
       {
         sampleIntegrationConstants[ 0 ] = 1.0;
       }
