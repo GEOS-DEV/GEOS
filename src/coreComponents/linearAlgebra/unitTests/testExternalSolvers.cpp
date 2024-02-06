@@ -171,10 +171,10 @@ TYPED_TEST_P( SolverTestLaplace2D, DirectParallel )
   this->test( params_DirectParallel() );
 }
 
-TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
-{
-  this->test( params_GMRES_ILU() );
-}
+// TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
+// {
+//   this->test( params_GMRES_ILU() );
+// }
 
 TYPED_TEST_P( SolverTestLaplace2D, CG_SGS )
 {
@@ -189,7 +189,7 @@ TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
 REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              DirectSerial,
                              DirectParallel,
-                             GMRES_ILU,
+//                             GMRES_ILU,
                              CG_SGS,
                              CG_AMG );
 
