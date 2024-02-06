@@ -167,8 +167,8 @@ jobs:
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
             GCP_BUCKET: geosx/Sherlock-CPU
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -266,6 +266,7 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.7.1-openblas0.3.10-zlib1.2.11
+            GCP_BUCKET: geosx/Sherlock-GPU
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.7.1-sm80.cmake
             RUNS_ON: Runner_4core_16GB
 
@@ -278,6 +279,7 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
