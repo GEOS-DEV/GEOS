@@ -145,8 +145,6 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp
-     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEM.hpp
-     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEMKernel.hpp
      )
 
 # Specify solver sources
@@ -212,7 +210,6 @@ set( physicsSolvers_sources
      wavePropagation/AcousticVTIFletcherWaveEquationSEM.cpp
      wavePropagation/AcousticVTIZhangWaveEquationSEM.cpp
      wavePropagation/AcousticElasticWaveEquationSEM.cpp
-     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEM.cpp
      )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
