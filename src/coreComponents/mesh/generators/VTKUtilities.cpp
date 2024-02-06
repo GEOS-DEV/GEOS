@@ -903,11 +903,11 @@ redistributeMeshes( integer const logLevel,
 {
   GEOS_MARK_FUNCTION;
 
-  std::vector< vtkSmartPointer< vtkDataSet > > fractures;
-  for( auto & nameToFracture: namesToFractures )
-  {
-    fractures.push_back( nameToFracture.second );
-  }
+//  std::vector< vtkSmartPointer< vtkDataSet > > fractures;
+//  for( auto & nameToFracture: namesToFractures )
+//  {
+//    fractures.push_back( nameToFracture.second );
+//  }
 
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds );

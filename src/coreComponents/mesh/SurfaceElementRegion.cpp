@@ -63,7 +63,7 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
     if( faceBlocks.hasGroup( m_faceBlockName ) )
     {
       FaceBlockABC const & source = faceBlocks.getGroup< FaceBlockABC >( m_faceBlockName );
-      subRegion.copyFromCellBlock( source );
+      subRegion.copyFromFaceBlock( source );
     }
     else
     {
