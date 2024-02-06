@@ -231,6 +231,7 @@ struct MassMatrixKernel
 
 
       real32 const invC2 = 1.0 / ( density[e] * pow( velocity[e], 2 ) );
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
       {
@@ -295,6 +296,7 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
+          // only the four corners of the mesh face are needed to compute the Jacobian
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
@@ -359,7 +361,7 @@ struct VelocityComputation
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
       {
@@ -492,7 +494,7 @@ struct PressureComputation
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
       {

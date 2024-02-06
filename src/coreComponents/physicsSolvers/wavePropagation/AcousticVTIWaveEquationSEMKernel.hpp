@@ -218,6 +218,7 @@ struct MassMatrixKernel
 
 
       real32 const invC2 = 1.0 / pow( velocity[e], 2 );
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
       {
@@ -320,7 +321,7 @@ struct DampingMatrixKernel
             vti_pq_z = vti_f[e];
             vti_q_z  = 1;
           }
-
+          // only the four corners of the mesh face are needed to compute the Jacobian
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
@@ -461,7 +462,9 @@ public:
     {}
 
     /// C-array stack storage for element local the nodal positions.
+    /// only the eight corners of the mesh cell are needed to compute the Jacobian
     real64 xLocal[ 8 ][ 3 ];
+    /// local (to this element) stiffness vectors
     real32 stiffnessVectorLocal_p[ numNodesPerElem ]{};
     real32 stiffnessVectorLocal_q[ numNodesPerElem ]{};
   };
@@ -510,8 +513,8 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void quadraturePointKernel( localIndex const q,
-                              localIndex const k,
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
                               StackVariables & stack ) const
   {
     // Pseudo Stiffness xy
