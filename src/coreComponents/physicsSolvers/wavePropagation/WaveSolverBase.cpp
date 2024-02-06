@@ -269,7 +269,7 @@ void WaveSolverBase::postProcessInput()
 
   m_usePML = counter;
 
-  if( m_useDAS == 0 && m_linearDASGeometry.size( 0 ) > 0 )
+  if( m_useDAS <= 0 && m_linearDASGeometry.size( 0 ) > 0 )
   {
     m_useDAS = 1;
     m_linearDASSamples = 5;
