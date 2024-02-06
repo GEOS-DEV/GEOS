@@ -22,12 +22,16 @@
 
 using namespace geos;
 using namespace geos::dataRepository;
-// using namespace geos::constitutive;
-// using namespace geos::constitutive::multifluid;
 using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
+//////////////////////////////// Test base utilities ////////////////////////////////
+
+
+/**
+ * @brief this struct is used to provide the input data to each tests
+ */
 struct TestParams
 {
   string xmlInput;
@@ -53,9 +57,11 @@ struct TestParams
 
 
 //////////////////////////////// SinglePhase Flux Statistics Test ////////////////////////////////
+namespace SinglePhaseFluxStatisticsTest
+{
 
 
-TestParams getSinglephaseXmlInput()
+TestParams getXmlInput()
 {
   TestParams testParams;
 
@@ -161,12 +167,18 @@ TestParams getSinglephaseXmlInput()
     <PeriodicEvent name="solverApplications"
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
-    <PeriodicEvent name="timestepsStatsEvent"
+    <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/timestepsStats" />
+                   target="/Tasks/timestepStats" />
+    <PeriodicEvent name="timestepsCheckEvent"
+                   timeFrequency="500.0"
+                   targetExactTimestep="1"
+                   targetExactStartStop="1"
+                   beginTime="0"
+                   target="/Tasks/timeStepChecker" />
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
                    targetExactTimestep="1"
@@ -176,7 +188,7 @@ TestParams getSinglephaseXmlInput()
   </Events>
 
   <Tasks>
-    <SourceFluxStatistics name="timestepsStats"
+    <SourceFluxStatistics name="timestepStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver" />
     <SourceFluxStatistics name="wholeSimStats"
@@ -242,7 +254,7 @@ TestParams getSinglephaseXmlInput()
 
 TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 {
-  TestParams const testParams = getSinglephaseXmlInput();
+  TestParams const testParams = getXmlInput();
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
@@ -252,48 +264,38 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 
 
   DomainPartition & domain = problem.getDomainPartition();
-  // SourceFluxStatsAggregator & timestepsStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepsStats" );
   SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
 
-  // check timestep statistics
+  // verification that the source flux statistics are correct over the whole simulation
+  wholeSimStats.forMeshLevelStatsWrapper( domain,
+                                          [&] ( MeshLevel & meshLevel,
+                                                SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
   {
-    //!\\ TODO
-  }
-
-  // check whole simulation statistics
-  {
-
-    // verification that the source flux statistics are correct over the whole simulation
-    wholeSimStats.forMeshLevelStatsWrapper( domain,
-                                            [&] ( MeshLevel & meshLevel,
-                                                  SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
+    wholeSimStats.forAllFluxStatsWrappers( meshLevel,
+                                            [&] ( MeshLevel &,
+                                                  SourceFluxStatsAggregator::WrappedStats & fluxStats )
     {
-      wholeSimStats.forAllFluxStatsWrappers( meshLevel,
-                                             [&] ( MeshLevel &,
-                                                   SourceFluxStatsAggregator::WrappedStats & fluxStats )
+      if( fluxStats.getFluxName() == testParams.sourceFluxName )
       {
-        if( fluxStats.getFluxName() == testParams.sourceFluxName )
-        {
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSourceMassProd ) << "The source flux did not inject the expected total mass.";
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sourceMeanRate ) << "The source flux did not inject at the expected rate.";
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sourceElementsCount ) << "The source flux did not target the expected elements.";
-        }
-        else if( fluxStats.getFluxName() == testParams.sinkFluxName )
-        {
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSinkMassProd ) << "The sink flux did not produce the expected total mass.";
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sinkMeanRate ) << "The sink flux did not produce at the expected rate.";
-          EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sinkElementsCount ) << "The sink flux did not target the expected elements.";
-        }
-        else
-        {
-          FAIL() << "Unexpected SourceFlux found!";
-        }
-      } );
-
-      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass, testParams.totalMassProd ) << "The fluxes did not produce the expected total mass.";
-      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate, testParams.totalMeanRate ) << "The fluxes did not produce at the expected rate.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSourceMassProd ) << "The source flux did not inject the expected total mass.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sourceMeanRate ) << "The source flux did not inject at the expected rate.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sourceElementsCount ) << "The source flux did not target the expected elements.";
+      }
+      else if( fluxStats.getFluxName() == testParams.sinkFluxName )
+      {
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSinkMassProd ) << "The sink flux did not produce the expected total mass.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_productionRate, testParams.sinkMeanRate ) << "The sink flux did not produce at the expected rate.";
+        EXPECT_DOUBLE_EQ( fluxStats.stats().m_elementCount, testParams.sinkElementsCount ) << "The sink flux did not target the expected elements.";
+      }
+      else
+      {
+        FAIL() << "Unexpected SourceFlux found!";
+      }
     } );
-  }
+
+    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass, testParams.totalMassProd ) << "The fluxes did not produce the expected total mass.";
+    EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate, testParams.totalMeanRate ) << "The fluxes did not produce at the expected rate.";
+  } );
 }
 
 
@@ -411,12 +413,12 @@ TestParams getMultiphaseXmlInput()
     <PeriodicEvent name="solverApplications"
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
-    <PeriodicEvent name="timestepsStatsEvent"
+    <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/timestepsStats" />
+                   target="/Tasks/timestepStats" />
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
                    targetExactTimestep="1"
@@ -426,7 +428,7 @@ TestParams getMultiphaseXmlInput()
   </Events>
 
   <Tasks>
-    <SourceFluxStatistics name="timestepsStats"
+    <SourceFluxStatistics name="timestepStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver" />
     <SourceFluxStatistics name="wholeSimStats"
@@ -476,6 +478,8 @@ TestParams getMultiphaseXmlInput()
   return testParams;
 }
 
+
+} /* namespace SinglePhaseFluxStatisticsTest */
 
 
 //////////////////////////////// Main ////////////////////////////////
