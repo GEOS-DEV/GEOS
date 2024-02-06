@@ -56,6 +56,93 @@ struct TestParams
 };
 
 
+/**
+ * @brief This Task allows to extract and check each timestep stats.
+ */
+class TimeStepChecker : public TaskBase
+{
+public:
+  TimeStepChecker( string const & name, Group * const parent ):
+    TaskBase( name, parent )
+  {}
+
+  void postProcessInput() override
+  {}
+
+  void setTestParams( TestParams const & inputTestParams ) { m_params = &inputTestParams; }
+
+  static string catalogName() { return "SinglePhaseStatsTimeStepChecker"; }
+
+  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                        real64 const GEOS_UNUSED_PARAM( dt ),
+                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                        DomainPartition & domain )
+  {
+    SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepStats" );
+    GEOS_LOG( GEOS_FMT( "TS[{}]: Start checking {}", m_timestepId, timestepStats.getName() ) );  //!\\ temp log
+    timestepStats.forMeshLevelStatsWrapper( domain,
+                                            [&] ( MeshLevel & meshLevel,
+                                                  SourceFluxStatsAggregator::WrappedStats & )
+    {
+      timestepStats.forAllFluxStatsWrappers( meshLevel,
+                                             [&] ( MeshLevel &,
+                                                   SourceFluxStatsAggregator::WrappedStats & fluxStats )
+      {
+        GEOS_LOG( GEOS_FMT( "TS[{}]: Check {}.{}", m_timestepId, fluxStats.getAggregatorName(), fluxStats.getFluxName() ) );//!\\ temp log
+        if( fluxStats.getFluxName() == m_params->sourceFluxName )
+        {
+          checkTimestepFluxStats( fluxStats.stats(),
+                                  m_params->sourceRates,
+                                  m_params->sourceMassProd,
+                                  m_params->sourceElementsCount );
+        }
+        else if( fluxStats.getFluxName() == m_params->sinkFluxName )
+        {
+          checkTimestepFluxStats( fluxStats.stats(),
+                                  m_params->sinkRates,
+                                  m_params->sinkMassProd,
+                                  m_params->sinkElementsCount );
+        }
+        else
+        {
+          FAIL() << "Unexpected SourceFlux found!";
+        }
+      } );
+    } );
+
+    ++m_timestepId;
+
+    return false;
+  }
+private:
+  TestParams const * m_params = nullptr;
+  int m_timestepId = 0;
+
+
+  void checkTimestepFluxStats( SourceFluxStatsAggregator::StatData const & stats,
+                               std::vector< real64 > const & expectedRates,
+                               std::vector< real64 > const & expectedMasses,
+                               integer const expectedElementCount )
+  {
+    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed mass = {} <=> expected mass {}",
+                        m_timestepId, stats.m_producedMass, expectedMasses[m_timestepId] ) );//!\\ temp log
+    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed rate = {} <=> expected rate {}",
+                        m_timestepId, stats.m_productionRate, expectedRates[m_timestepId] ) );//!\\ temp log
+    GEOS_LOG( GEOS_FMT( "TS[{}]:   - computed elements = {} <=> expected elements {}",
+                        m_timestepId, stats.m_elementCount, expectedElementCount ) );//!\\ temp log
+    EXPECT_LT( m_timestepId, expectedRates.size());
+    EXPECT_LT( m_timestepId, expectedMasses.size());
+    EXPECT_DOUBLE_EQ( stats.m_producedMass, expectedMasses[m_timestepId] );
+    EXPECT_DOUBLE_EQ( stats.m_productionRate, expectedRates[m_timestepId] );
+    EXPECT_DOUBLE_EQ( stats.m_elementCount, expectedElementCount );
+  }
+};
+REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
+
+
+
 //////////////////////////////// SinglePhase Flux Statistics Test ////////////////////////////////
 namespace SinglePhaseFluxStatisticsTest
 {
@@ -194,6 +281,8 @@ TestParams getXmlInput()
     <SourceFluxStatistics name="wholeSimStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver" />
+
+    <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
   </Tasks>
 
   <Functions>
@@ -258,10 +347,13 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
-  // run simulation
   setupProblemFromXML( problem, testParams.xmlInput.data() );
-  EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
+  TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( "/Tasks/timeStepChecker" );
+  timeStepChecker.setTestParams( testParams );
+
+  // run simulation
+  EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
   DomainPartition & domain = problem.getDomainPartition();
   SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
@@ -272,8 +364,8 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
                                                 SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
   {
     wholeSimStats.forAllFluxStatsWrappers( meshLevel,
-                                            [&] ( MeshLevel &,
-                                                  SourceFluxStatsAggregator::WrappedStats & fluxStats )
+                                           [&] ( MeshLevel &,
+                                                 SourceFluxStatsAggregator::WrappedStats & fluxStats )
     {
       if( fluxStats.getFluxName() == testParams.sourceFluxName )
       {
