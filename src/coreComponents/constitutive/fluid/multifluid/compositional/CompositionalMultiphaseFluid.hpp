@@ -78,6 +78,9 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
@@ -104,6 +107,8 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
   /**
@@ -138,6 +143,9 @@ private:
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
+
+  // backup data
+  array4d< real64 > m_kValues;
 };
 
 using CompositionalTwoPhasePengRobinsonConstantViscosity = CompositionalMultiphaseFluid<

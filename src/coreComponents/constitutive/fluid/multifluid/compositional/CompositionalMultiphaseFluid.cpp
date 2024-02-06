@@ -19,10 +19,25 @@
 #include "CompositionalMultiphaseFluid.hpp"
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
+
+namespace fields
+{
+namespace multifluid
+{
+DECLARE_FIELD( kValues,
+               "kValues",
+               array4dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase equilibrium ratios" );
+}
+}
 
 namespace constitutive
 {
@@ -61,6 +76,8 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentBinaryCoeff ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
+
+  registerField( fields::multifluid::kValues{}, &m_kValues );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -85,6 +102,16 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
                    compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+{
+  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  // Zero k-Values to force initialisation with Wilson k-Values
+  m_kValues.zero();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -169,6 +196,14 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
+{
+  MultiFluidBase::resizeFields( size, numPts );
+
+  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 std::unique_ptr< ConstitutiveBase >
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::deliverClone( string const & name,
                                                                              Group * const parent ) const
@@ -195,7 +230,8 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
                         m_phaseEnthalpy.toView(),
                         m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
-                        m_totalDensity.toView() );
+                        m_totalDensity.toView(),
+                        m_kValues.toView() );
 }
 
 // Create the fluid models

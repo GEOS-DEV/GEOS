@@ -58,6 +58,7 @@ public:
                        real64 const temperature,
                        arraySlice1d< real64 const > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
+                       arraySlice2d< real64 > const & kValues,
                        real64 & vapourPhaseMoleFraction,
                        arraySlice1d< real64 > const & liquidComposition,
                        arraySlice1d< real64 > const & vapourComposition )
@@ -65,9 +66,11 @@ public:
     constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
     stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
     stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
-    stackArray1d< real64, maxNumComps > kVapourLiquid( numComps );
     stackArray1d< real64, maxNumComps > fugacityRatios( numComps );
     stackArray1d< integer, maxNumComps > presentComponents( numComps );
+    arraySlice1d< real64 > const & kVapourLiquid = kValues[0];
+
+    calculatePresentComponents( numComps, composition, presentComponents );
 
     // Initialise compositions to feed composition
     for( integer ic = 0; ic < numComps; ++ic )
@@ -76,55 +79,62 @@ public:
       vapourComposition[ic] = composition[ic];
     }
 
-    calculatePresentComponents( numComps, composition, presentComponents );
+    // Check if k-Values need to be initialised
+    bool needInitialisation = false;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
+      {
+        needInitialisation = true;
+        break;
+      }
+    }
 
-    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                        pressure,
-                                                        temperature,
-                                                        componentProperties,
-                                                        kVapourLiquid );
+    bool kValueReset = false;
+    constexpr real64 boundsTolerance = 1.0e-3;
+    if( needInitialisation )
+    {
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kVapourLiquid );
+      vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponents );
+      if( vapourPhaseMoleFraction < -boundsTolerance || vapourPhaseMoleFraction > 1.0 + boundsTolerance )
+      {
+        kValueReset = true;
+        KValueInitialization::computeConstantLiquidKvalue( numComps,
+                                                           pressure,
+                                                           temperature,
+                                                           componentProperties,
+                                                           kVapourLiquid );
+      }
+    }
+
+    vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponents );
+    real64 const initialVapourFraction = vapourPhaseMoleFraction;
 
     bool converged = false;
+    //real64 const logTolerance = LvArray::math::log( MultiFluidConstants::fugacityTolerance );
     for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
     {
-      // Solve Rachford-Rice Equation
-      vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponents );
-
-      // Assign phase compositions
-      for( integer const ic : presentComponents )
-      {
-        liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
-        vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
-      }
-
-      normalizeComposition( numComps, liquidComposition );
-      normalizeComposition( numComps, vapourComposition );
-
-      // Compute the phase fugacities
-      EOS_TYPE_LIQUID::computeLogFugacityCoefficients( numComps,
-                                                       pressure,
-                                                       temperature,
-                                                       liquidComposition,
-                                                       componentProperties,
-                                                       logLiquidFugacity );
-      EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
-                                                       pressure,
-                                                       temperature,
-                                                       vapourComposition,
-                                                       componentProperties,
-                                                       logVapourFugacity );
+      real64 const error = computeFugacityRatio< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+        numComps,
+        pressure,
+        temperature,
+        composition,
+        componentProperties,
+        kVapourLiquid,
+        presentComponents,
+        vapourPhaseMoleFraction,
+        liquidComposition,
+        vapourComposition,
+        logLiquidFugacity,
+        logVapourFugacity,
+        fugacityRatios );
 
       // Compute fugacity ratios and check convergence
-      converged = true;
-
-      for( integer const ic : presentComponents )
-      {
-        fugacityRatios[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) * liquidComposition[ic] / vapourComposition[ic];
-        if( MultiFluidConstants::fugacityTolerance < LvArray::math::abs( fugacityRatios[ic] - 1.0 ) )
-        {
-          converged = false;
-        }
-      }
+      converged = (error < MultiFluidConstants::fugacityTolerance);
 
       if( converged )
       {
@@ -132,9 +142,23 @@ public:
       }
 
       // Update K-values
-      for( integer const ic : presentComponents )
+      if( (vapourPhaseMoleFraction < -boundsTolerance || vapourPhaseMoleFraction > 1.0+boundsTolerance)
+          && 0.2 < LvArray::math::abs( vapourPhaseMoleFraction-initialVapourFraction )
+          && !kValueReset )
       {
-        kVapourLiquid[ic] *= fugacityRatios[ic];
+        KValueInitialization::computeConstantLiquidKvalue( numComps,
+                                                           pressure,
+                                                           temperature,
+                                                           componentProperties,
+                                                           kVapourLiquid );
+        kValueReset =  true;
+      }
+      else
+      {
+        for( integer const ic : presentComponents )
+        {
+          kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
+        }
       }
     }
 
@@ -383,6 +407,64 @@ private:
       composition[ic] *= oneOverTotalMoles;
     }
     return totalMoles;
+  }
+
+  /**
+   * @brief Calculate the logarithms of the fugacity ratios
+   * @param[in] numComps number of components
+   * @param[in] composition composition to be normalized
+   */
+  template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
+  GEOS_HOST_DEVICE
+  static real64 computeFugacityRatio(
+    integer const numComps,
+    real64 const pressure,
+    real64 const temperature,
+    arraySlice1d< real64 const > const & composition,
+    ComponentProperties::KernelWrapper const & componentProperties,
+    arraySlice1d< real64 const > const & kValues,
+    arraySlice1d< integer const > const & presentComponents,
+    real64 & vapourPhaseMoleFraction,
+    arraySlice1d< real64 > const & liquidComposition,
+    arraySlice1d< real64 > const & vapourComposition,
+    arraySlice1d< real64 > const & logLiquidFugacity,
+    arraySlice1d< real64 > const & logVapourFugacity,
+    arraySlice1d< real64 > const & fugacityRatios )
+  {
+    // Solve Rachford-Rice Equation
+    vapourPhaseMoleFraction = RachfordRice::solve( kValues, composition, presentComponents );
+
+    // Assign phase compositions
+    for( integer const ic : presentComponents )
+    {
+      liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kValues[ic] - 1.0 ) );
+      vapourComposition[ic] = kValues[ic] * liquidComposition[ic];
+    }
+    normalizeComposition( numComps, liquidComposition );
+    normalizeComposition( numComps, vapourComposition );
+
+    // Compute the phase fugacities
+    EOS_TYPE_LIQUID::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     liquidComposition,
+                                                     componentProperties,
+                                                     logLiquidFugacity );
+    EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     vapourComposition,
+                                                     componentProperties,
+                                                     logVapourFugacity );
+
+    // Compute fugacity ratios and calculate the error
+    real64 error = 0.0;
+    for( integer const ic : presentComponents )
+    {
+      fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
+      error += (fugacityRatios[ic]*fugacityRatios[ic]);
+    }
+    return LvArray::math::sqrt( error );
   }
 };
 

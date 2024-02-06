@@ -120,6 +120,7 @@ public:
 private:
   TestFluid() = default;
 
+public:
   string_array componentNames;
   array1d< real64 > criticalPressure;
   array1d< real64 > criticalTemperature;
@@ -129,6 +130,7 @@ private:
   array1d< real64 > volumeShift;
   array2d< real64 > binaryCoeff;
 
+private:
   std::unique_ptr< constitutive::compositional::ComponentProperties > m_component_properties{};
 
 private:
@@ -147,6 +149,15 @@ public:
     for( auto const value : data )
     {
       array.emplace_back( value );
+    }
+  }
+  template< typename ARRAY, typename LIST >
+  static void populateArray( ARRAY & array, LIST const & data )
+  {
+    integer i = 0;
+    for( auto const value : data )
+    {
+      array[i++] = value;
     }
   }
 };

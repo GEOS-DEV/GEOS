@@ -57,21 +57,25 @@ public:
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
+                arraySlice2d< real64 > const & kValues,
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
     integer const numDofs = 2 + m_numComponents;
 
     // Iterative solve to converge flash
-    NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+    bool const flashStatus = NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
       m_numComponents,
       pressure,
       temperature,
       compFraction,
       componentProperties,
+      kValues,
       phaseFraction.value[m_vapourIndex],
       phaseCompFraction.value[m_liquidIndex],
       phaseCompFraction.value[m_vapourIndex] );
+    GEOS_WARNING_IF( !flashStatus,
+                     GEOS_FMT( "Negative two phase flash failed to converge {:.5e} {:.3f}", pressure, temperature ));
 
     // Calculate derivatives
     NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(

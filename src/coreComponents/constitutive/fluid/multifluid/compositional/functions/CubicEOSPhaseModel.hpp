@@ -946,9 +946,13 @@ computeLogFugacityCoefficients( integer const numComps,
   }
 
   // E
-  real64 const E = log( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient )
-                   -log( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient );
-  real64 const F = log( compressibilityFactor - bMixtureCoefficient );
+  real64 const expE = ( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient ) /
+                      ( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient );
+  real64 const expF = compressibilityFactor - bMixtureCoefficient;
+  GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
+                 GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ));
+  real64 const E = log( expE );
+  real64 const F = log( expF );
   real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * bMixtureCoefficient );
   real64 const A = aMixtureCoefficient;
 

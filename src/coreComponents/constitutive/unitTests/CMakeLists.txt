@@ -9,6 +9,7 @@ set( gtest_geosx_tests
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
      testNegativeTwoPhaseFlash.cpp
+     testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
      testCubicEOS.cpp
