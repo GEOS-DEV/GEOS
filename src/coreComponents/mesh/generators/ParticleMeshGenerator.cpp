@@ -178,7 +178,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         numColumns++;
       }
 
-      GEOS_ERROR_IF( numColumns != numColumnHeaders, "Particle file line " << lineNumber << " has a different number of terms than the column headers!" );
+      GEOS_ERROR_IF( numColumns != numColumnHeaders, "Particle file line " << lineNumber << " has a different number of terms than the column headers! Was " << numColumns << " but should be " << numColumnHeaders );
 
       lineNumber++;
 
@@ -266,7 +266,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int npInBlock = 0; // Number of particles in this particle block
     for( localIndex i=0; i<numThisType; i++ ) // Find out which particles belong to the current particle block
     {
-      materialID = particleData[particleType][i][7]; // The particle file is configured such that the 11th column has the material ID
+      materialID = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialType )]; // The particle file is configured such that the 11th column has the material ID
       if( materialID == blockMaterialMap[particleBlock.getName()] )
       {
         npInBlock++;
@@ -295,36 +295,36 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     for( int i : indices )
     {
       // Global ID
-      particleID[index] = particleData[particleType][i][0];
+      particleID[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::ID )];
 
       // Position
-      particleCenter[index][0] = particleData[particleType][i][1];
-      particleCenter[index][1] = particleData[particleType][i][2];
-      particleCenter[index][2] = particleData[particleType][i][3];
+      particleCenter[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::PositionX )];
+      particleCenter[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::PositionY )];
+      particleCenter[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::PositionZ )];
 
       // Velocity
-      particleVelocity[index][0] = particleData[particleType][i][4];
-      particleVelocity[index][1] = particleData[particleType][i][5];
-      particleVelocity[index][2] = particleData[particleType][i][6];
+      particleVelocity[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityX )];
+      particleVelocity[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityY )];
+      particleVelocity[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityZ )];
 
       // Material (set above) is [10]
 
       // Group
-      particleGroup[index] = particleData[particleType][i][8];
+      particleGroup[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::ContactGroup )];
 
       // surfaceFlag
-      particleSurfaceFlag[index] = particleData[particleType][i][9];
+      particleSurfaceFlag[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceFlag )];
 
       // Damage
-      particleDamage[index] = particleData[particleType][i][10];
+      particleDamage[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::Damage )];
 
       // strengthScale
-      particleStrengthScale[index] = particleData[particleType][i][11];
+      particleStrengthScale[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::StrengthScale )];
 
       // Volume and R-Vectors
       if( particleType == "SinglePoint" )
       {
-        particleVolume[index] = particleData[particleType][i][12];
+        particleVolume[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
         double a = std::pow( particleVolume[index], 1.0/3.0 );
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -339,15 +339,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       else if( particleType == "CPDI" )
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        x1 = particleData[particleType][i][12];
-        y1 = particleData[particleType][i][13];
-        z1 = particleData[particleType][i][14];
-        x2 = particleData[particleType][i][15];
-        y2 = particleData[particleType][i][16];
-        z2 = particleData[particleType][i][17];
-        x3 = particleData[particleType][i][18];
-        y3 = particleData[particleType][i][19];
-        z3 = particleData[particleType][i][20];
+        x1 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
+        y1 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorXY )];
+        z1 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorXZ )];
+        x2 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorYX )];
+        y2 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorYY )];
+        z2 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorYZ )];
+        x3 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorZX )];
+        y3 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorZY )];
+        z3 = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorZZ )];
         particleRVectors[index][0][0] = x1;
         particleRVectors[index][0][1] = y1;
         particleRVectors[index][0][2] = z1;
@@ -365,17 +365,17 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       }
 
       // Material Direction
-      particleMaterialDirection[index][0] = particleData[particleType][i][21];
-      particleMaterialDirection[index][1] = particleData[particleType][i][22];
-      particleMaterialDirection[index][2] = particleData[particleType][i][23];
+      particleMaterialDirection[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionX )];
+      particleMaterialDirection[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionY )];
+      particleMaterialDirection[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionZ )];
 
-      particleSurfaceNormal[index][0] = particleData[particleType][i][24];
-      particleSurfaceNormal[index][1] = particleData[particleType][i][25];
-      particleSurfaceNormal[index][2] = particleData[particleType][i][26];
+      particleSurfaceNormal[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceNormalX )];
+      particleSurfaceNormal[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceNormalY )];
+      particleSurfaceNormal[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceNormalZ )];
 
-      particleSurfacePosition[index][0] = particleData[particleType][i][27];
-      particleSurfacePosition[index][1] = particleData[particleType][i][28];
-      particleSurfacePosition[index][2] = particleData[particleType][i][29];
+      particleSurfacePosition[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionX )];
+      particleSurfacePosition[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionY )];
+      particleSurfacePosition[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionZ )];
 
       // Increment index
       index++;
