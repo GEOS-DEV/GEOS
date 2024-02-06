@@ -1,9 +1,9 @@
 #include "ControlledInput.hpp"
 
 #include "Events.hpp"
+#include "Functions.hpp"
 #include "Mesh.hpp"
 #include "Outputs.hpp"
-#include "Solvers.hpp"
 #include "Simulation.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
@@ -36,6 +36,11 @@ public:
     m_mesh = mesh;
   }
 
+  void setFunctions( std::vector< std::shared_ptr< functions::Function > > const & functions )
+  {
+    m_functions = functions;
+  }
+
   void fillProblemXmlNode( xml_node & problemNode ) const
   {
     problemNode.append_child( "Constitutive" );
@@ -65,10 +70,20 @@ public:
     {
       it->append_attribute( "name" ) = ( "__event-" + std::to_string( iEvent ) ).c_str();
     }
+
+    if( !m_functions.empty() )
+    {
+      problemNode.append_child( "Functions" );
+      for( std::shared_ptr< functions::Function > function: m_functions )
+      {
+        function->fillProblemXmlNode( problemNode );
+      }
+    }
   }
 
 private:
   Simulation m_simulation;
+  std::vector< std::shared_ptr< functions::Function > > m_functions;
   std::vector< std::shared_ptr< outputs::Output > > m_outputs;
   std::shared_ptr< meshes::Mesh > m_mesh;
 };
@@ -88,6 +103,10 @@ void operator>>( const YAML::Node & node,
   std::shared_ptr< meshes::Mesh > mesh;
   node["mesh"] >> mesh;
   deck.setMesh( mesh );
+
+  std::vector< std::shared_ptr< functions::Function > > functions;
+  node["functions"] >> functions;
+  deck.setFunctions( functions );
 }
 
 void fillWithMissingXmlInfo( xml_node & problem )
@@ -100,7 +119,7 @@ void fillWithMissingXmlInfo( xml_node & problem )
     fs.append_attribute( "objectPath" ) = "nodeManager";
     fs.append_attribute( "functionName" ) = "DirichletTimeFunction";
     fs.append_attribute( "scale" ) = "1.0";
-    fs.append_attribute( "setNames" ) = "{ source }";
+    fs.append_attribute( "setNames" ) = "{ hot }";
   }
   {
     xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
@@ -108,28 +127,22 @@ void fillWithMissingXmlInfo( xml_node & problem )
     fs.append_attribute( "fieldName" ) = "temperature";
     fs.append_attribute( "objectPath" ) = "nodeManager";
     fs.append_attribute( "scale" ) = "0.0";
-    fs.append_attribute( "setNames" ) = "{ sink }";
+    fs.append_attribute( "setNames" ) = "{ cold }";
   }
 
   xml_node geometry = problem.append_child( "Geometry" );
   {
     xml_node box = geometry.append_child( "Box" );
-    box.append_attribute( "name" ) = "source";
+    box.append_attribute( "name" ) = "hot";
     box.append_attribute( "xMin" ) = "{ -0.01, -0.01, -0.01 }";
     box.append_attribute( "xMax" ) = "{ +0.01, +1.01, +1.01 }";
   }
   {
     xml_node box = geometry.append_child( "Box" );
-    box.append_attribute( "name" ) = "sink";
+    box.append_attribute( "name" ) = "cold";
     box.append_attribute( "xMin" ) = "{ +0.99, -0.01, -0.01 }";
     box.append_attribute( "xMax" ) = "{ +1.01, +1.01, +1.01 }";
   }
-
-  xml_node tableFunctions = problem.append_child( "Functions" ).append_child( "TableFunction" );
-  tableFunctions.append_attribute( "name" ) = "DirichletTimeFunction";
-  tableFunctions.append_attribute( "inputVarNames" ) = "{ time }";
-  tableFunctions.append_attribute( "coordinates" ) = "{ 0.0, 1.0, 2.0 }";
-  tableFunctions.append_attribute( "values" ) = "{ 0.0, 3.e2, 4.e3 }";
 
   xml_node cesr = problem.append_child( "ElementRegions" ).append_child( "CellElementRegion" );
   cesr.append_attribute( "name" ) = "Domain";

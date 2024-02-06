@@ -12,6 +12,20 @@ simulation:
     linear_solver:
       type: serial_direct
 
+boundary_conditions:
+  - cold:
+      - field: temperature
+        value: 0
+  - hot:
+      - field: temperature
+        function: DirichletTimeFunction
+
+functions:
+  - DirichletTimeFunction:
+      type: table
+      x: [ 0.0, 1.0, 2.0 ]
+      y: [ 0.0, 3.e2, 4.e3 ]
+
 mesh:
   internal:
     element_type: hexahedra

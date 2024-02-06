@@ -8,6 +8,7 @@ FetchContent_MakeAvailable( yaml-cpp )
 set( controlledInput_headers
      ControlledInput.hpp
      Events.hpp
+     Functions.hpp
      Mesh.hpp
      NumericalStrategies.hpp
      Misc.hpp
@@ -19,6 +20,7 @@ set( controlledInput_headers
 set( controlledInput_sources
      ControlledInput.cpp
      Events.cpp
+     Functions.cpp
      Mesh.cpp
      NumericalStrategies.cpp
      Misc.cpp
