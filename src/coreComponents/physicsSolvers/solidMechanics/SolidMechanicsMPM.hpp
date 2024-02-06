@@ -213,7 +213,7 @@ public:
     static constexpr char const * displacementString() { return "displacement"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
     static constexpr char const * cohesiveTractionString() { return "cohesiveTraction"; }
-    static constexpr char const * cohesiveForceString() { return "cohesiveForce"; }
+
     static constexpr char const * massString() { return "mass"; }
     static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
@@ -236,7 +236,8 @@ public:
     static constexpr char const * cohesiveMassString() { return "cohesiveMass"; }
     static constexpr char const * cohesiveSurfaceNormalString() { return "cohesiveSurfaceNormal"; }
     static constexpr char const * cohesiveFieldFlagString() { return "cohesiveFieldFlag"; }
-
+    static constexpr char const * cohesiveForceString() { return "cohesiveForce"; }
+    
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
