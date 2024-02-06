@@ -32,15 +32,6 @@ namespace geos
 // may cause some newton convergence problems.
 #define ALLOW_CREATION_MASS 1
 
-
-// TODO remove! This option sets the pressure in a newly created FaceElement to
-// be the lowest value of all attached non-new FaceElements.
-#define SET_CREATION_PRESSURE 1
-
-// TODO remove! This option sets the nodal displacements attached a newly
-// created FaceElement to some scalar fraction of the aperture of the
-// lowest attached non-new FaceElements.
-#define SET_CREATION_DISPLACEMENT 0
 /// @endcond
 
 /**

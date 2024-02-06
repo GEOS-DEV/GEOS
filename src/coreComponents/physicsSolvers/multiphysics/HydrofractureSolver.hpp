@@ -138,6 +138,12 @@ public:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
+  enum class InitializationType
+  {
+    Pressure,
+    Displacement,
+  };
+
   struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
@@ -148,6 +154,7 @@ public:
 
     constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
 
+    constexpr static char const * newFractureInitializationTypeString() { return "newFractureInitializationType"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -217,7 +224,14 @@ private:
 
   integer m_isMatrixPoroelastic;
 
+  // flag to determine which initialization type to use for the new fracture cell 
+  InitializationType m_newFractureInitializationType; 
+
 };
+
+ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::InitializationType,
+              "Pressure",
+              "Displacement" );
 
 
 } /* namespace geos */

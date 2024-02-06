@@ -282,11 +282,6 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
                             hydraulicAperture,
                             fractureRegionIndex,
                             elemGhostRank,
-#if SET_CREATION_DISPLACEMENT==1
-                            faceToNodesMap,
-                            totalDisplacement,
-                            aperture,
-#endif
                             &fractureStencil]
                             ( localIndex const k )
   {
