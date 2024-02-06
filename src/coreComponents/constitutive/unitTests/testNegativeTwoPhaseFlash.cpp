@@ -94,6 +94,8 @@ public:
     real64 vapourFraction = -1.0;
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
+    stackArray2d< real64, numComps > kValues( 1, numComps );
+    kValues.zero();
 
     bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
       numComps,
@@ -101,6 +103,7 @@ public:
       temperature,
       composition,
       componentProperties,
+      kValues,
       vapourFraction,
       liquidComposition,
       vapourComposition );
@@ -153,6 +156,8 @@ public:
     real64 vapourFraction = -1.0;
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
+    stackArray2d< real64, numComps > kValues( 1, numComps );
+    kValues.zero();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -173,6 +178,7 @@ public:
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
+      kValues.zero();
 
       NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
         numComps,
@@ -180,6 +186,7 @@ public:
         t,
         zmf,
         componentProperties,
+        kValues,
         values[0],
         displacedLiquidComposition,
         displacedVapourComposition );
@@ -196,6 +203,7 @@ public:
       temperature,
       composition,
       componentProperties,
+      kValues,
       vapourFraction,
       liquidComposition,
       vapourComposition );
