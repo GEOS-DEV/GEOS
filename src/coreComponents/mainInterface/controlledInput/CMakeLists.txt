@@ -6,6 +6,7 @@ FetchContent_Declare( yaml-cpp
 FetchContent_MakeAvailable( yaml-cpp )
 
 set( controlledInput_headers
+     BoundaryConditions.hpp
      ControlledInput.hpp
      Events.hpp
      Functions.hpp
@@ -18,6 +19,7 @@ set( controlledInput_headers
 )
 
 set( controlledInput_sources
+     BoundaryConditions.cpp
      ControlledInput.cpp
      Events.cpp
      Functions.cpp

@@ -1,5 +1,6 @@
 #include "ControlledInput.hpp"
 
+#include "BoundaryConditions.hpp"
 #include "Events.hpp"
 #include "Functions.hpp"
 #include "Mesh.hpp"
@@ -41,6 +42,11 @@ public:
     m_functions = functions;
   }
 
+  void setBoundaryConditions( std::vector< std::shared_ptr< bc::BoundaryConditions > > const & bcs )
+  {
+    m_bcs = bcs;
+  }
+
   void fillProblemXmlNode( xml_node & problemNode ) const
   {
     problemNode.append_child( "Constitutive" );
@@ -49,6 +55,7 @@ public:
     problemNode.append_child( "NumericalMethods" );
     xml_node xmlOutputs = problemNode.append_child( "Outputs" );
     problemNode.append_child( "Solvers" );
+    xml_node fieldSpecifications = problemNode.append_child( "FieldSpecifications" );
 
     m_simulation.fillProblemXmlNode( problemNode );
 
@@ -79,11 +86,24 @@ public:
         function->fillProblemXmlNode( problemNode );
       }
     }
+
+    for( std::shared_ptr< bc::BoundaryConditions > bc: m_bcs )
+    {
+      bc->fillProblemXmlNode( problemNode );
+    }
+
+    // Add name to all the events.
+    int iBC = 0;
+    for( auto it = fieldSpecifications.children().begin(); it != fieldSpecifications.children().end(); ++it, ++iBC )
+    {
+      it->append_attribute( "name" ) = ( "__fs-" + std::to_string( iBC ) ).c_str();
+    }
   }
 
 private:
   Simulation m_simulation;
   std::vector< std::shared_ptr< functions::Function > > m_functions;
+  std::vector< std::shared_ptr< bc::BoundaryConditions > > m_bcs;
   std::vector< std::shared_ptr< outputs::Output > > m_outputs;
   std::shared_ptr< meshes::Mesh > m_mesh;
 };
@@ -107,29 +127,14 @@ void operator>>( const YAML::Node & node,
   std::vector< std::shared_ptr< functions::Function > > functions;
   node["functions"] >> functions;
   deck.setFunctions( functions );
+
+  std::vector< std::shared_ptr< bc::BoundaryConditions > > bcs;
+  node["boundary_conditions"] >> bcs;
+  deck.setBoundaryConditions( bcs );
 }
 
 void fillWithMissingXmlInfo( xml_node & problem )
 {
-  xml_node fieldSpecifications = problem.append_child( "FieldSpecifications" );
-  {
-    xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
-    fs.append_attribute( "name" ) = "sourceTerm";
-    fs.append_attribute( "fieldName" ) = "temperature";
-    fs.append_attribute( "objectPath" ) = "nodeManager";
-    fs.append_attribute( "functionName" ) = "DirichletTimeFunction";
-    fs.append_attribute( "scale" ) = "1.0";
-    fs.append_attribute( "setNames" ) = "{ hot }";
-  }
-  {
-    xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
-    fs.append_attribute( "name" ) = "sinkTerm";
-    fs.append_attribute( "fieldName" ) = "temperature";
-    fs.append_attribute( "objectPath" ) = "nodeManager";
-    fs.append_attribute( "scale" ) = "0.0";
-    fs.append_attribute( "setNames" ) = "{ cold }";
-  }
-
   xml_node geometry = problem.append_child( "Geometry" );
   {
     xml_node box = geometry.append_child( "Box" );
