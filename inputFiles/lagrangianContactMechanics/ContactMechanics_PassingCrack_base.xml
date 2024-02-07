@@ -5,9 +5,10 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <LagrangianContact
       name="lagrangiancontact"
-      solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
+      timeIntegrationOption="QuasiStatic"
+      surfaceGeneratorName="SurfaceGen"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial"
@@ -21,18 +22,6 @@
       <LinearSolverParameters
         directParallel="0"/>
     </LagrangianContact>
-
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      surfaceGeneratorName="SurfaceGen"
-      targetRegions="{ Region, Fracture }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"

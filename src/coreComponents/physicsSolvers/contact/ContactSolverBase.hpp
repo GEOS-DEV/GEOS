@@ -60,10 +60,11 @@ public:
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 protected:
 
   //virtual void postProcessInput() override;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 
   void computeFractureStateStatistics( MeshLevel const & mesh,
                                        globalIndex & numStick,
