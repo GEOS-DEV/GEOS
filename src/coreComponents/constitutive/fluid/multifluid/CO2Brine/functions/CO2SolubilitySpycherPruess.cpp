@@ -33,6 +33,8 @@ namespace PVTProps
 
 /**
  * Physical constants
+ * These correlations are developed with units: pressure [bar], volume [cm3], temperature [K].
+ * The equilibrium constant correlations (equilibriumConstantCO2 and equilibriumConstantH2O) have a temperature in C
  */
 static constexpr real64 P_ref = 1.0;                        // Reference pressure is 1 bar
 static constexpr real64 Pa_2_bar = 1.0e-5;                  // Conversion factor from Pa to Bar
@@ -245,6 +247,29 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
       // Calculate the solubility
       co2Values[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*molarMassH2O);
       h2oValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*molarMassCO2);
+    }
+  }
+
+  // Truncate negative solubility and warn
+  for( localIndex i = 0; i < nPressures; ++i )
+  {
+    real64 const P = tableCoords.getPressure( i );
+    for( localIndex j = 0; j < nTemperatures; ++j )
+    {
+      real64 const T = tableCoords.getTemperature( j );
+
+      if( co2Values[j*nPressures+i] < 0.0 )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "CO2SolubilitySpycherPruess: negative CO2 solubility value = {}, P = {}, T = {}; corrected to 0",
+                                   co2Values[j*nPressures+i], P, T ) );
+        co2Values[j*nPressures+i] = 0.0;
+      }
+      if( h2oValues[j*nPressures+i] < 0.0 )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "CO2SolubilitySpycherPruess: negative H2O solubility value = {}, P = {}, T = {}; corrected to 0",
+                                   h2oValues[j*nPressures+i], P, T ) );
+        h2oValues[j*nPressures+i] = 0.0;
+      }
     }
   }
 

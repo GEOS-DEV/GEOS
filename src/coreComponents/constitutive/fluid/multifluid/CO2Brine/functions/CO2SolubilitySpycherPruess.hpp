@@ -38,7 +38,8 @@ struct CO2SolubilitySpycherPruess
 /**
  * @brief Create CO2 and H2O solubility table based on Spycher, Pruess, Ennis-King (2003)
  * @details The generated table is a 2D table with lookup properties pressure (in Pa) and
- *          temperature (in degC). The returned solubility is in mole of CO2 per mole of water.
+ *          temperature (in degC). The returned CO2 solubility is in mole of CO2 per kg of
+ *          H2O and the returned water vapourisation is in moles of H2O per kg of CO2.
  * @param[in] inputParams A list of input parameters
  * @param[in] functionName The name of the model
  * @param[in] functionManager The function manager to which the table should be attached

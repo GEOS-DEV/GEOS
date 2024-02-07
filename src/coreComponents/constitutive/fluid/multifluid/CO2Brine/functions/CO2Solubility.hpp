@@ -304,9 +304,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
         phaseCompFraction.value[ip][jc] /= phaseFraction.value[ip];
       }
     }
-    // Composition derivatives
-    y_watDeriv[2+m_CO2Index] = watSolubility*(1.0 - x_co2Deriv[2+m_CO2Index]);
-    y_watDeriv[2+m_waterIndex] = -watSolubility * x_co2Deriv[2+m_waterIndex];
   }
   else
   {
