@@ -26,6 +26,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
+
 //////////////////////////////// Test base utilities ////////////////////////////////
 
 
@@ -35,6 +36,7 @@ CommandLineOptions g_commandLineOptions;
 struct TestInputs
 {
   string xmlInput;
+  std::map< string, string > tableFiles;
 
   string sourceFluxName;
   string sinkFluxName;
@@ -186,13 +188,43 @@ private:
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
 
 
+class FluidStatisticsTest : public ::testing::Test
+{
+public:
+
+  void writeTableFiles( std::map< string, string > const & files )
+  {
+    for( auto const & [fileName, content] : files )
+    {
+      std::ofstream os( fileName );
+      ASSERT_TRUE( os.is_open() );
+      os << content;
+      os.close();
+
+      m_tableFileNames.push_back( fileName );
+    }
+  }
+
+  void TearDown() override
+  {
+    // removing temp table files
+    for( string const & fileName : m_tableFileNames )
+    {
+      ASSERT_TRUE( std::remove( fileName.c_str() ) == 0 );
+    }
+  }
+
+private:
+  std::vector< string > m_tableFileNames;
+};
+
 
 //////////////////////////////// SinglePhase Flux Statistics Test ////////////////////////////////
 namespace SinglePhaseFluxStatisticsTest
 {
 
 
-TestSet getXmlInput()
+TestSet getTestSet()
 {
   TestInputs testInputs;
 
@@ -359,9 +391,9 @@ TestSet getXmlInput()
   return TestSet( testInputs );
 }
 
-TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
+TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 {
-  static TestSet testSet = getXmlInput();
+  static TestSet const testSet = getTestSet();
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
@@ -373,10 +405,9 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
+  // verification that the source flux statistics are correct over the whole simulation
   DomainPartition & domain = problem.getDomainPartition();
   SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
-
-  // verification that the source flux statistics are correct over the whole simulation
   EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
   wholeSimStats.forMeshLevelStatsWrapper( domain,
                                           [&] ( MeshLevel & meshLevel,
@@ -410,10 +441,15 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 }
 
 
+} /* namespace SinglePhaseFluxStatisticsTest */
+
+
 //////////////////////////////// Multiphase Flux Statistics Test ////////////////////////////////
+namespace MultiPhaseFluxStatisticsTest
+{
 
 
-TestInputs getMultiphaseXmlInput()
+TestSet getTestSet()
 {
   TestInputs testInputs;
 
@@ -424,7 +460,8 @@ TestInputs getMultiphaseXmlInput()
   <Solvers>
     <CompositionalMultiphaseFVM name="testSolver"
                                 discretization="fluidTPFA"
-                                targetRegions="{ reservoir }">
+                                targetRegions="{ reservoir }"
+                                temperature="366.483" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8" />
       <LinearSolverParameters solverType="gmres"
@@ -462,7 +499,7 @@ TestInputs getMultiphaseXmlInput()
                           phaseNames="{ gas, water }"
                           componentNames="{ co2, water }"
                           componentMolarWeight="{ 44e-3, 18e-3 }"
-                          phasePVTParaFiles="{ pvtgas.txt, pvtliquidezrokhi.txt }"
+                          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
                           flashModelParaFile="co2flash.txt" />
 
     <CompressibleSolidConstantPermeability name="rock"
@@ -570,27 +607,62 @@ TestInputs getMultiphaseXmlInput()
                    coordinates="{ 0.3000,          0.3175,         0.3350,         0.3525,        0.3700,        0.3875,       0.4050,       0.4225,       0.4400,       0.4575,       0.4750,      0.4925,      0.5100,      0.5275,      0.5450,      0.5625,      0.5800,      0.5975,     0.6150,     0.6325,     0.6500,     0.6675,     0.6850,     0.7025,     0.7200,     0.7375,     0.7550,     0.7725,    0.7900,    0.8054,    0.8209,    0.8404,    0.8600,    0.8775,    0.8950,    0.9125,    0.9300,    0.9475,    0.9650,    0.9825, 1.0000   }"
                    values="{         0.0, 0.0000001069690, 0.000001523818, 0.000007304599, 0.00002242961, 0.00005398050, 0.0001113999, 0.0002068239, 0.0003554932, 0.0005762517, 0.0008921512, 0.001331180, 0.001927144, 0.002720726, 0.003760776, 0.005105868, 0.006826186, 0.009005830, 0.01174561, 0.01516648, 0.01941368, 0.02466185, 0.03112128, 0.03904542, 0.04874017, 0.06057494, 0.07499593, 0.09254174, 0.1138611, 0.1364565, 0.1632363, 0.2042135, 0.2547712, 0.3097943, 0.3755964, 0.4536528, 0.5451093, 0.6502388, 0.7674166, 0.8909226, 1.000000 }" />
     <TableFunction name="gasRelativePermeabilityTable"
-                   coordinateFiles="{ 0.0000,      0.0175,       0.0350,      0.0525,      0.0700,     0.0875,     0.1050,     0.1225,     0.1400,     0.1595,     0.1790,     0.1945,     0.2100,     0.2275,     0.2450,     0.2625,     0.2800,     0.2975,     0.3150,    0.3325,    0.3500,    0.3675,    0.3850,    0.4025,    0.4200,    0.4375,    0.4550,    0.4725,    0.4900,    0.5075,    0.5250,    0.5425,    0.5600,    0.5775,    0.5950,    0.6125,    0.6300,    0.6475,    0.6650,    0.6825,    0.7000 }"
+                   coordinates="{     0.0000,       0.0175,      0.0350,      0.0525,      0.0700,     0.0875,     0.1050,     0.1225,     0.1400,     0.1595,     0.1790,     0.1945,     0.2100,     0.2275,     0.2450,     0.2625,     0.2800,     0.2975,     0.3150,    0.3325,    0.3500,    0.3675,    0.3850,    0.4025,    0.4200,    0.4375,    0.4550,    0.4725,    0.4900,    0.5075,    0.5250,    0.5425,    0.5600,    0.5775,    0.5950,    0.6125,    0.6300,    0.6475,    0.6650,    0.6825,    0.7000 }"
                    values="{     0.000000000, 0.0008885248, 0.002483741, 0.004583224, 0.007135315, 0.01012132, 0.01353719, 0.01738728, 0.02168159, 0.02701850, 0.03295183, 0.03808925, 0.04363513, 0.05042783, 0.05779578, 0.06577020, 0.07438478, 0.08367565, 0.09368138, 0.1044429, 0.1160032, 0.1284076, 0.1417029, 0.1559376, 0.1711607, 0.1874214, 0.2047679, 0.2232459, 0.2428968, 0.2637550, 0.2858446, 0.3091747, 0.3337331, 0.3594782, 0.3863263, 0.4141347, 0.4426735, 0.4715782, 0.5002513, 0.5275887, 0.5500000 }" />
   </Functions>
 
 </Problem>
 )xml";
 
+  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.0e5 5.0e7 1e5 285.15 395.15 2\n"
+                                        "ViscosityFun FenghourCO2Viscosity 1.0e5 5.0e7 1e5 285.15 395.15 2\n";
+
+  testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
+                                           "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
+
+  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.0e5 4e7 1e5 285.15 395.15 2 0\n";
+
 
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
+  testInputs.dt = 500.0;
+  testInputs.sourceElementsCount = 2;
+  testInputs.sinkElementsCount = 4;
 
-  // compute the expected statistics
-  {
-    //!\\ TODO
-  }
+  // FluxRate table from 0.0s to 5000.0s
+  //!\\ TODO : setup multi-component values here !
+  testInputs.fluxRates = { 0.000, 0.000, 0.767, 0.894, 0.561, 0.234, 0.194, 0.178, 0.162, 0.059, 0.000 };
 
-  return testInputs;
+  // sink is 4x source production
+  testInputs.sourceRateFactor = -1.0;
+  testInputs.sinkRateFactor = 4.0;
+
+  return TestSet( testInputs );
 }
 
 
-} /* namespace SinglePhaseFluxStatisticsTest */
+TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
+{
+  static TestSet const testSet = getTestSet();
+  writeTableFiles( testSet.inputs.tableFiles );
+
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  ProblemManager & problem = state.getProblemManager();
+
+  setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
+
+  //!\\ TODO : récupération du timestepChecker (à ajouter dans le xml)
+
+  // run simulation
+  EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
+
+  // verification that the source flux statistics are correct over the whole simulation
+  //!\\ TODO
+
+}
+
+
+}   /* namespace MultiPhaseFluxStatisticsTest */
 
 
 //////////////////////////////// Main ////////////////////////////////
