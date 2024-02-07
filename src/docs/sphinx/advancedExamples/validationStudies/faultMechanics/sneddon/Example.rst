@@ -99,7 +99,7 @@ To setup a coupling between rock and fracture deformations in LagrangianContact 
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -152,7 +152,7 @@ along the Z axes, 121 elements along the X axis and 921 elements along the Y axi
    :end-before: <!-- SPHINX_SNEDDON_MESH_END -->
 
 
-The mesh for the case with LagrangianContact solver was also created using the internal mesh generator, as parametrized in the ``InternalMesh`` XML tag. The mesh discretizes the same compational domain (:math:`40\, m \, \times 40 \,  m \, \times 1 \, m`) with 300 x 300 x 1 eight-node brick elements in the x, y, and z directions respectively. 
+The mesh for the case with LagrangianContact solver was also created using the internal mesh generator, as parametrized in the ``InternalMesh`` XML tag. The mesh discretizes the same compational domain (:math:`40\, m \, \times 40 \,  m \, \times 1 \, m`) with 300 x 300 x 2 eight-node brick elements in the x, y, and z directions respectively. 
 
 
 .. literalinclude:: ../../../../../../../inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_benchmark.xml
