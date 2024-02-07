@@ -263,7 +263,7 @@ jobs:
             RUNS_ON: Runner_4core_16GB
 
           - name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 11.7.1,)
-            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.7.1-openblas0.3.10-zlib1.2.11
             GCP_BUCKET: geosx/Sherlock-GPU
