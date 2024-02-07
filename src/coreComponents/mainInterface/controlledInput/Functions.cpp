@@ -47,9 +47,9 @@ void operator>>( const YAML::Node & node,
     auto function = node[i];
     for( auto const & kv: function )
     {
-      string const name = kv.first.as< string >();
+      string const type = kv.first.as< string >();
       auto const & subNode = kv.second;
-      string const type = subNode["type"].as< string >();
+      string const name = subNode["name"].as< string >();
       if( type == "table" )
       {
         auto f = std::make_shared< TableFunction >( name,

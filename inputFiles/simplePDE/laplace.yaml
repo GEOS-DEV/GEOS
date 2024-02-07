@@ -18,11 +18,11 @@ boundary_conditions:
         value: 0
   - hot:
       - field: temperature
-        function: DirichletTimeFunction
+        function: fct
 
 functions:
-  - DirichletTimeFunction:
-      type: table
+  - table:
+      name: fct
       x: [ 0.0, 1.0, 2.0 ]
       y: [ 0.0, 3.e2, 4.e3 ]
 
