@@ -98,7 +98,7 @@ public:
   arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 
   /// Flag to disable inelasticity
-  const bool & m_disableInelasticity;
+  const bool m_disableInelasticity;
 
   /**
    * @brief Get bulkModulus

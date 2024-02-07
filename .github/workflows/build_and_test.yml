@@ -22,6 +22,9 @@ on:
       DOCKER_REPOSITORY:
         required: true
         type: string
+      DOCKER_RUN_ARGS:
+        required: false
+        type: string
       ENABLE_HYPRE:
         required: false
         type: string
@@ -52,7 +55,7 @@ jobs:
     runs-on: ${{ inputs.RUNS_ON }}
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -60,14 +63,14 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v1'
+      uses: 'google-github-actions/auth@v2.1.0'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
 
     - name: 'Set up Cloud SDK'
       if: inputs.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v1'
+      uses: 'google-github-actions/setup-gcloud@v2.1.0'
       with:
         version: '>= 363.0.0'
 
@@ -80,6 +83,10 @@ jobs:
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
+
+
+
+        docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
@@ -97,7 +104,9 @@ jobs:
           script_args+=(--data-basename ${DATA_BASENAME})
 
           DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
-          sudo mkdir -p ${DATA_EXCHANGE_DIR}
+          if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
+            sudo mkdir -p ${DATA_EXCHANGE_DIR}
+          fi
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
           script_args+=(--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT})
@@ -110,6 +119,11 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
+        if [ ${{ inputs.RUNS_ON }} == 'self-hosted' ]; then
+          RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
+          mkdir -p ${GITHUB_WORKSPACE}/certificates
+          cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
+        fi
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
@@ -126,10 +140,20 @@ jobs:
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
 
-        docker_args+=(--cap-add=SYS_PTRACE)
+        docker_args+=(--cap-add=SYS_PTRACE --rm)
 
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
+
+        
+        SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        echo "CONTAINER_NAME: ${CONTAINER_NAME}"
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        docker_args+=(--name ${CONTAINER_NAME})
+
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
@@ -142,6 +166,7 @@ jobs:
         set +e
         docker run \
           ${docker_args[@]} \
+          -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
             ${script_args[@]}
@@ -156,11 +181,17 @@ jobs:
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
+
+        # Remove the container and the workspace to avoid any conflict with the next run.
+        echo github.workspace = ${{ github.workspace }}
+        #rm -rf ${{ github.workspace }}/*
+        #docker rm -f ${CONTAINER_NAME}
+
         exit ${EXIT_STATUS}
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4.0.1
       with:
         files: geos_coverage.info.cleaned
         fail_ci_if_error: true
