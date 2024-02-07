@@ -44,10 +44,10 @@ ContactSolverBase::ContactSolverBase( const string & name,
   m_setupSolidSolverDofs( true )
 {
 
-//  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-//    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-//    setInputFlag( InputFlags::REQUIRED ).
-//    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).

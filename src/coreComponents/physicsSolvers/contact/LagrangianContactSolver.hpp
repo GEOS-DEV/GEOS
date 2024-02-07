@@ -171,7 +171,7 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+  //virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct

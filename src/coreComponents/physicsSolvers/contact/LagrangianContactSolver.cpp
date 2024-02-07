@@ -76,8 +76,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  using namespace fields::contact;
-
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
@@ -88,7 +86,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      subRegion.registerField< deltaTraction >( getName() ).
+      subRegion.registerField< fields::contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -133,24 +131,24 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
-
-  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-  contactRelationName = this->m_contactRelationName; // TODO what is that?
-  GEOS_ERROR_IF( contactRelationName.empty(),
-                 GEOS_FMT( "{}: Solid model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ) );
-}
+//void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+//{
+//  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+//    setPlotLevel( PlotLevel::NOPLOT ).
+//    setRestartFlags( RestartFlags::NO_WRITE ).
+//    setSizedFromParent( 0 );
+//
+//  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
+//  contactRelationName = this->m_contactRelationName; // TODO what is that?
+//  GEOS_ERROR_IF( contactRelationName.empty(),
+//                 GEOS_FMT( "{}: Solid model not found on subregion {}",
+//                           getDataContext(), subRegion.getName() ) );
+//}
 
 
 void LagrangianContactSolver::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  ContactSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
@@ -200,7 +198,7 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  ContactSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -1076,6 +1074,8 @@ void LagrangianContactSolver::
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
+//  std::cout << " here 0 " << std::endl;
+
   elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
@@ -1094,6 +1094,8 @@ void LagrangianContactSolver::
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
+//    std::cout << " here 1 " << std::endl;
+
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
       using ContactType = TYPEOFREF( castedContact );
@@ -1105,6 +1107,8 @@ void LagrangianContactSolver::
         {
           return;
         }
+
+//        std::cout << " here 2 " << kfe << std::endl;
 
         if( ghostRank[kfe] < 0 )
         {
@@ -1126,8 +1130,10 @@ void LagrangianContactSolver::
           {
             case contact::FractureState::Stick:
               {
+//                std::cout << " stick 0 " << std::endl;
                 for( localIndex i = 0; i < 3; ++i )
                 {
+//                  std::cout << i << " " << dispJump[kfe][i] << " " << previousDispJump[kfe][i] << std::endl;
                   if( i == 0 )
                   {
                     elemRHS[i] = +Ja * dispJump[kfe][i];
@@ -1138,10 +1144,12 @@ void LagrangianContactSolver::
                   }
                 }
 
+//                std::cout << " stick 1 " << std::endl;
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
                   // Compute local area contribution for each node
                   array1d< real64 > nodalArea;
+//                  std::cout << kf << " computeFaceNodalArea " << std::endl;
                   computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -1150,9 +1158,11 @@ void LagrangianContactSolver::
                     {
                       nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
 
-                      dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-                      dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
-                      dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
+                      for( localIndex j = 0; j < 3; ++j )
+                      {
+                        dRdU( j, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, j ) * pow( -1, kf );
+//                        std::cout << a << " " << i << " " << j << " stick 2 " << nodalArea[a] << " " << rotationMatrix( kfe, i, j ) << " " << pow( -1, kf ) << std::endl;
+                      }
                     }
                   }
                 }
@@ -1161,6 +1171,7 @@ void LagrangianContactSolver::
             case contact::FractureState::Slip:
             case contact::FractureState::NewSlip:
               {
+//                std::cout << " slip " << std::endl;
                 elemRHS[0] = +Ja * dispJump[kfe][0];
 
                 for( localIndex kf = 0; kf < 2; ++kf )
@@ -1257,6 +1268,7 @@ void LagrangianContactSolver::
               }
             case contact::FractureState::Open:
               {
+//                std::cout << " open " << std::endl;
                 for( localIndex i = 0; i < 3; ++i )
                 {
                   elemRHS[i] = +Ja * traction[kfe][i];
@@ -1272,9 +1284,13 @@ void LagrangianContactSolver::
 
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
+//          std::cout << "localRow="<<localRow << std::endl;
+
+
           for( localIndex idof = 0; idof < 3; ++idof )
           {
             localRhs[localRow + idof] += elemRHS[idof];
+//            std::cout << localRow << " " << idof << "localRhs="<<localRhs[localRow + idof] << std::endl;
 
             if( fractureState[kfe] != contact::FractureState::Open )
             {
@@ -1282,6 +1298,7 @@ void LagrangianContactSolver::
                                                                         nodeDOF,
                                                                         dRdU[idof].dataIfContiguous(),
                                                                         2 * 3 * numNodesPerFace );
+//std::cout << "localMatrix.addToRowBinarySearchUnsorted"<<std::endl;
             }
 
             if( fractureState[kfe] != contact::FractureState::Stick )
@@ -1290,6 +1307,7 @@ void LagrangianContactSolver::
                                                     elemDOF,
                                                     dRdT[idof].dataIfContiguous(),
                                                     3 );
+//              std::cout << "localMatrix.addToRow"<<std::endl;
             }
           }
         }

@@ -294,7 +294,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_contactRelationName;
+  //string m_contactRelationName;
   MPI_iCommData m_iComm;
   bool m_isFixedStressPoromechanicsUpdate;
 
