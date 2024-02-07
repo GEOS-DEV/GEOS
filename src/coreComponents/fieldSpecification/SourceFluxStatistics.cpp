@@ -20,6 +20,7 @@
 
 #include "SourceFluxBoundaryCondition.hpp"
 #include "FieldSpecificationManager.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
@@ -147,12 +148,26 @@ void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
     GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producting on {} elements",
                              catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
                              wrappedStats.stats().m_elementCount ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
-                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                             wrappedStats.stats().m_producedMass ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
-                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                             wrappedStats.stats().m_productionRate ) );
+
+    // we want to format differently if we have got multiple phases or not
+    if( wrappedStats.stats().m_producedMass.size() == 1 )
+    {
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
+                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                               wrappedStats.stats().m_producedMass[0] ) );
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
+                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                               wrappedStats.stats().m_productionRate[0] ) );
+    }
+    else
+    {
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
+                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                               wrappedStats.stats().m_producedMass ) );
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
+                               catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                               wrappedStats.stats().m_productionRate ) );
+    }
   }
 }
 
@@ -172,7 +187,7 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
       fluxStats.stats() = StatData();
-      
+
       forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
                                  [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
@@ -203,16 +218,41 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
 
 
 
+void SourceFluxStatsAggregator::StatData::allocate( integer phaseCount )
+{
+  if( m_producedMass.size() != phaseCount )
+  {
+    m_producedMass.resize( phaseCount );
+    m_productionRate.resize( phaseCount );
+  }
+}
+void SourceFluxStatsAggregator::StatData::reset()
+{
+  for( int ip = 0; ip < getPhaseCount(); ++ip )
+  {
+    m_producedMass[ip] = 0.0;
+    m_productionRate[ip] = 0.0;
+  }
+  m_elementCount = 0;
+}
 void SourceFluxStatsAggregator::StatData::combine( StatData const & other )
 {
-  m_producedMass += other.m_producedMass;
-  m_productionRate += other.m_productionRate;
+  allocate( other.getPhaseCount() );
+
+  for( int ip = 0; ip < other.getPhaseCount(); ++ip )
+  {
+    m_producedMass[ip] += other.m_producedMass[ip];
+    m_productionRate[ip] += other.m_productionRate[ip];
+  }
   m_elementCount += other.m_elementCount;
 }
 void SourceFluxStatsAggregator::StatData::mpiReduce()
 {
-  m_producedMass = MpiWrapper::sum( m_producedMass );
-  m_productionRate = MpiWrapper::sum( m_productionRate );
+  for( int ip = 0; ip < getPhaseCount(); ++ip )
+  {
+    m_producedMass[ip] = MpiWrapper::sum( m_producedMass[ip] );
+    m_productionRate[ip] = MpiWrapper::sum( m_productionRate[ip] );
+  }
   m_elementCount = MpiWrapper::sum( m_elementCount );
 }
 
@@ -222,38 +262,78 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_aggregatorName = aggregatorName;
   m_fluxName = fluxName;
 }
+void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const dt,
+                                                                   real64 producedMass,
+                                                                   integer const elementCount,
+                                                                   bool const overwriteTimeStepStats )
+{
+  array1d< real64 > phaseProducedMass{ 1 };
+  phaseProducedMass[0] = producedMass;
+  gatherTimeStepStats( dt, phaseProducedMass, elementCount, overwriteTimeStepStats );
+}
 void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 dt,
-                                                                   real64 productedMass,
+                                                                   array1d< real64 > const & producedMass,
                                                                    integer elementCount,
                                                                    bool overwriteTimeStepStats )
 {
-  // we are beginning a new timestep, so we must aggregate the pending stats (mass & dt) before collecting the current stats data
+  m_periodStats.allocate( producedMass.size() );
+
+  // if beginning a new timestep, we must aggregate the stats from previous timesteps (mass & dt) before collecting the new ones
   if( !overwriteTimeStepStats )
   {
-    m_periodStats.m_periodPendingMass += m_periodStats.m_timeStepMass;
-    m_periodStats.m_timeStepMass = 0;
+    for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
+    {
+      m_periodStats.m_periodPendingMass[ip] += m_periodStats.m_timeStepMass[ip];
+      m_periodStats.m_timeStepMass[ip] = 0;
+    }
     m_periodStats.m_periodDeltaTime += dt;
     m_periodStats.m_elementCount = elementCount;
   }
 
-  m_periodStats.m_timeStepMass = productedMass;
+  for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
+  {
+    m_periodStats.m_timeStepMass = producedMass;
+  }
 }
 void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 {
+  // init phase data memory allocation if needed
+  m_stats.allocate( m_periodStats.getPhaseCount() );
+
   // produce timestep stats of this ranks
-  real64 periodMass = m_periodStats.m_timeStepMass + m_periodStats.m_periodPendingMass;
-  m_stats.m_producedMass = periodMass;
-  m_stats.m_productionRate = m_periodStats.m_periodDeltaTime > 0.0 ?
-                             periodMass / m_periodStats.m_periodDeltaTime :
-                             0.0;
   m_stats.m_elementCount = m_periodStats.m_elementCount;
+
+  real64 timeDivisor = m_periodStats.m_periodDeltaTime > 0.0 ? 1.0 / m_periodStats.m_periodDeltaTime : 0.0;
+  for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
+  {
+    real64 periodMass = m_periodStats.m_timeStepMass[ip] + m_periodStats.m_periodPendingMass[ip];
+    m_stats.m_producedMass[ip] = periodMass;
+    m_stats.m_productionRate[ip] = periodMass * timeDivisor;
+  }
 
   // combine period results from all MPI ranks
   m_stats.mpiReduce();
 
   // start a new timestep
-  m_periodStats = WrappedStats::PeriodStats();
-
+  m_periodStats.reset();
+}
+void SourceFluxStatsAggregator::WrappedStats::PeriodStats::allocate( integer phaseCount )
+{
+  if( m_timeStepMass.size() != phaseCount )
+  {
+    m_timeStepMass.resize( phaseCount );
+    m_periodPendingMass.resize( phaseCount );
+  }
+}
+void SourceFluxStatsAggregator::WrappedStats::PeriodStats::reset()
+{
+  for( int ip = 0; ip < getPhaseCount(); ++ip )
+  {
+    m_timeStepMass[ip] = 0.0;
+    m_periodPendingMass[ip] = 0.0;
+  }
+  m_periodDeltaTime = 0.0;
+  m_elementCount = 0;
 }
 
 

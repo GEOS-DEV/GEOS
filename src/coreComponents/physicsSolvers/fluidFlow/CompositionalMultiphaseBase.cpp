@@ -39,6 +39,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "fieldSpecification/SourceFluxStatistics.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -1483,6 +1484,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         return;
       }
 
+      // production stats for this SourceFluxBoundaryCondition in this subRegion
+      array1d< real64 > producedMass{ m_numComponents };
+
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
@@ -1528,7 +1532,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            useTotalMassEquation,
                                                            dofNumber,
                                                            rhsContributionArrayView,
-                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           localRhs,
+                                                           &producedMass] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1537,26 +1542,32 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           return;
         }
 
+        real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+        producedMass[fluidComponentId] += rhsValue;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
           globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-          localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                            // sizeScalingFactor
-                                                                                            // here
+          localRhs[totalMassBalanceRow] += rhsValue;
           if( fluidComponentId < numFluidComponents - 1 )
           {
             globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
-            localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                             // sizeScalingFactor here
+            localRhs[compMassBalanceRow] += rhsValue;
           }
         }
         else
         {
           globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
-          localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                           // sizeScalingFactor here
+          localRhs[compMassBalanceRow] += rhsValue;
         }
+      } );
+
+      SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
+                                                         [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
+      {
+        // set the new sub-region statistics for this timestep
+        wrapper.gatherTimeStepStats( dt, producedMass, targetSet.size(),
+                                     m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
       } );
     } );
   } );

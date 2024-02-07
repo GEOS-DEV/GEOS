@@ -1129,7 +1129,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         // set the new sub-region statistics for this timestep
         wrapper.gatherTimeStepStats( dt, producedMass, targetSet.size(),
                                      m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
-                                    //  GEOS_LOG(wrapper.getParent().getPath()<<"->"<<wrapper.getName()<<" productedMass="<<producedMass);
       } );
     } );
   } );

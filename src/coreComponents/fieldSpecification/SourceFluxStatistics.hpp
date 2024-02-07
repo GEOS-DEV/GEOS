@@ -41,13 +41,27 @@ public:
    */
   struct StatData
   {
-    /// fluid mass produced by the flux(es) (kg). Negative if injecting.
-    real64 m_producedMass = 0.0;
-    /// flux(es) production rate (kg/s). Negative if injecting.
-    real64 m_productionRate = 0.0;
+    /// fluid mass produced by the flux(es) (kg). Negative if injecting. One value for each fluid phase.
+    array1d< real64 > m_producedMass;
+    /// flux(es) production rate (kg/s). Negative if injecting. One value for each fluid phase.
+    array1d< real64 > m_productionRate;
     /// Number of elements in which we are producing / injecting
     integer m_elementCount = 0;
 
+    /**
+     * @brief resize the phase data arrays if needed
+     * @param phaseCount the count of phases
+     */
+    void allocate( integer phaseCount );
+    /**
+     * @brief reset the stats to 0.0
+     */
+    void reset();
+    /**
+     * @return the phase count for phasic stats
+     */
+    integer getPhaseCount() const
+    { return m_producedMass.size(); }
     /**
      * @brief Aggregate the statistics of the instance with those of another one.
      * @param other the other stats structure.
@@ -74,14 +88,24 @@ public:
     void setTarget( string_view aggregatorName, string_view fluxName );
 
     /**
-     * @brief Set the current time step stats.
+     * @brief Set the current time step stats. Single-phase version
+     * @param dt                     time delta of the current timestep
+     * @param producedMass          time-step producted mass (see StatData::m_producedMass).
+     * @param elementCount           number of cell elements concerned by this instance
      * @param overwriteTimeStepStats false when this is the first time we're writing the current
      *                               timestep data, true otherwise (i.e. new solver iteration)
-     * @param dt                     time delta of the current timestep
-     * @param productedMass          time-step producted mass (see StatData::m_producedMass).
-     * @param elementCount           number of cell elements concerned by this instance
      */
-    void gatherTimeStepStats( real64 dt, real64 productedMass, integer elementCount,
+    void gatherTimeStepStats( real64 dt, real64 producedMass, integer elementCount,
+                              bool overwriteTimeStepStats );
+    /**
+     * @brief Set the current time step stats. Multi-phase version
+     * @param dt                     time delta of the current timestep
+     * @param producedMass          time-step producted mass (see StatData::m_producedMass).
+     * @param elementCount           number of cell elements concerned by this instance
+     * @param overwriteTimeStepStats false when this is the first time we're writing the current
+     *                               timestep data, true otherwise (i.e. new solver iteration)
+     */
+    void gatherTimeStepStats( real64 dt, array1d< real64 > const & producedMass, integer elementCount,
                               bool overwriteTimeStepStats );
 
     /**
@@ -120,21 +144,34 @@ private:
     struct PeriodStats
     {
       /// producted mass of the current time-step.
-      real64 m_timeStepMass = 0.0;
+      array1d< real64 > m_timeStepMass;
       /// producted mass sum from all previous time-step of the current period.
-      real64 m_periodPendingMass = 0.0;
+      array1d< real64 > m_periodPendingMass;
       /// delta time the current period
       real64 m_periodDeltaTime = 0.0;
       /// number of cell elements concerned by this instance
       integer m_elementCount = 0;
+
+      /**
+       * @brief resize the phase data arrays if needed
+       * @param phaseCount the count of phases
+       */
+      void allocate( integer phaseCount );
+      /**
+       * @brief reset the stats to 0.0
+       */
+      void reset();
+      /**
+       * @return the phase count for phasic stats
+       */
+      integer getPhaseCount() const
+      { return m_timeStepMass.size(); }
     } m_periodStats;
 
     /// Name of the SourceFluxStatsAggregator that want to collect data on this instance.
     string m_aggregatorName;
     /// Name of the SourceFluxBoundaryCondition from which we are collecting data on this instance.
     string m_fluxName;
-
-    std::set<localIndex> elementSet;
   };
 
 
