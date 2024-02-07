@@ -192,8 +192,6 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
   // Construct the 2D Laplace matrix
   laplace2D.create( matrix.toViewConst(), matrix.numRows(), comm );
-
-//  laplace2D.write( "matrix.txt", LAIOutputFormat::NATIVE_ASCII);
 }
 
 /**
