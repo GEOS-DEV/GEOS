@@ -979,6 +979,8 @@ InternalMeshGenerator::
                                       int const (&firstElemIndexInPartition)[3],
                                       localIndex (& nodeOfBox)[8] )
 {
+  GEOS_ERROR_IF( component != 1, "Connectivity for periodic boundary implemented for the 1-component only" );
+
   // Condition is:
   // 1) element is last index in component direction
   // 2) first local element in component partition is zero
