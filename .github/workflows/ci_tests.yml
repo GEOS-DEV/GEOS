@@ -201,8 +201,6 @@ jobs:
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: ubuntu-22.04
-#      RUNS_ON: self-hosted
-#      DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
 
   code_coverage:
     needs:

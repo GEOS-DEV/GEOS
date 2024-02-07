@@ -145,12 +145,14 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
-        # SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-        # CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
-        # if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
-        #   docker rm -f ${CONTAINER_NAME}
-        # fi
-        # docker_args+=(--name ${CONTAINER_NAME})
+        
+        SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        echo "CONTAINER_NAME: ${CONTAINER_NAME}"
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        docker_args+=(--name ${CONTAINER_NAME})
 
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
@@ -189,7 +191,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4.0.1
       with:
         files: geos_coverage.info.cleaned
         fail_ci_if_error: true
