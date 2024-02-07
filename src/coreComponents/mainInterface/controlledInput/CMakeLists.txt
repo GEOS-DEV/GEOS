@@ -10,6 +10,7 @@ set( controlledInput_headers
      ControlledInput.hpp
      Events.hpp
      Functions.hpp
+     Geometry.hpp
      Mesh.hpp
      NumericalStrategies.hpp
      Misc.hpp
@@ -23,6 +24,7 @@ set( controlledInput_sources
      ControlledInput.cpp
      Events.cpp
      Functions.cpp
+     Geometry.cpp
      Mesh.cpp
      NumericalStrategies.cpp
      Misc.cpp

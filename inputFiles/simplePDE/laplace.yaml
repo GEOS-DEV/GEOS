@@ -35,6 +35,15 @@ mesh:
     nx: [ 10 ]
     ny: [ 10 ]
     nz: [ 10 ]
+  surfaces:
+    - box:
+        name: hot
+        min: [ -0.01, -0.01, -0.01 ]
+        max: [ 0.01,  1.01,  1.01 ]
+    - box:
+        name: cold
+        min: [ 0.99, -0.01, -0.01 ]
+        max: [ 1.01, 1.01, 1.01 ]
 
 outputs:
   - vtk:

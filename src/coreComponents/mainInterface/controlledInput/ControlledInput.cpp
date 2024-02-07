@@ -3,6 +3,7 @@
 #include "BoundaryConditions.hpp"
 #include "Events.hpp"
 #include "Functions.hpp"
+#include "Geometry.hpp"
 #include "Mesh.hpp"
 #include "Outputs.hpp"
 #include "Simulation.hpp"
@@ -45,6 +46,11 @@ public:
   void setBoundaryConditions( std::vector< std::shared_ptr< bc::BoundaryConditions > > const & bcs )
   {
     m_bcs = bcs;
+  }
+
+  void setGeometries( std::vector< std::shared_ptr< geometry::Geometry > > const & geometries )
+  {
+    m_geometries = geometries;
   }
 
   void fillProblemXmlNode( xml_node & problemNode ) const
@@ -98,6 +104,15 @@ public:
     {
       it->append_attribute( "name" ) = ( "__fs-" + std::to_string( iBC ) ).c_str();
     }
+
+    if( !m_geometries.empty() )
+    {
+      problemNode.append_child( "Geometry" );
+      for( std::shared_ptr< geometry::Geometry > geometry: m_geometries )
+      {
+        geometry->fillProblemXmlNode( problemNode );
+      }
+    }
   }
 
 private:
@@ -106,6 +121,7 @@ private:
   std::vector< std::shared_ptr< bc::BoundaryConditions > > m_bcs;
   std::vector< std::shared_ptr< outputs::Output > > m_outputs;
   std::shared_ptr< meshes::Mesh > m_mesh;
+  std::vector< std::shared_ptr< geometry::Geometry > > m_geometries;
 };
 
 
@@ -121,7 +137,8 @@ void operator>>( const YAML::Node & node,
   deck.setOutputs( outputs );
 
   std::shared_ptr< meshes::Mesh > mesh;
-  node["mesh"] >> mesh;
+  auto yamlMesh = node["mesh"];
+  yamlMesh >> mesh;
   deck.setMesh( mesh );
 
   std::vector< std::shared_ptr< functions::Function > > functions;
@@ -131,24 +148,17 @@ void operator>>( const YAML::Node & node,
   std::vector< std::shared_ptr< bc::BoundaryConditions > > bcs;
   node["boundary_conditions"] >> bcs;
   deck.setBoundaryConditions( bcs );
+
+  std::vector< std::shared_ptr< geometry::Geometry > > geometries;
+  if( auto yamlSurfaces = yamlMesh["surfaces"] )
+  {
+    yamlSurfaces >> geometries;
+    deck.setGeometries( geometries );
+  }
 }
 
 void fillWithMissingXmlInfo( xml_node & problem )
 {
-  xml_node geometry = problem.append_child( "Geometry" );
-  {
-    xml_node box = geometry.append_child( "Box" );
-    box.append_attribute( "name" ) = "hot";
-    box.append_attribute( "xMin" ) = "{ -0.01, -0.01, -0.01 }";
-    box.append_attribute( "xMax" ) = "{ +0.01, +1.01, +1.01 }";
-  }
-  {
-    xml_node box = geometry.append_child( "Box" );
-    box.append_attribute( "name" ) = "cold";
-    box.append_attribute( "xMin" ) = "{ +0.99, -0.01, -0.01 }";
-    box.append_attribute( "xMax" ) = "{ +1.01, +1.01, +1.01 }";
-  }
-
   xml_node cesr = problem.append_child( "ElementRegions" ).append_child( "CellElementRegion" );
   cesr.append_attribute( "name" ) = "Domain";
   cesr.append_attribute( "cellBlocks" ) = "{ cb1 }";
