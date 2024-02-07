@@ -48,6 +48,8 @@ public:
   /// this C++ classes. This is important.
   static string catalogName() { return "MatrixFreeSolidMechanicsFEM"; }
 
+  virtual string getCatalogName() const override { return catalogName(); }
+
   virtual
   real64 solverStep( real64 const & time_n,
                      real64 const & dt,
@@ -63,6 +65,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   void applyTractionBC( real64 const time,

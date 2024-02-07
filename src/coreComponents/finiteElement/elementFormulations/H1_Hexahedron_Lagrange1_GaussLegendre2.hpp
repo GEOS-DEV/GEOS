@@ -75,14 +75,23 @@ class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public FiniteElementBase
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
+
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of vertices per element.
+  constexpr static localIndex numVertices = numNodes;
+
+  /// The maximum number of vertices per element.
+  constexpr static localIndex maxVertices = numNodes;
+
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
   /// The number of sampling points per element
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
 
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -115,6 +124,8 @@ public:
     return numNodes;
   }
 
+
+
   GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const override
   {
@@ -128,6 +139,14 @@ public:
    */
   GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  static localIndex getNumVertices( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
     return numNodes;

@@ -194,7 +194,7 @@ real64 MatrixFreeSolidMechanicsFEM::solverStep( real64 const & time_n,
 
 //  std::cout << "m_solution: " << m_solution << std::endl;
 
-  applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
+  applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
 
 //  std::cout<<"MatrixFreeSolidMechanicsFEM::solverStep - end"<<std::endl;
 
@@ -295,6 +295,7 @@ void
 MatrixFreeSolidMechanicsFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const GEOS_UNUSED_PARAM( dt ),
                                                   DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

@@ -297,7 +297,7 @@ real64 axpy2_dot( real64 const alpha0, const Vector & x0, Vector & res0,
 }
 
 template< typename Vector >
-real64 dot( const Vector & x, const Vector & y )
+real64 dot2( const Vector & x, const Vector & y )
 {
   GEOS_MARK_FUNCTION;
   RAJA::ReduceSum< parallelDeviceReduce, real64 > vsum( 0.0 );
@@ -347,7 +347,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   watch.zero();
 
   integer & k = m_result.numIterations;
-  real64 tau = dot( r, r );
+  real64 tau = dot2( r, r );
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
     watch2.zero();
@@ -373,7 +373,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     m_operator.apply( p, Ap );
 
     // compute alpha
-    real64 const pAp = dot( p, Ap );
+    real64 const pAp = dot2( p, Ap );
     //GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp )
     real64 const alpha = tau / pAp;
 
@@ -399,7 +399,7 @@ void UnprecCgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // Update rk = rk - alpha*Ap
     axpby( -alpha, Ap, 1.0, r, r );
 
-    tau = dot( r, r );
+    tau = dot2( r, r );
 #endif
 
     real64 iterTime = watch2.elapsedTime();

@@ -63,8 +63,15 @@ public:
 
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 5;
+
   /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of vertices per element.
+  constexpr static localIndex numVertices = numNodes;
+
+  /// The maximum number of vertices per element.
+  constexpr static localIndex maxVertices = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
@@ -106,6 +113,14 @@ public:
    */
   GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return numNodes;
+  }
+
+    GEOS_HOST_DEVICE
+  inline
+  static localIndex getNumVertices( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
     return numNodes;
