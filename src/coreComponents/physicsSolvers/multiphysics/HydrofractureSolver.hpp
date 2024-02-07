@@ -224,8 +224,8 @@ private:
 
   integer m_isMatrixPoroelastic;
 
-  // flag to determine which initialization type to use for the new fracture cell 
-  InitializationType m_newFractureInitializationType; 
+  // flag to determine which initialization type to use for the new fracture cell
+  InitializationType m_newFractureInitializationType;
 
 };
 

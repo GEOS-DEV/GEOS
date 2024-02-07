@@ -75,7 +75,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_surfaceGeneratorName(),
   m_surfaceGenerator( nullptr ),
   m_maxNumResolves( 10 ),
-  m_isMatrixPoroelastic(), 
+  m_isMatrixPoroelastic(),
   m_newFractureInitializationType()
 {
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
@@ -179,7 +179,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postProcessInput()
   static const std::set< integer > binaryOptions = { 0, 1 };
   GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );
 
-  GEOS_ERROR_IF( m_newFractureInitializationType != InitializationType::Pressure && m_newFractureInitializationType != InitializationType::Displacement, 
+  GEOS_ERROR_IF( m_newFractureInitializationType != InitializationType::Pressure && m_newFractureInitializationType != InitializationType::Displacement,
                  viewKeyStruct::newFractureInitializationTypeString() << " option can be either Pressure or Displacement" );
 
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
@@ -197,7 +197,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   {
     initializeNewFractureFields( domain );
   }
-  
+
   real64 dtReturn = dt;
 
   implicitStepSetup( time_n, dt, domain );
@@ -995,17 +995,30 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
                                                                 arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    ArrayOfArraysView< localIndex const > const faceToNodesMap = faceManager.nodeList().toViewConst();
+    arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
+
+    solidMechanics::arrayView2dLayoutIncrDisplacement const incrementalDisplacement =
+      nodeManager.getField< fields::solidMechanics::incrementalDisplacement >();
+    solidMechanics::arrayView2dLayoutTotalDisplacement const totalDisplacement =
+      nodeManager.getField< fields::solidMechanics::totalDisplacement >();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                               [=]( localIndex const,
-                                                                    FaceElementSubRegion & subRegion )
+                                                              [=]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
     {
       ArrayOfArraysView< localIndex const > const facesToEdges = subRegion.edgeList().toViewConst();
       ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
       map< localIndex, localIndex > const & edgesToConnectorEdges = subRegion.m_edgesTo2dFaces;
-      
+
+      ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
+
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+
+      arrayView1d< real64 > const aperture = subRegion.getReference< array1d< real64 > >( "elementAperture" );
 
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
@@ -1015,26 +1028,31 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
   #endif
 
   #if ALLOW_CREATION_MASS==0
-      arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" );
+      arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" ); // change it to make aperture zero
   #endif
 
       forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        localIndex const newElemIndex = newFractureElements[k]; 
+        localIndex const newElemIndex = newFractureElements[k];
         real64 initialPressure = 1.0e99;
+        real64 initialAperture = 1.0e99;
   #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
         apertureF[newElemIndex] = aperture[newElemIndex];
-  #endif     
+  #endif
+        if( m_newFractureInitializationType == InitializationType::Displacement )
+        {
+          aperture[newElemIndex] = 1.0e99;
+        }
         arraySlice1d< localIndex const > const faceToEdges = facesToEdges[newElemIndex];
 
         for( localIndex ke=0; ke<faceToEdges.size(); ++ke )
         {
           localIndex const edgeIndex = faceToEdges[ke];
-          
+
           auto connIter = edgesToConnectorEdges.find( edgeIndex );
           if( connIter == edgesToConnectorEdges.end() )
           {
-            return; 
+            return;
           }
           localIndex const connectorIndex = edgesToConnectorEdges.at( edgeIndex );
           localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( connectorIndex );
@@ -1046,24 +1064,98 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
             if( newFractureElements.count( fractureElementIndex ) == 0 )
             {
               initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
+              initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
             }
           }
         }
+        if( m_newFractureInitializationType == InitializationType::Pressure )
+        {
+          fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
+          fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
+        }
+        else if( m_newFractureInitializationType == InitializationType::Displacement )
+        {
+          // Set the aperture/fluid pressure for the new face element to be the minimum
+          // of the existing value, smallest aperture/pressure from a connected face element.
+          // aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
 
-        fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
-        fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
+          localIndex const faceIndex0 = faceMap[newElemIndex][0];
+          localIndex const faceIndex1 = faceMap[newElemIndex][1];
+
+          localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+
+          bool zeroDisp = true;
+
+          for( localIndex a=0; a<numNodesPerFace; ++a )
+          {
+            localIndex const node0 = faceToNodesMap( faceIndex0, a );
+            localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+            if( LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
+                LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
+            {
+              zeroDisp = false;
+            }
+          }
+          if( zeroDisp )
+          {
+            aperture[newElemIndex] = 0;
+          }
+        }
 
         if( this->getLogLevel() > 1 )
         {
-          printf( "New elem index, init press = %4d, %4.2e \n",
+          printf( "New elem index, init aper, init press = %4d, %4.2e, %4.2e \n",
                   newElemIndex,
+                  aperture[newElemIndex],
                   fluidPressure[newElemIndex] );
         }
-      } ); 
+      } );
+
+      if( m_newFractureInitializationType == InitializationType::Displacement )
+      {
+        SortedArray< localIndex > touchedNodes;
+        forAll< serialPolicy >( newFractureElements.size(), [ newFractureElements
+                                                              , aperture
+                                                              , faceMap
+                                                              , faceNormal
+                                                              , faceToNodesMap
+                                                              , &touchedNodes
+                                                              , incrementalDisplacement
+                                                              , totalDisplacement ]( localIndex const k )
+        {
+          localIndex const newElemIndex = newFractureElements[k];
+
+          if( aperture[newElemIndex] < 1e98 )
+          {
+            localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
+            localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
+            localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+
+            real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ faceIndex0 ] );
+            LvArray::tensorOps::scale< 3 >( newDisp, -aperture[newElemIndex] );
+            for( localIndex a=0; a<numNodesPerFace; ++a )
+            {
+              localIndex const node0 = faceToNodesMap( faceIndex0, a );
+              localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+
+              touchedNodes.insert( node0 );
+              touchedNodes.insert( node1 );
+
+              if( node0 != node1 && touchedNodes.count( node0 )==0 )
+              {
+                LvArray::tensorOps::add< 3 >( incrementalDisplacement[node0], newDisp );
+                LvArray::tensorOps::add< 3 >( totalDisplacement[node0], newDisp );
+                LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[node1], newDisp );
+                LvArray::tensorOps::subtract< 3 >( totalDisplacement[node1], newDisp );
+              }
+            }
+          }
+        } );
+      }
 
       subRegion.m_recalculateConnectionsFor2dFaces.clear();
       subRegion.m_newFaceElements.clear();
-    } ); 
+    } );
   } );
 }
 
