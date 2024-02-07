@@ -109,7 +109,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
     'sphinxcontrib.plantuml',
-    'sphinxcontrib.programoutput'
+    'sphinxcontrib.programoutput',
+    'sphinxcontrib.bibtex'
 ]
 
 plantuml = "/usr/bin/plantuml"
@@ -253,21 +254,86 @@ texinfo_documents = [
 numfig = True
 
 # Additional stuff for the LaTeX preamble.
-latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
+latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n\\usepackage{mathtools}\n'
+latex_additional_files = ['docs/sphinx/latex_macros.sty']
 
+bibtex_bibfiles = ['docs/sphinx/biblio_wave.bib']
 
 #####################################################
 # add LaTeX macros
 
 f = open('docs/sphinx/latex_macros.sty')
-imgmath_latex_preamble = ""
+imgmath_latex_preamble = "\\usepackage{mathtools}"
 imgmath_image_format = 'svg'
 imgmath_font_size = 14
 
 for macro in f:
     # used when building latex and pdf versions
-    latex_elements['preamble'] += macro + '\n'
+    # latex_elements['preamble'] += macro + '\n'
     # used when building html version
     imgmath_latex_preamble += macro + '\n'
 
 #####################################################
+
+
+
+# copy to mathjax
+mathjax3_config = {                
+  "loader": {
+    "load": ['[tex]/mathtools', '[tex]/physics'],
+  },
+  "tex": {
+    "packages": {
+      '[+]': ['mathtools', 'physics']
+    },
+    "macros": {
+      'diff': '{\\mathop{}\!\\mathrm{d}}',
+      'Gammaxy':'{\\Gamma_{xy}}',
+      'Gammaz':'{\\Gamma_{z}}',
+      'dn':'{\\partial_{\\mathbf{n}}}',
+      'abs':['{\\left|#1\\right|}', 1],
+      'vtiVhr':'{V_{h}^r}',
+      'vtif':'{f_{\\textrm{vti}}}',
+      'vtiAxy':'{\\mathbf{A}_{xy}}',
+      'vtiAz':'{\\mathbf{A}_{z}}',
+      'vtiDt':'{\\mathrm{D}t}',
+      'vtidt':'{\\mathrm{dt}}',
+      'vtipb':'{\\mathbf{p}}',
+      'vtiqb':'{\\mathbf{q}}',
+      'vtiMass':'{\\mathbf{M}}',
+      'vtiDamp':'{\\mathbf{D}}',
+      'vtiDampxy':'{\\vtiDamp^{xy}}',
+      'vtiDampz':'{\\vtiDamp^{z}}',
+      'vtiDampxyii':'{\\vtiDamp^{xy}_{\\vtiib,\\vtiib}}',
+      'vtiDampzii':'{\\vtiDamp^{z}_{\\vtiib,\\vtiib}}',
+      'vtiStiff':'{\\mathbf{S}}',
+      'vtiStiffxy':'{\\vtiStiff^{xy}}',
+      'vtiStiffz':'{\\vtiStiff^{z}}',
+      'ttiDamp':'{\\check{\\mathbf{D}}}',
+      'ttiDampxy':'{\\ttiDamp^{xy}}',
+      'ttiDampz':'{\\ttiDamp^{z}}',
+      'ttiStiff':'{\\check{\\mathbf{S}}}',
+      'ttiStiffxy':'{\\ttiStiff^{xy}}',
+      'ttiStiffz':'{\\ttiStiff^{z}}',
+      'ttiStiffpxy':'{\\ttiStiff^{p,xy}}',
+      'ttiStiffpz':'{\\ttiStiff^{p,z}}',
+      'vtixx':'{\\mathbf{x}}',
+      'vtifbp':'{\\mathbf{f}}',
+      'vtifbq':'{\\mathbf{f}}',
+      'vtiint': ['{\\int_{#1}#2 \\diff#3}', 3],
+      'vtienstq':['{\\left\\{#1 \\mathrel{}\\middle|\\mathrel{}#2\\right\\}}',2],
+      'vtiib':'{\\mathbf{i}}',
+      'vtijb':'{\\mathbf{j}}',
+      'vtiBbp':'{\\mathbf{B}^p}',
+      'vtiBbpA':'{\\mathbf{B}^{p}_{\\mathbf{A}}}',
+      'vtiBbpxy':'{\\mathbf{B}^{p}_{xy}}',
+      'vtiBbpz':'{\\mathbf{B}^{p}_{z}}',
+      'vtijacp':'{J_p}',
+      'vtiJacp':'{\\mathbf{J}_p}',
+      'ttiR':'{\\mathbf{R}}',
+      'ttiBpxy':'{\\check{\\mathbf{B}}^p_{xy}}',
+      'ttiBpz':'{\\check{\\mathbf{B}}^p_{z}}',
+      'atantwo':'{\\textm{atan2}}',
+    }
+  }
+}
