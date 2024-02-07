@@ -219,11 +219,11 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
 
 void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
 {
-  if( dynamic_cast< CellElementSubRegion* >( &subRegion ) )
+  if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
   {
     SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( subRegion );
   }
-  else if( dynamic_cast< SurfaceElementSubRegion* >( &subRegion ) )
+  else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
     subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
       setPlotLevel( PlotLevel::NOPLOT ).
