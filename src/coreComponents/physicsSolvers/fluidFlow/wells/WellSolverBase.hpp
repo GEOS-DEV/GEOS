@@ -98,6 +98,12 @@ public:
   localIndex numDofPerResElement() const { return m_numDofPerResElement; }
 
   /**
+   * @brief getter for iso/thermal switch
+   * @return True if thermal
+   */
+  localIndex isThermal() const { return m_isThermal; }
+
+  /**
    * @brief get the name of DOF defined on well elements
    * @return name of the DOF field used by derived solver type
    */
@@ -310,6 +316,9 @@ protected:
 
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
+
+    /// flag indicating whether thermal formulation is used
+  integer m_isThermal;
 
   string const m_ratesOutputDir;
 

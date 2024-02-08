@@ -242,6 +242,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
+    m_isThermal = referenceFluid.isThermal();
   }
 
   // n_c components + one pressure ( + one temperature if needed )
@@ -1320,10 +1321,13 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                                MeshLevel const & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
+    std::cout << "assembleAccumulationAndVolumeBalanceTerms : domain " << domain.getName() << std::endl;
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
+      std::cout << "assembleAccumulationAndVolumeBalanceTerms : subregion " << subRegion.getName() << std::endl;
+   
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
@@ -2146,9 +2150,9 @@ void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & dom
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
-
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
+      std::cout << "fluxApprox.forAllStencils : mesh " << mesh.getName()  << std::endl;
+      
       // While this kernel is waiting for a factory class, pass all the accessors here
       isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
       < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( numComps,

@@ -333,6 +333,7 @@ void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambd
   Group const & stencilGroup = mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ).getGroup( getName() );
   stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
   {
+    std::cout << "FluxApproximationBase::forStencils " << wrapper.getName() << std::endl;
     lambda( wrapper.reference() );
   } );
 }

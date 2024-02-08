@@ -38,6 +38,7 @@
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/ThermalCompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
@@ -145,9 +146,10 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
     MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = fluid0.numFluidPhases();
     m_numComponents = fluid0.numFluidComponents();
+    m_isThermal = fluid0.isThermal();
   }
-  m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
-  m_numDofPerResElement = m_numComponents + 1; // 1 pressure + NC compositions
+  m_numDofPerWellElement = m_isThermal ?    m_numComponents + 3 : m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
+  m_numDofPerResElement = m_isThermal ? m_numComponents + 2 : m_numComponents + 1; // 1 pressure + NC compositions + temp if thermal
 
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -198,6 +200,10 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::well::dTotalMassDensity_dPressure >( getName() );
       subRegion.registerField< fields::well::dTotalMassDensity_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
+      if ( fluid.isThermal() )
+      {
+        subRegion.registerField< fields::well::dTotalMassDensity_dTemperature >( getName() );
+      }
 
       subRegion.registerField< fields::well::phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
@@ -863,12 +869,23 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  isothermalCompositionalMultiphaseBaseKernels::
-    PhaseVolumeFractionKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                               m_numPhases,
-                                               subRegion,
-                                               fluid );
+
+    real64 maxDeltaPhaseVolFrac  =
+    m_isThermal ?
+    thermalCompositionalMultiphaseBaseKernels::
+      PhaseVolumeFractionKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 subRegion,
+                                                 fluid ) 
+:    isothermalCompositionalMultiphaseBaseKernels::
+      PhaseVolumeFractionKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 subRegion,
+                                                 fluid );
+
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
 }
 
@@ -878,12 +895,20 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-
+  fluid.isThermal() ?
+    thermalCompositionalMultiphaseWellKernels::
+      TotalMassDensityKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 subRegion,
+                                                 fluid ) 
+  :  
   TotalMassDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,
                                                subRegion,
                                                fluid );
+                                               
 }
 
 void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
@@ -893,12 +918,12 @@ void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & s
 
   // update volumetric rates for the well constraints
   // note: this must be called before updateFluidModel
-  updateVolRatesForConstraint( subRegion );
+  updateVolRatesForConstraint( subRegion );  // tjb - thermal +++  looks like it does a lot more... 
 
   // update densities, phase fractions, phase volume fractions
-  updateFluidModel( subRegion );
-  updatePhaseVolumeFraction( subRegion );
-  updateTotalMassDensity( subRegion );
+  updateFluidModel( subRegion ); //  Calculate fluid properties 
+  updatePhaseVolumeFraction( subRegion ); // tjb - thermal
+  updateTotalMassDensity( subRegion );  // tjb - thermal
 
   // update the current BHP pressure
   updateBHPForConstraint( subRegion );
