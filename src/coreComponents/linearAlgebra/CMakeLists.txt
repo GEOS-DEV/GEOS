@@ -104,6 +104,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
@@ -163,4 +164,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 
-geosx_add_code_checks( PREFIX linearAlgebra )

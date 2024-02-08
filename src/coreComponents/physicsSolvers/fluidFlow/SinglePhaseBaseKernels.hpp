@@ -661,15 +661,21 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & deltaPres,
+          arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
+          arrayView2d< real64 const > const & density,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
           real64 & minDeltaPres,
           real64 & maxDeltaPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
           real64 & totalUncompactedPoreVol,
-          real64 & totalPoreVol )
+          real64 & totalPoreVol,
+          real64 & totalMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
@@ -678,8 +684,13 @@ struct StatisticsKernel
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinDeltaPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxDeltaPres( -LvArray::NumericLimits< real64 >::max );
 
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( -LvArray::NumericLimits< real64 >::max );
+
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalMass( 0.0 );
 
     forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -699,8 +710,13 @@ struct StatisticsKernel
       subRegionMinDeltaPres.min( deltaPres[ei] );
       subRegionMaxDeltaPres.max( deltaPres[ei] );
 
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
+
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       subRegionTotalPoreVol += dynamicPoreVol;
+      subRegionTotalMass += dynamicPoreVol * density[ei][0];
     } );
 
     minPres = subRegionMinPres.get();
@@ -710,8 +726,13 @@ struct StatisticsKernel
     minDeltaPres = subRegionMinDeltaPres.get();
     maxDeltaPres = subRegionMaxDeltaPres.get();
 
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
     totalPoreVol = subRegionTotalPoreVol.get();
+    totalMass = subRegionTotalMass.get();
   }
 };
 

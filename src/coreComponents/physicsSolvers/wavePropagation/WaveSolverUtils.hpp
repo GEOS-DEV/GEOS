@@ -175,7 +175,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+    real32 const a1 = LvArray::math::abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
@@ -308,10 +308,11 @@ struct WaveSolverUtils
                                         arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    real64 xLocal[FE_TYPE::numNodes][3]{};
-    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
+    // only the eight corners of the mesh cell are needed to compute the Jacobian
+    real64 xLocal[8][3]{};
+    for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
