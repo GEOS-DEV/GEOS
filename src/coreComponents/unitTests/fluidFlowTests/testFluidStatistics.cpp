@@ -119,16 +119,16 @@ struct TestSet
       for( integer timestepId = 0; timestepId < inputs.fluxRates.size(); ++timestepId )
       {
         // mass production / injection calculation
-        sourceRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * -1.0;
-        sourceMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * -1.0;
+        sourceRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.sourceRateFactor;
+        sourceMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * inputs.sourceRateFactor;
         totalSourceMassProd[ip] += sourceMassProd[timestepId][ip];
-        sinkRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * 4.0;
-        sinkMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * 4.0;
+        sinkRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.sinkRateFactor;
+        sinkMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * inputs.sinkRateFactor;
         massDeltas[timestepId][ip] = -( sourceMassProd[timestepId][ip] + sinkMassProd[timestepId][ip] );
         totalSinkMassProd[ip] += sinkMassProd[timestepId][ip];
         // rates accumulations
-        sourceMeanRate[ip] += inputs.fluxRates[timestepId][ip] * -1.0;
-        sinkMeanRate[ip] += inputs.fluxRates[timestepId][ip] * 4.0;
+        sourceMeanRate[ip] += inputs.fluxRates[timestepId][ip] * inputs.sourceRateFactor;
+        sinkMeanRate[ip] += inputs.fluxRates[timestepId][ip] * inputs.sinkRateFactor;
       }
       // mean rates calculation
       real64 const ratesMeanDivisor = 1.0 / double( timestepCount - 1 );
@@ -338,11 +338,11 @@ TestSet getTestSet()
                 scale="-1"
                 functionName="FluxRate"
                 setNames="{ sourceBox }" />
-    <!-- sink is producing 3x source rate -->
+    <!-- sink is producing 4x source rate -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
-                scale="3"
+                scale="4"
                 functionName="FluxRate"
                 setNames="{ sinkBox }"/>
 
@@ -360,7 +360,7 @@ TestSet getTestSet()
          xMax="{ 2.01, 1.01, 1.01 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{ 4.99, 8.99, -0.01 }"
+         xMin="{ 5.99, 8.99, -0.01 }"
          xMax="{ 10.01, 10.01, 1.01 }" />
   </Geometry>
 
@@ -418,14 +418,14 @@ TestSet getTestSet()
   testInputs.sinkFluxName = "sinkFlux";
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
-  testInputs.sinkElementsCount = 5;
+  testInputs.sinkElementsCount = 4;
 
   // FluxRate table from 0.0s to 5000.0s
   testInputs.setFluxRates( { { 0.000 }, { 0.000 }, { 0.767 }, { 0.894 }, { 0.561 }, { 0.234 }, { 0.194 }, { 0.178 }, { 0.162 }, { 0.059 }, { 0.000 } } );
 
-  // sink is 3x source production
+  // sink is 4x source production
   testInputs.sourceRateFactor = -1.0;
-  testInputs.sinkRateFactor = 3.0;
+  testInputs.sinkRateFactor = 4.0;
 
   return TestSet( testInputs );
 }
