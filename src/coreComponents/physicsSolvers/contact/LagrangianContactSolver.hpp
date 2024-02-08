@@ -68,7 +68,7 @@ public:
                CRSMatrix< real64, globalIndex > & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
-               bool const setSparsity = true ) override;
+               bool const setSparsity = true ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
