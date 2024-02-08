@@ -294,7 +294,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  //string m_contactRelationName;
+  string m_contactRelationName;
   MPI_iCommData m_iComm;
   bool m_isFixedStressPoromechanicsUpdate;
 
@@ -374,7 +374,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     }
   } );
 
-  //applyContactConstraint( dofManager, domain, localMatrix, localRhs );
+  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
 } /* namespace geos */
