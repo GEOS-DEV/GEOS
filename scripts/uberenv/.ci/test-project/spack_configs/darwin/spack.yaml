@@ -1,0 +1,19 @@
+# Spack env file for mac
+# Allow Spack to find and use compilers
+spack:
+  packages:
+    cmake:
+      externals:
+      - spec: cmake@3.14.5
+        prefix: /usr
+      buildable: false
+    pkg-config:
+      externals:
+      - spec: pkg-config@0.27.1
+        prefix: /usr
+      buildable: false
+    zlib:
+      externals:
+      - spec: zlib@1.2.7
+        prefix: /usr
+      buildable: false

@@ -1,0 +1,6 @@
+.DS_Store
+*.pyc
+s_env.sh
+_docs_html
+.ci/test-project/uberenv_libs
+spack-build-*

@@ -1,0 +1,10 @@
+{
+"package_name" : "magictestlib_cached",
+"package_version" : "1.0.0",
+"package_source_dir" : ".",
+"spack_build_mode" : "install",
+"spack_configs_path": "spack_configs",
+"spack_packages_path": "packages",
+"spack_url": "https://github.com/spack/spack",
+"spack_branch": "develop"
+}
