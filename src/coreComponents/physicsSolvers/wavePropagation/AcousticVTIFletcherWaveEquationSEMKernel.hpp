@@ -515,14 +515,14 @@ public:
                    StackVariables & stack ) const
   {
     for( int i=0; i<numNodesPerElem; i++ )
-      {
-	RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_p[i] );
-	RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_q[i] );
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_p[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_q[i] );
     }
     return 0;
   }
 
-  
+
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
@@ -541,20 +541,20 @@ public:
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
-      real32 const localIncrement_p = val * stack.invDensity *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes(k,j)];
+      real32 const localIncrement_p = val * stack.invDensity *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes( k, j )];
       stack.stiffnessVectorLocal_p[i] += localIncrement_p;
-      real32 const localIncrement_q = val * stack.invDensity * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes(k,j)]);
-      stack.stiffnessVectorLocal_q[i] += localIncrement_q ;
+      real32 const localIncrement_q = val * stack.invDensity * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes( k, j )]);
+      stack.stiffnessVectorLocal_q[i] += localIncrement_q;
     } );
 
     // Pseudo-Stiffness z
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
-      real32 const localIncrement_p = val * stack.invDensity * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes(k,j)]);
-      stack.stiffnessVectorLocal_p[i] += localIncrement_p ;
+      real32 const localIncrement_p = val * stack.invDensity * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes( k, j )]);
+      stack.stiffnessVectorLocal_p[i] += localIncrement_p;
 
-      real32 const localIncrement_q = -val * stack.invDensity * m_q_n[m_elemsToNodes(k,j)];
+      real32 const localIncrement_q = -val * stack.invDensity * m_q_n[m_elemsToNodes( k, j )];
       stack.stiffnessVectorLocal_q[i] += localIncrement_q;
     } );
   }
