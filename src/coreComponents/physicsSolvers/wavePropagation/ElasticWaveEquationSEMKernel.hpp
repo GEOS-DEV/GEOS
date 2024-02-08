@@ -93,14 +93,14 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceFrequency,
           real32 const timeSourceDelay,
           localIndex const rickerOrder,
-          integer useDAS,
+          WaveSolverUtils::DASType useDAS,
           integer linearDASSamples,
           arrayView2d< real64 const > const linearDASGeometry,
           R1Tensor const sourceForce,
           R2SymTensor const sourceMoment )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    integer nSamples = useDAS <= 0 ? 1 : linearDASSamples;
+    integer nSamples = useDAS == WaveSolverUtils::DASType::none ? 1 : linearDASSamples;
     array1d< real64 > const samplePointLocationsA( nSamples );
     arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
     array1d< real64 > const sampleIntegrationConstantsA( nSamples );
@@ -200,13 +200,13 @@ struct PrecomputeSourceAndReceiverKernel
       }
 
       /// compute integration constants of samples
-      /// for displacement difference DAS (m_useDAS==2), take the discrete derivative of the pair of geophones
-      if( useDAS == 2 )
+      /// for displacement difference (dipole) DAS, take the discrete derivative of the pair of geophones
+      if( useDAS == WaveSolverUtils::DASType::dipole )
       {
         sampleIntegrationConstants[ 0 ] = -1.0;
         sampleIntegrationConstants[ 1 ] = 1.0;
       }
-      /// for strain integration DAS (m_useDAS==1), take the average of strains to average strain data
+      /// for strain integration DAS, take the average of strains to average strain data
       else if( nSamples == 1 )
       {
         sampleIntegrationConstants[ 0 ] = 1.0;
@@ -224,7 +224,7 @@ struct PrecomputeSourceAndReceiverKernel
       {
         R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
         R1Tensor receiverVector;
-        if( useDAS <= 0 )
+        if( useDAS == WaveSolverUtils::DASType::none )
         {
           receiverVector = { 0, 0, 0 };
         }
@@ -232,7 +232,7 @@ struct PrecomputeSourceAndReceiverKernel
         {
           receiverVector =  WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
         }
-        real64 receiverLength = useDAS <= 0 ? 0 : linearDASGeometry[ ircv ][ 2 ];
+        real64 receiverLength = useDAS == WaveSolverUtils::DASType::none ? 0 : linearDASGeometry[ ircv ][ 2 ];
         /// loop over samples
         for( integer iSample = 0; iSample < nSamples; ++iSample )
         {
@@ -272,7 +272,7 @@ struct PrecomputeSourceAndReceiverKernel
             {
               receiverNodeIds[ircv][iSample * numNodesPerElem + a] = elemsToNodes( k,
                                                                                    a );
-              if( useDAS == 1 )
+              if( useDAS == WaveSolverUtils::DASType::strainIntegration )
               {
                 receiverConstants[ircv][iSample * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) *
                                                                           sampleIntegrationConstants[ iSample ];

@@ -45,7 +45,7 @@ char const * xmlInput =
         targetRegions="{ Region }"
         sourceCoordinates="{ { 50, 50, 50 } }"
         timeSourceFrequency="2"
-        useDAS="1"
+        useDAS="strainIntegration"
         linearDASSamples="5"
         linearDASGeometry="{ { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
                                 { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },

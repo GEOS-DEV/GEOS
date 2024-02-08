@@ -271,7 +271,7 @@ protected:
   localIndex m_nsamplesSeismoTrace;
 
   /// Flag to indicate which DAS type  will be modeled
-  integer m_useDAS;
+  WaveSolverUtils::DASType m_useDAS;
 
   /// Number of points used for strain integration for dipole DAS
   integer m_linearDASSamples;

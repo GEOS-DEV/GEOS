@@ -36,6 +36,13 @@ struct WaveSolverUtils
   using EXEC_POLICY = parallelDevicePolicy< >;
   using wsCoordType = real32;
 
+  enum class DASType : integer
+  {
+    none,               ///< deactivate DAS computation
+    dipole,             ///< use dipole formulation for DAS
+    strainIntegration,  ///< use strain integration for DAS
+  };
+
   GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
   {
@@ -359,6 +366,12 @@ struct WaveSolverUtils
   }
 
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( WaveSolverUtils::DASType,
+              "none",
+              "dipole",
+              "strainIntegration" );
 
 } /* namespace geos */
 

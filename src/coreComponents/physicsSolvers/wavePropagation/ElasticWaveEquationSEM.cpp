@@ -86,6 +86,7 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setApplyDefaultValue( { 1.0, 1.0, 1.0, 0.0, 0.0, 0.0 } ).
     setDescription( "Moment of the source: 6 real values describing a symmetric tensor in Voigt notation."
                     "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
+  printf( "you are running the correct version.\n" );
 }
 
 ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
@@ -106,7 +107,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
   m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  integer nsamples = m_useDAS <= 0 ? 1 : m_linearDASSamples;
+  integer nsamples = m_useDAS == WaveSolverUtils::DASType::none ? 1 : m_linearDASSamples;
   m_receiverConstants.resize( numReceiversGlobal, nsamples * numNodesPerElem );
   m_receiverNodeIds.resize( numReceiversGlobal, nsamples * numNodesPerElem );
 }
@@ -192,7 +193,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   m_sourceIsAccessible.resize( numSourcesGlobal );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-  if( m_useDAS <= 0 )
+  if( m_useDAS == WaveSolverUtils::DASType::none )
   {
     localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
     m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
@@ -638,7 +639,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                 true );
 
   // compute the seismic traces since last step.
-  if( m_useDAS <= 0 )
+  if( m_useDAS == WaveSolverUtils::DASType::none )
   {
     arrayView2d< real32 > const uXReceivers = m_displacementXNp1AtReceivers.toView();
     arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
@@ -743,7 +744,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
 
 
-    if( m_useDAS <= 0 )
+    if( m_useDAS == WaveSolverUtils::DASType::none )
     {
       arrayView2d< real32 > const uXReceivers  = m_displacementXNp1AtReceivers.toView();
       arrayView2d< real32 > const uYReceivers  = m_displacementYNp1AtReceivers.toView();

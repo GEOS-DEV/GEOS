@@ -129,7 +129,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( WaveSolverUtils::DASType::none ).
     setDescription( "Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference" );
 
   registerWrapper( viewKeyStruct::linearDASSamplesString(), &m_linearDASSamples ).
@@ -269,21 +269,21 @@ void WaveSolverBase::postProcessInput()
 
   m_usePML = counter;
 
-  if( m_useDAS <= 0 && m_linearDASGeometry.size( 0 ) > 0 )
+  if( m_useDAS == WaveSolverUtils::DASType::none && m_linearDASGeometry.size( 0 ) > 0 )
   {
-    m_useDAS = 1;
+    m_useDAS = WaveSolverUtils::DASType::strainIntegration;
     m_linearDASSamples = 5;
   }
 
-  if( m_useDAS == 2 )
+  if( m_useDAS == WaveSolverUtils::DASType::dipole )
   {
     m_linearDASSamples = 2;
   }
 
-  if( m_useDAS > 0 )
+  if( m_useDAS != WaveSolverUtils::DASType::none )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == 1 ? "strain integration" : "displacement difference" ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -300,7 +300,7 @@ void WaveSolverBase::postProcessInput()
       m_linearDASVectorX( ircv ) = dasVector[ 0 ];
       m_linearDASVectorY( ircv ) = dasVector[ 1 ];
       m_linearDASVectorZ( ircv ) = dasVector[ 2 ];
-      if( m_useDAS == 2 )
+      if( m_useDAS == WaveSolverUtils::DASType::dipole )
       {
         m_linearDASVectorX( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
         m_linearDASVectorY( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
