@@ -119,7 +119,7 @@ struct TestSet
     totalMeanRate.resize( phaseCount );
     for( integer ip = 0; ip < phaseCount; ++ip )
     {
-      for( integer timestepId = 0; timestepId < inputs.fluxRates.size(); ++timestepId )
+      for( integer timestepId = 0; timestepId < timestepCount; ++timestepId )
       {
         // mass production / injection calculation
         sourceRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.sourceRateFactor;
@@ -307,6 +307,7 @@ public:
     {
       ASSERT_TRUE( std::remove( fileName.c_str() ) == 0 );
     }
+    m_tableFileNames.clear();
   }
 
 private:
@@ -518,10 +519,6 @@ TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
   checkWholeSimFluxStatistics( problem, testSet );
-
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
-  geos::basicCleanup();
-  GEOS_LOG("non...");
 }
 
 
@@ -734,7 +731,6 @@ TestSet getTestSet()
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
   testInputs.sinkElementsCount = 1;
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   // FluxRate table from 0.0s to 5000.0s
   testInputs.setFluxRates( {
       { 0.000, 0.000 },
@@ -749,12 +745,10 @@ TestSet getTestSet()
       { 0.000, 0.088 },
       { 0.000, 0.059 },
       { 0.000, 0.000 } } );
-  GEOS_LOG("non...");
 
   testInputs.sourceRateFactor = -1.0;
   testInputs.sinkRateFactor = 1.0;
 
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   return TestSet( testInputs );
 }
 
@@ -762,33 +756,21 @@ TestSet getTestSet()
 TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
 {
   TestSet const testSet = getTestSet();
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   writeTableFiles( testSet.inputs.tableFiles );
-  GEOS_LOG("non...");
 
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-  GEOS_LOG("non...");
   ProblemManager & problem = state.getProblemManager();
 
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
-  GEOS_LOG("non...");
 
   //!\\ TODO : récupération du timestepChecker (à ajouter dans le xml)
 
   // run simulation
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
-  GEOS_LOG("non...");
 
   // EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
   checkWholeSimFluxStatistics( problem, testSet );
-
-  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
-  geos::basicCleanup();
-  GEOS_LOG("non...");
 }
 
 
@@ -803,5 +785,6 @@ int main( int argc, char * * argv )
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
+  geos::basicCleanup();
   return result;
 }
