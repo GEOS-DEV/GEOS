@@ -60,6 +60,8 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
 
+  setFractureRegions( meshBodies );
+
   forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
     string const labels[3] = { "normal", "tangent1", "tangent2" };
@@ -88,6 +90,19 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
     } );
 
   } );
+}
+
+void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel const & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion > ( regionNames, [&] ( localIndex const , SurfaceElementRegion const & region )
+    {
+      m_fractureRegionNames.push_back( region.getName() );
+    } );
+  });
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,

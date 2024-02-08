@@ -131,21 +131,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-//void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-//{
-//  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
-//    setPlotLevel( PlotLevel::NOPLOT ).
-//    setRestartFlags( RestartFlags::NO_WRITE ).
-//    setSizedFromParent( 0 );
-//
-//  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-//  contactRelationName = this->m_contactRelationName; // TODO what is that?
-//  GEOS_ERROR_IF( contactRelationName.empty(),
-//                 GEOS_FMT( "{}: Solid model not found on subregion {}",
-//                           getDataContext(), subRegion.getName() ) );
-//}
-
-
 void LagrangianContactSolver::initializePreSubGroups()
 {
   ContactSolverBase::initializePreSubGroups();
@@ -198,7 +183,7 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  ContactSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -261,12 +246,6 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   } );
 }
-
-//void LagrangianContactSolver::postProcessInput()
-//{
-//  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-//  SolverBase::postProcessInput();
-//}
 
 LagrangianContactSolver::~LagrangianContactSolver()
 {
@@ -525,6 +504,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   GEOS_MARK_FUNCTION;
   if( m_setupSolidSolverDofs )
   {
+    GEOS_LOG_RANK_0("setting up dofs here.");
     SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
   }
   // restrict coupling to fracture regions only
@@ -544,15 +524,15 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
-  dofManager.addField( solidMechanics::totalDisplacement::key(),
-                       FieldLocation::Node,
-                       3,
-                       meshTargets );
+  // dofManager.addField( solidMechanics::totalDisplacement::key(),
+  //                      FieldLocation::Node,
+  //                      3,
+  //                      meshTargets );
 
-  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                          solidMechanics::totalDisplacement::key(),
-                          DofManager::Connector::Elem,
-                          meshTargets );
+  // dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+  //                         solidMechanics::totalDisplacement::key(),
+  //                         DofManager::Connector::Elem,
+  //                         meshTargets );
 
   dofManager.addField( contact::traction::key(),
                        FieldLocation::Elem,

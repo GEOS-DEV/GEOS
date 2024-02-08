@@ -10,7 +10,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region }"
+      targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial"
       fractureRegionName="Fracture">
       <NonlinearSolverParameters

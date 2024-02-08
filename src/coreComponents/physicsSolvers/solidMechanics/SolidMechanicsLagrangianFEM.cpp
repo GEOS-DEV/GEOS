@@ -1271,6 +1271,9 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 {
   GEOS_MARK_FUNCTION;
 
+  GEOS_UNUSED_VAR(domain, dofManager, localMatrix, localRhs);
+
+
 //  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
 //  {
 //    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

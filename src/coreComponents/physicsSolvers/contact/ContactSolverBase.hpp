@@ -81,17 +81,15 @@ protected:
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
-//  /// Solid mechanics solver name
-//  string m_solidSolverName;
+  void setFractureRegions(  dataRepository::Group const & domain ); 
 
   /// fracture region name
   string m_fractureRegionName;
 
-//  /// pointer to the solid mechanics solver
-//  SolidMechanicsLagrangianFEM * m_solidSolver;
-
   /// contact relation name string
   string m_contactRelationName;
+
+  std::vector< string > m_fractureRegionNames;
 
   ///
   bool m_setupSolidSolverDofs;
