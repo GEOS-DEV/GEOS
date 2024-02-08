@@ -218,19 +218,18 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real32 const invC2 = 1.0 / pow( velocity[e], 2 ) / density[e];
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      real32 const invC2 = 1.0 / ( velocity[e] * velocity[e] * density[e] );
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
-
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
@@ -302,15 +301,17 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          // only the four corners of the mesh face are needed to compute the Jacobian
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
@@ -470,11 +471,16 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      xLocal()
+      xLocal(),
+      stiffnessVectorLocal_p(),
+      stiffnessVectorLocal_q()
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[ 8 ][ 3 ];
+    real32 stiffnessVectorLocal_p[ numNodesPerElem ]{};
+    real32 stiffnessVectorLocal_q[ numNodesPerElem ]{};
+    real32 invDensity;
   };
   //***************************************************************************
 
@@ -489,10 +495,10 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    stack.invDensity = 1./m_density[k];
+    for( localIndex a=0; a< 8; ++a )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
       for( int i=0; i< 3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
@@ -500,6 +506,23 @@ public:
     }
   }
 
+  /**
+   * @copydoc geos::finiteElement::KernelBase::complete
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const
+  {
+    for( int i=0; i<numNodesPerElem; i++ )
+      {
+	RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_p[i] );
+	RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal_q[i] );
+    }
+    return 0;
+  }
+
+  
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
@@ -514,26 +537,25 @@ public:
                               StackVariables & stack ) const
   {
     // Precompute
-    real32 invDensity = 1./m_density[k];
     real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
     // Pseudo Stiffness xy
-    m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
-      real32 const localIncrement_p = val * invDensity *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val * invDensity * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+      real32 const localIncrement_p = val * stack.invDensity *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes(k,j)];
+      stack.stiffnessVectorLocal_p[i] += localIncrement_p;
+      real32 const localIncrement_q = val * stack.invDensity * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes(k,j)]);
+      stack.stiffnessVectorLocal_q[i] += localIncrement_q ;
     } );
 
     // Pseudo-Stiffness z
 
-    m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
-      real32 const localIncrement_p = val * invDensity * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
+      real32 const localIncrement_p = val * stack.invDensity * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes(k,j)]);
+      stack.stiffnessVectorLocal_p[i] += localIncrement_p ;
 
-      real32 const localIncrement_q = -val  * invDensity * m_q_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+      real32 const localIncrement_q = -val * stack.invDensity * m_q_n[m_elemsToNodes(k,j)];
+      stack.stiffnessVectorLocal_q[i] += localIncrement_q;
     } );
   }
 
