@@ -86,8 +86,7 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setApplyDefaultValue( { 1.0, 1.0, 1.0, 0.0, 0.0, 0.0 } ).
     setDescription( "Moment of the source: 6 real values describing a symmetric tensor in Voigt notation."
                     "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
-  printf( "you are running the correct version.\n" );
-}
+ }
 
 ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
 {
