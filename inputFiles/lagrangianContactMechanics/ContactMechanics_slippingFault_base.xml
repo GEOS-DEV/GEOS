@@ -63,6 +63,11 @@
       target="/Solvers/lagrangiancontact"/>
 
     <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
       name="outputs"
       beginTime="0.0"
       endTime="1.0"
