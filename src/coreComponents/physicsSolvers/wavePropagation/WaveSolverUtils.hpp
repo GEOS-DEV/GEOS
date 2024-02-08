@@ -80,9 +80,12 @@ struct WaveSolverUtils
    */
   static void initTrace( char const * prefix,
                          string const & name,
+                         bool const outputSeismoTrace,
                          localIndex const nReceivers,
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
+    if( !outputSeismoTrace ) return;
+
     string const outputDir = OutputBase::getOutputDirectory();
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
 
@@ -101,7 +104,7 @@ struct WaveSolverUtils
   }
 
   /**
-   * @brief Convenient helper for 3D vectors calling 3 times the scalar version.
+   * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
    */
   static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
@@ -140,6 +143,7 @@ struct WaveSolverUtils
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
+          GEOS_LOG_RANK( GEOS_FMT( "Append to seismo trace file {}", fn ) );
           for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
           {
             // index - time - value
@@ -171,7 +175,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+    real32 const a1 = LvArray::math::abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
@@ -208,7 +212,7 @@ struct WaveSolverUtils
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
   {
-    real64 const time_np1 = time_n+dt;
+    real64 const time_np1 = time_n + dt;
 
     real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
@@ -304,10 +308,11 @@ struct WaveSolverUtils
                                         arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    real64 xLocal[FE_TYPE::numNodes][3]{};
-    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
+    // only the eight corners of the mesh cell are needed to compute the Jacobian
+    real64 xLocal[8][3]{};
+    for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};

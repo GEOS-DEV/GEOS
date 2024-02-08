@@ -165,7 +165,7 @@
       defaultDensity="2650"
       defaultBulkModulus="5.e9"
       defaultPoissonRatio="0.25"
-      defaultThermalExpansionCoefficient="1e-5"/>
+      defaultDrainedLinearTEC="1e-5"/>
     <ConstantPermeability
       name="rockPermChannel"
       permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
@@ -173,7 +173,7 @@
       name="rockPorosityChannel"
       grainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"
-      defaultThermalExpansionCoefficient="1e-5"/>
+      defaultPorosityTEC="1e-5"/>
 
     <PorousElasticIsotropic
       name="porousRockBarrier"
@@ -186,7 +186,7 @@
       defaultDensity="2650"
       defaultBulkModulus="5.e9"
       defaultPoissonRatio="0.25"
-      defaultThermalExpansionCoefficient="1e-5"/>
+      defaultDrainedLinearTEC="1e-5"/>
     <ConstantPermeability
       name="rockPermBarrier"
       permeabilityComponents="{ 9.8e-16, 9.8e-16, 9.8e-16 }"/>
@@ -194,7 +194,7 @@
       name="rockPorosityBarrier"
       grainBulkModulus="1.0e27"
       defaultReferencePorosity="0.05"
-      defaultThermalExpansionCoefficient="1e-5"/>
+      defaultPorosityTEC="1e-5"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
