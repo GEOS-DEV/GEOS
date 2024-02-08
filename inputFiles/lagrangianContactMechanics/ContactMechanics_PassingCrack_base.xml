@@ -10,9 +10,7 @@
       timeIntegrationOption="QuasiStatic"
       surfaceGeneratorName="SurfaceGen"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial"
-      fractureRegionName="Fracture">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
@@ -29,9 +27,7 @@
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
-
  
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace

@@ -6,9 +6,7 @@
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
-      fractureRegionName="Fracture"
       initialDt="10"
-      contactRelationName="fractureContact"
       discretization="FE1"
       timeIntegrationOption="QuasiStatic"
       logLevel="1">

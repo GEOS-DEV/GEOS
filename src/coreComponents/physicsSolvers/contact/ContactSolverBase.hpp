@@ -52,7 +52,7 @@ public:
 
   string const & getContactRelationName() const { return m_contactRelationName; }
 
-  string const & getFractureRegionName() const { return m_fractureRegionName; }
+  string const & getFractureRegionName() const { return m_fractureRegionNames[0]; }
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
@@ -83,9 +83,6 @@ protected:
 
   void setFractureRegions(  dataRepository::Group const & domain ); 
 
-  /// fracture region name
-  string m_fractureRegionName;
-
   /// contact relation name string
   string m_contactRelationName;
 
@@ -97,8 +94,6 @@ protected:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
-    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
 
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
@@ -117,9 +112,7 @@ protected:
     {
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
-      std::vector< string > fractureRegionNames { getFractureRegionName() };
-
-      elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
+      elemManager.forElementRegions< SurfaceElementRegion >( m_fractureRegionNames,
                                                              [&] ( localIndex const,
                                                                    SurfaceElementRegion const & region )
       {
@@ -138,9 +131,7 @@ protected:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      std::vector< string >  fractureRegionNames { getFractureRegionName() };
-
-      elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
+      elemManager.forElementRegions< SurfaceElementRegion >( m_fractureRegionNames,
                                                              [&] ( localIndex const,
                                                                    SurfaceElementRegion & region )
       {

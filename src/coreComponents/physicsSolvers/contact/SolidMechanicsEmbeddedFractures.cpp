@@ -149,7 +149,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     arrayView2d< real64 > oldDispJump = subRegion.getField< contact::oldDispJump >();
@@ -286,7 +286,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -682,7 +682,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -722,7 +722,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       arrayView2d< real64 const > const & jump = subRegion.getField< contact::dispJump >();
 
@@ -764,8 +765,9 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView2d< real64 const > const & dispJump = subRegion.getField< fields::contact::dispJump >();
       arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
-
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {

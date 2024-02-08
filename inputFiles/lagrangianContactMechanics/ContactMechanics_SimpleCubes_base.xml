@@ -8,8 +8,6 @@
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial"
-      fractureRegionName="Fracture"
       timeIntegrationOption="QuasiStatic"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1">

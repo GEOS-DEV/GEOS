@@ -161,8 +161,6 @@ protected:
 private:
   string m_stabilizationName;
 
-  localIndex m_contactRelationFullIndex;
-
   real64 const m_slidingCheckTolerance = 0.05;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};

@@ -138,10 +138,6 @@ void LagrangianContactSolver::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-  m_contactRelationFullIndex = contactRelation.getIndexInParent();
-
-
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -1044,13 +1040,12 @@ void LagrangianContactSolver::
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
   
-  dofManager.printFieldInfo();
-
   elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+    string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
@@ -1778,7 +1773,8 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
