@@ -183,6 +183,7 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
+            ENABLE_PYGEOSX: ON
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -193,6 +194,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
+            ENABLE_PYGEOSX: ON
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
             CMAKE_BUILD_TYPE: Release
@@ -203,6 +205,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
+            ENABLE_PYGEOSX: ON
 
           - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -212,6 +215,7 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: ON
             BUILD_SHARED_LIBS: ON
             HOST_CONFIG: /spack-generated.cmake
+            ENABLE_PYGEOSX: ON
 
           - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
             CMAKE_BUILD_TYPE: Release
@@ -231,6 +235,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+      ENABLE_PYGEOSX: ${{ matrix.ENABLE_PYGEOSX }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}

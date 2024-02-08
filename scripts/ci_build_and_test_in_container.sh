@@ -63,7 +63,9 @@ Usage: $0
   --nproc N
       Number of cores to use for the build.
   --repository /path/to/repository
-      Internal mountpoint where the geos repository will be available. 
+      Internal mountpoint where the geos repository will be available.
+  --run-pygeosx-tests
+      Runs the pygeosx tests.
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
   --sccache-credentials credentials.json
@@ -79,7 +81,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-pygeosx-tests,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -90,6 +92,7 @@ ENABLE_HYPRE=ON
 ENABLE_HYPRE_DEVICE=CPU
 GEOS_LA_INTERFACE=Hypre
 RUN_UNIT_TESTS=true
+RUN_PYGEOSX_TESTS=false
 RUN_INTEGRATED_TESTS=false
 UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
@@ -133,6 +136,7 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
+    --run-pygeosx-tests)     RUN_PYGEOSX_TESTS=true;     shift;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
@@ -225,6 +229,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3 -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
 fi
 
+# Set CMake options for pygeosx testing
+if [[ "${RUN_PYGEOSX_TESTS}" = true ]]; then
+  PYGEOSX_CMAKE_ARGS="-DENABLE_PYGEOSX=ON -DENABLE_PYLVARRAY=ON"
+fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
@@ -260,7 +268,8 @@ or_die python3 scripts/config-build.py \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                ${SCCACHE_CMAKE_ARGS} \
-               ${ATS_CMAKE_ARGS}
+               ${ATS_CMAKE_ARGS} \
+               ${PYGEOSX_CMAKE_ARGS}
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOS_BUILD_DIR}
@@ -283,6 +292,14 @@ if [[ "${BUILD_EXE_ONLY}" = true ]]; then
 else
   or_die cmake --build . -j $NPROC
   or_die cmake --install .
+
+  if [[ "${RUN_PYGEOSX_TESTS}" = true ]]; then
+    # fix the setuptools/distutils conflict
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
+    or_die ninja pygeosx
+    or_die ninja geosx_python_tools
+    or_die ninja pygeosx_unit_tests
+  fi
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
