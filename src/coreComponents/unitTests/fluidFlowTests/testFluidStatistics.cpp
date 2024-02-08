@@ -40,6 +40,9 @@ struct TestInputs
 
   string sourceFluxName;
   string sinkFluxName;
+  string timeStepCheckerPath;
+  string timeStepFluxStatsPath;
+  string wholeSimFluxStatsPath;
 
   // rates for each timesteps, for each phases
   array2d< real64 > fluxRates;
@@ -93,7 +96,7 @@ struct TestSet
   array1d< real64 > totalMeanRate;
 
   /**
-   * @brief Compute the expected statistics set
+   * @brief Compute the expected statistics set for the tested simulation.
    * @param inputParams the test simulation input parameters
    */
   TestSet( TestInputs const & inputParams ):
@@ -142,6 +145,14 @@ struct TestSet
 };
 
 
+/**
+ * @brief Verification that the source flux statistics are correct for the current timestep
+ * @param expectedMasses the expected mass values per phase
+ * @param expectedRates the expected rate values per phase
+ * @param expectedElementCount the number of expected targeted elements
+ * @param stats the timestep stats
+ * @param context a context string to provide in any error message.
+ */
 void checkFluxStats( arraySlice1d< real64 > const & expectedMasses,
                      arraySlice1d< real64 > const & expectedRates,
                      integer const expectedElementCount,
@@ -150,18 +161,63 @@ void checkFluxStats( arraySlice1d< real64 > const & expectedMasses,
 {
   for( int ip = 0; ip < stats.stats().getPhaseCount(); ++ip )
   {
-    EXPECT_DOUBLE_EQ( stats.stats().m_producedMass[ip], expectedMasses[ip] )
-      << "The flux named '" << stats.getFluxName() << "' did not produce the expected mass (" << context << ").";
-    EXPECT_DOUBLE_EQ( stats.stats().m_productionRate[ip], expectedRates[ip] )
-      << "The flux named '" << stats.getFluxName() << "' did not produce at the expected rate (" << context << ").";
+    EXPECT_DOUBLE_EQ( stats.stats().m_producedMass[ip], expectedMasses[ip] ) << GEOS_FMT( "The flux named '{}' did not produce the expected mass ({}, phase = {}).",
+                                                                                          stats.getFluxName(), context, ip );
+    EXPECT_DOUBLE_EQ( stats.stats().m_productionRate[ip], expectedRates[ip] ) << GEOS_FMT( "The flux named '{}' did not produce at the expected rate ({}, phase = {}).",
+                                                                                           stats.getFluxName(), context, ip );
   }
-  EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount )
-    << "The flux named '" << stats.getFluxName() << "' did not produce in the expected elements (" << context << ").";
+  EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount ) << GEOS_FMT( "The flux named '{}' did not produce in the expected elements ({}).",
+                                                                                      stats.getFluxName(), context );
+}
+
+/**
+ * @brief Verification that the source flux statistics are correct over the whole simulation
+ * @param problem the simulation ProblemManager
+ * @param testSet the simulation TestSet
+ */
+void checkWholeSimFluxStatistics( ProblemManager & problem, TestSet const & testSet )
+{
+  DomainPartition & domain = problem.getDomainPartition();
+  SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( testSet.inputs.wholeSimFluxStatsPath );
+  wholeSimStats.forMeshLevelStatsWrapper( domain,
+                                          [&] ( MeshLevel & meshLevel,
+                                                SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
+  {
+    wholeSimStats.forAllFluxStatsWrappers( meshLevel,
+                                           [&] ( MeshLevel &,
+                                                 SourceFluxStatsAggregator::WrappedStats & fluxStats )
+    {
+      if( fluxStats.getFluxName() == testSet.inputs.sourceFluxName )
+      {
+        checkFluxStats( testSet.totalSourceMassProd,
+                        testSet.sourceMeanRate,
+                        testSet.inputs.sourceElementsCount,
+                        fluxStats, "over whole simulation" );
+      }
+      else if( fluxStats.getFluxName() == testSet.inputs.sinkFluxName )
+      {
+        checkFluxStats( testSet.totalSinkMassProd,
+                        testSet.sinkMeanRate,
+                        testSet.inputs.sinkElementsCount,
+                        fluxStats, "over whole simulation" );
+      }
+      else
+      {
+        FAIL() << "Unexpected SourceFlux found!";
+      }
+    } );
+
+    for( int ip = 0; ip < meshLevelStats.stats().getPhaseCount(); ++ip )
+    {
+      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass[ip], testSet.totalMassProd[ip] ) << "The fluxes did not produce the expected total mass (over whole simulation, phase = " << ip << ").";
+      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate[ip], testSet.totalMeanRate[ip] ) << "The fluxes did not produce at the expected rate (over whole simulation, phase = " << ip << ").";
+    }
+  } );
 }
 
 
 /**
- * @brief This Task allows to extract and check each timestep stats.
+ * @brief This Task allows to extract and check each timestep stats during the simulation.
  */
 class TimeStepChecker : public TaskBase
 {
@@ -186,7 +242,7 @@ public:
                         DomainPartition & domain )
   {
     EXPECT_LT( m_timestepId, m_testSet->timestepCount ) << "The tested time-step count were higher than expected.";
-    SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepStats" );
+    SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( m_testSet->inputs.timeStepFluxStatsPath );
     timestepStats.forMeshLevelStatsWrapper( domain,
                                             [&] ( MeshLevel & meshLevel,
                                                   SourceFluxStatsAggregator::WrappedStats & )
@@ -200,14 +256,14 @@ public:
           checkFluxStats( m_testSet->sourceMassProd[m_timestepId],
                           m_testSet->sourceRates[m_timestepId],
                           m_testSet->inputs.sourceElementsCount,
-                          fluxStats, GEOS_FMT( "time = {}", time_n ) );
+                          fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
         }
         else if( fluxStats.getFluxName() == m_testSet->inputs.sinkFluxName )
         {
           checkFluxStats( m_testSet->sinkMassProd[m_timestepId],
                           m_testSet->sinkRates[m_timestepId],
                           m_testSet->inputs.sinkElementsCount,
-                          fluxStats, GEOS_FMT( "time = {}", time_n ) );
+                          fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
         }
         else
         {
@@ -338,11 +394,11 @@ TestSet getTestSet()
                 scale="-1"
                 functionName="FluxRate"
                 setNames="{ sourceBox }" />
-    <!-- sink is producing 4x source rate -->
+    <!-- sink is producing 3x source rate -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
-                scale="4"
+                scale="3"
                 functionName="FluxRate"
                 setNames="{ sinkBox }"/>
 
@@ -360,7 +416,7 @@ TestSet getTestSet()
          xMax="{ 2.01, 1.01, 1.01 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{ 5.99, 8.99, -0.01 }"
+         xMin="{ 4.99, 8.99, -0.01 }"
          xMax="{ 10.01, 10.01, 1.01 }" />
   </Geometry>
 
@@ -374,7 +430,7 @@ TestSet getTestSet()
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/timestepStats" />
+                   target="/Tasks/timeStepFluxStats" />
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
@@ -386,14 +442,14 @@ TestSet getTestSet()
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/wholeSimStats" />
+                   target="/Tasks/wholeSimFluxStats" />
   </Events>
 
   <Tasks>
-    <SourceFluxStatistics name="timestepStats"
+    <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver" />
-    <SourceFluxStatistics name="wholeSimStats"
+    <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver" />
 
@@ -416,72 +472,56 @@ TestSet getTestSet()
 
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
+  testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
+  testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
+  testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
+
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
-  testInputs.sinkElementsCount = 4;
+  testInputs.sinkElementsCount = 5;
 
   // FluxRate table from 0.0s to 5000.0s
-  testInputs.setFluxRates( { { 0.000 }, { 0.000 }, { 0.767 }, { 0.894 }, { 0.561 }, { 0.234 }, { 0.194 }, { 0.178 }, { 0.162 }, { 0.059 }, { 0.000 } } );
+  testInputs.setFluxRates( { { 0.000 },
+                             { 0.000 },
+                             { 0.767 },
+                             { 0.894 },
+                             { 0.561 },
+                             { 0.234 },
+                             { 0.194 },
+                             { 0.178 },
+                             { 0.162 },
+                             { 0.059 },
+                             { 0.000 } } );
 
-  // sink is 4x source production
+  // sink is 3x source production
   testInputs.sourceRateFactor = -1.0;
-  testInputs.sinkRateFactor = 4.0;
+  testInputs.sinkRateFactor = 3.0;
 
   return TestSet( testInputs );
 }
 
 TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 {
-  static TestSet const testSet = getTestSet();
+  TestSet const testSet = getTestSet();
+
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
-  TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( "/Tasks/timeStepChecker" );
+  TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTestSet( testSet );
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
-  // verification that the source flux statistics are correct over the whole simulation
-  DomainPartition & domain = problem.getDomainPartition();
-  SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
   EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
-  wholeSimStats.forMeshLevelStatsWrapper( domain,
-                                          [&] ( MeshLevel & meshLevel,
-                                                SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
-  {
-    wholeSimStats.forAllFluxStatsWrappers( meshLevel,
-                                           [&] ( MeshLevel &,
-                                                 SourceFluxStatsAggregator::WrappedStats & fluxStats )
-    {
-      if( fluxStats.getFluxName() == testSet.inputs.sourceFluxName )
-      {
-        checkFluxStats( testSet.totalSourceMassProd,
-                        testSet.sourceMeanRate,
-                        testSet.inputs.sourceElementsCount,
-                        fluxStats, "whole simulation" );
-      }
-      else if( fluxStats.getFluxName() == testSet.inputs.sinkFluxName )
-      {
-        checkFluxStats( testSet.totalSinkMassProd,
-                        testSet.sinkMeanRate,
-                        testSet.inputs.sinkElementsCount,
-                        fluxStats, "whole simulation" );
-      }
-      else
-      {
-        FAIL() << "Unexpected SourceFlux found!";
-      }
-    } );
 
-    for( int ip = 0; ip < meshLevelStats.stats().getPhaseCount(); ++ip )
-    {
-      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_producedMass[ip], testSet.totalMassProd[ip] ) << "The fluxes did not produce the expected total mass.";
-      EXPECT_DOUBLE_EQ( meshLevelStats.stats().m_productionRate[ip], testSet.totalMeanRate[ip] ) << "The fluxes did not produce at the expected rate.";
-    }
-  } );
+  checkWholeSimFluxStatistics( problem, testSet );
+
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
+  geos::basicCleanup();
+  GEOS_LOG("non...");
 }
 
 
@@ -563,18 +603,18 @@ TestSet getTestSet()
   </Constitutive>
 
   <FieldSpecifications>
-    <!-- The rates are positive, but we need negative values for injection (scale=-1) -->
+    <!-- We are injecting CO2 (negative production values) -->
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
-                component="1"
+                component="0"
                 scale="-1"
                 functionName="FluxRate"
                 setNames="{ sourceBox }" />
-    <!-- sink is producing 4x source rate -->
+    <!-- We are depleting water -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
-                scale="4"
+                scale="1"
                 functionName="FluxRate"
                 setNames="{ sinkBox }" />
       
@@ -593,10 +633,10 @@ TestSet getTestSet()
     <!-- source selects 2 elements -->
     <Box name="sourceBox"
          xMin="{ -0.01, -0.01, -0.01 }"
-         xMax="{ 2.01, 1.01, 1.01 }" />
+         xMax="{ 1.01, 1.01, 1.01 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{ 5.99, 8.99, -0.01 }"
+         xMin="{ 8.99, 8.99, -0.01 }"
          xMax="{ 10.01, 10.01, 1.01 }" />
   </Geometry>
 
@@ -610,39 +650,50 @@ TestSet getTestSet()
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/timestepStats" />
+                   target="/Tasks/timeStepFluxStats" />
+    <PeriodicEvent name="timestepsCheckEvent"
+                   timeFrequency="500.0"
+                   targetExactTimestep="1"
+                   targetExactStartStop="1"
+                   beginTime="0"
+                   target="/Tasks/timeStepChecker" />
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
-                   target="/Tasks/wholeSimStats" />
+                   target="/Tasks/wholeSimFluxStats" />
   </Events>
 
   <Tasks>
-    <SourceFluxStatistics name="timestepStats"
+    <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver" />
-    <SourceFluxStatistics name="wholeSimStats"
+                          flowSolverName="testSolver"
+                          logLevel="1" />
+    <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver" />
+                          flowSolverName="testSolver"
+                          logLevel="1" />
+
+    <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
   </Tasks>
 
   <Functions>
-
+    <!-- CO2 injection rates -->
     <TableFunction
-      name="FluxComp1Rate"
+      name="FluxInjectionRate"
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
       values="{       0.000,  0.000,  0.767,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
     />
+    <!-- water depletion rates -->
     <TableFunction
-      name="FluxComp1Rate"
+      name="FluxProductionRate"
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.000,  0.000,  0.121,  0.427,  0.502,  0.199,  0.117,  0.088,  0.059,  0.000,  0.000 }"
+      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.117,  0.088,  0.059,  0.000 }"
     />
 
     <TableFunction name="initGasCompFracTable"
@@ -676,39 +727,68 @@ TestSet getTestSet()
 
   testInputs.sourceFluxName = "sourceFlux";
   testInputs.sinkFluxName = "sinkFlux";
+  testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
+  testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
+  testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
+
   testInputs.dt = 500.0;
-  testInputs.sourceElementsCount = 2;
-  testInputs.sinkElementsCount = 4;
-
+  testInputs.sourceElementsCount = 1;
+  testInputs.sinkElementsCount = 1;
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   // FluxRate table from 0.0s to 5000.0s
-  //!\\ TODO : setup multi-component values here !
+  testInputs.setFluxRates( {
+      { 0.000, 0.000 },
+      { 0.000, 0.000 },
+      { 0.767, 0.000 },
+      { 0.561, 0.000 },
+      { 0.194, 0.121 },
+      { 0.102, 0.427 },
+      { 0.059, 0.502 },
+      { 0.000, 0.199 },
+      { 0.000, 0.117 },
+      { 0.000, 0.088 },
+      { 0.000, 0.059 },
+      { 0.000, 0.000 } } );
+  GEOS_LOG("non...");
 
-  // sink is 4x source production
   testInputs.sourceRateFactor = -1.0;
-  testInputs.sinkRateFactor = 4.0;
+  testInputs.sinkRateFactor = 1.0;
 
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   return TestSet( testInputs );
 }
 
 
 TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
 {
-  static TestSet const testSet = getTestSet();
+  TestSet const testSet = getTestSet();
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   writeTableFiles( testSet.inputs.tableFiles );
+  GEOS_LOG("non...");
 
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  GEOS_LOG("non...");
   ProblemManager & problem = state.getProblemManager();
 
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
+  GEOS_LOG("non...");
 
   //!\\ TODO : récupération du timestepChecker (à ajouter dans le xml)
 
   // run simulation
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
+  GEOS_LOG("non...");
 
-  // verification that the source flux statistics are correct over the whole simulation
-  //!\\ TODO
+  // EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
+  checkWholeSimFluxStatistics( problem, testSet );
+
+  GEOS_LOG("c'est toi ? " << __FILE__ << ":" << __LINE__ );
+  geos::basicCleanup();
+  GEOS_LOG("non...");
 }
 
 
@@ -723,6 +803,5 @@ int main( int argc, char * * argv )
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geos::basicCleanup();
   return result;
 }
