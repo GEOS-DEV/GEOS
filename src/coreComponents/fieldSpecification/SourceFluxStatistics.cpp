@@ -262,33 +262,52 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_aggregatorName = aggregatorName;
   m_fluxName = fluxName;
 }
-void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const dt,
-                                                                   real64 producedMass,
-                                                                   integer const elementCount,
-                                                                   bool const overwriteTimeStepStats )
+void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
+                                                                   real64 const producedMass,
+                                                                   integer const elementCount )
 {
   array1d< real64 > phaseProducedMass{ 1 };
   phaseProducedMass[0] = producedMass;
-  gatherTimeStepStats( dt, phaseProducedMass, elementCount, overwriteTimeStepStats );
+  gatherTimeStepStats( currentTime, dt, phaseProducedMass, elementCount );
 }
-void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 dt,
+string formatLvArray( array1d< real64 > const & arr )
+{
+  int id=0;
+  std::ostringstream oss;
+  oss<<"[";
+  oss<<arr[id++];
+  while( id<arr.size())
+    oss<<", "<<arr[id++];
+  oss<<"]";
+  return oss.str();
+}
+void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
                                                                    array1d< real64 > const & producedMass,
-                                                                   integer elementCount,
-                                                                   bool overwriteTimeStepStats )
+                                                                   integer const elementCount )
 {
   m_periodStats.allocate( producedMass.size() );
 
   // if beginning a new timestep, we must aggregate the stats from previous timesteps (mass & dt) before collecting the new ones
-  if( !overwriteTimeStepStats )
+  bool isBeginingNewTS = currentTime >= ( m_periodStats.m_lastGatherTime + m_periodStats.m_lastGatherDT );
+  if( isBeginingNewTS )
   {
     for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
     {
       m_periodStats.m_periodPendingMass[ip] += m_periodStats.m_timeStepMass[ip];
       m_periodStats.m_timeStepMass[ip] = 0;
     }
-    m_periodStats.m_periodDeltaTime += dt;
     m_periodStats.m_elementCount = elementCount;
+    m_periodStats.m_periodDeltaTime += m_periodStats.m_lastGatherDT;
   }
+  GEOS_LOG( GEOS_FMT( "{}, {}    @{:.3f} +{:.3f}    [ {} ] :    pendMass + tsMass = {}kg + {}kg    pending time = {:.3f} + {:.3f}    lastTime = @{:.3f} ",
+                      m_fluxName, m_aggregatorName,
+                      currentTime, dt,
+                      isBeginingNewTS ? (m_periodStats.m_periodDeltaTime>0.0 ? "New TS" : "New Period") : "TS OVERRIDE",
+                      formatLvArray( m_periodStats.m_periodPendingMass ), formatLvArray( producedMass ),
+                      m_periodStats.m_periodDeltaTime, m_periodStats.m_lastGatherDT,
+                      m_periodStats.m_lastGatherTime ) );
+  m_periodStats.m_lastGatherTime = currentTime;//m_lastGatherTime -> m_timeStepStart
+  m_periodStats.m_lastGatherDT = dt;//m_lastGatherDT -> m_timeStepDeltaTime
 
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
   {
@@ -303,7 +322,8 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
   // produce timestep stats of this ranks
   m_stats.m_elementCount = m_periodStats.m_elementCount;
 
-  real64 timeDivisor = m_periodStats.m_periodDeltaTime > 0.0 ? 1.0 / m_periodStats.m_periodDeltaTime : 0.0;
+  real64 const dt = m_periodStats.m_lastGatherDT + m_periodStats.m_periodDeltaTime;
+  real64 const timeDivisor = dt > 0.0 ? 1.0 / dt : 0.0;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
   {
     real64 periodMass = m_periodStats.m_timeStepMass[ip] + m_periodStats.m_periodPendingMass[ip];
@@ -334,6 +354,8 @@ void SourceFluxStatsAggregator::WrappedStats::PeriodStats::reset()
   }
   m_periodDeltaTime = 0.0;
   m_elementCount = 0;
+  m_lastGatherTime = 0.0;
+  m_lastGatherDT = 0.0;
 }
 
 

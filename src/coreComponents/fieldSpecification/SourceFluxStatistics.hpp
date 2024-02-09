@@ -149,7 +149,9 @@ private:
       array1d< real64 > m_periodPendingMass;
       /// delta time the current period
       real64 m_periodDeltaTime = 0.0;
-      /// number of cell elements concerned by this instance
+      real64 m_lastGatherTime = 0.0;
+      real64 m_lastGatherDT = 0.0;
+      /// number of cell elements targeted by this instance
       integer m_elementCount = 0;
 
       /**

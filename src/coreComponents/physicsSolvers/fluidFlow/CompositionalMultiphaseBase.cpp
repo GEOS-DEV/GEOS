@@ -1561,13 +1561,12 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           localRhs[compMassBalanceRow] += rhsValue;
         }
       } );
-
+      GEOS_LOG(fs.getName()<<": Collect for phase="<<fluidComponentId<<" ;  newtonItCount = "<<m_nonlinearSolverParameters.m_numNewtonIterations);
       SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
         // set the new sub-region statistics for this timestep
-        wrapper.gatherTimeStepStats( dt, producedMass, targetSet.size(),
-                                     m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
+        wrapper.gatherTimeStepStats( time, dt, producedMass, targetSet.size() );
       } );
     } );
   } );

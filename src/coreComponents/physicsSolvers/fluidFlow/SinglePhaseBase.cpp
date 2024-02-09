@@ -1127,8 +1127,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
         // set the new sub-region statistics for this timestep
-        wrapper.gatherTimeStepStats( dt, producedMass, targetSet.size(),
-                                     m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
+        wrapper.gatherTimeStepStats( time_n, dt, producedMass, targetSet.size() );
       } );
     } );
   } );
