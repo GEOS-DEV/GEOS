@@ -89,24 +89,12 @@ public:
 
     /**
      * @brief Set the current time step stats. Single-phase version
-     * @param dt                     time delta of the current timestep
-     * @param producedMass          time-step producted mass (see StatData::m_producedMass).
-     * @param elementCount           number of cell elements concerned by this instance
-     * @param overwriteTimeStepStats false when this is the first time we're writing the current
-     *                               timestep data, true otherwise (i.e. new solver iteration)
-     */
-    void gatherTimeStepStats( real64 dt, real64 producedMass, integer elementCount,
-                              bool overwriteTimeStepStats );
+    void gatherTimeStepStats( real64 currentTime, real64 dt,
+                              real64 producedMass, integer elementCount );
     /**
      * @brief Set the current time step stats. Multi-phase version
-     * @param dt                     time delta of the current timestep
-     * @param producedMass          time-step producted mass (see StatData::m_producedMass).
-     * @param elementCount           number of cell elements concerned by this instance
-     * @param overwriteTimeStepStats false when this is the first time we're writing the current
-     *                               timestep data, true otherwise (i.e. new solver iteration)
-     */
-    void gatherTimeStepStats( real64 dt, array1d< real64 > const & producedMass, integer elementCount,
-                              bool overwriteTimeStepStats );
+    void gatherTimeStepStats( real64 currentTime, real64 dt,
+                              array1d< real64 > const & producedMass, integer elementCount );
 
     /**
      * @brief Finalize the period statistics of each timestep gathering and render data over all mpi ranks.
