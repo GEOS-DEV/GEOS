@@ -89,10 +89,20 @@ public:
 
     /**
      * @brief Set the current time step stats. Single-phase version
+     * @param currentTime  time of the timestep start since simulation starting
+     * @param dt           time delta of the current timestep
+     * @param producedMass time-step producted mass (see StatData::m_producedMass).
+     * @param elementCount number of cell elements concerned by this instance
+     */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
                               real64 producedMass, integer elementCount );
     /**
      * @brief Set the current time step stats. Multi-phase version
+     * @param currentTime  time of the timestep start since simulation starting
+     * @param dt           time delta of the current timestep
+     * @param producedMass time-step producted mass (see StatData::m_producedMass).
+     * @param elementCount number of cell elements concerned by this instance
+     */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
                               array1d< real64 > const & producedMass, integer elementCount );
 
@@ -135,10 +145,12 @@ private:
       array1d< real64 > m_timeStepMass;
       /// producted mass sum from all previous time-step of the current period.
       array1d< real64 > m_periodPendingMass;
-      /// delta time the current period
-      real64 m_periodDeltaTime = 0.0;
-      real64 m_lastGatherTime = 0.0;
-      real64 m_lastGatherDT = 0.0;
+      /// time of when the timestep starts (since the simulation start)
+      real64 m_timeStepStart = 0.0;
+      /// time that the current timestep is simulating
+      real64 m_timeStepDeltaTime = 0.0;
+      /// delta time from all previous time-step of the current period.
+      real64 m_periodPendingDeltaTime = 0.0;
       /// number of cell elements targeted by this instance
       integer m_elementCount = 0;
 
@@ -177,31 +189,14 @@ private:
   static string catalogName() { return "SourceFluxStatistics"; }
 
   /**
-   * @defgroup Tasks Interface Functions
-   *
-   * This function implements the interface defined by the abstract TaskBase class
+   * @copydoc ExecutableGroup::execute()
    */
-  /**@{*/
-
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
-
-  /**@}*/
-
-  // /**
-  //  * @return a WrappedStats struct that contains the statistics of the flux for the
-  //  * SourceFluxStatsAggregator instance in the container.
-  //  * @param container the container from which we want the statistics.
-  //  * @param fluxName  the name of the flux from which we want the statistics.
-  //  * @throw           a GEOS_ERROR if the flux was not found.
-  //  * @note To be retrieved, the WrappedStats struct must be registered on the container during the
-  //  * registerDataOnMesh() call.
-  //  */
-  // WrappedStats & getFluxStatData( Group & container, string_view fluxName );
 
   /**
    * @brief Apply a functor to all WrappedStats of the given group that target a given flux (and
@@ -302,11 +297,11 @@ private:
 
   /**
    * @brief Output in the log the given statistics.
-   * @param regionName the name of the element group (a region, a sub-region...) from which we want to output the data.
-   * @param minLogLevel the min log level to output any line.
+   * @param regionName     the name of the element group (a region, a sub-region...) from which we want to output the data.
+   * @param minLogLevel    the min log level to output any line.
    * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param fluxName the flux name concerned by the statistics.
-   * @param stats the statistics that must be output in the log.
+   * @param fluxName       the flux name concerned by the statistics.
+   * @param stats          the statistics that must be output in the log.
    */
   void writeStatData( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
 
@@ -383,11 +378,6 @@ void SourceFluxStatsAggregator::forAllSubRegionStatsWrappers( ElementRegionBase 
 
 inline string SourceFluxStatsAggregator::getStatWrapperName( string_view fluxName ) const
 { return GEOS_FMT( "{}_region_stats_for_{}", fluxName, getName() ); }
-
-
-/******************************** SourceFluxStatisticsKernel ********************************/
-struct SourceFluxStatisticsKernel
-{};
 
 
 } /* namespace geos */

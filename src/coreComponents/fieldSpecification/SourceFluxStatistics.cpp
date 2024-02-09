@@ -86,10 +86,6 @@ SourceFluxStatsAggregator::registerWrappedStats( Group & group, string_view flux
 }
 void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
 {
-  // the fields have to be registered in "registerDataOnMesh" (and not later)
-  // otherwise they cannot be targeted by TimeHistory
-
-  // for now, this guard is needed to avoid breaking the xml schema generation
   if( m_solver == nullptr )
   {
     return;
@@ -118,26 +114,6 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
     }
   } );
 }
-
-// SourceFluxStatsAggregator::WrappedStats &
-// SourceFluxStatsAggregator::getFluxStatData( Group & container,
-//                                             string_view fluxName )
-// {
-//   WrappedStats * r = nullptr;
-//   container.forWrappers< WrappedStats >( [&]( dataRepository::Wrapper< WrappedStats > & statsWrapper )
-//   {
-//     WrappedStats & statsWrapperView = statsWrapper.referenceAsView();
-//     if( statsWrapperView.getFluxName() == fluxName && statsWrapperView.getAggregatorName() == getName() )
-//     {
-//       r = &statsWrapperView;
-//     }
-//   } );
-//   // Error if SourceFluxStatsAggregator::registerDataOnMesh() did not work as expected
-//   GEOS_ERROR_IF( r == nullptr, GEOS_FMT( "{}: {} data wrongly registered on mesh (no flux stats wrapper was found for {} named {}).",
-//                                          getName(), catalogName(),
-//                                          SourceFluxBoundaryCondition::catalogName(), fluxName ) );
-//   return *r;
-// }
 
 void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
                                                string_view elementSetName,
@@ -270,17 +246,6 @@ void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const 
   phaseProducedMass[0] = producedMass;
   gatherTimeStepStats( currentTime, dt, phaseProducedMass, elementCount );
 }
-string formatLvArray( array1d< real64 > const & arr )
-{
-  int id=0;
-  std::ostringstream oss;
-  oss<<"[";
-  oss<<arr[id++];
-  while( id<arr.size())
-    oss<<", "<<arr[id++];
-  oss<<"]";
-  return oss.str();
-}
 void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
                                                                    array1d< real64 > const & producedMass,
                                                                    integer const elementCount )
@@ -288,27 +253,20 @@ void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const 
   m_periodStats.allocate( producedMass.size() );
 
   // if beginning a new timestep, we must aggregate the stats from previous timesteps (mass & dt) before collecting the new ones
-  bool isBeginingNewTS = currentTime >= ( m_periodStats.m_lastGatherTime + m_periodStats.m_lastGatherDT );
+  bool isBeginingNewTS = currentTime >= ( m_periodStats.m_timeStepStart + m_periodStats.m_timeStepDeltaTime );
   if( isBeginingNewTS )
   {
     for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
     {
       m_periodStats.m_periodPendingMass[ip] += m_periodStats.m_timeStepMass[ip];
-      m_periodStats.m_timeStepMass[ip] = 0;
     }
     m_periodStats.m_elementCount = elementCount;
-    m_periodStats.m_periodDeltaTime += m_periodStats.m_lastGatherDT;
+    m_periodStats.m_periodPendingDeltaTime += m_periodStats.m_timeStepDeltaTime;
   }
-  GEOS_LOG( GEOS_FMT( "{}, {}    @{:.3f} +{:.3f}    [ {} ] :    pendMass + tsMass = {}kg + {}kg    pending time = {:.3f} + {:.3f}    lastTime = @{:.3f} ",
-                      m_fluxName, m_aggregatorName,
-                      currentTime, dt,
-                      isBeginingNewTS ? (m_periodStats.m_periodDeltaTime>0.0 ? "New TS" : "New Period") : "TS OVERRIDE",
-                      formatLvArray( m_periodStats.m_periodPendingMass ), formatLvArray( producedMass ),
-                      m_periodStats.m_periodDeltaTime, m_periodStats.m_lastGatherDT,
-                      m_periodStats.m_lastGatherTime ) );
-  m_periodStats.m_lastGatherTime = currentTime;//m_lastGatherTime -> m_timeStepStart
-  m_periodStats.m_lastGatherDT = dt;//m_lastGatherDT -> m_timeStepDeltaTime
 
+  // new timestep stats to take into account
+  m_periodStats.m_timeStepStart = currentTime;
+  m_periodStats.m_timeStepDeltaTime = dt;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
   {
     m_periodStats.m_timeStepMass = producedMass;
@@ -322,7 +280,7 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
   // produce timestep stats of this ranks
   m_stats.m_elementCount = m_periodStats.m_elementCount;
 
-  real64 const dt = m_periodStats.m_lastGatherDT + m_periodStats.m_periodDeltaTime;
+  real64 const dt = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
   real64 const timeDivisor = dt > 0.0 ? 1.0 / dt : 0.0;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
   {
@@ -352,10 +310,10 @@ void SourceFluxStatsAggregator::WrappedStats::PeriodStats::reset()
     m_timeStepMass[ip] = 0.0;
     m_periodPendingMass[ip] = 0.0;
   }
-  m_periodDeltaTime = 0.0;
+  m_periodPendingDeltaTime = 0.0;
   m_elementCount = 0;
-  m_lastGatherTime = 0.0;
-  m_lastGatherDT = 0.0;
+  m_timeStepStart = 0.0;
+  m_timeStepDeltaTime = 0.0;
 }
 
 

@@ -1561,7 +1561,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           localRhs[compMassBalanceRow] += rhsValue;
         }
       } );
-      GEOS_LOG(fs.getName()<<": Collect for phase="<<fluidComponentId<<" ;  newtonItCount = "<<m_nonlinearSolverParameters.m_numNewtonIterations);
+
       SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
