@@ -45,28 +45,14 @@ struct TestInputs
   string wholeSimFluxStatsPath;
 
   // rates for each timesteps, for each phases
-  array2d< real64 > fluxRates;
+  array2d< real64 > sourceRates;
+  array2d< real64 > sinkRates;
 
   real64 dt;
   real64 sourceRateFactor;
   real64 sinkRateFactor;
   integer sourceElementsCount;
   integer sinkElementsCount;
-
-  void setFluxRates( std::initializer_list< std::initializer_list< real64 > > timestepPhaseValues )
-  {
-    fluxRates.resize( timestepPhaseValues.size(), timestepPhaseValues.begin()->size() );
-    integer timestepId = 0;
-    for( auto const & phaseValues : timestepPhaseValues )
-    {
-      integer ip = 0;
-      for( auto const & phaseValue : phaseValues )
-      {
-        fluxRates[timestepId][ip++] = phaseValue;
-      }
-      ++timestepId;
-    }
-  }
 };
 
 /**
@@ -102,8 +88,12 @@ struct TestSet
   TestSet( TestInputs const & inputParams ):
     inputs( inputParams )
   {
-    timestepCount = inputs.fluxRates.size( 0 );
-    phaseCount = inputs.fluxRates.size( 1 );
+    // tables must provide the same timestep & phase rates
+    EXPECT_EQ( inputs.sourceRates.size( 0 ), inputs.sinkRates.size( 0 ));
+    EXPECT_EQ( inputs.sourceRates.size( 1 ), inputs.sinkRates.size( 1 ));
+
+    timestepCount = inputs.sourceRates.size( 0 );
+    phaseCount = inputs.sourceRates.size( 1 );
     totalElementsCount = inputs.sourceElementsCount + inputs.sinkElementsCount;
 
     sourceRates.resize( timestepCount, phaseCount );
@@ -117,21 +107,22 @@ struct TestSet
     totalSinkMassProd.resize( phaseCount );
     totalMassProd.resize( phaseCount );
     totalMeanRate.resize( phaseCount );
+
     for( integer ip = 0; ip < phaseCount; ++ip )
     {
       for( integer timestepId = 0; timestepId < timestepCount; ++timestepId )
       {
         // mass production / injection calculation
-        sourceRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.sourceRateFactor;
-        sourceMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * inputs.sourceRateFactor;
+        sourceRates[timestepId][ip] = inputs.sourceRates[timestepId][ip] * inputs.sourceRateFactor;
+        sourceMassProd[timestepId][ip] = inputs.sourceRates[timestepId][ip] * inputs.dt * inputs.sourceRateFactor;
         totalSourceMassProd[ip] += sourceMassProd[timestepId][ip];
-        sinkRates[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.sinkRateFactor;
-        sinkMassProd[timestepId][ip] = inputs.fluxRates[timestepId][ip] * inputs.dt * inputs.sinkRateFactor;
+        sinkRates[timestepId][ip] = inputs.sinkRates[timestepId][ip] * inputs.sinkRateFactor;
+        sinkMassProd[timestepId][ip] = inputs.sinkRates[timestepId][ip] * inputs.dt * inputs.sinkRateFactor;
         massDeltas[timestepId][ip] = -( sourceMassProd[timestepId][ip] + sinkMassProd[timestepId][ip] );
         totalSinkMassProd[ip] += sinkMassProd[timestepId][ip];
         // rates accumulations
-        sourceMeanRate[ip] += inputs.fluxRates[timestepId][ip] * inputs.sourceRateFactor;
-        sinkMeanRate[ip] += inputs.fluxRates[timestepId][ip] * inputs.sinkRateFactor;
+        sourceMeanRate[ip] += inputs.sourceRates[timestepId][ip] * inputs.sourceRateFactor;
+        sinkMeanRate[ip] += inputs.sinkRates[timestepId][ip] * inputs.sinkRateFactor;
       }
       // mean rates calculation
       real64 const ratesMeanDivisor = 1.0 / double( timestepCount - 1 );
@@ -241,6 +232,7 @@ public:
                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
                         DomainPartition & domain )
   {
+    EXPECT_NE( m_testSet, nullptr );
     EXPECT_LT( m_timestepId, m_testSet->timestepCount ) << "The tested time-step count were higher than expected.";
     SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( m_testSet->inputs.timeStepFluxStatsPath );
     timestepStats.forMeshLevelStatsWrapper( domain,
@@ -315,6 +307,22 @@ private:
 };
 
 
+void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::initializer_list< real64 > > timestepPhaseValues )
+{
+  rateTable.resize( timestepPhaseValues.size(), timestepPhaseValues.begin()->size() );
+  integer timestepId = 0;
+  for( auto const & phaseValues : timestepPhaseValues )
+  {
+    integer ip = 0;
+    for( auto const & phaseValue : phaseValues )
+    {
+      rateTable[timestepId][ip++] = phaseValue;
+    }
+    ++timestepId;
+  }
+}
+
+
 //////////////////////////////// SinglePhase Flux Statistics Test ////////////////////////////////
 namespace SinglePhaseFluxStatisticsTest
 {
@@ -351,9 +359,9 @@ TestSet getTestSet()
   <Mesh>
     <InternalMesh name="mesh"
                   elementTypes="{ C3D8 }"
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
+                  xCoords="{   0, 10 }"
+                  yCoords="{   0, 10 }"
+                  zCoords="{ -10,  0 }"
                   nx="{ 10 }"
                   ny="{ 10 }"
                   nz="{ 10 }"
@@ -413,12 +421,12 @@ TestSet getTestSet()
   <Geometry>
     <!-- source selects 2 elements -->
     <Box name="sourceBox"
-         xMin="{ -0.01, -0.01, -0.01 }"
-         xMax="{ 2.01, 1.01, 1.01 }" />
+         xMin="{ -0.01, -0.01, -10.01 }"
+         xMax="{  2.01,  1.01,  -8.99 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{ 4.99, 8.99, -0.01 }"
-         xMax="{ 10.01, 10.01, 1.01 }" />
+         xMin="{  4.99, 8.99, -1.01 }"
+         xMax="{ 10.01, 10.01, 0.01 }" />
   </Geometry>
 
   <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
@@ -426,6 +434,7 @@ TestSet getTestSet()
     <PeriodicEvent name="solverApplications"
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
+
     <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
@@ -482,17 +491,19 @@ TestSet getTestSet()
   testInputs.sinkElementsCount = 5;
 
   // FluxRate table from 0.0s to 5000.0s
-  testInputs.setFluxRates( { { 0.000 },
-                             { 0.000 },
-                             { 0.767 },
-                             { 0.894 },
-                             { 0.561 },
-                             { 0.234 },
-                             { 0.194 },
-                             { 0.178 },
-                             { 0.162 },
-                             { 0.059 },
-                             { 0.000 } } );
+  setRateTable( testInputs.sourceRates,
+                { { 0.000 },
+                  { 0.000 },
+                  { 0.767 },
+                  { 0.894 },
+                  { 0.561 },
+                  { 0.234 },
+                  { 0.194 },
+                  { 0.178 },
+                  { 0.162 },
+                  { 0.059 },
+                  { 0.000 } } );
+  testInputs.sinkRates=testInputs.sourceRates;
 
   // sink is 3x source production
   testInputs.sourceRateFactor = -1.0;
@@ -560,9 +571,9 @@ TestSet getTestSet()
   <Mesh>
     <InternalMesh name="mesh"
                   elementTypes="{ C3D8 }"
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
+                  xCoords="{   0, 10 }"
+                  yCoords="{   0, 10 }"
+                  zCoords="{ -10,  0 }"
                   nx="{ 10 }"
                   ny="{ 10 }"
                   nz="{ 10 }"
@@ -596,7 +607,7 @@ TestSet getTestSet()
                           permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }" />
     <TableRelativePermeability name="relperm"
                                phaseNames="{ gas, water }"
-                               wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }" />
+                               wettingNonWettingRelPermTableNames="{ gasRelativePermeabilityTable, waterRelativePermeabilityTable }" />
   </Constitutive>
 
   <FieldSpecifications>
@@ -605,16 +616,16 @@ TestSet getTestSet()
                 objectPath="ElementRegions/reservoir"
                 component="0"
                 scale="-1"
-                functionName="FluxRate"
+                functionName="FluxInjectionRate"
                 setNames="{ sourceBox }" />
     <!-- We are depleting water -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
                 scale="1"
-                functionName="FluxRate"
+                functionName="FluxProductionRate"
                 setNames="{ sinkBox }" />
-      
+
     <HydrostaticEquilibrium name="equil"
                             objectPath="ElementRegions"
                             maxNumberOfEquilibrationIterations="100"
@@ -629,12 +640,12 @@ TestSet getTestSet()
   <Geometry>
     <!-- source selects 2 elements -->
     <Box name="sourceBox"
-         xMin="{ -0.01, -0.01, -0.01 }"
-         xMax="{ 1.01, 1.01, 1.01 }" />
+         xMin="{ -0.01, -0.01, -10.01 }"
+         xMax="{  1.01,  1.01,  -8.99 }" />
     <!-- sink selects 2 elements -->
     <Box name="sinkBox"
-         xMin="{ 8.99, 8.99, -0.01 }"
-         xMax="{ 10.01, 10.01, 1.01 }" />
+         xMin="{  8.99,  8.99, -1.01 }"
+         xMax="{ 10.01, 10.01,  0.01 }" />
   </Geometry>
 
   <!-- We are adding 500s to the whole sim time to force the wholeSimStatsEvent to be executed -->
@@ -642,6 +653,7 @@ TestSet getTestSet()
     <PeriodicEvent name="solverApplications"
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
+
     <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
@@ -666,11 +678,11 @@ TestSet getTestSet()
     <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="1" />
+                          logLevel="2" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="1" />
+                          logLevel="2" />
 
     <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
   </Tasks>
@@ -682,7 +694,7 @@ TestSet getTestSet()
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.767,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
+      values="{       0.000,  0.000,  0.267,  0.561,  0.194,  0.102,  0.059,  0.000,  0.000,  0.000,  0.000,  0.000 }"
     />
     <!-- water depletion rates -->
     <TableFunction
@@ -690,7 +702,7 @@ TestSet getTestSet()
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{    0.0,  500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0 }"
-      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.117,  0.088,  0.059,  0.000 }"
+      values="{       0.000,  0.000,  0.003,  0.062,  0.121,  0.427,  0.502,  0.199,  0.083,  0.027,  0.000,  0.000 }"
     />
 
     <TableFunction name="initGasCompFracTable"
@@ -701,7 +713,7 @@ TestSet getTestSet()
                    values="{        1.0,  1.0,  1.0,  1.0 }" />
     <TableFunction name="initTempTable"
                    coordinates="{ -10.0,   -7.0,   -3.0,   -1.0 }"
-                   values="{  395.15, 389.15, 382.15, 378.15 }" />
+                   values="{     395.15, 389.15, 382.15, 378.15 }" />
     <TableFunction name="waterRelativePermeabilityTable"
                    coordinates="{ 0.3000,          0.3175,         0.3350,         0.3525,        0.3700,        0.3875,       0.4050,       0.4225,       0.4400,       0.4575,       0.4750,      0.4925,      0.5100,      0.5275,      0.5450,      0.5625,      0.5800,      0.5975,     0.6150,     0.6325,     0.6500,     0.6675,     0.6850,     0.7025,     0.7200,     0.7375,     0.7550,     0.7725,    0.7900,    0.8054,    0.8209,    0.8404,    0.8600,    0.8775,    0.8950,    0.9125,    0.9300,    0.9475,    0.9650,    0.9825, 1.0000   }"
                    values="{         0.0, 0.0000001069690, 0.000001523818, 0.000007304599, 0.00002242961, 0.00005398050, 0.0001113999, 0.0002068239, 0.0003554932, 0.0005762517, 0.0008921512, 0.001331180, 0.001927144, 0.002720726, 0.003760776, 0.005105868, 0.006826186, 0.009005830, 0.01174561, 0.01516648, 0.01941368, 0.02466185, 0.03112128, 0.03904542, 0.04874017, 0.06057494, 0.07499593, 0.09254174, 0.1138611, 0.1364565, 0.1632363, 0.2042135, 0.2547712, 0.3097943, 0.3755964, 0.4536528, 0.5451093, 0.6502388, 0.7674166, 0.8909226, 1.000000 }" />
@@ -713,13 +725,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.0e5 5.0e7 1e5 285.15 395.15 2\n"
-                                        "ViscosityFun FenghourCO2Viscosity 1.0e5 5.0e7 1e5 285.15 395.15 2\n";
+  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.0e6 5.0e7 1e5 285.15 395.15 2\n"
+                                        "ViscosityFun FenghourCO2Viscosity 1.0e6 5.0e7 1e5 285.15 395.15 2\n";
 
   testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
                                            "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
 
-  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.0e5 4e7 1e5 285.15 395.15 2 0\n";
+  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.0e6 5.0e7 1e5 285.15 395.15 2 0\n";
 
 
   testInputs.sourceFluxName = "sourceFlux";
@@ -731,20 +743,31 @@ TestSet getTestSet()
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
   testInputs.sinkElementsCount = 1;
-  // FluxRate table from 0.0s to 5000.0s
-  testInputs.setFluxRates( {
-      { 0.000, 0.000 },
-      { 0.000, 0.000 },
-      { 0.767, 0.000 },
-      { 0.561, 0.000 },
-      { 0.194, 0.121 },
-      { 0.102, 0.427 },
-      { 0.059, 0.502 },
-      { 0.000, 0.199 },
-      { 0.000, 0.117 },
-      { 0.000, 0.088 },
-      { 0.000, 0.059 },
-      { 0.000, 0.000 } } );
+  // FluxInjectionRate & FluxProductionRate table from 0.0s to 5000.0s
+  setRateTable( testInputs.sourceRates,
+                { { 0.000, 0.0 },
+                  { 0.000, 0.0 },
+                  { 0.267, 0.0 },
+                  { 0.561, 0.0 },
+                  { 0.194, 0.0 },
+                  { 0.102, 0.0 },
+                  { 0.059, 0.0 },
+                  { 0.000, 0.0 },
+                  { 0.000, 0.0 },
+                  { 0.000, 0.0 },
+                  { 0.000, 0.0 } } );
+  setRateTable( testInputs.sinkRates,
+                { { 0.0, 0.000 },
+                  { 0.0, 0.000 },
+                  { 0.0, 0.003 },
+                  { 0.0, 0.062 },
+                  { 0.0, 0.121 },
+                  { 0.0, 0.427 },
+                  { 0.0, 0.502 },
+                  { 0.0, 0.199 },
+                  { 0.0, 0.083 },
+                  { 0.0, 0.027 },
+                  { 0.0, 0.000 } } );
 
   testInputs.sourceRateFactor = -1.0;
   testInputs.sinkRateFactor = 1.0;
@@ -763,12 +786,13 @@ TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
-  //!\\ TODO : récupération du timestepChecker (à ajouter dans le xml)
+  TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
+  timeStepChecker.setTestSet( testSet );
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
-  // EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
+  EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
   checkWholeSimFluxStatistics( problem, testSet );
 }
