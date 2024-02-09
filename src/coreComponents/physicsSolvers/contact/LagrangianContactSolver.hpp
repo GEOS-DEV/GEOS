@@ -52,7 +52,7 @@ public:
   string getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "LagrangianContact"; }
+  static string coupledSolverAttributePrefix() { return "lagrangianContact"; }
 
   virtual void initializePreSubGroups() override;
 

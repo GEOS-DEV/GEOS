@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       flowSolverName="flowSolver"
-      LagrangianContactSolverName="fractureMechSolver"
+      lagrangianContactSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
@@ -24,8 +24,8 @@
       name="fractureMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
-      targetRegions="{ Domain }"
-      fractureRegionName="Fracture"
+      targetRegions="{ Domain, Fracture }"
+      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       contactRelationName="fractureContact"/>  
 

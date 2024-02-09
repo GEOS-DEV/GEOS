@@ -7,8 +7,8 @@
       name="poroSolver"
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
-      LagrangianContactSolverName="fractureMechSolver"
-      poromechanicsSolverName="singlePhasePoromechanicsSolver"
+      flowSolverName="flowSolver"
+      lagrangianContactSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
@@ -19,30 +19,14 @@
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
-    <SinglePhasePoromechanics
-      name="singlePhasePoromechanicsSolver"
-      solidSolverName="matrixMechSolver"
-      flowSolverName="flowSolver"
-      logLevel="1"
-      targetRegions="{ Domain }">
-    </SinglePhasePoromechanics>
-
     <LagrangianContact
       name="fractureMechSolver"
-      solidSolverName="matrixMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
-      fractureRegionName="Fracture"
-      discretization="FE1"
-      contactRelationName="fractureContact"/>  
-
-    <SolidMechanics_LagrangianFEM
-      name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      logLevel="1"/>
+      contactRelationName="fractureContact"/>  
 
     <SinglePhaseFVM
       name="flowSolver"
