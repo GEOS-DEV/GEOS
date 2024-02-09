@@ -288,7 +288,31 @@ TEST( testTable, tableClass )
              "|  Cras egestas    |\n"
              "+------------------+\n"
              );
+
+  Table tableTest12( {
+    Table::ColumnParam{{"Cras egestas"}, Table::Alignment::middle},
+    Table::ColumnParam{{"CoordX"}, Table::Alignment::right},
+    Table::ColumnParam{{"C"}, Table::Alignment::middle},
+    Table::ColumnParam{{"CoordZ"}, Table::Alignment::left},
+    Table::ColumnParam{{"Prev\nelement"}, Table::Alignment::left},
+    Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
+  } );
+  tableTest12.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest12.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest12.draw( oss );
+  tableTestsOutput.push_back( oss.str() );
+  oss.str( "" );
+  EXPECT_EQ( tableTestsOutput[11],
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "|  Cras egestas  |  CoordX  |           C           |  CoordZ     |  Prev     |   Next    |\n"
+             "|                |          |                       |             |  element  |  element  |\n"
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "|     value1     |          |          3.0          |  3.0129877  |  2        |     1     |\n"
+             "|      val1      |       v  |  [3.045,42.02,89.25]  |  3          |  10       |     3     |\n"
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             );
 }
+
 
 int main( int argc, char * * argv )
 {
