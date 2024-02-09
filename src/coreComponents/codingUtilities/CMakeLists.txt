@@ -9,6 +9,7 @@ set( codingUtilities_headers
      UnitTestUtilities.hpp
      Utilities.hpp
      traits.hpp
+     Table.hpp
    )
 
 #
@@ -16,7 +17,8 @@ set( codingUtilities_headers
 #
 set( codingUtilities_sources
      Parsing.cpp
-     StringUtilities.cpp )
+     StringUtilities.cpp
+     Table.cpp )
 
 set( dependencyList ${parallelDeps} common fast_float )
 

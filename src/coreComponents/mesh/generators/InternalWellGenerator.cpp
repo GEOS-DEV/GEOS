@@ -24,6 +24,7 @@
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "codingUtilities/Table.hpp"
 
 namespace geos
 {
@@ -543,53 +544,64 @@ void InternalWellGenerator::debugWellGeometry() const
     return;
   }
 
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::commRank( MPI_COMM_GEOSX ) << std::endl << std::endl;
-  std::cout << "Number of well elements = " << m_numElems << std::endl;
+  std::vector< std::string > row;
+  std::ostringstream oss;
+  Table table = Table( {
+      Table::ColumnParam{{"Element no."}, Table::Alignment::right},
+      Table::ColumnParam{{"CoordX"}, Table::Alignment::middle},
+      Table::ColumnParam{{"CoordY"}, Table::Alignment::middle},
+      Table::ColumnParam{{"CoordZ"}, Table::Alignment::middle},
+      Table::ColumnParam{{"Prev\nElement"}, Table::Alignment::right},
+      Table::ColumnParam{{"Next\nElement"}, Table::Alignment::right},
+    }
+                       );
+
+  std::string titleName = "InternalWellGenerator " + getName();
+  table.setTitle( titleName );
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
-    std::cout << "Well element #" << iwelem << std::endl;
-    std::cout << "Coordinates of the element center: " << m_elemCenterCoords[iwelem] << std::endl;
-    if( m_nextElemId[iwelem] < 0 )
+    std::optional< globalIndex > nextElement;
+    std::optional< globalIndex > prevElement;
+
+    if( m_nextElemId[iwelem] >= 0 )
     {
-      std::cout << "No next well element" << std::endl;
+      nextElement =  m_nextElemId[iwelem];
     }
-    else
+
+    if( m_prevElemId[iwelem][0] >= 0 )
     {
-      std::cout << "Next well element # = " << m_nextElemId[iwelem] << std::endl;
+      prevElement =  m_prevElemId[iwelem][0];
     }
-    if( m_prevElemId[iwelem][0] < 0 )
-    {
-      std::cout << "No previous well element" << std::endl;
-    }
-    else
-    {
-      std::cout << "Previous well element #" << m_prevElemId[iwelem][0] << std::endl;
-    }
+
     for( globalIndex inode = 0; inode < m_numNodesPerElem; ++inode )
     {
       if( inode == 0 )
       {
-        std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
+          //std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
       }
       else
       {
-        std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
+        //std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
       }
     }
+    table.addRow< 6 >( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement,
+                       nextElement );
+
   }
+  table.draw( oss );
 
-  std::cout << std::endl << "Number of perforations = " << m_numPerforations << std::endl;
-
+  Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected toO" } );
+  std::string titlePerfo = "Peforation table ";
+  tablePerforation.setTitle( titlePerfo );
+  
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    std::cout << "Perforation #" << iperf << std::endl;
-    std::cout << "Coordinates of the perforation: " << m_perfCoords[iperf] << std::endl;
-    std::cout << "Is connected to well element #" << m_perfElemId[iperf] << std::endl;
+    tablePerforation.addRow< 3 >( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
+
+  tablePerforation.draw( oss );
+
   std::cout << std::endl;
 
 }
