@@ -268,8 +268,11 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.7.1-openblas0.3.10-zlib1.2.11
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/Sherlock-GPU
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.7.1-sm80.cmake
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.7.1-sm70.cmake
             RUNS_ON: Runner_4core_16GB
 
     uses: ./.github/workflows/build_and_test.yml
