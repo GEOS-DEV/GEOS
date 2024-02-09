@@ -8,7 +8,7 @@
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       flowSolverName="flowSolver"
-      lagrangianContactSolverName="fractureMechSolver"
+      solidSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"

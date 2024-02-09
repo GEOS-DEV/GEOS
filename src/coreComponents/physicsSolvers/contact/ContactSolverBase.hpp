@@ -56,7 +56,7 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
-  void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
+  //void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
@@ -89,7 +89,7 @@ protected:
   std::vector< string > m_fractureRegionNames;
 
   ///
-  bool m_setupSolidSolverDofs;
+  //bool m_setupSolidSolverDofs;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

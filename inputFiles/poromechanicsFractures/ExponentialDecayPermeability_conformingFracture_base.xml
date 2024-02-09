@@ -6,7 +6,7 @@
     <SinglePhasePoromechanicsConformingFractures
       name="poroSolver"
       flowSolverName="flowSolver"
-      lagrangianContactSolverName="fractureMechSolver"
+      solidSolverName="fractureMechSolver"
       initialDt="1e-3"
       logLevel="1"
       targetRegions="{ Domain, Fracture }">

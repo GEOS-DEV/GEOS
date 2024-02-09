@@ -40,8 +40,8 @@ using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
-  SolidMechanicsLagrangianFEM( name, parent ),
-  m_setupSolidSolverDofs( true )
+  SolidMechanicsLagrangianFEM( name, parent )//,
+  //m_setupSolidSolverDofs( true )
 {}
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -182,7 +182,7 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  if( m_setupSolidSolverDofs )
+  //if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::applyBoundaryConditions( time,
                                                           dt,

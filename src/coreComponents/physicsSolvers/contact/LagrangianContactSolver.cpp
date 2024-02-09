@@ -203,7 +203,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
                                                     real64 const & dt,
                                                     DomainPartition & domain )
 {
-  if( m_setupSolidSolverDofs )
+  //if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
   }
@@ -499,7 +499,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  if( m_setupSolidSolverDofs )
+  //if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
   }
@@ -1684,7 +1684,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 {
   GEOS_MARK_FUNCTION;
 
-  if( m_setupSolidSolverDofs )
+  //if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
