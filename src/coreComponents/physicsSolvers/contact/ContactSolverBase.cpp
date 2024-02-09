@@ -86,11 +86,11 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
                                                     MeshLevel const & mesh,
                                                     arrayView1d< string const > const & regionNames )
   {
-    mesh.getElemManager().forElementRegions< SurfaceElementRegion > ( regionNames, [&] ( localIndex const , SurfaceElementRegion const & region )
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames, [&] ( localIndex const, SurfaceElementRegion const & region )
     {
       m_fractureRegionNames.push_back( region.getName() );
     } );
-  });
+  } );
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,

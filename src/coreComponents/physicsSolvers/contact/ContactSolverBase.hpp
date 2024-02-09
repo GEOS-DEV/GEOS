@@ -81,7 +81,7 @@ protected:
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
-  void setFractureRegions(  dataRepository::Group const & domain ); 
+  void setFractureRegions( dataRepository::Group const & domain );
 
   /// contact relation name string
   string m_contactRelationName;

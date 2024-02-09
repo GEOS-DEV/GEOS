@@ -765,7 +765,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView2d< real64 const > const & dispJump = subRegion.getField< fields::contact::dispJump >();
       arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
-      
+
       string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 

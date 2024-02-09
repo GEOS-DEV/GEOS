@@ -71,7 +71,7 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR(domain, dofManager);
+  GEOS_UNUSED_VAR( domain, dofManager );
 
 //  /// We need to add 2 coupling terms:
 //  // 1. Poroemechanical coupling in the bulk

@@ -1039,7 +1039,7 @@ void LagrangianContactSolver::
 
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-  
+
   elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
