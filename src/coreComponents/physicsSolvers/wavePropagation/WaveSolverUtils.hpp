@@ -370,10 +370,11 @@ struct WaveSolverUtils
                                         arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    real64 xLocal[FE_TYPE::numNodes][3]{};
-    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
+    // only the eight corners of the mesh cell are needed to compute the Jacobian
+    real64 xLocal[8][3]{};
+    for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
