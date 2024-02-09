@@ -126,7 +126,7 @@ public:
 
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
-    constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
+    //constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
 
     constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
   };

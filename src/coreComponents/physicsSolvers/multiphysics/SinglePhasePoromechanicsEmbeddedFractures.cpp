@@ -38,21 +38,16 @@ using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
-  SinglePhasePoromechanics( name, parent )//,
-  //m_fracturesSolverName()
+  SinglePhasePoromechanics( name, parent )
 {
-//  registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
-//    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-//    setInputFlag( InputFlags::REQUIRED ).
-//    setDescription( "Name of the fractures solver to use in the fractured poroelastic solver" );
+//  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+//    setInputFlag( InputFlags::FALSE );
 
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
-
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  m_linearSolverParameters.get().mgr.separateComponents = false;
-  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  m_linearSolverParameters.get().dofsPerNode = 3;
+  LinearSolverParameters & params = m_linearSolverParameters.get();
+  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
+  params.mgr.separateComponents = false;
+  params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  params.dofsPerNode = 3;
 }
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
@@ -69,8 +64,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 {
   SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
 
-  using namespace fields::contact;
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & regionNames )
@@ -79,7 +72,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const,
                                                                                      EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerField< dTraction_dPressure >( getName() );
+      subRegion.registerField< fields::contact::dTraction_dPressure >( getName() );
     } );
   } );
 }
@@ -572,7 +565,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 const > const & pressure =
         subRegion.template getField< fields::flow::pressure >();
 
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, solidMechanicsSolver()->getContactRelationName() );
+              string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
+              ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
 
