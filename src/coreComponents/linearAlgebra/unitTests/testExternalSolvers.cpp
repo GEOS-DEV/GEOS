@@ -166,10 +166,12 @@ TYPED_TEST_P( SolverTestLaplace2D, DirectSerial )
   this->test( params );
 }
 
+#if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TYPED_TEST_P( SolverTestLaplace2D, DirectParallel )
 {
   this->test( params_DirectParallel() );
 }
+#endif
 
 TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
 {
@@ -188,7 +190,9 @@ TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
 
 REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              DirectSerial,
+#if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
                              DirectParallel,
+#endif
                              GMRES_ILU,
                              CG_SGS,
                              CG_AMG );
@@ -233,10 +237,12 @@ TYPED_TEST_P( SolverTestElasticity2D, DirectSerial )
   this->test( params_DirectSerial() );
 }
 
+#if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 TYPED_TEST_P( SolverTestElasticity2D, DirectParallel )
 {
   this->test( params_DirectParallel() );
 }
+#endif
 
 TYPED_TEST_P( SolverTestElasticity2D, GMRES_AMG )
 {
@@ -248,7 +254,9 @@ TYPED_TEST_P( SolverTestElasticity2D, GMRES_AMG )
 
 REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
                              DirectSerial,
+#if !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
                              DirectParallel,
+#endif
                              GMRES_AMG );
 
 #ifdef GEOSX_USE_TRILINOS
