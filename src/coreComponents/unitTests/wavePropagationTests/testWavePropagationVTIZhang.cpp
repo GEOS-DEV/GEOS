@@ -164,13 +164,6 @@ char const * xmlInput =
         scale="0.1"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellSigma"
-        initialCondition="1"
-        objectPath="ElementRegions/Region/cb"
-        fieldName="acousticSigma"
-        scale="0.75"
-        setNames="{ all }"/>
-      <FieldSpecification
         name="zposFreeSurface"
         objectPath="faceManager"
         fieldName="acousticFreeSurface"
