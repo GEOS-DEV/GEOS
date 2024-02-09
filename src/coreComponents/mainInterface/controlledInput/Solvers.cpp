@@ -4,9 +4,6 @@
 
 #include "Misc.hpp"
 
-#include "common/DataTypes.hpp"
-
-
 namespace geos::input::solvers
 {
 
@@ -34,7 +31,7 @@ public:
       m_variable( variable )
   { }
 
-  void fillProblemXmlNode( xml_node & problemNode ) const override
+  void fillProblemXmlNode( xml_node & problemNode, std::vector< string > const & defaultDomains = {} ) const override
   {
     xml_node solvers = problemNode.select_node( "Solvers" ).node();
     xml_node laplaceFem = solvers.append_child( "LaplaceFEM" );
@@ -43,7 +40,7 @@ public:
     string const feSpaceName = "FE" + std::to_string( m_variable.fe_order );
     laplaceFem.append_attribute( "discretization" ) = feSpaceName.c_str();
     laplaceFem.append_attribute( "fieldName" ) = m_variable.name.c_str();
-    laplaceFem.append_attribute( "targetRegions" ) = createGeosArray( m_on ).c_str();
+    laplaceFem.append_attribute( "targetRegions" ) = createGeosArray( m_on.empty() ? defaultDomains : m_on ).c_str();
 
     xml_node events = problemNode.select_node( "Events" ).node();
     events::PeriodicEvent pe = events::PeriodicEvent( "/Solvers/" + solverName );
@@ -88,7 +85,7 @@ void operator>>( const YAML::Node & node,
     if( solverType == "laplace" )
     {
       NamedVariable nv;
-      std::vector< string > on = subNode["on"].as< std::vector< string >>( std::vector< string >{ "Domain" } );
+      std::vector< string > on = subNode["on"].as< std::vector< string > >( std::vector< string >{} );
       subNode["formulation"]["variable"] >> nv;
 
       solvers.push_back( std::make_shared< Laplace >( nv, on ) );

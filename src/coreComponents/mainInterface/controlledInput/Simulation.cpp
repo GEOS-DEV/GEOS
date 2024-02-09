@@ -27,14 +27,14 @@ void Simulation::setNumericalStrategy( std::shared_ptr< numericalStrategies::Num
   m_ns = ns;
 }
 
-void Simulation::fillProblemXmlNode( xml_node & problemNode ) const
+void Simulation::fillProblemXmlNode( xml_node & problemNode, std::vector< string > const & defaultDomains ) const
 {
   xml_node eventsNode = problemNode.select_node( "Events" ).node();
   fillEventsXmlNode( eventsNode );
 
   for( auto const & solver: m_solvers )
   {
-    solver->fillProblemXmlNode( problemNode );
+    solver->fillProblemXmlNode( problemNode, defaultDomains );
   }
 
   m_ns->fillProblemXmlNode( problemNode );

@@ -24,7 +24,7 @@ public:
 
   void setNumericalStrategy( std::shared_ptr< numericalStrategies::NumericalStrategies > ns );
 
-  void fillProblemXmlNode( pugi::xml_node & problemNode ) const;
+  void fillProblemXmlNode( pugi::xml_node & problemNode, std::vector< string > const & defaultDomains ) const;
 
 private:
 

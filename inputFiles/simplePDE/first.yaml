@@ -106,7 +106,7 @@ num_strategies:
     type: direct
 
 
-solver:-
+solver:
   laplace:
     formulation:
       - variable:

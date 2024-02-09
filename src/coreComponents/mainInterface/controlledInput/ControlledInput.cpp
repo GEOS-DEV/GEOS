@@ -57,13 +57,14 @@ public:
   {
     problemNode.append_child( "Constitutive" );
     xml_node xmlEvents = problemNode.append_child( "Events" );
-    xml_node xmlMesh = problemNode.append_child( "Mesh" );
+    problemNode.append_child( "Mesh" );
     problemNode.append_child( "NumericalMethods" );
     xml_node xmlOutputs = problemNode.append_child( "Outputs" );
     problemNode.append_child( "Solvers" );
     xml_node fieldSpecifications = problemNode.append_child( "FieldSpecifications" );
+    problemNode.append_child( "ElementRegions" );
 
-    m_simulation.fillProblemXmlNode( problemNode );
+    m_simulation.fillProblemXmlNode( problemNode, m_mesh->getDomains() );
 
     for( std::shared_ptr< outputs::Output > output: m_outputs )
     {
@@ -74,8 +75,7 @@ public:
       }
     }
 
-    // Create and populate the mesh node
-    m_mesh->fillMeshXmlNode( xmlMesh );
+    m_mesh->fillProblemXmlNode( problemNode );
 
     // Add name to all the events.
     int iEvent = 0;
@@ -159,17 +159,12 @@ void operator>>( const YAML::Node & node,
 
 void fillWithMissingXmlInfo( xml_node & problem )
 {
-  xml_node cesr = problem.append_child( "ElementRegions" ).append_child( "CellElementRegion" );
-  cesr.append_attribute( "name" ) = "Domain";
-  cesr.append_attribute( "cellBlocks" ) = "{ cb1 }";
-  cesr.append_attribute( "materialList" ) = "{ nullModel }";
+  problem.select_node("ElementRegions/CellElementRegion").node().append_attribute( "materialList" ) = "{ nullModel }";
 }
 
 void convert( string const & stableInputFileName,
               xmlWrapper::xmlDocument & doc )
 {
-//  xml_document & pugiDoc = doc.getPugiDocument();
-//  pugiDoc.select_node( "/Problem/Events" );
   xml_node problem = doc.appendChild( "Problem" );
 
   YAML::Node const input = YAML::LoadFile( stableInputFileName );

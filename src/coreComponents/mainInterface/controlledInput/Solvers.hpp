@@ -1,6 +1,8 @@
 #ifndef GEOS_INPUT_SOLVERS_HPP
 #define GEOS_INPUT_SOLVERS_HPP
 
+#include "common/DataTypes.hpp"
+
 #include <yaml-cpp/yaml.h>
 
 #include <pugixml.hpp>
@@ -16,7 +18,7 @@ class Solver
 public:
   virtual ~Solver() = default;
 
-  virtual void fillProblemXmlNode( pugi::xml_node & problemNode ) const = 0;
+  virtual void fillProblemXmlNode( pugi::xml_node & problemNode, std::vector< string > const & defaultDomains ) const = 0;
 };
 
 void operator>>( const YAML::Node & node,

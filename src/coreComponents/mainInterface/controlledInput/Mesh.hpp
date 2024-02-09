@@ -1,6 +1,8 @@
 #ifndef GEOS_INPUT_MESH_HPP
 #define GEOS_INPUT_MESH_HPP
 
+#include "common/DataTypes.hpp"
+
 #include <pugixml.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -14,7 +16,9 @@ class Mesh
 public:
   virtual ~Mesh() = default;
 
-  virtual void fillMeshXmlNode( pugi::xml_node & meshNode ) const = 0;
+  virtual std::vector< string > getDomains() const = 0;
+
+  virtual void fillProblemXmlNode( pugi::xml_node & problemNode ) const = 0;
 };
 
 void operator>>( const YAML::Node & node,

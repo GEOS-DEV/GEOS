@@ -1,8 +1,6 @@
 #include "Mesh.hpp"
 #include "Misc.hpp"
 
-#include "common/DataTypes.hpp"
-
 namespace geos::input::meshes
 {
 
@@ -24,11 +22,18 @@ public:
       m_zRange( zRange ),
       m_nx( nx ),
       m_ny( ny ),
-      m_nz( nz )
+      m_nz( nz ),
+      m_domains( { "Domain" } )
   { }
 
-  void fillMeshXmlNode( xml_node & meshNode ) const override
+  std::vector< string > getDomains() const override
   {
+    return m_domains;
+  }
+
+  void fillProblemXmlNode( pugi::xml_node & problemNode ) const override
+  {
+    xml_node meshNode = problemNode.select_node( "Mesh" ).node();
     xml_node internal = meshNode.append_child( "InternalMesh" );
     internal.append_attribute( "name" ) = "__internal_mesh";
     internal.append_attribute( "elementTypes" ) = ( "{ " + convertYamlElementTypeToGeosElementType( m_elementType ) + " }" ).c_str();
@@ -38,7 +43,13 @@ public:
     internal.append_attribute( "nx" ) = createGeosArray( m_nx ).c_str();
     internal.append_attribute( "ny" ) = createGeosArray( m_ny ).c_str();
     internal.append_attribute( "nz" ) = createGeosArray( m_nz ).c_str();
+
+    // TODO we assume that no region is created -> we create a unique one on the fly.
     internal.append_attribute( "cellBlockNames" ) = "{ cb1 }";  // TODO Improve the cell block mgmt!
+    xml_node er = problemNode.select_node( "ElementRegions" ).node();
+    xml_node cer = er.append_child( "CellElementRegion" );
+    cer.append_attribute( "name" ) = m_domains.front().c_str(); // TODO assert unique
+    cer.append_attribute( "cellBlocks" ) = "{ cb1 }"; // TODO duplicated
   }
 
 private:
@@ -49,6 +60,7 @@ private:
   std::vector< string > m_nx;
   std::vector< string > m_ny;
   std::vector< string > m_nz;
+  std::vector< string > m_domains;
 };
 
 void operator>>( const YAML::Node & node,

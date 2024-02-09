@@ -12,6 +12,25 @@ simulation:
     linear_solver:
       type: serial_direct
 
+mesh:
+  internal:
+    element_type: hexahedra
+    x_range: [ 0, 0.5, 1 ]
+    y_range: [ 0, 0.4, 1 ]
+    z_range: [ 0, 0.7, 1 ]
+    nx: [ 5, 5 ]
+    ny: [ 5, 5 ]
+    nz: [ 5, 5 ]
+  surfaces:
+    - box:
+        name: hot
+        min: [ -0.01, -0.01, -0.01 ]
+        max: [ 0.01,  1.01,  1.01 ]
+    - box:
+        name: cold
+        min: [ 0.99, -0.01, -0.01 ]
+        max: [ 1.01, 1.01, 1.01 ]
+
 boundary_conditions:
   - cold:
       - field: temperature
@@ -26,24 +45,6 @@ functions:
       x: [ 0.0, 1.0, 2.0 ]
       y: [ 0.0, 3.e2, 4.e3 ]
 
-mesh:
-  internal:
-    element_type: hexahedra
-    x_range: [ 0, 1 ]
-    y_range: [ 0, 1 ]
-    z_range: [ 0, 1 ]
-    nx: [ 10 ]
-    ny: [ 10 ]
-    nz: [ 10 ]
-  surfaces:
-    - box:
-        name: hot
-        min: [ -0.01, -0.01, -0.01 ]
-        max: [ 0.01,  1.01,  1.01 ]
-    - box:
-        name: cold
-        min: [ 0.99, -0.01, -0.01 ]
-        max: [ 1.01, 1.01, 1.01 ]
 
 outputs:
   - vtk:
