@@ -22,6 +22,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {
@@ -200,7 +201,10 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
-                           contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
+                           contextName,
+                           const_cast< typename std::remove_const< KEY & >::type >( option ),
+                           optionName,
+                           stringutilities::join( mapKeys( map ), ", " ) ),
                  InputError );
   return iter->second;
 }
@@ -309,6 +313,7 @@ std::underlying_type_t< ENUMERATION > * toUnderlyingPtr( ENUMERATION * const enu
  */
 template< typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void copy( integer const N,
            VEC1 const & v1,
            VEC2 const & v2,
@@ -333,6 +338,7 @@ void copy( integer const N,
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
@@ -363,6 +369,7 @@ void applyChainRule( integer const N,
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,
@@ -386,6 +393,76 @@ struct NoOpFunc
   operator()( Ts && ... ) const {}
 };
 
+template< typename FLAGS_ENUM >
+struct BitFlags
+{
+  GEOS_HOST_DEVICE
+  void set( FLAGS_ENUM flag )
+  {
+    m_FlagValue |= (integer)flag;
+  }
+
+  GEOS_HOST_DEVICE
+  bool isSet( FLAGS_ENUM flag ) const
+  {
+    return (m_FlagValue & (integer)flag) == (integer)flag;
+  }
+
+private:
+
+  using FlagsType = std::underlying_type_t< FLAGS_ENUM >;
+  FlagsType m_FlagValue{};
+
+};
+
+// Temporary functions (axpy, scale, dot) used in Aitken's acceleration. Will be removed once the nonlinear
+// acceleration implementation scheme will use LAI vectors. See issue #2891
+// (https://github.com/GEOS-DEV/GEOS/issues/2891)
+
+template< typename VECTOR_TYPE, typename SCALAR_TYPE >
+VECTOR_TYPE axpy( VECTOR_TYPE const & vec1,
+                  VECTOR_TYPE const & vec2,
+                  SCALAR_TYPE const alpha )
+{
+  GEOS_ASSERT( vec1.size() == vec2.size() );
+  const localIndex N = vec1.size();
+  VECTOR_TYPE result( N );
+  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
+                                      [&] GEOS_HOST ( localIndex const i )
+    {
+      result[i] = vec1[i] + alpha * vec2[i];
+    } );
+  return result;
+}
+
+template< typename VECTOR_TYPE, typename SCALAR_TYPE >
+VECTOR_TYPE scale( VECTOR_TYPE const & vec,
+                   SCALAR_TYPE const scalarMult )
+{
+  const localIndex N = vec.size();
+  VECTOR_TYPE result( N );
+  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
+                                      [&] GEOS_HOST ( localIndex const i )
+    {
+      result[i] = scalarMult * vec[i];
+    } );
+  return result;
+}
+
+template< typename VECTOR_TYPE >
+real64 dot( VECTOR_TYPE const & vec1,
+            VECTOR_TYPE const & vec2 )
+{
+  GEOS_ASSERT( vec1.size() == vec2.size());
+  RAJA::ReduceSum< parallelHostReduce, real64 > result( 0.0 );
+  const localIndex N = vec1.size();
+  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
+                                      [&] GEOS_HOST ( localIndex const i )
+    {
+      result += vec1[i] * vec2[i];
+    } );
+  return result.get();
+}
 
 } // namespace geos
 

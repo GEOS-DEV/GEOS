@@ -4,11 +4,7 @@
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList finiteElement finiteVolume )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${parallelDeps} finiteVolume )
 
 #
 # Specify all sources
@@ -26,4 +22,3 @@ blt_add_library( NAME       discretizationMethods
 
 target_include_directories( discretizationMethods PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX discretizationMethods )

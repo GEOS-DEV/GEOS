@@ -22,6 +22,9 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+
 
 namespace geos
 {
@@ -100,6 +103,17 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
+
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
@@ -125,6 +139,21 @@ public:
                                   arrayView1d< real64 > const & localRhs );
 
   /**
+   * @brief assembles the accumulation terms for all cells of a spcefici subRegion.
+   * @tparam SUBREGION_TYPE the subRegion type
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param subRegion the subRegion
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   *
+   */
+  template< typename SUBREGION_TYPE >
+  void accumulationAssemblyLaunch( DofManager const & dofManager,
+                                   SUBREGION_TYPE const & subRegion,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
+
+  /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value
    * @param dt time step
@@ -134,8 +163,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  assembleFluxTerms( real64 const time_n,
-                     real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -152,13 +180,13 @@ public:
    * @param jumpDofKey dofKey of the displacement jump
    */
   virtual void
-  assemblePoroelasticFluxTerms( real64 const time_n,
-                                real64 const dt,
-                                DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs,
-                                string const & jumpDofKey ) = 0;
+  assembleEDFMFluxTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         string const & jumpDofKey ) = 0;
 
   /**
    * @brief assembles the flux terms for all cells for the hydrofracture case
@@ -264,6 +292,12 @@ public:
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update thermal conductivity
+   * @param subRegion the group storing the required fields
+   */
+  void updateThermalConductivity( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
@@ -367,6 +401,47 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
+
+template< typename SUBREGION_TYPE >
+void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
+                                                  SUBREGION_TYPE const & subRegion,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
+{
+  geos::constitutive::SingleFluidBase const & fluid =
+    getConstitutiveModel< geos::constitutive::SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
+  geos::constitutive::CoupledSolidBase const & solid =
+    getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  if( m_isThermal )
+  {
+    thermalSinglePhaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                 dofKey,
+                                                 subRegion,
+                                                 fluid,
+                                                 solid,
+                                                 localMatrix,
+                                                 localRhs );
+  }
+  else
+  {
+    singlePhaseBaseKernels::
+      ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                 dofKey,
+                                                 subRegion,
+                                                 fluid,
+                                                 solid,
+                                                 localMatrix,
+                                                 localRhs );
+  }
+}
 
 } /* namespace geos */
 

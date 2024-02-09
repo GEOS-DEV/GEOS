@@ -17,6 +17,9 @@
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #cmakedefine GEOSX_USE_CALIPER
 
+/// Enables use of Caliper (CMake option ENABLE_ADIAK)
+#cmakedefine GEOSX_USE_ADIAK
+
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #cmakedefine GEOSX_USE_CHAI
 
@@ -30,10 +33,16 @@
 #cmakedefine GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#cmakedefine GEOSX_USE_CUDA
+#cmakedefine GEOS_USE_CUDA
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
-#cmakedefine GEOSX_USE_CUDA_NVTOOLSEXT
+#cmakedefine GEOS_USE_CUDA_NVTOOLSEXT
+
+/// Enables use of HIP (CMake option ENABLE_HIP)
+#cmakedefine GEOS_USE_HIP
+
+/// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
+#cmakedefine GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #cmakedefine GEOSX_USE_PVTPackage
@@ -59,8 +68,17 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
-/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
-#cmakedefine GEOSX_USE_HYPRE_CUDA
+/// Denotes HYPRE using CPU
+#define GEOS_USE_HYPRE_CPU 0
+/// Denotes HYPRE using CUDA
+#define GEOS_USE_HYPRE_CUDA 1
+/// Denotes HYPRE using HIP
+#define GEOS_USE_HYPRE_HIP 2
+/// Macro determining what parellel interface hypre is using
+#cmakedefine GEOS_USE_HYPRE_DEVICE @GEOS_USE_HYPRE_DEVICE@
+
+/// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
+#cmakedefine GEOSX_USE_SUPERLU_DIST
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
@@ -98,6 +116,9 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
 
+/// The default block size for GEOSX on this platform
+#cmakedefine GEOSX_BLOCK_SIZE @GEOSX_BLOCK_SIZE@
+
 /// Version information for HDF5
 #cmakedefine HDF5_VERSION @HDF5_VERSION@
 
@@ -120,12 +141,12 @@
 #cmakedefine caliper_VERSION @caliper_VERSION@
 
 /// Version information for Metis
-#cmakedefine METIS_VERSION @METIS_VERSION@
+#cmakedefine metis_VERSION @metis_VERSION@
 
 /// Version information for ParMetis
-#cmakedefine PARAMETIS_VERSION @PARAMETIS_VERSION@
+#cmakedefine parmetis_VERSION @parmetis_VERSION@
 
-/// Version information for scotch 
+/// Version information for scotch
 #cmakedefine scotch_VERSION @scotch_VERSION@
 
 /// Version information for superlu_dist
@@ -133,6 +154,15 @@
 
 /// Version information for suitesparse
 #cmakedefine suitesparse_VERSION @suitesparse_VERSION@
+
+/// Version information for hypre
+#cmakedefine hypre_VERSION @hypre_VERSION@
+
+/// Version information for trilinos
+#cmakedefine trilinos_VERSION @trilinos_VERSION@
+
+/// Version information for petsc
+#cmakedefine petsc_VERSION @petsc_VERSION@
 
 /// Version information for VTK
 #cmakedefine VTK_VERSION @VTK_VERSION@
@@ -146,6 +176,13 @@
 /// Version information for CUDAToolkit
 #cmakedefine CUDAToolkit_VERSION @CUDAToolkit_VERSION@
 
+#if defined(GEOS_USE_CUDA) || defined(GEOS_USE_HIP)
+// This needs to be placed into this header in order to appropriately replace
+//  the old usage of GEOS_USE_CUDA, since we detect whether it is defined
+//  rather than a value, not having it in the *same* header can cauase nebulous
+//  compilation problems including the USD of arrays changing depending the scope
+#define GEOS_USE_DEVICE
+#endif
 
 #endif  /* GEOS_CONFIG_HPP */
 

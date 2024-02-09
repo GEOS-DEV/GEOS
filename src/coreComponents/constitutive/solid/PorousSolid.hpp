@@ -20,7 +20,6 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 
-#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -57,11 +56,17 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
+                                                      real64 const & pressure_k,
                                                       real64 const & pressure_n,
                                                       real64 const & temperature,
+                                                      real64 const & temperature_k,
                                                       real64 const & temperature_n ) const override final
   {
-    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, pressure_n, temperature, temperature_n );
+    updateBiotCoefficientAndAssignBulkModulus( k );
+
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q,
+                                                       pressure, pressure_k, pressure_n,
+                                                       temperature, temperature_k, temperature_n );
   }
 
   GEOS_HOST_DEVICE
@@ -127,8 +132,8 @@ public:
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
   {
-    real64 dTotalStress_dPressure[6];
-    real64 dTotalStress_dTemperature[6];
+    real64 dTotalStress_dPressure[6]{};
+    real64 dTotalStress_dTemperature[6]{};
 
     // Compute total stress increment and its derivative
     computeTotalStress( k,
@@ -142,22 +147,15 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
-    // Compute porosity
-    real64 const deltaPressure    = pressure - pressure_n;
-    real64 const deltaTemperature = temperature - temperature_n;
-
-
+    // Compute total stress increment for the porosity update
+    GEOS_UNUSED_VAR( pressure_n, temperature_n );
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-
-    real64 const effectiveMeanStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-
-    real64 const totalMeanStressIncrement = effectiveMeanStressIncrement - biotCoefficient * deltaPressure - 3 * thermalExpansionCoefficient * bulkModulus * deltaTemperature;
-
-    m_porosityUpdate.updateTotalMeanStressIncrement( k, q, totalMeanStressIncrement );
-
-    // The body force is calculated in the SolidMechanics kernel and the fluid contribution is neglected here
+    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
+                                            - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
+    m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
   }
 
   /**
@@ -172,9 +170,36 @@ public:
    * @param stiffness the stiffness array
    */
   GEOS_HOST_DEVICE
+  inline
   void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
+  }
+
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @param [in] k the element number
+   * @param [out] biotCefficient the biot-coefficient
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getBiotCoefficient( localIndex const k, real64 & biotCoefficient ) const
+  {
+    biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+  }
+
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @param [in] k the element number
+   * @param [out] thermalExpansionCoefficient the thermal expansion coefficient
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getThermalExpansionCoefficient( localIndex const k, real64 & thermalExpansionCoefficient ) const
+  {
+    thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
   }
 
 private:
@@ -185,12 +210,13 @@ private:
 
 
   GEOS_HOST_DEVICE
-  void updateBiotCoefficient( localIndex const k ) const
+  inline
+  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignBulkModulus( k, bulkModulus );
   }
 
   GEOS_HOST_DEVICE
@@ -229,6 +255,7 @@ private:
   }
 
   GEOS_HOST_DEVICE
+  inline
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & pressure,
@@ -248,7 +275,7 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    updateBiotCoefficient( k );
+    updateBiotCoefficientAndAssignBulkModulus( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
@@ -310,7 +337,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
@@ -347,6 +374,25 @@ public:
   {
     return getPorosityModel().getBiotCoefficient();
   }
+
+  /**
+   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getMeanStressIncrement_k() const
+  {
+    return getPorosityModel().getMeanStressIncrement_k();
+  }
+
+  /**
+   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView1d< real64 > const getAverageMeanStressIncrement_k()
+  {
+    return getPorosityModel().getAverageMeanStressIncrement_k();
+  }
+
 
 private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;

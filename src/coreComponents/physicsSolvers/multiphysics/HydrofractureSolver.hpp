@@ -20,30 +20,42 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class HydrofractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                  SinglePhaseBase >
+using dataRepository::Group;
+
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics< SinglePhaseBase > >
+class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = POROMECHANICS_SOLVER;
   using Base::m_solvers;
+  using Base::m_names;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_linearSolverParameters;
 
-  enum class SolverType : integer
-  {
-    SolidMechanics = 0,
-    Flow = 1
-  };
+  using Base::registerWrapper;
+  using Base::forDiscretizationOnMeshTargets;
+  using Base::getMeshModificationTimestamp;
+  using Base::getSystemSetupTimestamp;
+  using Base::nonlinearImplicitStep;
+  using Base::implicitStepComplete;
+  using Base::getLogLevel;
+  using Base::setSystemSetupTimestamp;
+  using Base::setupDofs;
+  using Base::flowSolver;
+  using Base::solidMechanicsSolver;
+  using Base::assembleElementBasedTerms;
+
 
   /**
    * @brief main constructor for HydrofractureSolver objects
@@ -56,32 +68,14 @@ public:
   /// Destructor for the class
   ~HydrofractureSolver() override {}
 
+  static string catalogName();
   /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new HydrofractureSolver object through the object catalog.
+   * @copydoc SolverBase::getCatalogName()
    */
-  static string catalogName()
-  {
-    return "Hydrofracture";
-  }
+  string getCatalogName() const override { return catalogName(); }
 
-  /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
-   */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
-   */
-  SinglePhaseBase * flowSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
-  }
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -93,7 +87,7 @@ public:
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override;
+                              DofManager & dofManager ) const override final;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -120,7 +114,7 @@ public:
 
   /**@}*/
 
-  void updateDeformationForCoupling( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -134,12 +128,12 @@ public:
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
@@ -150,9 +144,10 @@ public:
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
+
+    constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
+
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -163,8 +158,6 @@ public:
 protected:
 
   virtual void postProcessInput() override final;
-
-  virtual void initializePreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -209,13 +202,13 @@ private:
   /// pointer to the surface generator
   SurfaceGenerator * m_surfaceGenerator;
 
-  std::unique_ptr< ParallelMatrix > m_blockDiagUU;
-
   // it is only important for this case.
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
+
+  integer m_isMatrixPoroelastic;
 
 };
 

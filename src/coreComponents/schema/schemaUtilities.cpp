@@ -52,8 +52,8 @@ void ConvertDocumentationToSchema( string const & fname,
   </xsd:schema>";
 
   xmlWrapper::xmlDocument schemaTree;
-  schemaTree.load_string( schemaBase.c_str());
-  xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
+  schemaTree.loadString( schemaBase );
+  xmlWrapper::xmlNode schemaRoot = schemaTree.getChild( "xsd:schema" );
 
   // Build the simple schema types
   GEOS_LOG_RANK_0( "  Basic datatypes" );
@@ -65,9 +65,22 @@ void ConvertDocumentationToSchema( string const & fname,
 
   // Write the schema to file
   GEOS_LOG_RANK_0( "  Saving file" );
-  schemaTree.save_file( fname.c_str());
+  schemaTree.saveFile( fname );
 
   GEOS_LOG_RANK_0( "  Done!" );
+}
+
+string getSchemaTypeName( string_view rtTypeName )
+{
+  string const sanitizedName = std::regex_replace( string( rtTypeName ), std::regex( "::" ), "_" );
+
+  // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
+  auto constexpr typeMergingRegex = "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?";
+  string const xmlSafeName = std::regex_replace( sanitizedName,
+                                                 std::regex( typeMergingRegex ),
+                                                 "string" );
+
+  return xmlSafeName;
 }
 
 void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
@@ -97,10 +110,10 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
 
 void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
-  rtTypes::typeRegex typeRegex;
-  for( auto const & regex : typeRegex )
+  auto const regexes = rtTypes::createBasicTypesRegexMap();
+  for( auto const & [typeName, regex] : regexes )
   {
-    AppendSimpleType( schemaRoot, regex.first, regex.second );
+    AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
 
@@ -176,7 +189,8 @@ void SchemaConstruction( Group & group,
             // Enforce uniqueness of element names
             // Note: this must be done at the parent element level
             xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
-            string uniqueNameNodeStr = targetName + subName + "UniqueName";
+            string path = std::regex_replace( group.getPath(), std::regex( "/" ), "" );
+            string uniqueNameNodeStr =  path + subName + "UniqueName";
             uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
             xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
             uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
@@ -232,7 +246,7 @@ void SchemaConstruction( Group & group,
               commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
             commentNode.set_value( commentString.c_str());
 
 
@@ -241,23 +255,18 @@ void SchemaConstruction( Group & group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
-            string const sanitizedName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
-
-            // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
-            string const xmlSafeName = std::regex_replace( sanitizedName, std::regex( "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?" ), "string" );
-            GEOS_LOG_VAR( wrappedTypeName );
-            GEOS_LOG_VAR( xmlSafeName );
-            attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
+            string const schemaTypeName = getSchemaTypeName( wrapper.getRTTypeName() );
+            GEOS_LOG_VAR( schemaTypeName );
+            attributeNode.append_attribute( "type" ) = schemaTypeName.c_str();
 
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
-            if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
+            if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", schemaTypeName.c_str() ).empty() )
             {
-              string const regex = wrapper.typeRegex();
+              string const & regex = wrapper.getTypeRegex().m_regexStr;
               if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex
-                AppendSimpleType( schemaRoot, xmlSafeName, regex );
+                AppendSimpleType( schemaRoot, schemaTypeName, regex );
               }
             }
 
@@ -288,12 +297,13 @@ void SchemaConstruction( Group & group,
         // Only add this attribute if not present
         if( targetTypeDefNode.find_child_by_attribute( "xsd:attribute", "name", "name" ).empty())
         {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
           commentNode.set_value( "name => A name is required for any non-unique nodes" );
 
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
+          string const schemaTypeName = getSchemaTypeName( rtTypes::CustomTypes::groupName );
           attributeNode.append_attribute( "name" ) = "name";
-          attributeNode.append_attribute( "type" ) = "string";
+          attributeNode.append_attribute( "type" ) = schemaTypeName.c_str();
           attributeNode.append_attribute( "use" ) = "required";
         }
       }

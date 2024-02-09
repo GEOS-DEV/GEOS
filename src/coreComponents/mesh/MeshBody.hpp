@@ -20,7 +20,7 @@
 #define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-
+#include "dataRepository/KeyNames.hpp"
 
 namespace geos
 {
@@ -167,6 +167,38 @@ public:
   }
 
   /**
+   * @brief Get whether meshbody has particles
+   * @return whether meshbody has particles
+   */
+  bool hasParticles() const
+  {
+    return m_hasParticles;
+  }
+
+  /**
+   * @brief Set whether meshbody has particles
+   * @param hasParticles Boolean indicating whether the meshbody has particles
+   */
+  void setHasParticles( bool hasParticles );
+
+  /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
+  CellBlockManagerABC const & getCellBlockManager() const
+  {
+    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterCellBlockManager()
+  {
+    this->deregisterGroup( dataRepository::keys::cellManager );
+  }
+
+  /**
    * @brief Data repository keys
    */
   struct viewKeysStruct
@@ -184,13 +216,17 @@ public:
     static constexpr char const * baseDiscretizationString() { return "Level0"; }
   } groupKeys; ///< groupKeys
 
+
 private:
+
   Group & m_meshLevels;
 
   /// Mesh length scale used to define an absolute length tolerance
   /// The default value can be set to another value
   real64 m_globalLengthScale { 0. };
 
+  /// flag for whether MeshBody has particles
+  bool m_hasParticles;
 
   static string intToMeshLevelString( localIndex const meshLevel );
 

@@ -30,6 +30,7 @@ namespace singlePhaseWellKernels
 /******************************** ControlEquationHelper ********************************/
 
 GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -83,6 +84,7 @@ ControlEquationHelper::
 }
 
 GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -352,6 +354,7 @@ PressureRelationKernel::
 /******************************** PerforationKernel ********************************/
 
 GEOS_HOST_DEVICE
+inline
 void
 PerforationKernel::
   compute( real64 const & resPressure,
@@ -655,7 +658,7 @@ PresInitializationKernel::
 
 
   GEOS_THROW_IF( foundNegativePressure.get() == 1,
-                 "Invalid well initialization: negative pressure was found",
+                 wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
                  InputError );
 }
 

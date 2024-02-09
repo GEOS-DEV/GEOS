@@ -54,7 +54,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -67,18 +66,16 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  linParams.dofsPerNode = 3;
 
   if( m_useStaticCondensation )
   {
+    linParams.dofsPerNode = 3;
     linParams.isSymmetric = true;
     linParams.amg.separateComponents = true;
   }
   else
   {
     linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-    linParams.mgr.separateComponents = true;
-    linParams.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   }
 }
 
@@ -319,12 +316,13 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                             dofManager.rankOffset(),
                                                             localMatrix,
                                                             localRhs,
+                                                            dt,
                                                             gravityVectorData );
 
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
-                           < parallelDevicePolicy< 32 >,
-                             constitutive::SolidBase,
+                           < parallelDevicePolicy< >,
+                             constitutive::ElasticIsotropic,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
                                                      m_solidSolver->getDiscretizationName(),
@@ -341,10 +339,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                                               dofManager.rankOffset(),
                                                                               localMatrix,
                                                                               localRhs,
+                                                                              dt,
                                                                               gravityVectorData );
       real64 maxTraction = finiteElement::
                              regionBasedKernelApplication
-                           < parallelDevicePolicy< 32 >,
+                           < parallelDevicePolicy< >,
                              constitutive::SolidBase,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
@@ -633,7 +632,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout << GEOS_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
+      std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
     }
 
     return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
@@ -647,6 +646,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
                                                            arrayView1d< real64 const > const & localSolution,
                                                            real64 const scalingFactor,
+                                                           real64 const dt,
                                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -654,6 +654,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   m_solidSolver->applySystemSolution( dofManager,
                                       localSolution,
                                       scalingFactor,
+                                      dt,
                                       domain );
 
   if( !m_useStaticCondensation )
@@ -664,7 +665,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   }
   else
   {
-    updateJump( dofManager, domain );
+    updateJump( dofManager, dt, domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -685,6 +686,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 }
 
 void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -710,11 +712,12 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                                     dofManager.rankOffset(),
                                                                     voidMatrix.toViewConstSizes(),
                                                                     voidRhs.toView(),
+                                                                    dt,
                                                                     gravityVectorData );
 
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
-                         < parallelDevicePolicy< 32 >,
+                         < parallelDevicePolicy< >,
                            constitutive::SolidBase,
                            CellElementSubRegion >( mesh,
                                                    regionNames,

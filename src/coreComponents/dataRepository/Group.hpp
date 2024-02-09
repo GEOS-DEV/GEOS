@@ -158,7 +158,7 @@ public:
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void printDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 ) const;
 
   /**
    * @brief @return a table formatted string containing all input options.
@@ -334,7 +334,7 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -349,7 +349,7 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -411,6 +411,21 @@ public:
   template< typename T = Group >
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
+
+  /**
+   * @brief Check whether a sub-group exists by type.
+   * @tparam T The type of sub-group to search for
+   * @return @p true if sub-group of type T exists, @p false otherwise
+   */
+  template< typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type,
+    //   any calls to the lambda indicates that we have a subgroup of the correct type.
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
 
   ///@}
 
@@ -745,10 +760,23 @@ public:
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
-   *        file and put them into the wrapped values for this group.
+   * file and put them into the wrapped values for this group.
+   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
+  /**
+   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
+   * but allow to reuse an existing xmlNodePos.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -1031,6 +1059,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1043,7 +1072,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events );
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE );
 
   ///@}
 
@@ -1071,7 +1101,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1086,7 +1116,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1286,13 +1316,31 @@ public:
   string getPath() const;
 
   /**
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
+   */
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
+
+  /**
+   * @return DataContext object that that stores contextual information on a wrapper contained by
+   * this group that can be used in output messages.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @throw std::domain_error if the wrapper doesn't exist.
+   */
+  template< typename KEY >
+  DataContext const & getWrapperDataContext( KEY key ) const
+  { return getWrapperBase< KEY >( key ).getDataContext(); }
+
+  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1301,9 +1349,15 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
+
+  /**
+   * @return true if this group has a parent.
+   */
+  bool hasParent() const
+  { return m_parent != nullptr; }
 
   /**
    * @brief Get the group's index within its parent group
@@ -1323,7 +1377,7 @@ public:
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
-  integer sizedFromParent() const
+  int sizedFromParent() const
   { return m_sizedFromParent; }
 
   /**
@@ -1409,6 +1463,12 @@ public:
   /// Enable verbosity input for object
   void enableLogLevelInput();
 
+  /**
+   * @brief Set verbosity level
+   * @param logLevel new verbosity level value
+   */
+  void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
+
   /// @return The verbosity level
   integer getLogLevel() const { return m_logLevel; }
   ///@}
@@ -1480,9 +1540,12 @@ private:
   /**
    * @brief Read values from the input file and put them into the
    *   wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] targetNode the XML node that to extract input values from
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
    */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1544,6 +1607,10 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  /// A DataContext object used to provide contextual information on this Group,
+  /// if it is created from an input XML file, the line or offset in that file.
+  std::unique_ptr< DataContext > m_dataContext;
 
 };
 

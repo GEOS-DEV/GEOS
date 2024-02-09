@@ -20,8 +20,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "constitutive/fluid/ParticleFluidBase.hpp"
-#include "constitutive/fluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
 
 namespace geos
 {
@@ -80,6 +80,10 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName() { return "ProppantTransport"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -136,6 +140,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void
@@ -167,8 +172,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void assembleFluxTerms( real64 const time_n,
-                          real64 const dt,
+  void assembleFluxTerms( real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,

@@ -44,7 +44,8 @@ public:
   template< typename SUBREGION_TYPE >
   using InputCellToNodeMap = traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType >;
   /// Type of MeshData::cellToFaceMap.
-  using InputCellToFaceMap = arrayView2d< localIndex const >;
+  template< typename SUBREGION_TYPE >
+  using InputCellToFaceMap = traits::ViewTypeConst< typename SUBREGION_TYPE::FaceMapType >;
   /// Type of MeshData::faceToNodeMap.
   using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
   /// Type of MeshData::faceToEdgeMap.
@@ -114,7 +115,7 @@ public:
     /// View to the cell-to-node map in the sub-region.
     InputCellToNodeMap< SUBREGION_TYPE > cellToNodeMap;
     /// View to the cell-to-face map in the sub-region.
-    InputCellToFaceMap cellToFaceMap;
+    InputCellToFaceMap< SUBREGION_TYPE > cellToFaceMap;
     /// View to the face-to-node map in the sub-region.
     InputFaceToNodeMap faceToNodeMap;
     /// View to the face-to-edge map in the sub-region.
@@ -134,14 +135,14 @@ public:
   };
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -153,7 +154,7 @@ public:
    * @return The number of support points.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     return stack.numSupportPoints;
@@ -170,7 +171,7 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[maxSupportPoints][3],
                            StackVariables const & stack,
@@ -194,7 +195,7 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[maxSupportPoints] )
@@ -217,7 +218,7 @@ public:
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( & matrix )
                                         [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -252,7 +253,7 @@ public:
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
                                                  real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
@@ -279,7 +280,7 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const ( &X )[maxSupportPoints][3],
                                              StackVariables const & stack )
@@ -297,7 +298,7 @@ public:
    * @param meshData MeshData struct to be filled.
    */
   template< typename SUBREGION_TYPE >
-  GEOS_FORCE_INLINE
+  inline
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -327,7 +328,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
@@ -371,7 +372,7 @@ public:
    * @return Zero.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   localIndex getNumSupportPoints() const override
   {
     GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
@@ -401,7 +402,7 @@ public:
    * @param N Array to store the values of shape functions, that is actually set to zero.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      real64 ( & N )[maxSupportPoints] )
   {
@@ -420,7 +421,7 @@ public:
    * @param[out] N The shape function values. It is set to zero.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[maxSupportPoints] )
   {
@@ -441,7 +442,7 @@ public:
    * @return A zero matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static real64 invJacobianTransformation( int const q,
                                            real64 const ( &X )[numNodes][3],
                                            real64 ( & J )[3][3] )
@@ -467,7 +468,7 @@ public:
    * @return Zero.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const ( &X )[maxSupportPoints][3],
                            real64 ( & gradN )[maxSupportPoints][3] )
@@ -530,11 +531,12 @@ private:
    */
   template< typename SUBREGION_TYPE >
   GEOS_HOST_DEVICE
+  inline
   static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
                        InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                       InputCellToFaceMap const & elementToFaceMap,
+                       InputCellToFaceMap< SUBREGION_TYPE > const & elementToFaceMap,
                        InputFaceToNodeMap const & faceToNodeMap,
                        InputFaceToEdgeMap const & faceToEdgeMap,
                        InputEdgeToNodeMap const & edgeToNodeMap,
@@ -552,6 +554,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOS_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -577,6 +580,7 @@ private:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
   GEOS_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
@@ -605,12 +609,16 @@ private:
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
+#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
+#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
+#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
+#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -624,7 +632,9 @@ using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
+#if !defined( GEOS_USE_HIP )
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
+#endif
 }
 }
 

@@ -12,16 +12,16 @@
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1.0e-3"
         newtonMaxIter="10"
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -41,6 +41,7 @@
       name="SurfaceGenerator"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="Fracture"
       logLevel="2"
       mpiCommOrder="1"/>
@@ -60,7 +61,7 @@
   </Mesh>
 
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="FracturePlane"
       normal="{-0.342020143325669, 0.939692620785908, 0.0}"
       origin="{0.0, 0.0, 0.5}"
@@ -117,7 +118,7 @@
       name="solverApplication2"
       beginTime="5.0e-03"
       endTime="0.05"
-      forceDt="5.0e-03"
+      forceDt="5.0e-04"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
@@ -333,7 +334,7 @@
     <PackCollection
       name="tractionCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"/>
+      fieldName="traction"/>
 
     <PackCollection
       name="displacementJumpCollection"

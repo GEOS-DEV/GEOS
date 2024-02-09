@@ -228,7 +228,7 @@ byteSizeOfElement()
 template< typename T >
 inline size_t
 byteSize( T const & value )
-{ return size( value ) * byteSizeOfElement< T >(); }
+{ return wrapperHelpers::size( value ) * byteSizeOfElement< T >(); }
 
 
 template< typename T >
@@ -259,7 +259,7 @@ capacity( T const & value )
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_capacity< T const >, localIndex >
 capacity( T const & value )
-{ return size( value ); }
+{ return wrapperHelpers::size( value ); }
 
 
 
@@ -312,7 +312,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   // Get the number of bytes in the array and a pointer to the array.
   localIndex const byteSize = valuesNode.dtype().number_of_elements();
@@ -366,7 +366,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -381,7 +381,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< T > >
 pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -453,7 +453,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   constexpr int totalNumDimensions = NDIM + hasImplicitDimension;
 
   // Check that the permutations match.
-  conduit::Node const & permutationNode = node.child( "__permutation__" );
+  conduit::Node const & permutationNode = node.fetch_existing( "__permutation__" );
   GEOS_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
@@ -471,7 +471,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   }
 
   // Now pull out the dimensions and resize the array.
-  conduit::Node const & dimensionNode = node.child( "__dimensions__" );
+  conduit::Node const & dimensionNode = node.fetch_existing( "__dimensions__" );
   GEOS_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
   camp::idx_t const * const dims = dimensionNode.value();
 
@@ -483,7 +483,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   var.resize( NDIM, dims );
 
   // Finally memcpy
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOS_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
@@ -521,7 +521,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
     GEOS_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -570,6 +570,7 @@ void addBlueprintField( T const &,
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << fields.path() );
+  GEOS_UNUSED_VAR( fields );
 }
 
 template< typename T, int NDIM, int USD >
@@ -589,7 +590,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     GEOS_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -616,6 +617,7 @@ void populateMCArray( T const &,
 {
   GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
               "\nWas trying to write it to " << node.path() );
+  GEOS_UNUSED_VAR( node );
 }
 
 template< typename T >
@@ -767,12 +769,12 @@ UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events ); }
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op=MPI_REPLACE )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
@@ -812,12 +814,12 @@ UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & 
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events ); }
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;

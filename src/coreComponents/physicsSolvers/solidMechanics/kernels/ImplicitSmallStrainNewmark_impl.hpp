@@ -43,12 +43,13 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
                             globalIndex const rankOffset,
                             CRSMatrixView< real64, globalIndex const > const inputMatrix,
                             arrayView1d< real64 > const inputRhs,
+                            real64 const inputDt,
                             real64 const (&inputGravityVector)[3],
                             real64 const inputNewmarkGamma,
                             real64 const inputNewmarkBeta,
                             real64 const inputMassDamping,
-                            real64 const inputStiffnessDamping,
-                            real64 const inputDt ):
+                            real64 const inputStiffnessDamping ):
+  // real64 const inputDt ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -60,14 +61,15 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
         rankOffset,
         inputMatrix,
         inputRhs,
+        inputDt,
         inputGravityVector ),
   m_vtilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhattilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_newmarkGamma( inputNewmarkGamma ),
   m_newmarkBeta( inputNewmarkBeta ),
   m_massDamping( inputMassDamping ),
-  m_stiffnessDamping( inputStiffnessDamping ),
-  m_dt( inputDt )
+  m_stiffnessDamping( inputStiffnessDamping )
+  //m_dt( inputDt )
 {}
 
 
@@ -75,7 +77,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -96,7 +98,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
@@ -136,7 +138,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64 ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const

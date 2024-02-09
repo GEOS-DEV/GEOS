@@ -1,0 +1,24 @@
+
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
+#include "policies.hpp"
+
+
+#define INSTANTIATION( NAME )\
+template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >; \
+template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kernelLaunch< NAME##Policy, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > > \
+                                                                                      ( localIndex const, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
+
+
+namespace geos
+{
+using namespace constitutive;
+using namespace finiteElement;
+namespace poromechanicsEFEMKernels
+{
+  INSTANTIATION( SinglePhasePoromechanicsEFEM )
+}
+}
+
+#undef INSTANTIATION

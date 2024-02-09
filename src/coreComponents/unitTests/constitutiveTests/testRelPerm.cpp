@@ -107,6 +107,39 @@ RelativePermeabilityBase & makeBrooksCoreyBakerRelPermThreePhase( string const &
   return relPerm;
 }
 
+RelativePermeabilityBase & makeBrooksCoreyStone2RelPermThreePhase( string const & name, Group & parent )
+{
+  BrooksCoreyStone2RelativePermeability & relPerm = parent.registerGroup< BrooksCoreyStone2RelativePermeability >( name );
+
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
+  phaseMinSat.resize( 3 );
+  phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01; phaseMinSat[2] = 0.025;
+
+  array1d< real64 > & waterOilRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::waterOilRelPermExponentString() );
+  waterOilRelPermExp.resize( 2 );
+  waterOilRelPermExp[0] = 2.4; waterOilRelPermExp[1] = 1.5;
+
+  array1d< real64 > & waterOilRelPermMaxVal =
+    relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString() );
+  waterOilRelPermMaxVal.resize( 2 );
+  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.65;
+
+  array1d< real64 > & gasOilRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::gasOilRelPermExponentString() );
+  gasOilRelPermExp.resize( 2 );
+  gasOilRelPermExp[0] = 1.9; gasOilRelPermExp[1] = 3.95;
+
+  array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
+  gasOilRelPermMaxVal.resize( 2 );
+  gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
+
+  relPerm.postProcessInputRecursive();
+  return relPerm;
+}
+
 RelativePermeabilityBase & makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group & parent )
 {
   VanGenuchtenBakerRelativePermeability & relPerm = parent.registerGroup< VanGenuchtenBakerRelativePermeability >( name );
@@ -160,6 +193,41 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const 
   gasOilRelPermExpInv[0] = 1.9; gasOilRelPermExpInv[1] = 3.95;
 
   array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyBakerRelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
+  gasOilRelPermMaxVal.resize( 2 );
+  gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
+
+  relPerm.postProcessInputRecursive();
+  return relPerm;
+}
+
+RelativePermeabilityBase & makeVanGenuchtenStone2RelPermThreePhase( string const & name, Group & parent )
+{
+  VanGenuchtenStone2RelativePermeability & relPerm = parent.registerGroup< VanGenuchtenStone2RelativePermeability >( name );
+
+  string_array & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( VanGenuchtenStone2RelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
+  phaseMinSat.resize( 3 );
+  phaseMinSat[0] = 0.03; phaseMinSat[1] = 0.01; phaseMinSat[2] = 0.025;
+
+  array1d< real64 > & waterOilRelPermExpInv = relPerm.getReference< array1d< real64 > >(
+    VanGenuchtenStone2RelativePermeability::viewKeyStruct::waterOilRelPermExponentInvString() );
+  waterOilRelPermExpInv.resize( 2 );
+  waterOilRelPermExpInv[0] = 2.4; waterOilRelPermExpInv[1] = 2.5;
+
+  array1d< real64 > & waterOilRelPermMaxVal =
+    relPerm.getReference< array1d< real64 > >( VanGenuchtenStone2RelativePermeability::viewKeyStruct::waterOilRelPermMaxValueString() );
+  waterOilRelPermMaxVal.resize( 2 );
+  waterOilRelPermMaxVal[0] = 0.9; waterOilRelPermMaxVal[1] = 0.75;
+
+  array1d< real64 > & gasOilRelPermExpInv =
+    relPerm.getReference< array1d< real64 > >( VanGenuchtenStone2RelativePermeability::viewKeyStruct::gasOilRelPermExponentInvString() );
+  gasOilRelPermExpInv.resize( 2 );
+  gasOilRelPermExpInv[0] = 1.9; gasOilRelPermExpInv[1] = 3.95;
+
+  array1d< real64 > & gasOilRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyStone2RelativePermeability::viewKeyStruct::gasOilRelPermMaxValueString() );
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
@@ -748,6 +816,10 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
 
   auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
+  auto & interpolatorFlag  = relPerm.getReference< ThreePhaseInterpolator >(
+    TableRelativePermeability::viewKeyStruct::threePhaseInterpolatorString() );
+  interpolatorFlag = ThreePhaseInterpolator::STONEII;
+
   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
@@ -859,6 +931,32 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   }
 }
 
+TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyStone2RelPermThreePhase )
+{
+  initialize( makeBrooksCoreyStone2RelPermThreePhase( "relPerm", m_parent ) );
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const startSat = 0.3;
+  real64 const endSat   = 0.7;
+  real64 const dS = 1e-1;
+  real64 const alpha = 0.4;
+
+  array1d< real64 > sat( 3 );
+
+  sat[0] = startSat;
+  sat[1] = alpha*(1.0-sat[0]);
+  sat[2] = (1-alpha)*(1.0-sat[0]);
+
+  while( sat[0] <= endSat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = alpha *(1-sat[0]);
+    sat[2] = (1-alpha) *(1-sat[0]);
+  }
+}
 
 TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
 {
@@ -985,10 +1083,10 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =
     m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMinHistoricalVolFraction::key() );
-  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+  phaseMinHistoricalVolFraction.move( hostMemorySpace, false );
   auto & phaseMaxHistoricalVolFraction =
     m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( fields::relperm::phaseMaxHistoricalVolFraction::key() );
-  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+  phaseMaxHistoricalVolFraction.move( hostMemorySpace, false );
 
   while( sat[0] <= endSat )
   {
@@ -997,7 +1095,6 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
     sat[1] = 1-sat[0];
   }
 }
-
 
 int main( int argc, char * * argv )
 {

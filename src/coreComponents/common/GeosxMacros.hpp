@@ -33,7 +33,7 @@
  */
 ///@{
 
-#if defined(__CUDACC__)
+#if defined(GEOS_USE_DEVICE)
 #define GEOS_HOST __host__
 #define GEOS_DEVICE __device__
 #define GEOS_HOST_DEVICE __host__ __device__
@@ -50,6 +50,11 @@
 #define GEOS_FORCE_INLINE inline
 /// Compiler directive specifying to unroll the loop.
 #define PRAGMA_UNROLL
+#endif
+
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+/// Macro defined when currently compiling on device (only defined in the device context).
+#define GEOS_DEVICE_COMPILE
 #endif
 
 ///@}
@@ -105,5 +110,26 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Macro to concatenate two tokens (user level)
 #define GEOS_CONCAT( A, B ) GEOS_CONCAT_IMPL( A, B )
+
+/**
+ * @brief [[maybe_unused]] when >= C++17, or compiler-specific implementations
+ *        when < C++17
+ */
+#if __cplusplus >= 201703L
+#define GEOS_MAYBE_UNUSED [[maybe_unused]]
+#else
+// If not C++17 or later, check the compiler.
+    #ifdef _MSC_VER
+// Microsoft Visual Studio
+#define GEOS_MAYBE_UNUSED __pragma(warning(suppress: 4100))
+    #elif defined(__GNUC__) || defined(__clang__)
+// GCC or Clang
+#define GEOS_MAYBE_UNUSED __attribute__((unused))
+    #else
+// If the compiler is unknown, we can't suppress the warning,
+// so we define GEOS_MAYBE_UNUSED as an empty macro.
+#define GEOS_MAYBE_UNUSED
+    #endif
+#endif
 
 #endif // GEOS_COMMON_GEOSXMACROS_HPP_

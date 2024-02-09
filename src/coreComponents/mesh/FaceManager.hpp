@@ -117,20 +117,21 @@ public:
    * @param[in] cellBlockManager Provides the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
    * @param[in] nodeManager Provides the nodes positions.
+   * @param[in] isBaseMeshLevel True if this manager belonds to the base mesh level, false otherwise
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
-                                NodeManager const & nodeManager );
+                                NodeManager const & nodeManager, bool isBaseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
    * @param[in] nodeManager The node manager instance.
    * @param[in] edgeManager The edge manager instance.
-   * @param[in] elementRegionManager The element region manager instance.
+   * @param[in] elemRegionManager The element region manager instance.
    */
   void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                        EdgeManager const & edgeManager,
-                                       ElementRegionManager const & elementRegionManager );
+                                       ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Compute faces center, area and normal.
@@ -140,10 +141,11 @@ public:
 
   /**
    * @brief Builds the face-on-domain-boundary indicator.
+   * @param[in] elemRegionManager The element region manager.
    * @note Based on the face to element region mapping that must be defined.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects();
+  void setDomainBoundaryObjects( ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Build sets from the node sets
@@ -365,7 +367,7 @@ public:
    * @return non-const reference to faces-to-ElementRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+  array2d< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
@@ -379,7 +381,7 @@ public:
    * @return non-const reference to faces-to-ElementSubRegion relation
    * @copydetails FaceManager::elementList()
    */
-  array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  array2d< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.

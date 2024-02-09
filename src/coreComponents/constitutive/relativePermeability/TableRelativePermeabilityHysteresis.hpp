@@ -31,6 +31,8 @@ namespace geos
 namespace constitutive
 {
 
+
+
 class TableRelativePermeabilityHysteresis : public RelativePermeabilityBase
 {
 public:
@@ -128,6 +130,8 @@ public:
                    arrayView1d< real64 const > const & imbibitionRelPermEndPoint,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
+                   ThreePhaseInterpolator const & threePhaseInterpolator,
+                   real64 const & waterOilRelPermMaxValue,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
@@ -362,6 +366,10 @@ private:
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
 
+    real64 const m_waterOilRelPermMaxValue;
+
+    ThreePhaseInterpolator const m_threePhaseInterpolator;
+
   };
 
   /**
@@ -429,6 +437,9 @@ private:
     static constexpr char const * imbibitionNonWettingRelPermTableNameString()
     { return "imbibitionNonWettingRelPermTableName"; }
 
+    static constexpr char const * waterOilMaxRelPermString() { return "waterOilMaxRelPerm"; }
+
+    static constexpr char const * threePhaseInterpolatorString() { return "threePhaseInterpolator"; }
   };
 
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override
@@ -553,10 +564,17 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
+  /// Max krwo value (unique as krwo and krgo are considred non hysteretical in our implementation)
+  real64 m_waterOilMaxRelPerm;
+
+  /// enum class to dispatch interpolator (Baker/Eclipse,StoneII)
+  ThreePhaseInterpolator m_threePhaseInterpolator;
+
 };
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeDrainageRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                           real64 const & phaseVolFraction,
@@ -569,7 +587,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTrappedCriticalPhaseVolFraction( real64 const & Scrd,
                                           real64 const & Shy,
@@ -586,7 +605,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
@@ -672,7 +692,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionNonWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                       TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
@@ -750,7 +771,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeTwoPhase( integer const ipWetting,
                    integer const ipNonWetting,
@@ -838,7 +860,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeThreePhase( integer const ipWetting,
                      integer const ipInter,
@@ -950,19 +973,41 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // use saturation-weighted interpolation
   real64 const shiftedWettingVolFrac = ( phaseVolFraction[ipWetting] - m_drainagePhaseMinVolFraction[ipWetting] );
 
-  relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
-                                        phaseVolFraction[ipNonWetting],
-                                        m_phaseOrder,
-                                        interRelPerm_wi,
-                                        dInterRelPerm_wi_dInterVolFrac,
-                                        interRelPerm_nwi,
-                                        dInterRelPerm_nwi_dInterVolFrac,
-                                        phaseRelPerm[ipInter],
-                                        dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  if( m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
+  {
+    relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
+                                          phaseVolFraction[ipNonWetting],
+                                          m_phaseOrder,
+                                          interRelPerm_wi,
+                                          dInterRelPerm_wi_dInterVolFrac,
+                                          interRelPerm_nwi,
+                                          dInterRelPerm_nwi_dInterVolFrac,
+                                          phaseRelPerm[ipInter],
+                                          dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+
+  }
+  else// if( m_threePhaseInterpolator == ThreePhaseInterpolator::STONEII )
+  {
+    relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
+                                           phaseVolFraction[ipNonWetting],
+                                           m_phaseOrder,
+                                           m_waterOilRelPermMaxValue,
+                                           interRelPerm_wi,
+                                           dInterRelPerm_wi_dInterVolFrac,
+                                           interRelPerm_nwi,
+                                           dInterRelPerm_nwi_dInterVolFrac,
+                                           phaseRelPerm[ipWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
+                                           phaseRelPerm[ipNonWetting],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
+                                           phaseRelPerm[ipInter],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+  }
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
@@ -1028,7 +1073,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 }
 
 GEOS_HOST_DEVICE
-inline void
+inline
+void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

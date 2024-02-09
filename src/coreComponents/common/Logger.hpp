@@ -21,6 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
+#include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
@@ -69,7 +70,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#if defined(__CUDA_ARCH__)
+#if defined(GEOS_DEVICE_COMPILE)
 #define GEOS_LOG_RANK_IF( EXP, msg )
 #else
 #define GEOS_LOG_RANK_IF( EXP, msg ) \
@@ -100,7 +101,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#if defined(__CUDA_ARCH__)
+#if defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, msg )
 #else
 #define GEOS_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
@@ -478,11 +479,41 @@ struct InputError : public std::runtime_error
   {}
 
   /**
-   * @brief Construct an InputError from an underlying exception.
-   * @param subException An exception to base this new one on.
-   * @param msgToInsert The error message. It will be inserted into the one inside of subException.
+   * @brief Constructs an InputError from an underlying exception.
+   * @param subException The exception on which the created one is based.
+   * @param msgToInsert The error message that will be inserted in the subException error message.
    */
   InputError( std::exception const & subException, std::string const & msgToInsert );
+};
+
+/**
+ * @brief Exception class used to report errors in user input.
+ */
+struct SimulationError : public std::runtime_error
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  SimulationError( std::string const & what ):
+    std::runtime_error( what )
+  {}
+
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  SimulationError( char const * const what ):
+    std::runtime_error( what )
+  {}
+
+  /**
+   * @brief Construct a SimulationError from an underlying exception.
+   * @param subException An exception to base this new one on.
+   * @param msgToInsert The error message.
+   * It will be inserted before the error message inside of subException.
+   */
+  SimulationError( std::exception const & subException, std::string const & msgToInsert );
 };
 
 /**

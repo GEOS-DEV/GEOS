@@ -103,9 +103,9 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] faceIndex The reference of the face manager.
+   * @param[in] faceManager The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & faceIndex );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
 
   /**
    * @brief Set external edges.
@@ -123,8 +123,9 @@ public:
   /**
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
+   * @param[in] isBaseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool isBaseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.

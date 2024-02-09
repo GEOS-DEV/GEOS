@@ -32,6 +32,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
+      surfaceGeneratorName="SurfaceGen"
       targetRegions="{ Region }"
       >
       <NonlinearSolverParameters
@@ -54,7 +55,7 @@
 
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
-    <BoundedPlane
+    <Rectangle
       name="fracture"
       normal="{1.0, 0.0, 0.0}"
       origin="{0.0, 0.0, 0.0}"
@@ -62,7 +63,7 @@
       widthVector="{0.0, 0.0, 1.0}"
       dimensions="{ 2, 10 }"/>
 
-    <BoundedPlane
+    <Rectangle
       name="core"
       normal="{1.0, 0.0, 0.0}"
       origin="{0.0, 0.0, 0.0}"

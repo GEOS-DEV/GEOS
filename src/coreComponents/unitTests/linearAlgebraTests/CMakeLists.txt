@@ -1,34 +1,33 @@
-#
 # Specify list of tests
-#
 set( LAI_tests
      testDofManager.cpp
-     testLAIHelperFunctions.cpp
-    )
+     testLAIHelperFunctions.cpp )
 
 set( nranks 2 )
 
-#
 # Add gtest C++ based tests
-#
-set( dependencyList gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
+  list( APPEND dependencyList geosx_core )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (TARGET fmt::fmt)
+  set( dependencyList ${dependencyList} fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  set( dependencyList ${dependencyList} fmt )
 endif()
 
 foreach(test ${LAI_tests})
@@ -37,14 +36,15 @@ foreach(test ${LAI_tests})
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${dependencyList} )
+                      DEPENDS_ON ${dependencyList}
+                    )
 
 if ( ENABLE_MPI )
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} -x ${nranks}
-                NUM_MPI_TASKS ${nranks} )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} -x ${nranks}
+                 NUM_MPI_TASKS ${nranks} )
 else()
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} )
 endif()
 endforeach()

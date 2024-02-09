@@ -149,7 +149,7 @@ public:
    * of global data into local stack storage.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -199,7 +199,7 @@ public:
    * Jacobian and Residual into the global Jacobian and Residual.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
@@ -240,6 +240,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
+      // #pragma unroll
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointKernel( k, q, stack );

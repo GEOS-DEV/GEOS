@@ -24,12 +24,7 @@ set( events_sources
      tasks/TasksManager.cpp
    )
 
-set( dependencyList common dataRepository )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif( )
-
+set( dependencyList ${parallelDeps} common fileIO dataRepository )
 
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}
@@ -40,4 +35,3 @@ blt_add_library( NAME       events
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX events )

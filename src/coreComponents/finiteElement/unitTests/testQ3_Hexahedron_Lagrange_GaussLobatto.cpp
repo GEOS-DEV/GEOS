@@ -79,7 +79,8 @@ void testKernelDriver()
     }
   } );
 
-  real64 xCoords[numNodes][3];
+  array2d< real64 > xCoordsData( numNodes, 3 );
+  arrayView2d< real64 > const & xCoords = xCoordsData;
   xCoords[0][0]=-1.0;
   xCoords[1][0]=-1.0/sqrt( 5.0 );
   xCoords[2][0]=1.0/sqrt( 5.0 );
@@ -158,11 +159,22 @@ void testKernelDriver()
   forAll< POLICY >( 1,
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
+
+    real64 xLocal[numNodes][3];
+
+    for( localIndex a=0; a< numNodes; ++a )
+    {
+      for( localIndex i=0; i<3; ++i )
+      {
+        xLocal[a][i] = xCoords[a][i];
+      }
+    }
+
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJ[q] = Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
-                                                                    xCoords,
+                                                                    xLocal,
                                                                     dNdX );
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -196,10 +208,10 @@ void testKernelDriver()
     }
   } );
 }
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geos::parallelDevicePolicy< 32 > >();
+  testKernelDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )

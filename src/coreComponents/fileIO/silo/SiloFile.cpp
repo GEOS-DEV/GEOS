@@ -28,8 +28,8 @@
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
 #include "fileIO/Outputs/OutputUtilities.hpp"
@@ -1243,15 +1243,15 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         string const & fieldName = wrapper.getName();
         viewPointers[esr][fieldName] = &wrapper;
 
-        types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
-          using ArrayType = decltype( array );
+          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
           Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
           Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
 
           newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
           newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
-        } );
+        }, wrapper );
       }
     }
   } );
@@ -1263,9 +1263,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     WrapperBase & wrapper = *wrapperIter.second;
     string const & fieldName = wrapper.getName();
 
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
       ArrayType & targetArray = wrapperT.reference();
 
@@ -1294,7 +1294,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
           counter += subRegion.size();
         }
       } );
-    } );
+    }, wrapper );
   }
 
   writeGroupSilo( fakeGroup,
@@ -2180,7 +2180,7 @@ void SiloFile::writeDataField( string const & meshName,
   string_array varnamestring( nvars );
   array1d< array1d< OUTTYPE > > castedField( nvars );
 
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   for( int i = 0; i < nvars; ++i )
   {
@@ -2306,7 +2306,7 @@ void SiloFile::writeDataField( string const & meshName,
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex = 1;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   localIndex const npts = field.size( primaryDimIndex );
   localIndex const nvar = field.size( secondaryDimIndex );
@@ -2345,7 +2345,7 @@ void SiloFile::writeDataField( string const & meshName,
   int const primaryDimIndex = 0;
   int const secondaryDimIndex1 = 1;
   int const secondaryDimIndex2 = 2;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -2438,7 +2438,7 @@ void SiloFile::writeDataField( string const & meshName,
                                string const & multiRoot )
 {
   int nvars = 1;
-  field.move( LvArray::MemorySpace::host );
+  field.move( hostMemorySpace );
 
   for( int i=1; i<NDIM; ++i )
   {

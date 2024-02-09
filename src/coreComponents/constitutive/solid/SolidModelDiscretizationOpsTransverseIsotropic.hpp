@@ -63,7 +63,7 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
 
   /// @copydoc SolidModelDiscretizationOpsIsotropic::scaleParams
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void scaleParams( real64 const scale )
   {
     m_c11 *= scale;
@@ -88,7 +88,7 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsTransverseIsotropic::BTDB( BASIS_GRADIENT const & gradN,
                                                            real64 const & detJxW,
                                                            real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -129,7 +129,7 @@ void SolidModelDiscretizationOpsTransverseIsotropic::BTDB( BASIS_GRADIENT const 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsTransverseIsotropic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                                 real64 const & detJxW,
                                                                 real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -170,7 +170,7 @@ void SolidModelDiscretizationOpsTransverseIsotropic::upperBTDB( BASIS_GRADIENT c
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsTransverseIsotropic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                                real64 const & detJxW,
                                                                real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
@@ -199,7 +199,7 @@ void SolidModelDiscretizationOpsTransverseIsotropic::diagBTDB( BASIS_GRADIENT co
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void SolidModelDiscretizationOpsTransverseIsotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                                      real64 const & detJxW,
                                                                      real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )

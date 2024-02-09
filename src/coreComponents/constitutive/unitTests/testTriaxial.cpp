@@ -30,7 +30,7 @@ void testTriaxialDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( TriaxialTests, testTriaxialDevice )
 {
   testCamClayDriver< geos::parallelDevicePolicy< > >();

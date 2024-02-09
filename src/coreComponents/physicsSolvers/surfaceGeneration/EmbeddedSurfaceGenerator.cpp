@@ -33,7 +33,7 @@
 #include "mesh/utilities/CIcomputationKernel.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
-#include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
+#include "mesh/simpleGeometricObjects/Rectangle.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 
@@ -68,8 +68,14 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
+
+  registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
 
   // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
   // setInputFlag( InputFlags::FALSE );
@@ -128,7 +134,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   NewObjectLists newObjects;
 
   // Loop over all the fracture planes
-  geometricObjManager.forSubGroups< BoundedPlane >( [&]( BoundedPlane & fracture )
+  geometricObjManager.forGeometricObject< PlanarGeometricObject >( m_targetObjectsName, [&]( localIndex const,
+                                                                                             PlanarGeometricObject & fracture )
   {
     /* 1. Find out if an element is cut by the fracture or not.
      * Loop over all the elements and for each one of them loop over the nodes and compute the
@@ -200,7 +207,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
         }
       } );// end loop over cells
     } );// end loop over subregions
-  } );// end loop over thick planes
+  } );// end loop over planes
 
   // Launch kernel to compute connectivity index of each fractured element.
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
@@ -219,7 +226,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );
 
-      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< >, KERNEL_TYPE >( kernel );
     } );
   } );
 
@@ -408,7 +415,7 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
       setGroupCell.forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
       {
         SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
-        targetSetCell.move( LvArray::MemorySpace::host );
+        targetSetCell.move( hostMemorySpace );
 
         SortedArray< localIndex > & targetSetEmbSurf =
           setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();

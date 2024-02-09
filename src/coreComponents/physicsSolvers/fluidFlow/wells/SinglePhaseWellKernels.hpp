@@ -19,8 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -76,7 +76,9 @@ struct ControlEquationHelper
   static constexpr real64 EPS = 1e-15;
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
@@ -86,7 +88,9 @@ struct ControlEquationHelper
                  WellControls::Control & newControl );
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
            real64 const & targetBHP,
@@ -181,7 +185,9 @@ struct PerforationKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   compute( real64 const & resPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
@@ -308,7 +314,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -320,12 +326,14 @@ public:
                       WellElementSubRegion const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
                       WellControls const & wellControls,
-                      real64 const & timeAtEndOfStep,
-                      real64 const & dt )
+                      real64 const timeAtEndOfStep,
+                      real64 const dt,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_dt( dt ),
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
@@ -356,7 +364,7 @@ public:
           else if( m_currentControl == WellControls::Control::TOTALVOLRATE )
           {
             // this residual entry is in volume / time units
-            normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), minNormalizer );
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetRate ), m_minNormalizer );
           }
         }
         // for the pressure difference equation, always normalize by the BHP
@@ -441,19 +449,20 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    WellControls const & wellControls,
-                   real64 const & timeAtEndOfStep,
-                   real64 const & dt,
+                   real64 const timeAtEndOfStep,
+                   real64 const dt,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, timeAtEndOfStep, dt );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, wellControls, timeAtEndOfStep, dt, minNormalizer );
     ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
   }
 

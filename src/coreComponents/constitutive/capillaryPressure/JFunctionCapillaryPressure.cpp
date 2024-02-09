@@ -38,6 +38,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
   m_nonWettingIntermediateSurfaceTension( -1 )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingJFuncTableNameString(), &m_wettingNonWettingJFuncTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (wetting phase, non-wetting phase)\n"
                     "Note that this input is only used for two-phase flow.\n"
@@ -48,6 +49,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     " to specify the table names." );
 
   registerWrapper( viewKeyStruct::wettingIntermediateJFuncTableNameString(), &m_wettingIntermediateJFuncTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
@@ -56,6 +58,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     " to specify the table names." );
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateJFuncTableNameString(), &m_nonWettingIntermediateJFuncTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (non-wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
@@ -247,7 +250,19 @@ void JFunctionCapillaryPressure::saveConvergedRockState( arrayView2d< real64 con
       permeability = convergedPermeability[ei][0][2];
     }
 
-    real64 const porosityOverPermeability = pow( convergedPorosity[ei][0], porosityExponent ) / pow( permeability, permeabilityExponent );
+    // here we compute an average of the porosity over quadrature points
+    // this average is exact for tets, regular pyramids/wedges/hexes, or for VEM
+    real64 porosityAveragedOverQuadraturePoints = 0;
+    for( integer i = 0; i < convergedPorosity.size( 1 ); ++i )
+    {
+      porosityAveragedOverQuadraturePoints += convergedPorosity[ei][i];
+    }
+    porosityAveragedOverQuadraturePoints /= convergedPorosity.size( 1 );
+    porosityAveragedOverQuadraturePoints =
+      LvArray::math::max( porosityAveragedOverQuadraturePoints, LvArray::NumericLimits< real64 >::epsilon );
+
+    real64 const porosityOverPermeability = pow( porosityAveragedOverQuadraturePoints, porosityExponent )
+                                            / pow( permeability, permeabilityExponent );
 
     // units:
     // ------

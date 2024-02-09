@@ -21,11 +21,11 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/fluid/SlurryFluidFields.hpp"
-#include "constitutive/fluid/particleFluidSelector.hpp"
-#include "constitutive/fluid/ParticleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/ProppantPermeability.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -142,14 +142,16 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
   GEOS_THROW_IF( fluidName.empty(),
-                 GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
                  InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOS_THROW_IF( proppantName.empty(),
-                 GEOS_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
+                 GEOS_FMT( "{}: Proppant model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
                  InputError );
 
 }
@@ -487,11 +489,10 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
 void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
-
-  for( auto const & meshTarget : getMeshTargets() )
+  for( auto const & meshTarget: getMeshTargets())
   {
-    printf( "(%s,%s):", meshTarget.first.first.c_str(), meshTarget.first.second.c_str() );
-    std::cout<<meshTarget.second<<std::endl;
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: MeshBody = ({},{}) - target region = {}",
+                               getName(), meshTarget.first.first.c_str(), meshTarget.first.second.c_str(), meshTarget.second ));
   }
 
   dofManager.addField( fields::proppant::proppantConcentration::key(),
@@ -505,7 +506,7 @@ void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 }
 
 
-void ProppantTransport::assembleSystem( real64 const time,
+void ProppantTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -520,8 +521,7 @@ void ProppantTransport::assembleSystem( real64 const time,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -587,8 +587,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 }
 
 
-void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                           real64 const dt,
+void ProppantTransport::assembleFluxTerms( real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -726,7 +725,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       {
 
         string const & subRegionName = subRegion.getName();
-        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
+                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -745,8 +745,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         string const & subRegionName = subRegion.getName();
         localIndex const comp = fs.getComponent();
 
-        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
-        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
+                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
+                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -764,9 +766,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           for( localIndex ic = 0; ic < m_numComponents; ++ic )
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
-            GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
-                                                                                                       << " on region '" << bcStatusEntryOuter.first << "',"
-                                                                                                       << " set '" << bcStatusEntryInner.first << "'" );
+            GEOS_WARNING_IF( !bcConsistent,
+                             getDataContext() << ": Composition boundary condition not applied to component " <<
+                             ic << " on region '" << bcStatusEntryOuter.first << "'," <<
+                             " set '" << bcStatusEntryInner.first << "'" );
           }
         }
       }
@@ -855,6 +858,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                                                    dofKey,
                                                    localRhs,
                                                    subRegion,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 
@@ -889,7 +893,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;
@@ -898,8 +902,10 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                              arrayView1d< real64 const > const & localSolution,
                                              real64 const scalingFactor,
+                                             real64 const dt,
                                              DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   dofManager.addVectorToField( localSolution,
                                fields::proppant::proppantConcentration::key(),
                                fields::proppant::proppantConcentration::key(),

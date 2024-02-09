@@ -17,7 +17,7 @@
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -75,7 +75,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
 void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
@@ -91,21 +91,21 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
-  problemManager.processInputFileRecursive( xmlProblemNode );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.processInputFileRecursive( topLevelNode );
+  constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   problemManager.problemSetup();
   problemManager.applyInitialConditions();
@@ -260,11 +260,11 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
+          pres.move( hostMemorySpace, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
           solver.updateState( domain );
@@ -286,15 +286,15 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         {
           arrayView1d< real64 > const temp =
             subRegion.getField< fields::flow::temperature >();
-          temp.move( LvArray::MemorySpace::host, false );
+          temp.move( hostMemorySpace, false );
 
           solver.resetStateToBeginningOfStep( domain );
 
-          temp.move( LvArray::MemorySpace::host, true );
+          temp.move( hostMemorySpace, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
-#if defined(GEOSX_USE_CUDA)
-          temp.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          temp.move( parallelDeviceMemorySpace, false );
 #endif
 
           // here, we make sure that rock internal energy is updated

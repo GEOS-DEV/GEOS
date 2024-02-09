@@ -16,7 +16,7 @@
 
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -86,31 +86,30 @@ char const * xmlInput =
                     nx="{3}"
                     ny="{1}"
                     nz="{1}"
-                    cellBlockNames="{cb1}"/>
-      <InternalWell name="well_producer1"
-                    wellRegionName="wellRegion1"
-                    wellControlsName="wellControls1"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {4.5, 0,  2  },
-                                           {4.5, 0,  0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="producer1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
-      <InternalWell name="well_injector1"
-                    wellRegionName="wellRegion2"
-                    wellControlsName="wellControls2"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {0.5, 0, 2  },
-                                           {0.5, 0, 0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="injector1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
+                    cellBlockNames="{cb1}">
+        <InternalWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      polylineNodeCoords="{ {4.5, 0,  2  },
+                                             {4.5, 0,  0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+        <InternalWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      polylineNodeCoords="{ {0.5, 0, 2  },
+                                             {0.5, 0, 0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+      </InternalMesh>
     </Mesh>
     <NumericalMethods>
       <FiniteVolume>
@@ -219,13 +218,13 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::host, false );
+  residual.move( hostMemorySpace, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
-  jacobian.move( LvArray::MemorySpace::host );
+  jacobian.move( hostMemorySpace );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
@@ -254,11 +253,11 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
           // get the primary variables on the reservoir elements
           arrayView1d< real64 > const & pres =
             subRegion.getField< fields::well::pressure >();
-          pres.move( LvArray::MemorySpace::host, false );
+          pres.move( hostMemorySpace, false );
 
           arrayView2d< real64, compflow::USD_COMP > const & compDens =
             subRegion.getField< fields::well::globalCompDensity >();
-          compDens.move( LvArray::MemorySpace::host, false );
+          compDens.move( hostMemorySpace, false );
 
           // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
           for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -274,7 +273,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
               // here is the perturbation in the pressure of the element
               real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-              pres.move( LvArray::MemorySpace::host, true );
+              pres.move( hostMemorySpace, true );
               pres[ei] += dP;
 
               // after perturbing, update the pressure-dependent quantities in the reservoir
@@ -308,7 +307,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
               solver.resetStateToBeginningOfStep( domain );
 
               real64 const dRho = perturbParameter * totalDensity;
-              compDens.move( LvArray::MemorySpace::host, true );
+              compDens.move( hostMemorySpace, true );
               compDens[ei][jc] += dRho;
 
               flowSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -359,15 +358,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
       // get the primary variables on the well elements
       arrayView1d< real64 > const & wellElemPressure =
         subRegion.getField< fields::well::pressure >();
-      wellElemPressure.move( LvArray::MemorySpace::host, false );
+      wellElemPressure.move( hostMemorySpace, false );
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
         subRegion.getField< fields::well::globalCompDensity >();
-      wellElemCompDens.move( LvArray::MemorySpace::host, false );
+      wellElemCompDens.move( hostMemorySpace, false );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getField< fields::well::mixtureConnectionRate >();
-      connRate.move( LvArray::MemorySpace::host, false );
+      connRate.move( hostMemorySpace, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -383,7 +382,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // here is the perturbation in the pressure of the well element
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
-          wellElemPressure.move( LvArray::MemorySpace::host, true );
+          wellElemPressure.move( hostMemorySpace, true );
           wellElemPressure[iwelem] += dP;
 
           // after perturbing, update the pressure-dependent quantities in the well
@@ -405,7 +404,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
           solver.resetStateToBeginningOfStep( domain );
 
           real64 const dRho = perturbParameter * wellElemTotalDensity;
-          wellElemCompDens.move( LvArray::MemorySpace::host, true );
+          wellElemCompDens.move( hostMemorySpace, true );
           wellElemCompDens[iwelem][jc] += dRho;
 
           wellSolver.updateState( domain );
@@ -430,7 +429,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
 
           // here is the perturbation in the rate of the well element
           real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
-          connRate.move( LvArray::MemorySpace::host, true );
+          connRate.move( hostMemorySpace, true );
           connRate[iwelem] += dRate;
 
           wellSolver.updateState( domain );
@@ -528,7 +527,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

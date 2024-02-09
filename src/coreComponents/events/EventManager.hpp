@@ -95,6 +95,9 @@ public:
     static constexpr char const * cycleString() { return "cycle"; }
     static constexpr char const * currentSubEventString() { return "currentSubEvent"; }
 
+    static constexpr char const * timeOutputFormat() { return "timeOutputFormat"; }
+
+
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
     dataRepository::ViewKey cycle = { "cycle" };
@@ -112,7 +115,25 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
+  /// enum class defining the format of the time output in the log
+  enum class TimeOutputFormat : integer
+  {
+    seconds,
+    minutes,
+    hours,
+    days,
+    years,
+    full
+  };
+
 private:
+
+
+  /**
+   * @brief ouput time information to the log
+   *
+   */
+  void outputTime() const;
 
   /// Min time for a simulation
   real64 m_minTime;
@@ -134,8 +155,19 @@ private:
 
   /// Current subevent index
   integer m_currentSubEvent;
+
+  /// time output type
+  TimeOutputFormat m_timeOutputFormat;
 };
 
+/// valid strings fort the time output enum.
+ENUM_STRINGS( EventManager::TimeOutputFormat,
+              "seconds",
+              "minutes",
+              "hours",
+              "days",
+              "years",
+              "full" );
 
 } /* namespace geos */
 

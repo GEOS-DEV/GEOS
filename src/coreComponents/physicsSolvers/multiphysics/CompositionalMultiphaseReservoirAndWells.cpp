@@ -20,7 +20,7 @@
 #include "CompositionalMultiphaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
@@ -52,10 +52,10 @@ public:
   static string name() { return "CompositionalMultiphaseReservoir"; }
 };
 // Class specialization for a RESERVOIR_SOLVER set to MultiphasePoromechanics
-template<> class CompositionalCatalogNames< MultiphasePoromechanics >
+template<> class CompositionalCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
 {
 public:
-  static string name() { return MultiphasePoromechanics::catalogName()+"Reservoir"; }
+  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseBase >::catalogName()+"Reservoir"; }
 };
 
 }
@@ -83,7 +83,7 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 {}
 
 template<>
-CompositionalMultiphaseBase const *
+CompositionalMultiphaseBase *
 CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
 flowSolver() const
 {
@@ -91,8 +91,8 @@ flowSolver() const
 }
 
 template<>
-CompositionalMultiphaseBase const *
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics >::
+CompositionalMultiphaseBase *
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -115,7 +115,7 @@ setMGRStrategy()
 
 template<>
 void
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics >::
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > >::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
@@ -141,9 +141,9 @@ initializePreSubGroups()
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                 GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
                  InputError );
 }
 
@@ -279,6 +279,11 @@ assembleCouplingTerms( real64 const time_n,
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
+  GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
+                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
+                           this->getCatalogName(), this->getName() ),
+                 std::runtime_error );
+
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
@@ -344,6 +349,8 @@ assembleCouplingTerms( real64 const time_n,
       arrayView1d< localIndex const > const & resElementIndex =
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
+      bool const useTotalMassEquation = this->flowSolver()->useTotalMassEquation() > 0;
+
       RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 
       // loop over the perforations and add the rates to the residual and jacobian
@@ -406,10 +413,13 @@ assembleCouplingTerms( real64 const time_n,
           }
         }
 
-        // Apply equation/variable change transformation(s)
-        stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs*2, 2, localPerfJacobian, work );
-        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        if( useTotalMassEquation )
+        {
+          // Apply equation/variable change transformation(s)
+          stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
+          shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs * 2, 2, localPerfJacobian, work );
+          shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        }
 
         for( localIndex i = 0; i < localPerf.size(); ++i )
         {
@@ -445,10 +455,13 @@ assembleCouplingTerms( real64 const time_n,
   } );
 }
 
+template class CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >;
+template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > >;
+
 namespace
 {
 typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
-typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics > CompositionalMultiphasePoromechanicsAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
 }

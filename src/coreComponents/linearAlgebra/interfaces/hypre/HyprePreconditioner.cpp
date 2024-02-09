@@ -376,7 +376,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
     m_precond = std::make_unique< HyprePrecWrapper >();
     create( mat.dofManager() );
   }
-
   HypreMatrix const & precondMat = setupPreconditioningMatrix( mat );
   Base::setup( precondMat );
 
@@ -403,7 +402,9 @@ void HyprePreconditioner::setup( Matrix const & mat )
       {
         m_precond->destroy( m_precond->ptr );
       }
+#if defined(GEOSX_USE_SUPERLU_DIST)
       hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
+#endif
     }
   }
 }

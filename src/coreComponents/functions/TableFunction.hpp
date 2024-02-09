@@ -23,6 +23,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -229,6 +230,15 @@ private:
   virtual real64 evaluate( real64 const * const input ) const override final;
 
   /**
+   * @brief Check if the given coordinate is in the bounds of the table coordinates in the
+   * specified dimension, throw an exception otherwise.
+   * @param coord the coordinate in the 'dim' dimension that must be checked
+   * @param dim the dimension in which the coordinate must be checked
+   * @throw SimulationError if the value is out of the coordinates bounds.
+   */
+  void checkCoord( real64 coord, localIndex dim ) const;
+
+  /**
    * @brief @return Number of table dimensions
    */
   integer numDimensions() const { return LvArray::integerConversion< integer >( m_coordinates.size() ); }
@@ -262,6 +272,13 @@ private:
   InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
 
   /**
+   * @param dim The coordinate dimension (= axe) we want the Unit.
+   * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
+   */
+  units::Unit getDimUnit( localIndex const dim ) const
+  { return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown; }
+
+  /**
    * @brief Set the interpolation method
    * @param method The interpolation method
    */
@@ -270,14 +287,23 @@ private:
   /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
+   * @param dimUnits The units of each dimension of the coordinates, in the same order
    */
-  void setTableCoordinates( array1d< real64_array > const & coordinates );
+  void setTableCoordinates( array1d< real64_array > const & coordinates,
+                            std::vector< units::Unit > const & dimUnits = {} );
 
   /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
+   * @param unit The unit of the given values
    */
-  void setTableValues( real64_array values );
+  void setTableValues( real64_array values, units::Unit unit = units::Unknown );
+
+  /**
+   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
+   * @param filename Filename for output
+   */
+  void print( std::string const & filename ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -328,13 +354,20 @@ private:
   /// Table values (in fortran order)
   array1d< real64 > m_values;
 
+  /// The units of each table coordinate axes
+  std::vector< units::Unit > m_dimUnits;
+
+  /// The unit of the table values
+  units::Unit m_valueUnit;
+
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;
 
 };
-
+/// @cond DO_NOT_DOCUMENT
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -350,6 +383,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -422,6 +456,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -483,6 +518,7 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -500,6 +536,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -600,6 +637,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -607,6 +645,8 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRA
   GEOS_ERROR( "Rounding interpolation with derivatives not implemented" );
   return 0.0;
 }
+
+/// @endcond
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( TableFunction::InterpolationType,

@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ascent-gcc@8.1.1.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ORNL/ascent-gcc@8.1.1.cmake)
 
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")

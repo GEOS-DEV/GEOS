@@ -57,7 +57,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                 StackVariables & stack ) const
 {
@@ -79,7 +79,7 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                 localIndex const q,
                                                                                                 StackVariables & stack ) const
@@ -118,10 +118,9 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   HughesWinget( Rot, Dadt, Ldt );
 
   real64 stress[ 6 ]{};
-  real64 const timeIncrement = 0.0;
   constitutive::SolidUtilities::
     hypoUpdate_StressOnly( m_constitutiveUpdate,
-                           k, q, timeIncrement, Dadt, Rot, stress );
+                           k, q, m_dt, Dadt, Rot, stress );
 
   real64 P[ 3 ][ 3 ]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );

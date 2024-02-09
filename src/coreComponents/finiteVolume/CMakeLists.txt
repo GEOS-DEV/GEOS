@@ -12,8 +12,8 @@ set( finiteVolume_headers
      FluxApproximationBase.hpp
      ProjectionEDFMHelper.hpp
      HybridMimeticDiscretization.hpp
-     MimeticInnerProductDispatch.hpp 
-     StencilBase.hpp    
+     MimeticInnerProductDispatch.hpp
+     StencilBase.hpp
      TwoPointFluxApproximation.hpp
      mimeticInnerProducts/BdVLMInnerProduct.hpp
      mimeticInnerProducts/MimeticInnerProductBase.hpp
@@ -40,15 +40,7 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-set( dependencyList mesh codingUtilities fieldSpecification )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+set( dependencyList ${parallelDeps} mesh codingUtilities fieldSpecification )
 
 blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}
@@ -56,7 +48,6 @@ blt_add_library( NAME       finiteVolume
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX finiteVolume )

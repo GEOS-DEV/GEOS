@@ -44,6 +44,10 @@ public:
   {
     return "LagrangianContact";
   }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "LagrangianContact"; }
@@ -93,6 +97,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void

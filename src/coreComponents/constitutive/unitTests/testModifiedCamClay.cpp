@@ -86,8 +86,7 @@ void testModifiedCamClayDriver()
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(),
-                                                             inputStream.size() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
   if( !xmlResult )
   {
     GEOS_LOG_RANK_0( "XML parsed with errors!" );
@@ -95,8 +94,8 @@ void testModifiedCamClayDriver()
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
+  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
   constitutiveManager.postProcessInputRecursive();
 
   localIndex constexpr numElem = 2;
@@ -137,7 +136,7 @@ void testModifiedCamClayDriver()
 
   for( localIndex loadstep=0; loadstep < 500; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
@@ -169,7 +168,7 @@ void testModifiedCamClayDriver()
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
   testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();

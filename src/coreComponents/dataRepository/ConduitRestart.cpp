@@ -64,10 +64,10 @@ string readRootNode( string const & rootPath )
     conduit::Node node;
     conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
-    int const nFiles = node.child( "number_of_files" ).value();
+    int const nFiles = node.fetch_existing( "number_of_files" ).value();
     GEOS_THROW_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
 
-    string const filePattern = node.child( "file_pattern" ).as_string();
+    string const filePattern = node.fetch_existing( "file_pattern" ).as_string();
     string const rootDirName = splitPath( rootPath ).first;
 
     rankFilePattern = rootDirName + "/" + filePattern;

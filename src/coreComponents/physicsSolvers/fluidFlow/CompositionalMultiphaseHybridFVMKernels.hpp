@@ -21,8 +21,8 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
@@ -215,7 +215,9 @@ struct UpwindingHelper
    * @param[in] posd position (local or neighbor) of the downwind element
    */
   GEOS_HOST_DEVICE
-  static void
+  inline
+  static
+  void
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const & gravTerm,
@@ -333,6 +335,7 @@ struct AssemblerKernelHelper
                           arrayView1d< real64 const > const & mimFaceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
+                          integer const useTotalMassEquation,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -520,6 +523,7 @@ struct AssemblerKernel
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
+           const integer useTotalMassEquation,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -634,6 +638,7 @@ struct FluxKernel
           globalIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
+          integer const useTotalMassEquation,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -842,7 +847,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -876,11 +881,13 @@ public:
                       CompFlowAccessors const & compFlowAccessors,
                       MultiFluidAccessors const & multiFluidAccessors,
                       PorosityAccessors const & porosityAccessors,
-                      real64 const & dt )
+                      real64 const dt,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_dt( dt ),
     m_regionFilter( regionFilter ),
     m_elemRegionList( faceManager.elementRegionList() ),
@@ -926,7 +933,7 @@ public:
       computeMassNormalizer( kf, massNormalizer );
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
-      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * m_dt ) / LvArray::math::max( minNormalizer, massNormalizer );
+      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * m_dt ) / LvArray::math::max( m_minNormalizer, massNormalizer );
     }
   }
 
@@ -998,13 +1005,14 @@ public:
   static void
   createAndLaunch( solverBaseKernels::NormType const normType,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    SortedArrayView< localIndex const > const & regionFilter,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    FaceManager const & faceManager,
-                   real64 const & dt,
+                   real64 const dt,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
@@ -1017,7 +1025,7 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, dt );
+                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, dt, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );

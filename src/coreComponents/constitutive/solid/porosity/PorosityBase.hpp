@@ -45,11 +45,11 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
-                       arrayView2d< real64 > const & porosity_n,
+                       arrayView2d< real64 const > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
                        arrayView2d< real64 > const & dPorosity_dTemperature,
-                       arrayView2d< real64 > const & initialPorosity,
-                       arrayView1d< real64 > const & referencePorosity ):
+                       arrayView2d< real64 const > const & initialPorosity,
+                       arrayView1d< real64 const > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_porosity_n( porosity_n ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
@@ -69,7 +69,7 @@ public:
    * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void savePorosity( localIndex const k,
                      localIndex const q,
                      real64 const & porosity,
@@ -80,7 +80,7 @@ public:
   }
 
   /**
-   * @brief Helper to save point stress back to m_newPorosity array
+   * @brief Helper to save porosity back to m_newPorosity array
    *
    * This is mostly defined for improving code readability.
    *
@@ -104,7 +104,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
@@ -113,7 +113,7 @@ public:
 
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getPorosity_n( localIndex const k,
                         localIndex const q ) const
   {
@@ -121,7 +121,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 getInitialPorosity( localIndex const k,
                              localIndex const q ) const
   {
@@ -132,26 +132,35 @@ public:
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
+                                                 real64 const & pressure_k,
                                                  real64 const & pressure_n,
                                                  real64 const & temperature,
+                                                 real64 const & temperature_k,
                                                  real64 const & temperature_n ) const
   {
-    GEOS_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
+    GEOS_UNUSED_VAR( k, q, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
     GEOS_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
   }
 
 protected:
-  arrayView2d< real64 > m_newPorosity;
 
-  arrayView2d< real64 > m_porosity_n;
+  /// New value of porosity
+  arrayView2d< real64 > const m_newPorosity;
 
-  arrayView2d< real64 > m_dPorosity_dPressure;
+  /// Value of porosity at the previous time step
+  arrayView2d< real64 const > const m_porosity_n;
 
-  arrayView2d< real64 > m_dPorosity_dTemperature;
+  /// Derivative of porosity wrt pressure
+  arrayView2d< real64 > const m_dPorosity_dPressure;
 
-  arrayView2d< real64 > m_initialPorosity;
+  /// Derivative of porosity wrt temperature
+  arrayView2d< real64 > const m_dPorosity_dTemperature;
 
-  arrayView1d< real64 > m_referencePorosity;
+  /// Initial porosity
+  arrayView2d< real64 const > const m_initialPorosity;
+
+  /// Reference porosity
+  arrayView1d< real64 const > const m_referencePorosity;
 };
 
 
@@ -239,6 +248,10 @@ public:
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
+  /// Ignore the porosity update and return to the state of the system
+  /// This is useful after the initialization step
+  virtual void ignoreConvergedState() const;
+
   /**
    * @brief Initialize newPorosity and porosity_n.
    */
@@ -246,10 +259,45 @@ public:
 
   virtual arrayView1d< real64 const > const getBiotCoefficient() const
   {
-    GEOS_ERROR( "getBiotPorosity() not implemented for this model" );
+    GEOS_ERROR( "getBiotCoefficient() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toViewConst();
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for the mean total stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  virtual arrayView2d< real64 const > const getMeanTotalStressIncrement_k() const
+  {
+    GEOS_ERROR( "getMeanTotalStressIncrement_k() not implemented for this model" );
+
+    array2d< real64 > out;
+    return out.toViewConst();
+  }
+
+  /**
+   * @brief Non-const accessor for the average mean total stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  virtual arrayView1d< real64 > const getAverageMeanTotalStressIncrement_k()
+  {
+    GEOS_ERROR( "getAverageMeanTotalStressIncrement_k() not implemented for this model" );
+
+    array1d< real64 > out;
+    return out.toView();
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void savePorosity( localIndex const k,
+                     localIndex const q,
+                     real64 const & porosity,
+                     real64 const & dPorosity_dPressure ) const
+  {
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
   }
 
   using KernelWrapper = PorosityBaseUpdates;

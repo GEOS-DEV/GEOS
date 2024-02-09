@@ -149,7 +149,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, EmbeddedSurfaceSubRegion & subRegion )
     {
 
-      FixedToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
+      OrderedVariableToManyElementRelation const & surfaceElementsToCells = subRegion.getToCellRelation();
 
       for( localIndex const & k : newObjects.newElements.at( {er, esr} ) )
       {
@@ -186,7 +186,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
                                                                              EmbeddedSurfaceSubRegion & subRegion )
       {
         localIndex_array & surfaceElemGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-        surfaceElemGhostsToSend.move( LvArray::MemorySpace::host );
+        surfaceElemGhostsToSend.move( hostMemorySpace );
 
         for( localIndex const & k : newSurfaceGhostsToSend.at( {er, esr} ) )
         {
@@ -313,7 +313,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
     {
       // we send all the ghosts
       arrayView1d< localIndex const >  const & elemsGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-      elemsGhostsToSend.move( LvArray::MemorySpace::host );
+      elemsGhostsToSend.move( hostMemorySpace );
       forAll< serialPolicy >( elemsGhostsToSend.size(), [=, &elemsToSendData] ( localIndex const k )
       {
         elemsToSendData[er][esr].emplace_back( elemsGhostsToSend[k] );

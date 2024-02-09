@@ -70,6 +70,7 @@ public:
   using Base::m_X;
   using Base::m_disp;
   using Base::m_uhat;
+  using Base::m_dt;
 
 
   /**
@@ -89,6 +90,7 @@ public:
                    globalIndex const rankOffset,
                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                    arrayView1d< real64 > const inputRhs,
+                   real64 const inputDt,
                    real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -101,6 +103,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
+          inputDt,
           inputGravityVector ),
     m_w( embeddedSurfSubRegion.getField< fields::contact::dispJump >().toView() ),
     m_tractionVec( embeddedSurfSubRegion.getField< fields::contact::traction >().toViewConst() ),
@@ -206,7 +209,6 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
-
     GEOS_UNUSED_VAR( numElems );
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
@@ -231,7 +233,7 @@ public:
   //END_kernelLauncher
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const

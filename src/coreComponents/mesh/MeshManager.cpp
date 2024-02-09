@@ -14,10 +14,13 @@
 
 
 #include "MeshManager.hpp"
+#include "MeshBody.hpp"
+#include "MeshLevel.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "generators/CellBlockManagerABC.hpp"
 #include "generators/MeshGeneratorBase.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 
 #include <unordered_set>
@@ -59,7 +62,18 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    meshGen.generateMesh( domain );
+    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    meshBody.createMeshLevel( 0 );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
+    meshGen.generateMesh( meshBody, partition );
+
+    if( !meshBody.hasParticles() )
+    {
+      CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+
+      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    }
   } );
 }
 
@@ -68,11 +82,6 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
   this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    if( dynamicCast< InternalWellGenerator * >( &meshGen ) )
-    {
-      return;
-    }
-
     string const & meshName = meshGen.getName();
     domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
   } );
@@ -106,7 +115,14 @@ void MeshManager::importFields( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&domain]( MeshGeneratorBase const & generator )
   {
     if( !domain.hasMeshBody( generator.getName() ) )
+    {
       return;
+    }
+    else if( domain.getMeshBody( generator.getName() ).hasParticles() ) // field import is not currently compatible with particle mesh
+                                                                        // bodies
+    {
+      return;
+    }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 
@@ -141,7 +157,7 @@ void MeshManager::importFields( DomainPartition & domain )
         WrapperBase & wrapper = subRegion.getWrapperBase( geosxFieldName );
         if( generator.getLogLevel() >= 1 )
         {
-          GEOS_LOG_RANK_0( "Importing field " << meshFieldName << " -> " << geosxFieldName <<
+          GEOS_LOG_RANK_0( "Importing field " << meshFieldName << " into " << geosxFieldName <<
                            " on " << region.getName() << "/" << subRegion.getName() );
         }
 

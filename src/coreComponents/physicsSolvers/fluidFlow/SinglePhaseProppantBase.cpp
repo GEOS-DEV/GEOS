@@ -20,9 +20,9 @@
 #include "SinglePhaseProppantBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/SlurryFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
@@ -69,7 +69,8 @@ void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRe
 {
   string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidMaterialName = SolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOS_ERROR_IF( fluidMaterialName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( fluidMaterialName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                                      getDataContext(), subRegion.getName() ) );
 }
 
 void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & domain ) const
@@ -85,7 +86,8 @@ void SinglePhaseProppantBase::validateConstitutiveModels( DomainPartition & doma
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
       GEOS_THROW_IF( fluidName.empty(),
-                     GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
                      InputError );
     } );
   } );

@@ -79,6 +79,7 @@ public:
   using Base::m_elementVolume;
   using Base::m_fracturedElems;
   using Base::m_cellsToEmbeddedSurfaces;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -97,6 +98,7 @@ public:
                   globalIndex const rankOffset,
                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                   arrayView1d< real64 > const inputRhs,
+                  real64 const inputDt,
                   real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -110,6 +112,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
+          inputDt,
           inputGravityVector )
   {}
 
@@ -148,7 +151,7 @@ public:
    * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -185,7 +188,7 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
@@ -234,6 +237,7 @@ using EFEMJumpUpdateFactory = finiteElement::KernelFactory< EFEMJumpUpdate,
                                                             globalIndex const,
                                                             CRSMatrixView< real64, globalIndex const > const,
                                                             arrayView1d< real64 > const,
+                                                            real64 const,
                                                             real64 const (&) [3] >;
 
 } // namespace SolidMechanicsEFEMKernels

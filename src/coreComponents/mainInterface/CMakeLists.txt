@@ -18,15 +18,7 @@ set( mainInterface_sources
      version.cpp
    )
 
-set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}
@@ -39,4 +31,3 @@ add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX mainInterface )

@@ -120,12 +120,11 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
         } );
 
-        GEOS_ERROR_IF( !bodyFound,
+        GEOS_THROW_IF( !bodyFound,
                        GEOS_FMT( "MeshBody ({}) is specified, but not found.",
-                                 targetTokens[0] ) );
+                                 targetTokens[0] ),
+                       std::domain_error );
       }
-
-
 
       string const meshBodyName = targetTokens[0];
       MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
@@ -151,16 +150,14 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
             }
           } );
 
-          GEOS_ERROR_IF( !levelFound,
+          GEOS_THROW_IF( !levelFound,
                          GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
-                                   targetTokens[1] ) );
+                                   targetTokens[1] ),
+                         std::domain_error );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
       {
-        //GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
-        //                  "using baseDiscretizationString()." );
-
         string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
         targetTokens.insert( targetTokens.begin()+1, baseMeshLevelName );
@@ -203,9 +200,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       return targetGroup;
     }
   }
-  catch( std::domain_error const & e )
+  catch( std::exception const & e )
   {
-    throw InputError( e, getName() + " has a wrong objectPath: " + objectPath + "\n" );
+    throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }
 

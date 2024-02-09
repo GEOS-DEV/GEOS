@@ -13,6 +13,7 @@
  */
 
 #include "CellElementRegion.hpp"
+#include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
 namespace geos
@@ -23,23 +24,25 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 );
 }
 
 CellElementRegion::~CellElementRegion()
 {}
 
-void CellElementRegion::generateMesh( Group & cellBlocks )
+void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
-    CellBlockABC & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
+    CellBlockABC const & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
     subRegion.copyFromCellBlock( source );
   }
 }

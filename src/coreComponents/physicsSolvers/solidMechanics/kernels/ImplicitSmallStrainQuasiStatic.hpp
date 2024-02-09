@@ -84,7 +84,7 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
-
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -102,6 +102,7 @@ public:
                                   globalIndex const rankOffset,
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
+                                  real64 const inputDt,
                                   real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
@@ -171,7 +172,7 @@ public:
      * @param a Node index for the row.
      * @param b Node index for the col.
      */
-    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE inline constexpr
     void operator() ( localIndex const a, localIndex const b )
     {
       GEOS_UNUSED_VAR( a );
@@ -183,7 +184,7 @@ public:
      *   integrating the divergence to produce nodal forces.
      * @param stress The stress array.
      */
-    GEOS_HOST_DEVICE GEOS_FORCE_INLINE constexpr
+    GEOS_HOST_DEVICE inline constexpr
     void operator() ( real64 (& stress)[6] )
     {
       GEOS_UNUSED_VAR( stress );
@@ -211,7 +212,7 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
@@ -247,7 +248,7 @@ protected:
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
@@ -261,6 +262,7 @@ using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitSmallStrainQuas
                                                          globalIndex,
                                                          CRSMatrixView< real64, globalIndex const > const,
                                                          arrayView1d< real64 > const,
+                                                         real64 const,
                                                          real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels

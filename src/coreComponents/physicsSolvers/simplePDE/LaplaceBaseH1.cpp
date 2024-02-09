@@ -39,6 +39,7 @@ LaplaceBaseH1::LaplaceBaseH1( const string & name,
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   this->registerWrapper( viewKeyStruct::fieldVarName(), &m_fieldName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of field variable" );
 
@@ -141,8 +142,10 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain
 void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                          arrayView1d< real64 const > const & localSolution,
                                          real64 const scalingFactor,
+                                         real64 const dt,
                                          DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   dofManager.addVectorToField( localSolution,
                                m_fieldName,
                                m_fieldName,
@@ -212,14 +215,14 @@ void LaplaceBaseH1::
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy< > >( targetSet,
+                                                                    time,
+                                                                    targetGroup,
+                                                                    m_fieldName,
+                                                                    dofManager.getKey( m_fieldName ),
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs );
     } );
   } );
 }

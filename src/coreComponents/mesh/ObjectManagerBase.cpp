@@ -314,7 +314,8 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
                                       bool onDevice,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -339,7 +340,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events, op );
     }
   }
 
@@ -606,10 +607,10 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     localIndex_array unpackedLocalIndices;
     unpackedLocalIndices.resize( numUnpackedIndices );
 
-    globalIndex_array globalIndices;
+    array1d< globalIndex > globalIndices;
     unpackedSize += bufferOps::Unpack( buffer, globalIndices );
     localIndex numNewIndices = 0;
-    globalIndex_array newGlobalIndices;
+    array1d< globalIndex > newGlobalIndices;
     newGlobalIndices.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
     for( localIndex a = 0; a < numUnpackedIndices; ++a )
@@ -831,13 +832,25 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
   {
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
 
-#if !defined(__CUDA_ARCH__)
-    targetSet.move( LvArray::MemorySpace::host, true );
+#if !defined(GEOS_DEVICE_COMPILE)
+    targetSet.move( hostMemorySpace, true );
 #endif
 
     if( targetSet.count( source ) > 0 )
     {
       targetSet.insert( destination );
+    }
+  }
+}
+
+void ObjectManagerBase::eraseObject( std::set< localIndex > const & indicesToErase )
+{
+  for( auto & nameToWrapper: wrappers() )
+  {
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      wrapper->erase( indicesToErase );
     }
   }
 }
