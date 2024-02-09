@@ -104,9 +104,7 @@ void AcousticVTIFletcherWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
 
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
 void AcousticVTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
