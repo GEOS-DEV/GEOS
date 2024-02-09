@@ -26,6 +26,7 @@
 #include "fieldSpecification/PerfectlyMatchedLayer.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "WaveSolverUtils.hpp"
 
 #include <limits>
 
@@ -127,14 +128,34 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Flag to apply PML" );
 
   registerWrapper( viewKeyStruct::useDASString(), &m_useDAS ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Flag to indicate if DAS type of data will be modeled" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( WaveSolverUtils::DASType::none ).
+    setDescription( "Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference" );
+
+  registerWrapper( viewKeyStruct::linearDASSamplesString(), &m_linearDASSamples ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 5 ).
+    setDescription( "Number of sample points to be used for strain integration when integrating the strain for the DAS signal" );
 
   registerWrapper( viewKeyStruct::linearDASGeometryString(), &m_linearDASGeometry ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
+
+  registerWrapper( viewKeyStruct::linearDASVectorXString(), &m_linearDASVectorX ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "X component of the linear DAS direction vector" );
+
+  registerWrapper( viewKeyStruct::linearDASVectorYString(), &m_linearDASVectorY ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Y component of the linear DAS direction vector" );
+
+  registerWrapper( viewKeyStruct::linearDASVectorZString(), &m_linearDASVectorZ ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Z component of the linear DAS direction vector" );
 
   registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
     setInputFlag( InputFlags::FALSE ).
@@ -248,12 +269,21 @@ void WaveSolverBase::postProcessInput()
 
   m_usePML = counter;
 
-  if( m_linearDASGeometry.size( 1 ) > 0 )
-    m_useDAS = 1;
+  if( m_useDAS == WaveSolverUtils::DASType::none && m_linearDASGeometry.size( 0 ) > 0 )
+  {
+    m_useDAS = WaveSolverUtils::DASType::strainIntegration;
+    m_linearDASSamples = 5;
+  }
 
-  if( m_useDAS )
+  if( m_useDAS == WaveSolverUtils::DASType::dipole )
+  {
+    m_linearDASSamples = 2;
+  }
+
+  if( m_useDAS != WaveSolverUtils::DASType::none )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == WaveSolverUtils::DASType::strainIntegration ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
@@ -261,9 +291,22 @@ void WaveSolverBase::postProcessInput()
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-    /// initialize DAS geometry
-    initializeDAS();
-
+    m_linearDASVectorX.resize( m_linearDASGeometry.size( 0 ) );
+    m_linearDASVectorY.resize( m_linearDASGeometry.size( 0 ) );
+    m_linearDASVectorZ.resize( m_linearDASGeometry.size( 0 ) );
+    for( int ircv = 0; ircv < m_linearDASGeometry.size( 0 ); ircv++ )
+    {
+      R1Tensor dasVector = WaveSolverUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );
+      m_linearDASVectorX( ircv ) = dasVector[ 0 ];
+      m_linearDASVectorY( ircv ) = dasVector[ 1 ];
+      m_linearDASVectorZ( ircv ) = dasVector[ 2 ];
+      if( m_useDAS == WaveSolverUtils::DASType::dipole )
+      {
+        m_linearDASVectorX( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+        m_linearDASVectorY( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+        m_linearDASVectorZ( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+      }
+    }
   }
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
@@ -302,36 +345,6 @@ void WaveSolverBase::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-}
-
-void WaveSolverBase::initializeDAS()
-{
-  /// double the number of receivers and modify their coordinates
-  /// so to have two receivers on each side of each DAS channel
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
-
-  arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
-  arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
-
-  for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
-  {
-    /// updated xyz of receivers on the far end of a DAS channel
-    receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0]
-                                                      + cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][1] = receiverCoordinates[ircv][1]
-                                                      + cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][2] = receiverCoordinates[ircv][2]
-                                                      + sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
-
-    /// updated xyz of receivers on the near end of a DAS channel
-    receiverCoordinates[ircv][0] = receiverCoordinates[ircv][0]
-                                   - cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[ircv][1] = receiverCoordinates[ircv][1]
-                                   - cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[ircv][2] = receiverCoordinates[ircv][2]
-                                   - sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
-  }
 }
 
 real64 WaveSolverBase::solverStep( real64 const & time_n,
@@ -430,7 +443,9 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
                                              real64 const dt,
                                              arrayView1d< real32 const > const var_np1,
                                              arrayView1d< real32 const > const var_n,
-                                             arrayView2d< real32 > varAtReceivers )
+                                             arrayView2d< real32 > varAtReceivers,
+                                             arrayView1d< real32 > coeffs,
+                                             bool add )
 {
   /*
    * In forward case we compute seismo if time_n + dt is the first time
@@ -452,10 +467,10 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
-    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
       break;
     WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
-                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
+                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
   }
 }
 
