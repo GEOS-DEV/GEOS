@@ -60,6 +60,17 @@ public:
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+
+    constexpr static char const * fractureStateString() { return "fractureState"; }
+
+    constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
+
+    constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
+  };
+
 protected:
 
   //virtual void postProcessInput() override;
@@ -90,17 +101,6 @@ protected:
 
   ///
   //bool m_setupSolidSolverDofs;
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
-    constexpr static char const * fractureStateString() { return "fractureState"; }
-
-    constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
-
-    constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
-  };
 
   template< typename LAMBDA >
   void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const

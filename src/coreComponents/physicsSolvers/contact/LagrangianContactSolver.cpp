@@ -136,7 +136,7 @@ void LagrangianContactSolver::initializePreSubGroups()
   ContactSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  //ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -171,14 +171,13 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
                                            CRSMatrix< real64, globalIndex > & localMatrix,
                                            ParallelVector & rhs,
                                            ParallelVector & solution,
-                                           bool const setSparsity )
+                                           bool const GEOS_UNUSED_PARAM( setSparsity ) )
 {
   if( m_precond )
   {
     m_precond->clear();
   }
 
-  GEOS_UNUSED_PARAM( setSparsity )
   // setup monolithic coupled system
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true );
 
