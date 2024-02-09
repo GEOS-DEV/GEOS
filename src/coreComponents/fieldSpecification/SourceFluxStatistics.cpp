@@ -239,14 +239,6 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_fluxName = fluxName;
 }
 void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
-                                                                   real64 const producedMass,
-                                                                   integer const elementCount )
-{
-  array1d< real64 > phaseProducedMass{ 1 };
-  phaseProducedMass[0] = producedMass;
-  gatherTimeStepStats( currentTime, dt, phaseProducedMass, elementCount );
-}
-void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
                                                                    array1d< real64 > const & producedMass,
                                                                    integer const elementCount )
 {

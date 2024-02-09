@@ -1011,9 +1011,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         return;
       }
 
-      // production stats for this SourceFluxBoundaryCondition in this subRegion
-      real64 producedMass = 0.0;
-
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
@@ -1023,6 +1020,9 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       array1d< real64 > rhsContributionArray( targetSet.size() );
       arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
       localIndex const rankOffset = dofManager.rankOffset();
+
+      array1d< real64 > producedMass{ 1 };
+      arrayView1d< real64 > producedMassView = producedMass.toView();
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       fs.computeRhsContribution< FieldSpecificationAdd,
@@ -1064,7 +1064,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              rhsContributionArrayView,
                                                              localRhs,
                                                              localMatrix,
-                                                             &producedMass] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             producedMassView] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1078,7 +1078,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const energyRowIndex = massRowIndex + 1;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
-          producedMass += rhsValue;
+          producedMassView[0] += rhsValue;
           //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
@@ -1119,7 +1119,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const rowIndex = dofNumber[ei] - rankOffset;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
           localRhs[rowIndex] += rhsValue;
-          producedMass += rhsValue;
+          producedMass[0] += rhsValue;
         } );
       }
 

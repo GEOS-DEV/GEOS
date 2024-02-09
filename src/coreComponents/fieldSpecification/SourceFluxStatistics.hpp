@@ -88,15 +88,6 @@ public:
     void setTarget( string_view aggregatorName, string_view fluxName );
 
     /**
-     * @brief Set the current time step stats. Single-phase version
-     * @param currentTime  time of the timestep start since simulation starting
-     * @param dt           time delta of the current timestep
-     * @param producedMass time-step producted mass (see StatData::m_producedMass).
-     * @param elementCount number of cell elements concerned by this instance
-     */
-    void gatherTimeStepStats( real64 currentTime, real64 dt,
-                              real64 producedMass, integer elementCount );
-    /**
      * @brief Set the current time step stats. Multi-phase version
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep

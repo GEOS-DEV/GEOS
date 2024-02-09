@@ -1484,9 +1484,6 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         return;
       }
 
-      // production stats for this SourceFluxBoundaryCondition in this subRegion
-      array1d< real64 > producedMass{ m_numComponents };
-
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
@@ -1498,6 +1495,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       array1d< real64 > rhsContributionArray( targetSet.size() );
       arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
       localIndex const rankOffset = dofManager.rankOffset();
+
+      array1d< real64 > producedMass{ m_numComponents };
+      arrayView1d< real64 > producedMassView = producedMass.toView();
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       fs.computeRhsContribution< FieldSpecificationAdd,
@@ -1533,7 +1533,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs,
-                                                           &producedMass] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           producedMassView] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1543,7 +1543,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         }
 
         real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-        producedMass[fluidComponentId] += rhsValue;
+        producedMassView[fluidComponentId] += rhsValue;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
