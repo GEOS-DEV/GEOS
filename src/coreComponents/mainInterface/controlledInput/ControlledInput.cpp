@@ -160,6 +160,7 @@ void operator>>( const YAML::Node & node,
 void fillWithMissingXmlInfo( xml_node & problem )
 {
   problem.select_node("ElementRegions/CellElementRegion").node().append_attribute( "materialList" ) = "{ nullModel }";
+  problem.select_node("Constitutive").node().append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" ); // TODO null model hard coded
 }
 
 void convert( string const & stableInputFileName,

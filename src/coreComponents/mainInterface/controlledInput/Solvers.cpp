@@ -46,9 +46,6 @@ public:
     events::PeriodicEvent pe = events::PeriodicEvent( "/Solvers/" + solverName );
     pe.fillEventsXmlNode( events );
 
-    xml_node constitutive = problemNode.select_node( "Constitutive" ).node();
-    constitutive.append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
-
     xml_node numericalMethods = problemNode.select_node( "NumericalMethods" ).node();
     xml_node feSpace = numericalMethods.append_child( "FiniteElements" ).append_child( "FiniteElementSpace" );
     feSpace.append_attribute( "name" ) = feSpaceName.c_str();

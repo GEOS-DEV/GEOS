@@ -45,7 +45,6 @@ functions:
       x: [ 0.0, 1.0, 2.0 ]
       y: [ 0.0, 3.e2, 4.e3 ]
 
-
 outputs:
   - vtk:
       every: 1 s
