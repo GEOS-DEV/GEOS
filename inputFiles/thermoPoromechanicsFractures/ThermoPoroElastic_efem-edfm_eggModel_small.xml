@@ -7,9 +7,8 @@
       name="poroSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
       initialDt="1000"
-      fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
+      solidSolverName="fractureMechSolver"
       logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
@@ -27,8 +26,8 @@
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
-      solidSolverName="matrixMechSolver"
-      fractureRegionName="Fracture"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
@@ -37,12 +36,6 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsEmbeddedFractures>
-
-    <SolidMechanicsLagrangianSSLE
-      name="matrixMechSolver"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ Reservoir, Overburden, Underburden, Sideburden }"/>
 
     <SinglePhaseFVM
       name="flowSolver"

@@ -23,7 +23,6 @@
       name="fractureMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"
