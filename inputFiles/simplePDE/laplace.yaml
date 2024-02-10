@@ -3,6 +3,7 @@ simulation:
   end: 2 s
   solver:
     laplace:
+      on: [domain0, domain1]
       formulation:
         variable:
           name: temperature
@@ -21,6 +22,16 @@ mesh:
     nx: [ 5, 5 ]
     ny: [ 5, 5 ]
     nz: [ 5, 5 ]
+    regions:
+      mapping:
+        domain0: [
+          [ 0, 0, 0 ],
+          [ 1, 0, 0 ]
+        ]
+        domain1: [
+          [ 0, 1, 1 ],
+          [ 1, 1, 1 ]
+        ]
   surfaces:
     - box:
         name: hot
