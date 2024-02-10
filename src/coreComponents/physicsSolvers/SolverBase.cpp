@@ -276,7 +276,7 @@ bool SolverBase::execute( real64 const time_n,
       }
       else
       {
-        nextDt=dtRemaining;
+        nextDt = dtRemaining;
       }
     }
 
