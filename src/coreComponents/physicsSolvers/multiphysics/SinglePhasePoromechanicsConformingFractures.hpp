@@ -122,7 +122,7 @@ public:
 
   bool updateConfiguration( DomainPartition & domain ) override final;
 
-  void initializePostInitialConditionsPostSubGroups() override final;
+  //void initializePostInitialConditionsPostSubGroups() override final;
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 

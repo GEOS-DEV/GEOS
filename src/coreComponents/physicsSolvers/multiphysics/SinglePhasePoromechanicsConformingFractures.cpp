@@ -52,8 +52,8 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
-{
+//void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
+//{
 //  contactSolver()->setSolidSolverDofFlags( false );
 //
 //  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics< SinglePhaseBase
@@ -64,7 +64,7 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
 //                           getCatalogName(), getDataContext(),
 //                           SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::isThermalString(),
 //                           poromechanicsSolver()->getDataContext() ) );
-}
+//}
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
@@ -73,14 +73,14 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
 
   GEOS_UNUSED_VAR( domain, dofManager );
 
-//  /// We need to add 2 coupling terms:
-//  // 1. Poroemechanical coupling in the bulk
-//  poromechanicsSolver()->setupCoupling( domain, dofManager );
-//
-//  // 2. Traction - pressure coupling in the fracture
-//  dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
-//                          fields::contact::traction::key(),
-//                          DofManager::Connector::Elem );
+  /// We need to add 2 coupling terms:
+  // 1. Poroemechanical coupling in the bulk
+  Base::setupCoupling( domain, dofManager );
+
+  // 2. Traction - pressure coupling in the fracture
+  dofManager.addCoupling( SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
+                          fields::contact::traction::key(),
+                          DofManager::Connector::Elem );
 }
 
 bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
