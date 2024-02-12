@@ -1496,8 +1496,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
       localIndex const rankOffset = dofManager.rankOffset();
 
-      array1d< real64 > producedMass{ m_numComponents };
-      arrayView1d< real64 > producedMassView = producedMass.toView();
+      RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       fs.computeRhsContribution< FieldSpecificationAdd,
@@ -1533,7 +1532,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs,
-                                                           producedMassView] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1543,7 +1542,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         }
 
         real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
-        producedMassView[fluidComponentId] += rhsValue;
+        massProd += rhsValue;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
@@ -1566,7 +1565,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
         // set the new sub-region statistics for this timestep
-        wrapper.gatherTimeStepStats( time, dt, producedMass, targetSet.size() );
+        array1d< real64 > massProdArr{ m_numComponents };
+        massProdArr[fluidComponentId] = massProd.get();
+        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), targetSet.size() );
       } );
     } );
   } );

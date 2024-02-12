@@ -239,7 +239,7 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_fluxName = fluxName;
 }
 void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
-                                                                   array1d< real64 > const & producedMass,
+                                                                   arrayView1d< real64 const > const & producedMass,
                                                                    integer const elementCount )
 {
   m_periodStats.allocate( producedMass.size() );

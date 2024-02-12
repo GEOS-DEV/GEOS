@@ -95,7 +95,8 @@ public:
      * @param elementCount number of cell elements concerned by this instance
      */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
-                              array1d< real64 > const & producedMass, integer elementCount );
+                              arrayView1d< real64 const > const & producedMass,
+                              integer elementCount );
 
     /**
      * @brief Finalize the period statistics of each timestep gathering and render data over all mpi ranks.
