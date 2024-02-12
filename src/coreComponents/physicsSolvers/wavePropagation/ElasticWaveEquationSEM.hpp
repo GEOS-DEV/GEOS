@@ -91,7 +91,8 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
-   * @brief Compute DAS data from the appropriate three-component receiver pairs
+   * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS
+   * type is set to 2
    * @param xCompRcv the array holding the x-component of pairs of receivers
    * @param yCompRcv the array holding the y-component of pairs of receivers
    * @param zCompRcv the array holding the z-component of pairs of receivers
@@ -99,7 +100,6 @@ public:
   void computeDAS( arrayView2d< real32 > const xCompRcv,
                    arrayView2d< real32 > const yCompRcv,
                    arrayView2d< real32 > const zCompRcv );
-
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -115,6 +115,8 @@ public:
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
+
+    static constexpr char const * dasSignalNp1AtReceiversString() { return "dasSignalNp1AtReceivers"; }
 
     static constexpr char const * sourceForceString() { return "sourceForce"; }
     static constexpr char const * sourceMomentString() { return "sourceMoment"; }
@@ -202,6 +204,9 @@ private:
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
+
+  /// DAS receiver signal at np1 for each time step for each receiver (z-component)
+  array2d< real32 > m_dasSignalNp1AtReceivers;
 
   /// Vector describing the force of the source
   R1Tensor m_sourceForce;
