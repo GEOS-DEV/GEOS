@@ -27,14 +27,12 @@ mesh:
     nz: [ 5, 5 ]
     regions:
       mapping:
-        domain0: [
-          [ 0, 0, 0 ],
-          [ 1, 0, 0 ]
-        ]
-        domain1: [
-          [ 0, 1, 1 ],
-          [ 1, 1, 1 ]
-        ]
+        domain0:
+          - [ 0, 0, 0 ]
+          - [ 1, 0, 0 ]
+        domain1:
+          - [ 0, 1, 1 ]
+          - [ 1, 1, 1 ]
   surfaces:
     - box:
         name: hot
