@@ -6,7 +6,6 @@
     <LagrangianContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
-      surfaceGeneratorName="SurfaceGen"
       stabilizationName="TPFAstabilization"
       logLevel="1"
       discretization="FE1"

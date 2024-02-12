@@ -8,7 +8,6 @@
       stabilizationName="TPFAstabilization"
       logLevel="1"
       timeIntegrationOption="QuasiStatic"
-      surfaceGeneratorName="SurfaceGen"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters

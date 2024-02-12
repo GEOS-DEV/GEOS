@@ -846,8 +846,8 @@ SolidMechanicsLagrangianFEM::
       arrayView2d< real64 > const vtilde = nodeManager.getField< solidMechanics::velocityTilde >();
       arrayView2d< real64 > const uhatTilde = nodeManager.getField< solidMechanics::uhatTilde >();
 
-      real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
-      real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
+      real64 const newmarkGamma = this->getReference< real64 >( viewKeyStruct::newmarkGammaString() );
+      real64 const newmarkBeta = this->getReference< real64 >( viewKeyStruct::newmarkBetaString() );
 
       forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
@@ -910,8 +910,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       arrayView2d< real64 const > const vtilde    = nodeManager.getField< solidMechanics::velocityTilde >();
       arrayView2d< real64 const > const uhatTilde = nodeManager.getField< solidMechanics::uhatTilde >();
 
-      real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
-      real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
+      real64 const newmarkGamma = this->getReference< real64 >( viewKeyStruct::newmarkGammaString() );
+      real64 const newmarkBeta = this->getReference< real64 >( viewKeyStruct::newmarkBetaString() );
 
       RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
                                               [=] GEOS_HOST_DEVICE ( localIndex const a )

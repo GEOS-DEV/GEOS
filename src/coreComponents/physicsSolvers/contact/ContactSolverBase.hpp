@@ -60,15 +60,15 @@ public:
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : SolidMechanicsLagrangianFEM::viewKeyStruct
   {
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+    //constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
 
-    constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
+    //constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
   };
 
 protected:

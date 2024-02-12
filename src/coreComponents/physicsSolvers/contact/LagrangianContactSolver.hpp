@@ -175,17 +175,17 @@ private:
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
+    //constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+    //constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
 
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-    constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
+    //constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
-    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
+    constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 
   };
 

@@ -9,7 +9,6 @@
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
       timeIntegrationOption="QuasiStatic"
-      surfaceGeneratorName="SurfaceGen"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"

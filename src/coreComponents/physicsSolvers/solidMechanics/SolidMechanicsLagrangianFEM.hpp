@@ -229,7 +229,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * cflFactorString() { return "cflFactor"; }
+    //static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
@@ -243,19 +243,19 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-    constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
+    static constexpr char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
 
-    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
-    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
-    dataRepository::ViewKey massDamping = { massDampingString() };
-    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
-  } solidMechanicsViewKeys;
+//    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
+//    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
+//    dataRepository::ViewKey massDamping = { massDampingString() };
+//    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
+//    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
+  };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {

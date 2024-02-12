@@ -65,6 +65,9 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
+  this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
+
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
