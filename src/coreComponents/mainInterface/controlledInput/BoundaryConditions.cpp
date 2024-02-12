@@ -66,35 +66,25 @@ private:
 void operator>>( const YAML::Node & node,
                  std::vector< std::shared_ptr< BoundaryConditions > > & bcs )
 {
-  GEOS_ASSERT( node.IsSequence() );
-
-  for( std::size_t i = 0; i < node.size(); i++ )
+  const YAML::Node & dirichlet = node["dirichlet"];
+  GEOS_ASSERT( dirichlet.IsSequence() );
+  for( auto const & bc: dirichlet )
   {
-    auto bc = node[i];
-    for( auto const & kv: bc )
+    string const location = bc["on"].as< string >();
+    string const field = bc["field"].as< string >();
+    if( auto val = bc["value"] )
     {
-      string const location = kv.first.as< string >();
-      auto const & fieldSpecifications = kv.second;
-      GEOS_ASSERT( fieldSpecifications.IsSequence() );
-      for( std::size_t j = 0; j < fieldSpecifications.size(); j++ )
-      {
-        auto fs = fieldSpecifications[j];
-        string const field = fs["field"].as< string >();
-        if( auto val = fs["value"] )
-        {
-          auto uniform = std::make_shared< Uniform >( location, field, val.as< real64 >() );
-          bcs.push_back(uniform);
-        }
-        else if( auto fct = fs["function"] )
-        {
-          auto dirichletFct = std::make_shared< DirichletFct >( location, field, fct.as< string >() );
-          bcs.push_back(dirichletFct);
-        }
-        else
-        {
-          GEOS_WARNING( "Discarded bc \"" << fs << "\"" );
-        }
-      }
+      auto uniform = std::make_shared< Uniform >( location, field, val.as< real64 >() );
+      bcs.push_back( uniform );
+    }
+    else if( auto fct = bc["function"] )
+    {
+      auto dirichletFct = std::make_shared< DirichletFct >( location, field, fct.as< string >() );
+      bcs.push_back( dirichletFct );
+    }
+    else
+    {
+      GEOS_WARNING( "Discarded bc \"" << bc << "\"" );
     }
   }
 }

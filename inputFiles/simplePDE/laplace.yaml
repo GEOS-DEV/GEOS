@@ -44,12 +44,13 @@ mesh:
         max: [ 1.01, 1.01, 1.01 ]
 
 boundary_conditions:
-  - cold:
-      - field: temperature
-        value: 0
-  - hot:
-      - field: temperature
-        function: fct
+  dirichlet:
+    - on: cold
+      field: temperature
+      value: 0
+    - on: hot
+      field: temperature
+      function: fct
 
 functions:
   - table:
