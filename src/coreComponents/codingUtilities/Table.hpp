@@ -34,6 +34,15 @@ public:
 
   enum MarginValue { tiny, small, medium, large};
 
+  /**
+   * @brief Struct for a column margin and border margin. 
+   * @param tiny 0 margin for both;
+   * @param small 1 margin from |
+   * @param medium 2 margin from |
+   * @param large 3 margin from |
+   * 
+   * @param marginValue current margin value 
+   */
   struct Margin
   {
     integer tiny;
@@ -51,9 +60,9 @@ public:
 
   /**
    * @brief Struct for a ColumnParam.
-   * @param [in] headerName A vector containing all string for a header name
-   * @param [in] columnValues Alignment for a column. By default aligned to the right side
-   * @param [in] enabled A boolean to display a colummn
+   * @param headerName A vector containing all string for a header name
+   * @param columnValues Alignment for a column. By default aligned to the right side
+   * @param enabled A boolean to display a colummn
    */
   struct ColumnParam
   {
@@ -113,9 +122,6 @@ public:
    * @return return the table name
    */
   std::string const & getTitle();
-
-  Margin borderMargin;
-  Margin columnMargin;
 
 private:
 
@@ -204,6 +210,9 @@ private:
   std::vector< std::vector< std::string > > m_splitHeader;
   std::vector< std::vector< string > > m_cellsRows;
   std::vector< Column > m_columns;
+
+  Margin borderMargin;
+  Margin columnMargin;
 
   std::string title;
   std::string topSeparator;
