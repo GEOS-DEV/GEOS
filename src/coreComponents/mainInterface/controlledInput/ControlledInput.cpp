@@ -162,12 +162,19 @@ void fillWithMissingXmlInfo( xml_node & problem )
   problem.select_node("Constitutive").node().append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" ); // TODO null model hard coded
 }
 
+void checkInputFileVersion( YAML::Node const & input )
+{
+  string const version = input["geos"]["input_file_version"].as< string >();
+  GEOS_ERROR_IF( version != "0.0.1", "Not supported input file version " << version );
+}
+
 void convert( string const & stableInputFileName,
               xmlWrapper::xmlDocument & doc )
 {
   xml_node problem = doc.appendChild( "Problem" );
 
   YAML::Node const input = YAML::LoadFile( stableInputFileName );
+  checkInputFileVersion( input );
   Deck deck;
   input >> deck;
 
