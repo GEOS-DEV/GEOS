@@ -656,20 +656,15 @@ TestSet getTestSet()
 
     <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
                    beginTime="0"
                    target="/Tasks/timeStepFluxStats" />
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
                    beginTime="0"
                    target="/Tasks/timeStepChecker" />
+
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
                    beginTime="0"
                    target="/Tasks/wholeSimFluxStats" />
   </Events>
@@ -725,13 +720,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.0e6 5.0e7 1e5 285.15 395.15 2\n"
-                                        "ViscosityFun FenghourCO2Viscosity 1.0e6 5.0e7 1e5 285.15 395.15 2\n";
+  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
+                                        "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n";
 
   testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
                                            "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
 
-  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.0e6 5.0e7 1e5 285.15 395.15 2 0\n";
+  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n";
 
 
   testInputs.sourceFluxName = "sourceFlux";
