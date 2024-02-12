@@ -30,7 +30,24 @@ public:
 
   enum Alignment { right, left, middle };
 
-  enum MarginColumn {small, medium, large};
+  enum MarginType {border, column};
+
+  enum MarginValue { tiny, small, medium, large};
+
+  struct Margin
+  {
+    integer tiny;
+    integer small;
+    integer medium;
+    integer large;
+
+    integer marginValue;
+
+    void setWorkingValue( integer const & value )
+    {
+      marginValue = value;
+    }
+  };
 
   /**
    * @brief Struct for a ColumnParam.
@@ -54,7 +71,7 @@ public:
 
   /**
    * @brief Construct a new Table object by specifying alignment of values in the table and optionally their display according to their log
-   *level
+   * level
    *
    * @param columnParameter
    */
@@ -84,11 +101,21 @@ public:
   void setTitle( const std::string & title );
 
   /**
+   * @brief Set the Margin object
+   *
+   * @param valueType
+   */
+  void setMargin( MarginValue const & valueType );
+
+  /**
    * @brief Get the table title
    *
    * @return return the table name
    */
   std::string const & getTitle();
+
+  Margin borderMargin;
+  Margin columnMargin;
 
 private:
 
@@ -106,6 +133,14 @@ private:
     std::vector< std::string > columnValues;
     std::string m_maxStringSize;
   };
+
+  /**
+   * @brief Get the Margin object
+   *
+   * @param type
+   * @return Margin
+   */
+  Margin getMargin( MarginType const & type );
 
   /**
    * @brief Get the name of the section given an enum
@@ -176,8 +211,6 @@ private:
   size_t maxRowHeader;
 
   int marginTitle = 2;
-  int borderMargin = 2;
-  int columnMargin = 5;
 
   std::string titleRow;
   std::string rows;
