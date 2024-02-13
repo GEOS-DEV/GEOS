@@ -25,8 +25,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
-      discretization="FE1"
-      contactRelationName="fractureContact"/>  
+      discretization="FE1"/>  
 
     <SinglePhaseFVM
       name="flowSolver"

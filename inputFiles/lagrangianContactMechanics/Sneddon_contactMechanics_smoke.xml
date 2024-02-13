@@ -15,8 +15,7 @@
       stabilizationName="TPFAstabilization"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      contactRelationName="fractureMaterial">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
