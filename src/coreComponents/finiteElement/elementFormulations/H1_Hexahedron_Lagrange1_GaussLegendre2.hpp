@@ -304,7 +304,7 @@ public:
    */
   GEOS_HOST_DEVICE
   static real64 invJacobianTransformation( int const q,
-                                           real64 const (&X)[numNodes][3],
+                                           real64 const (&X)[numVertices][3],
                                            real64 ( & J )[3][3] )
   {
     int qa, qb, qc;

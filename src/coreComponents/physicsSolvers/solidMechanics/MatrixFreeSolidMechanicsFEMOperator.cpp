@@ -105,8 +105,12 @@ void MatrixFreeSolidMechanicsFEMOperator::apply( ParallelVector const & src, Par
     MeshLevel & mesh = *meshLevelPtr;
 
     auto const & totalDisplacement = mesh.getNodeManager().getField< fields::solidMechanics::totalDisplacement >();
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localSrc.dataBuffer() );
-    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), totalDisplacement.stridesArray(), 0, localDst.dataBuffer() );
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > localSrc2d( totalDisplacement.dimsArray(), 
+                                                                           totalDisplacement.stridesArray(),
+                                                                           localSrc.dataBuffer() );
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > localDst2d( totalDisplacement.dimsArray(), 
+                                                                     totalDisplacement.stridesArray(), 
+                                                                     localDst.dataBuffer() );
 
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::SmallStrainResidualFactory( localSrc2d,
                                                                                          localDst2d,

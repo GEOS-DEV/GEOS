@@ -129,13 +129,13 @@ void test_capture()
   forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )
   {} );
 
-  EXPECT_EQ( gradNDimsView[0], 0 );
-  EXPECT_EQ( gradNDimsView[1], 0 );
-  EXPECT_EQ( gradNDimsView[2], 0 );
-  EXPECT_EQ( gradNDimsView[3], 0 );
+  EXPECT_EQ( gradNDimsView[0], 4 );
+  EXPECT_EQ( gradNDimsView[1], 8 );
+  EXPECT_EQ( gradNDimsView[2], 8 );
+  EXPECT_EQ( gradNDimsView[3], 3 );
 
-  EXPECT_EQ( detJDimsView[0], 0 );
-  EXPECT_EQ( detJDimsView[1], 0 );
+  EXPECT_EQ( detJDimsView[0], 4 );
+  EXPECT_EQ( detJDimsView[1], 8 );
 #endif
 
 

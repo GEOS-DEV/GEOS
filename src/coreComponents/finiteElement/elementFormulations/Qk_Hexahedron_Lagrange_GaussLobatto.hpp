@@ -181,7 +181,7 @@ public:
   static localIndex getNumVertices( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
-    return numNodes;
+    return numVertices;
   }
 
   /**

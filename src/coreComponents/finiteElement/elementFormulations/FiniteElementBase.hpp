@@ -16,9 +16,9 @@
  * @file FiniteElementBase.hpp
  */
 
-//#if defined(GEOS_USE_DEVICE)
+#if defined(GEOS_USE_DEVICE)
 #define CALC_FEM_SHAPE_IN_KERNEL
-//#endif
+#endif
 
 
 
