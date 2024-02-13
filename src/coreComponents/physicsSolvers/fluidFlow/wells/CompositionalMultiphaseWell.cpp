@@ -197,6 +197,9 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
 
       subRegion.registerField< fields::well::totalMassDensity >( getName() );
+      subRegion.registerField< fields::well::dTotalMassDensity >( getName() ).
+        reference().resizeDimension< 1 >( m_numComponents +2 ); // dP, dT, dC
+      // tjb - remove  
       subRegion.registerField< fields::well::dTotalMassDensity_dPressure >( getName() );
       subRegion.registerField< fields::well::dTotalMassDensity_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
@@ -215,6 +218,9 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerField< fields::well::compPerforationRate >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
+      perforationData.registerField< fields::well::dCompPerforationRate >( getName() ).
+        reference().resizeDimension< 1, 2, 3 >( 2, m_numComponents, m_numComponents+ 2 );
+      // tjb - remove
       perforationData.registerField< fields::well::dCompPerforationRate_dPres >( getName() ).
         reference().resizeDimension< 1, 2 >( 2, m_numComponents );
       perforationData.registerField< fields::well::dCompPerforationRate_dComp >( getName() ).
@@ -222,8 +228,15 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
+      
+      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ). 
+        setSizedFromParent( 0 ).
+        reference().resizeDimension< 0 >(  m_numComponents + 2  ); // dP, dT, dC
+
+      //tjb - remove  
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentBHP_dPresString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
+      //tjb - remove
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHP_dCompDensString() ).
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 ).
@@ -232,10 +245,17 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( m_numPhases );
+
+      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRateString() ). 
+        setSizedFromParent( 0 ).
+        reference().resizeDimension< 0 >(  m_numComponents + 2  ); // dP, dT, dC
+
+      //tjb -remove
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dPresString() ).
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( m_numPhases );
+      //tjb remove
       wellControls.registerWrapper< array2d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() ).
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 ).
@@ -245,8 +265,13 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( m_numPhases );
 
-      wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
+
+      wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
+      wellControls.registerWrapper<array1d< real64 > >(  viewKeyStruct::dCurrentTotalVolRateString() ).
+        setSizedFromParent( 0 ).
+        reference().resizeDimension< 0 >(  m_numComponents + 3  ); // dP, dT, dC dQ
+
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dPresString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRate_dCompDensString() ).
@@ -579,6 +604,8 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
 
   arrayView1d< real64 > const & totalMassDens = subRegion.getField< fields::well::totalMassDensity >();
+  arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDenss = subRegion.getField< fields::well::dTotalMassDensity >();
+
   arrayView1d< real64 > const & dTotalMassDens_dPres = subRegion.getField< fields::well::dTotalMassDensity_dPressure >();
   arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDens_dCompDens = subRegion.getField< fields::well::dTotalMassDensity_dGlobalCompDensity >();
 
@@ -593,6 +620,9 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
   real64 & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  arrayView1d< real64 > const & dCurrentBHP =
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );
+
   real64 & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
   arrayView1d< real64 > const & dCurrentBHP_dCompDens =
@@ -602,15 +632,19 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   forAll< serialPolicy >( 1, [&numComp,
                               pres,
                               totalMassDens,
+                              dTotalMassDenss,
                               dTotalMassDens_dPres,
                               dTotalMassDens_dCompDens,
                               wellElemGravCoef,
                               &currentBHP,
+                              &dCurrentBHP,
                               &dCurrentBHP_dPres,
                               dCurrentBHP_dCompDens,
                               &iwelemRef,
                               &refGravCoef] ( localIndex const )
   {
+    GEOS_UNUSED_VAR( dTotalMassDenss );
+    GEOS_UNUSED_VAR( dCurrentBHP );
     real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
     currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
     dCurrentBHP_dPres = 1 + dTotalMassDens_dPres[iwelemRef] * diffGravCoef;
@@ -679,15 +713,20 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+  arrayView1d< real64 > const & dCurrentPhaseVolRate =
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRateString() );
+  // tjb - remove
   arrayView1d< real64 > const & dCurrentPhaseVolRate_dPres =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dPresString() );
-  arrayView2d< real64 > const & dCurrentPhaseVolRate_dCompDens =
-    wellControls.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() );
   arrayView1d< real64 > const & dCurrentPhaseVolRate_dRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dRateString() );
-
+  arrayView2d< real64 > const & dCurrentPhaseVolRate_dCompDens =
+    wellControls.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() );
   real64 & currentTotalVolRate =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+  arrayView1d< real64 > const & dCurrentTotalVolRate =
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() );  
+  // TJB - remove 
   real64 & dCurrentTotalVolRate_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dPresString() );
   arrayView1d< real64 > const & dCurrentTotalVolRate_dCompDens =
@@ -719,10 +758,12 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &surfacePres,
                                 &surfaceTemp,
                                 &currentTotalVolRate,
+                                dCurrentTotalVolRate,
                                 &dCurrentTotalVolRate_dPres,
                                 dCurrentTotalVolRate_dCompDens,
                                 &dCurrentTotalVolRate_dRate,
                                 currentPhaseVolRate,
+                                dCurrentPhaseVolRate,
                                 dCurrentPhaseVolRate_dPres,
                                 dCurrentPhaseVolRate_dCompDens,
                                 dCurrentPhaseVolRate_dRate,
@@ -733,6 +774,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &massDensity] ( localIndex const )
     {
       GEOS_UNUSED_VAR( massUnit );
+      GEOS_UNUSED_VAR( dCurrentPhaseVolRate );
+      GEOS_UNUSED_VAR( dCurrentTotalVolRate );
       using Deriv = multifluid::DerivativeOffset;
 
       stackArray1d< real64, maxNumComp > work( numComp );
@@ -1411,6 +1454,9 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
 
       arrayView1d< real64 const > const & wellElemTotalMassDens =
         subRegion.getField< fields::well::totalMassDensity >();
+      arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens =
+        subRegion.getField< fields::well::dTotalMassDensity >();
+      //tjb - remove  
       arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres =
         subRegion.getField< fields::well::dTotalMassDensity_dPressure >();
       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens =
@@ -1430,7 +1476,10 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
         perforationData->getField< fields::perforation::wellTransmissibility >();
 
       arrayView2d< real64 > const & compPerfRate =
-        perforationData->getField< fields::well::compPerforationRate >();
+      perforationData->getField< fields::well::compPerforationRate >();
+      arrayView4d< real64 > const & dCompPerfRate =
+        perforationData->getField< fields::well::dCompPerforationRate >();
+      // tjb - remove
       arrayView3d< real64 > const & dCompPerfRate_dPres =
         perforationData->getField< fields::well::dCompPerforationRate_dPres >();
       arrayView4d< real64 > const & dCompPerfRate_dComp =
@@ -1465,6 +1514,7 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
                                                     wellElemPres,
                                                     wellElemCompDens,
                                                     wellElemTotalMassDens,
+                                                    dWellElemTotalMassDens,
                                                     dWellElemTotalMassDens_dPres,
                                                     dWellElemTotalMassDens_dCompDens,
                                                     wellElemCompFrac,
@@ -1476,6 +1526,7 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
                                                     resElementSubRegion,
                                                     resElementIndex,
                                                     compPerfRate,
+                                                    dCompPerfRate,
                                                     dCompPerfRate_dPres,
                                                     dCompPerfRate_dComp );
 
@@ -1655,6 +1706,8 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
       // get total mass density on well elements (for potential calculations)
       arrayView1d< real64 const > const & wellElemTotalMassDens =
         subRegion.getField< fields::well::totalMassDensity >();
+      arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens =
+        subRegion.getField< fields::well::dTotalMassDensity >();
       arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres =
         subRegion.getField< fields::well::dTotalMassDensity_dPressure >();
       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens =
@@ -1676,6 +1729,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                                          nextWellElemIndex,
                                                          wellElemPres,
                                                          wellElemTotalMassDens,
+                                                         dWellElemTotalMassDens,
                                                          dWellElemTotalMassDens_dPres,
                                                          dWellElemTotalMassDens_dCompDens,
                                                          controlHasSwitched,

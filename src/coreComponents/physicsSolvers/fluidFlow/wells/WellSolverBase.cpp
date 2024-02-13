@@ -165,7 +165,7 @@ namespace geos
                                       arrayView1d<real64> const &localRhs)
   {
     GEOS_MARK_FUNCTION;
-    if (m_isThermal)
+    if (false && m_isThermal)
     {
      integer const useTotalMassEquation = 1;
     string const wellDofKey = dofManager.getKey(wellElementDofName());
@@ -177,7 +177,6 @@ namespace geos
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
       {
-        ElementRegionManager const &elemManager = mesh.getElemManager();
         string const dofKey = dofManager.getKey(CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString());
         string const &fluidName = subRegion.getReference<string>(viewKeyStruct::fluidNamesString());
 

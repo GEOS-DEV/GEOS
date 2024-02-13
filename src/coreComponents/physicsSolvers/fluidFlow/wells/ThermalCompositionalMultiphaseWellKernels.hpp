@@ -71,9 +71,7 @@ namespace geos
        * @param[in] ei the element index
        * @param[in] totalMassDensityKernelOp the function used to customize the kernel
        */
-      template <typename FUNC = NoOpFunc>
-      GEOS_HOST_DEVICE inline void compute(localIndex const ei,
-                                           FUNC &&totalMassDensityKernelOp = NoOpFunc{}) const
+      GEOS_HOST_DEVICE inline void compute(localIndex const ei) const
       {
         using Deriv = multifluid::DerivativeOffset;
 
@@ -81,7 +79,7 @@ namespace geos
         arraySlice2d<real64 const, compflow::USD_PHASE_DC - 1> dPhaseVolFrac = m_dPhaseVolFrac[ei];
         arraySlice1d<real64 const, multifluid::USD_PHASE - 2> phaseMassDens = m_phaseMassDens[ei][0];
         arraySlice2d<real64 const, multifluid::USD_PHASE_DC - 2> dPhaseMassDens = m_dPhaseMassDens[ei][0];
-        real64 &totalMassDens = m_totalMassDens[ei];
+  
         real64 &dTotalMassDens_dTemp = m_dTotalMassDens_dTemp[ei];
 
         // Call the base compute the compute the total mass density and derivatives

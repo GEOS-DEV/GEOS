@@ -132,13 +132,16 @@ ControlEquationHelper::
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
            real64 const & currentBHP,
+           arrayView1d< real64 const > const & dCurrentBHP,
            real64 const & dCurrentBHP_dPres,
            arrayView1d< real64 const > const & dCurrentBHP_dCompDens,
            arrayView1d< real64 const > const & currentPhaseVolRate,
+           arrayView1d< real64 const > const & dCurrentPhaseVolRate,
            arrayView1d< real64 const > const & dCurrentPhaseVolRate_dPres,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate_dCompDens,
            arrayView1d< real64 const > const & dCurrentPhaseVolRate_dRate,
            real64 const & currentTotalVolRate,
+           arrayView1d< real64 const > const & dCurrentTotalVolRate,
            real64 const & dCurrentTotalVolRate_dPres,
            arrayView1d< real64 const > const & dCurrentTotalVolRate_dCompDens,
            real64 const & dCurrentTotalVolRate_dRate,
@@ -147,6 +150,10 @@ ControlEquationHelper::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
+
+  GEOS_UNUSED_VAR(dCurrentBHP);
+  GEOS_UNUSED_VAR(dCurrentPhaseVolRate);
+  GEOS_UNUSED_VAR(dCurrentTotalVolRate);
   localIndex const eqnRowIndex      = dofNumber + ROFFSET::CONTROL - rankOffset;
   globalIndex const presDofColIndex = dofNumber + COFFSET::DPRES;
   globalIndex const rateDofColIndex = dofNumber + COFFSET::DCOMP + NC;
@@ -568,6 +575,8 @@ PressureRelationKernel::
            real64 const & presNext,
            real64 const & totalMassDens,
            real64 const & totalMassDensNext,
+           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens,
+           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDensNext,
            real64 const & dTotalMassDens_dPres,
            real64 const & dTotalMassDens_dPresNext,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
@@ -575,6 +584,8 @@ PressureRelationKernel::
            real64 & localPresRel,
            real64 ( & localPresRelJacobian )[2*(NC+1)] )
 {
+  GEOS_UNUSED_VAR(dTotalMassDens);
+  GEOS_UNUSED_VAR(dTotalMassDensNext);
   // local working variables and arrays
   real64 dAvgMassDens_dCompCurrent[NC]{};
   real64 dAvgMassDens_dCompNext[NC]{};
@@ -620,6 +631,7 @@ PressureRelationKernel::
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
+          arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
           bool & controlHasSwitched,
@@ -638,6 +650,9 @@ PressureRelationKernel::
   // dynamic well control data
   real64 const & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  arrayView1d< real64 const > const & dCurrentBHP =
+    wellControls.getReference<  array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );  
+  // tjb - remove
   real64 const & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
   arrayView1d< real64 const > const & dCurrentBHP_dCompDens =
@@ -645,6 +660,9 @@ PressureRelationKernel::
 
   arrayView1d< real64 const > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+  arrayView1d< real64 const > const & dCurrentPhaseVolRate =
+    wellControls.getReference<  array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRateString() );
+  // tjb - remove
   arrayView1d< real64 const > const & dCurrentPhaseVolRate_dPres =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dPresString() );
   arrayView2d< real64 const > const & dCurrentPhaseVolRate_dCompDens =
@@ -654,6 +672,9 @@ PressureRelationKernel::
 
   real64 const & currentTotalVolRate =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+  arrayView1d< real64 const > const & dCurrentTotalVolRate =
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() ); 
+  // tjb - remove
   real64 const & dCurrentTotalVolRate_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dPresString() );
   arrayView1d< real64 const > const & dCurrentTotalVolRate_dCompDens =
@@ -697,13 +718,16 @@ PressureRelationKernel::
                                             targetTotalRate,
                                             targetMassRate,
                                             currentBHP,
+                                            dCurrentBHP,
                                             dCurrentBHP_dPres,
                                             dCurrentBHP_dCompDens,
                                             currentPhaseVolRate,
+                                            dCurrentPhaseVolRate,
                                             dCurrentPhaseVolRate_dPres,
                                             dCurrentPhaseVolRate_dCompDens,
                                             dCurrentPhaseVolRate_dRate,
                                             currentTotalVolRate,
+                                            dCurrentTotalVolRate,
                                             dCurrentTotalVolRate_dPres,
                                             dCurrentTotalVolRate_dCompDens,
                                             dCurrentTotalVolRate_dRate,
@@ -727,6 +751,8 @@ PressureRelationKernel::
                      wellElemPressure[iwelemNext],
                      wellElemTotalMassDens[iwelem],
                      wellElemTotalMassDens[iwelemNext],
+                     dWellElemTotalMassDens[iwelem],
+                     dWellElemTotalMassDens[iwelemNext],
                      dWellElemTotalMassDens_dPres[iwelem],
                      dWellElemTotalMassDens_dPres[iwelemNext],
                      dWellElemTotalMassDens_dCompDens[iwelem],
@@ -776,6 +802,7 @@ PressureRelationKernel::
                   arrayView1d< localIndex const > const & nextWellElemIndex, \
                   arrayView1d< real64 const > const & wellElemPressure, \
                   arrayView1d< real64 const > const & wellElemTotalMassDens, \
+                  arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens, \
                   arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                   arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \
                   bool & controlHasSwitched, \
@@ -812,6 +839,7 @@ PerforationKernel::
            real64 const & wellElemPres,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
            real64 const & wellElemTotalMassDens,
+           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens,
            real64 const & dWellElemTotalMassDens_dPres,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens_dCompDens,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompFrac,
@@ -819,11 +847,13 @@ PerforationKernel::
            real64 const & perfGravCoef,
            real64 const & trans,
            arraySlice1d< real64 > const & compPerfRate,
+           arraySlice3d< real64 > const & dCompPerfRate,
            arraySlice2d< real64 > const & dCompPerfRate_dPres,
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
   using Deriv = multifluid::DerivativeOffset;
-
+  GEOS_UNUSED_VAR(dWellElemTotalMassDens);
+  GEOS_UNUSED_VAR(dCompPerfRate);
   // local working variables and arrays
   real64 pres[2]{};
   real64 dPres_dP[2]{};
@@ -1127,6 +1157,7 @@ PerforationKernel::
           arrayView1d< real64 const > const & wellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
+          arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac,
@@ -1138,6 +1169,7 @@ PerforationKernel::
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView2d< real64 > const & compPerfRate,
+          arrayView4d< real64 > const & dCompPerfRate,
           arrayView3d< real64 > const & dCompPerfRate_dPres,
           arrayView4d< real64 > const & dCompPerfRate_dComp )
 {
@@ -1171,6 +1203,7 @@ PerforationKernel::
                        wellElemPres[iwelem],
                        wellElemCompDens[iwelem],
                        wellElemTotalMassDens[iwelem],
+                       dWellElemTotalMassDens[iwelem],
                        dWellElemTotalMassDens_dPres[iwelem],
                        dWellElemTotalMassDens_dCompDens[iwelem],
                        wellElemCompFrac[iwelem],
@@ -1178,6 +1211,7 @@ PerforationKernel::
                        perfGravCoef[iperf],
                        perfTrans[iperf],
                        compPerfRate[iperf],
+                       dCompPerfRate[iperf],
                        dCompPerfRate_dPres[iperf],
                        dCompPerfRate_dComp[iperf] );
 
@@ -1205,6 +1239,7 @@ PerforationKernel::
                       arrayView1d< real64 const > const & wellElemPres, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens, \
                       arrayView1d< real64 const > const & wellElemTotalMassDens, \
+                      arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens, \
                       arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac, \
@@ -1216,6 +1251,7 @@ PerforationKernel::
                       arrayView1d< localIndex const > const & resElementSubRegion, \
                       arrayView1d< localIndex const > const & resElementIndex, \
                       arrayView2d< real64 > const & compPerfRate, \
+                      arrayView4d< real64 > const & dCompPerfRate, \
                       arrayView3d< real64 > const & dCompPerfRate_dPres, \
                       arrayView4d< real64 > const & dCompPerfRate_dComp )
 
