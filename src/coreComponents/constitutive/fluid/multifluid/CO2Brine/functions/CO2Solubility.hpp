@@ -58,9 +58,7 @@ public:
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
     m_phaseLiquidIndex( phaseLiquidIndex )
-  {
-    GEOS_UNUSED_VAR( waterVapourisationTable );
-  }
+  {}
 
   template< int USD1 >
   GEOS_HOST_DEVICE
