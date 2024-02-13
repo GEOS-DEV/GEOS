@@ -133,9 +133,9 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
   Base::initializePostInitialConditionsPreSubGroups();
 
   arrayView1d< string const > const & poromechanicsTargetRegionNames =
-    this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+                                      this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   arrayView1d< string const > const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+                                      this->flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
@@ -144,13 +144,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
                              getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
                    InputError );
   }
-
-  integer & isFlowThermal = this->flowSolver()->isThermal();
-  GEOS_LOG_RANK_0_IF( this->m_isThermal && !isFlowThermal,
-                      GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                getCatalogName(), this->getName(),
-                                FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getDataContext() ) );
-  isFlowThermal = this->m_isThermal;
 
   if( this->m_isThermal )
   {
@@ -235,7 +228,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else
     {
       poromechanicsMaxForce =
-        assemblyLaunch< constitutive::PorousSolidBase,
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
                         poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                        dofManager,
                                                                                        regionNames,

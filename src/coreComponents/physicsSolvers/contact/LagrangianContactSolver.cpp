@@ -33,7 +33,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+//#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -64,9 +64,6 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
-
-  this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
-    setInputFlag( dataRepository::InputFlags::FALSE );
 
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
@@ -577,14 +574,16 @@ void LagrangianContactSolver::assembleContact( DomainPartition & domain,
   } );
 }
 
-
-real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
-                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
+real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
+                                                       real64 const & dt,
                                                        DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm(time, dt, domain, dofManager, localRhs);
+
   real64 momentumR2 = 0.0;
   real64 contactR2 = 0.0;
 
@@ -695,7 +694,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
       globalResidualNorm[1],
       globalResidualNorm[2] );
   }
-  return globalResidualNorm[2];
+  return sqrt(globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual);
 }
 
 void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )

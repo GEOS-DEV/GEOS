@@ -73,6 +73,23 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
+  void initializePostInitialConditionsPreSubGroups()
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    integer & isFlowThermal = this->flowSolver()->isThermal();
+    GEOS_WARNING_IF( this->m_isThermal && !isFlowThermal,
+                     GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
+                               this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ) );
+    isFlowThermal = this->m_isThermal;
+
+//    integer & isMechThermal = this->solidMechanicsSolver()->isThermal();
+//    GEOS_WARNING_IF( this->m_isThermal && !isMechThermal,
+//                     GEOS_FMT( "{} {}: The attribute `{}` of the solid mechanics solver `{}` is set to 1 since the poromechanics solver is thermal",
+//                               this->getCatalogName(), this->getName(), SolidMechanicsLagrangianFEM::viewKeyStruct::isThermalString(), this->solidMechanicsSolver()->getName() ) );
+//    isMechThermal = this->m_isThermal;
+  }
+
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();

@@ -294,19 +294,19 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_contactRelationName;
   MPI_iCommData m_iComm;
   bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
-  SolverBase * m_surfaceGenerator;
-  string m_surfaceGeneratorName;
-
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  string m_contactRelationName;
+
+  SolverBase * m_surfaceGenerator;
+  string m_surfaceGeneratorName;
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
