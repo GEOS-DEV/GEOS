@@ -16,6 +16,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/SourceFluxStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 
 #include <gtest/gtest.h>
 
@@ -43,6 +44,7 @@ struct TestInputs
   string timeStepCheckerPath;
   string timeStepFluxStatsPath;
   string wholeSimFluxStatsPath;
+  string flowSolverPath;
 
   // rates for each timesteps, for each phases
   array2d< real64 > sourceRates;
@@ -169,7 +171,9 @@ void checkFluxStats( arraySlice1d< real64 > const & expectedMasses,
 void checkWholeSimFluxStatistics( ProblemManager & problem, TestSet const & testSet )
 {
   DomainPartition & domain = problem.getDomainPartition();
-  SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( testSet.inputs.wholeSimFluxStatsPath );
+  SourceFluxStatsAggregator & wholeSimStats =
+    problem.getGroupByPath< SourceFluxStatsAggregator >( testSet.inputs.wholeSimFluxStatsPath );
+
   wholeSimStats.forMeshLevelStatsWrapper( domain,
                                           [&] ( MeshLevel & meshLevel,
                                                 SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
@@ -206,6 +210,44 @@ void checkWholeSimFluxStatistics( ProblemManager & problem, TestSet const & test
   } );
 }
 
+void checkTimeStepFluxStats( ProblemManager & problem, TestSet const & testSet,
+                             real64 const time_n, integer const timestepId )
+{
+  DomainPartition & domain = problem.getDomainPartition();
+  SourceFluxStatsAggregator & timestepStats =
+    problem.getGroupByPath< SourceFluxStatsAggregator >( testSet.inputs.timeStepFluxStatsPath );
+
+  timestepStats.forMeshLevelStatsWrapper( domain,
+                                          [&] ( MeshLevel & meshLevel,
+                                                SourceFluxStatsAggregator::WrappedStats & )
+  {
+    timestepStats.forAllFluxStatsWrappers( meshLevel,
+                                           [&] ( MeshLevel &,
+                                                 SourceFluxStatsAggregator::WrappedStats & fluxStats )
+    {
+      if( fluxStats.getFluxName() == testSet.inputs.sourceFluxName )
+      {
+        checkFluxStats( testSet.sourceMassProd[timestepId],
+                        testSet.sourceRates[timestepId],
+                        testSet.inputs.sourceElementsCount,
+                        fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
+      }
+      else if( fluxStats.getFluxName() == testSet.inputs.sinkFluxName )
+      {
+        checkFluxStats( testSet.sinkMassProd[timestepId],
+                        testSet.sinkRates[timestepId],
+                        testSet.inputs.sinkElementsCount,
+                        fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
+      }
+      else
+      {
+        FAIL() << "Unexpected SourceFlux found!";
+      }
+    } );
+  } );
+}
+
+
 
 /**
  * @brief This Task allows to extract and check each timestep stats during the simulation.
@@ -220,8 +262,11 @@ public:
   void postProcessInput() override
   {}
 
-  void setTestSet( TestSet const & testSet ) { m_testSet = &testSet; }
-  integer getTestedTimeStepCount() { return m_timestepId; }
+  void setCheckTimeStepFunction( std::function< void(real64) > func )
+  { m_checkTimeStepFunction = std::function< void(real64) >( func ); }
+
+  integer getTestedTimeStepCount()
+  { return m_timestepId; }
 
   static string catalogName() { return "SinglePhaseStatsTimeStepChecker"; }
 
@@ -230,46 +275,18 @@ public:
                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                         integer const GEOS_UNUSED_PARAM( eventCounter ),
                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & domain )
+                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
   {
-    EXPECT_NE( m_testSet, nullptr );
-    EXPECT_LT( m_timestepId, m_testSet->timestepCount ) << "The tested time-step count were higher than expected.";
-    SourceFluxStatsAggregator & timestepStats = getGroupByPath< SourceFluxStatsAggregator >( m_testSet->inputs.timeStepFluxStatsPath );
-    timestepStats.forMeshLevelStatsWrapper( domain,
-                                            [&] ( MeshLevel & meshLevel,
-                                                  SourceFluxStatsAggregator::WrappedStats & )
-    {
-      timestepStats.forAllFluxStatsWrappers( meshLevel,
-                                             [&] ( MeshLevel &,
-                                                   SourceFluxStatsAggregator::WrappedStats & fluxStats )
-      {
-        if( fluxStats.getFluxName() == m_testSet->inputs.sourceFluxName )
-        {
-          checkFluxStats( m_testSet->sourceMassProd[m_timestepId],
-                          m_testSet->sourceRates[m_timestepId],
-                          m_testSet->inputs.sourceElementsCount,
-                          fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
-        }
-        else if( fluxStats.getFluxName() == m_testSet->inputs.sinkFluxName )
-        {
-          checkFluxStats( m_testSet->sinkMassProd[m_timestepId],
-                          m_testSet->sinkRates[m_timestepId],
-                          m_testSet->inputs.sinkElementsCount,
-                          fluxStats, GEOS_FMT( "for timestep at t = {} s", time_n ) );
-        }
-        else
-        {
-          FAIL() << "Unexpected SourceFlux found!";
-        }
-      } );
-    } );
+    EXPECT_TRUE( m_checkTimeStepFunction );
+    m_checkTimeStepFunction( time_n );
 
     ++m_timestepId;
-
     return false;
   }
+
+
 private:
-  TestSet const * m_testSet = nullptr;
+  std::function< void(real64) > m_checkTimeStepFunction;
   int m_timestepId = 0;
 };
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
@@ -320,6 +337,26 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
     }
     ++timestepId;
   }
+}
+
+real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
+{
+  real64 totalMass = 0.0;
+  SolverBase const & solver = problem.getGroupByPath< SolverBase >( string( flowSolverPath ) );
+  solver.forDiscretizationOnMeshTargets( problem.getDomainPartition().getMeshBodies(),
+                                         [&] ( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
+    {
+      SinglePhaseStatistics::RegionStatistics & regionStats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
+        SinglePhaseStatistics::viewKeyStruct::regionStatisticsString() );
+
+      totalMass += regionStats.totalMass;
+    } );
+  } );
+  return totalMass;
 }
 
 
@@ -441,12 +478,17 @@ TestSet getTestSet()
                    targetExactStartStop="1"
                    beginTime="0"
                    target="/Tasks/timeStepFluxStats" />
+    <PeriodicEvent name="timestepReservoirStatsEvent"
+                   timeFrequency="500.0"
+                   beginTime="0"
+                   target="/Tasks/timeStepReservoirStats" />
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
                    targetExactTimestep="1"
                    targetExactStartStop="1"
                    beginTime="0"
                    target="/Tasks/timeStepChecker" />
+
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
                    targetExactTimestep="1"
@@ -458,10 +500,16 @@ TestSet getTestSet()
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver" />
+                          flowSolverName="testSolver"
+                          logLevel="2" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver" />
+                          flowSolverName="testSolver"
+                          logLevel="2" />
+
+    <SinglePhaseStatistics name="timeStepReservoirStats"
+                                       flowSolverName="testSolver"
+                                       logLevel="1" />
 
     <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
   </Tasks>
@@ -485,6 +533,7 @@ TestSet getTestSet()
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
+  testInputs.flowSolverPath = "/Solvers/testSolver";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
@@ -521,8 +570,22 @@ TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
+  real64 firstMass;
+
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
-  timeStepChecker.setTestSet( testSet );
+  timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
+  {
+    integer const timestepId = timeStepChecker.getTestedTimeStepCount();
+    EXPECT_LT( timestepId, testSet.timestepCount ) << "The tested time-step count were higher than expected.";
+    checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+
+    static bool passedFirstTimeStep = false;
+    if( !passedFirstTimeStep )
+    {
+      passedFirstTimeStep = true;
+      firstMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+    }
+  } );
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
@@ -530,6 +593,14 @@ TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   EXPECT_EQ( timeStepChecker.getTestedTimeStepCount(), testSet.timestepCount ) << "The tested time-step were different than expected.";
 
   checkWholeSimFluxStatistics( problem, testSet );
+
+  // check singlephasestatistics results
+  real64 const lastMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+  real64 const massDiffTol = 1e-7;
+  EXPECT_NEAR( lastMass - firstMass,
+               -testSet.totalMassProd[0],
+               massDiffTol * std::abs( testSet.totalMassProd[0] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
+                                                                                 SinglePhaseStatistics::catalogName() );
 }
 
 
@@ -654,7 +725,7 @@ TestSet getTestSet()
                    forceDt="500.0"
                    target="/Solvers/testSolver" />
 
-    <PeriodicEvent name="timestepStatsEvent"
+    <PeriodicEvent name="timestepFluxStatsEvent"
                    timeFrequency="500.0"
                    beginTime="0"
                    target="/Tasks/timeStepFluxStats" />
@@ -673,11 +744,11 @@ TestSet getTestSet()
     <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          logLevel="0" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          logLevel="0" />
 
     <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
   </Tasks>
@@ -782,7 +853,12 @@ TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
-  timeStepChecker.setTestSet( testSet );
+  timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
+  {
+    integer const timestepId = timeStepChecker.getTestedTimeStepCount();
+    EXPECT_LT( timestepId, testSet.timestepCount ) << "The tested time-step count were higher than expected.";
+    checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+  } );
 
   // run simulation
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
