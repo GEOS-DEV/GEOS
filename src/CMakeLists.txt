@@ -258,10 +258,7 @@ if ( Python3_EXECUTABLE )
 
     # Check for the requested branch of geosPythonPackages (used for testing)
     if( NOT GEOS_PYTHON_PACKAGES_BRANCH )
-      # set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
-
-      set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)
-      message(WARNING "Temporarily changing the geosPythonPackages branch to feature/sherman/outOfPlaceATS")
+      set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
     endif()
 
     set( GEOSX_PYTHON_TOOLS_BINS
