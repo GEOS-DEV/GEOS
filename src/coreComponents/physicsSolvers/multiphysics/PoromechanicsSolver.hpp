@@ -85,8 +85,10 @@ public:
 
 //    integer & isMechThermal = this->solidMechanicsSolver()->isThermal();
 //    GEOS_WARNING_IF( this->m_isThermal && !isMechThermal,
-//                     GEOS_FMT( "{} {}: The attribute `{}` of the solid mechanics solver `{}` is set to 1 since the poromechanics solver is thermal",
-//                               this->getCatalogName(), this->getName(), SolidMechanicsLagrangianFEM::viewKeyStruct::isThermalString(), this->solidMechanicsSolver()->getName() ) );
+//                     GEOS_FMT( "{} {}: The attribute `{}` of the solid mechanics solver `{}` is set to 1 since the poromechanics solver is
+// thermal",
+//                               this->getCatalogName(), this->getName(), SolidMechanicsLagrangianFEM::viewKeyStruct::isThermalString(),
+// this->solidMechanicsSolver()->getName() ) );
 //    isMechThermal = this->m_isThermal;
   }
 

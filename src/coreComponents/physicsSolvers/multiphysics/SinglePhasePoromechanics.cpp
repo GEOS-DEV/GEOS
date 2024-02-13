@@ -133,9 +133,9 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
   Base::initializePostInitialConditionsPreSubGroups();
 
   arrayView1d< string const > const & poromechanicsTargetRegionNames =
-                                      this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+    this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   arrayView1d< string const > const & flowTargetRegionNames =
-                                      this->flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+    this->flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )

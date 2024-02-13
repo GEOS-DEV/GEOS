@@ -2777,8 +2777,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="groupNameRef" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2801,8 +2799,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
  0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
-		<!--surfaceGeneratorName => Name of the surface generator to use-->
-		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -3270,8 +3266,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="groupNameRef" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -3292,8 +3286,6 @@ Local - Add stabilization only to interiors of macro elements.-->
  0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
-		<!--surfaceGeneratorName => Name of the surface generator to use-->
-		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:

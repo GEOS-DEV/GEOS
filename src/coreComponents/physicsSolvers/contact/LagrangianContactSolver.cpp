@@ -582,7 +582,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
 {
   GEOS_MARK_FUNCTION;
 
-  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm(time, dt, domain, dofManager, localRhs);
+  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
   real64 momentumR2 = 0.0;
   real64 contactR2 = 0.0;
@@ -694,7 +694,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
       globalResidualNorm[1],
       globalResidualNorm[2] );
   }
-  return sqrt(globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual);
+  return sqrt( globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual );
 }
 
 void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )
