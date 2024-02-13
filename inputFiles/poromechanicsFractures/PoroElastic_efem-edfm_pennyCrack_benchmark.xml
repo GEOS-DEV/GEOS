@@ -28,8 +28,7 @@
       name="fractureMechSolver"
       targetRegions="{ Domain, Fracture }"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      contactRelationName="fractureContact"/>
+      discretization="FE1"/>
 
     <SinglePhaseFVM
       name="flowSolver"

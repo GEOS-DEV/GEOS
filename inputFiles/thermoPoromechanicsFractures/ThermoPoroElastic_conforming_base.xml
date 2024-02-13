@@ -31,8 +31,7 @@
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ RockMatrix, Fracture }"
-      discretization="FE1"
-      contactRelationName="fractureContact"/>
+      discretization="FE1"/>
 
     <SinglePhaseFVM
       name="flowSolver"

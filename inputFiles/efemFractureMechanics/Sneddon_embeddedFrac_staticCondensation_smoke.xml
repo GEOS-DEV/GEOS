@@ -13,7 +13,6 @@
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
       initialDt="10"
-      contactRelationName="fractureContact"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="1"

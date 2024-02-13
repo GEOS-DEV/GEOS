@@ -8,7 +8,6 @@
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
-      contactRelationName="fractureContact"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
