@@ -277,12 +277,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # They are not in the same folder, so we do it in 2 steps.
   # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
   # in two different folder with meaningful names when unpacking. 
-  # or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
-  # or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR}/integratedTests/TestResults/ --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
-  # or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
-
-  # Try creating the tar in one shot
-  or_die tar -czvf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz -C ${GEOSX_BUILD_DIR}/integratedTests/ integratedTests/* TestResults/
+  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
+  or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
+  or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 
   # want to clean the integrated tests folder to avoid polluting the next build.
   or_die integratedTests/geos_ats.sh -a clean
