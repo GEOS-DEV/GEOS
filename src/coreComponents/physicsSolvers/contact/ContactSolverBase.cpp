@@ -42,7 +42,13 @@ ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )//,
   //m_setupSolidSolverDofs( true )
-{}
+{
+  this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
+
+  this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
+}
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {

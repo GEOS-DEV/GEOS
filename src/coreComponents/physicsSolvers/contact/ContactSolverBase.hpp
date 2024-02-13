@@ -50,7 +50,7 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
-  string const & getContactRelationName() const { return m_contactRelationName; }
+  //string const & getContactRelationName() const { return m_contactRelationName; }
 
   string const & getFractureRegionName() const { return m_fractureRegionNames[0]; }
 
@@ -95,7 +95,7 @@ protected:
   void setFractureRegions( dataRepository::Group const & domain );
 
   /// contact relation name string
-  string m_contactRelationName;
+  //string m_contactRelationName;
 
   std::vector< string > m_fractureRegionNames;
 
