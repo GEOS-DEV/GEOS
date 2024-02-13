@@ -282,7 +282,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 
   # Try creating the tar in one shot
-  or_die tar -czvf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz -C ${GEOSX_BUILD_DIR}/integratedTests/ TestResults/
+  or_die tar -czvf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz -C ${GEOSX_BUILD_DIR}/integratedTests/ integratedTests/* TestResults/
 
   # want to clean the integrated tests folder to avoid polluting the next build.
   or_die integratedTests/geos_ats.sh -a clean
