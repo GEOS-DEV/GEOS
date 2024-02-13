@@ -18,7 +18,6 @@
  */
 
 #include "InternalWellGenerator.hpp"
-#include "codingUtilities/Table.hpp"
 
 namespace geos
 {

@@ -320,7 +320,7 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Prev\nelement"}, Table::Alignment::left},
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
   } );
-   tableTest13.setTitle( "InternalWellGenerator well_injector1" );
+  tableTest13.setTitle( "InternalWellGenerator well_injector1" );
   tableTest13.setMargin( Table::MarginValue::tiny );
   tableTest13.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest13.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );

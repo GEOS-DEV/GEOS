@@ -35,13 +35,13 @@ public:
   enum MarginValue { tiny, small, medium, large};
 
   /**
-   * @brief Struct for a column margin and border margin. 
+   * @brief Struct for a column margin and border margin.
    * @param tiny 0 margin for both;
    * @param small 1 margin from |
    * @param medium 2 margin from |
    * @param large 3 margin from |
-   * 
-   * @param marginValue current margin value 
+   *
+   * @param marginValue current margin value
    */
   struct Margin
   {

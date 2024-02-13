@@ -67,17 +67,17 @@ Table::Table( std::vector< ColumnParam > const & columnParameter ):
   maxRowHeader = 0;
 }
 
-Table::Margin Table::getMargin( MarginType  const & type )
+Table::Margin Table::getMargin( MarginType const & type )
+{
+  Margin marginBorder {0, 1, 2, 3, 2};
+  Margin marginColumn {0, 3, 5, 7, 5};
+  if( type == MarginType::border )
   {
-    Margin marginBorder {0, 1, 2, 3, 2};
-    Margin marginColumn {0, 3, 5, 7, 5};
-    if(type == MarginType::border)
-    {
-      return marginBorder;
-    }
-    return marginColumn;
-
+    return marginBorder;
   }
+  return marginColumn;
+
+}
 
 void Table::splitHeadersStringAndStore()
 {

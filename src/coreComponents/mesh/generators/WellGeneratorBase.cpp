@@ -17,7 +17,8 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-
+#include "codingUtilities/Table.hpp"
+#include "common/Units.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -562,15 +563,14 @@ void WellGeneratorBase::debugWellGeometry() const
     {
       if( inode == 0 )
       {
-          //std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
+        //std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
       }
       else
       {
         //std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
       }
     }
-    table.addRow< 6 >( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement,
-                       nextElement );
+    table.addRow< 6 >( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
 
   }
   table.draw( oss );
@@ -578,7 +578,7 @@ void WellGeneratorBase::debugWellGeometry() const
   Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected toO" } );
   std::string titlePerfo = "Peforation table ";
   tablePerforation.setTitle( titlePerfo );
-  
+
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
     tablePerforation.addRow< 3 >( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
