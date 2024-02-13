@@ -207,7 +207,11 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const enthalpyTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    enthalpyTable->initializeFunction();
+    enthalpyTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
+    enthalpyTable->setValueUnits( units::Enthalpy );
+    return enthalpyTable;
   }
   else
   {
