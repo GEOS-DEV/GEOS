@@ -1169,21 +1169,21 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     elemsToNodesNew = cellBlock.getElemToNode();
     localIndex const numCellElements = cellBlock.numElements();
 
-    forAll< RAJA::omp_parallel_for_exec >( numCellElements,
-                                           [ elemsToNodesSource=elemsToNodesSource.toView(),
-                                             elemsToNodesNew=elemsToNodesNew.toView(),
-                                             elemsToEdges=elemsToEdges.toView(),
-                                             elemsToFaces=elemsToFaces.toView(),
-                                             edgeToNodeMapNew=edgeToNodeMapNew.toView(),
-                                             faceToNodeMapNew=faceToNodeMapNew.toView(),
-                                             refPosSrc=refPosSource.toView(),
-                                             refPosNew=refPosNew.toView(),
-                                             elementLocalToGlobal=elementLocalToGlobal.toView(),
-                                             nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
-                                             numEdgesPerFace, numVerticesPerFace,
-                                             numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell, numNodesPerFace, numNodesPerEdge, order,
-                                             numInternalNodesPerCell, numInternalNodesPerEdge, numInternalNodesPerFace,
-                                             globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_elem )
+    forAll< parallelHostPolicy >( numCellElements,
+                                  [ elemsToNodesSource=elemsToNodesSource.toView(),
+                                    elemsToNodesNew=elemsToNodesNew.toView(),
+                                    elemsToEdges=elemsToEdges.toView(),
+                                    elemsToFaces=elemsToFaces.toView(),
+                                    edgeToNodeMapNew=edgeToNodeMapNew.toView(),
+                                    faceToNodeMapNew=faceToNodeMapNew.toView(),
+                                    refPosSrc=refPosSource.toView(),
+                                    refPosNew=refPosNew.toView(),
+                                    elementLocalToGlobal=elementLocalToGlobal.toView(),
+                                    nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
+                                    numEdgesPerFace, numVerticesPerFace,
+                                    numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell, numNodesPerFace, numNodesPerEdge, order,
+                                    numInternalNodesPerCell, numInternalNodesPerEdge, numInternalNodesPerFace,
+                                    globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_elem )
     {
       std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
