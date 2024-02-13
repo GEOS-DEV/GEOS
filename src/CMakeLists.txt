@@ -261,21 +261,19 @@ if ( Python3_EXECUTABLE )
       set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
     endif()
 
-    # Build targets
     set( GEOSX_PYTHON_TOOLS_BINS
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
-    add_custom_target( geosx_python_tools_update
-                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
-                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
-
     add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
-                        DEPENDS geosx_python_tools_update
-                      )
+                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
+                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
     add_custom_target( geosx_python_tools
                        DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+
+    add_custom_target( geosx_python_tools_clean
+                       COMMAND rm ${GEOSX_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_test
                        COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
@@ -327,7 +325,7 @@ if ( ENABLE_ATS )
        )
 
     add_custom_command( OUTPUT ${ATS_SCRIPT}
-                        COMMAND ${CMAKE_BINARY_DIR}/bin/setup_ats_environment ${CMAKE_SOURCE_DIR}/.. ${CMAKE_BINARY_DIR} ${ATS_WORKING_DIR} ${ATS_BASELINE_DIR} ${ATS_ARGUMENTS}
+                        COMMAND ${CMAKE_BINARY_DIR}/bin/setup_ats_environment ${CMAKE_SOURCE_DIR}/.. ${CMAKE_BINARY_DIR} ${ATS_BASELINE_DIR} ${ATS_WORKING_DIR} ${ATS_ARGUMENTS}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        )
 
