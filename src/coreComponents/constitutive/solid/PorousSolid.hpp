@@ -337,7 +337,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
