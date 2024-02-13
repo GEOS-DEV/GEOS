@@ -969,11 +969,11 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-#if !defined( CALC_FEM_SHAPE_IN_KERNEL )
+//#if !defined( CALC_FEM_SHAPE_IN_KERNEL )
                   feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
-#else
-                  GEOS_UNUSED_VAR( X );
-#endif
+// #else
+//                   GEOS_UNUSED_VAR( X );
+// #endif
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),

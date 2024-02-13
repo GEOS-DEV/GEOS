@@ -383,22 +383,22 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                                                                    elementSubRegion,
                                                                                    meshData );
 
-          constexpr localIndex maxVertices = FE_TYPE::maxVertices;
+          //constexpr localIndex maxVertices = FE_TYPE::maxVertices;
           constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real64 N[maxSupportPoints];
-          real64 xLocal[maxVertices][3];
+          real64 xLocal[maxSupportPoints][3];
 
 
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
             typename FE_TYPE::StackVariables feStack;
             finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numVertices = FE_TYPE::getNumVertices( feStack );
+            //localIndex const numVertices = FE_TYPE::getNumVertices( feStack );
             localIndex const numSupportPoints = FE_TYPE::getNumSupportPoints( feStack );
 
-            for( localIndex a=0; a< numVertices; ++a )
+            for( localIndex a=0; a< numSupportPoints; ++a )
             {
               for( localIndex i=0; i<3; ++i )
               {
@@ -408,9 +408,9 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              real64 J[3][3] = {{0}};
-              real64 const detJW = FE_TYPE::invJacobianTransformation( q, xLocal, J );
-              FE_TYPE::calcN( q, N );
+              real64 dNdXLocal[maxSupportPoints][3];
+              real64 const detJW = finiteElement.calcGradN( q, xLocal, feStack, dNdXLocal );
+              FE_TYPE::calcN( q, feStack, N );
 
               for( localIndex a=0; a< numSupportPoints; ++a )
               {
