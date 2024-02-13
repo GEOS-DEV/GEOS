@@ -252,7 +252,7 @@ struct GEOS_FMT_NS::formatter<std::optional<T>> : GEOS_FMT_NS::formatter< T >
     if (opt) {
       return GEOS_FMT_NS::formatter<T>::format(*opt, ctx);
     } 
-    return GEOS_FMT_NS::format_to(ctx.out(), "NO VALUE");
+    return GEOS_FMT_NS::format_to(ctx.out(), "");
   }
 };
 
