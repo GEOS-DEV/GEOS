@@ -16,7 +16,7 @@
  * @file SolidMechanicsConformingFracturesVEM.cpp
  *
  */
-
+#define GEOSX_DISPATCH_VEM
 #include "SolidMechanicsConformingFracturesVEM.hpp"
 
 #include "common/TimingMacros.hpp"

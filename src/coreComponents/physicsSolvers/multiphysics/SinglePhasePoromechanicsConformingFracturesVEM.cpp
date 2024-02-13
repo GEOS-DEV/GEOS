@@ -16,6 +16,7 @@
  * @file SinglePhasePoromechanicsConformingFracturesVEM.cpp
  */
 
+#define GEOSX_DISPATCH_VEM
 #include "SinglePhasePoromechanicsConformingFracturesVEM.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
