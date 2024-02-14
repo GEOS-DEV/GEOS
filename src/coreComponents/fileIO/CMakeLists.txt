@@ -31,10 +31,12 @@ set( fileIO_sources
 set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
+        python/PyCatalystOutputType.hpp
         python/PyHistoryCollectionType.hpp
         python/PyHistoryOutputType.hpp
         python/PyVTKOutputType.hpp )
   list( APPEND fileIO_sources
+        python/PyCatalystOutput.cpp
         python/PyHistoryCollection.cpp
         python/PyHistoryOutput.cpp
         python/PyVTKOutput.cpp )
