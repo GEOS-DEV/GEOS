@@ -170,6 +170,8 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
 
+      GEOS_LOG_RANK_0( "Included additionnal XML file: " << getAbsolutePath( includedFilePath ) );
+
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
       GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"

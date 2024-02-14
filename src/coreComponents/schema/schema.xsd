@@ -1442,10 +1442,18 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshInternalMeshVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="InternalWellbore" type="InternalWellboreType">
 				<xsd:unique name="MeshInternalWellboreInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="MeshInternalWellboreVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
@@ -1455,6 +1463,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshVTKMeshVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
@@ -1462,6 +1474,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshInternalMeshInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshInternalMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -1515,9 +1533,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--radius => Radius of the well [m]-->
 		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--wellControlsName => Name of the set of constraints associated with this well-->
-		<xsd:attribute name="wellControlsName" type="groupNameRef" use="required" />
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
 		<!--wellRegionName => Name of the well element region-->
-		<xsd:attribute name="wellRegionName" type="groupNameRef" use="required" />
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1531,10 +1549,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="VTKWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Perforation" type="PerforationType" />
+		</xsd:choice>
+		<!--file => Path to the well file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
+		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
+		<!--minSegmentLength => Minimum length of a well segment [m]-->
+		<xsd:attribute name="minSegmentLength" type="real64" default="0.01" />
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
+		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
+		<!--radius => Radius of the well [m]-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<!--wellRegionName => Name of the well element region-->
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshInternalWellboreInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshInternalWellboreVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -1597,6 +1642,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshVTKMeshInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshVTKMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -2151,6 +2202,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2171,9 +2224,16 @@ the relative residual norm satisfies:
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_WaveSolverUtils_DASType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|dipole|strainIntegration" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="AcousticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2199,6 +2259,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2219,6 +2281,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2247,6 +2311,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2267,6 +2333,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2332,7 +2400,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2394,7 +2462,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2480,6 +2548,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--useMass => Use total mass equation-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
+		<!--writeCSV => Write rates into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2572,6 +2642,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2592,6 +2664,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2620,6 +2694,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
@@ -2644,6 +2720,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3201,6 +3279,8 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--writeCSV => Write rates into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3394,6 +3474,8 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<xsd:attribute name="fractureRegion" type="groupNameRef" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isPoroelastic => Flag that defines whether the material is poroelastic or not.-->
+		<xsd:attribute name="isPoroelastic" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
@@ -3446,6 +3528,8 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3556,6 +3640,8 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3576,6 +3662,8 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3822,13 +3910,15 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<xsd:attribute name="flashModelParaFile" type="path" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--solubilityTableNames => Names of solubility tables for each phase-->
+		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3840,13 +3930,15 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<xsd:attribute name="flashModelParaFile" type="path" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--solubilityTableNames => Names of solubility tables for each phase-->
+		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3858,13 +3950,15 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<xsd:attribute name="flashModelParaFile" type="path" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--solubilityTableNames => Names of solubility tables for each phase-->
+		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3876,13 +3970,15 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<xsd:attribute name="flashModelParaFile" type="path" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--solubilityTableNames => Names of solubility tables for each phase-->
+		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

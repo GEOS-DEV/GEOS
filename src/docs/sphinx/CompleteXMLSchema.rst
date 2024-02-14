@@ -1326,6 +1326,13 @@ Element: VTKMesh
 .. include:: ../../coreComponents/schema/docs/VTKMesh.rst
 
 
+.. _XML_VTKWell:
+
+Element: VTKWell
+================
+.. include:: ../../coreComponents/schema/docs/VTKWell.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -2756,6 +2763,13 @@ Datastructure: VTK
 Datastructure: VTKMesh
 ======================
 .. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
+
+
+.. _DATASTRUCTURE_VTKWell:
+
+Datastructure: VTKWell
+======================
+.. include:: ../../coreComponents/schema/docs/VTKWell_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
