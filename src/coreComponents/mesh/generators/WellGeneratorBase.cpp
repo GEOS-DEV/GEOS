@@ -529,7 +529,7 @@ void WellGeneratorBase::debugWellGeometry() const
     return;
   }
 
-  std::vector< std::string > row;
+  std::vector< string > row;
   std::ostringstream oss;
   Table table = Table( {
       Table::ColumnParam{{"Element no."}, Table::Alignment::right},
@@ -541,7 +541,7 @@ void WellGeneratorBase::debugWellGeometry() const
     }
                        );
 
-  std::string titleName = "InternalWellGenerator " + getName();
+  string titleName = "InternalWellGenerator " + getName();
   table.setTitle( titleName );
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
@@ -573,10 +573,10 @@ void WellGeneratorBase::debugWellGeometry() const
     table.addRow< 6 >( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
 
   }
-  table.draw( oss );
+  table.draw();
 
   Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected toO" } );
-  std::string titlePerfo = "Peforation table ";
+  string titlePerfo = "Peforation table ";
   tablePerforation.setTitle( titlePerfo );
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
@@ -584,7 +584,7 @@ void WellGeneratorBase::debugWellGeometry() const
     tablePerforation.addRow< 3 >( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  tablePerforation.draw( oss );
+  tablePerforation.draw();
 
   std::cout << std::endl;
 }

@@ -66,7 +66,7 @@ public:
    */
   struct ColumnParam
   {
-    std::vector< std::string > headerName;
+    std::vector< string > headerName;
     Alignment alignment = Alignment::right;
     bool enabled = true;
   };
@@ -76,7 +76,7 @@ public:
    *
    * @param columnNames
    */
-  Table( std::vector< std::string > const & columnNames );
+  Table( std::vector< string > const & columnNames );
 
   /**
    * @brief Construct a new Table object by specifying alignment of values in the table and optionally their display according to their log
@@ -101,27 +101,27 @@ public:
    *
    * @param os
    */
-  void draw( std::ostringstream & os );
+  void draw( std::ostream & os = std::cout );
 
   /**
    * @brief Set the name of the table
    * @param [in] title The name of the table
    */
-  void setTitle( const std::string & title );
+  void setTitle( string_view title );
 
   /**
    * @brief Set the Margin object
    *
    * @param valueType
    */
-  void setMargin( MarginValue const & valueType );
+  void setMargin( MarginValue valueType );
 
   /**
    * @brief Get the table title
    *
    * @return return the table name
    */
-  std::string const & getTitle();
+  string_view getTitle();
 
 private:
 
@@ -136,8 +136,8 @@ private:
   struct Column
   {
     ColumnParam parameter;
-    std::vector< std::string > columnValues;
-    std::string m_maxStringSize;
+    std::vector< string > columnValues;
+    string m_maxStringSize;
   };
 
   /**
@@ -154,7 +154,7 @@ private:
    * @param section
    * @return The name of the section
    */
-  std::string getStringSection( Section section ) const;
+  string getStringSection( Section section ) const;
 
   /**
    * @brief the vector column \p m_column with all values previously stored in the constructor
@@ -185,8 +185,8 @@ private:
    * by adding an extra number of characters
    *
    */
-  void computeAndSetMaxStringSize( string::size_type const & sectionlineLength,
-                                   string::size_type const & titleLineLength );
+  void computeAndSetMaxStringSize( string::size_type const sectionlineLength,
+                                   string::size_type const titleLineLength );
   /**
    * @brief Compute the lines separator
    *
@@ -207,22 +207,22 @@ private:
    */
   void buildSectionRows( integer const & nbRows, Section const & sectionName );
 
-  std::vector< std::vector< std::string > > m_splitHeader;
+  std::vector< std::vector< string > > m_splitHeader;
   std::vector< std::vector< string > > m_cellsRows;
   std::vector< Column > m_columns;
 
   Margin borderMargin;
   Margin columnMargin;
 
-  std::string title;
-  std::string topSeparator;
-  std::string sectionSeparator;
+  string title;
+  string topSeparator;
+  string sectionSeparator;
   size_t maxRowHeader;
 
   int marginTitle = 2;
 
-  std::string titleRow;
-  std::string rows;
+  string titleRow;
+  string rows;
 
 };
 
@@ -233,10 +233,10 @@ void Table::addRow( const Args &... args )
   static_assert( nbColumn_ == N,
                  "The number of cells per line does not correspond to the number of parameters" );
 
-  std::vector< std::string > rowsValues;
+  std::vector< string > rowsValues;
   int idx = 0;
   ( [&] {
-    std::string cellValue = GEOS_FMT( "{}", args );
+    string cellValue = GEOS_FMT( "{}", args );
     if( m_columns[idx].parameter.enabled )
     {
       rowsValues.push_back( cellValue );
