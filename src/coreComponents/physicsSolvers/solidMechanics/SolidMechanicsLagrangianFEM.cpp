@@ -1153,6 +1153,7 @@ SolidMechanicsLagrangianFEM::
         for( localIndex dim = 0; dim < 3; ++dim )
         {
           localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+          //std::cout <<nodeIndex << " " << dim << " " << localRhs[localRow + dim] << std::endl;
         }
       }
     } );

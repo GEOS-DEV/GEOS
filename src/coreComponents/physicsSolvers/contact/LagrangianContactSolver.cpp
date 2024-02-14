@@ -670,22 +670,22 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
 
   MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
 
-  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    m_initialResidual[0] = globalResidualNorm[0];
-    m_initialResidual[1] = globalResidualNorm[1];
-    m_initialResidual[2] = globalResidualNorm[2];
-    globalResidualNorm[0] = 1.0;
-    globalResidualNorm[1] = 1.0;
-    globalResidualNorm[2] = 1.0;
-  }
-  else
-  {
-    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
-    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
-    // Add 0 just to match Matlab code results
-    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
-  }
+//  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+//  {
+//    m_initialResidual[0] = globalResidualNorm[0];
+//    m_initialResidual[1] = globalResidualNorm[1];
+//    m_initialResidual[2] = globalResidualNorm[2];
+//    globalResidualNorm[0] = 1.0;
+//    globalResidualNorm[1] = 1.0;
+//    globalResidualNorm[2] = 1.0;
+//  }
+//  else
+//  {
+//    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
+//    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
+//    // Add 0 just to match Matlab code results
+//    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+//  }
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout<< GEOS_FMT(

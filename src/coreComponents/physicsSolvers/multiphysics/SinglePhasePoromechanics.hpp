@@ -104,16 +104,6 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-private:
-
-  /**
-   * @brief Helper function to recompute the bulk density
-   * @param[in] subRegion the element subRegion
-   */
-  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
-
-  void createPreconditioner();
-
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
@@ -125,6 +115,16 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
+
+private:
+
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
+
+  void createPreconditioner();
 
 };
 

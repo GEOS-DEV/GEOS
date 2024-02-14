@@ -38,13 +38,13 @@ using namespace fields;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                           Group * const parent )
-  : Base( name, parent ),
-  m_isThermal( 0 )
+  : Base( name, parent )//,
+  //m_isThermal( 0 )
 {
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
+//  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+//    setApplyDefaultValue( 0 ).
+//    setInputFlag( InputFlags::OPTIONAL ).
+//    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   m_linearSolverParameters.get().mgr.separateComponents = false;
@@ -208,7 +208,9 @@ void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributi
   GEOS_UNUSED_VAR( time_n, dt );
 
   /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
+
   Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  this->solidMechanicsSolver()->getMaxForce() = 0.0; // this is to be consistent with old version
 
   // Flow accumulation for fractures
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
