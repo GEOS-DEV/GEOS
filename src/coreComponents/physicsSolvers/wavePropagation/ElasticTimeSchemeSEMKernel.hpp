@@ -26,7 +26,31 @@ struct ElasticTimeSchemeSEM
 {
   
   using EXEC_POLICY = parallelDevicePolicy< >;
-
+    /**
+   * @brief  Apply second order Leap-Frog time scheme for isotropic case without PML
+   * @param[in] dt time-step
+   * @param[out] ux_np1 displacement in x-direction array at time n+1 (updated here)
+   * @param[in] ux_n displacement in x-direction array at time n
+   * @param[in] ux_nm1 displacement in x-direction array at time n-1
+   * @param[out] uy_np1 displacement in y-direction array at time n+1 (updated here)
+   * @param[in] uy_n displacement in y-direction array at time n
+   * @param[in] uy_nm1 displacement in y-direction array at time n-1
+   * @param[out] uz_np1 displacement in z-direction array at time n+1 (updated here)
+   * @param[in] uz_n displacement in z-direction array at time n
+   * @param[in] uz_nm1 displacement in z-direction array at time n-1
+   * @param[in] mass the mass matrix
+   * @param[in] dampingx the damping matrix for x-component
+   * @param[in] dampingy the damping matrix for y-component
+   * @param[in] dampingz the damping matrix for z-component
+   * @param[in] stiffnessVectorx array containing the product of the stiffness matrix R and the displacement in x-direction at time n
+   * @param[in] stiffnessVectory array containing the product of the stiffness matrix R and the displacement in y-direction at time n
+   * @param[in] stiffnessVectorz array containing the product of the stiffness matrix R and the displacement in z-direction at time n
+   * @param[in] rhsx the right-hand-side for displacement in x-direction
+   * @param[in] rhsy the right-hand-side for displacement in y-direction
+   * @param[in] rhsz the right-hand-side for displacement in z-direction
+   * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
+   * @param[in] solverTargetNodesSet the targetted nodeset (useful in particular when we do elasto-acoustic simulation )
+   */
   static void LeapFrog(real64 const dt,
                        arrayView1d< real32 > const ux_np1,
                        arrayView1d< real32 > const ux_n,

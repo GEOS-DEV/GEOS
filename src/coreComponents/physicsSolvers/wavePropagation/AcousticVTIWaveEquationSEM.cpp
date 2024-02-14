@@ -591,7 +591,7 @@ real64 AcousticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     GEOS_MARK_SCOPE ( updateP );
    
-    AcousticTimeSchemeSEM::LeapFrogforVTI(nodeManager,dt,p_np1,p_n,p_nm1,q_np1,q_n,q_nm1,mass,stiffnessVector_p,
+    AcousticTimeSchemeSEM::LeapFrogforVTI(nodeManager.size(),dt,p_np1,p_n,p_nm1,q_np1,q_n,q_nm1,mass,stiffnessVector_p,
                                           stiffnessVector_q,damping_p,damping_pq,damping_q,damping_qp,
                                           rhs,freeSurfaceNodeIndicator,lateralSurfaceNodeIndicator,
                                           bottomSurfaceNodeIndicator);

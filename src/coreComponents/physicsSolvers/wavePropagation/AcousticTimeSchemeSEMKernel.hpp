@@ -27,6 +27,20 @@ struct AcousticTimeSchemeSEM
 
   using EXEC_POLICY = parallelDevicePolicy< >;
 
+
+  /**
+   * @brief  Apply second order Leap-Frog time scheme for isotropic case without PML
+   * @param[in] dt time-step
+   * @param[out] p_np1 pressure array at time n+1 (updated here)
+   * @param[in] p_n pressure array at time n
+   * @param[in] p_nm1 pressure array at time n-1
+   * @param[in] mass the mass matrix
+   * @param[in] stiffnessVector array containing the product of the stiffness matrix R and the pressure at time n
+   * @param[in] damping the damping matrix
+   * @param[in] rhs the right-hand-side
+   * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
+   * @param[in] solverTargetNodesSet the targetted nodeset (useful in particular when we do elasto-acoustic simulation )
+   */
   static void LeapFrogWithoutPML( real64 const dt,
                                   arrayView1d< real32 > const p_np1,
                                   arrayView1d< real32 > const p_n,
@@ -54,7 +68,29 @@ struct AcousticTimeSchemeSEM
 
   };
 
-  static void LeapFrogforVTI( NodeManager & nodeManager,
+  /**
+   * @brief  Apply second order Leap-Frog time scheme for VTI case without PML
+   * @param[in] size The number of nodes in the nodeManager
+   * @param[in] dt time-step
+   * @param[out] p_np1 pressure array at time n+1 (updated here)
+   * @param[in] p_n pressure array at time n
+   * @param[in] p_nm1 pressure array at time n-1
+   * @param[out] q_np1 auxiliary pressure array at time n+1 (updated here)
+   * @param[in] q_n auxiliary pressure array at time n
+   * @param[in] q_nm1 auxiliary pressure array at time n-1
+   * @param[in] mass the mass matrix
+   * @param[in] stiffnessVector_p array containing the product of the stiffness matrix R and the pressure at time n
+   * @param[in] stiffnessVector_q array containing the product of the stiffness matrix R and the auxiliary pressure at time n
+   * @param[in] damping_p the damping matrix
+   * @param[in] damping_pq the damping matrix
+   * @param[in] damping_q the damping matrix
+   * @param[in] damping_qp the damping matrix
+   * @param[in] rhs the right-hand-side
+   * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
+   * @param[in] lateralSurfaceNodeIndicator array which contains indicators to tell if we are on a lateral boundary or not
+   * @param[in] bottomSurfaceNodeIndicator array which contains indicators to telle if we are on the bottom boundary or not
+   */
+  static void LeapFrogforVTI( localIndex const size,
                               real64 const dt,
                               arrayView1d< real32 > const p_np1,
                               arrayView1d< real32 > const p_n,
@@ -76,7 +112,7 @@ struct AcousticTimeSchemeSEM
                                 
   {
     real64 const dt2 = pow( dt, 2 );
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a] != 1 )
       {

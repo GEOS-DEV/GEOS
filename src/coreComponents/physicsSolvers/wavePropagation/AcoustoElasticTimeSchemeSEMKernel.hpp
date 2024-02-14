@@ -27,6 +27,20 @@ struct AcoustoElasticTimeSchemeSEM
   
   using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
+    /**
+   * @brief  Apply second order Leap-Frog time scheme for the coupling condition of elasto-acoustic scheme
+   * @param[in] dt time-step
+   * @param[out] ux_np1 displacement in x-direction array at time n+1 (updated here)
+   * @param[out] uy_np1 displacement in y-direction array at time n+1 (updated here)
+   * @param[out] uz_np1 displacement in z-direction array at time n+1 (updated here)
+   * @param[in] p_n pressure at time n 
+   * @param[in] elasticMass the mass matrix for the elastic equation
+   * @param[in] atoex the coupling matrix for x-component
+   * @param[in] atoey the coupling matrix for y-component
+   * @param[in] atoez the coupling matrix for z-component
+   * @param[in] elasticFSNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not (elastic region)
+   * @param[in] interfaceNodesSet the nodeset containing the nodes belonging to the interface
+   */
 
   static void LeapFrog(real64 const dt,
                        arrayView1d< real32 > const ux_np1,
