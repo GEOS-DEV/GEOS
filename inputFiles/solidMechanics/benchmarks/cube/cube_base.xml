@@ -15,7 +15,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"
-        logLevel="1"
+        logLevel="0"
         krylovTol="1.0e-200"
         krylovMaxIter="1000"/>
     </MatrixFreeSolidMechanicsFEM>
@@ -95,34 +95,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="middleNode0"
-      initialCondition="1"
-      objectPath="nodeManager"
-      fieldName="ReferencePosition"
-      component="0"
-      scale="0.0"
-      setNames="{ middleNode }"/>
-
-    <FieldSpecification
-      name="middleNode1"
-      initialCondition="1"
-      objectPath="nodeManager"
-      fieldName="ReferencePosition"
-      component="1"
-      scale="-0.2"
-      setNames="{ middleNode }"/>
-
-    <FieldSpecification
-      name="middleNode2"
-      initialCondition="1"
-      objectPath="nodeManager"
-      fieldName="ReferencePosition"
-      component="2"
-      scale="0.2"
-      setNames="{ middleNode }"/>
-
-
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
