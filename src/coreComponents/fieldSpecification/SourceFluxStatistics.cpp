@@ -121,7 +121,7 @@ void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
 {
   if( getLogLevel() >= minLogLevel && logger::internal::rank == 0 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producting on {} elements",
+    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producing on {} elements",
                              catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
                              wrappedStats.stats().m_elementCount ) );
 
