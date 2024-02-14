@@ -111,7 +111,8 @@ private:
    * @param[in] mesh the mesh level object
    * @param[in] regionNames the array of target region names
    */
-  void computeRegionStatistics( MeshLevel & mesh,
+  void computeRegionStatistics( real64 const time,
+                                MeshLevel & mesh,
                                 arrayView1d< string const > const & regionNames ) const;
 
 
