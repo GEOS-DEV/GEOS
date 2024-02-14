@@ -1082,7 +1082,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex faceVertID[ numVerticesPerFace ];
     globalIndex faceVertGID[ numVerticesPerFace ];
-    array1d< localIndex > faceToNodeMapWork( numNodesPerFace );
+    array1d< localIndex > const faceToNodeMapWork( numNodesPerFace );
     for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ )
     {
       faceVertID[ iter_node ] = faceToNodesMapSource[ iter_face ][ iter_node ];
@@ -1187,7 +1187,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     {
       std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
-      array1d< localIndex > elemToNodeMapWork( numNodesPerCell );
+      array1d< localIndex > const elemToNodeMapWork( numNodesPerCell );
       for( localIndex iter_node=0; iter_node<numVerticesPerCell; iter_node++ )
       {
         elemVertID[ iter_node ] = elemsToNodesSource[ iter_elem ][ iter_node ];
