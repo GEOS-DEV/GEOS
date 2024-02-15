@@ -130,13 +130,6 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
   updateState( domain );
 }
 
-//void SolidMechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-//                                                         real64 const & dt,
-//                                                         DomainPartition & domain )
-//{
-//  m_solidSolver->implicitStepSetup( time_n, dt, domain );
-//}
-
 void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
                                                             real64 const & dt,
                                                             DomainPartition & domain )
@@ -178,13 +171,6 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     {
       array1d< string > regions;
       regions.emplace_back( getFractureRegionName());
-//      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-//      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-//                                                                      [&]( localIndex const,
-//                                                                           SurfaceElementRegion const & region )
-//      {
-//        regions.emplace_back( region.getName() );
-//      } );
       meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
     } );
 

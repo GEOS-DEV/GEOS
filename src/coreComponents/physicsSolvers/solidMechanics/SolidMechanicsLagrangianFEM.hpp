@@ -229,7 +229,6 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    //static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
@@ -249,12 +248,6 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
-
-//    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
-//    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
-//    dataRepository::ViewKey massDamping = { massDampingString() };
-//    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-//    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )

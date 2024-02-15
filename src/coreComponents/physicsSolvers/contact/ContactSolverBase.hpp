@@ -42,38 +42,20 @@ public:
                 integer const cycleNumber,
                 DomainPartition & domain ) override final;
 
-  virtual void
-  applyBoundaryConditions( real64 const time,
-                           real64 const dt,
-                           DomainPartition & domain,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
-
-  //string const & getContactRelationName() const { return m_contactRelationName; }
-
   string const & getFractureRegionName() const { return m_fractureRegionNames[0]; }
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
-
-  //void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
   void synchronizeFractureState( DomainPartition & domain ) const;
 
   struct viewKeyStruct : SolidMechanicsLagrangianFEM::viewKeyStruct
   {
-    //constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
-
-    //constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
   };
 
 protected:
-
-  //virtual void postProcessInput() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 
@@ -94,13 +76,7 @@ protected:
 
   void setFractureRegions( dataRepository::Group const & domain );
 
-  /// contact relation name string
-  //string m_contactRelationName;
-
   std::vector< string > m_fractureRegionNames;
-
-  ///
-  //bool m_setupSolidSolverDofs;
 
   template< typename LAMBDA >
   void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const

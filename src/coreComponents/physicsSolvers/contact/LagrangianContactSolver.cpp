@@ -135,7 +135,6 @@ void LagrangianContactSolver::initializePreSubGroups()
   ContactSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  //ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -178,7 +177,7 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -201,10 +200,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
                                                     real64 const & dt,
                                                     DomainPartition & domain )
 {
-  //if( m_setupSolidSolverDofs )
-  {
-    SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
-  }
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -497,10 +493,9 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                                          DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  //if( m_setupSolidSolverDofs )
-  {
-    SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
-  }
+
+  SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
+
   // restrict coupling to fracture regions only
   map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,

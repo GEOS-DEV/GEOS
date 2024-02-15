@@ -40,8 +40,7 @@ using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
-  SolidMechanicsLagrangianFEM( name, parent )//,
-  //m_setupSolidSolverDofs( true )
+  SolidMechanicsLagrangianFEM( name, parent )
 {
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
@@ -176,26 +175,6 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
                                  " stick: {:12} | slip:  {:12} | open:  {:12}",
                                  numStick, numSlip, numOpen ) );
     } );
-  }
-}
-
-void ContactSolverBase::applyBoundaryConditions( real64 const time,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  //if( m_setupSolidSolverDofs )
-  {
-    SolidMechanicsLagrangianFEM::applyBoundaryConditions( time,
-                                                          dt,
-                                                          domain,
-                                                          dofManager,
-                                                          localMatrix,
-                                                          localRhs );
   }
 }
 

@@ -126,15 +126,11 @@ public:
 
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
-    //constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
-
     constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
   };
 
 
 protected:
-
-  //virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -150,10 +146,6 @@ private:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const & dt );
-
-//  string m_fracturesSolverName;
-
-//  SolidMechanicsEmbeddedFractures * m_fracturesSolver;
 
 };
 

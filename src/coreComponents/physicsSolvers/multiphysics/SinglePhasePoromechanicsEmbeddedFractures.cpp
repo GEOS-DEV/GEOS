@@ -40,9 +40,6 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
                                                                                       Group * const parent ):
   SinglePhasePoromechanics( name, parent )
 {
-//  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-//    setInputFlag( InputFlags::FALSE );
-
   LinearSolverParameters & params = m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
   params.mgr.separateComponents = false;
@@ -52,13 +49,6 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
 {}
-
-//void SinglePhasePoromechanicsEmbeddedFractures::postProcessInput()
-//{
-//  SinglePhasePoromechanics::postProcessInput();
-//
-//  m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
-//}
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {

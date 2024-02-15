@@ -21,8 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
-#include "../../linearAlgebra/DofManager.hpp"
-#include "../../common/DataTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geos
 {
@@ -50,9 +50,6 @@ public:
    * @copydoc SolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
-
-  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  //static string coupledSolverAttributePrefix() { return "lagrangianContact"; }
 
   virtual void initializePreSubGroups() override;
 
@@ -134,8 +131,6 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
-  //string const & getContactRelationName() const { return m_contactRelationName; }
-
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
@@ -155,9 +150,6 @@ public:
 
   string getStabilizationName() const { return m_stabilizationName; }
 
-protected:
-  //virtual void postProcessInput() override final;
-
 private:
   string m_stabilizationName;
 
@@ -169,24 +161,17 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
-  //virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-
-
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
-    //constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-    //constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
 
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-    //constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
-
   };
 
 };
