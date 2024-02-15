@@ -362,6 +362,7 @@ struct CatalystOutput::CatalystInternals {
   std::string implementationPath = "";
   std::string adiosConfig = "";
   std::string channelName = "fullfield";
+  std::string sstFileName = "gs.bp";
 
   void initializeCatalyst() {
     std::string scriptsCopy = this->scripts;
@@ -402,6 +403,11 @@ struct CatalystOutput::CatalystInternals {
             "implementation without providing an adios2 configuration file.");
       }
       initializer["adios/config"] = this->adiosConfig;
+    }
+
+    std::string envSSTfilename = std::getenv("CATALYST_SST_FILTENAME");
+    if( envSSTfilename != "")) {
+      this->sstFileName = envSSTfilename;
     }
 
     auto capsule = GenericConduitCapsule<conduit::Node>(&initializer);
@@ -466,6 +472,7 @@ bool CatalystOutput::execute(real64 const time_n, real64 const /*dt*/,
   auto& catalystState = executeRoot["catalyst/state"];
   catalystState["timestep"].set(cycleNumber);
   catalystState["time"].set(time_n);
+  catalystState["sstFileName"].set(this->internal->sstFileName);
 
   auto& channel =
       executeRoot["catalyst/channels/" + this->internal->channelName];
