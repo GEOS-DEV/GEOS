@@ -157,6 +157,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   real64 const temperatureInCelsius = units::convertKToC( temperature );
   try
   {
+    std::cout << " pressure pvt : " << pressure << std::endl;
+    std::cout << " temperatureInCelsius : " << temperatureInCelsius << std::endl;
     m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );
     m_phase1->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
     m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
@@ -264,6 +266,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         {
           if( strs[1] == PHASE1::Density::catalogName() )
           {
+            std::cout << " strs : " << strs<< std::endl;
             phase1InputParams[PHASE1::InputParamOrder::DENSITY] = strs;
           }
           else if( strs[1] == PHASE2::Density::catalogName() )
@@ -301,7 +304,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     }
     is.close();
   }
-
+  std::cout << "phase2InputParams[PHASE2::InputParamOrder::ENTHALPY]" << phase2InputParams[PHASE2::InputParamOrder::ENTHALPY] << std::endl;
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::DENSITY].empty(),
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Density::catalogName() ),
@@ -331,7 +334,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                          getLogLevel() > 0 && logger::internal::rank==0 );
   m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
                                          getLogLevel() > 0 && logger::internal::rank==0 );
-
+  std::cout << "phase2InputParams " << phase2InputParams << std::endl;
+  std::cout << "m_componentNames " << m_componentNames << std::endl;
+  std::cout << "m_componentMolarWeight " << m_componentMolarWeight << std::endl;
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
   {

@@ -20,7 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PHILLIPSBRINEVISCOSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
-
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -90,6 +90,8 @@ public:
   static string catalogName() { return "PhillipsBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
+
+  void debugViscosityTable() const;
 
   /**
    * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )

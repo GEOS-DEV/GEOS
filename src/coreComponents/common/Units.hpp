@@ -245,4 +245,15 @@ struct GEOS_FMT_NS::formatter< geos::units::TimeFormatInfo > : GEOS_FMT_NS::form
   }
 };
 
+template <typename T>
+struct GEOS_FMT_NS::formatter<std::optional<T>> : GEOS_FMT_NS::formatter< T >
+{
+  auto format(std::optional<T> const& opt, format_context & ctx) {
+    if (opt) {
+      return GEOS_FMT_NS::formatter<T>::format(*opt, ctx);
+    } 
+    return GEOS_FMT_NS::format_to(ctx.out(), "NO VALUE");
+  }
+};
+
 #endif //GEOS_MATH_PHYSICSCONSTANTS_HPP_

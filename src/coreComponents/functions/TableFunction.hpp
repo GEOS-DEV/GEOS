@@ -317,6 +317,11 @@ private:
     m_valueUnit = unit;
   }
 
+  units::Unit getValueUnit() const
+  {
+    return m_valueUnit;
+  }
+
   /**
    * @brief Print table into a CSV file (only 1d and 2d tables are supported)
    * @param filename Filename for output
