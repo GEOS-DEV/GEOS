@@ -406,7 +406,7 @@ struct CatalystOutput::CatalystInternals {
     }
 
     std::string envSSTfilename = std::getenv("CATALYST_SST_FILTENAME");
-    if( envSSTfilename != "")) {
+    if( envSSTfilename != "") {
       this->sstFileName = envSSTfilename;
     }
 
