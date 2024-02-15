@@ -630,6 +630,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
           for( localIndex dim = 0; dim < 3; ++dim )
           {
             localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+            std::cout << localRow + dim << " " << localRhs[localRow + dim] << std::endl;
           }
         }
       } );
@@ -1685,6 +1686,10 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 {
   GEOS_MARK_FUNCTION;
 
+  for(integer i=0; i < localSolution.size(); i++)
+    std::cout <<i<<" "<< localSolution[i] << std::endl;
+  //exit(-1);
+
   //if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
@@ -1699,6 +1704,26 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                contact::traction::key(),
                                contact::traction::key(),
                                scalingFactor );
+
+  std::cout << " traction " << std::endl;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+                                                              {
+                                                                arrayView2d< real64 > const & traction = subRegion.getField< contact::traction >();
+                                                                forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+                                                                {
+                                                                  for( localIndex i = 0; i < 3; ++i )
+                                                                  {
+                                                                    std::cout << kfe << " " << i << " " << traction[kfe][i] << std::endl;
+                                                                  }
+                                                                });
+                                                              });
+  });
 
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only

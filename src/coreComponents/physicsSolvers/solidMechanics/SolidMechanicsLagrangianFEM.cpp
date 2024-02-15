@@ -1220,7 +1220,24 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                solidMechanics::totalDisplacement::key(),
                                scalingFactor );
 
+  std::cout << " totalDisplacement " << std::endl;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+  solidMechanics::arrayView2dLayoutTotalDisplacement const & disp =
+    nodeManager.getField< solidMechanics::totalDisplacement >();
+  forAll< parallelDevicePolicy<  > >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+  {
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      std::cout << a << " " << i << " " << disp( a, i ) << std::endl;
+    }
+  });
+  });
+
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
 

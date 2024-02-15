@@ -190,8 +190,8 @@ public:
     // note that the order of operations matters a lot here (for instance for the MGR labels)
     // we must set up dofs for solid mechanics first, and then for flow
     // that's the reason why this function is here and not in CoupledSolvers.hpp
-    solidMechanicsSolver()->setupDofs( domain, dofManager );
     flowSolver()->setupDofs( domain, dofManager );
+    solidMechanicsSolver()->setupDofs( domain, dofManager );
 
     this->setupCoupling( domain, dofManager );
   }

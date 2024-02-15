@@ -288,6 +288,22 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                  scalingFactor );
   }
 
+std::cout << " pressure " << std::endl;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+    {
+      arrayView1d < real64 const > const &pres = subRegion.template getField< fields::flow::pressure >();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        std::cout <<ei << " " << pres[ei] << std::endl;
+      });
+    } );
+  });
+
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
                                                                       arrayView1d< string const > const & regionNames )
