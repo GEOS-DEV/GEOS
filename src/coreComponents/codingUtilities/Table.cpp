@@ -21,7 +21,7 @@
 namespace geos
 {
 
-string const cellAlignment( Table::Alignment const & a, string_view value, int spaces )
+string cellAlignment( Table::Alignment const a, string_view value, integer spaces ) 
 {
   switch( a )
   {
@@ -67,7 +67,7 @@ Table::Table( std::vector< ColumnParam > const & columnParameter ):
   maxRowHeader = 0;
 }
 
-Table::Margin Table::getMargin( MarginType const & type )
+Table::Margin Table::getMargin( MarginType type ) const
 {
   Margin marginBorder {0, 1, 2, 3, 2};
   Margin marginColumn {0, 3, 5, 7, 5};
@@ -262,7 +262,7 @@ void Table::buildTitleRow()
   titleRow += GEOS_FMT( "{}\n", "|" );
 }
 
-void Table::buildSectionRows( integer const & nbRows, Section const & sectionName )
+void Table::buildSectionRows( integer const nbRows, Section const sectionName )
 {
 
   for( integer idxRow = 0; idxRow< nbRows; idxRow++ )

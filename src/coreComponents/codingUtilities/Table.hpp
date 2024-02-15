@@ -52,7 +52,7 @@ public:
 
     integer marginValue;
 
-    void setWorkingValue( integer const & value )
+    void setWorkingValue( integer const value )
     {
       marginValue = value;
     }
@@ -91,7 +91,7 @@ public:
    * @param args
    */
   template< size_t N, typename ... Args >
-  void addRow( const Args &... args );
+  void addRow( Args const &... args );
 
   /**
    * @brief Write the the table into specified stream
@@ -137,13 +137,13 @@ private:
    * @param type
    * @return Margin
    */
-  Margin getMargin( MarginType const & type );
+  Margin getMargin( MarginType type ) const;
 
   /**
    * @brief Get the name of the section given an enum
    * @param section
    * @return The name of the section
-   */
+   */0
   string getStringSection( Section section ) const;
 
   /**
@@ -157,7 +157,7 @@ private:
   void splitHeadersStringAndStore();
 
   /**
-   * @brief Iterate throught all header name vector and set them to the same size by adding empty string(s).
+   * @brief Iterate throught all header names vector and set them to the same size by adding empty string(s).
    */
   void addSpaceToSplitHeaderAndStore();
 
@@ -188,7 +188,7 @@ private:
    * @param nbRows
    * @param sectionName
    */
-  void buildSectionRows( integer const & nbRows, Section const & sectionName );
+  void buildSectionRows( integer nbRows, Section sectionName );
 
   std::vector< std::vector< string > > m_splitHeader;
   std::vector< std::vector< string > > m_cellsRows;
@@ -211,11 +211,11 @@ private:
 };
 
 template< size_t N, typename ... Args >
-void Table::addRow( const Args &... args )
+void Table::addRow( Args const &... args )
 {
   constexpr std::size_t nbColumn_ = sizeof...(args);
   static_assert( nbColumn_ == N,
-                 "The number of cells per line does not correspond to the number of parameters" );
+                 "The number of cells per line does not correspond to the number of parameters." );
 
   std::vector< string > rowsValues;
   int idx = 0;
