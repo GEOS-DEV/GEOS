@@ -50,11 +50,15 @@ struct TestInputs
   array2d< real64 > sourceRates;
   array2d< real64 > sinkRates;
 
+  // parameters for precomputing results
   real64 dt;
   real64 sourceRateFactor;
   real64 sinkRateFactor;
   integer sourceElementsCount;
   integer sinkElementsCount;
+
+  /// To be sure sub-timestepping is supported, require the test to have at least one sub-timestep (at least one test should test that).
+  bool requireSubTimeStep;
 };
 
 /**
@@ -247,6 +251,21 @@ void checkTimeStepFluxStats( ProblemManager & problem, TestSet const & testSet,
   } );
 }
 
+void checkTimeStepStats( ProblemManager & problem, TestSet const & testSet,
+                         real64 const time_n, integer const timestepId )
+{
+  EXPECT_LT( timestepId, testSet.timestepCount ) << GEOS_FMT( "The tested time-step count were higher than expected (t = {} s).",
+                                                              time_n );
+
+  // simulation end sub-timestep check
+  if( testSet.inputs.requireSubTimeStep && timestepId == testSet.timestepCount-1 )
+  {
+    SolverBase const & solver = problem.getGroupByPath< SolverBase >( testSet.inputs.flowSolverPath );
+    SolverStatistics const & solverStats = solver.getSolverStatistics();
+    EXPECT_GT( solverStats.getNumTimeStepCuts(), 0 ) << "The test did not encountered any timestep cut, but were expected to. "
+                                                        "Consider adapting the simulation so a timestep cut occurs to check they work as expected.";
+  }
+}
 
 
 /**
@@ -474,26 +493,17 @@ TestSet getTestSet()
 
     <PeriodicEvent name="timestepStatsEvent"
                    timeFrequency="500.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
-                   beginTime="0"
                    target="/Tasks/timeStepFluxStats" />
     <PeriodicEvent name="timestepReservoirStatsEvent"
                    timeFrequency="500.0"
-                   beginTime="0"
                    target="/Tasks/timeStepReservoirStats" />
+
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
-                   beginTime="0"
                    target="/Tasks/timeStepChecker" />
 
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
-                   targetExactTimestep="1"
-                   targetExactStartStop="1"
-                   beginTime="0"
                    target="/Tasks/wholeSimFluxStats" />
   </Events>
 
@@ -501,11 +511,11 @@ TestSet getTestSet()
     <SourceFluxStatistics name="timeStepFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          logLevel="0" />
     <SourceFluxStatistics name="wholeSimFluxStats"
                           fluxNames="{ all }"
                           flowSolverName="testSolver"
-                          logLevel="2" />
+                          logLevel="0" />
 
     <SinglePhaseStatistics name="timeStepReservoirStats"
                                        flowSolverName="testSolver"
@@ -558,6 +568,8 @@ TestSet getTestSet()
   testInputs.sourceRateFactor = -1.0;
   testInputs.sinkRateFactor = 3.0;
 
+  testInputs.requireSubTimeStep = false;
+
   return TestSet( testInputs );
 }
 
@@ -576,7 +588,7 @@ TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
-    EXPECT_LT( timestepId, testSet.timestepCount ) << "The tested time-step count were higher than expected.";
+    checkTimeStepStats( problem, testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
 
     static bool passedFirstTimeStep = false;
@@ -727,16 +739,14 @@ TestSet getTestSet()
 
     <PeriodicEvent name="timestepFluxStatsEvent"
                    timeFrequency="500.0"
-                   beginTime="0"
                    target="/Tasks/timeStepFluxStats" />
+
     <PeriodicEvent name="timestepsCheckEvent"
                    timeFrequency="500.0"
-                   beginTime="0"
                    target="/Tasks/timeStepChecker" />
 
     <PeriodicEvent name="wholeSimStatsEvent"
                    timeFrequency="5000.0"
-                   beginTime="0"
                    target="/Tasks/wholeSimFluxStats" />
   </Events>
 
@@ -805,10 +815,12 @@ TestSet getTestSet()
   testInputs.timeStepCheckerPath = "/Tasks/timeStepChecker";
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
+  testInputs.flowSolverPath = "/Solvers/testSolver";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
   testInputs.sinkElementsCount = 1;
+
   // FluxInjectionRate & FluxProductionRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
                 { { 0.000, 0.0 },
@@ -838,6 +850,8 @@ TestSet getTestSet()
   testInputs.sourceRateFactor = -1.0;
   testInputs.sinkRateFactor = 1.0;
 
+  testInputs.requireSubTimeStep = true;
+
   return TestSet( testInputs );
 }
 
@@ -856,7 +870,7 @@ TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatistics )
   timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
-    EXPECT_LT( timestepId, testSet.timestepCount ) << "The tested time-step count were higher than expected.";
+    checkTimeStepStats( problem, testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
   } );
 
