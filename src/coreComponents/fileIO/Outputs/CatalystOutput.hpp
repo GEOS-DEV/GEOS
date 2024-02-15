@@ -74,8 +74,8 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
   /**
-   * @brief Return PyVTKOutput type.
-   * @return Return PyVTKOutput type.
+   * @brief Return PyCatalystOutput type.
+   * @return Return PyCatalystOutput type.
    */
 #if defined(GEOSX_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override;

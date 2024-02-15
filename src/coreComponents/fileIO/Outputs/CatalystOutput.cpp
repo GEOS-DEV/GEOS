@@ -406,7 +406,7 @@ struct CatalystOutput::CatalystInternals {
     }
 
     std::string envSSTfilename = std::getenv("CATALYST_SST_FILTENAME");
-    if( envSSTfilename != "")) {
+    if( envSSTfilename != "") {
       this->sstFileName = envSSTfilename;
     }
 
@@ -520,9 +520,9 @@ void CatalystOutput::cleanup(real64 const time_n, integer const cycleNumber,
 }
 
 #if defined(GEOSX_USE_PYGEOSX)
-PyTypeObject * VTKOutput::getPythonType() const
+PyTypeObject * CatalystOutput::getPythonType() const
 {
-  return python::getPyVTKOutputType();
+  return python::getPyCatalystOutputType();
 }
 #endif
 
