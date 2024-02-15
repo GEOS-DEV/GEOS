@@ -106,8 +106,6 @@ static PyObject * reinit( PyCatalystOutput * self, PyObject *args )
 
 static PyMethodDef PyCatalystOutput_methods[] = {
   { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine CatalystOutput::execute"},
-  { "setOutputDir", (PyCFunction) setOutputDir, METH_VARARGS, "wrapper to change directory output"},
-  { "setOutputFileRootName", (PyCFunction) setOutputFileRootName, METH_VARARGS, "wrapper to change the root name of the output files and subfolders"},
   { "reinit", (PyCFunction) reinit, METH_VARARGS, "reinitialization function"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
