@@ -73,6 +73,13 @@ public:
                         integer const eventCounter,
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
+  /**
+   * @brief Return PyVTKOutput type.
+   * @return Return PyVTKOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
 
 private:
   ///@{

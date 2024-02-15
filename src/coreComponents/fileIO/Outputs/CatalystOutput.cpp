@@ -519,6 +519,13 @@ void CatalystOutput::cleanup(real64 const time_n, integer const cycleNumber,
   this->internal->initialized = false;
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * VTKOutput::getPythonType() const
+{
+  return python::getPyVTKOutputType();
+}
+#endif
+
 REGISTER_CATALOG_ENTRY(OutputBase, CatalystOutput, string const&,
                        dataRepository::Group* const)
 
