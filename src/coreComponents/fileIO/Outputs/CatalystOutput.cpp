@@ -19,6 +19,10 @@
 // GEOS
 #include "CatalystOutput.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyCatalystOutputType.hpp"
+#endif
+
 #include "fileIO/Catalyst/CatalystActions.hpp"
 #include "fileIO/Catalyst/GenericConduitCapsule.tpp"
 #include "mesh/DomainPartition.hpp"
