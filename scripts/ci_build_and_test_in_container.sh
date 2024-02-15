@@ -252,11 +252,7 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testLifoStorage|testExternalSolvers"
-  else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
-  fi
+  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
