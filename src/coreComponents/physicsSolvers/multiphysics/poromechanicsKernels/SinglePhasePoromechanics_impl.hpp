@@ -152,8 +152,6 @@ computeBodyForce( localIndex const k,
   LvArray::tensorOps::scaledCopy< 3 >( stack.bodyForce, m_gravityVector, mixtureDensity );
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dVolStrainIncrement, m_gravityVector, dMixtureDens_dVolStrainIncrement );
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dPressure, m_gravityVector, dMixtureDens_dPressure );
-
-  //std::cout << k << " " << q << " body force = " << stack.bodyForce[0] << std::endl;
 }
 
 template< typename SUBREGION_TYPE,
@@ -203,7 +201,6 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     dNdX,
     stack.totalStress,
     -detJxW );
-//  std::cout << " localResidualMomentum = " <<  stack.localResidualMomentum[0] << " totalStress = " << stack.totalStress[0] << std::endl;
 
   LinearFormUtilities::compute< displacementTestSpace,
                                 DifferentialOperator::Identity >

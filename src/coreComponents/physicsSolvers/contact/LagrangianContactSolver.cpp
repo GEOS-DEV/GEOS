@@ -33,7 +33,6 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-//#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -630,7 +629,6 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
           for( localIndex dim = 0; dim < 3; ++dim )
           {
             localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
-            std::cout << localRow + dim << " " << localRhs[localRow + dim] << std::endl;
           }
         }
       } );
@@ -671,22 +669,22 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & time,
 
   MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
 
-//  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-//  {
-//    m_initialResidual[0] = globalResidualNorm[0];
-//    m_initialResidual[1] = globalResidualNorm[1];
-//    m_initialResidual[2] = globalResidualNorm[2];
-//    globalResidualNorm[0] = 1.0;
-//    globalResidualNorm[1] = 1.0;
-//    globalResidualNorm[2] = 1.0;
-//  }
-//  else
-//  {
-//    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
-//    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
-//    // Add 0 just to match Matlab code results
-//    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
-//  }
+  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+  {
+    m_initialResidual[0] = globalResidualNorm[0];
+    m_initialResidual[1] = globalResidualNorm[1];
+    m_initialResidual[2] = globalResidualNorm[2];
+    globalResidualNorm[0] = 1.0;
+    globalResidualNorm[1] = 1.0;
+    globalResidualNorm[2] = 1.0;
+  }
+  else
+  {
+    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
+    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
+    // Add 0 just to match Matlab code results
+    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+  }
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout<< GEOS_FMT(
@@ -1686,14 +1684,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 {
   GEOS_MARK_FUNCTION;
 
-  for(integer i=0; i < localSolution.size(); i++)
-    std::cout <<i<<" "<< localSolution[i] << std::endl;
-  //exit(-1);
-
-  //if( m_setupSolidSolverDofs )
-  {
-    SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-  }
+  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
 
   dofManager.addVectorToField( localSolution,
                                contact::traction::key(),
@@ -1704,26 +1695,6 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                contact::traction::key(),
                                contact::traction::key(),
                                scalingFactor );
-
-  std::cout << " traction " << std::endl;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-                                                              {
-                                                                arrayView2d< real64 > const & traction = subRegion.getField< contact::traction >();
-                                                                forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-                                                                {
-                                                                  for( localIndex i = 0; i < 3; ++i )
-                                                                  {
-                                                                    std::cout << kfe << " " << i << " " << traction[kfe][i] << std::endl;
-                                                                  }
-                                                                });
-                                                              });
-  });
 
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only

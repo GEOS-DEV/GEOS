@@ -69,24 +69,6 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
-//  /**
-//   * @brief accessor for the pointer to the solid mechanics solver
-//   * @return a pointer to the solid mechanics solver
-//   */
-//  LagrangianContactSolver * contactSolver() const
-//  {
-//    return std::get< toUnderlying( SolverType::Contact ) >( m_solvers );
-//  }
-//
-//  /**
-//   * @brief accessor for the pointer to the poromechanics solver
-//   * @return a pointer to the flow solver
-//   */
-//  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
-//  {
-//    return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
-//  }
-
   /**
    * @defgroup Solver Interface Functions
    *
@@ -113,26 +95,13 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
-
-  // virtual void implicitStepComplete( real64 const & time_n,
-  //                                    real64 const & dt,
-  //                                    DomainPartition & domain ) override;
-
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
 
-  //void initializePostInitialConditionsPostSubGroups() override final;
-
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
   /**@}*/
-
-//  struct viewKeyStruct : Base::viewKeyStruct
-//  {
-//    /// Flag to indicate that the simulation is thermal
-//    constexpr static char const * isThermalString() { return "isThermal"; }
-//  };
 
 private:
 
@@ -193,19 +162,6 @@ private:
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
-
-//  template< typename CONSTITUTIVE_BASE,
-//            typename KERNEL_WRAPPER,
-//            typename ... PARAMS >
-//  real64 assemblyLaunch( MeshLevel & mesh,
-//                         DofManager const & dofManager,
-//                         arrayView1d< string const > const & regionNames,
-//                         string const & materialNamesString,
-//                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                         arrayView1d< real64 > const & localRhs,
-//                         real64 const dt,
-//                         PARAMS && ... params );
-
   /**
    * @brief
    *
@@ -232,50 +188,7 @@ private:
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
-
-  /// flag to determine whether or not this is a thermal simulation
-//  integer m_isThermal;
 };
-
-//template< typename CONSTITUTIVE_BASE,
-//          typename KERNEL_WRAPPER,
-//          typename ... PARAMS >
-//real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & mesh,
-//                                                                    DofManager const & dofManager,
-//                                                                    arrayView1d< string const > const & regionNames,
-//                                                                    string const & materialNamesString,
-//                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-//                                                                    arrayView1d< real64 > const & localRhs,
-//                                                                    real64 const dt,
-//                                                                    PARAMS && ... params )
-//{
-//  GEOS_MARK_FUNCTION;
-//
-//  NodeManager const & nodeManager = mesh.getNodeManager();
-//
-//  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-//  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-//
-//  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-//
-//  KERNEL_WRAPPER kernelWrapper( dispDofNumber,
-//                                dofManager.rankOffset(),
-//                                localMatrix,
-//                                localRhs,
-//                                dt,
-//                                gravityVectorData,
-//                                std::forward< PARAMS >( params )... );
-//
-//  return finiteElement::
-//           regionBasedKernelApplication< parallelDevicePolicy< >,
-//                                         CONSTITUTIVE_BASE,
-//                                         CellElementSubRegion >( mesh,
-//                                                                 regionNames,
-//                                                                 solidMechanicsSolver()->getDiscretizationName(),
-//                                                                 materialNamesString,
-//                                                                 kernelWrapper );
-//}
-
 
 } /* namespace geos */
 

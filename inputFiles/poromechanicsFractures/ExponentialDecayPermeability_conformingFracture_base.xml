@@ -8,7 +8,7 @@
       flowSolverName="flowSolver"
       solidSolverName="fractureMechSolver"
       initialDt="1e-3"
-      logLevel="10"
+      logLevel="1"
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         maxTimeStepCuts="3"

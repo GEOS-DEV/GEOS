@@ -38,33 +38,14 @@ using namespace fields;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                           Group * const parent )
-  : Base( name, parent )//,
-  //m_isThermal( 0 )
+  : Base( name, parent )
 {
-//  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-//    setApplyDefaultValue( 0 ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
-
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
-  m_linearSolverParameters.get().mgr.separateComponents = false;
-  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  m_linearSolverParameters.get().dofsPerNode = 3;
+  LinearSolverParameters & params = m_linearSolverParameters.get();
+  params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
+  params.mgr.separateComponents = false;
+  params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  params.dofsPerNode = 3;
 }
-
-//void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
-//{
-//  contactSolver()->setSolidSolverDofFlags( false );
-//
-//  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics< SinglePhaseBase
-// >::viewKeyStruct::isThermalString() );
-//
-//  GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal,
-//                 GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver `{}` must be set to the same value as for this solver.",
-//                           getCatalogName(), getDataContext(),
-//                           SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::isThermalString(),
-//                           poromechanicsSolver()->getDataContext() ) );
-//}
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
@@ -709,8 +690,10 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
 {
-
+  // call base poromechanics update
   Base::updateState( domain );
+  // need to call solid mechanics update separately to compute face displacement jump
+  solidMechanicsSolver()->updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
   flowSolver()->prepareStencilWeights( domain );
