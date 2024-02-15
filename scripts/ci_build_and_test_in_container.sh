@@ -34,6 +34,8 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --code-coverage
+      run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --exchange-dir /path/to/exchange
@@ -64,7 +66,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -74,6 +76,7 @@ RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
+CODE_COVERAGE=false
 
 eval set -- ${args}
 while :
@@ -101,6 +104,7 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
+    --code-coverage)         CODE_COVERAGE=true;         shift;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
@@ -139,6 +143,26 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
+  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+    DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
+    for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+      if [ -f "$file" ]; then
+        filename=$(basename -- "$file")
+        filename_no_ext="${filename%.*}"
+        new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
+        cp "$file" "$new_filename"
+        echo "Copied $filename to $new_filename"
+      fi
+    done
+    update-ca-certificates 
+    # gcloud config set core/custom_ca_certs_file cert.pem'
+    
+    NPROC=8
+  else
+    NPROC=$(nproc)
+  fi
+  echo "Using ${NPROC} cores."
+
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
@@ -152,6 +176,14 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die virtualenv ${ATS_PYTHON_HOME}
   ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
+
+
+if [[ "${CODE_COVERAGE}" = true ]]; then
+  or_die apt-get update
+  or_die apt-get install -y lcov
+fi
+
+
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -175,6 +207,7 @@ or_die python3 scripts/config-build.py \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
+               -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
@@ -195,9 +228,9 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ninja -j $NPROC geosx
 else
-  or_die ninja -j $(nproc)
+  or_die ninja -j $NPROC
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
@@ -207,9 +240,23 @@ else
   fi
 fi
 
+if [[ ! -z "${SCCACHE_CREDS}" ]]; then
+  echo "sccache post-build state"
+  or_die ${SCCACHE} --show-adv-stats
+fi
+
+if [[ "${CODE_COVERAGE}" = true ]]; then
+  or_die ninja coreComponents_coverage
+  cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+fi
+
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testLifoStorage|testExternalSolvers"
+  else
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+  fi
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
@@ -233,12 +280,13 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
+
+  # want to clean the integrated tests folder to avoid polluting the next build.
+  or_die integratedTests/geos_ats.sh -a clean
 fi
 
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  echo "sccache final state"
-  or_die ${SCCACHE} --show-adv-stats
-fi
+# Cleaning the build directory.
+or_die ninja clean
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
