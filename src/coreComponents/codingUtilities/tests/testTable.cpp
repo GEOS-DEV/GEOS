@@ -24,7 +24,7 @@ using namespace geos;
 TEST( testTable, tableClass )
 {
 
-  std::vector< std::string > tableTestsOutput;
+  std::vector< string > tableTestsOutput;
 
   std::ostringstream oss;
 
@@ -41,6 +41,7 @@ TEST( testTable, tableClass )
                          787442, 10 );
   tableTest.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[0],
              "\n+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
@@ -54,7 +55,7 @@ TEST( testTable, tableClass )
              "|                                                                    value1                                                                    |  [30.21543]  |      3.0      |    54     |     0     |\n"
              "|                                                                                                                                              |              |               |           |           |\n"
              "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
-             "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
+             "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
              );
 
   Table tableTest2( {"Duis fringilla, ligula sed porta fringilla,\nligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante",
@@ -69,6 +70,7 @@ TEST( testTable, tableClass )
   tableTest2.addRow< 5 >( "value23", "[30.21543]", "30.45465142", 787442, 10 );
   tableTest2.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[1],
              "\n+---------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
@@ -80,7 +82,7 @@ TEST( testTable, tableClass )
              "|                                              value1                                              |  [30.21543]  |      3.0      |    54     |     0     |\n"
              "|                                                                                                  |              |               |           |           |\n"
              "|                                             value23                                              |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
-             "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
+             "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
              );
 
   Table tableTest3 (
@@ -91,6 +93,7 @@ TEST( testTable, tableClass )
   tableTest3.setTitle( "InternalWellGenerator well_injector1" );
   tableTest3.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ ( tableTestsOutput[2],
               "\n+-----------------------------------------------------------------------------------------------------------------------------+\n"
@@ -101,7 +104,7 @@ TEST( testTable, tableClass )
               "|  nascetur ridiculus mus. Duis fringilla, ligula sed porta fringilla, ligula wisicommodo felis,  |          |     |          |\n"
               "|                                             ut adi                                              |          |     |          |\n"
               "|                 piscing felis dui in enim. Suspendisse malesuada ultrices ante                  |          |     |          |\n"
-              "+-------------------------------------------------------------------------------------------------+----------+-----+----------+\n"
+              "+-------------------------------------------------------------------------------------------------+----------+-----+----------+\n\n"
               );
 
   Table tableTest4( {
@@ -117,6 +120,7 @@ TEST( testTable, tableClass )
   tableTest4.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest4.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[3],
              "\n+-----------------------------------------------------------------------------------------+\n"
@@ -127,7 +131,7 @@ TEST( testTable, tableClass )
              "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
              "|     value1     |          |  3.0                  |  3.0129877  |        2  |        1  |\n"
              "|      val1      |  v       |  [3.045,42.02,89.25]  |  3          |       10  |        3  |\n"
-             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
              );
 
   Table tableTest5( {
@@ -144,6 +148,7 @@ TEST( testTable, tableClass )
   tableTest5.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest5.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[4],
              "\n+-----------------------------------------------------------------+\n"
@@ -153,7 +158,7 @@ TEST( testTable, tableClass )
              "+----------------+----------+-----------------------+-------------+\n"
              "|     value1     |          |  3.0                  |  3.0129877  |\n"
              "|      val1      |  v       |  [3.045,42.02,89.25]  |  3          |\n"
-             "+----------------+----------+-----------------------+-------------+\n"
+             "+----------------+----------+-----------------------+-------------+\n\n"
              );
 
   Table tableTest6( {
@@ -169,6 +174,7 @@ TEST( testTable, tableClass )
   tableTest6.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest6.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[5],
              "\n+-----------------------------------------------------------------------------------------+\n"
@@ -179,7 +185,7 @@ TEST( testTable, tableClass )
              "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
              "|     value1     |          |  3.0                  |  3.0129877  |        2  |     1     |\n"
              "|      val1      |  v       |  [3.045,42.02,89.25]  |      3      |       10  |     3     |\n"
-             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
              );
 
   Table tableTest7( {
@@ -195,6 +201,7 @@ TEST( testTable, tableClass )
   tableTest7.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest7.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[6],
              "\n+------------------------------------------------------------------------------------------------------------------+\n"
@@ -204,7 +211,7 @@ TEST( testTable, tableClass )
              "+---------------------------+---------------------+----------------------------------+-----------------------------+\n"
              "|          value1           |                     |               3.0                |  3.0129877                  |\n"
              "|           val1            |                  v  |       [3.045,42.02,89.25]        |  3                          |\n"
-             "+---------------------------+---------------------+----------------------------------+-----------------------------+\n"
+             "+---------------------------+---------------------+----------------------------------+-----------------------------+\n\n"
              );
 
   Table tableTest8( {
@@ -220,6 +227,7 @@ TEST( testTable, tableClass )
   tableTest8.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest8.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[7],
              "\n+----------------------------------------------------------------------------------------------------------------+\n"
@@ -230,7 +238,7 @@ TEST( testTable, tableClass )
              "+-------------------+-------------+--------------------------+----------------+--------------+-------------------+\n"
              "|      value1       |             |           3.0            |  3.0129877     |  2           |         1         |\n"
              "|       val1        |          v  |   [3.045,42.02,89.25]    |  3             |  10          |         3         |\n"
-             "+-------------------+-------------+--------------------------+----------------+--------------+-------------------+\n"
+             "+-------------------+-------------+--------------------------+----------------+--------------+-------------------+\n\n"
              );
 
   Table tableTest9( {
@@ -242,6 +250,7 @@ TEST( testTable, tableClass )
   tableTest9.addRow< 1 >( "val1" );
   tableTest9.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[8],
              "\n+-------------------------------------------------------------------------------------------------------------------+\n"
@@ -251,7 +260,7 @@ TEST( testTable, tableClass )
              "+-------------------------------------------------------------------------------------------------------------------+\n"
              "|                                                     value1                                                        |\n"
              "|                                                      val1                                                         |\n"
-             "+-------------------------------------------------------------------------------------------------------------------+\n"
+             "+-------------------------------------------------------------------------------------------------------------------+\n\n"
              );
 
   Table tableTest10( {
@@ -262,6 +271,7 @@ TEST( testTable, tableClass )
   tableTest10.addRow< 1 >( "val1" );
   tableTest10.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[9],
              "\n+--------------------------------------------------------------------------------------------------------------+\n"
@@ -271,7 +281,7 @@ TEST( testTable, tableClass )
              "+--------------------------------------------------------------------------------------------------------------+\n"
              "|  Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis    |\n"
              "|                                                    val1                                                      |\n"
-             "+--------------------------------------------------------------------------------------------------------------+\n"
+             "+--------------------------------------------------------------------------------------------------------------+\n\n"
              );
 
   Table tableTest11( {
@@ -280,13 +290,14 @@ TEST( testTable, tableClass )
   tableTest11.setTitle( "title1" );
   tableTest11.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[10],
              "\n+------------------+\n"
              "|      title1      |\n"
              "+------------------+\n"
              "|  Cras egestas    |\n"
-             "+------------------+\n"
+             "+------------------+\n\n"
              );
 
   Table tableTest12( {
@@ -301,6 +312,7 @@ TEST( testTable, tableClass )
   tableTest12.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest12.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[11],
              "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
@@ -309,7 +321,7 @@ TEST( testTable, tableClass )
              "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
              "|     value1     |          |          3.0          |  3.0129877  |  2        |     1     |\n"
              "|      val1      |       v  |  [3.045,42.02,89.25]  |  3          |  10       |     3     |\n"
-             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
              );
 
   Table tableTest13( {
@@ -320,12 +332,13 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Prev\nelement"}, Table::Alignment::left},
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
   } );
-   tableTest13.setTitle( "InternalWellGenerator well_injector1" );
+  tableTest13.setTitle( "InternalWellGenerator well_injector1" );
   tableTest13.setMargin( Table::MarginValue::tiny );
   tableTest13.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest13.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest13.draw( oss );
   tableTestsOutput.push_back( oss.str() );
+  oss.clear();
   oss.str( "" );
   EXPECT_EQ( tableTestsOutput[12],
              "\n+-----------------------------------------------------------------+\n"
@@ -336,7 +349,7 @@ TEST( testTable, tableClass )
              "+------------+------+-------------------+---------+-------+-------+\n"
              "|   value1   |      |        3.0        |3.0129877|2      |   1   |\n"
              "|    val1    |     v|[3.045,42.02,89.25]|3        |10     |   3   |\n"
-             "+------------+------+-------------------+---------+-------+-------+\n"
+             "+------------+------+-------------------+---------+-------+-------+\n\n"
              );
 }
 

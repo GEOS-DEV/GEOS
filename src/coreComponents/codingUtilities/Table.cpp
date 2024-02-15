@@ -21,18 +21,18 @@
 namespace geos
 {
 
-std::string const cellAlignment( Table::Alignment const & a, std::string const & value, int spaces )
+string const cellAlignment( Table::Alignment const & a, string_view value, int spaces )
 {
   switch( a )
   {
     case Table::right:   return GEOS_FMT( "{:>{}}", value, spaces );
-    case Table::left:   return GEOS_FMT( "{:<{}}", value, spaces );
-    case Table::middle: return GEOS_FMT( "{:^{}}", value, spaces );
-    default:      return GEOS_FMT( "{:<{}}", value, spaces );
+    case Table::left:    return GEOS_FMT( "{:<{}}", value, spaces );
+    case Table::middle:  return GEOS_FMT( "{:^{}}", value, spaces );
+    default:             return GEOS_FMT( "{:<{}}", value, spaces );
   }
 }
 
-std::string Table::getStringSection( Section section ) const
+string Table::getStringSection( Section section ) const
 {
   switch( section )
   {
@@ -42,7 +42,7 @@ std::string Table::getStringSection( Section section ) const
   }
 }
 
-Table::Table( std::vector< std::string > const & headers ):
+Table::Table( std::vector< string > const & headers ):
   borderMargin( getMargin( MarginType::border )),
   columnMargin( getMargin( MarginType::column )),
   maxRowHeader( 0 )
@@ -67,32 +67,32 @@ Table::Table( std::vector< ColumnParam > const & columnParameter ):
   maxRowHeader = 0;
 }
 
-Table::Margin Table::getMargin( MarginType  const & type )
+Table::Margin Table::getMargin( MarginType const & type )
+{
+  Margin marginBorder {0, 1, 2, 3, 2};
+  Margin marginColumn {0, 3, 5, 7, 5};
+  if( type == MarginType::border )
   {
-    Margin marginBorder {0, 1, 2, 3, 2};
-    Margin marginColumn {0, 3, 5, 7, 5};
-    if(type == MarginType::border)
-    {
-      return marginBorder;
-    }
-    return marginColumn;
-
+    return marginBorder;
   }
+  return marginColumn;
+
+}
 
 void Table::splitHeadersStringAndStore()
 {
   for( size_t columnParamIdx = 0; columnParamIdx< m_columns.size(); columnParamIdx++ )
   {
-    std::vector< std::string > splitHeaderParts;
-    std::stringstream ss( m_columns[columnParamIdx].parameter.headerName[0] );
-    std::string subHeaderName;
+    std::vector< string > splitHeaderParts;
+    std::istringstream ss( m_columns[columnParamIdx].parameter.headerName[0] );
+    string subHeaderName;
 
     while( getline( ss, subHeaderName, '\n' ))
     {
       splitHeaderParts.push_back( subHeaderName );
     }
 
-    size_t cellSize = splitHeaderParts.size();
+    size_t const cellSize = splitHeaderParts.size();
     maxRowHeader = std::max( maxRowHeader, cellSize );
 
     m_splitHeader.push_back( splitHeaderParts );
@@ -105,24 +105,24 @@ void Table::addSpaceToSplitHeaderAndStore()
   {
     if( m_splitHeader[columnParamIdx].size() < maxRowHeader )
     {
-      integer whiteRowToAdd = maxRowHeader -  m_splitHeader[columnParamIdx].size();
+      const integer whiteRowToAdd = maxRowHeader -  m_splitHeader[columnParamIdx].size();
       m_splitHeader[columnParamIdx].insert( m_splitHeader[columnParamIdx].end(), whiteRowToAdd, " " );
     }
     m_columns[columnParamIdx].parameter.headerName = m_splitHeader[columnParamIdx];
   }
 }
 
-void Table::setTitle( std::string const & title_ )
+void Table::setTitle( string_view title_ )
 {
   title = title_;
 }
 
-std::string const & Table::getTitle()
+string_view Table::getTitle()
 {
   return title;
 }
 
-void Table::setMargin( MarginValue const & valueType )
+void Table::setMargin( MarginValue valueType )
 {
   switch( valueType )
   {
@@ -147,7 +147,7 @@ void Table::setMargin( MarginValue const & valueType )
 
 void Table::findMaxStringSize()
 {
-  std::string maxStringSize = "";
+  string maxStringSize = "";
   for( size_t idxColumn  = 0; idxColumn <  m_columns.size(); idxColumn++ )
   {
     auto it = std::max_element( m_columns[idxColumn].parameter.headerName.begin(),
@@ -160,7 +160,7 @@ void Table::findMaxStringSize()
 
     for( size_t idxRow = 0; idxRow <  m_cellsRows.size(); idxRow++ )
     {
-      std::string cell =  m_columns[idxColumn].columnValues[idxRow];
+      string cell =  m_columns[idxColumn].columnValues[idxRow];
       if( maxStringSize.length() < cell.length())
       {
         maxStringSize = cell;
@@ -170,8 +170,8 @@ void Table::findMaxStringSize()
   }
 }
 
-void Table::computeAndSetMaxStringSize( string::size_type const & sectionlineLength,
-                                        string::size_type const & titleLineLength )
+void Table::computeAndSetMaxStringSize( string::size_type sectionlineLength,
+                                        string::size_type titleLineLength )
 {
   integer extraLinesPerColumn;
   integer extraLines;
@@ -270,7 +270,7 @@ void Table::buildSectionRows( integer const & nbRows, Section const & sectionNam
     rows += GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin.marginValue );
     for( std::size_t idxColumn = 0; idxColumn < m_columns.size(); ++idxColumn )
     {
-      std::string cell;
+      string cell;
 
       if( getStringSection( sectionName ) == "header" )
       {
@@ -307,7 +307,7 @@ void Table::buildSectionRows( integer const & nbRows, Section const & sectionNam
   }
 }
 
-void Table::fillColumnsValuesFromCellsRows()
+void Table::fillColumnsValuesFromMCellsRows()
 {
   for( size_t idxRow = 0; idxRow < m_cellsRows.size(); idxRow++ )
   {
@@ -318,12 +318,11 @@ void Table::fillColumnsValuesFromCellsRows()
   }
 }
 
-void Table::draw( std::ostringstream & oss )
+void Table::draw( std::ostream & oss )
 {
-  oss.clear();
-  std::string tableOutput;
+  string tableOutput;
 
-  fillColumnsValuesFromCellsRows();
+  fillColumnsValuesFromMCellsRows();
 
   splitHeadersStringAndStore();
   addSpaceToSplitHeaderAndStore();
@@ -340,9 +339,7 @@ void Table::draw( std::ostringstream & oss )
   buildSectionRows( maxRowHeader, Section::header );
   buildSectionRows( m_cellsRows.size(), Section::values );
 
-  tableOutput = titleRow + rows;
-
-  std::cout << tableOutput;
+  tableOutput = titleRow + rows + '\n';
 
   oss << tableOutput;
 }
