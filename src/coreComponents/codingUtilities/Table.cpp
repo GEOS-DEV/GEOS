@@ -92,7 +92,7 @@ void Table::splitHeadersStringAndStore()
       splitHeaderParts.push_back( subHeaderName );
     }
 
-    const size_t cellSize = splitHeaderParts.size();
+    size_t const cellSize = splitHeaderParts.size();
     maxRowHeader = std::max( maxRowHeader, cellSize );
 
     m_splitHeader.push_back( splitHeaderParts );
@@ -307,7 +307,7 @@ void Table::buildSectionRows( integer const & nbRows, Section const & sectionNam
   }
 }
 
-void Table::fillColumnsValuesFromCellsRows()
+void Table::fillColumnsValuesFromMCellsRows()
 {
   for( size_t idxRow = 0; idxRow < m_cellsRows.size(); idxRow++ )
   {
@@ -322,7 +322,7 @@ void Table::draw( std::ostream & oss )
 {
   string tableOutput;
 
-  fillColumnsValuesFromCellsRows();
+  fillColumnsValuesFromMCellsRows();
 
   splitHeadersStringAndStore();
   addSpaceToSplitHeaderAndStore();
@@ -339,7 +339,7 @@ void Table::draw( std::ostream & oss )
   buildSectionRows( maxRowHeader, Section::header );
   buildSectionRows( m_cellsRows.size(), Section::values );
 
-  tableOutput = titleRow + rows;
+  tableOutput = titleRow + rows + '\n';
 
   oss << tableOutput;
 }

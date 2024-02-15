@@ -586,7 +586,6 @@ void WellGeneratorBase::debugWellGeometry() const
 
   tablePerforation.draw();
 
-  std::cout << std::endl;
 }
 
 }
