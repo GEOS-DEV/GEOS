@@ -160,12 +160,10 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
-    real32 const dt2 = pow( dt, 2 );
-
     elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    AcoustoElasticTimeSchemeSEM::LeapFrog(dt,ux_np1,uy_np1,uz_np1,p_n,elasticMass,atoex,atoey,atoez,
-                                          elasticFSNodeIndicator,interfaceNodesSet);
+    AcoustoElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, uy_np1, uz_np1, p_n, elasticMass, atoex, atoey, atoez,
+                                           elasticFSNodeIndicator, interfaceNodesSet );
 
     elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 

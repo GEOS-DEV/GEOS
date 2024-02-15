@@ -108,8 +108,8 @@ struct AcousticTimeSchemeSEM
                               arrayView1d< real32 > const rhs,
                               arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
                               arrayView1d< localIndex const > const lateralSurfaceNodeIndicator,
-                              arrayView1d< localIndex const > const bottomSurfaceNodeIndicator)
-                                
+                              arrayView1d< localIndex const > const bottomSurfaceNodeIndicator )
+
   {
     real64 const dt2 = pow( dt, 2 );
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -159,8 +159,7 @@ struct AcousticTimeSchemeSEM
     } );
   };
 
-  
-                              
+
 
 };
 

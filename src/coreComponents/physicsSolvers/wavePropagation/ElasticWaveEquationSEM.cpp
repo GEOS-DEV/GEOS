@@ -576,12 +576,11 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
-  real64 const dt2 = pow( dt, 2 );
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  ElasticTimeSchemeSEM::LeapFrog(dt,ux_np1,ux_n,ux_nm1,uy_np1,uy_n,uy_nm1,uz_np1,uz_n,uz_nm1,
-                                 mass,dampingx,dampingy,dampingz,stiffnessVectorx,stiffnessVectory,
-                                 stiffnessVectorz,rhsx,rhsy,rhsz,freeSurfaceNodeIndicator,
-                                 solverTargetNodesSet);
+  ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
+                                  mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
+                                  stiffnessVectorz, rhsx, rhsy, rhsz, freeSurfaceNodeIndicator,
+                                  solverTargetNodesSet );
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,

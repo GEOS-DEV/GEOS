@@ -24,16 +24,16 @@ namespace geos
 
 struct AcoustoElasticTimeSchemeSEM
 {
-  
+
   using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
-    /**
+  /**
    * @brief  Apply second order Leap-Frog time scheme for the coupling condition of elasto-acoustic scheme
    * @param[in] dt time-step
    * @param[out] ux_np1 displacement in x-direction array at time n+1 (updated here)
    * @param[out] uy_np1 displacement in y-direction array at time n+1 (updated here)
    * @param[out] uz_np1 displacement in z-direction array at time n+1 (updated here)
-   * @param[in] p_n pressure at time n 
+   * @param[in] p_n pressure at time n
    * @param[in] elasticMass the mass matrix for the elastic equation
    * @param[in] atoex the coupling matrix for x-component
    * @param[in] atoey the coupling matrix for y-component
@@ -42,17 +42,17 @@ struct AcoustoElasticTimeSchemeSEM
    * @param[in] interfaceNodesSet the nodeset containing the nodes belonging to the interface
    */
 
-  static void LeapFrog(real64 const dt,
-                       arrayView1d< real32 > const ux_np1,
-                       arrayView1d< real32 > const uy_np1,
-                       arrayView1d< real32 > const uz_np1,
-                       arrayView1d< real32 const > const p_n,
-                       arrayView1d< real32 const > const elasticMass,
-                       arrayView1d< real32 const > const atoex,
-                       arrayView1d< real32 const > const atoey,
-                       arrayView1d< real32 const > const atoez,
-                       arrayView1d< localIndex const > const elasticFSNodeIndicator,
-                       SortedArrayView< localIndex const > const interfaceNodesSet)
+  static void LeapFrog( real64 const dt,
+                        arrayView1d< real32 > const ux_np1,
+                        arrayView1d< real32 > const uy_np1,
+                        arrayView1d< real32 > const uz_np1,
+                        arrayView1d< real32 const > const p_n,
+                        arrayView1d< real32 const > const elasticMass,
+                        arrayView1d< real32 const > const atoex,
+                        arrayView1d< real32 const > const atoey,
+                        arrayView1d< real32 const > const atoez,
+                        arrayView1d< localIndex const > const elasticFSNodeIndicator,
+                        SortedArrayView< localIndex const > const interfaceNodesSet )
   {
     real64 const dt2 = pow( dt, 2 );
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )

@@ -24,9 +24,9 @@ namespace geos
 
 struct ElasticTimeSchemeSEM
 {
-  
+
   using EXEC_POLICY = parallelDevicePolicy< >;
-    /**
+  /**
    * @brief  Apply second order Leap-Frog time scheme for isotropic case without PML
    * @param[in] dt time-step
    * @param[out] ux_np1 displacement in x-direction array at time n+1 (updated here)
@@ -51,28 +51,28 @@ struct ElasticTimeSchemeSEM
    * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
    * @param[in] solverTargetNodesSet the targetted nodeset (useful in particular when we do elasto-acoustic simulation )
    */
-  static void LeapFrog(real64 const dt,
-                       arrayView1d< real32 > const ux_np1,
-                       arrayView1d< real32 > const ux_n,
-                       arrayView1d< real32 > const ux_nm1,
-                       arrayView1d< real32 > const uy_np1,
-                       arrayView1d< real32 > const uy_n,
-                       arrayView1d< real32 > const uy_nm1,
-                       arrayView1d< real32 > const uz_np1,
-                       arrayView1d< real32 > const uz_n,
-                       arrayView1d< real32 > const uz_nm1,
-                       arrayView1d< real32 const > const mass,
-                       arrayView1d< real32 const > const dampingx,
-                       arrayView1d< real32 const > const dampingy,
-                       arrayView1d< real32 const > const dampingz,
-                       arrayView1d< real32 > const stiffnessVectorx,
-                       arrayView1d< real32 > const stiffnessVectory,
-                       arrayView1d< real32 > const stiffnessVectorz,
-                       arrayView1d< real32 > const rhsx,
-                       arrayView1d< real32 > const rhsy,
-                       arrayView1d< real32 > const rhsz,
-                       arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
-                       SortedArrayView< localIndex const > const solverTargetNodesSet)
+  static void LeapFrog( real64 const dt,
+                        arrayView1d< real32 > const ux_np1,
+                        arrayView1d< real32 > const ux_n,
+                        arrayView1d< real32 > const ux_nm1,
+                        arrayView1d< real32 > const uy_np1,
+                        arrayView1d< real32 > const uy_n,
+                        arrayView1d< real32 > const uy_nm1,
+                        arrayView1d< real32 > const uz_np1,
+                        arrayView1d< real32 > const uz_n,
+                        arrayView1d< real32 > const uz_nm1,
+                        arrayView1d< real32 const > const mass,
+                        arrayView1d< real32 const > const dampingx,
+                        arrayView1d< real32 const > const dampingy,
+                        arrayView1d< real32 const > const dampingz,
+                        arrayView1d< real32 > const stiffnessVectorx,
+                        arrayView1d< real32 > const stiffnessVectory,
+                        arrayView1d< real32 > const stiffnessVectorz,
+                        arrayView1d< real32 > const rhsx,
+                        arrayView1d< real32 > const rhsy,
+                        arrayView1d< real32 > const rhsz,
+                        arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
+                        SortedArrayView< localIndex const > const solverTargetNodesSet )
   {
     real64 const dt2 = pow( dt, 2 );
     forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
