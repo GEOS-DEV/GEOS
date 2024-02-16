@@ -91,36 +91,41 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
                                           string const & functionName,
                                           FunctionManager & functionManager )
 {
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  real64 tolerance = 1e-10;
-  try
-  {
-    if( inputParams.size() >= 9 )
-    {
-      tolerance = stod( inputParams[8] );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-
-  localIndex const nP = tableCoords.nPressures();
-  localIndex const nT = tableCoords.nTemperatures();
-  array1d< real64 > density( nP * nT );
-  array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, density );
-  calculateCO2Viscosity( tableCoords, density, viscosity );
-
   string const tableName = functionName + "_table";
+
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const viscosityTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    viscosityTable->initializeFunction();
+    viscosityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
+    viscosityTable->setValueUnits( units::Viscosity );
+    return viscosityTable;
   }
   else
   {
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    real64 tolerance = 1e-10;
+    try
+    {
+      if( inputParams.size() >= 9 )
+      {
+        tolerance = stod( inputParams[8] );
+      }
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    localIndex const nP = tableCoords.nPressures();
+    localIndex const nT = tableCoords.nTemperatures();
+    array1d< real64 > density( nP * nT );
+    array1d< real64 > viscosity( nP * nT );
+    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, density );
+    calculateCO2Viscosity( tableCoords, density, viscosity );
+
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     viscosityTable->setTableCoordinates( tableCoords.getCoords(),
                                          { units::Pressure, units::TemperatureInC } );
