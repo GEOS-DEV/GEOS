@@ -578,6 +578,12 @@
 		</xsd:choice>
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
@@ -606,8 +612,6 @@
 		<xsd:attribute name="sourceRegion" type="integer_array" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
-		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
-		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 		<!--uxNp1AtReceivers => Ux value at each receiver for each timestep-->
@@ -625,6 +629,12 @@
 		</xsd:choice>
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
@@ -649,8 +659,6 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
-		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
-		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -662,6 +670,12 @@
 		</xsd:choice>
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
@@ -686,8 +700,6 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
-		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
-		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -778,6 +790,12 @@
 		<xsd:attribute name="displacementzNp1AtReceivers" type="real32_array2d" />
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
@@ -792,6 +810,18 @@
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--receiverRegion => Region containing the receivers-->
 		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sigmaxxNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxxNp1AtReceivers" type="real32_array2d" />
+		<!--sigmaxyNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxyNp1AtReceivers" type="real32_array2d" />
+		<!--sigmaxzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmaxzNp1AtReceivers" type="real32_array2d" />
+		<!--sigmayyNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmayyNp1AtReceivers" type="real32_array2d" />
+		<!--sigmayzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmayzNp1AtReceivers" type="real32_array2d" />
+		<!--sigmazzNp1AtReceivers => Displacement value at each receiver for each timestep (z-components)-->
+		<xsd:attribute name="sigmazzNp1AtReceivers" type="real32_array2d" />
 		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceElem => Element containing the sources-->
@@ -804,8 +834,6 @@
 		<xsd:attribute name="sourceRegion" type="integer_array" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
-		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
-		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
@@ -815,6 +843,8 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
+		<!--dasSignalNp1AtReceivers => DAS signal value at each receiver for each timestep-->
+		<xsd:attribute name="dasSignalNp1AtReceivers" type="real32_array2d" />
 		<!--displacementXNp1AtReceivers => Displacement value at each receiver for each timestep (x-component)-->
 		<xsd:attribute name="displacementXNp1AtReceivers" type="real32_array2d" />
 		<!--displacementYNp1AtReceivers => Displacement value at each receiver for each timestep (y-component)-->
@@ -823,6 +853,12 @@
 		<xsd:attribute name="displacementZNp1AtReceivers" type="real32_array2d" />
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
@@ -845,8 +881,6 @@
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
 		<!--sourceValue => Source Value of the sources-->
 		<xsd:attribute name="sourceValue" type="real32_array2d" />
-		<!--useDAS => Flag to indicate if DAS type of data will be modeled-->
-		<xsd:attribute name="useDAS" type="integer" />
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
