@@ -166,7 +166,7 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & const getEmbeddedSurfaceBlocks() override;
+  Group & const getEmbeddedSurfaceBlocks() const override;
 
   Group & getEmbeddedSurfaceBlocks() override;
 

@@ -56,7 +56,7 @@ public:
     * @details Return the number of embedded surface elements, each surface element
     * can intersect 1 or N 3d elements
     */ 
-    virtual localIndex numEmbeddedSurfElem() const = 0
+    virtual localIndex numEmbeddedSurfElem() const = 0;
     
     /**
     * @brief Get the indices of the nodes of all embedded surface elements

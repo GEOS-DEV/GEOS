@@ -691,7 +691,7 @@ ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() co
 
 ToCellRelation< ArrayOfArrays< localIndex > > getEmbeddedSurfaceToElements() const {
 
-  return m_embeddedSurfToCells
+  return m_embeddedSurfToCells;
 }
 
 const Group & CellBlockManager::getCellBlocks() const
