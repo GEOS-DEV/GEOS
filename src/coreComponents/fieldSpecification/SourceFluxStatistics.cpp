@@ -76,12 +76,17 @@ void SourceFluxStatsAggregator::postProcessInput()
 }
 
 Wrapper< SourceFluxStatsAggregator::WrappedStats > &
-SourceFluxStatsAggregator::registerWrappedStats( Group & group, string_view fluxName )
+SourceFluxStatsAggregator::registerWrappedStats( Group & group,
+                                                 string_view fluxName,
+                                                 string_view elementSetName )
 {
   string const wrapperName = getStatWrapperName( fluxName );
   Wrapper< WrappedStats > & statsWrapper = group.registerWrapper< WrappedStats >( wrapperName );
   statsWrapper.setRestartFlags( RestartFlags::NO_WRITE );
   statsWrapper.reference().setTarget( getName(), fluxName );
+
+  writeStatsToCSV( elementSetName, statsWrapper.reference(), true );
+
   return statsWrapper;
 }
 void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
@@ -95,19 +100,22 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
                                                               MeshLevel & mesh,
                                                               arrayView1d< string const > const & )
   {
-    registerWrappedStats( mesh, viewKeyStruct::fluxSetWrapperString() );
+    registerWrappedStats( mesh, viewKeyStruct::fluxSetWrapperString(), viewKeyStruct::allRegionWrapperString() );
+
     for( string const & fluxName : m_fluxNames )
     {
-      registerWrappedStats( mesh, fluxName );
+      registerWrappedStats( mesh, fluxName, viewKeyStruct::allRegionWrapperString() );
 
       mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
       {
-        Wrapper< WrappedStats > & regionStatsWrapper = registerWrappedStats( region, fluxName );
+        Wrapper< WrappedStats > & regionStatsWrapper =
+          registerWrappedStats( region, fluxName, region.getName() );
         region.excludeWrappersFromPacking( { regionStatsWrapper.getName() } );
 
         region.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
         {
-          Wrapper< WrappedStats > & subRegionStatsWrapper = registerWrappedStats( subRegion, fluxName );
+          Wrapper< WrappedStats > & subRegionStatsWrapper =
+            registerWrappedStats( subRegion, fluxName, subRegion.getName() );
           subRegion.excludeWrappersFromPacking( { subRegionStatsWrapper.getName() } );
         } );
       } );
@@ -115,9 +123,9 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
-                                               string_view elementSetName,
-                                               WrappedStats const & wrappedStats )
+void SourceFluxStatsAggregator::writeStatsToLog( integer minLogLevel,
+                                                 string_view elementSetName,
+                                                 WrappedStats const & wrappedStats )
 {
   if( getLogLevel() >= minLogLevel && logger::internal::rank == 0 )
   {
@@ -144,6 +152,30 @@ void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
                                catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
                                wrappedStats.stats().m_productionRate ) );
     }
+  }
+}
+
+void SourceFluxStatsAggregator::writeStatsToCSV( string_view elementSetName, WrappedStats const & stats,
+                                                 bool writeHeader )
+{
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+  {
+    string const fileName = GEOS_FMT( "{}/{}_{}_{}.csv",
+                                      m_outputDir,
+                                      stats.getAggregatorName(), stats.getFluxName(), elementSetName );
+    std::ofstream outputFile( fileName,
+                              writeHeader ? std::ios_base::out : std::ios_base::app );
+    if( writeHeader )
+    {
+      outputFile << "Time [s],Element Count,Producted Mass [kg],Production Rate [kg/s]" << std::endl;
+    }
+    else
+    {
+      outputFile << GEOS_FMT( "{},{},{},{}",
+                              stats.getStatsPeriodStart(), stats.stats().m_elementCount,
+                              stats.stats().m_producedMass, stats.stats().m_productionRate ) << std::endl;
+    }
+    outputFile.close();
   }
 }
 
@@ -175,18 +207,21 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
           subRegionStats.finalizePeriod();
 
           regionStats.stats().combine( subRegionStats.stats() );
-          writeStatData( 4, subRegion.getName(), subRegionStats );
+          writeStatsToLog( 4, subRegion.getName(), subRegionStats );
         } );
 
         fluxStats.stats().combine( regionStats.stats() );
-        writeStatData( 3, region.getName(), regionStats );
+        writeStatsToLog( 3, region.getName(), regionStats );
+        writeStatsToCSV( region.getName(), regionStats, false );
       } );
 
       meshLevelStats.stats().combine( fluxStats.stats() );
-      writeStatData( 2, viewKeyStruct::allRegionWrapperString(), fluxStats );
+      writeStatsToLog( 2, viewKeyStruct::allRegionWrapperString(), fluxStats );
+      writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), fluxStats, false );
     } );
 
-    writeStatData( 1, viewKeyStruct::allRegionWrapperString(), meshLevelStats );
+    writeStatsToLog( 1, viewKeyStruct::allRegionWrapperString(), meshLevelStats );
+    writeStatsToCSV( viewKeyStruct::allRegionWrapperString(), meshLevelStats, false );
   } );
 
   return false;
@@ -244,19 +279,27 @@ void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const 
 {
   m_periodStats.allocate( producedMass.size() );
 
-  // if beginning a new timestep, we must aggregate the stats from previous timesteps (mass & dt) before collecting the new ones
-  bool isBeginingNewTS = currentTime >= ( m_periodStats.m_timeStepStart + m_periodStats.m_timeStepDeltaTime );
-  if( isBeginingNewTS )
+  // if beginning a new period, we must initialize constant values over the period
+  bool isBeginingNewPeriod = !m_periodStats.m_isGathering;
+  if( isBeginingNewPeriod )
+  {
+    m_periodStats.m_periodStart = currentTime;
+    m_periodStats.m_elementCount = elementCount;
+    m_periodStats.m_isGathering = true;
+  }
+
+  // if beginning a new timestep, we must accumulate the stats from previous timesteps (mass & dt) before collecting the new ones
+  if( isBeginingNewPeriod ||
+      currentTime >= ( m_periodStats.m_timeStepStart + m_periodStats.m_timeStepDeltaTime ) )
   {
     for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
     {
       m_periodStats.m_periodPendingMass[ip] += m_periodStats.m_timeStepMass[ip];
     }
-    m_periodStats.m_elementCount = elementCount;
     m_periodStats.m_periodPendingDeltaTime += m_periodStats.m_timeStepDeltaTime;
   }
 
-  // new timestep stats to take into account
+  // new timestep stats to take into account (overriding if not begining a new timestep)
   m_periodStats.m_timeStepStart = currentTime;
   m_periodStats.m_timeStepDeltaTime = dt;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
@@ -269,11 +312,12 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
   // init phase data memory allocation if needed
   m_stats.allocate( m_periodStats.getPhaseCount() );
 
-  // produce timestep stats of this ranks
+  // produce the period stats of this rank
   m_stats.m_elementCount = m_periodStats.m_elementCount;
+  m_statsPeriodStart = m_periodStats.m_periodStart;
+  m_statsPeriodDT = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
 
-  real64 const dt = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
-  real64 const timeDivisor = dt > 0.0 ? 1.0 / dt : 0.0;
+  real64 const timeDivisor = m_statsPeriodDT > 0.0 ? 1.0 / m_statsPeriodDT : 0.0;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
   {
     real64 periodMass = m_periodStats.m_timeStepMass[ip] + m_periodStats.m_periodPendingMass[ip];
@@ -306,6 +350,7 @@ void SourceFluxStatsAggregator::WrappedStats::PeriodStats::reset()
   m_elementCount = 0;
   m_timeStepStart = 0.0;
   m_timeStepDeltaTime = 0.0;
+  m_isGathering = false;
 }
 
 

@@ -88,7 +88,8 @@ public:
     void setTarget( string_view aggregatorName, string_view fluxName );
 
     /**
-     * @brief Set the current time step stats. Multi-phase version
+     * @brief Set the current time step stats. Accumulate the statistics only if the time is strictly 
+     * after the previous time + dt (override the statistics if the current timestep is cut).
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep
      * @param producedMass time-step producted mass (see StatData::m_producedMass).
@@ -117,6 +118,18 @@ public:
     { return m_stats; }
 
     /**
+     * @return the start time of the wrapped stats period (in s)
+     */
+    real64 getStatsPeriodStart() const
+    { return m_statsPeriodStart; }
+
+    /**
+     * @return the duration of the wrapped stats period (in s)
+     */
+    real64 getStatsPeriodDuration() const
+    { return m_statsPeriodDT; }
+
+    /**
      * @return the name of the SourceFluxStatsAggregator that want to collect data on this instance.
      */
     string_view getAggregatorName() const
@@ -130,7 +143,14 @@ public:
 private:
     /// stats data collected over the last period (one timestep or more), computed by finalizePeriod()
     StatData m_stats;
+    /// the start time of the wrapped stats period (in s)
+    real64 m_statsPeriodStart;
+    /// the duration of the wrapped stats period (in s)
+    real64 m_statsPeriodDT;
 
+    /**
+     * @brief This struct is used to accumulate statistics along one or more timesteps.
+     */
     struct PeriodStats
     {
       /// producted mass of the current time-step.
@@ -141,10 +161,14 @@ private:
       real64 m_timeStepStart = 0.0;
       /// time that the current timestep is simulating
       real64 m_timeStepDeltaTime = 0.0;
+      /// start time of the current period.
+      real64 m_periodStart = 0.0;
       /// delta time from all previous time-step of the current period.
       real64 m_periodPendingDeltaTime = 0.0;
       /// number of cell elements targeted by this instance
       integer m_elementCount = 0;
+      /// Did the period statistics gathering started ?
+      bool m_isGathering = false;
 
       /**
        * @brief resize the phase data arrays if needed
@@ -285,17 +309,24 @@ private:
    */
   void registerDataOnMesh( Group & meshBodies ) override;
 
-  dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group, string_view fluxName );
+  dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
+                                                                  string_view fluxName,
+                                                                  string_view elementSetName );
 
   /**
-   * @brief Output in the log the given statistics.
-   * @param regionName     the name of the element group (a region, a sub-region...) from which we want to output the data.
+   * @brief If requested, output in the log and CSV the given statistics.
    * @param minLogLevel    the min log level to output any line.
    * @param elementSetName the region / sub-subregion name concerned by the statistics.
-   * @param fluxName       the flux name concerned by the statistics.
    * @param stats          the statistics that must be output in the log.
    */
-  void writeStatData( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
+  void writeStatsToLog( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
+  /**
+   * @brief If CSV is enabled, create or append a new CSV file.
+   * @param elementSetName the region / sub-subregion name concerned by the statistics.
+   * @param stats          the statistics that must be output in the log.
+   * @param writeHeader    If true, create the CSV with the header. If false, append it with the statistics.
+   */
+  void writeStatsToCSV( string_view elementSetName, WrappedStats const & stats, bool writeHeader );
 
 };
 

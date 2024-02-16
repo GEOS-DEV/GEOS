@@ -11,6 +11,7 @@ logLevel       integer            0        | Log level
                                            | - Log Level 3 details values for each region,                                                                                                                                                                                            
                                            | - Log Level 4 details values for each sub-region.                                                                                                                                                                                        
 name           groupName          required A name is required for any non-unique nodes                                                                                                                                                                                              
+writeCSV       integer            0        Write statistics into a CSV file                                                                                                                                                                                                         
 ============== ================== ======== ======================================================================================================================================================================================================================================== 
 
 
