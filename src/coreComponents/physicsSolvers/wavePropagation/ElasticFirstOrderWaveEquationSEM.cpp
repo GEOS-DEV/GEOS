@@ -54,32 +54,32 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxxNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayyNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmazzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxyNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );

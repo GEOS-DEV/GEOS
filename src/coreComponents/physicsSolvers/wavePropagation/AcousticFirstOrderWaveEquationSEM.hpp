@@ -67,15 +67,6 @@ public:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
-  /**@}*/
-
-  // /**
-  //  * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-  //  * @param cycleNumber the cycle number/step number of evaluation of the source
-  //  * @param rhs the right hand side vector to be computed
-  //  */
-  // virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
