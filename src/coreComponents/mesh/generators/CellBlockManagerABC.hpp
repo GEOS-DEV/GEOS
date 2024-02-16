@@ -121,6 +121,12 @@ public:
   virtual const Group & getFaceBlocks() const = 0;
 
   /**
+   * @brief Returns a group containing the embedded surfaces blocks as EmbeddedSurfaceBlockABC instances
+   * @return Const reference to the Group instance.
+   */
+  virtual const Group & getEmbeddedSurfaceBlocks() const = 0;
+
+  /**
    * @brief Total number of nodes across all the cell blocks.
    * @return The total number of nodes.
    *
@@ -139,6 +145,12 @@ public:
    * @return The total number of faces.
    */
   virtual localIndex numFaces() const = 0;
+
+  /**
+   * @brief Total number of embedded surfaces across all the cell blocks.
+   * @return The total number of embedded surfaces.
+   */
+  virtual localIndex numEmbeddedSurfaces() const = 0;
 
   /**
    * @brief Returns the node coordinates in a (numNodes, 3) 2d array.
@@ -195,6 +207,13 @@ public:
    */
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
 
+  /**
+   * @brief Returns the embedded surface to elements mapping.
+   * @return A 1 to many relationship. The result is jagged array mapping each embedded element
+   * To the elements it intersect.
+   *
+   */
+  virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfaceToElements() const = 0;
   /**
    * @brief The node to global mapping for nodes.
    * @return The mapping as an array of size numNodes.
