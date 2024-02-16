@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
@@ -39,8 +39,8 @@ char const * xmlInput =
   <?xml version="1.0" ?>
   <Problem>
     <Solvers>
-      <AcousticFirstOrderSEM
-        name="acousticFirstOrderSolver"
+      <ElasticFirstOrderSEM
+        name="elasticFirstOrderSolver"
         cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
@@ -48,7 +48,7 @@ char const * xmlInput =
         timeSourceFrequency="2"
         receiverCoordinates="{ { 0.1, 0.1, 0.1 }, { 0.1, 0.1, 99.9 }, { 0.1, 99.9, 0.1 }, { 0.1, 99.9, 99.9 },
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
-                                { 50, 50, 50 } }"
+                                { 50.1, 50.1, 50.1 } }"
         outputSeismoTrace="0"
         dtSeismoTrace="0.05"
         rickerOrder="1"/>
@@ -72,7 +72,7 @@ char const * xmlInput =
         forceDt="0.05"
         targetExactStartStop="0"
         targetExactTimestep="0"
-        target="/Solvers/acousticFirstOrderSolver"/>
+        target="/Solvers/elasticFirstOrderSolver"/>
       <PeriodicEvent
         name="waveFieldUxCollection"
         timeFrequency="0.05"
@@ -114,46 +114,75 @@ char const * xmlInput =
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification
-        name="cellVelocity"
+        name="cellVelocityVp"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="acousticVelocity"
+        fieldName="elasticVelocityVp"
         scale="1500"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="cellVelocityVs"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="elasticVelocityVs"
+        scale="1060"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="acousticDensity"
+        fieldName="elasticDensity"
         scale="1"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="lambda"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="lambda"
+        scale="0"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="mu"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="mu"
+        scale="0"
         setNames="{ all }"/>
     </FieldSpecifications>
     <Tasks>
       <PackCollection
-        name="waveFieldPressureCollection"
-        objectPath="nodeManager"
-        fieldName="pressure_np1"/>
-      <PackCollection
         name="waveFieldUxCollection"
-        objectPath="ElementRegions/Region/cb"
-        fieldName="velocity_x"/>
+        objectPath="nodeManager"
+        fieldName="displacementx_np1"/>
       <PackCollection
         name="waveFieldUyCollection"
-        objectPath="ElementRegions/Region/cb"
-        fieldName="velocity_y"/>
+        objectPath="nodeManager"
+        fieldName="displacementy_np1"/>
       <PackCollection
         name="waveFieldUzCollection"
+        objectPath="nodeManager"
+        fieldName="displacementz_np1"/>
+      <PackCollection
+        name="waveFieldSigmaxxCollection"
         objectPath="ElementRegions/Region/cb"
-        fieldName="velocity_z"/>
+        fieldName="stresstensorxx"/>
+      <PackCollection
+        name="waveFieldSigmayyCollection"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="stresstensoryy"/>
+      <PackCollection
+        name="waveFieldSigmazzCollection"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="stresstensorzz"/>
     </Tasks>
   </Problem>
   )xml";
 
-class AcousticFirstOrderWaveEquationSEMTest : public ::testing::Test
+class ElasticFirstOrderWaveEquationSEMTest : public ::testing::Test
 {
 public:
 
-  AcousticFirstOrderWaveEquationSEMTest():
+  ElasticFirstOrderWaveEquationSEMTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
@@ -169,18 +198,18 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  AcousticFirstOrderWaveEquationSEM * propagator;
+  ElasticFirstOrderWaveEquationSEM * propagator;
 };
 
-real64 constexpr AcousticFirstOrderWaveEquationSEMTest::time;
-real64 constexpr AcousticFirstOrderWaveEquationSEMTest::dt;
-real64 constexpr AcousticFirstOrderWaveEquationSEMTest::eps;
+real64 constexpr ElasticFirstOrderWaveEquationSEMTest::time;
+real64 constexpr ElasticFirstOrderWaveEquationSEMTest::dt;
+real64 constexpr ElasticFirstOrderWaveEquationSEMTest::eps;
 
-TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
+TEST_F( ElasticFirstOrderWaveEquationSEMTest, SeismoTrace )
 {
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< ElasticFirstOrderWaveEquationSEM >( "elasticFirstOrderSolver" );
   real64 time_n = time;
   // run for 1s (20 steps)
   for( int i=0; i<20; i++ )
@@ -192,26 +221,33 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 20, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticFirstOrderWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
-  arrayView2d< real32 > const uxReceivers = propagator->getReference< array2d< real32 > >( AcousticFirstOrderWaveEquationSEM::viewKeyStruct::uxNp1AtReceiversString() ).toView();
-  arrayView2d< real32 > const uyReceivers = propagator->getReference< array2d< real32 > >( AcousticFirstOrderWaveEquationSEM::viewKeyStruct::uyNp1AtReceiversString() ).toView();
-  arrayView2d< real32 > const uzReceivers = propagator->getReference< array2d< real32 > >( AcousticFirstOrderWaveEquationSEM::viewKeyStruct::uzNp1AtReceiversString() ).toView();
-
+  arrayView2d< real32 > const uxReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementxNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const uyReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementyNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const uzReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::displacementzNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const sigmaxxReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmaxxNp1AtReceiversString()).toView();
+  arrayView2d< real32 > const sigmayyReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmayyNp1AtReceiversString()).toView();
+  arrayView2d< real32 > const sigmazzReceivers = propagator->getReference< array2d< real32 > >( ElasticFirstOrderWaveEquationSEM::viewKeyStruct::sigmazzNp1AtReceiversString()).toView();
   // move it to CPU, if needed
-  pReceivers.move( LvArray::MemorySpace::host, false );
   uxReceivers.move( LvArray::MemorySpace::host, false );
   uyReceivers.move( LvArray::MemorySpace::host, false );
   uzReceivers.move( LvArray::MemorySpace::host, false );
+  sigmaxxReceivers.move( LvArray::MemorySpace::host, false );
+  sigmayyReceivers.move( LvArray::MemorySpace::host, false );
+  sigmazzReceivers.move( LvArray::MemorySpace::host, false );
 
   // check number of seismos and trace length
-  ASSERT_EQ( pReceivers.size( 1 ), 10 );
-  ASSERT_EQ( pReceivers.size( 0 ), 21 );
   ASSERT_EQ( uxReceivers.size( 1 ), 10 );
   ASSERT_EQ( uxReceivers.size( 0 ), 21 );
   ASSERT_EQ( uyReceivers.size( 1 ), 10 );
   ASSERT_EQ( uyReceivers.size( 0 ), 21 );
   ASSERT_EQ( uzReceivers.size( 1 ), 10 );
   ASSERT_EQ( uzReceivers.size( 0 ), 21 );
+  ASSERT_EQ( sigmaxxReceivers.size( 1 ), 10 );
+  ASSERT_EQ( sigmaxxReceivers.size( 0 ), 21 );
+  ASSERT_EQ( sigmayyReceivers.size( 1 ), 10 );
+  ASSERT_EQ( sigmayyReceivers.size( 0 ), 21 );
+  ASSERT_EQ( sigmazzReceivers.size( 1 ), 10 );
+  ASSERT_EQ( sigmazzReceivers.size( 0 ), 21 );
 
   // check seismo content. The pressure and velocity values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
@@ -220,30 +256,40 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   {
     if( i > 0 )
     {
-      ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
       ASSERT_TRUE( std::abs( uxReceivers[i][8] ) > 0 );
       ASSERT_TRUE( std::abs( uyReceivers[i][8] ) > 0 );
       ASSERT_TRUE( std::abs( uzReceivers[i][8] ) > 0 );
+      ASSERT_TRUE( std::abs( sigmaxxReceivers[i][8] ) > 0 );
+      ASSERT_TRUE( std::abs( sigmayyReceivers[i][8] ) > 0 );
+      ASSERT_TRUE( std::abs( sigmazzReceivers[i][8] ) > 0 );
     }
-    double avgP = 0;
     double avgUx = 0;
     double avgUy = 0;
     double avgUz = 0;
+    double avgSxx = 0;
+    double avgSyy = 0;
+    double avgSzz = 0;
     for( int r=0; r<8; r++ )
     {
-      avgP += pReceivers[i][r];
       avgUx += uxReceivers[i][r];
       avgUy += uyReceivers[i][r];
       avgUz += uzReceivers[i][r];
+      avgSxx += sigmaxxReceivers[i][r];
+      avgSyy += sigmayyReceivers[i][r];
+      avgSzz += sigmazzReceivers[i][r];
     }
-    avgP /= 8.0;
     avgUx /= 8.0;
     avgUy /= 8.0;
     avgUz /= 8.0;
-    ASSERT_TRUE( std::abs( pReceivers[i][8] - avgP ) < 0.00001 );
+    avgSxx /= 8.0;
+    avgSyy /= 8.0;
+    avgSzz /= 8.0;
     ASSERT_TRUE( std::abs( uxReceivers[i][8] - avgUx ) < 0.00001 );
     ASSERT_TRUE( std::abs( uyReceivers[i][8] - avgUy ) < 0.00001 );
     ASSERT_TRUE( std::abs( uzReceivers[i][8] - avgUz ) < 0.00001 );
+    ASSERT_TRUE( std::abs( sigmaxxReceivers[i][8] - avgSxx ) < 0.00001 );
+    ASSERT_TRUE( std::abs( sigmayyReceivers[i][8] - avgSyy ) < 0.00001 );
+    ASSERT_TRUE( std::abs( sigmazzReceivers[i][8] - avgSzz ) < 0.00001 );
   }
 }
 
