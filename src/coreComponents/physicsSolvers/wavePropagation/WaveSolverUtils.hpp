@@ -30,8 +30,6 @@ namespace geos
 struct WaveSolverUtils
 {
   static constexpr real64 epsilonLoc = 1e-8;
-  static constexpr real64 eps64 = std::numeric_limits< real64 >::epsilon();
-  static constexpr real32 eps32 = std::numeric_limits< real32 >::epsilon();
 
   using EXEC_POLICY = parallelDevicePolicy< >;
   using wsCoordType = real32;
