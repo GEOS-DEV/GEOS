@@ -133,13 +133,13 @@
       defaultDensity="2700"
       defaultBulkModulus="38.1944444444e9"
       defaultShearModulus="21.8253968254e9"
-      defaultThermalExpansionCoefficient="10e-7"/>
+      defaultDrainedLinearTEC="10e-7"/>
 
     <BiotPorosity
       name="rockPorosity"
       grainBulkModulus="1e27"
       defaultReferencePorosity="0.01"
-      defaultThermalExpansionCoefficient="0.0"/>
+      defaultPorosityTEC="0.0"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
@@ -157,7 +157,7 @@
       referenceViscosity="1e-3"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
-      volumetricHeatCapacity="4.2e6"
+      specificHeatCapacity="4.2e3"
       referenceInternalEnergy="0.001"/>
 
     <ConstantPermeability

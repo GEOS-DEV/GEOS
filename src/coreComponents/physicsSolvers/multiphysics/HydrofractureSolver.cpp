@@ -798,7 +798,8 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
         {
           localIndex const kf1 = elemsToFaces[kfe][1];
 
-          real64 thermalStress0, thermalStress1;
+          real64 thermalStress0 = 0.0;
+          real64 thermalStress1 = 0.0;
 
           for( localIndex k=0; k<faceToRegionMap.size( 1 ); ++k )
           {
