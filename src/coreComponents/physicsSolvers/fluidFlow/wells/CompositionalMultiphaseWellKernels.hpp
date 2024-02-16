@@ -542,6 +542,7 @@ public:
     m_phaseMassDens( fluid.phaseMassDensity() ),
     m_dPhaseMassDens( fluid.dPhaseMassDensity() ),
     m_totalMassDens( subRegion.getField< fields::well::totalMassDensity >() ),
+    m_dTotalMassDens( subRegion.getField< fields::well::dTotalMassDensity >() ),
     m_dTotalMassDens_dPres( subRegion.getField< fields::well::dTotalMassDensity_dPressure >() ),
     m_dTotalMassDens_dCompDens( subRegion.getField< fields::well::dTotalMassDensity_dGlobalCompDensity >() )
   {}
@@ -565,28 +566,35 @@ public:
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseMassDens = m_phaseMassDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens = m_dPhaseMassDens[ei][0];
+
     real64 & totalMassDens = m_totalMassDens[ei];
+    arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > dTotalMassDens = m_dTotalMassDens[ei];
     real64 & dTotalMassDens_dPres = m_dTotalMassDens_dPres[ei];
     arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > dTotalMassDens_dCompDens = m_dTotalMassDens_dCompDens[ei];
-
     real64 dMassDens_dC[numComp]{};
 
     totalMassDens = 0.0;
+    dTotalMassDens[Deriv::dP]=0.0; 
     dTotalMassDens_dPres = 0.0;
+    dTotalMassDens[Deriv::dP]=0.0;
     for( integer ic = 0; ic < numComp; ++ic )
     {
       dTotalMassDens_dCompDens[ic] = 0.0;
+      dTotalMassDens[Deriv::dC+ic]=0.0;
     }
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       totalMassDens += phaseVolFrac[ip] * phaseMassDens[ip];
       dTotalMassDens_dPres += dPhaseVolFrac[ip][Deriv::dP] * phaseMassDens[ip] + phaseVolFrac[ip] * dPhaseMassDens[ip][Deriv::dP];
+      dTotalMassDens[Deriv::dP] += dPhaseVolFrac[ip][Deriv::dP] * phaseMassDens[ip] + phaseVolFrac[ip] * dPhaseMassDens[ip][Deriv::dP];
 
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens[ip], dMassDens_dC, Deriv::dC );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         dTotalMassDens_dCompDens[ic] += dPhaseVolFrac[ip][Deriv::dC+ic] * phaseMassDens[ip]
+                                        + phaseVolFrac[ip] * dMassDens_dC[ic];
+        dTotalMassDens[Deriv::dC+ic] += dPhaseVolFrac[ip][Deriv::dC+ic] * phaseMassDens[ip]
                                         + phaseVolFrac[ip] * dMassDens_dC[ic];
       }
 
@@ -612,6 +620,7 @@ protected:
 
   /// Views on total mass densities
   arrayView1d< real64 > m_totalMassDens;
+  arrayView2d< real64, compflow::USD_FLUID_DC > m_dTotalMassDens;
   arrayView1d< real64 > m_dTotalMassDens_dPres;
   arrayView2d< real64, compflow::USD_FLUID_DC > m_dTotalMassDens_dCompDens;
 
