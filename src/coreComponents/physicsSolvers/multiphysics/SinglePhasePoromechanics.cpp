@@ -228,7 +228,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
     else
     {
       poromechanicsMaxForce =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
+        assemblyLaunch< constitutive::PorousSolidBase,
                         poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                        dofManager,
                                                                                        regionNames,
