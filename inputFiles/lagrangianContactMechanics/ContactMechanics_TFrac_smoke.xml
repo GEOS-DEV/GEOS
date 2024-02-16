@@ -29,21 +29,6 @@
      logLevel="0"/>
  </LagrangianContact>
 
- <SolidMechanics_LagrangianFEM
-   name="lagsolve"
-   timeIntegrationOption="QuasiStatic"
-   logLevel="0"
-   discretization="FE1"
-   surfaceGeneratorName="SurfaceGen"
-   targetRegions="{ Region }">
-   <NonlinearSolverParameters
-     newtonTol="1.0e-6"
-     newtonMaxIter="5"/>
-   <LinearSolverParameters
-     krylovTol="1.0e-10"
-     logLevel="0"/>
- </SolidMechanics_LagrangianFEM>
-
  <SurfaceGenerator
    name="SurfaceGen"
    logLevel="0"

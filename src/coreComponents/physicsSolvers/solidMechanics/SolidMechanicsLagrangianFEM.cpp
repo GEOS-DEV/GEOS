@@ -326,6 +326,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     FaceManager const & faceManager = mesh.getFaceManager();
     EdgeManager const & edgeManager = mesh.getEdgeManager();
     arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
+    mass.zero(); // assign to zero so that accumulation below works properly
 
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
