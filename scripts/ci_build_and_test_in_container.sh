@@ -3,9 +3,6 @@ set -o pipefail
 
 printenv
 
-echo ${GEOS_SRC_DIR}
-
-
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
@@ -124,6 +121,8 @@ done
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
+else
+  echo "Repository folder is ${GEOS_SRC_DIR}"
 fi
 
 if [[ -z "${GEOSX_DIR}" ]]; then
