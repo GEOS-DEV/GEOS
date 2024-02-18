@@ -7,8 +7,6 @@
 #
 ###############################################################################
 
-set( GEOSX_BUILD_SHARED_LIBS ON CACHE BOOL "" )
-set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 
@@ -16,9 +14,15 @@ set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI ON CACHE BOOL "")
 set(MPI_C_COMPILER ${MPI_HOME}/bin/mpicc CACHE PATH "")
 set(MPI_CXX_COMPILER ${MPI_HOME}/bin/mpicxx CACHE PATH "")
-set(MPIEXEC lrun CACHE STRING "")
+set(MPIEXEC /usr/tcetmp/bin/lrun CACHE STRING "")
+set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG -n CACHE STRING "")
+
 set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
+set( GEOSX_BUILD_SHARED_LIBS ON CACHE BOOL "" )
+set( GEOSX_BUILD_OBJ_LIBS OFF CACHE BOOL "" )
+
+
 
 # OpenMP
 set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
