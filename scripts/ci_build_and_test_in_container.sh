@@ -3,6 +3,9 @@ set -o pipefail
 
 printenv
 
+echo ${GEOS_SRC_DIR}
+
+
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
