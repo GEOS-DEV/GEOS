@@ -61,6 +61,8 @@ EOF
 exit 1
 }
 
+
+
 # First working in the root of the cloned repository.
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
@@ -287,6 +289,12 @@ fi
 
 # Cleaning the build directory.
 or_die ninja clean
+
+# Clean the repository
+echo ${GEOS_SRC_DIR}
+or_die cd ${GEOS_SRC_DIR}
+git clean -f -d 
+
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
