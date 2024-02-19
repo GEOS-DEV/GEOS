@@ -211,32 +211,37 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+  string const tableName = functionName + "_table";
 
-  real64 tolerance = 1e-10;
-  try
-  {
-    if( inputParams.size() >= 9 )
-    {
-      tolerance = stod( inputParams[8] );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-
-  array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
-
-  string const & tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const densityTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    densityTable->initializeFunction();
+    densityTable->setDimUnits( PTTableCoordinates::coordsUnits );
+    densityTable->setValueUnits( units::Density );
+    return densityTable;
   }
   else
   {
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    real64 tolerance = 1e-10;
+    try
+    {
+      if( inputParams.size() >= 9 )
+      {
+        tolerance = stod( inputParams[8] );
+      }
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
+
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     densityTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
     densityTable->setTableValues( densities, units::Density );

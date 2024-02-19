@@ -70,7 +70,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
-  m_useSimpleAccumulation( 0 ),
+  m_useSimpleAccumulation( 1 ),
   m_minCompDens( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision )
 {
 //START_SPHINX_INCLUDE_00
@@ -141,7 +141,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::useSimpleAccumulationString(), &m_useSimpleAccumulation ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether simple accumulation form is used" );
 
   this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
@@ -185,6 +185,11 @@ void CompositionalMultiphaseBase::postProcessInput()
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be smaller or equal to 1.0" );
 
+  if( m_isThermal && m_useSimpleAccumulation == 1 ) // useSimpleAccumulation is not yet compatible with thermal
+  {
+    GEOS_LOG_RANK_0( "'useSimpleAccumulation' is not yet implemented for thermal simulation. Switched to phase sum accumulation." );
+    m_useSimpleAccumulation = 0;
+  }
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
@@ -256,48 +261,45 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      if( m_hasCapPressure )
       {
+        subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the capillary pressure constitutive model to use" ).
+          reference();
 
-        if( m_hasCapPressure )
-        {
+        string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+        GEOS_THROW_IF( capPresName.empty(),
+                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
+                                 getDataContext(), subRegion.getDataContext() ),
+                       InputError );
+      }
 
-          subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the capillary pressure constitutive model to use" ).
-            reference();
+      if( m_hasDiffusion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the diffusion constitutive model to use" );
 
-          string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-          capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-          GEOS_THROW_IF( capPresName.empty(),
-                         GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                   getDataContext(), subRegion.getDataContext() ),
-                         InputError );
-        }
-        if( m_hasDiffusion )
-        {
-          subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the diffusion constitutive model to use" );
+        string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+        GEOS_THROW_IF( diffusionName.empty(),
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError );
+      }
 
-          string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
-          diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
-          GEOS_THROW_IF( diffusionName.empty(),
-                         GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
-                         InputError );
-        }
-        if( m_hasDispersion )
-        {
-          subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the dispersion constitutive model to use" );
+      if( m_hasDispersion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the dispersion constitutive model to use" );
 
           string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
           dispersionName = getConstitutiveName< DispersionBase >( subRegion );
@@ -314,22 +316,18 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
         }
 
-
-        if( m_targetFlowCFL > 0 )
-        {
-
-          subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
-            reference().resizeDimension< 1 >( m_numPhases );
-
-          subRegion.registerField< fields::flow::componentOutflux >( getName() ).
-            reference().resizeDimension< 1 >( m_numComponents );
-          subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
-          subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
-        }
-
+      if( m_targetFlowCFL > 0 )
+      {
+        subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
+          reference().resizeDimension< 1 >( m_numPhases );
+        subRegion.registerField< fields::flow::componentOutflux >( getName() ).
+          reference().resizeDimension< 1 >( m_numComponents );
+        subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
+        subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       }
 
-
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       subRegion.registerField< pressure >( getName() );
       subRegion.registerField< pressure_n >( getName() );
@@ -609,12 +607,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
   } );
 }
 
-void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
+void CompositionalMultiphaseBase::updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
   isothermalCompositionalMultiphaseBaseKernels::
-    ComponentFractionKernelFactory::
+    GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                dataGroup );
 
@@ -744,7 +742,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subReg
 {
   GEOS_MARK_FUNCTION;
 
-  updateComponentFraction( subRegion );
+  updateGlobalComponentFraction( subRegion );
   updateFluidModel( subRegion );
   real64 const maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
   updateRelPermModel( subRegion );
@@ -757,6 +755,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subReg
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
+                                                        DomainPartition & domain,
                                                         arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
@@ -794,6 +793,9 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     } );
 
   } );
+
+  // with initial component densities defined - check if they need to be corrected to avoid zero diags etc
+  chopNegativeDensities( domain );
 
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
@@ -1228,7 +1230,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
     } );
 
     // Initialize primary variables from applied initial conditions
-    initializeFluidState( mesh, regionNames );
+    initializeFluidState( mesh, domain, regionNames );
 
     mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                      [&]( localIndex const,
@@ -1350,7 +1352,6 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
-                                                     m_useSimpleAccumulation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,

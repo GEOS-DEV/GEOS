@@ -18,6 +18,7 @@ yCoords           real64_array       required y-coordinates of each mesh block v
 zBias             real64_array       {1}      Bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N) 
 zCoords           real64_array       required z-coordinates of each mesh block vertex                                                                 
 InternalWell      node                        :ref:`XML_InternalWell`                                                                                 
+VTKWell           node                        :ref:`XML_VTKWell`                                                                                      
 ================= ================== ======== ======================================================================================================= 
 
 

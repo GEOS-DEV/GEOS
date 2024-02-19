@@ -3,12 +3,20 @@
 
 # Configuration
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PACKAGE_DIR=$SCRIPT_DIR/../src/coreComponents/python/modules
-declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
-                            "$PACKAGE_DIR/geosx_xml_tools_package"
-                            "$PACKAGE_DIR/hdf5_wrapper_package"
-                            "$PACKAGE_DIR/pygeosx_tools_package"
-                            "$SCRIPT_DIR/../integratedTests/scripts/geos_ats_package")
+PYTHON_TARGET=
+BIN_DIR=
+PACKAGE_DIR=
+TMP_CLONE_DIR=
+PIP_CMD="pip --disable-pip-version-check"
+PACKAGE_BRANCH=main
+
+
+declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
+                            "geosx_mesh_doctor"
+                            "geosx_xml_tools_package"
+                            "hdf5_wrapper_package"
+                            "pygeosx_tools_package"
+                            "geos_ats_package")
 declare -a LINK_SCRIPTS=("preprocess_xml"
                          "format_xml"
                          "convert_abaqus"
@@ -19,11 +27,6 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
 
 
 # Read input arguments
-PYTHON_TARGET=
-BIN_DIR=
-PIP_CMD="pip --disable-pip-version-check"
-
-
 if [[ -z "${VERBOSE}" ]]
 then
     VERBOSE=false
@@ -45,6 +48,14 @@ case $key in
     BIN_DIR="$2"
     shift # past argument
     ;;
+    -d|--pkg-dir)
+    PACKAGE_DIR="$2"
+    shift # past argument
+    ;;
+    -r|--python-pkg-branch)
+    PACKAGE_BRANCH="$2"
+    shift # past argument
+    ;;
     -v|--verbose)
     VERBOSE=true
     shift # past argument
@@ -54,6 +65,8 @@ case $key in
     echo "Python environment setup options:"
     echo "-p/--python-target \"Target parent python bin\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
+    echo "-d/--pkg-dir \"Directory containing target python packages\""
+    echo "-t/--tool-branch \"Target branch for geosPythonPackages (default=main) \""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit
@@ -84,18 +97,36 @@ then
 fi
 
 
+# Check for a predefined package directory
+echo "Checking for python packages..."
+if [[ -z "${PACKAGE_DIR}" ]]
+then
+    echo "Cloning the GEOS python package repository (branch=$PACKAGE_BRANCH)..."
+    TMP_CLONE_DIR=$(mktemp -d)
+    PACKAGE_DIR=$TMP_CLONE_DIR/geosPythonPackages
+    git clone --depth 1 --branch $PACKAGE_BRANCH --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
+elif [ ! -d "${PACKAGE_DIR}/geosx_xml_tools_package" ]
+then
+    echo "The specified package directory does not contain the expected targets."
+    echo "The path specified with -d/--pkg-dir should point to a copy of the geosPythonPackages repository."
+    exit 1
+fi
+
+
 # Install packages
 echo "Installing python packages..."
 for p in "${TARGET_PACKAGES[@]}"
 do
-    if [ -d "$p" ]
+    if [ -d "$PACKAGE_DIR/$p" ]
     then
         echo "  $p"
+
+        # Try installing the package
         if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install $p)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
             INSTALL_RC=$?
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
             INSTALL_RC=$?
         fi
 
@@ -188,6 +219,13 @@ then
         ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
     fi
 fi
+
+
+if [[ ! -z "${TMP_CLONE_DIR}" ]]
+then
+    rm -rf $TMP_CLONE_DIR
+fi
+
 
 echo "Done!"
 
