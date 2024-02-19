@@ -293,8 +293,8 @@ fi
 or_die ninja clean
 
 # Clean the repository
-echo ${GEOS_SRC_DIR}
 or_die cd ${GEOS_SRC_DIR}
+git config --global --add safe.directory ${GEOS_SRC_DIR}
 git clean -f -d 
 
 
