@@ -182,10 +182,10 @@ jobs:
           fi
         fi
 
-        # Remove the container and the workspace to avoid any conflict with the next run.
+        # clean workspace and remove the container and the workspace to avoid any conflict with the next run.
         echo github.workspace = ${{ github.workspace }}
-        #rm -rf ${{ github.workspace }}/*
-        #docker rm -f ${CONTAINER_NAME}
+        rm -rf ${{ github.workspace }}/*
+        docker rm -f ${CONTAINER_NAME}
 
         exit ${EXIT_STATUS}
 
