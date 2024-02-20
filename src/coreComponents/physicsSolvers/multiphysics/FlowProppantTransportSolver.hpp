@@ -25,14 +25,13 @@ namespace geos
 {
 
 class ProppantTransport;
-class FlowSolverBase;
 
-class FlowProppantTransportSolver : public CoupledSolver< ProppantTransport,
-                                                          FlowSolverBase >
+template <typename FLOW_SOLVER>
+class FlowProppantTransportSolver : public CoupledSolver< ProppantTransport, FLOW_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< ProppantTransport, FlowSolverBase >;
+  using Base = CoupledSolver< ProppantTransport, FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -51,7 +50,7 @@ public:
    * @param parent the parent group of this instantiation of FlowProppantTransportSolver
    */
   FlowProppantTransportSolver( const string & name,
-                               Group * const parent );
+                               dataRepository::Group * const parent );
 
   /// Destructor for the class
   ~FlowProppantTransportSolver() override {};
@@ -60,7 +59,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new FlowProppantTransportSolver object through the object catalog.
    */
-  static string catalogName() { return "FlowProppantTransport"; }
+  static string catalogName();
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -79,7 +78,7 @@ public:
    * @brief accessor for the pointer to the flow solver
    * @return a pointer to the flow solver
    */
-  FlowSolverBase * flowSolver() const
+  FLOW_SOLVER * flowSolver() const
   {
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }

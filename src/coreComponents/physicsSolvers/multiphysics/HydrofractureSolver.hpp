@@ -75,7 +75,7 @@ public:
   string getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
+  static string coupledSolverAttributePrefix() { return "hydrofracture"; }
 
   /**
    * @defgroup Solver Interface Functions

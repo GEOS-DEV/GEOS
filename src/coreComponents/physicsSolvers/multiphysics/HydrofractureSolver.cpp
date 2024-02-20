@@ -34,38 +34,17 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename POROMECHANICS_SOLVER > class
-  HydrofractureSolverCatalogNames {};
-
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return "Hydrofracture"; }
-};
-
-// Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return "MultiphaseHydrofracture"; }
-};
-}
-
 // provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-HydrofractureSolver< POROMECHANICS_SOLVER >::
-catalogName()
+template<>
+string HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::catalogName()
 {
-  return HydrofractureSolverCatalogNames< POROMECHANICS_SOLVER >::name();
+  return "Hydrofracture";
 }
-
+//template<>
+//string HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > >::catalogName()
+//{
+//return "MultiphaseHydrofracture";
+//}
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
