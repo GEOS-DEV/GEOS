@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+#export PYTHONDONTWRITEBYTECODE=1
+
 printenv
 
 SCRIPT_NAME=$0
@@ -296,9 +298,6 @@ or_die ninja clean
 # Clean the repository
 or_die cd ${GEOS_SRC_DIR}/inputFiles
 find . -name *.pyc | xargs rm -f
-# git config --global --add safe.directory ${GEOS_SRC_DIR}
-# git clean -f -d 
-
 
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.

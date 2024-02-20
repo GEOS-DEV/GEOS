@@ -181,12 +181,7 @@ jobs:
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
-
-        # Remove the container and the workspace to avoid any conflict with the next run.
-        # echo github.workspace = ${{ github.workspace }}
-        # rm -rf ${{ github.workspace }}/*
-        docker rm -f ${CONTAINER_NAME}
-
+        
         exit ${EXIT_STATUS}
 
     - name: Upload coverage to Codecov
