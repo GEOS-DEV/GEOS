@@ -152,7 +152,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
                                                                    ElementSubRegionBase & subRegion )
     {
       setConstitutiveNamesCallSuper( subRegion );
-      setConstitutiveNames( subRegion );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -234,12 +233,6 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
                                                       getDataContext(), subRegion.getDataContext() ) );
 
 }
-
-void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-  GEOS_UNUSED_VAR( subRegion );
-}
-
 
 void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
