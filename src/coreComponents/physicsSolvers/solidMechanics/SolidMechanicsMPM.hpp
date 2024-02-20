@@ -108,6 +108,43 @@ public:
   };
 
   /**
+   * @enum ContactNormalTypeOption
+   * 
+   * The options for contact gap correction
+  */
+  enum struct ContactNormalTypeOption : integer
+  {
+    Difference,
+    MassWeighted,
+    LargerMass,
+    Mixed
+  };
+
+  /**
+   * @enum ContactGapCorrectionOption
+   * 
+   * The options for contact gap correction
+  */
+  enum struct ContactGapCorrectionOption : integer
+  {
+    Simple,
+    Implicit,
+    Softened
+  };
+
+    /**
+   * @enum OverlapCorrectionOption
+   * 
+   * The options for overlap correction
+  */
+  enum struct OverlapCorrectionOption : integer
+  {
+    Off,
+    NormalForce,
+    SPH,
+  };
+
+  /**
    * Constructor
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
@@ -225,6 +262,9 @@ public:
     static constexpr char const * damageGradientString() { return "damageGradient"; }
     static constexpr char const * maxDamageString() { return "maxDamage"; }
     static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
+
+    static constexpr char const * surfacePositionString() { return "surfacePosition"; }
+
     static constexpr char const * materialPositionString() { return "materialPosition"; }
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
@@ -233,8 +273,10 @@ public:
     static constexpr char const * referenceSurfacePositionString() { return "referenceSurfacePosition"; }
     static constexpr char const * referenceMaterialVolumeString() { return "referenceMaterialVolume"; }
 
-    static constexpr char const * cohesiveMassString() { return "cohesiveMass"; }
-    static constexpr char const * cohesiveSurfaceNormalString() { return "cohesiveSurfaceNormal"; }
+    static constexpr char const * surfaceMassString() { return "surfaceMass"; }
+    static constexpr char const * explicitSurfaceNormalString() { return "explicitSurfaceNormal"; }
+    static constexpr char const * maxMappedParticleIDString() { return "maxMappedParticleIDS"; }
+    static constexpr char const * principalExplicitSurfaceNormalString() { return "principalExplicitSurfaceNormal"; }
     static constexpr char const * cohesiveFieldFlagString() { return "cohesiveFieldFlag"; }
     static constexpr char const * cohesiveForceString() { return "cohesiveForce"; }
     
@@ -256,6 +298,15 @@ public:
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  localIndex partitionField( int numContactGroups,
+                             int damageFieldPartitioning,
+                             localIndex particleGroup,
+                             arraySlice1d< real64 const > const particleDamageGradient,
+                             arraySlice1d< real64 const > const particleSurfaceNormal,
+                             arraySlice1d< real64 const > const gridDamageGradient );
 
   void triggerEvents( const real64 dt,
                       const real64 time_n, 
@@ -297,8 +348,12 @@ public:
   void computeGridSurfaceNormals( ParticleManager & particleManager,
                                   NodeManager & nodeManager );
 
-  void normalizeGridSurfaceNormals( arrayView2d< real64 const > const & gridMass,
-                                    arrayView3d< real64 > const & gridSurfaceNormal );
+  void computeGridSurfacePositions( ParticleManager & particleManager,
+                                    NodeManager & nodeManager );
+
+  void normalizeGridSurfaceNormals( NodeManager & nodeManager );
+
+  void normalizeGridSurfacePositions( NodeManager & nodeManager );
 
   void computeContactForces( real64 const dt,
                              NodeManager & nodeManager,
@@ -309,6 +364,7 @@ public:
                              arrayView3d< real64 const > const & gridVelocity,
                              arrayView3d< real64 const > const & gridMomentum,
                              arrayView3d< real64 const > const & gridSurfaceNormal,
+                             arrayView3d< real64 const > const & gridSurfacePosition,
                              arrayView3d< real64 const > const & gridMaterialPosition,
                              arrayView2d< int const > const & gridCohesiveFieldFlag,
                              arrayView3d< real64 > const & gridContactForce );
@@ -332,6 +388,8 @@ public:
                                          arraySlice1d< real64 const > const qB,
                                          arraySlice1d< real64 const > const nA,
                                          arraySlice1d< real64 const > const nB,
+                                         arraySlice1d< real64 const > const sA,
+                                         arraySlice1d< real64 const > const sB, 
                                          arraySlice1d< real64 const > const xA, // Position of field A
                                          arraySlice1d< real64 const > const xB, // Position of field B
                                          arraySlice1d< real64 > const fA,
@@ -379,8 +437,10 @@ public:
 
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
-  void projectDamageFieldGradientToGrid( ParticleManager & particleManager,
-                                         NodeManager & nodeManager );
+  void projectDamageFieldGradientToGrid( DomainPartition & domain,
+                                         ParticleManager & particleManager,
+                                         NodeManager & nodeManager,
+                                         MeshLevel & mesh );
 
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
@@ -410,7 +470,7 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
-  void projectCohesiveSurfaceNormalsToGrid( DomainPartition & domain,
+  void projectParticleSurfaceNormalsToGrid( DomainPartition & domain,
                                             ParticleManager& particleManager,
                                             NodeManager & nodeManager,
                                             MeshLevel & mesh  );
@@ -637,6 +697,9 @@ protected:
   std::vector< real64 > m_profilingTimes;
   std::vector< std::string > m_profilingLabels;
 
+  array1d< string > m_plottableFields;
+  SortedArray< string > m_plottableFieldsSorted;
+
   TimeIntegrationOption m_timeIntegrationOption;
   UpdateMethodOption m_updateMethod;
   int m_updateOrder;
@@ -678,6 +741,8 @@ protected:
   real64 m_reactionWriteInterval;
   real64 m_nextReactionWriteTime;
 
+  real64 m_explicitSurfaceNormalInfluence;
+
   // Cohesive law variables
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
@@ -714,7 +779,7 @@ protected:
   real64 m_minParticleJacobian;
   real64 m_maxParticleJacobian;
   
-  int m_overlapCorrection;
+  OverlapCorrectionOption m_overlapCorrection;
   real64 m_overlapThreshold1;
   real64 m_overlapThreshold2;
   int m_computeSPHJacobian;
@@ -736,8 +801,9 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
-  int m_contactNormalType;
-  int m_contactGapCorrection;
+  int m_useSurfacePositionForContact;
+  ContactNormalTypeOption m_contactNormalType;
+  ContactGapCorrectionOption m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
 
   int m_resetDefGradForFullyDamagedParticles;
@@ -832,6 +898,22 @@ ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
               "Linear",
               "Cosine",
               "Smoothstep" );
+
+ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
+              "Difference",
+              "MassWeighted",
+              "LargerMass",
+              "Mixed" );
+
+ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
+              "Simple",
+              "Implicit",
+              "Softened" );
+
+ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
+              "Off",
+              "NormalForce",
+              "SPH" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
