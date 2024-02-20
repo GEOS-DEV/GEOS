@@ -316,14 +316,14 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
         //                                                        velocity,
         //                                                        damping );
 
-        
-        AcousticMatricesSEM::MassMatrix< FE_TYPE> kernelM( finiteElement );
-        kernelM.template computeMassMatrix<EXEC_POLICY,ATOMIC_POLICY>(elementSubRegion.size(),
-                                                                       nodeCoords,
-                                                                       elemsToNodes,
-                                                                       velocity,
-                                                                       density,
-                                                                       mass );
+
+        AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                          nodeCoords,
+                                                                          elemsToNodes,
+                                                                          velocity,
+                                                                          density,
+                                                                          mass );
 
         AcousticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
         kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
