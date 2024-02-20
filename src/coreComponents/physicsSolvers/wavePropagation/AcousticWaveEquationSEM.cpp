@@ -304,34 +304,35 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         //                                                        density,
         //                                                        mass );
 
-        AcousticMatricesSEM::computeMassMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
-                                                                                  elementSubRegion.size(),
-                                                                                  nodeCoords,
-                                                                                  elemsToNodes,
-                                                                                  velocity,
-                                                                                  density,
-                                                                                  mass );
+        AcousticMatricesSEM::MassMatrix< FE_TYPE> kernelM( finiteElement );
+         kernelM.template computeMassMatrix<EXEC_POLICY,ATOMIC_POLICY>(elementSubRegion.size(),
+                                                                       nodeCoords,
+                                                                       elemsToNodes,
+                                                                       velocity,
+                                                                       density,
+                                                                       mass );
 
-        // acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-        // kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        nodeCoords,
-        //                                                        elemsToFaces,
-        //                                                        facesToNodes,
-        //                                                        facesDomainBoundaryIndicator,
-        //                                                        freeSurfaceFaceIndicator,
-        //                                                        velocity,
-        //                                                        density,
-        //                                                        damping );
+        AcousticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
+        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeCoords,
+                                                                             elemsToFaces,
+                                                                             facesToNodes,
+                                                                             facesDomainBoundaryIndicator,
+                                                                             freeSurfaceFaceIndicator,
+                                                                             velocity,
+                                                                             density,
+                                                                             damping );
 
-        AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
-                                                                                     elementSubRegion.size(),                                                                                                                                        nodeCoords,
-                                                                                     elemsToFaces,
-                                                                                     facesToNodes,
-                                                                                     facesDomainBoundaryIndicator,
-                                                                                     freeSurfaceFaceIndicator,
-                                                                                     velocity,
-                                                                                     density,
-                                                                                     damping );
+        //AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
+        //                                                                             elementSubRegion.size(),                                                                                                                                        nodeCoords,
+        //                                                                             elemsToFaces,
+        //                                                                             facesToNodes,
+        //                                                                             facesDomainBoundaryIndicator,
+        //                                                                             freeSurfaceFaceIndicator,
+        //                                                                             velocity,
+        //                                                                             density,
+                                                                                     //damping );
+
 
 
       } );

@@ -24,7 +24,14 @@ namespace geos
 
 struct AcousticMatricesSEM
 {
-  
+
+   template< typename FE_TYPE >
+   struct MassMatrix
+   {
+
+     MassMatrix( FE_TYPE const & finiteElement )
+      : m_finiteElement( finiteElement )
+      {}
    /**
    * @brief Launches the precomputation of the mass matrices
    * @tparam EXEC_POLICY the execution policy
@@ -39,15 +46,14 @@ struct AcousticMatricesSEM
    * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
-  template< typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
-  static void
-  computeMassMatrix( FE_TYPE const & finiteElement,
-          localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 const > const density,
-          arrayView1d< real32 > const mass )
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  computeMassMatrix(localIndex const size,
+                    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                    arrayView1d< real32 const > const velocity,
+                    arrayView1d< real32 const > const density,
+                    arrayView1d< real32 > const mass )
 
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -67,12 +73,22 @@ struct AcousticMatricesSEM
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = invC2 * finiteElement.computeMassTerm( q, xLocal );
+        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
         RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
 
+  FE_TYPE const & m_finiteElement;
+
+  };
+template< typename FE_TYPE >
+struct DampingMatrix
+{
+
+  DampingMatrix( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
 
   /**
    * @brief Launches the precomputation of the damping matrices
@@ -88,10 +104,9 @@ struct AcousticMatricesSEM
    * @param[in] density cell-wise density
    * @param[out] damping diagonal of the damping matrix
    */
-  template< typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
-  static void
-  computeDampingMatrix( FE_TYPE const & finiteElement,
-          localIndex const size,
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  computeDampingMatrix( localIndex const size,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
@@ -123,14 +138,21 @@ struct AcousticMatricesSEM
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            real32 const localIncrement = alpha * finiteElement.computeDampingTerm( q, xLocal );
+            real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
             RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes( f, q )], localIncrement );
           }
         }
       }
     } );
   }
-  
+
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
+
+};
+
+
+
 };
 
 } // namespace geos
