@@ -73,9 +73,9 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
-  void initializePostInitialConditionsPreSubGroups()
+  void postProcessInput()
   {
-    Base::initializePostInitialConditionsPreSubGroups();
+    Base::postProcessInput();
 
     integer & isFlowThermal = this->flowSolver()->isThermal();
     GEOS_WARNING_IF( this->m_isThermal && !isFlowThermal,
