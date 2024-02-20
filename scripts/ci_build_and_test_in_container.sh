@@ -294,9 +294,10 @@ or_die ninja clean
 
 
 # Clean the repository
-or_die cd ${GEOS_SRC_DIR}
-git config --global --add safe.directory ${GEOS_SRC_DIR}
-git clean -f -d 
+or_die cd ${GEOS_SRC_DIR}/inputFiles
+find . -name *.pyc | xargs rm -f
+# git config --global --add safe.directory ${GEOS_SRC_DIR}
+# git clean -f -d 
 
 
 
