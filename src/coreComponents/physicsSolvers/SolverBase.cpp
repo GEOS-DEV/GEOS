@@ -268,7 +268,16 @@ bool SolverBase::execute( real64 const time_n,
     if( dtRemaining > 0.0 )
     {
       nextDt = setNextDt( dtAccepted, domain );
-      nextDt = std::min( nextDt, dtRemaining );
+      if( nextDt < dtRemaining )
+      {
+        // better to do two equal steps than one big and one small (even potentially tiny)
+        if( nextDt * 2 > dtRemaining )
+          nextDt = dtRemaining / 2;
+      }
+      else
+      {
+        nextDt = dtRemaining;
+      }
     }
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
