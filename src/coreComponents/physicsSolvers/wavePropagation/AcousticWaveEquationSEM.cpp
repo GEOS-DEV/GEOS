@@ -29,6 +29,7 @@
 #include "WaveSolverUtils.hpp"
 #include "AcousticTimeSchemeSEMKernel.hpp"
 #include "AcousticMatricesSEMKernel.hpp"
+#include "AcousticPMLSEMKernel.hpp"
 
 namespace geos
 {
@@ -594,7 +595,7 @@ void AcousticWaveEquationSEM::initializePML()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::
+        AcousticPMLSEM::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -742,7 +743,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         /// apply the PML kernel
-        acousticWaveEquationSEMKernels::
+        AcousticPMLSEM::
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -1033,7 +1034,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
           xLocal[i] = nodeCoords32[a][i];
         }
 
-        acousticWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
+        AcousticPMLSEM::ComputeDamping::computeDampingProfile(
           xLocal,
           xMin,
           xMax,

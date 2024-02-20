@@ -135,6 +135,7 @@ set( physicsSolvers_headers
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
      wavePropagation/AcousticTimeSchemeSEMKernel.hpp
      wavePropagation/AcousticMatricesSEMKernel.hpp
+     wavePropagation/AcousticPMLSEMKernel.hpp
      wavePropagation/ElasticFields.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
