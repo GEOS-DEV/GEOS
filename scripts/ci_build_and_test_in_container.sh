@@ -292,6 +292,14 @@ fi
 # Cleaning the build directory.
 or_die ninja clean
 
+
+# Clean the repository
+or_die cd ${GEOS_SRC_DIR}
+git config --global --add safe.directory ${GEOS_SRC_DIR}
+git clean -f -d 
+
+
+
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
   echo "Exiting the build process with exit status ${INTEGRATED_TEST_EXIT_STATUS} from the integrated tests."
