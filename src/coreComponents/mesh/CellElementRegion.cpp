@@ -38,7 +38,8 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
 
   //TODO: add documentation ?
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 );
 }
 
 CellElementRegion::~CellElementRegion()

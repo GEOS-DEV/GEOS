@@ -214,50 +214,147 @@ void calculateCO2Solubility( string const & functionName,
   }
 }
 
+TableFunction const * getSolubilityTable( string const & tableName,
+                                          FunctionManager & functionManager )
+{
+  TableFunction * const table = functionManager.getGroupPointer< TableFunction >( tableName );
+  table->initializeFunction();
+  table->setDimUnits( { units::Pressure, units::TemperatureInC } );
+  table->setValueUnits( units::Solubility );
+  return table;
+}
+
+TableFunction const * makeSolubilityTable( array1d< real64_array > const & coords,
+                                           array1d< real64 > const & values,
+                                           string const & tableName,
+                                           FunctionManager & functionManager )
+{
+  TableFunction * const table = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+  table->setTableCoordinates( coords, { units::Pressure, units::TemperatureInC } );
+  table->setTableValues( values, units::Solubility );
+  table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  return table;
+}
+
+TableFunction const * makeZeroTable( string const & tableName,
+                                     FunctionManager & functionManager )
+{
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return getSolubilityTable( tableName, functionManager );
+  }
+  else
+  {
+    array1d< array1d< real64 > > coords( 2 );
+    for( integer dim = 0; dim < 2; ++dim )
+    {
+      coords[dim].emplace_back( -1.0e10 );
+      coords[dim].emplace_back( 1.0e10 );
+    }
+    array1d< real64 > values( 4 );
+    values.zero();
+
+    return makeSolubilityTable( coords, values, tableName, functionManager );
+  }
+}
+
 TableFunction const * makeSolubilityTable( string_array const & inputParams,
                                            string const & functionName,
                                            FunctionManager & functionManager )
 {
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  // initialize salinity and tolerance
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
-
-  real64 tolerance = 1e-9;
-  real64 salinity = 0.0;
-  try
+  // Check the second argument
+  if( inputParams[1] == "Tables" )
   {
-    salinity = stod( inputParams[8] );
-    if( inputParams.size() >= 10 )
+    string const inputTableName = inputParams[2];
+    if( inputTableName.empty())
     {
-      tolerance = stod( inputParams[9] );
+      return makeZeroTable( GEOS_FMT( "{}_zeroDissolution_table", CO2Solubility::catalogName() ), functionManager );
+    }
+    else
+    {
+      GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
+                     GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
+                     InputError );
+      return getSolubilityTable( inputTableName, functionManager );
     }
   }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
 
-  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
+  string const tableName = functionName + "_co2Dissolution_table";
 
-  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    return getSolubilityTable( tableName, functionManager );
   }
   else
   {
-    TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    solubilityTable->setTableCoordinates( tableCoords.getCoords(),
-                                          { units::Pressure, units::TemperatureInC } );
-    solubilityTable->setTableValues( values, units::Solubility );
-    solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    return solubilityTable;
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // initialize salinity and tolerance
+    GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                          InputError );
+
+    real64 tolerance = 1e-9;
+    real64 salinity = 0.0;
+    try
+    {
+      salinity = stod( inputParams[8] );
+      if( inputParams.size() >= 10 )
+      {
+        tolerance = stod( inputParams[9] );
+      }
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
+
+    return makeSolubilityTable( tableCoords.getCoords(), values, tableName, functionManager );
+  }
+}
+
+TableFunction const * makeVapourisationTable( string_array const & inputParams,
+                                              string const & functionName,
+                                              FunctionManager & functionManager )
+{
+  if( inputParams[1] == "Tables" )
+  {
+    string const inputTableName = inputParams[3];
+    if( inputTableName.empty())
+    {
+      return makeZeroTable( GEOS_FMT( "{}_zeroDissolution_table", CO2Solubility::catalogName() ), functionManager );
+    }
+    else
+    {
+      GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
+                     GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
+                     InputError );
+      return getSolubilityTable( inputTableName, functionManager );
+    }
+  }
+
+  string const tableName = functionName + "_waterVaporization_table";
+
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return getSolubilityTable( tableName, functionManager );
+  }
+  else
+  {
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // Currently initialise to all zeros
+    array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    values.zero();
+
+    return makeSolubilityTable( tableCoords.getCoords(), values, tableName, functionManager );
   }
 }
 
@@ -267,7 +364,8 @@ CO2Solubility::CO2Solubility( string const & name,
                               string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
+                              array1d< real64 > const & componentMolarWeight,
+                              bool const printTable ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
@@ -292,6 +390,12 @@ CO2Solubility::CO2Solubility( string const & name,
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
+    m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
+  }
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,
@@ -299,19 +403,22 @@ void CO2Solubility::checkTablesParameters( real64 const pressure,
 {
   m_CO2SolubilityTable->checkCoord( pressure, 0 );
   m_CO2SolubilityTable->checkCoord( temperature, 1 );
+  m_WaterVapourisationTable->checkCoord( pressure, 0 );
+  m_WaterVapourisationTable->checkCoord( temperature, 1 );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2SolubilityTable,
+                        *m_WaterVapourisationTable,
                         m_CO2Index,
                         m_waterIndex,
                         m_phaseGasIndex,
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 

@@ -13,6 +13,7 @@
  */
 
 #include "NonlinearSolverParameters.hpp"
+#include "common/Logger.hpp"
 
 namespace geos
 {
@@ -154,6 +155,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
+  this->registerWrapper( viewKeysStruct::nonlinearAccelerationTypeString(), &m_nonlinearAccelerationType ).
+    setApplyDefaultValue( NonlinearAccelerationType::None ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Nonlinear acceleration type for sequential solver." );
+
 }
 
 void NonlinearSolverParameters::postProcessInput()
@@ -161,6 +167,39 @@ void NonlinearSolverParameters::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
                         ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
+
+  if( getLogLevel() > 0 )
+  {
+    GEOS_LOG_RANK_0( "Nonlinear solver parameters:" );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Line search action = {}", EnumStrings< LineSearchAction >::toString( m_lineSearchAction ) ) );
+    if( m_lineSearchAction != LineSearchAction::None )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line search interpolation type = {}", EnumStrings< LineSearchInterpolationType >::toString( m_lineSearchInterpType ) ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line search maximum number of cuts = {}", m_lineSearchMaxCuts ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line search cut factor = {}", m_lineSearchCutFactor ) );
+    }
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Norm type (flow solver) = {}", EnumStrings< solverBaseKernels::NormType >::toString( m_normType ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Minimum residual normalizer = {}", m_minNormalizer ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Convergence tolerance = {}", m_newtonTol ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Maximum iterations = {}", m_maxIterNewton ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Minimum iterations = {}", m_minIterNewton ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Maximum allowed residual norm = {}", m_maxAllowedResidualNorm ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Allow non-converged = {}", m_allowNonConverged ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Time step decrease iterations limit = {}", m_timeStepDecreaseIterLimit ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Time step increase iterations limit = {}", m_timeStepIncreaseIterLimit ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Time step decrease factor = {}", m_timeStepDecreaseFactor ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Time step increase factor = {}", m_timeStepDecreaseFactor ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Time step cut factor = {}", m_timeStepCutFactor ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Maximum time step cuts = {}", m_maxTimeStepCuts ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Maximum sub time steps = {}", m_maxSubSteps ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Maximum number of configuration attempts = {}", m_maxNumConfigurationAttempts ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Coupling type = {}", EnumStrings< CouplingType >::toString( m_couplingType ) ) );
+    if( m_couplingType == CouplingType::Sequential )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Sequential convergence criterion = {}", EnumStrings< SequentialConvergenceCriterion >::toString( m_sequentialConvergenceCriterion ) ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Subcycling = {}", m_subcyclingOption ) );
+    }
+  }
 }
 
 

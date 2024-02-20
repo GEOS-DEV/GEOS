@@ -19,7 +19,10 @@ set( gtest_triaxial_xmls
 
 set( gtest_pvt_xmls
      testPVT.xml
-     testPVT_PhaseComposition.xml )
+     testPVT_CO2Brine.xml
+     testPVT_CO2BrineTables.xml
+     testPVT_PhaseComposition.xml
+   )
 
 set( gtest_reactivefluid_xmls
      testReactiveFluid.xml )
@@ -38,6 +41,22 @@ if( ENABLE_PVTPackage )
           testCO2BrinePVTModels.cpp )
 
     list( APPEND dependencyList PVTPackage )
+endif()
+
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
+
+if (TARGET fmt::fmt)
+  list( APPEND dependencyList fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
 endif()
 
 # Add gtest C++ based tests
