@@ -24,8 +24,9 @@
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
+//#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 
 namespace geos
 {
@@ -39,6 +40,11 @@ template<>
 string HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::catalogName()
 {
   return "Hydrofracture";
+}
+template<>
+string HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseProppantBase > >::catalogName()
+{
+return "HydrofractureProppant";
 }
 //template<>
 //string HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > >::catalogName()
@@ -954,8 +960,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 namespace
 {
 typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
-// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
+typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseProppantBase > > ProppantHydrofracture;
+REGISTER_CATALOG_ENTRY( SolverBase, ProppantHydrofracture, string const &, Group * const )
+// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 

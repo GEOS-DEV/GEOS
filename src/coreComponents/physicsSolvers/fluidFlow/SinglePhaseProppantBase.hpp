@@ -56,6 +56,8 @@ public:
 
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
 
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const override
+  { SinglePhaseBase::updatePorosityAndPermeability(subRegion); }
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const override;
 
 protected:

@@ -25,6 +25,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
@@ -46,11 +47,17 @@ namespace
 template< typename FLOW_SOLVER > class
   SinglePhaseCatalogNames {};
 
-// Class specialization for a FLOW_SOLVER set to SinglePhaseFlow
+// Class specialization for a FLOW_SOLVER set to SinglePhaseBase
 template<> class SinglePhaseCatalogNames< SinglePhaseBase >
 {
 public:
   static string name() { return "SinglePhasePoromechanics"; }
+};
+// Class specialization for a FLOW_SOLVER set to SinglePhaseProppantBase
+template<> class SinglePhaseCatalogNames< SinglePhaseProppantBase >
+{
+public:
+  static string name() { return "SinglePhaseProppantPoromechanics"; }
 };
 // Class specialization for a FLOW_SOLVER set to SinglePhaseReservoirAndWells
 template<> class SinglePhaseCatalogNames< SinglePhaseReservoirAndWells< SinglePhaseBase > >
@@ -355,12 +362,15 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegio
 }
 
 template class SinglePhasePoromechanics< SinglePhaseBase >;
+template class SinglePhasePoromechanics< SinglePhaseProppantBase >;
 template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
 
 namespace
 {
 typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanics, string const &, Group * const )
+typedef SinglePhasePoromechanics< SinglePhaseProppantBase > SinglePhaseProppantPoromechanics;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseProppantPoromechanics, string const &, Group * const )
 typedef SinglePhasePoromechanics< SinglePhaseBase > SinglePhasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 }

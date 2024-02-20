@@ -91,7 +91,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
