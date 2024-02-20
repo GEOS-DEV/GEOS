@@ -325,12 +325,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
         //AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
         //                                                                             elementSubRegion.size(),
-        //   
-        //   
-        //   
-        //   
-        //   
-        //   
+        //
+        //
+        //
+        //
+        //
+        //
         //                                                                                                                      nodeCoords,
         //                                                                             elemsToFaces,
         //                                                                             facesToNodes,
