@@ -82,6 +82,7 @@ public:
 #endif
 
 private:
+  static const std::string getEnv( const char* );
   ///@{
   /**
    */

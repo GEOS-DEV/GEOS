@@ -400,7 +400,7 @@ struct CatalystOutput::CatalystInternals {
 
     if (this->implementation == "adios" ||
         (this->implementation.empty() &&
-         std::string(std::getenv("CATALYST_IMPLEMENTATION_NAME")) == "adios")) {
+         getEnv("CATALYST_IMPLEMENTATION_NAME") == "adios")) {
       if (this->adiosConfig == "") {
         GEOS_ERROR(
             "CatalystOutput: Constructor: Cannot use the catalyst/adios2 "
@@ -409,7 +409,7 @@ struct CatalystOutput::CatalystInternals {
       initializer["adios/config"] = this->adiosConfig;
     }
 
-    std::string envSSTfilename = std::getenv("CATALYST_SST_FILTENAME");
+    std::string envSSTfilename = getEnv("CATALYST_SST_FILTENAME");
     if( envSSTfilename != "") {
       this->sstFileName = envSSTfilename;
     }
@@ -488,7 +488,7 @@ bool CatalystOutput::execute(real64 const time_n, real64 const /*dt*/,
   bool isInTransit =
       this->internal->implementation == "adios" ||
       (this->internal->implementation.empty() &&
-       std::string(std::getenv("CATALYST_IMPLEMENTATION_NAME")) == "adios");
+       getEnv("CATALYST_IMPLEMENTATION_NAME") == "adios");
 
   ScopedDataContainer dataScoping;
   ::SanitizeNode(channel, isInTransit, dataScoping);
@@ -500,6 +500,12 @@ bool CatalystOutput::execute(real64 const time_n, real64 const /*dt*/,
   }
 
   return false;
+}
+
+const std::string CatalystOutput::getEnv( const char* varname )
+{
+  char* varptr = std::getenv( varname );
+  return varptr == nullptr ? "" : std::string( varptr );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
