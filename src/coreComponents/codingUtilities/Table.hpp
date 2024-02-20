@@ -57,7 +57,7 @@ public:
   };
 
   /**
-   * @brief Struct for a ColumnParam.
+   * @brief Structure to set up each colum parameters.
    */
   struct ColumnParam
   {
@@ -84,16 +84,22 @@ public:
 
   /**
    * @brief Add a row the the table. The number of arguments must match with the number of header values
-   * @tparam N
-   * @tparam Args
+   * @tparam N Number of values passed to addRow.
+   * @tparam Args Values passed to addRow.
    * @param args
    */
   template< size_t N, typename ... Args >
   void addRow( Args const &... args );
 
   /**
+   * @brief Add rows to the table.
+   * @param vecRows
+   */
+  void addRowsFromVector( std::vector< std::vector< string > > vecRows );
+
+  /**
    * @brief Write the the table into specified stream
-   * @param os
+   * @param os An output stream. By defaut os is set to std::cout.
    */
   void draw( std::ostream & os = std::cout );
 

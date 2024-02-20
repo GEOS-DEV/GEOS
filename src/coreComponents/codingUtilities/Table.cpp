@@ -73,6 +73,23 @@ Table::Table( std::vector< ColumnParam > const & columnParameter ):
   }
 }
 
+void Table::addRowsFromVector( std::vector< std::vector< string > > vecRows )
+{
+  for( size_t indexRow = 0; indexRow < vecRows.size(); indexRow++ )
+  {
+    std::vector< string > rowsValues;
+    for( size_t indexValue = 0; indexValue < vecRows[indexRow].size(); indexValue++ )
+    {
+      string cellValue = GEOS_FMT( "{}", vecRows[indexRow][indexValue] );
+      if( m_columns[indexValue].parameter.enabled )
+      {
+        rowsValues.push_back( cellValue );
+      }
+    }
+    m_cellsRows.push_back( rowsValues );
+  }
+}
+
 Table::Margin Table::getMargin( MarginType type ) const
 {
   Margin marginBorder {0, 1, 2, 3, 2};
@@ -113,7 +130,7 @@ void Table::adjustHeaderSizesAndStore( size_t largestHeaderVectorSize,
   {
     if( splitHeader[columnParamIdx].size() < largestHeaderVectorSize )
     {
-      const integer whiteRowToAdd = largestHeaderVectorSize - splitHeader[columnParamIdx].size();
+      integer const whiteRowToAdd = largestHeaderVectorSize - splitHeader[columnParamIdx].size();
       splitHeader[columnParamIdx].insert( splitHeader[columnParamIdx].end(), whiteRowToAdd, " " );
     }
     m_columns[columnParamIdx].parameter.headerName = splitHeader[columnParamIdx];
