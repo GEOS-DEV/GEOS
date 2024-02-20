@@ -33,29 +33,53 @@ namespace fields
 namespace acousticvtifields
 {
 
-DECLARE_FIELD( Delta,
-               "delta",
+DECLARE_FIELD( AcousticVelocity,
+               "acousticVelocity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium velocity of the cell" );
+
+DECLARE_FIELD( AcousticDensity,
+               "acousticDensity",
+               array1d< real32 >,
+               1,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
+
+DECLARE_FIELD( AcousticDelta,
+               "acousticDelta",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Delta thomsen anisotropy parameter" );
 
-DECLARE_FIELD( Epsilon,
-               "epsilon",
+DECLARE_FIELD( AcousticEpsilon,
+               "acousticEpsilon",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Epsilon thomsen anisotropy parameter" );
 
-DECLARE_FIELD( F,
-               "f",
+DECLARE_FIELD( AcousticSigma,
+               "acousticSigma",
+               array1d< real32 >,
+               0.75,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Sigma quantity in VTI/TTI Fletcher's equations" );
+
+DECLARE_FIELD( AcousticMassVector,
+               "acousticMassVector",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "f quantity in VTI/TTI Fletcher's equations" );
+               "Diagonal of the Mass Matrix." );
 
 DECLARE_FIELD( StiffnessVector_p,
                "stiffnessVector_p",
@@ -153,7 +177,23 @@ DECLARE_FIELD( DampingVector_qp,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix for p terms in q equation." );
 
-DECLARE_FIELD( LateralSurfaceFaceIndicator,
+DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
+               "acousticFreeSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+
+DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
+               "acousticFreeSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+
+DECLARE_FIELD( AcousticLateralSurfaceFaceIndicator,
                "lateralSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
@@ -161,7 +201,7 @@ DECLARE_FIELD( LateralSurfaceFaceIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
 
-DECLARE_FIELD( LateralSurfaceNodeIndicator,
+DECLARE_FIELD( AcousticLateralSurfaceNodeIndicator,
                "lateralSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
@@ -169,7 +209,7 @@ DECLARE_FIELD( LateralSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Lateral surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
 
-DECLARE_FIELD( BottomSurfaceFaceIndicator,
+DECLARE_FIELD( AcousticBottomSurfaceFaceIndicator,
                "bottomSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
@@ -177,13 +217,21 @@ DECLARE_FIELD( BottomSurfaceFaceIndicator,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
 
-DECLARE_FIELD( BottomSurfaceNodeIndicator,
+DECLARE_FIELD( AcousticBottomSurfaceNodeIndicator,
                "bottomSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
+
+DECLARE_FIELD( ForcingRHS,
+               "rhs",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS" );
 }
 
 }

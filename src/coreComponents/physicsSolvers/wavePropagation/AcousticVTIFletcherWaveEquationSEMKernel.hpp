@@ -19,11 +19,12 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFLETCHERWAVEEQUATIONSEMKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFLETCHERWAVEEQUATIONSEMKERNEL_HPP_
 
-#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverBaseFields.hpp"
 #include "WaveSolverUtils.hpp"
-
+#if !defined( GEOS_USE_HIP )
+#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
+#include "AcousticVTIFields.hpp"
 
 namespace geos
 {
@@ -444,14 +445,14 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< fields::wavesolverfields::Pressure_p_n >() ),
-    m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
-    m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
-    m_density( elementSubRegion.template getField< fields::wavesolverfields::AcousticDensity >() ),
-    m_vti_epsilon( elementSubRegion.template getField< fields::wavesolverfields::AcousticEpsilon >() ),
-    m_vti_delta( elementSubRegion.template getField< fields::wavesolverfields::AcousticDelta >() ),
-    m_vti_sigma( elementSubRegion.template getField< fields::wavesolverfields::AcousticSigma >() ),
+    m_p_n( nodeManager.getField< fields::acousticvtifields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< fields::acousticvtifields::Pressure_q_n >() ),
+    m_stiffnessVector_p( nodeManager.getField< fields::acousticvtifields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< fields::acousticvtifields::StiffnessVector_q >() ),
+    m_density( elementSubRegion.template getField< fields::acousticvtifields::AcousticDensity >() ),
+    m_vti_epsilon( elementSubRegion.template getField< fields::acousticvtifields::AcousticEpsilon >() ),
+    m_vti_delta( elementSubRegion.template getField< fields::acousticvtifields::AcousticDelta >() ),
+    m_vti_sigma( elementSubRegion.template getField< fields::acousticvtifields::AcousticSigma >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

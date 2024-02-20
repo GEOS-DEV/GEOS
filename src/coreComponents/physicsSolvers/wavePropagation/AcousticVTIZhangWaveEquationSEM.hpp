@@ -20,10 +20,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEM_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEM_HPP_
 
+#include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "WaveSolverBase.hpp"
-#include "WaveSolverBaseFields.hpp"
+#include "AcousticVTIFields.hpp"
 
 namespace geos
 {

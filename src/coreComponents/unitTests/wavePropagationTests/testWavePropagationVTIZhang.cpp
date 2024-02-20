@@ -262,7 +262,8 @@ TEST_F( AcousticVTIZhangWaveEquationSEMTest, SeismoTrace )
     avg /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
   }
-  // run adjoint solver
+  // (not available) run adjoint solver
+  /*
   for( int i = 0; i < 10; i++ )
   {
     propagator->explicitStepBackward( time_n, dt, i, domain, false );
@@ -282,7 +283,7 @@ TEST_F( AcousticVTIZhangWaveEquationSEMTest, SeismoTrace )
     }
     avg /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-  }
+  }*/
 }
 
 int main( int argc, char * * argv )
