@@ -4,6 +4,8 @@ set( gtest_geosx_tests
      testWavePropagationAcousticFirstOrder.cpp 
      testWavePropagationVTIFletcher.cpp
      testWavePropagationVTIZhang.cpp
+     testWavePropagationElasticFirstOrder.cpp
+     testWavePropagationDAS.cpp
      )
 
 set( dependencyList ${parallelDeps} gtest )
