@@ -142,12 +142,19 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     arrayView1d< string const > const & regionNames )
   {
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      setConstitutiveNamesCallSuper( subRegion );
+      setConstitutiveNames( subRegion );
+    } );
+
     NodeManager & nodes = meshLevel.getNodeManager();
 
     nodes.registerField< solidMechanics::totalDisplacement >( getName() ).
