@@ -529,6 +529,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager 
 
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   /// 1. update the reservoir
   SinglePhasePoromechanics::updateState( domain );
 

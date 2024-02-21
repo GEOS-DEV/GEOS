@@ -315,6 +315,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner()
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
                                                                                arrayView1d< string const > const & regionNames )
