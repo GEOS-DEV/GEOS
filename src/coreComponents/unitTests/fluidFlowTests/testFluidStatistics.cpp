@@ -287,7 +287,7 @@ public:
   integer getTestedTimeStepCount()
   { return m_timestepId; }
 
-  static string catalogName() { return "SinglePhaseStatsTimeStepChecker"; }
+  static string catalogName() { return "TimeStepChecker"; }
 
   virtual bool execute( real64 const time_n,
                         real64 const GEOS_UNUSED_PARAM( dt ),
@@ -521,7 +521,7 @@ TestSet getTestSet()
                                        flowSolverName="testSolver"
                                        logLevel="1" />
 
-    <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
+    <TimeStepChecker name="timeStepChecker" />
   </Tasks>
 
   <Functions>
@@ -760,7 +760,7 @@ TestSet getTestSet()
                           flowSolverName="testSolver"
                           logLevel="0" />
 
-    <SinglePhaseStatsTimeStepChecker name="timeStepChecker" />
+    <TimeStepChecker name="timeStepChecker" />
   </Tasks>
 
   <Functions>
