@@ -277,7 +277,7 @@ TEST_F( AcousticVTIZhangWaveEquationSEMTest, SeismoTrace )
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
   }*/
 }
-*/
+
 
 int main( int argc, char * * argv )
 {
