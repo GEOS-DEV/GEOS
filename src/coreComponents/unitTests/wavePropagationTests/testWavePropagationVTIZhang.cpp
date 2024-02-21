@@ -22,7 +22,6 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/WaveSolverBaseFields.hpp"
 #include "physicsSolvers/wavePropagation/AcousticVTIZhangWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
