@@ -143,7 +143,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nextXProfileWriteTime( 0.0 ),
   m_xProfileVx0( 0.0 )
 {
-  // setInputFlags( InputFlags::OPTIONAL );
+  GEOS_MARK_FUNCTION;
 
   registerWrapper( "solverProfiling", &m_solverProfiling ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -650,6 +650,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
 void SolidMechanicsMPM::postRestartInitialization()
 {
+  GEOS_MARK_FUNCTION;
   SolverBase::postRestartInitialization();
 
   // Initialize friction coefficient table
@@ -688,6 +689,7 @@ void SolidMechanicsMPM::postRestartInitialization()
 
 void SolidMechanicsMPM::postProcessInput()
 {
+  GEOS_MARK_FUNCTION;
   SolverBase::postProcessInput();
 
   if( m_overlapCorrection == 2 )
@@ -853,6 +855,7 @@ void SolidMechanicsMPM::postProcessInput()
 
 void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
+  GEOS_MARK_FUNCTION;
   using namespace fields::mpm;
 
   ExecutableGroup::registerDataOnMesh( meshBodies );
@@ -1049,6 +1052,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
 void SolidMechanicsMPM::initializePreSubGroups()
 {
+  GEOS_MARK_FUNCTION;
   SolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -1549,6 +1553,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 // Load any particle dependent properties into constitutive model such as strength scale which is determiend per particle not by material model input
 void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager & particleManager)
 {
+  GEOS_MARK_FUNCTION;
   // Load strength scale into constitutive model (for ceramic)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -2531,6 +2536,7 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
                                              string sourceRegionName,
                                              string destinationRegionName )
 {
+  GEOS_MARK_FUNCTION;
   // Material swap is performed by copying particle data from source region and constitutive model to destination region and constitutive model
   // The destination constiutive model is initialized as an empty particle subRegion
   // Presently only material swaps for polymers are implemented
@@ -2850,6 +2856,7 @@ void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                          Group & nodeSets )
 {
+  GEOS_MARK_FUNCTION;
   // This is a helper function for enforcing symmetry BCs on a single face and is meant to be called by other functions, not directly by the
   // solver:
   //   * enforceGridVectorFieldSymmetryBC calls this on all grid faces
@@ -2912,6 +2919,7 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > 
                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                           Group & nodeSets )
 {
+  GEOS_MARK_FUNCTION;
   for( int face=0; face<6; face++ )
   {
     if( m_boundaryConditionTypes[face] == 1 || m_boundaryConditionTypes[face] == 2 )
@@ -3094,6 +3102,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleManager,
                                                    NodeManager & nodeManager )
 {
+  GEOS_MARK_FUNCTION;
   // Grid fields
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() );
@@ -3141,6 +3150,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
 void SolidMechanicsMPM::normalizeGridSurfaceNormals( arrayView2d< real64 const > const & gridMass,
                                                      arrayView3d< real64 > const & gridSurfaceNormal )
 {
+  GEOS_MARK_FUNCTION;
   int const numNodes = gridSurfaceNormal.size( 0 );
   int const numVelocityFields = m_numVelocityFields;
   real64 const smallMass = m_smallMass;
@@ -3176,6 +3186,7 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( arrayView2d< real64 const >
 
 void SolidMechanicsMPM::initializeFrictionCoefficients()
 {
+  GEOS_MARK_FUNCTION;
   if( m_frictionCoefficientTable.size(0) != 0 )
   {
     GEOS_ERROR_IF( m_frictionCoefficientTable.size(0) != m_frictionCoefficientTable.size(1), "frictionCoefficientTable must be square.");
@@ -3222,6 +3233,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                               arrayView3d< real64 const > const & gridMaterialPosition,
                                               arrayView3d< real64 > const & gridContactForce )
 {
+  GEOS_MARK_FUNCTION;
   // Get number of nodes
   int numNodes = gridMass.size( 0 ); // get size from nodeManager instead?
 
@@ -3316,6 +3328,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
+  GEOS_MARK_FUNCTION;
   // Total mass for the contact pair.
   real64 mAB = mA + mB;
 
@@ -3580,6 +3593,7 @@ void SolidMechanicsMPM::computeOrthonormalBasis( const real64 * e1, // input "no
                                                  real64 * e2,       // output "tangential" unit vector.
                                                  real64 * e3 )      // output "tangential" unit vector.
 {
+  GEOS_MARK_FUNCTION;
   // This routine takes in a normalized vector and gives two orthogonal vectors.
   // It is rather arbitrary, in general, how this is done; however, this routine
   // is written in a consistent way. This is important, for example, if you
@@ -3732,6 +3746,7 @@ void SolidMechanicsMPM::solverProfilingIf( std::string label, bool condition )
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
 {
+  GEOS_MARK_FUNCTION;
   SolverBase::setConstitutiveNamesCallSuper( subRegion );
 
   subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
@@ -3931,6 +3946,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
 void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
 {
+  GEOS_MARK_FUNCTION;
   // Each partition determines its optimal multiplier which results in the minimum time for neighbor list construction
   // The global multiplier is set by a weighted average of each partition's multiplier, with the number of particles
   // on the partition being the weight factor.
@@ -3982,6 +3998,7 @@ void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
 
 real64 SolidMechanicsMPM::kernel( real64 const & r ) // distance from particle to query point.
 {
+  GEOS_MARK_FUNCTION;
   // Compute the value of a particle kernel function at some point.
 
   const real64 R = m_neighborRadius; // kernel Radius
@@ -4002,6 +4019,7 @@ void SolidMechanicsMPM::kernelGradient( arraySlice1d< real64 const > const x,  /
                                         real64 const & r,                      // distance from particle to query point.
                                         real64 * result )
 {
+  GEOS_MARK_FUNCTION;
   // Compute the value of a particle kernel function gradient at some point.
 
   real64 s;
@@ -4029,6 +4047,7 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 const > const
                                               arrayView1d< real64 const > const fp ) // scalar field values (e.g. damage) at neighbor
                                                                                      // particles
 {
+  GEOS_MARK_FUNCTION;
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
   // The lists xp, fp, and the length np could refer to all the particles in the patch,
   // but generally this function will be evaluated with x equal to some particle center,
@@ -4071,6 +4090,7 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 const >
                                                                                                 // neighbor particles
                                                     arraySlice1d< real64 > const result )
 {
+  GEOS_MARK_FUNCTION;
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
   // The lists xp, fp, and the length np could refer to all the particles in the patch,
   // but generally this function will be evaluated with x equal to some particle center,
@@ -4134,6 +4154,7 @@ void SolidMechanicsMPM::computeKernelVectorGradient( arraySlice1d< real64 const 
                                                                                                                 // particles
                                                      arraySlice2d< real64 > const result )
 {
+  GEOS_MARK_FUNCTION;
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
   // The lists xp, fp, and the length np could refer to all the particles in the patch,
   // but generally this function will be evaluated with x equal to some particle center,
