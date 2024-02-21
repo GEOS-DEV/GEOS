@@ -367,7 +367,7 @@ TEST( testTable, tableClass )
 
   tableTest14.setTitle( "InternalWellGenerator well_injector1" );
   tableTest14.setMargin( Table::MarginValue::tiny );
-  tableTest14.addRowsFromVector( vecValues );
+  tableTest14.addRowsFromVectors( vecValues );
   tableTest14.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();

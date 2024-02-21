@@ -40,47 +40,38 @@ string buildValueCell( Table::Alignment const alignment, string_view value, inte
   }
 }
 
-string Table::getStringSection( Section section ) const
+Table::Table( std::vector< string > const & headers )
 {
-  switch( section )
-  {
-    case Section::header: return "header";
-    case Section::values: return "values";
-    default: return "values";
-  }
-}
+  setMargin( MarginValue::medium );
 
-Table::Table( std::vector< string > const & headers ):
-  borderMargin( getMargin( MarginType::border )),
-  columnMargin( getMargin( MarginType::column ))
-{
   for( size_t idx = 0; idx< headers.size(); idx++ )
   {
     m_columns.push_back( {Table::ColumnParam{{headers[idx]}, Alignment::middle, true}, {}, ""} );
   }
 }
 
-Table::Table( std::vector< ColumnParam > const & columnParameter ):
-  borderMargin( getMargin( MarginType::border )),
-  columnMargin( getMargin( MarginType::column ))
+Table::Table( std::vector< ColumnParam > const & columnParameter )
 {
+  setMargin( MarginValue::medium );
+
   for( size_t idx = 0; idx< columnParameter.size(); idx++ )
   {
     if( columnParameter[idx].enabled )
     {
       m_columns.push_back( {columnParameter[idx], {}, ""} );
     }
+
   }
 }
 
-void Table::addRowsFromVector( std::vector< std::vector< string > > vecRows )
+void Table::addRowsFromVectors( std::vector< std::vector< string > > tableRows )
 {
-  for( size_t indexRow = 0; indexRow < vecRows.size(); indexRow++ )
+  for( size_t indexRow = 0; indexRow < tableRows.size(); indexRow++ )
   {
     std::vector< string > rowsValues;
-    for( size_t indexValue = 0; indexValue < vecRows[indexRow].size(); indexValue++ )
+    for( size_t indexValue = 0; indexValue < tableRows[indexRow].size(); indexValue++ )
     {
-      string cellValue = GEOS_FMT( "{}", vecRows[indexRow][indexValue] );
+      string cellValue = GEOS_FMT( "{}", tableRows[indexRow][indexValue] );
       if( m_columns[indexValue].parameter.enabled )
       {
         rowsValues.push_back( cellValue );
@@ -88,18 +79,6 @@ void Table::addRowsFromVector( std::vector< std::vector< string > > vecRows )
     }
     m_cellsRows.push_back( rowsValues );
   }
-}
-
-Table::Margin Table::getMargin( MarginType type ) const
-{
-  Margin marginBorder {0, 1, 2, 3, 2};
-  Margin marginColumn {0, 3, 5, 7, 5};
-  if( type == MarginType::border )
-  {
-    return marginBorder;
-  }
-  return marginColumn;
-
 }
 
 void Table::parseAndStoreHeaderSections( size_t & largestHeaderVectorSize,
@@ -147,27 +126,10 @@ string_view Table::getTitle()
   return tableTitle;
 }
 
-void Table::setMargin( MarginValue valueType )
+void Table::setMargin( MarginValue marginType )
 {
-  switch( valueType )
-  {
-    case MarginValue::tiny:
-      borderMargin.setWorkingValue( borderMargin.tiny );
-      columnMargin.setWorkingValue( columnMargin.tiny );
-      break;
-    case MarginValue::small:
-      borderMargin.setWorkingValue( borderMargin.small );
-      columnMargin.setWorkingValue( columnMargin.small );
-      break;
-    case MarginValue::medium:
-      borderMargin.setWorkingValue( borderMargin.medium );
-      columnMargin.setWorkingValue( columnMargin.medium );
-      break;
-    case MarginValue::large:
-      borderMargin.setWorkingValue( borderMargin.large );
-      columnMargin.setWorkingValue( columnMargin.large );
-      break;
-  }
+  borderMargin = marginType;
+  columnMargin = integer( marginType ) * 2 + 1;
 }
 
 void Table::findAndSetMaxStringSize()
@@ -212,7 +174,7 @@ void Table::computeAndSetMaxStringSize( string::size_type sectionlineLength,
     {
       m_columns[idxColumn].m_maxStringSize = GEOS_FMT( "{:>{}}",
                                                        m_columns[idxColumn].m_maxStringSize,
-                                                       newStringSize + columnMargin.marginValue );
+                                                       newStringSize + columnMargin );
     }
     else
     {
@@ -227,7 +189,7 @@ void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSep
 {
   string::size_type sectionlineLength = 0;
   string::size_type titleLineLength = tableTitle.length() + ( marginTitle * 2 );
-  integer nbSpaceBetweenColumn = ( ( m_columns.size() - 1 ) *  columnMargin.marginValue ) + (borderMargin.marginValue * 2);
+  integer nbSpaceBetweenColumn = ( ( m_columns.size() - 1 ) *  columnMargin ) + (borderMargin * 2);
   if( !tableTitle.empty())
   {
     tableTitle = GEOS_FMT( "{:^{}}", tableTitle, titleLineLength );
@@ -247,7 +209,7 @@ void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSep
   {
     sectionSeparator +=  GEOS_FMT( "+{:-<{}}+",
                                    "",
-                                   ( m_columns[0].m_maxStringSize.length() + (borderMargin.marginValue - 1) + columnMargin.marginValue ));
+                                   ( m_columns[0].m_maxStringSize.length() + (borderMargin - 1) + columnMargin ));
   }
   else
   {
@@ -256,16 +218,16 @@ void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSep
       integer cellSize = m_columns[idxColumn].m_maxStringSize.length();
       if( idxColumn == 0 )
       {
-        sectionSeparator +=  GEOS_FMT( "+{:-<{}}", "", ( cellSize + borderMargin.marginValue ));
+        sectionSeparator +=  GEOS_FMT( "+{:-<{}}", "", ( cellSize + borderMargin ));
       }
       else if( idxColumn == (m_columns.size() - 1))
       {
-        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin.marginValue );
-        sectionSeparator += GEOS_FMT( "{:->{}}", "+", ( cellSize + borderMargin.marginValue + 1 ) );
+        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin );
+        sectionSeparator += GEOS_FMT( "{:->{}}", "+", ( cellSize + borderMargin + 1 ) );
       }
       else
       {
-        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin.marginValue );
+        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin );
         sectionSeparator += GEOS_FMT( "{:->{}}", "", cellSize );
       }
     }
@@ -286,16 +248,16 @@ void Table::buildTitleRow( string & titleRows, string topSeparator, string secti
 void Table::buildSectionRows( string sectionSeparator,
                               string & rows,
                               integer const nbRows,
-                              Section const sectionName )
+                              Section const section )
 {
   for( integer idxRow = 0; idxRow< nbRows; idxRow++ )
   {
-    rows += GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin.marginValue );
+    rows += GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin );
     for( std::size_t idxColumn = 0; idxColumn < m_columns.size(); ++idxColumn )
     {
       string cell;
 
-      if( getStringSection( sectionName ) == "header" )
+      if( section == Section::header )
       {
         cell = m_columns[idxColumn].parameter.headerName[idxRow];
       }
@@ -310,17 +272,17 @@ void Table::buildSectionRows( string sectionSeparator,
 
       if( idxColumn < m_columns.size() - 1 )
       {
-        rows += GEOS_FMT( "{:^{}}", "|", columnMargin.marginValue );
+        rows += GEOS_FMT( "{:^{}}", "|", columnMargin );
       }
 
     }
     if( m_columns.size() == 1 )
     {
-      rows +=  GEOS_FMT( "{:>{}}\n", "|", columnMargin.marginValue );
+      rows +=  GEOS_FMT( "{:>{}}\n", "|", columnMargin );
     }
     else
     {
-      rows += GEOS_FMT( "{:>{}}\n", "|", borderMargin.marginValue + 1 );
+      rows += GEOS_FMT( "{:>{}}\n", "|", borderMargin + 1 );
     }
 
   }

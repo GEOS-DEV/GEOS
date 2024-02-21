@@ -30,30 +30,11 @@ public:
 
   enum Alignment { right, left, middle };
 
-  enum MarginType { border, column };
-
-  enum MarginValue { tiny, small, medium, large };
-
-  /**
-   * @brief Struct for a column margin and a border margin.
-   */
-  struct Margin
-  {
-    // 0 margin from |
-    integer tiny;
-    // 1 margin from |
-    integer small;
-    // 2 margin from |
-    integer medium;
-    // 3 margin from |
-    integer large;
-    // current margin value
-    integer marginValue;
-
-    void setWorkingValue( integer const value )
-    {
-      marginValue = value;
-    }
+  enum MarginValue : integer {
+    tiny = 0,
+    small = 1,
+    medium = 2,
+    large = 3
   };
 
   /**
@@ -78,7 +59,7 @@ public:
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
-   * @param columnParameter
+   * @param columnParameter List of structures to set up each colum parameters.
    */
   Table( std::vector< ColumnParam > const & columnParameter );
 
@@ -92,10 +73,10 @@ public:
   void addRow( Args const &... args );
 
   /**
-   * @brief Add rows to the table.
-   * @param vecRows
+   * @brief Add rows from vectors to the table.
+   * @param vecRows Vector who contains all table's rows
    */
-  void addRowsFromVector( std::vector< std::vector< string > > vecRows );
+  void addRowsFromVectors( std::vector< std::vector< string > > tableRows );
 
   /**
    * @brief Write the the table into specified stream
@@ -111,9 +92,9 @@ public:
 
   /**
    * @brief Sets the minimal margin width between row content and borders.
-   * @param valueType
+   * @param marginType 
    */
-  void setMargin( MarginValue valueType );
+  void setMargin( MarginValue marginType );
 
   /**
    * @return return the table name
@@ -137,20 +118,6 @@ private:
   };
 
   /**
-   * @brief Get the margin type either a borderMagin or a column
-   * @param type
-   * @return Margin
-   */
-  Margin getMargin( MarginType type ) const;
-
-  /**
-   * @brief Get the name of the section given an enum
-   * @param section
-   * @return The name of the section
-   */
-  string getStringSection( Section section ) const;
-
-  /**
    * @brief Fill the vector \p m_column with values from m_cellsRows who store all values in an unsorted order
    */
   void fillColumnsValuesFromCellsRows( );
@@ -164,7 +131,7 @@ private:
                                     std::vector< std::vector< string > > & splitHeader );
 
   /**
-   * @brief Iterate throught the header names vector
+   * @brief Iterate throught the header names vector.
    * Adjust the size of each header vector by adding empty strings if needed.
    * Store the modified header names in the corresponding column parameter.
    * @param largestHeaderVectorSize The largest split header vector size
@@ -189,14 +156,14 @@ private:
 
   /**
    * @brief Compute and build the top and the section line separator
-   * @param topSeparator
-   * @param sectionSeparator
+   * @param topSeparator An empty string to be built
+   * @param sectionSeparator An empty string to be built
    */
   void computeAndBuildSeparator( string & topSeparator, string & sectionSeparator );
 
   /**
    * @brief Build the table title section
-   * @param titleRows Rows containing the title section
+   * @param titleRows Rows containing the title section.
    * @param topSeparator The top line separator
    * @param sectionSeparator The section line separator
    */
@@ -207,19 +174,19 @@ private:
    * @param sectionSeparator Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section
-   * @param sectionName The section to be built
+   * @param section The section to be built
    */
   void buildSectionRows( string sectionSeparator,
                          string & rows,
                          integer const nbRows,
-                         Section const sectionName );
+                         Section const section );
 
 
   std::vector< std::vector< string > > m_cellsRows;
   std::vector< Column > m_columns;
 
-  Margin borderMargin;
-  Margin columnMargin;
+  integer borderMargin;
+  integer columnMargin;
 
   string tableTitle;
 
