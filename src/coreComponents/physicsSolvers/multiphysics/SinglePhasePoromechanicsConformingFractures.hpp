@@ -114,9 +114,9 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
 
-  // virtual void implicitStepComplete( real64 const & time_n,
-  //                                    real64 const & dt,
-  //                                    DomainPartition & domain ) override;
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override final;
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
