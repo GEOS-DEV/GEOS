@@ -120,6 +120,8 @@ do
   esac
 done
 
+ ls -la /tmp/geos/integratedTests
+
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
