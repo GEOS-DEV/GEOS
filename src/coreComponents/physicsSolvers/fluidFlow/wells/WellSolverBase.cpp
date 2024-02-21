@@ -196,6 +196,7 @@ void WellSolverBase::assembleSystem( real64 const time,
 
 void WellSolverBase::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
