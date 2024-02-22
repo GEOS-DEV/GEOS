@@ -93,7 +93,7 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
                                          << " error norm: " << delta / (value + 1.0)
                                          << " (" << v1 << " vs " << v2 << "),"
                                          << " exceeds " << relTol << ". "
-                                         << " absolute error: " << delta << " exeeds "
+                                         << " absolute error: " << delta << " exceeds "
                                          << absTol << std::endl;
   }
   return ::testing::AssertionSuccess();
@@ -119,6 +119,7 @@ void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, 
 {
   SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
+  GEOS_ERROR();
 }
 
 template< typename ROW_INDEX, typename COL_INDEX, typename VALUE >
