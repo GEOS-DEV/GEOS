@@ -1415,7 +1415,7 @@ public:
   void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
 
   /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   * @brief viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct
   {
