@@ -627,6 +627,10 @@ public:
    */
   R1Tensor const gravityVector() const;
 
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
+
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const;
+
   /**
    * @brief accessor for the linear solver parameters.
    * @return the linear solver parameter list
