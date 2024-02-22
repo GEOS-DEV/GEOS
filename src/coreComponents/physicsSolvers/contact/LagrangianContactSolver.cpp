@@ -1741,6 +1741,8 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
 void LagrangianContactSolver::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   computeFaceDisplacementJump( domain );
 }
 
