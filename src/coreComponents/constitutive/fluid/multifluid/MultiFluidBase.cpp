@@ -49,6 +49,9 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
+  registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
+    setRestartFlags( RestartFlags::NO_WRITE );
+
   registerField( fields::multifluid::phaseFraction{}, &m_phaseFraction.value );
   registerField( fields::multifluid::dPhaseFraction{}, &m_phaseFraction.derivs );
 
