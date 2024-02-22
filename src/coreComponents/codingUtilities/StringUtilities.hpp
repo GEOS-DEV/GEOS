@@ -255,6 +255,16 @@ constexpr bool endsWith( std::string_view str, std::string_view suffix )
          str.compare( str.size()-suffix.size(), suffix.size(), suffix ) == 0;
 }
 
+template< typename T >
+std::ostream & operator<<( std::ostream & os, std::optional< T > const & t )
+{
+  if( t )
+  {
+    os << t.value();
+  }
+  return os;
+}
+
 } // namespace stringutilities
 } // namespace geos
 
