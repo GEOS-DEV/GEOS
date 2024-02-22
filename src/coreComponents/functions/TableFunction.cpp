@@ -20,6 +20,7 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "codingUtilities/Table.hpp"
 
 #include <algorithm>
 
@@ -181,9 +182,9 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                  SimulationError );
 }
 
-void TableFunction::print( std::string const & filename ) const
+void TableFunction::printInCSV( string const filename ) const
 {
-  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+  std::ofstream os( filename + ".csv" );
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 
@@ -250,6 +251,60 @@ void TableFunction::print( std::string const & filename ) const
   }
 
   os.close();
+}
+
+void TableFunction::printInLog( string const filename ) const
+{
+
+  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
+  std::cout << "in function printInLog " <<  numDimensions << std::endl;
+  if( numDimensions == 1 )
+  {
+    Table pvtTable1D = Table(
+      {
+        string( units::getDescription( getDimUnit( 0 ))),
+        string( units::getDescription( m_valueUnit ))
+      } );
+    pvtTable1D.setTitle( filename );
+    arraySlice1d< real64 const > const coords = m_coordinates[0];
+
+    for( integer idx = 0; idx < m_values.size(); idx++ )
+    {
+      pvtTable1D.addRow< 2 >( coords[idx], m_values[idx] );
+    }
+
+    pvtTable1D.draw();
+  }
+  else if( numDimensions == 2 )
+  {
+    arraySlice1d< real64 const > const coordsX = m_coordinates[0];
+    arraySlice1d< real64 const > const coordsY = m_coordinates[1];
+    integer const nX = coordsX.size();
+    integer const nY = coordsY.size();
+    std::vector< string > vecDescription;
+    vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
+
+    for( integer idxY = 0; idxY < nY; idxY++ )
+    {
+      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
+      vecDescription.push_back( description );
+    }
+
+    Table pvtTable2D = Table( vecDescription );
+
+    for( integer i = 0; i < nX; i++ )
+    {
+      std::vector< string > vecValues;
+      vecValues.push_back( std::to_string( coordsX[i] ));
+      for( integer j = 0; j < nY; j++ )
+      {
+        vecValues.push_back( std::to_string( m_values[ j*nX + i ] ));
+      }
+    }
+    
+    pvtTable2D.draw();
+  }
+
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const

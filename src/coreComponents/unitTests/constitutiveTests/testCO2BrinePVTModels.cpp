@@ -366,6 +366,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
                                                strs,
                                                componentNames,
                                                componentMolarWeight,
+                                               true,
                                                true ); // print PVT tables
     }
   }
@@ -408,6 +409,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               phaseNames,
                                               componentNames,
                                               componentMolarWeight,
+                                              true,
                                               true ); // print PVT tables
     }
   }

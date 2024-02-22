@@ -278,7 +278,8 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
-                                            bool const printTable ):
+                                            bool const printInCsv,
+                                            bool const printInLog ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -287,8 +288,15 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_CO2DensityTable->print( m_CO2DensityTable->getName() );
+
+  if( printInCsv || ( printInLog && m_CO2DensityTable->numDimensions() >= 3 ) )
+  {
+    m_CO2DensityTable->printInCSV( m_CO2DensityTable->getName() );
+  }
+  if( printInLog &&  m_CO2DensityTable->numDimensions() <= 2 )
+  {
+    m_CO2DensityTable->printInLog( m_CO2DensityTable->getName() );
+  }
 }
 
 void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,
@@ -306,7 +314,7 @@ SpanWagnerCO2Density::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
 
 } // namespace PVTProps
 

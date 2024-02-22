@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -101,6 +102,11 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of solubility tables for each phase" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Write PVT tables into a CSV file" );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -121,19 +127,21 @@ bool CO2BrineFluid< PHASE1, PHASE2, FLASH >::isThermal() const
            PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
 }
 
-
 template< typename PHASE1, typename PHASE2, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 deliverClone( string const & name, Group * const parent ) const
 {
+  std::cout<< "deliverClone" << std::endl;
+  std::cout<<  LvArray::system::stackTrace( true ) << std::endl;
+
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
   CO2BrineFluid & newConstitutiveRelation = dynamicCast< CO2BrineFluid & >( *clone );
   newConstitutiveRelation.m_p1Index = m_p1Index;
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation.createPVTModels();
+  newConstitutiveRelation.createPVTModels(true);
 
   return clone;
 }
@@ -201,6 +209,15 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 {
+
+  if( m_isClone == true )
+    return;
+
+  if( getParent().getName() == "ConstitutiveModels" )
+  {
+    m_isClone = true;
+  }
+
   MultiFluidBase::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
@@ -231,12 +248,27 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  createPVTModels();
+  if(m_isClone == true) return;
+
+  if(getParent().getName() == "ConstitutiveModels")
+  {
+    m_isClone = true;
+  }                      
+
+  createPVTModels(m_isClone);
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels(bool isClone)
 {
+  std::cout << "ConstitutiveManager " << ConstitutiveManager::groupKeyStruct::constitutiveModelsString() << std::endl;
+
+  if( isClone )
+    return;
+
+  std::cout << "passed brine" << std::endl;
+  std::cout << m_isClone << std::endl;
+
 
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
@@ -327,11 +359,16 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
-  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
 
+  //temp
+  m_writeCSV = 1;
+  std::cout<< "CO2BRINE CALL" << std::endl;
+  std::cout<<  LvArray::system::stackTrace( true ) << std::endl;
+  std::cout<<  Group::getPath() << std::endl;
+  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+                                         m_writeCSV, getLogLevel() > 0 && logger::internal::rank==0 );
+  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
+                                         m_writeCSV, getLogLevel() > 0 && logger::internal::rank==0 );
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
   {
@@ -356,6 +393,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                                  m_phaseNames,
                                                  m_componentNames,
                                                  m_componentMolarWeight,
+                                                 m_writeCSV,
                                                  getLogLevel() > 0 && logger::internal::rank==0 );
           }
         }
@@ -396,6 +434,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                          m_phaseNames,
                                          m_componentNames,
                                          m_componentMolarWeight,
+                                         m_writeCSV,
                                          getLogLevel() > 0 && logger::internal::rank==0 );
   }
 
