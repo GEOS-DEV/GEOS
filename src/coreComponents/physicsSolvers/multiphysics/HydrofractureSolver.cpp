@@ -858,6 +858,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
   Base::updateState( domain );
 
