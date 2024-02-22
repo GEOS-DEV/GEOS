@@ -21,9 +21,17 @@
 namespace geos
 {
 
-string const cellAlignment( Table::Alignment const & a, string_view value, int spaces )
+/**
+ * @brief Build a value cell given an alignment and spaces from "|"
+ *
+ * @param alignment
+ * @param value
+ * @param spaces
+ * @return A cell value
+ */
+string buildValueCell( Table::Alignment const alignment, string_view value, integer spaces )
 {
-  switch( a )
+  switch( alignment )
   {
     case Table::right:   return GEOS_FMT( "{:>{}}", value, spaces );
     case Table::left:    return GEOS_FMT( "{:<{}}", value, spaces );
@@ -32,54 +40,49 @@ string const cellAlignment( Table::Alignment const & a, string_view value, int s
   }
 }
 
-string Table::getStringSection( Section section ) const
+Table::Table( std::vector< string > const & headers )
 {
-  switch( section )
-  {
-    case Section::header: return "header";
-    case Section::values: return "values";
-    default: return "values";
-  }
-}
+  setMargin( MarginValue::medium );
 
-Table::Table( std::vector< string > const & headers ):
-  borderMargin( getMargin( MarginType::border )),
-  columnMargin( getMargin( MarginType::column )),
-  maxRowHeader( 0 )
-{
   for( size_t idx = 0; idx< headers.size(); idx++ )
   {
     m_columns.push_back( {Table::ColumnParam{{headers[idx]}, Alignment::middle, true}, {}, ""} );
   }
 }
 
-Table::Table( std::vector< ColumnParam > const & columnParameter ):
-  borderMargin( getMargin( MarginType::border )),
-  columnMargin( getMargin( MarginType::column ))
+Table::Table( std::vector< ColumnParam > const & columnParameter )
 {
+  setMargin( MarginValue::medium );
+
   for( size_t idx = 0; idx< columnParameter.size(); idx++ )
   {
     if( columnParameter[idx].enabled )
     {
       m_columns.push_back( {columnParameter[idx], {}, ""} );
     }
+
   }
-  maxRowHeader = 0;
 }
 
-Table::Margin Table::getMargin( MarginType const & type )
+void Table::addRowsFromVectors( std::vector< std::vector< string > > tableRows )
 {
-  Margin marginBorder {0, 1, 2, 3, 2};
-  Margin marginColumn {0, 3, 5, 7, 5};
-  if( type == MarginType::border )
+  for( size_t indexRow = 0; indexRow < tableRows.size(); indexRow++ )
   {
-    return marginBorder;
+    std::vector< string > rowsValues;
+    for( size_t indexValue = 0; indexValue < tableRows[indexRow].size(); indexValue++ )
+    {
+      string cellValue = GEOS_FMT( "{}", tableRows[indexRow][indexValue] );
+      if( m_columns[indexValue].parameter.enabled )
+      {
+        rowsValues.push_back( cellValue );
+      }
+    }
+    m_cellsRows.push_back( rowsValues );
   }
-  return marginColumn;
-
 }
 
-void Table::splitHeadersStringAndStore()
+void Table::parseAndStoreHeaderSections( size_t & largestHeaderVectorSize,
+                                         std::vector< std::vector< string > > & splitHeader )
 {
   for( size_t columnParamIdx = 0; columnParamIdx< m_columns.size(); columnParamIdx++ )
   {
@@ -93,59 +96,43 @@ void Table::splitHeadersStringAndStore()
     }
 
     size_t const cellSize = splitHeaderParts.size();
-    maxRowHeader = std::max( maxRowHeader, cellSize );
+    largestHeaderVectorSize = std::max( largestHeaderVectorSize, cellSize );
 
-    m_splitHeader.push_back( splitHeaderParts );
+    splitHeader.push_back( splitHeaderParts );
   }
 }
 
-void Table::addSpaceToSplitHeaderAndStore()
+void Table::adjustHeaderSizesAndStore( size_t largestHeaderVectorSize,
+                                       std::vector< std::vector< string > > & splitHeader )
 {
   for( size_t columnParamIdx = 0; columnParamIdx < m_columns.size(); columnParamIdx++ )
   {
-    if( m_splitHeader[columnParamIdx].size() < maxRowHeader )
+    if( splitHeader[columnParamIdx].size() < largestHeaderVectorSize )
     {
-      const integer whiteRowToAdd = maxRowHeader -  m_splitHeader[columnParamIdx].size();
-      m_splitHeader[columnParamIdx].insert( m_splitHeader[columnParamIdx].end(), whiteRowToAdd, " " );
+      integer const whiteRowToAdd = largestHeaderVectorSize - splitHeader[columnParamIdx].size();
+      splitHeader[columnParamIdx].insert( splitHeader[columnParamIdx].end(), whiteRowToAdd, " " );
     }
-    m_columns[columnParamIdx].parameter.headerName = m_splitHeader[columnParamIdx];
+    m_columns[columnParamIdx].parameter.headerName = splitHeader[columnParamIdx];
   }
 }
 
 void Table::setTitle( string_view title_ )
 {
-  title = title_;
+  tableTitle = title_;
 }
 
 string_view Table::getTitle()
 {
-  return title;
+  return tableTitle;
 }
 
-void Table::setMargin( MarginValue valueType )
+void Table::setMargin( MarginValue marginType )
 {
-  switch( valueType )
-  {
-    case MarginValue::tiny:
-      borderMargin.setWorkingValue( borderMargin.tiny );
-      columnMargin.setWorkingValue( columnMargin.tiny );
-      break;
-    case MarginValue::small:
-      borderMargin.setWorkingValue( borderMargin.small );
-      columnMargin.setWorkingValue( columnMargin.small );
-      break;
-    case MarginValue::medium:
-      borderMargin.setWorkingValue( borderMargin.medium );
-      columnMargin.setWorkingValue( columnMargin.medium );
-      break;
-    case MarginValue::large:
-      borderMargin.setWorkingValue( borderMargin.large );
-      columnMargin.setWorkingValue( columnMargin.large );
-      break;
-  }
+  borderMargin = marginType;
+  columnMargin = integer( marginType ) * 2 + 1;
 }
 
-void Table::findMaxStringSize()
+void Table::findAndSetMaxStringSize()
 {
   string maxStringSize = "";
   for( size_t idxColumn  = 0; idxColumn <  m_columns.size(); idxColumn++ )
@@ -187,7 +174,7 @@ void Table::computeAndSetMaxStringSize( string::size_type sectionlineLength,
     {
       m_columns[idxColumn].m_maxStringSize = GEOS_FMT( "{:>{}}",
                                                        m_columns[idxColumn].m_maxStringSize,
-                                                       newStringSize + columnMargin.marginValue );
+                                                       newStringSize + columnMargin );
     }
     else
     {
@@ -198,15 +185,14 @@ void Table::computeAndSetMaxStringSize( string::size_type sectionlineLength,
   }
 }
 
-void Table::computeAndBuildLines()
+void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSeparator )
 {
   string::size_type sectionlineLength = 0;
-  string::size_type titleLineLength = title.length() + ( marginTitle * 2 );
-  integer nbSpaceBetweenColumn = ( ( m_columns.size() - 1 ) *  columnMargin.marginValue ) + (borderMargin.marginValue * 2);
-
-  if( !title.empty())
+  string::size_type titleLineLength = tableTitle.length() + ( marginTitle * 2 );
+  integer nbSpaceBetweenColumn = ( ( m_columns.size() - 1 ) *  columnMargin ) + (borderMargin * 2);
+  if( !tableTitle.empty())
   {
-    title = GEOS_FMT( "{:^{}}", title, titleLineLength );
+    tableTitle = GEOS_FMT( "{:^{}}", tableTitle, titleLineLength );
   }
 
   for( std::size_t i = 0; i < m_columns.size(); ++i )
@@ -215,36 +201,33 @@ void Table::computeAndBuildLines()
   }
 
   sectionlineLength += nbSpaceBetweenColumn;
-
   if( sectionlineLength < titleLineLength )
   {
     computeAndSetMaxStringSize( sectionlineLength, titleLineLength );
   }
-
   if( m_columns.size() == 1 )
   {
     sectionSeparator +=  GEOS_FMT( "+{:-<{}}+",
                                    "",
-                                   ( m_columns[0].m_maxStringSize.length() + (borderMargin.marginValue - 1) + columnMargin.marginValue ));
+                                   ( m_columns[0].m_maxStringSize.length() + (borderMargin - 1) + columnMargin ));
   }
   else
   {
     for( std::size_t idxColumn = 0; idxColumn < m_columns.size(); ++idxColumn )
     {
       integer cellSize = m_columns[idxColumn].m_maxStringSize.length();
-
       if( idxColumn == 0 )
       {
-        sectionSeparator +=  GEOS_FMT( "+{:-<{}}", "", ( cellSize + borderMargin.marginValue ));
+        sectionSeparator +=  GEOS_FMT( "+{:-<{}}", "", ( cellSize + borderMargin ));
       }
       else if( idxColumn == (m_columns.size() - 1))
       {
-        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin.marginValue );
-        sectionSeparator += GEOS_FMT( "{:->{}}", "+", ( cellSize + borderMargin.marginValue + 1 ) );
+        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin );
+        sectionSeparator += GEOS_FMT( "{:->{}}", "+", ( cellSize + borderMargin + 1 ) );
       }
       else
       {
-        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin.marginValue );
+        sectionSeparator += GEOS_FMT( "{:-^{}}", "+", columnMargin );
         sectionSeparator += GEOS_FMT( "{:->{}}", "", cellSize );
       }
     }
@@ -252,27 +235,29 @@ void Table::computeAndBuildLines()
   topSeparator = GEOS_FMT( "+{:-<{}}+", "", sectionSeparator.size() - 2 );// -2 for ++
 }
 
-void Table::buildTitleRow()
+void Table::buildTitleRow( string & titleRows, string topSeparator, string sectionSeparator )
 {
-  titleRow = GEOS_FMT( "\n{}\n|", topSeparator );
-  titleRow +=  cellAlignment( Alignment::middle,
-                              title,
-                              (sectionSeparator.length() - 2) // -2 for ||
-                              );
-  titleRow += GEOS_FMT( "{}\n", "|" );
+  titleRows = GEOS_FMT( "\n{}\n|", topSeparator );
+  titleRows +=  buildValueCell( Alignment::middle,
+                                tableTitle,
+                                (sectionSeparator.length() - 2) // -2 for ||
+                                );
+  titleRows += GEOS_FMT( "{}\n", "|" );
 }
 
-void Table::buildSectionRows( integer const & nbRows, Section const & sectionName )
+void Table::buildSectionRows( string sectionSeparator,
+                              string & rows,
+                              integer const nbRows,
+                              Section const section )
 {
-
   for( integer idxRow = 0; idxRow< nbRows; idxRow++ )
   {
-    rows += GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin.marginValue );
+    rows += GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin );
     for( std::size_t idxColumn = 0; idxColumn < m_columns.size(); ++idxColumn )
     {
       string cell;
 
-      if( getStringSection( sectionName ) == "header" )
+      if( section == Section::header )
       {
         cell = m_columns[idxColumn].parameter.headerName[idxRow];
       }
@@ -281,23 +266,23 @@ void Table::buildSectionRows( integer const & nbRows, Section const & sectionNam
         cell = m_columns[idxColumn].columnValues[idxRow];
       }
       integer cellSize = m_columns[idxColumn].m_maxStringSize.length();
-      rows += cellAlignment( m_columns[idxColumn].parameter.alignment,
-                             cell,
-                             cellSize );
+      rows += buildValueCell( m_columns[idxColumn].parameter.alignment,
+                              cell,
+                              cellSize );
 
       if( idxColumn < m_columns.size() - 1 )
       {
-        rows += GEOS_FMT( "{:^{}}", "|", columnMargin.marginValue );
+        rows += GEOS_FMT( "{:^{}}", "|", columnMargin );
       }
 
     }
     if( m_columns.size() == 1 )
     {
-      rows +=  GEOS_FMT( "{:>{}}\n", "|", columnMargin.marginValue );
+      rows +=  GEOS_FMT( "{:>{}}\n", "|", columnMargin );
     }
     else
     {
-      rows += GEOS_FMT( "{:>{}}\n", "|", borderMargin.marginValue + 1 );
+      rows += GEOS_FMT( "{:>{}}\n", "|", borderMargin + 1 );
     }
 
   }
@@ -307,7 +292,7 @@ void Table::buildSectionRows( integer const & nbRows, Section const & sectionNam
   }
 }
 
-void Table::fillColumnsValuesFromMCellsRows()
+void Table::fillColumnsValuesFromCellsRows()
 {
   for( size_t idxRow = 0; idxRow < m_cellsRows.size(); idxRow++ )
   {
@@ -321,25 +306,32 @@ void Table::fillColumnsValuesFromMCellsRows()
 void Table::draw( std::ostream & oss )
 {
   string tableOutput;
+  string rows;
+  string titleRows;
+  string topSeparator;
+  string sectionSeparator;
 
-  fillColumnsValuesFromMCellsRows();
+  std::vector< std::vector< string > > splitHeader;
+  size_t largestHeaderVectorSize = 0;
 
-  splitHeadersStringAndStore();
-  addSpaceToSplitHeaderAndStore();
 
-  findMaxStringSize();
-  computeAndBuildLines();
+  fillColumnsValuesFromCellsRows();
+  parseAndStoreHeaderSections( largestHeaderVectorSize, splitHeader );
+  adjustHeaderSizesAndStore( largestHeaderVectorSize, splitHeader );
 
-  if( !title.empty())
+  findAndSetMaxStringSize();
+  computeAndBuildSeparator( topSeparator, sectionSeparator );
+
+  if( !tableTitle.empty())
   {
-    buildTitleRow();
+    buildTitleRow( titleRows, topSeparator, sectionSeparator );
   }
 
   rows += GEOS_FMT( "{}\n", sectionSeparator );
-  buildSectionRows( maxRowHeader, Section::header );
-  buildSectionRows( m_cellsRows.size(), Section::values );
+  buildSectionRows( sectionSeparator, rows, largestHeaderVectorSize, Section::header );
+  buildSectionRows( sectionSeparator, rows, m_cellsRows.size(), Section::values );
 
-  tableOutput = titleRow + rows + '\n';
+  tableOutput = titleRows + rows + '\n';
 
   oss << tableOutput;
 }
