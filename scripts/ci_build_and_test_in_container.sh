@@ -182,7 +182,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats f \"np<=2\" --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  export ATS_FILTER="np<=1"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 
