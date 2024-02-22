@@ -365,7 +365,8 @@ CO2Solubility::CO2Solubility( string const & name,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight,
-                              bool const printTable ):
+                              bool const printInCsv,
+                              bool const printInLog ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
@@ -391,10 +392,16 @@ CO2Solubility::CO2Solubility( string const & name,
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
   m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
-  if( printTable )
+
+  if( printInCsv || ( printInLog && m_CO2SolubilityTable->numDimensions() >= 3 ) )
   {
-    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
-    m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
+    m_CO2SolubilityTable->printInCSV( m_CO2SolubilityTable->getName() );
+    m_WaterVapourisationTable->printInCSV( m_WaterVapourisationTable->getName() );
+  }
+  if( printInLog &&  m_CO2SolubilityTable->numDimensions() <= 2 )
+  {
+    m_CO2SolubilityTable->printInLog( m_CO2SolubilityTable->getName() );
+    m_WaterVapourisationTable->printInLog( m_WaterVapourisationTable->getName() );
   }
 }
 
@@ -418,7 +425,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
 
 } // end namespace PVTProps
 

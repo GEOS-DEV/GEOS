@@ -176,7 +176,8 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
-                                            bool const printTable ):
+                                            bool const printInCsv,
+                                            bool const printInLog ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -188,8 +189,15 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_brineDensityTable->print( m_brineDensityTable->getName() );
+  
+  if( printInCsv || ( printInLog && m_brineDensityTable->numDimensions() >= 3 ) )
+  {
+    m_brineDensityTable->printInCSV( m_brineDensityTable->getName() );
+  }
+  if( printInLog &&  m_brineDensityTable->numDimensions() <= 2 )
+  {
+    m_brineDensityTable->printInLog( m_brineDensityTable->getName() );
+  }
 }
 
 PhillipsBrineDensity::KernelWrapper
@@ -208,7 +216,7 @@ void PhillipsBrineDensity::checkTablesParameters( real64 const pressure,
   m_brineDensityTable->checkCoord( temperature, 1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
 
 } // namespace PVTProps
 

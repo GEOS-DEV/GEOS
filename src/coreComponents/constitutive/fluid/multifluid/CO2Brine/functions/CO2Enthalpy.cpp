@@ -256,7 +256,8 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
                           string_array const & inputParams,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
-                          bool const printTable ):
+                          bool const printInCsv,
+                          bool const printInLog ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -265,8 +266,16 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
+
+
+  if( printInCsv || ( printInLog && m_CO2EnthalpyTable->numDimensions() >= 3 ) )
+  {
+    m_CO2EnthalpyTable->printInCSV( m_CO2EnthalpyTable->getName() );
+  }
+  if( printInLog &&  m_CO2EnthalpyTable->numDimensions() <= 2 )
+  {
+    m_CO2EnthalpyTable->printInLog( m_CO2EnthalpyTable->getName() );
+  }
 }
 
 
@@ -308,7 +317,7 @@ CO2Enthalpy::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
 
 } // namespace PVTProps
 

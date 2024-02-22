@@ -83,15 +83,14 @@ public:
                           string_array const & inputPara,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
-                          bool const printTable );
+                          bool const printInCsv,
+                          bool const printInLog );
 
   virtual ~PhillipsBrineViscosity() override = default;
 
   static string catalogName() { return "PhillipsBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
-
-  void debugViscosityTable() const;
 
   /**
    * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )

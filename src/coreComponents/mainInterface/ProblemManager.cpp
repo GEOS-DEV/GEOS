@@ -150,6 +150,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+
   postProcessInputRecursive();
 
   generateMesh();
@@ -710,15 +711,17 @@ void ProblemManager::importFields()
 
 void ProblemManager::applyNumericalMethods()
 {
-
+  std::cout << "getDomainPartition before " << std::endl;
   DomainPartition & domain  = getDomainPartition();
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
+  std::cout << "getMeshBodies before " << std::endl;
   Group & meshBodies = domain.getMeshBodies();
 
   // this contains a key tuple< mesh body name, mesh level name, region name, subregion name> with a value of the number of quadrature
   // points.
+  std::cout << "calculateRegionQuadrature before " << std::endl;
   map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
-
+    std::cout << "calculateRegionQuadrature done " << std::endl;
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 

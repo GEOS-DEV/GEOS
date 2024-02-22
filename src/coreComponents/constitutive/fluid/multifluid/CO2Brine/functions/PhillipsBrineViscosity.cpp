@@ -20,7 +20,6 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "functions/FunctionManager.hpp"
-#include "codingUtilities/Table.hpp"
 
 namespace geos
 {
@@ -37,46 +36,23 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                                                 string_array const & inputPara,
                                                 string_array const & componentNames,
                                                 array1d< real64 > const & componentMolarWeight,
-                                                bool const printTable ):
+                                                bool const printInCsv,
+                                                bool const printInLog ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
-  if( printTable )
-    m_waterViscosityTable->print( m_waterViscosityTable->getName() );
+  if( printInCsv || ( printInLog && m_waterViscosityTable->numDimensions() >= 3 ) )
+  {
+    m_waterViscosityTable->printInCSV( m_waterViscosityTable->getName() );
+  }
+  if( printInLog &&  m_waterViscosityTable->numDimensions() <= 2 )
+  {
+    m_waterViscosityTable->printInLog( m_waterViscosityTable->getName() );
+  }
+
   makeCoefficients( inputPara );
-
-}
-
-void PhillipsBrineViscosity::debugViscosityTable() const
-{
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0 )
-  {
-    return;
-  }
-
-  Table tablePerforation = Table( {"Perforation no." } );
-
-  std::cout << " numCoord " <<  m_waterViscosityTable->numDimensions() << std::endl;
-  std::cout << " dimUnit " <<  m_waterViscosityTable->getDimUnit( 0 ) << std::endl;
-  std::cout << " Unit " << units::getDescription( units::Unit::Viscosity ) << std::endl;
-
-  arrayView1d< real64 const > viscosity = m_waterViscosityTable->getValues();
-  ArrayOfArraysView< real64 const > coords = m_waterViscosityTable->getCoordinates();
-  arraySlice1d< real64 const > tempVar = coords[0];
-  arraySlice1d< real64 const > pressure = coords[1];
-  // for( auto value : m_waterViscosityTable->getValues() )
-  // {
-  //   std::cout << " value m_water : " <<  value << std::endl;
-
-  // }
-  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
-  {
-    tablePerforation.addRow< 1 >( tempVar[i] );
-  }
-
- tablePerforation.draw(std::cout);
 }
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
@@ -123,7 +99,7 @@ PhillipsBrineViscosity::createKernelWrapper() const
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
 
 } // end namespace PVTProps
 
