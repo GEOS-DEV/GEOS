@@ -227,6 +227,8 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }

@@ -38,12 +38,6 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
 
-  enum class SolverType : integer
-  {
-    Poromechanics = 0,
-    Contact = 1
-  };
-
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFractures"; }
 

@@ -704,6 +704,8 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )

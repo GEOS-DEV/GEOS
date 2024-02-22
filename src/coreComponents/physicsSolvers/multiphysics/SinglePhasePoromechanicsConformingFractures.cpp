@@ -690,6 +690,8 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   // call base poromechanics update
   Base::updateState( domain );
   // need to call solid mechanics update separately to compute face displacement jump
