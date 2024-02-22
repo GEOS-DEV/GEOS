@@ -28,7 +28,6 @@ primarySpeciesTotalConcentration real64_array2d                                 
 secondarySpeciesConcentration    real64_array2d                                                                                secondarySpeciesConcentration                                                                                
 totalDensity                     real64_array2d                                                                                Total density                                                                                                
 totalDensity_n                   real64_array2d                                                                                Total density at the previous converged time step                                                            
-useMass                          integer                                                                                       (no description available)                                                                                   
 ================================ ============================================================================================= ============================================================================================================ 
 
 
