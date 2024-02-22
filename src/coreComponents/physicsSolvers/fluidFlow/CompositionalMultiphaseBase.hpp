@@ -153,7 +153,9 @@ public:
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override final;
+  virtual void saveIterationState( DomainPartition & domain ) const override final;
+
+  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -254,7 +256,6 @@ public:
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
-    static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
 
   };
 
@@ -377,8 +378,6 @@ public:
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
-  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
-
 protected:
 
   virtual void postProcessInput() override;
@@ -416,8 +415,6 @@ protected:
                         char const logMessage[],
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
-
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const override final;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -481,9 +478,6 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
-
-  /// maximum (absolute) component density change in a sequential iteration
-  real64 m_maxSequentialCompDensChange;
 
   /// the targeted CFL for timestep
   real64 m_targetFlowCFL;

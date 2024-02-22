@@ -17,7 +17,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
-        maxAllowedResidualNorm="1e15"/>
+        allowNonConverged="1"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>

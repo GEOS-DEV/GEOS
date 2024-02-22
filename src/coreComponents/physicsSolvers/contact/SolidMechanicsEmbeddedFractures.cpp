@@ -731,7 +731,6 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
-  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
