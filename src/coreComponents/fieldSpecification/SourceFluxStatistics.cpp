@@ -134,23 +134,24 @@ void SourceFluxStatsAggregator::writeStatsToLog( integer minLogLevel,
                              wrappedStats.stats().m_elementCount ) );
 
     // we want to format differently if we have got multiple phases or not
+    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
     if( wrappedStats.stats().m_producedMass.size() == 1 )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
                                catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_producedMass[0] ) );
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
+                               wrappedStats.stats().m_producedMass[0], massUnit ) );
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
                                catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_productionRate[0] ) );
+                               wrappedStats.stats().m_productionRate[0], massUnit ) );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} {}",
                                catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_producedMass ) );
-      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
+                               wrappedStats.stats().m_producedMass, massUnit ) );
+      GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} {}/s",
                                catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
-                               wrappedStats.stats().m_productionRate ) );
+                               wrappedStats.stats().m_productionRate, massUnit ) );
     }
   }
 }
@@ -167,7 +168,8 @@ void SourceFluxStatsAggregator::writeStatsToCSV( string_view elementSetName, Wra
                               writeHeader ? std::ios_base::out : std::ios_base::app );
     if( writeHeader )
     {
-      outputFile << "Time [s],Element Count,Producted Mass [kg],Production Rate [kg/s]" << std::endl;
+      outputFile << GEOS_FMT( "Time [s],Element Count,Producted Mass [{0}],Production Rate [{0}/s]",
+                              units::getSymbol( m_solver->getMassUnit() ) ) << std::endl;
     }
     else
     {

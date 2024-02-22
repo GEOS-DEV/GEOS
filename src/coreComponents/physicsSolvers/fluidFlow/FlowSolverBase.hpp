@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -128,6 +129,12 @@ public:
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
   integer & isThermal() { return m_isThermal; }
+
+  /**
+   * @return The unit in which we evaluate the amount of fluid per element (Mass or Mole).
+   */
+  virtual units::Unit getMassUnit() const
+  { return units::Unit::Mass; }
 
   /**
    * @brief Function to activate the flag allowing negative pressure

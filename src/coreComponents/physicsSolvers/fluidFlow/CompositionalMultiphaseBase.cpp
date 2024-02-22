@@ -79,10 +79,13 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Temperature" );
 //END_SPHINX_INCLUDE_00
+
+  // TODO: add more description on how useMass can alter the simulation (convergence issues?). How does it interact with wells useMass?
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use mass formulation instead of molar" );
+    setDescription( GEOS_FMT( "Use mass formulation instead of molar. Warning : Affects {} rates units.",
+                              SourceFluxBoundaryCondition::catalogName() ) );
 
   this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
     setSizedFromParent( 0 ).

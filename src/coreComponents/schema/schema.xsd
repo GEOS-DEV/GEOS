@@ -1233,7 +1233,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
+		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The producted fluid rate unit is in kg by default, or in mole if the flow solver has a useMass of 0.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
@@ -1241,7 +1241,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
@@ -2397,7 +2397,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="temperature" type="real64" use="required" />
 		<!--useDBC => Enable Dissipation-based continuation flux-->
 		<xsd:attribute name="useDBC" type="integer" default="0" />
-		<!--useMass => Use mass formulation instead of molar-->
+		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
 		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
@@ -2459,7 +2459,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--useMass => Use mass formulation instead of molar-->
+		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
 		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />

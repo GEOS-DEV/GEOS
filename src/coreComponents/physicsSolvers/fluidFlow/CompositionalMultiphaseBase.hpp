@@ -178,6 +178,12 @@ public:
   string referenceFluidModelName() const { return m_referenceFluidModelName; }
 
   /**
+   * @return The unit in which we evaluate the amount of fluid per element (Mass or Mole, depending on useMass).
+   */
+  virtual units::Unit getMassUnit() const override
+  { return m_useMass ? units::Unit::Mass : units::Unit::Mole; }
+
+  /**
    * @brief assembles the accumulation and volume balance terms for all cells
    * @param time_n previous time value
    * @param dt time step

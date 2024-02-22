@@ -41,9 +41,11 @@ public:
    */
   struct StatData
   {
-    /// fluid mass produced by the flux(es) (kg). Negative if injecting. One value for each fluid phase.
+    /// Amount of fluid produced by the flux(es). Negative if injecting. One value for each fluid phase.
+    /// In kg by default, or in mol if useMass = 0 on the solver.
     array1d< real64 > m_producedMass;
-    /// flux(es) production rate (kg/s). Negative if injecting. One value for each fluid phase.
+    /// Flux(es) production rate. Negative if injecting. One value for each fluid phase.
+    /// In kg/s by default, or in mol/s if useMass = 0 on the solver.
     array1d< real64 > m_productionRate;
     /// Number of elements in which we are producing / injecting
     integer m_elementCount = 0;
@@ -92,7 +94,7 @@ public:
      * after the previous time + dt (override the statistics if the current timestep is cut).
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep
-     * @param producedMass time-step producted mass (see StatData::m_producedMass).
+     * @param producedMass Amount of produced fluid (see StatData::m_producedMass).
      * @param elementCount number of cell elements concerned by this instance
      */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
@@ -153,13 +155,13 @@ private:
      */
     struct PeriodStats
     {
-      /// producted mass of the current time-step.
+      /// Fluid production during current time-step. Same unit as StatData::productedMass.
       array1d< real64 > m_timeStepMass;
-      /// producted mass sum from all previous time-step of the current period.
+      /// Fluid production during all previous time-step of the current period. Same unit as StatData::productedMass.
       array1d< real64 > m_periodPendingMass;
-      /// time of when the timestep starts (since the simulation start)
+      /// time of when the timestep starts (since the simulation start).
       real64 m_timeStepStart = 0.0;
-      /// time that the current timestep is simulating
+      /// time that the current timestep is simulating. 
       real64 m_timeStepDeltaTime = 0.0;
       /// start time of the current period.
       real64 m_periodStart = 0.0;

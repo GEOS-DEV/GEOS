@@ -115,8 +115,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
         {
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
-          integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-          string const massUnit = useMass ? "kg" : "mol";
+          string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
           outputFile <<
             "Time [s],Min pressure [Pa],Average pressure [Pa],Max pressure [Pa],Min delta pressure [Pa],Max delta pressure [Pa]," <<
             "Min temperature [Pa],Average temperature [Pa],Max temperature [Pa],Total dynamic pore volume [rm^3]";
@@ -405,8 +404,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       mobilePhaseMass[ip] = regionStatistics.phaseMass[ip] - regionStatistics.immobilePhaseMass[ip];
     }
 
-    integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-    string const massUnit = useMass ? "kg" : "mol";
+    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Pressure (min, average, max): {}, {}, {} Pa",
                                         getName(), regionNames[i], time, regionStatistics.minPressure, regionStatistics.averagePressure, regionStatistics.maxPressure ) );
