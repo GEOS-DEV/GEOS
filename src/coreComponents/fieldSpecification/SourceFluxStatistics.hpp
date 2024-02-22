@@ -90,7 +90,7 @@ public:
     void setTarget( string_view aggregatorName, string_view fluxName );
 
     /**
-     * @brief Set the current time step stats. Accumulate the statistics only if the time is strictly 
+     * @brief Set the current time step stats. Accumulate the statistics only if the time is strictly
      * after the previous time + dt (override the statistics if the current timestep is cut).
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep
@@ -161,7 +161,7 @@ private:
       array1d< real64 > m_periodPendingMass;
       /// time of when the timestep starts (since the simulation start).
       real64 m_timeStepStart = 0.0;
-      /// time that the current timestep is simulating. 
+      /// time that the current timestep is simulating.
       real64 m_timeStepDeltaTime = 0.0;
       /// start time of the current period.
       real64 m_periodStart = 0.0;
