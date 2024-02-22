@@ -35,21 +35,19 @@ public:
   enum MarginValue { tiny, small, medium, large };
 
   /**
-   * @brief Struct for a column margin and border margin.
-   * @param tiny 0 margin for both;
-   * @param small 1 margin from |
-   * @param medium 2 margin from |
-   * @param large 3 margin from |
-   *
-   * @param marginValue current margin value
+   * @brief Struct for a column margin and a border margin.
    */
   struct Margin
   {
+    // 0 margin from |
     integer tiny;
+    // 1 margin from |
     integer small;
+    // 2 margin from |
     integer medium;
+    // 3 margin from |
     integer large;
-
+    // current margin value
     integer marginValue;
 
     void setWorkingValue( integer const value )
@@ -78,14 +76,14 @@ public:
   Table( std::vector< string > const & columnNames );
 
   /**
-   * @brief Construct a new Table object by specifying alignment of values in the table and optionally their display according to their log
+   * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
    * @param columnParameter
    */
   Table( std::vector< ColumnParam > const & columnParameter );
 
   /**
-   * @brief Add a row the the table. The number of arguments need to match with the number of header values
+   * @brief Add a row the the table. The number of arguments must match with the number of header values
    * @tparam N
    * @tparam Args
    * @param args
@@ -101,12 +99,12 @@ public:
 
   /**
    * @brief Set the name of the table
-   * @param [in] title The name of the table
+   * @param tableTitle The name of the table
    */
-  void setTitle( string_view title );
+  void setTitle( string_view tableTitle );
 
   /**
-   * @brief Sets the minimal margin width between the row content an its borders.
+   * @brief Sets the minimal margin width between row content and borders.
    * @param valueType
    */
   void setMargin( MarginValue valueType );
@@ -133,7 +131,7 @@ private:
   };
 
   /**
-   * @brief Get the Margin object
+   * @brief Get the margin type either a borderMagin or a column
    * @param type
    * @return Margin
    */
@@ -143,70 +141,83 @@ private:
    * @brief Get the name of the section given an enum
    * @param section
    * @return The name of the section
-   */0
+   */
   string getStringSection( Section section ) const;
 
   /**
-   * @brief fill the vector \p m_column with values from m_cellsRows who store all value in an unsorted order
+   * @brief Fill the vector \p m_column with values from m_cellsRows who store all values in an unsorted order
    */
-  void fillColumnsValuesFromMCellsRows();
+  void fillColumnsValuesFromCellsRows( );
 
   /**
-   * @brief Split all header names by detecting \p '\n' character and store each split header name into a vector.
+   * @brief Split all header names by detecting the newline \\n character.
+   * @param splitHeader A vector containing all split header names
+   * @param largestHeaderVectorSize The largest split header vector size
    */
-  void splitHeadersStringAndStore();
+  void parseAndStoreHeaderSections( size_t & largestHeaderVectorSize,
+                                    std::vector< std::vector< string > > & splitHeader );
 
   /**
-   * @brief Iterate throught all header names vector and set them to the same size by adding empty string(s).
+   * @brief Iterate throught the header names vector
+   * Adjust the size of each header vector by adding empty strings if needed.
+   * Store the modified header names in the corresponding column parameter.
+   * @param largestHeaderVectorSize The largest split header vector size
+   * @param splitHeader A vector containing all split header names
    */
-  void addSpaceToSplitHeaderAndStore();
+  void adjustHeaderSizesAndStore( size_t largestHeaderVectorSize,
+                                  std::vector< std::vector< string > > & splitHeader );
 
   /**
-   * @brief For each column find the largest string size
+   * @brief For each column find and set the column's longest string
    */
-  void findMaxStringSize();
+  void findAndSetMaxStringSize();
 
   /**
-   * @brief If the title is the largest string size in the table, recalculate for all column, the \p m_maxStringSize value
-   * by adding an extra number of characters
+   * @brief Compute the largest string size in the table. If the table title is the largest string size in the table, recalculate for all
+   * columns the \p m_maxStringSize value by adding extra characters
+   * @param sectionlineLength The length of a section line
+   * @param titleLineLength The length of a title line
    */
   void computeAndSetMaxStringSize( string::size_type sectionlineLength,
                                    string::size_type titleLineLength );
-  /**
-   * @brief Compute the lines separator
-   */
-  void computeAndBuildLines();
 
   /**
-   * @brief Build the title section
-   *
+   * @brief Compute and build the top and the section line separator
+   * @param topSeparator
+   * @param sectionSeparator
    */
-  void buildTitleRow();
+  void computeAndBuildSeparator( string & topSeparator, string & sectionSeparator );
 
   /**
-   * @brief build the header or values section
-   * @param nbRows
-   * @param sectionName
+   * @brief Build the table title section
+   * @param titleRows Rows containing the title section
+   * @param topSeparator The top line separator
+   * @param sectionSeparator The section line separator
    */
-  void buildSectionRows( integer nbRows, Section sectionName );
+  void buildTitleRow( string & titleRows, string topSeparator, string sectionSeparator );
 
-  std::vector< std::vector< string > > m_splitHeader;
+  /**
+   * @brief Build a section by specifying it's type ( header or section )
+   * @param sectionSeparator Line separator between sections
+   * @param rows A section row
+   * @param nbRows Indicates the number of lines in a section
+   * @param sectionName The section to be built
+   */
+  void buildSectionRows( string sectionSeparator,
+                         string & rows,
+                         integer const nbRows,
+                         Section const sectionName );
+
+
   std::vector< std::vector< string > > m_cellsRows;
-
   std::vector< Column > m_columns;
 
   Margin borderMargin;
   Margin columnMargin;
 
-  string title;
-  string topSeparator;
-  string sectionSeparator;
-  size_t maxRowHeader;
+  string tableTitle;
 
   int marginTitle = 2;
-
-  string titleRow;
-  string rows;
 
 };
 
