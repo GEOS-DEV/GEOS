@@ -189,7 +189,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
-  
+
   if( printInCsv || ( printInLog && m_brineDensityTable->numDimensions() >= 3 ) )
   {
     m_brineDensityTable->printInCSV( m_brineDensityTable->getName() );

@@ -162,7 +162,7 @@ private:
 
   void createPVTModels(bool isClone);
 
-  bool m_isClone = false;
+  bool m_isClone = true;
 
   /// Names of the files defining the viscosity and density models
   path_array m_phasePVTParaFiles;

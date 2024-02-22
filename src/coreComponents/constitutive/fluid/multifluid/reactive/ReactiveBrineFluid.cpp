@@ -120,13 +120,6 @@ template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::postProcessInput()
 {
 
-  if( m_isClone == true )
-    return;
-
-  if( getParent().getName() == "ConstitutiveModels" )
-  {
-    m_isClone = true;
-  }
   ReactiveMultiFluid::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
@@ -135,9 +128,6 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
   GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
-
-  if( m_isClone == true )
-    return;
 
   if( getParent().getName() == "ConstitutiveModels" )
   {
@@ -153,10 +143,6 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
 
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-
-  if( isClone )
-    return;
-
   array1d< array1d< string > > phase1InputParams;
   phase1InputParams.resize( 3 );
 
@@ -217,10 +203,15 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
                  ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
-
+  std::cout << "reactive brine" << isClone << std::endl;
   // then, we are ready to instantiate the phase models
+
+  bool const writeCSV = !isClone && m_writeCSV;
+  bool const writeInLog = !isClone && (getLogLevel() > 0 && logger::internal::rank==0);
+
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       m_writeCSV, getLogLevel() > 0 && logger::internal::rank==0 );
+                                       writeCSV, writeInLog);
+
 }
 
 template< typename PHASE >

@@ -133,7 +133,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 deliverClone( string const & name, Group * const parent ) const
 {
   std::cout<< "deliverClone" << std::endl;
-  std::cout<<  LvArray::system::stackTrace( true ) << std::endl;
 
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
@@ -141,7 +140,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_p1Index = m_p1Index;
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation.createPVTModels(true);
+  newConstitutiveRelation.createPVTModels( true );
 
   return clone;
 }
@@ -209,15 +208,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 {
-
-  if( m_isClone == true )
-    return;
-
-  if( getParent().getName() == "ConstitutiveModels" )
-  {
-    m_isClone = true;
-  }
-
   MultiFluidBase::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
@@ -248,28 +238,20 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  if(m_isClone == true) return;
-
-  if(getParent().getName() == "ConstitutiveModels")
+  std::cout << "test clone " << m_isClone << std::endl;
+  std::cout << " getParent().getName() " <<  getParent().getName() << std::endl;
+  bool isClone = true;
+  if( getParent().getName() == "Constitutive" )
   {
-    m_isClone = true;
-  }                      
+    isClone = false;
+  }
 
-  createPVTModels(m_isClone);
+  createPVTModels( isClone );
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels(bool isClone)
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
 {
-  std::cout << "ConstitutiveManager " << ConstitutiveManager::groupKeyStruct::constitutiveModelsString() << std::endl;
-
-  if( isClone )
-    return;
-
-  std::cout << "passed brine" << std::endl;
-  std::cout << m_isClone << std::endl;
-
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
@@ -362,13 +344,17 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels(bool isClone)
 
   //temp
   m_writeCSV = 1;
-  std::cout<< "CO2BRINE CALL" << std::endl;
-  std::cout<<  LvArray::system::stackTrace( true ) << std::endl;
   std::cout<<  Group::getPath() << std::endl;
+  std::cout << "test clone int create" << isClone << std::endl;
+
+  bool const writeCSV = !isClone && m_writeCSV;
+  bool const writeInLog = !isClone && (getLogLevel() > 0 && logger::internal::rank==0);
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                         m_writeCSV, getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV, writeInLog );
   m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
-                                         m_writeCSV, getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV, writeInLog );
+
+
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
   {
@@ -393,8 +379,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels(bool isClone)
                                                  m_phaseNames,
                                                  m_componentNames,
                                                  m_componentMolarWeight,
-                                                 m_writeCSV,
-                                                 getLogLevel() > 0 && logger::internal::rank==0 );
+                                                 writeCSV, 
+                                                 writeInLog );
           }
         }
         else
@@ -434,8 +420,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels(bool isClone)
                                          m_phaseNames,
                                          m_componentNames,
                                          m_componentMolarWeight,
-                                         m_writeCSV,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV, 
+                                         writeInLog );
   }
 
   GEOS_THROW_IF( m_flash == nullptr,
