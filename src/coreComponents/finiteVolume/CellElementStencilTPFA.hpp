@@ -298,7 +298,7 @@ CellElementStencilTPFAWrapper::
     dims[1] = coeffNested.dims()[0]; strides[1] = coeffNested.strides()[0];        //increment cell to 2nd pos
     dims[2] = coeffNested.dims()[1]; strides[2] = coeffNested.strides()[1];        //then shift gauss point as well
     dims[3] = coeffNested.dims()[3]; strides[3] = coeffNested.strides()[3];        //direction remain last pos
-    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
+    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, coeffNested.dataBuffer());
 
     computeWeightsBase( iconn, i, halfWeight[i], coeffSwapped[ip] );
 

@@ -2264,7 +2264,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="LinearIsotropicDispersionType">
 		<!--dispersivity => Dispersivity-->
-		<xsd:attribute name="dispersivity" type="real64_array3d" />
+		<xsd:attribute name="dispersivity" type="real64_array4d" />
 	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
