@@ -256,24 +256,18 @@ if ( Python3_EXECUTABLE )
         message(WARNING "The \"virtualenv\" package was not found in the target python environment (${Python3_EXECUTABLE}).  This package may be required to build PYGEOSX or the python development environment.")
     endif()
 
-    # Check for the requested branch of geosPythonPackages (used for testing)
-    if( NOT GEOS_PYTHON_PACKAGES_BRANCH )
-      set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
-    endif()
-
+    # Build targets
     set( GEOSX_PYTHON_TOOLS_BINS
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
     add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
-                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
-                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin
+                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                      )
 
     add_custom_target( geosx_python_tools
                        DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
-
-    add_custom_target( geosx_python_tools_clean
-                       COMMAND rm ${GEOSX_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_test
                        COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
@@ -297,80 +291,11 @@ endif()
 ################################
 # Add integratedTests
 ################################
-if (NOT DEFINED ENABLE_ATS)
-    set( ENABLE_ATS true CACHE BOOL "")
+if( EXISTS "${CMAKE_SOURCE_DIR}/../integratedTests/CMakeLists.txt")
+  add_subdirectory( ${CMAKE_SOURCE_DIR}/../integratedTests integratedTests )
+else()
+  message( "Could not find the integratedTests submodule" )
 endif()
-
-
-if ( ENABLE_ATS )
-    if (NOT DEFINED ATS_WORKING_DIR)
-        message( WARNING "ATS_WORKING_DIR is not defined (required for integrated testing system)" )
-        message( WARNING "Defaulting to ${CMAKE_BINARY_DIR}/integratedTests/workingDir" )
-        set( ATS_WORKING_DIR "${CMAKE_BINARY_DIR}/integratedTests/workingDir" CACHE PATH "")
-    endif()
-
-    if (NOT DEFINED ATS_BASELINE_DIR)
-        message( WARNING "ATS_BASELINE_DIR is not defined (required for integrated testing system)" )
-        message( WARNING "Defaulting to ${CMAKE_SOURCE_DIR}/../integratedTests" )
-        set( ATS_BASELINE_DIR "${CMAKE_SOURCE_DIR}/../integratedTests" CACHE PATH "")
-    endif()
-
-    if (NOT Python3_EXECUTABLE)
-        message( FATAL_ERROR "An appropriate version of python was not found (required for integrated testing system).  Try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config." )
-    endif() 
-
-     # Setup testing
-    set( ATS_SCRIPT
-        "${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh"
-       )
-
-    add_custom_command( OUTPUT ${ATS_SCRIPT}
-                        COMMAND ${CMAKE_BINARY_DIR}/bin/setup_ats_environment ${CMAKE_SOURCE_DIR}/.. ${CMAKE_BINARY_DIR} ${ATS_BASELINE_DIR} ${ATS_WORKING_DIR} ${ATS_ARGUMENTS}
-                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       )
-
-    add_custom_target( ats_environment
-                       DEPENDS geosx_python_tools
-                       DEPENDS ${ATS_SCRIPT} )
-
-    add_custom_target( ats_run
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh
-                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       DEPENDS ats_environment
-                     )
-
-    add_custom_target( ats_clean
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a veryclean
-                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       DEPENDS ats_environment
-                     )
-
-    add_custom_target( ats_rebaseline
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a rebaseline
-                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       DEPENDS ats_environment
-                     )
-
-    add_custom_target( ats_rebaseline_failed
-                       COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a rebaselinefailed
-                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                       DEPENDS ats_environment
-                     )
-endif()
-
-
-# Python formatting
-if ( ENABLE_YAPF )
-    set( integrated_tests_python_sources )
-    file( GLOB_RECURSE integrated_tests_python_sources "${CMAKE_SOURCE_DIR}/../inputFiles/*.py" )
-    set( integrated_tests_ats_sources )
-    file( GLOB_RECURSE integrated_tests_ats_sources "${CMAKE_SOURCE_DIR}/../inputFiles/*.ats" )
-
-    blt_add_code_checks( PREFIX  integrated_tests_yapf_style
-                         SOURCES ${integrated_tests_python_sources} ${integrated_tests_ats_sources} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
-                         YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
-endif()
-
 
 # the following adds a `build_test` CMake target such that running `$ make build_test test`
 # builds the unit tests before running them

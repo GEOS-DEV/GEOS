@@ -23,7 +23,6 @@
 #include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
 #include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "AcoustoElasticFields.hpp"
 #include <tuple>
 
 namespace geos
@@ -179,6 +178,34 @@ protected:
   arrayView1d< string const > m_acousRegions;
   arrayView1d< string const > m_elasRegions;
 };
+
+namespace fields
+{
+
+DECLARE_FIELD( CouplingVectorx,
+               "couplingVectorx",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term on x." );
+
+DECLARE_FIELD( CouplingVectory,
+               "couplingVectory",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term on y." );
+
+DECLARE_FIELD( CouplingVectorz,
+               "couplingVectorz",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Coupling term on z." );
+}
 
 } /* namespace geos */
 
