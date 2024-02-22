@@ -4614,6 +4614,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	<xsd:complexType name="LinearIsotropicDispersionType">
 		<!--longitudinalDispersivity => Longitudinal dispersivity [m]-->
 		<xsd:attribute name="longitudinalDispersivity" type="real64" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

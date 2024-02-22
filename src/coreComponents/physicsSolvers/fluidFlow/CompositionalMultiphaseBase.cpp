@@ -266,6 +266,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+
       if( m_hasCapPressure )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
@@ -306,20 +309,20 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           setSizedFromParent( 0 ).
           setDescription( "Name of the dispersion constitutive model to use" );
 
-          string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
-          dispersionName = getConstitutiveName< DispersionBase >( subRegion );
-          GEOS_THROW_IF( dispersionName.empty(),
-                         GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
-                         InputError );
+        string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
+        dispersionName = getConstitutiveName< DispersionBase >( subRegion );
+        GEOS_THROW_IF( dispersionName.empty(),
+                       GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
+                       InputError );
 
-          array1d< std::string > directions( 3 );
-          directions[0] = "x"; directions[1] = "y"; directions[2] = "z";
-          subRegion.registerField< phaseVelocity >( getName()).
-            setDimLabels( 1, fluid.phaseNames() ).
-            setDimLabels( 2, directions ).
-            reference().resizeDimension< 1, 2 >( m_numPhases, directions.size() );
+        array1d< std::string > directions( 3 );
+        directions[0] = "x"; directions[1] = "y"; directions[2] = "z";
+        subRegion.registerField< phaseVelocity >( getName()).
+          setDimLabels( 1, fluid.phaseNames() ).
+          setDimLabels( 2, directions ).
+          reference().resizeDimension< 1, 2 >( m_numPhases, directions.size() );
 
-        }
+      }
 
       if( m_targetFlowCFL > 0 )
       {
@@ -330,9 +333,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
         subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       }
-
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       subRegion.registerField< pressureScalingFactor >( getName() );
       subRegion.registerField< temperatureScalingFactor >( getName() );
