@@ -282,8 +282,6 @@ void TableFunction::printInLog( string const filename ) const
     integer const nX = coordsX.size();
     integer const nY = coordsY.size();
     std::vector< string > vecDescription;
-    std::vector< std::vector< string > > vRowsValues;
-
     vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
 
     for( integer idxY = 0; idxY < nY; idxY++ )
@@ -302,9 +300,8 @@ void TableFunction::printInLog( string const filename ) const
       {
         vecValues.push_back( std::to_string( m_values[ j*nX + i ] ));
       }
-      vRowsValues.push_back( vecValues );
     }
-    pvtTable2D.addRowsFromVectors( vRowsValues );
+    
     pvtTable2D.draw();
   }
 
