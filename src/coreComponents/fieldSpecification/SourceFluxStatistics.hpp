@@ -203,7 +203,9 @@ private:
   SourceFluxStatsAggregator( const string & name,
                              Group * const parent );
 
-  /// Accessor for the catalog name
+  /**
+   * @return The catalog name
+   */
   static string catalogName() { return "SourceFluxStatistics"; }
 
   /**
@@ -215,6 +217,55 @@ private:
                         integer const eventCounter,
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
+
+  /**
+   * @brief Apply a functor to WrappedStats that combines all stats for each target solver
+   *        discretization mesh levels.
+   * @param domain   the domain for which we want the statistics
+   * @param lambda   the functor that will be called for each WrappedStats. Takes in parameter the MeshLevel
+   *                 reference and the reference to the WrappedStats that combines all stats for the instance.
+   * @tparam LAMBDA  the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forMeshLevelStatsWrapper( DomainPartition & domain, LAMBDA && lambda );
+  /**
+   * @brief Apply a functor to each WrappedStats that combines the stats over all region for a flux.
+   * @param meshLevel the mesh level for which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter the MeshLevel
+   *                  reference and the reference to one of the flux WrappedStats.
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllFluxStatsWrappers( MeshLevel & meshLevel, LAMBDA && lambda );
+  /**
+   * @brief Apply a functor to all simulated region WrappedStats (of the given MeshLevel) that target a
+   *        given flux.
+   * @param meshLevel the mesh level we want to loop over all its regions.
+   * @param fluxName  the name of the flux from which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter the
+   *                  ElementRegionBase reference and the reference of its WrappedStats.
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllRegionStatsWrappers( MeshLevel & meshLevel, string_view fluxName, LAMBDA && lambda );
+  /**
+   * @brief Apply a functor to all subregion WrappedStats (of the given region) that target a given flux.
+   * @param region    the region from which we want to execute the lambda for each of its sub-region.
+   * @param fluxName  the name of the flux from which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter the
+   *                  ElementSubRegionBase reference and the reference of its WrappedStats.
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllSubRegionStatsWrappers( ElementRegionBase & region, string_view fluxName, LAMBDA && lambda );
 
   /**
    * @brief Apply a functor to all WrappedStats of the given group that target a given flux (and
@@ -230,47 +281,6 @@ private:
    */
   template< typename LAMBDA >
   static void forAllFluxStatWrappers( Group & container, string_view fluxName, LAMBDA && lambda );
-
-  /**
-   * @brief Loop over the target solver discretization on all mesh targets and ????????????
-   * @param fluxName the name of the flux from which we want the statistics.
-   * @param lambda   the functor that will be called for each WrappedStats. Takes in parameter the MeshLevel reference
-   *                 and the reference to the WrappedStats that combines all stats for the instance.
-   * @tparam LAMBDA  the type of lambda function to call in the function
-   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
-   * registerDataOnMesh() call.
-   */
-  template< typename LAMBDA >
-  void forMeshLevelStatsWrapper( DomainPartition & domain, LAMBDA && lambda );
-  /**
-   * @param fluxName  the name of the flux from which we want the statistics.
-   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
-   * @tparam LAMBDA   the type of lambda function to call in the function
-   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
-   * registerDataOnMesh() call.
-   */
-  template< typename LAMBDA >
-  void forAllFluxStatsWrappers( MeshLevel & meshLevel, LAMBDA && lambda );
-  /**
-   * @param fluxName  the name of the flux from which we want the statistics.
-   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
-   * @tparam LAMBDA   the type of lambda function to call in the function
-   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
-   * registerDataOnMesh() call.
-   */
-  template< typename LAMBDA >
-  void forAllRegionStatsWrappers( MeshLevel & meshLevel, string_view fluxName, LAMBDA && lambda );
-  /**
-   * @brief Apply a functor to all subregion WrappedStats (of the given region) that target a given flux.
-   * @param region    the region from which we want to execute the lambda for each of its sub-region.
-   * @param fluxName  the name of the flux from which we want the statistics.
-   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
-   * @tparam LAMBDA   the type of lambda function to call in the function
-   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
-   * registerDataOnMesh() call.
-   */
-  template< typename LAMBDA >
-  void forAllSubRegionStatsWrappers( ElementRegionBase & region, string_view fluxName, LAMBDA && lambda );
 
   /**
    * @return a string used to name the wrapper that is added to each region that is simulated by the solver.
