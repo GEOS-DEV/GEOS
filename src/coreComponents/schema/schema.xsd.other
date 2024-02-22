@@ -1496,6 +1496,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 		<!--viscosityTableWrappers => (no description available)-->
 		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
@@ -1602,6 +1604,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1646,6 +1650,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1690,6 +1696,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1734,6 +1742,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CarmanKozenyPermeabilityType">
 		<!--dPerm_dPorosity => (no description available)-->
@@ -1806,6 +1816,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositonalTwoPhaseFluidPengRobinsonType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1850,6 +1862,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositonalTwoPhaseFluidSoaveRedlichKwongType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -1894,6 +1908,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
 		<!--dDensity_dPressure => Derivative of density with respect to pressure-->
@@ -2060,6 +2076,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 		<!--viscosityTableWrappers => (no description available)-->
 		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
@@ -2498,6 +2516,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2550,6 +2570,8 @@
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--totalDensity_n => Total density at the previous converged time step-->
 		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseConstantThermalConductivityType">
 		<!--effectiveConductivity => Effective conductivity-->

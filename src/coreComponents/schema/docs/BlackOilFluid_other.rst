@@ -29,6 +29,7 @@ phaseTypes                      integer_array                                   
 phaseViscosity                  real64_array3d                                                                                          Phase viscosity                                                                                              
 totalDensity                    real64_array2d                                                                                          Total density                                                                                                
 totalDensity_n                  real64_array2d                                                                                          Total density at the previous converged time step                                                            
+useMass                         integer                                                                                                 (no description available)                                                                                   
 viscosityTableWrappers          LvArray_Array< geos_TableFunction_KernelWrapper, 1, camp_int_seq< long, 0l >, int, LvArray_ChaiBuffer > (no description available)                                                                                   
 =============================== ======================================================================================================= ============================================================================================================ 
 
