@@ -236,7 +236,7 @@ else
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
     # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
-    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
   fi
 fi
 

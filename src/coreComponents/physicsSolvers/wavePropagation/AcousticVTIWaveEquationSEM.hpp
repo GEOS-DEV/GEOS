@@ -23,8 +23,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "WaveSolverBase.hpp"
-#include "AcousticFields.hpp"
-#include "AcousticVTIFields.hpp"
+#include "WaveSolverBaseFields.hpp"
 
 namespace geos
 {
