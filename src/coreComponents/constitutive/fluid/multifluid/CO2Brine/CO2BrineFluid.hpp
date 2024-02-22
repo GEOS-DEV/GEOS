@@ -186,7 +186,7 @@ private:
   /// Index of the gas phase
   integer m_p2Index;
 
-  bool m_isClone = false;
+  bool m_isClone = true;
 
   ///
   integer m_writeCSV;

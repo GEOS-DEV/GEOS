@@ -209,12 +209,12 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   if( printInCsv || ( printInLog && m_CO2EnthalpyTable->numDimensions() >= 3 ) )
   {
     m_CO2EnthalpyTable->printInCSV( m_CO2EnthalpyTable->getName() );
-        m_brineEnthalpyTable->printInCSV( m_brineEnthalpyTable->getName() );
+    m_brineEnthalpyTable->printInCSV( m_brineEnthalpyTable->getName() );
   }
   if( printInLog &&  m_CO2EnthalpyTable->numDimensions() <= 2 )
   {
     m_CO2EnthalpyTable->printInLog( m_CO2EnthalpyTable->getName() );
-        m_brineEnthalpyTable->printInLog( m_brineEnthalpyTable->getName() );
+    m_brineEnthalpyTable->printInLog( m_brineEnthalpyTable->getName() );
   }
 
 }
