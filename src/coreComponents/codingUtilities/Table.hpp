@@ -65,8 +65,8 @@ public:
 
   /**
    * @brief Add a row the the table. The number of arguments must match with the number of header values
-   * @tparam N Number of values passed to addRow.
-   * @tparam Args Values passed to addRow.
+   * @tparam N The Number of values passed to addRow.
+   * @tparam Args The values passed to addRow.
    * @param args
    */
   template< size_t N, typename ... Args >
@@ -79,7 +79,7 @@ public:
   void addRowsFromVectors( std::vector< std::vector< string > > tableRows );
 
   /**
-   * @brief Write the the table into specified stream
+   * @brief Write the table into specified stream
    * @param os An output stream. By defaut os is set to std::cout.
    */
   void draw( std::ostream & os = std::cout );
@@ -91,7 +91,7 @@ public:
   void setTitle( string_view tableTitle );
 
   /**
-   * @brief Sets the minimal margin width between row content and borders.
+   * @brief Set the minimal margin width between row content and borders.
    * @param marginType 
    */
   void setMargin( MarginValue marginType );
@@ -124,7 +124,7 @@ private:
 
   /**
    * @brief Split all header names by detecting the newline \\n character.
-   * @param splitHeader A vector containing all split header names
+   * @param splitHeader A empty vector who will contain all split header names
    * @param largestHeaderVectorSize The largest split header vector size
    */
   void parseAndStoreHeaderSections( size_t & largestHeaderVectorSize,
@@ -182,6 +182,7 @@ private:
                          Section const section );
 
 
+  //Vector who contains all rows in the table
   std::vector< std::vector< string > > m_cellsRows;
   std::vector< Column > m_columns;
 
