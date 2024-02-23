@@ -49,6 +49,18 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( dataRepository::InputFlags::FALSE );
 }
 
+void ContactSolverBase::postProcessInput()
+{
+  SolidMechanicsLagrangianFEM::postProcessInput();
+
+  GEOS_THROW_IF( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic,
+                 GEOS_FMT( "{} {}: The attribute `{}` must be `{}`",
+                           this->getCatalogName(), this->getName(),
+                           viewKeyStruct::timeIntegrationOptionString(),
+                           EnumStrings< TimeIntegrationOption >::toString( TimeIntegrationOption::QuasiStatic ) ),
+                 InputError );
+}
+
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
