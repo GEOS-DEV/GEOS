@@ -144,32 +144,6 @@ struct TestSet
 
 
 /**
- * @brief Verification that the source flux statistics are correct for the current timestep
- * @param expectedMasses the expected mass values per phase
- * @param expectedRates the expected rate values per phase
- * @param expectedElementCount the number of expected targeted elements
- * @param stats the timestep stats
- * @param context a context string to provide in any error message.
- */
-void checkFluxStats( arraySlice1d< real64 > const & expectedMasses,
-                     arraySlice1d< real64 > const & expectedRates,
-                     integer const expectedElementCount,
-                     SourceFluxStatsAggregator::WrappedStats const & stats,
-                     string_view context )
-{
-  for( int ip = 0; ip < stats.stats().getPhaseCount(); ++ip )
-  {
-    EXPECT_DOUBLE_EQ( stats.stats().m_producedMass[ip], expectedMasses[ip] ) << GEOS_FMT( "The flux named '{}' did not produce the expected mass ({}, phase = {}).",
-                                                                                          stats.getFluxName(), context, ip );
-    EXPECT_DOUBLE_EQ( stats.stats().m_productionRate[ip], expectedRates[ip] ) << GEOS_FMT( "The flux named '{}' did not produce at the expected rate ({}, phase = {}).",
-                                                                                           stats.getFluxName(), context, ip );
-  }
-  EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount ) << GEOS_FMT( "The flux named '{}' did not produce in the expected elements ({}).",
-                                                                                      stats.getFluxName(), context );
-}
-
-
-/**
  * @brief This Task allows to extract and check each timestep stats during the simulation.
  */
 class TimeStepChecker : public TaskBase
@@ -1173,8 +1147,8 @@ TestSet getTestSet()
   // This simulation is set-up to have at least one timestep cut.
   testInputs.requiredSubTimeStep = 2;
   // scale is set to high values to make the solver generate timestep cuts
-  testInputs.sourceRateFactor = -10.0;
-  testInputs.sinkRateFactor = 10.0;
+  testInputs.sourceRateFactor = -8.0;
+  testInputs.sinkRateFactor = 8.0;
 
   return TestSet( testInputs );
 }
