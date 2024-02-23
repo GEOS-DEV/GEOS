@@ -650,10 +650,10 @@ TestSet getTestSet()
                                 targetRegions="{ reservoir }"
                                 temperature="366.483"
                                 useMass="1"
-                                logLevel="0" >
+                                logLevel="1" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
-                                 maxTimeStepCuts="4" />
+                                 maxTimeStepCuts="8" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
