@@ -255,12 +255,23 @@ constexpr bool endsWith( std::string_view str, std::string_view suffix )
          str.compare( str.size()-suffix.size(), suffix.size(), suffix ) == 0;
 }
 
+/**
+ * @brief Overloading operator (<<) for std::optional<T>.
+ *
+ * This function displays the value contained in a std::optional<T> object if one exists.
+ * Otherwise, it produces no output.
+ *
+ * @tparam T The type of the value contained std::optional.
+ * @param os An output stream (for example, std::cout).
+ * @param optValue std::optional<T> value to display.
+ * @return The output stream
+ */
 template< typename T >
-std::ostream & operator<<( std::ostream & os, std::optional< T > const & t )
+std::ostream & operator<<( std::ostream & os, std::optional< T > const & optValue )
 {
-  if( t )
+  if( optValue )
   {
-    os << t.value();
+    os << optValue.value();
   }
   return os;
 }

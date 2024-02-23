@@ -30,7 +30,8 @@ public:
 
   enum Alignment { right, left, middle };
 
-  enum MarginValue : integer {
+  enum MarginValue : integer
+  {
     tiny = 0,
     small = 1,
     medium = 2,
@@ -64,35 +65,38 @@ public:
   Table( std::vector< ColumnParam > const & columnParameter );
 
   /**
-   * @brief Add a row the the table. The number of arguments must match with the number of header values
-   * @tparam N The Number of values passed to addRow.
-   * @tparam Args The values passed to addRow.
-   * @param args
+   * @brief Add a row the the table.
+   *
+   * @param N The number expected by the table
+   * @param Args The values passed to addRow (can be any type).
+   * @param args Cell values to be added to the line.
+   *
+   * @pre The number of arguments must correspond to the expected number of cells per line (N).
    */
   template< size_t N, typename ... Args >
-  void addRow( Args const &... args );
+  void addRow( Args const & ... args );
 
   /**
    * @brief Add rows from vectors to the table.
-   * @param vecRows Vector who contains all table's rows
+   * @param vecRows Vector who contains all the table rows
    */
   void addRowsFromVectors( std::vector< std::vector< string > > tableRows );
 
   /**
-   * @brief Write the table into specified stream
-   * @param os An output stream. By defaut os is set to std::cout.
+   * @brief Write the table into a specified stream
+   * @param os An output stream (by default, std::cout)
    */
   void draw( std::ostream & os = std::cout );
 
   /**
-   * @brief Set the name of the table
-   * @param tableTitle The name of the table
+   * @brief Set the table name
+   * @param tableTitle The table name
    */
   void setTitle( string_view tableTitle );
 
   /**
    * @brief Set the minimal margin width between row content and borders.
-   * @param marginType 
+   * @param marginType
    */
   void setMargin( MarginValue marginType );
 
@@ -118,9 +122,9 @@ private:
   };
 
   /**
-   * @brief Fill the vector \p m_column with values from m_cellsRows who store all values in an unsorted order
+   * @brief Fill the vector (m_column) with values from m_cellsRows who store all values in an unsorted order
    */
-  void fillColumnsValuesFromCellsRows( );
+  void fillColumnsValuesFromCellsRows();
 
   /**
    * @brief Split all header names by detecting the newline \\n character.
