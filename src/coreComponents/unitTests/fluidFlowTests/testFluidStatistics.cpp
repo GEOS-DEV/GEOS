@@ -652,7 +652,8 @@ TestSet getTestSet()
                                 useMass="1"
                                 logLevel="0" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8" />
+                                 newtonMaxIter="8"
+                                 maxTimeStepCuts="4" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
