@@ -528,6 +528,14 @@ void WellGeneratorBase::debugWellGeometry() const
   {
     return;
   }
+  string sectionOutput;
+  string sectionName = "Section : Well generation";
+
+  sectionOutput = GEOS_FMT( "\n{:=^{}}\n", "=", sectionName.size() + 5 );
+  sectionOutput += GEOS_FMT( "{:^{}}\n", sectionName, sectionName.size() + 5 );
+  sectionOutput += GEOS_FMT( "{:=^{}}\n", "=", sectionName.size() + 5 );
+
+  std::cout << sectionOutput;
 
   std::vector< string > row;
   std::ostringstream oss;
@@ -575,8 +583,8 @@ void WellGeneratorBase::debugWellGeometry() const
   }
   table.draw();
 
-  Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected toO" } );
-  string titlePerfo = "Peforation table ";
+  Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected to" } );
+  string titlePerfo = "Peforation table";
   tablePerforation.setTitle( titlePerfo );
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )

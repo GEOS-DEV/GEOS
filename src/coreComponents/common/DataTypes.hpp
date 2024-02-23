@@ -62,7 +62,7 @@
 #include <vector>
 #include <set>
 #include <string_view>
-
+#include <optional>
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
  */
