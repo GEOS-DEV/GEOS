@@ -922,7 +922,7 @@ TestSet getTestSet()
                                 logLevel="0" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
-                                 maxTimeStepCuts="4" />
+                                 maxTimeStepCuts="8" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
@@ -982,14 +982,14 @@ TestSet getTestSet()
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
                 component="0"
-                scale="-10"
+                scale="-8"
                 functionName="FluxInjectionRate"
                 setNames="{ sourceBox }" />
     <!-- We are depleting water -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
-                scale="10"
+                scale="8"
                 functionName="FluxProductionRate"
                 setNames="{ sinkBox }" />
 
