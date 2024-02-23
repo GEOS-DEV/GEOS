@@ -56,6 +56,7 @@ public:
   };
 
 protected:
+  virtual void postProcessInput() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 

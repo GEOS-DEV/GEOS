@@ -90,9 +90,6 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  void updateIntrinsicNodalData( DomainPartition * const domain );
-
-
   /**
    * @defgroup Solver Interface Functions
    *
