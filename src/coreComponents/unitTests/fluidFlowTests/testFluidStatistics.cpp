@@ -281,6 +281,31 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
 
 
 /**
+ * @brief Verification that the source flux statistics are correct for the current timestep
+ * @param expectedMasses the expected mass values per phase
+ * @param expectedRates the expected rate values per phase
+ * @param expectedElementCount the number of expected targeted elements
+ * @param stats the timestep stats
+ * @param context a context string to provide in any error message.
+ */
+void checkFluxStats( arraySlice1d< real64 > const & expectedMasses,
+                     arraySlice1d< real64 > const & expectedRates,
+                     integer const expectedElementCount,
+                     SourceFluxStatsAggregator::WrappedStats const & stats,
+                     string_view context )
+{
+  for( int ip = 0; ip < stats.stats().getPhaseCount(); ++ip )
+  {
+    EXPECT_DOUBLE_EQ( stats.stats().m_producedMass[ip], expectedMasses[ip] ) << GEOS_FMT( "The flux named '{}' did not produce the expected mass ({}, phase = {}).",
+                                                                                          stats.getFluxName(), context, ip );
+    EXPECT_DOUBLE_EQ( stats.stats().m_productionRate[ip], expectedRates[ip] ) << GEOS_FMT( "The flux named '{}' did not produce at the expected rate ({}, phase = {}).",
+                                                                                           stats.getFluxName(), context, ip );
+  }
+  EXPECT_DOUBLE_EQ( stats.stats().m_elementCount, expectedElementCount ) << GEOS_FMT( "The flux named '{}' did not produce in the expected elements ({}).",
+                                                                                      stats.getFluxName(), context );
+}
+
+/**
  * @brief Verification that the source flux statistics are correct over the whole simulation
  * @param problem the simulation ProblemManager
  * @param testSet the simulation TestSet
@@ -327,6 +352,13 @@ void checkWholeSimFluxStats( ProblemManager & problem, TestSet const & testSet )
   } );
 }
 
+/**
+ * @brief Verification that the source flux statistics are correct for a given timestep
+ * @param problem the simulation ProblemManager
+ * @param testSet the simulation TestSet
+ * @param time_n the current timestep start
+ * @param timestepId the current timestep id (= cycle)
+ */
 void checkTimeStepFluxStats( ProblemManager & problem, TestSet const & testSet,
                              real64 const time_n, integer const timestepId )
 {
