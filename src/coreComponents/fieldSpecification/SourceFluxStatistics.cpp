@@ -275,45 +275,23 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_aggregatorName = aggregatorName;
   m_fluxName = fluxName;
 }
-string formatLvArray( arrayView1d< real64 const > const & arr )
-{
-  int id=0;
-  std::ostringstream oss;
-  oss<<"[";
-  oss<<arr[id++];
-  while( id<arr.size())
-    oss<<", "<<arr[id++];
-  oss<<"]";
-  return oss.str();
-}
 void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const currentTime, real64 const dt,
                                                                    arrayView1d< real64 const > const & producedMass,
                                                                    integer const elementCount )
 {
   m_periodStats.allocate( producedMass.size() );
 
-    bool isBeginingNewPeriod=false,isNewTS=false;
-
   if( !m_periodStats.m_isGathering )
   {
-  // if beginning a new period, we must initialize constant values over the period
-  // if beginning a new period, we must initialize constant values over the period
-  bool isBeginingNewPeriod = !m_periodStats.m_isGathering;
-  if( isBeginingNewPeriod )
-  {
     // if beginning a new period, we must initialize constant values over the period
-  bool isBeginingNewPeriod = !m_periodStats.m_isGathering;
-  if( isBeginingNewPeriod )
-  {
     m_periodStats.m_periodStart = currentTime;
     m_periodStats.m_elementCount = elementCount;
     m_periodStats.m_isGathering = true;
-    isBeginingNewPeriod=true;
   }
   else
   {
     GEOS_WARNING_IF( currentTime< m_periodStats.m_timeStepStart, GEOS_FMT( "{}: Time seems to have rollback, stats will be wrong.", m_aggregatorName ) );
-    if( currentTime > ( m_periodStats.m_timeStepStart + m_periodStats.m_timeStepDeltaTime ) )
+    if( currentTime > m_periodStats.m_timeStepStart )
     {
       // if beginning a new timestep, we must accumulate the stats from previous timesteps (mass & dt) before collecting the new ones
       for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
@@ -321,19 +299,9 @@ void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const 
         m_periodStats.m_periodPendingMass[ip] += m_periodStats.m_timeStepMass[ip];
       }
       m_periodStats.m_periodPendingDeltaTime += m_periodStats.m_timeStepDeltaTime;
-      isNewTS=true;
     }
   }
-  GEOS_LOG( GEOS_FMT( "{}, {}    @{:.3f} +{:.3f}    [ {} ] :    pendMass + tsMass = {}kg + {}kg    pending time = {:.3f} + {:.3f}    periodStart = @{:.3f} ",
-                      m_fluxName, m_aggregatorName,
-                      currentTime, dt,
-                      isBeginingNewPeriod ? "New Period" :
-                                            ( isNewTS ? "New TS" : "TS OVERRIDE"),
-                      formatLvArray( m_periodStats.m_periodPendingMass ), formatLvArray( producedMass ),
-                      m_periodStats.m_periodPendingDeltaTime, dt,
-                      m_periodStats.m_periodStart ) );
-
-  // new timestep stats to take into account (overriding if not begining a new timestep)
+  // current timestep stats to take into account (overriding if not begining a new timestep)
   m_periodStats.m_timeStepStart = currentTime;
   m_periodStats.m_timeStepDeltaTime = dt;
   for( int ip = 0; ip < m_periodStats.getPhaseCount(); ++ip )
