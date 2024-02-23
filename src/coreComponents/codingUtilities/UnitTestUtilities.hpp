@@ -93,7 +93,7 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
                                          << " error norm: " << delta / (value + 1.0)
                                          << " (" << v1 << " vs " << v2 << "),"
                                          << " exceeds " << relTol << ". "
-                                         << " absolute error: " << delta << " exceeds "
+                                         << " absolute error: " << delta << " exeeds "
                                          << absTol << std::endl;
   }
   return ::testing::AssertionSuccess();
