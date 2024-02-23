@@ -89,9 +89,23 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
 
+      // write rates output header
+      if( m_writeCSV > 0 && subRegion.isLocallyOwned())
+      {
+        string const wellControlsName = wellControls.getName();
+        integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+        // format: time,bhp,total_rate,total_vol_rate
+        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
+        outputFile.close();
+      }
+
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                                  getDataContext(), subRegion.getName() ) );
 
     } );
   } );
@@ -130,17 +144,17 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Phase rate control is not available for SinglePhaseWell",
                  InputError );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be negative",
                  InputError );
   GEOS_THROW_IF( !isZero( targetPhaseRate ),
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for SinglePhaseWell",
                  InputError );
 }
@@ -298,7 +312,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
                                  "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                  wellControlsName, dens[iwelemRef][0],
-                                 currentVolRate, currentVolRate ) );
+                                 connRate[iwelemRef], currentVolRate ) );
       }
     } );
   } );
@@ -419,8 +433,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                         real64 const dt,
+void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                                          DomainPartition const & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -807,6 +820,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
@@ -826,12 +840,12 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
 
-bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
+bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            arrayView1d< real64 const > const & localSolution,
                                            real64 const scalingFactor )
@@ -886,8 +900,10 @@ void
 SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                       arrayView1d< real64 const > const & localSolution,
                                       real64 const scalingFactor,
+                                      real64 const dt,
                                       DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                fields::well::pressure::key(),
@@ -992,6 +1008,16 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
+  if( getLogLevel() > 0 )
+  {
+    printRates( time_n, dt, domain );
+  }
+}
+
+void SinglePhaseWell::printRates( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1022,13 +1048,23 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
       WellControls const & wellControls = getWellControls( subRegion );
       string const wellControlsName = wellControls.getName();
 
-      if( wellControls.getLogLevel() == 0 )
+      // format: time,total_rate,total_vol_rate
+      std::ofstream outputFile;
+      if( m_writeCSV > 0 )
       {
-        return;
+        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+        outputFile << time_n + dt;
       }
+
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        if( outputFile.is_open())
+        {
+          // print all zeros in the rates file
+          outputFile << ",0.0,0.0,0.0" << std::endl;
+          outputFile.close();
+        }
         return;
       }
 
@@ -1045,7 +1081,8 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                                   connRate,
                                   &currentTotalVolRate,
                                   &iwelemRef,
-                                  &wellControlsName] ( localIndex const )
+                                  &wellControlsName,
+                                  &outputFile] ( localIndex const )
       {
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -1055,11 +1092,16 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                             wellControlsName, currentBHP ) );
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
+        if( outputFile.is_open())
+        {
+          outputFile << "," << currentBHP;
+          outputFile << "," << currentTotalRate << "," << currentTotalVolRate << std::endl;
+          outputFile.close();
+        }
       } );
     } );
   } );
 }
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseWell, string const &, Group * const )
 }// namespace geos

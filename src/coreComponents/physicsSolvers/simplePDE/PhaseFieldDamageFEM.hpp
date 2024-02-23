@@ -50,6 +50,10 @@ public:
   {
     return "PhaseFieldDamageFEM";
   }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   static string coupledSolverAttributePrefix() { return "damage"; }
 
@@ -97,6 +101,7 @@ public:
   virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
+                                    real64 const dt,
                                     DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
@@ -126,11 +131,19 @@ public:
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                        arrayView1d< real64 > const & localRhs );
 
-  enum class timeIntegrationOption
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+
+  enum class TimeIntegrationOption
   {
     SteadyState,
     ImplicitTransient,
     ExplicitTransient
+  };
+
+  enum class LocalDissipation
+  {
+    Linear,
+    Quadratic,
   };
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
@@ -166,8 +179,8 @@ protected:
 private:
   string m_fieldName;
   stabledt m_stabledt;
-  timeIntegrationOption m_timeIntegrationOption;
-  string m_localDissipationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
+  LocalDissipation m_localDissipationOption;
   integer m_irreversibilityFlag;
   real64 m_damageUpperBound;
 
@@ -175,6 +188,15 @@ private:
 
   PhaseFieldDamageFEM();
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( PhaseFieldDamageFEM::LocalDissipation,
+              "Linear",
+              "Quadratic" );
+ENUM_STRINGS( PhaseFieldDamageFEM::TimeIntegrationOption,
+              "SteadyState",
+              "ImplicitTransient",
+              "ExplicitTransient" );
 
 } /* namespace geos */
 

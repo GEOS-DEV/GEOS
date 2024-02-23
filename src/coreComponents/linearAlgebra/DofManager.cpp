@@ -1343,10 +1343,10 @@ void vectorToFieldImpl( arrayView1d< real64 const > const & localVector,
 
   // Restrict primary solution fields to 1-2D real arrays,
   // because applying component index is not well defined for 3D and higher
-  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
-  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using FieldTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > > >;
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     vectorToFieldKernel< FIELD_OP, POLICY >( manager,
                                              localVector,
@@ -1356,7 +1356,7 @@ void vectorToFieldImpl( arrayView1d< real64 const > const & localVector,
                                              scalingFactor,
                                              dofOffset,
                                              mask );
-  } );
+  }, wrapper );
 }
 
 template< typename FIELD_OP, typename POLICY, typename FIELD_VIEW >
@@ -1403,10 +1403,10 @@ void fieldToVectorImpl( arrayView1d< real64 > const & localVector,
 
   // Restrict primary solution fields to 1-2D real arrays,
   // because applying component index is not well defined for 3D and higher
-  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
-  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using FieldTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > > >;
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > const & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     fieldToVectorKernel< FIELD_OP, POLICY >( localVector,
                                              wrapperT.reference(),
@@ -1415,7 +1415,7 @@ void fieldToVectorImpl( arrayView1d< real64 > const & localVector,
                                              scalingFactor,
                                              dofOffset,
                                              mask );
-  } );
+  }, wrapper );
 }
 
 } // namespace

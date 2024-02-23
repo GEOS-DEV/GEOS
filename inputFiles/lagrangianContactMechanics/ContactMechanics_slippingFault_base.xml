@@ -32,6 +32,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
+      surfaceGeneratorName="SurfaceGen"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -62,6 +63,11 @@
       endTime="1.0"
       forceDt="0.1"
       target="/Solvers/lagrangiancontact"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="outputs"
