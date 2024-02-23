@@ -22,3 +22,12 @@ set(MPMPROFILER_OPTION 1) 	# 0 off, 1 something, 2 something else.  doesn't work
 set(MPM_OPTION 0)      		# 0 default, 1 something, 2 something else.  doesn't work yet
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/physicsSolvers/solidMechanics/mpmConfigFiles/config.h.in ${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/physicsSolvers/solidMechanics/temp4P2G/config.h @ONLY)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Build type is Debug")
+    message(STATUS "C Flags for Debug configuration: ${CMAKE_C_FLAGS_DEBUG}")
+    message(STATUS "CXX Flags for Debug configuration: ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
+message(STATUS "C Flags for Debug configuration: ${CMAKE_C_FLAGS_DEBUG}")
+message(STATUS "CXX Flags for Debug configuration: ${CMAKE_CXX_FLAGS_DEBUG}")

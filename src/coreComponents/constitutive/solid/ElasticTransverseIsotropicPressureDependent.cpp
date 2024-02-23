@@ -161,7 +161,7 @@ void ElasticTransverseIsotropicPressureDependent::postProcessInput()
   real64 Nut = m_defaultPoissonRatioTransverse;
 
   // CC: could the pressure derivatives every be negative? also should I optionally allow poisson ratios to change?
-  if( dEtdp > 0.0 && dEadp > 0.0 && dGatdp )
+  if( dEtdp > 0.0 && dEadp > 0.0 && dGatdp > 0.0)
   {
     dc11dp = ( Nuat * Nuat - 1 ) * dEtdp / ( ( Nut + 1 ) * ( 2*Nuat * Nuat + Nut - 1 ) );
     dc13dp = -( Nuat * dEtdp ) / ( 2 * Nuat * Nuat + Nut - 1 );

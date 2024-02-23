@@ -317,6 +317,11 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   v[2][0] = -rotationAxis[1];
   v[2][1] = rotationAxis[0];
 
+  // LvArray::tensorOps::Rij_eq_AikBkj uses restrict to avoid potential aliasing
+  // v,v cant be used within LvArray::tensorOps::Rij_eq_AikBkj
+  real64 vDup[3][3];  
+  std::memcpy(vDup, v, sizeof(v));
+
   real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
   real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
 
@@ -324,8 +329,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   LvArray::tensorOps::addIdentity< 3 >( R, 1);
   LvArray::tensorOps::add< 3, 3 >( R, v);
 
-  real64 temp[3][3] = { {0} };
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v, v );
+  real64 temp[3][3] = { {0} }; 
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, vDup, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
 

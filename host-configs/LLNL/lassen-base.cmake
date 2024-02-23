@@ -46,8 +46,8 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2.1/lib64/libesslsmpcuda.so
                    CACHE PATH "")
 
 # TPL
-set(ENABLE_PAPI OFF CACHE BOOL "")
-set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
+set(ENABLE_PAPI ON CACHE BOOL "")
+# set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
 # GEOSX specific options
@@ -73,7 +73,7 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 
 # YAPF python formatting
-set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+# set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
 
 # PYGEOSX
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
