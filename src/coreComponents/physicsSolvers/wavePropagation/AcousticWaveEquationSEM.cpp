@@ -892,7 +892,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
               for( localIndex i = 0; i < numNodesPerElem; ++i )
               {
                 localIndex nodeIdx = elemsToNodes[eltIdx][i];
-                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/numNodesPerElem * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
               }
             }
           } );
