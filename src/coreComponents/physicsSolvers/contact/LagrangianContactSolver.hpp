@@ -21,8 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
-#include "linearAlgebra/DofManager.hpp"
-#include "common/DataTypes.hpp"
 
 namespace geos
 {
