@@ -108,6 +108,12 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
       m_fractureRegionNames.push_back( region.getName() );
     } );
   } );
+
+  // TODO remove once multiple regions are fully supported
+  GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
+                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
+                           this->getCatalogName(), this->getName() ),
+                 InputError );
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
