@@ -100,7 +100,7 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    savePorosity( k, q, porosity, biotSkeletonModulusInverse );
+    savePorosity( k, q, porosity, dPorosity_dPressure, dPorosity_dTemperature );
   }
 
   GEOS_HOST_DEVICE
@@ -114,7 +114,7 @@ public:
                                    real64 & dPorosity_dVolStrain,
                                    real64 const & biotCoefficient,
                                    real64 const & thermalExpansionCoefficient,
-                                   real64 const & averageMeanTotalStressIncrement_k,
+                                   real64 const & meanTotalStressIncrement,
                                    real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
@@ -124,8 +124,7 @@ public:
 
     // total stress formulation for porosity update
     porosity = porosity_n
-               + biotCoefficient * averageMeanTotalStressIncrement_k / bulkModulus // change due to stress increment (at the previous
-                                                                                   // sequential iteration)
+               + biotCoefficient * meanTotalStressIncrement / bulkModulus // change due to stress increment
                + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
                - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;

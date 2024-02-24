@@ -301,6 +301,8 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
+    updateBiotCoefficientAndAssignBulkModulus( k );
+
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -308,8 +310,6 @@ private:
                                      strainIncrement,
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
-
-    updateBiotCoefficientAndAssignBulkModulus( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
