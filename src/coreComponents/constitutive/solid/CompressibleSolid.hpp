@@ -54,7 +54,9 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
-                                                      real64 const & temperature ) const override final
+                                                      real64 const & GEOS_UNUSED_PARAM( pressure_n ),
+                                                      real64 const & temperature,
+                                                      real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
