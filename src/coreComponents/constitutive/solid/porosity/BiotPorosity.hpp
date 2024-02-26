@@ -319,7 +319,7 @@ protected:
   /// Bulk modulus (updated in the update class, not read in input)
   array1d< real64 > m_bulkModulus;
 
-  /// Bulk modulus (updated in the update class, not read in input)
+  /// Shear modulus (updated in the update class, not read in input)
   array1d< real64 > m_shearModulus;
 
   /// Mean total stress increment (updated in the update class, not read in input)
