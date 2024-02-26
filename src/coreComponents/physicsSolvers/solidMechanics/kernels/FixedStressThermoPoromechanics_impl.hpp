@@ -179,8 +179,7 @@ quadraturePointKernel( localIndex const k,
                                                                          stack.uhat_local,
                                                                          reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
                                                                          -stabilizationScaling );
-  stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
-  CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
   // body force derivatives
   {
