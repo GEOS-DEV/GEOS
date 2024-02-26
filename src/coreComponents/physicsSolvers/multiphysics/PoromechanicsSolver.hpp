@@ -352,7 +352,9 @@ protected:
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                               auto & subRegion )
         {
-          // update bulk density
+          // update the bulk density
+          // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
+          // pressure/temperature terms
           updateBulkDensity( subRegion );
         } );
       } );
