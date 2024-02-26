@@ -193,7 +193,6 @@ protected:
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_pressure;
-  arrayView1d< real64 const > const m_pressure_k;
   arrayView1d< real64 const > const m_pressure_n;
 
   /// The rank-global initial temperature array
@@ -201,7 +200,6 @@ protected:
 
   /// The rank-global temperature arrays.
   arrayView1d< real64 const > const m_temperature;
-  arrayView1d< real64 const > const m_temperature_k;
   arrayView1d< real64 const > const m_temperature_n;
 
   /**

@@ -125,10 +125,8 @@ public:
                                                   localIndex const q,
                                                   real64 const & timeIncrement,
                                                   real64 const & pressure,
-                                                  real64 const & pressure_k,
                                                   real64 const & pressure_n,
                                                   real64 const & temperature,
-                                                  real64 const & temperature_k,
                                                   real64 const & temperature_n,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
@@ -150,7 +148,6 @@ public:
                         stiffness );
 
     // Compute total stress increment for the porosity update
-    GEOS_UNUSED_VAR( pressure_n, temperature_n );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );

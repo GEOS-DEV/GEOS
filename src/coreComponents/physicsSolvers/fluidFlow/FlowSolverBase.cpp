@@ -490,22 +490,17 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-      << << <<< HEAD
-      if( m_isFixedStressPoromechanicsUpdate ) // for sequential simulations
-        {
-        arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
-        arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
+    if( m_isFixedStressPoromechanicsUpdate )   // for sequential simulations
+    {
+      arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
+      arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
 
-        updatePorosityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
-      }
-      else // for fully implicit simulations without mechanics
-        {
-        updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, temperature );
-      }
-
-      =======
-        updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
-    >> >> >>> pt/bulk-dens
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+    }
+    else   // for fully implicit simulations without mechanics
+    {
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, pressure_n, temperature, pressure_n, pressure_n );
+    }
   } );
 }
 
