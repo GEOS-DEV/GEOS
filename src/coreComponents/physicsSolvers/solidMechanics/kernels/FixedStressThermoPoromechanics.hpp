@@ -191,9 +191,6 @@ protected:
   /// The rank global bulk density
   arrayView2d< real64 const > const m_bulkDensity;
 
-  /// The rank global density
-  arrayView2d< real64 const > m_solidDensity;
-
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_pressure;
   arrayView1d< real64 const > const m_pressure_n;

@@ -253,26 +253,6 @@ private:
   }
 
   GEOS_HOST_DEVICE
-  void computePorosityFixedStress( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure,
-                                   real64 const & pressure_n,
-                                   real64 const & temperature,
-                                   real64 const & temperature_n,
-                                   real64 const & meanTotalStressIncrement,
-                                   real64 & porosity ) const
-  {
-    m_porosityUpdate.updateFixedStress( k, q,
-                                        pressure,
-                                        pressure_n,
-                                        temperature,
-                                        temperature_n,
-                                        meanTotalStressIncrement );
-
-    porosity = m_porosityUpdate.getPorosity( k, q );
-  }
-
-  GEOS_HOST_DEVICE
   inline
   void computeTotalStress( localIndex const k,
                            localIndex const q,

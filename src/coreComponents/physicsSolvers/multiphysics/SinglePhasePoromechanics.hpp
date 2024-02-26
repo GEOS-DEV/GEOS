@@ -110,7 +110,7 @@ private:
    * @brief Helper function to recompute the bulk density
    * @param[in] subRegion the element subRegion
    */
-  void updateBulkDensity( ElementSubRegionBase & subRegion );
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
 
   void createPreconditioner();
 

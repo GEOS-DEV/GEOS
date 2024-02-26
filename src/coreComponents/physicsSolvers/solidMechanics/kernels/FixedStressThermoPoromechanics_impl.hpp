@@ -23,7 +23,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "finiteElement/BilinearFormUtilities.hpp"
 
 namespace geos
 {
@@ -66,7 +65,6 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_bulkDensity( elementSubRegion.template getField< fields::poromechanics::bulkDensity >() ),
-  m_solidDensity( inputConstitutiveType.getDensity() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
   m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
@@ -209,7 +207,6 @@ complete( localIndex const k,
       maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
     }
   }
-//  exit(-1);
   return maxForce;
 }
 

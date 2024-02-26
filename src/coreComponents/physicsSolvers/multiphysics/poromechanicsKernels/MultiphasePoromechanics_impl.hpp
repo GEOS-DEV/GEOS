@@ -261,9 +261,6 @@ computeBodyForce( localIndex const k,
   LvArray::tensorOps::scaledCopy< 3 >( stack.dBodyForce_dPressure, m_gravityVector, dMixtureDens_dPressure );
   LvArray::tensorOps::Rij_eq_AiBj< 3, maxNumComponents >( stack.dBodyForce_dComponents, m_gravityVector, dTotalMassDensity_dComponents );
 
-  std::cout << k<< " " << q << " dPorosity_dVolStrain = " << dPorosity_dVolStrain << " dMixtureDens_dVolStrainIncrement = " << dMixtureDens_dVolStrainIncrement <<
-    " dBodyForce_dVolStrainIncrement = " << stack.dBodyForce_dVolStrainIncrement[0] << " " << stack.dBodyForce_dVolStrainIncrement[1] << " " << stack.dBodyForce_dVolStrainIncrement[2] << std::endl;
-
   // Step 4: customize the kernel (for instance, to add thermal derivatives)
   bodyForceKernelOp( totalMassDensity, mixtureDensity );
 
@@ -472,20 +469,6 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
     stack.stiffness, // fourth-order tensor handled via DiscretizationOps
     dNdX,
     -detJxW );
-
-  std::cout << "localJacobian" << std::endl;
-  for( int j = 0; j < 3; ++j )
-    for( int i = 0; i < 3; ++i )
-    {
-      std::cout << i << " " << j << " " << stack.dLocalResidualMomentum_dDisplacement[i][j] << std::endl;
-    }
-
-  std::cout << "detJxW=" << detJxW << std::endl;
-  for( int i = 0; i < numNodesPerElem; i++ )
-  {
-    std::cout << "N["<<i<<"]="<< N[i] << std::endl;
-    std::cout << "dNdX["<<i<<"]="<<dNdX[i][0] << " " << dNdX[i][1] << " " << dNdX[i][2] << std::endl;
-  }
 
   BilinearFormUtilities::compute< displacementTestSpace,
                                   displacementTrialSpace,
@@ -702,7 +685,6 @@ complete( localIndex const k,
     shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
   }
 
-//  std::cout << "localJacobian" << std::endl;
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
@@ -714,13 +696,6 @@ complete( localIndex const k,
       {
         continue;
       }
-
-//      for( int i = 0; i < 3; ++i )
-//      {
-//        std::cout << localNode << " " << dim << " " << stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode +
-// dim][i] << std::endl;
-//      }
-
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
                                                                               stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
@@ -740,7 +715,6 @@ complete( localIndex const k,
                                                                               m_numComponents );
     }
   }
-//  exit(-1);
 
   localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex - m_dofRankOffset );
 
