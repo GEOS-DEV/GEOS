@@ -100,7 +100,7 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    savePorosity( k, q, porosity, biotSkeletonModulusInverse );
+    savePorosity( k, q, porosity, dPorosity_dPressure, dPorosity_dTemperature );
   }
 
   GEOS_HOST_DEVICE
@@ -111,7 +111,6 @@ public:
                                    real64 & porosity,
                                    real64 & dPorosity_dPressure,
                                    real64 & dPorosity_dTemperature,
-                                   real64 & dPorosity_dVolStrain,
                                    real64 const & biotCoefficient,
                                    real64 const & thermalExpansionCoefficient,
                                    real64 const & averageMeanTotalStressIncrement_k,
@@ -130,42 +129,12 @@ public:
                - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
-    dPorosity_dVolStrain = biotCoefficient;
 
     // Fixed-stress part
     porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
                 + fixedStressTemperatureCoefficient * deltaTemperatureFromBeginningOfTimeStep; // fixed-stress temperature term
     dPorosity_dPressure += fixedStressPressureCoefficient;
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
-  }
-
-  // this function is used in mechanics solver
-  // it uses meanTotalStressIncrement at gauss point
-  GEOS_HOST_DEVICE
-  virtual void updateFixedStress( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & pressure, // current
-                                  real64 const & pressure_n, // last time step
-                                  real64 const & temperature,
-                                  real64 const & temperature_n,
-                                  real64 const & meanTotalStressIncrement,
-                                  real64 & dPorosity_dVolStrain ) const
-  {
-    real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
-    real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
-
-    computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
-                                deltaTemperatureFromBeginningOfTimeStep,
-                                m_porosity_n[k][q],
-                                m_referencePorosity[k],
-                                m_newPorosity[k][q],
-                                m_dPorosity_dPressure[k][q],
-                                m_dPorosity_dTemperature[k][q],
-                                dPorosity_dVolStrain,
-                                m_biotCoefficient[k],
-                                m_thermalExpansionCoefficient[k],
-                                meanTotalStressIncrement,
-                                m_bulkModulus[k] );
   }
 
   // this function is used in flow solver
@@ -176,8 +145,7 @@ public:
                                   real64 const & pressure,                // current
                                   real64 const & pressure_n,              // last time step
                                   real64 const & temperature,
-                                  real64 const & temperature_n,
-                                  real64 & dPorosity_dVolStrain ) const
+                                  real64 const & temperature_n ) const
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
@@ -189,7 +157,6 @@ public:
                                 m_newPorosity[k][q],
                                 m_dPorosity_dPressure[k][q],
                                 m_dPorosity_dTemperature[k][q],
-                                dPorosity_dVolStrain,
                                 m_biotCoefficient[k],
                                 m_thermalExpansionCoefficient[k],
                                 m_averageMeanTotalStressIncrement_k[k],
