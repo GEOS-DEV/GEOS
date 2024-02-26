@@ -59,27 +59,6 @@ public:
   {}
 
   /**
-   * @brief Helper to save point stress back to m_newPorosity array
-   *
-   * This is mostly defined for improving code readability.
-   *
-   * @param[in] k Element index.
-   * @param[in] q Quadrature point index.
-   * @param[in] porosity porosity to be saved to m_newPorosity[k][q]
-   * @param[in] dPorosity_dPressure porosity derivative w.r.t pressure to be saved to m_dPorosity_dPressure[k][q]
-   */
-  GEOS_HOST_DEVICE
-  inline
-  void savePorosity( localIndex const k,
-                     localIndex const q,
-                     real64 const & porosity,
-                     real64 const & dPorosity_dPressure ) const
-  {
-    m_newPorosity[k][q] = porosity;
-    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
-  }
-
-  /**
    * @brief Helper to save porosity back to m_newPorosity array
    *
    * This is mostly defined for improving code readability.
@@ -273,17 +252,6 @@ public:
 
     array1d< real64 > out;
     return out.toView();
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  void savePorosity( localIndex const k,
-                     localIndex const q,
-                     real64 const & porosity,
-                     real64 const & dPorosity_dPressure ) const
-  {
-    m_newPorosity[k][q] = porosity;
-    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
   }
 
   using KernelWrapper = PorosityBaseUpdates;

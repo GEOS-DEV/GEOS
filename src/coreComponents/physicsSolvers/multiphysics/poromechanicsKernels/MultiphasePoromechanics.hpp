@@ -372,10 +372,10 @@ using MultiphasePoromechanicsKernelFactory =
                                 string const >;
 
 /**
- * @class MultiphaseTotalFluidDensityKernel
- * @brief Kernel to update the total fluid density before a mechanics solve in sequential schemes
+ * @class MultiphaseBulkDensityKernel
+ * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
  */
-class MultiphaseTotalFluidDensityKernel
+class MultiphaseBulkDensityKernel
 {
 public:
 
@@ -386,12 +386,12 @@ public:
    * @param[in] solid the porous solid model
    * @param[in] subRegion the element subregion
    */
-  MultiphaseTotalFluidDensityKernel( integer const numPhases,
-                                     constitutive::MultiFluidBase const & fluid,
-                                     constitutive::CoupledSolidBase const & solid,
-                                     ElementSubRegionBase & subRegion )
+  MultiphaseBulkDensityKernel( integer const numPhases,
+                               constitutive::MultiFluidBase const & fluid,
+                               constitutive::CoupledSolidBase const & solid,
+                               ElementSubRegionBase & subRegion )
     : m_numPhases( numPhases ),
-    m_totalFluidDensity( subRegion.getField< fields::poromechanics::totalFluidDensity >() ),
+    m_bulkDensity( subRegion.getField< fields::poromechanics::bulkDensity >() ),
     m_fluidPhaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
     m_rockDensity( solid.getDensity() ),
     m_fluidPhaseDensity( fluid.phaseMassDensity() ),
@@ -407,11 +407,13 @@ public:
   void compute( localIndex const ei,
                 localIndex const q ) const
   {
-    m_totalFluidDensity[ei][q] = 0.0;
+    m_bulkDensity[ei][q] = 0.0;
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      m_totalFluidDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][q][ip];
+      m_bulkDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][q][ip];
     }
+    m_bulkDensity[ei][q] *= m_porosity[ei][q];
+    m_bulkDensity[ei][q] += ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];
   }
 
   /**
@@ -442,8 +444,8 @@ protected:
   // number of fluid phases
   integer const m_numPhases;
 
-  // the total fluid density
-  arrayView2d< real64 > const m_totalFluidDensity;
+  // the bulk density
+  arrayView2d< real64 > const m_bulkDensity;
 
   // the fluid phase saturation
   arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac;
@@ -460,9 +462,9 @@ protected:
 };
 
 /**
- * @class MultiphaseTotalFluidDensityKernelFactory
+ * @class MultiphaseBulkDensityKernelFactory
  */
-class MultiphaseTotalFluidDensityKernelFactory
+class MultiphaseBulkDensityKernelFactory
 {
 public:
 
@@ -481,10 +483,10 @@ public:
                    constitutive::CoupledSolidBase const & solid,
                    ElementSubRegionBase & subRegion )
   {
-    MultiphaseTotalFluidDensityKernel kernel( numPhases, fluid, solid, subRegion );
-    MultiphaseTotalFluidDensityKernel::launch< POLICY >( subRegion.size(),
-                                                         subRegion.getField< fields::poromechanics::totalFluidDensity >().size( 1 ),
-                                                         kernel );
+    MultiphaseBulkDensityKernel kernel( numPhases, fluid, solid, subRegion );
+    MultiphaseBulkDensityKernel::launch< POLICY >( subRegion.size(),
+                                                   subRegion.getField< fields::poromechanics::bulkDensity >().size( 1 ),
+                                                   kernel );
   }
 };
 
