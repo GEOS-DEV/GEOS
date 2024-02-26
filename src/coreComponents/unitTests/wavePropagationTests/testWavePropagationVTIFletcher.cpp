@@ -264,14 +264,14 @@ TEST_F( AcousticVTIFletcherWaveEquationSEMTest, SeismoTrace )
   }
   // (not supported yet) run adjoint solver
 /*
-  for( int i = 0; i < 10; i++ )
-  {
+   for( int i = 0; i < 10; i++ )
+   {
     propagator->explicitStepBackward( time_n, dt, i, domain, false );
     time_n += dt;
-  }
-  // check again the seismo content.
-  for( int i = 0; i < 11; i++ )
-  {
+   }
+   // check again the seismo content.
+   for( int i = 0; i < 11; i++ )
+   {
     if( i > 0 )
     {
       ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
@@ -283,7 +283,7 @@ TEST_F( AcousticVTIFletcherWaveEquationSEMTest, SeismoTrace )
     }
     avg /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
-  }*/  
+   }*/
 }
 
 
