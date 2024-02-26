@@ -32,7 +32,7 @@ class SolidMechanicsLagrangeContact : public ContactSolverBase
 public:
 
   SolidMechanicsLagrangeContact( const string & name,
-                           Group * const parent );
+                                 Group * const parent );
 
   ~SolidMechanicsLagrangeContact() override;
 

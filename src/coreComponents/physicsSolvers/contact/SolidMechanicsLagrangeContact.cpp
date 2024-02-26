@@ -56,7 +56,7 @@ using namespace fields;
 using namespace finiteElement;
 
 SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & name,
-                                                  Group * const parent ):
+                                                              Group * const parent ):
   ContactSolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
@@ -165,11 +165,11 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 }
 
 void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
-                                           DofManager & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution,
-                                           bool const GEOS_UNUSED_PARAM( setSparsity ) )
+                                                 DofManager & dofManager,
+                                                 CRSMatrix< real64, globalIndex > & localMatrix,
+                                                 ParallelVector & rhs,
+                                                 ParallelVector & solution,
+                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
 {
   if( m_precond )
   {
@@ -186,8 +186,8 @@ void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 DomainPartition & domain )
+                                                       real64 const & dt,
+                                                       DomainPartition & domain )
 {
   computeRotationMatrices( domain );
   computeTolerances( domain );
@@ -197,8 +197,8 @@ void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
 }
 
 void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    DomainPartition & domain )
+                                                          real64 const & dt,
+                                                          DomainPartition & domain )
 {
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
@@ -490,7 +490,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
 }
 
 void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
-                                         DofManager & dofManager ) const
+                                               DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -530,11 +530,11 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
 }
 
 void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
-                                              real64 const dt,
-                                              DomainPartition & domain,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+                                                    real64 const dt,
+                                                    DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -551,9 +551,9 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
 }
 
 void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
-                                               DofManager const & dofManager,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               arrayView1d< real64 > const & localRhs )
+                                                     DofManager const & dofManager,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -569,10 +569,10 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
 }
 
 real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time,
-                                                       real64 const & dt,
-                                                       DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       arrayView1d< real64 const > const & localRhs )
+                                                             real64 const & dt,
+                                                             DomainPartition const & domain,
+                                                             DofManager const & dofManager,
+                                                             arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -804,9 +804,9 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
 }
 
 void SolidMechanicsLagrangeContact::computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                                                    localIndex const kf0,
-                                                    array1d< real64 > & nodalArea ) const
+                                                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                          localIndex const kf0,
+                                                          array1d< real64 > & nodalArea ) const
 {
   // I've tried to access the finiteElement::dispatch3D with
   // finiteElement::FiniteElementBase const &
@@ -1261,10 +1261,10 @@ void SolidMechanicsLagrangeContact::
 }
 
 void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mesh,
-                                                     NumericalMethodsManager const & numericalMethodManager,
-                                                     DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+                                                           NumericalMethodsManager const & numericalMethodManager,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1672,10 +1672,10 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 }
 
 void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofManager,
-                                                   arrayView1d< real64 const > const & localSolution,
-                                                   real64 const scalingFactor,
-                                                   real64 const dt,
-                                                   DomainPartition & domain )
+                                                         arrayView1d< real64 const > const & localSolution,
+                                                         real64 const scalingFactor,
+                                                         real64 const dt,
+                                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1876,7 +1876,7 @@ bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartiti
 }
 
 real64 SolidMechanicsLagrangeContact::setNextDt( real64 const & currentDt,
-                                           DomainPartition & domain )
+                                                 DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( domain );
   return currentDt;
