@@ -413,7 +413,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateStabilizationParameters( Doma
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::updateTotalFluidDensity( ElementSubRegionBase & subRegion )
+void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
   string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -423,9 +423,9 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateTotalFluidDensity( ElementSub
   string const solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
   CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-  // update the total fluid density
+  // update the bulk density
   poromechanicsKernels::
-    MultiphaseTotalFluidDensityKernelFactory::
+    MultiphaseBulkDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( this->flowSolver()->numFluidPhases(),
                                                fluid,
                                                solid,

@@ -338,7 +338,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & dom
 }
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::updateTotalFluidDensity( ElementSubRegionBase & subRegion )
+void SinglePhasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
   string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -348,9 +348,9 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateTotalFluidDensity( ElementSu
   string const solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
   CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-  // update the total fluid density
+  // update the bulk density
   poromechanicsKernels::
-    SinglePhaseTotalFluidDensityKernelFactory::
+    SinglePhaseBulkDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( fluid,
                                                solid,
                                                subRegion );
