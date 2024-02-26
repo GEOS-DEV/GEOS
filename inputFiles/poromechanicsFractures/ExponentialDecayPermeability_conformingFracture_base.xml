@@ -19,7 +19,7 @@
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
       timeIntegrationOption="QuasiStatic"

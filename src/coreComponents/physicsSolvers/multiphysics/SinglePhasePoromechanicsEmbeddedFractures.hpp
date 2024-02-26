@@ -166,7 +166,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
-  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getFractureRegionName() );
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getUniqueFractureRegionName() );
   EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );

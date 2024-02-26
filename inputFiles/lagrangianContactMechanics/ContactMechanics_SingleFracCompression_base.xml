@@ -4,7 +4,7 @@
 <!-- SPHINX_SOLVER -->
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
@@ -23,7 +23,7 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </LagrangianContact>
+    </SolidMechanicsLagrangeContact>
 
     <SurfaceGenerator
       name="SurfaceGen"
