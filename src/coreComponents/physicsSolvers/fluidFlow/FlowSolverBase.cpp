@@ -44,39 +44,23 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
                                                               CellElementSubRegion & subRegion,
                                                               arrayView1d< real64 const > const & pressure,
-                                                              arrayView1d< real64 const > const & temperature )
+                                                              arrayView1d< real64 const > const & pressure_k,
+                                                              arrayView1d< real64 const > const & pressure_n,
+                                                              arrayView1d< real64 const > const & temperature,
+                                                              arrayView1d< real64 const > const & temperature_k,
+                                                              arrayView1d< real64 const > const & temperature_n )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateStateFromPressureAndTemperature( k, q, pressure[k], temperature[k] );
-    }
-  } );
-}
-
-template< typename POROUSWRAPPER_TYPE >
-void updatePorosityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
-                                CellElementSubRegion & subRegion,
-                                arrayView1d< real64 const > const & pressure,
-                                arrayView1d< real64 const > const & pressure_k,
-                                arrayView1d< real64 const > const & pressure_n,
-                                arrayView1d< real64 const > const & temperature,
-                                arrayView1d< real64 const > const & temperature_k,
-                                arrayView1d< real64 const > const & temperature_n )
-{
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
-  {
-
-    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-    {
-      porousWrapper.updateStateFixedStress( k, q,
-                                            pressure[k],
-                                            pressure_k[k],
-                                            pressure_n[k],
-                                            temperature[k],
-                                            temperature_k[k],
-                                            temperature_n[k] );
+      porousWrapper.updateStateFromPressureAndTemperature( k, q,
+                                                           pressure[k],
+                                                           pressure_k[k],
+                                                           pressure_n[k],
+                                                           temperature[k],
+                                                           temperature_k[k],
+                                                           temperature_n[k] );
     }
   } );
 }
@@ -506,18 +490,17 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( m_isFixedStressPoromechanicsUpdate ) // for sequential simulations
+    if( m_isFixedStressPoromechanicsUpdate )   // for sequential simulations
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
 
-      updatePorosityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
     }
-    else // for fully implicit simulations without mechanics
+    else   // for fully implicit simulations without mechanics
     {
-      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, temperature );
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, pressure_n, temperature, pressure_n, pressure_n );
     }
-
   } );
 }
 

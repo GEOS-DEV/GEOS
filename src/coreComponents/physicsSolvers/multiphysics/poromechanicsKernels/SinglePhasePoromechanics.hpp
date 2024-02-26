@@ -271,10 +271,10 @@ using SinglePhasePoromechanicsKernelFactory =
                                 string const >;
 
 /**
- * @class SinglePhaseTotalFluidDensityKernel
- * @brief Kernel to update the total fluid density before a mechanics solve in sequential schemes
+ * @class SinglePhaseBulkDensityKernel
+ * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
  */
-class SinglePhaseTotalFluidDensityKernel
+class SinglePhaseBulkDensityKernel
 {
 public:
 
@@ -284,10 +284,10 @@ public:
    * @param[in] solid the porous solid model
    * @param[in] subRegion the element subregion
    */
-  SinglePhaseTotalFluidDensityKernel( constitutive::SingleFluidBase const & fluid,
-                                      constitutive::CoupledSolidBase const & solid,
-                                      ElementSubRegionBase & subRegion )
-    : m_totalFluidDensity( subRegion.getField< fields::poromechanics::totalFluidDensity >() ),
+  SinglePhaseBulkDensityKernel( constitutive::SingleFluidBase const & fluid,
+                                constitutive::CoupledSolidBase const & solid,
+                                ElementSubRegionBase & subRegion )
+    : m_bulkDensity( subRegion.getField< fields::poromechanics::bulkDensity >() ),
     m_rockDensity( solid.getDensity() ),
     m_fluidDensity( fluid.density() ),
     m_porosity( solid.getPorosity() )
@@ -302,7 +302,8 @@ public:
   void compute( localIndex const ei,
                 localIndex const q ) const
   {
-    m_totalFluidDensity[ei][q] = m_fluidDensity[ei][q];
+    m_bulkDensity[ei][q] =
+      ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q] + m_porosity[ei][q] * m_fluidDensity[ei][q];
   }
 
   /**
@@ -330,8 +331,8 @@ public:
 
 protected:
 
-  // the total fluid density
-  arrayView2d< real64 > const m_totalFluidDensity;
+  // the bulk density
+  arrayView2d< real64 > const m_bulkDensity;
 
   // the rock density
   arrayView2d< real64 const > const m_rockDensity;
@@ -345,9 +346,9 @@ protected:
 };
 
 /**
- * @class SinglePhaseTotalFluidDensityKernelFactory
+ * @class SinglePhaseBulkDensityKernelFactory
  */
-class SinglePhaseTotalFluidDensityKernelFactory
+class SinglePhaseBulkDensityKernelFactory
 {
 public:
 
@@ -364,10 +365,10 @@ public:
                    constitutive::CoupledSolidBase const & solid,
                    ElementSubRegionBase & subRegion )
   {
-    SinglePhaseTotalFluidDensityKernel kernel( fluid, solid, subRegion );
-    SinglePhaseTotalFluidDensityKernel::launch< POLICY >( subRegion.size(),
-                                                          subRegion.getField< fields::poromechanics::totalFluidDensity >().size( 1 ),
-                                                          kernel );
+    SinglePhaseBulkDensityKernel kernel( fluid, solid, subRegion );
+    SinglePhaseBulkDensityKernel::launch< POLICY >( subRegion.size(),
+                                                    subRegion.getField< fields::poromechanics::bulkDensity >().size( 1 ),
+                                                    kernel );
   }
 };
 

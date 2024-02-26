@@ -107,10 +107,10 @@ protected:
 private:
 
   /**
-   * @brief Helper function to recompute the total fluid density
+   * @brief Helper function to recompute the bulk density
    * @param[in] subRegion the element subRegion
    */
-  void updateTotalFluidDensity( ElementSubRegionBase & subRegion );
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
 
   void createPreconditioner();
 
