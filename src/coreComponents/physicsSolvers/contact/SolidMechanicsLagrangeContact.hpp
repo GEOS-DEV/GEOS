@@ -13,12 +13,12 @@
  */
 
 /**
- * @file LagrangianContactSolver.hpp
+ * @file SolidMechanicsLagrangeContact.hpp
  *
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
@@ -27,14 +27,14 @@ namespace geos
 
 class SolidMechanicsLagrangianFEM;
 
-class LagrangianContactSolver : public ContactSolverBase
+class SolidMechanicsLagrangeContact : public ContactSolverBase
 {
 public:
 
-  LagrangianContactSolver( const string & name,
-                           Group * const parent );
+  SolidMechanicsLagrangeContact( const string & name,
+                                 Group * const parent );
 
-  ~LagrangianContactSolver() override;
+  ~SolidMechanicsLagrangeContact() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -42,7 +42,7 @@ public:
    */
   static string catalogName()
   {
-    return "LagrangianContact";
+    return "SolidMechanicsLagrangeContact";
   }
   /**
    * @copydoc SolverBase::getCatalogName()
@@ -176,4 +176,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_ */

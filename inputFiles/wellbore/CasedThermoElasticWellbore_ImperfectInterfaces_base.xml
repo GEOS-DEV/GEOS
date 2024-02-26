@@ -21,7 +21,7 @@
     </SinglePhasePoromechanicsConformingFractures>
     <!-- SPHINX_ContactTHMSolverEnd -->
 
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
       stabilizationName="tpfaFlow"
@@ -35,7 +35,7 @@
         />
       <LinearSolverParameters
         directParallel="0"/>
-    </LagrangianContact>
+    </SolidMechanicsLagrangeContact>
 
 
     <SinglePhaseFVM

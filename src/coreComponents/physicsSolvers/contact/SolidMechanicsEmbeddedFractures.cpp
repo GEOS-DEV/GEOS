@@ -142,7 +142,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     arrayView2d< real64 > oldDispJump = subRegion.getField< contact::oldDispJump >();
@@ -170,7 +170,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                                   arrayView1d< string const > const & )
     {
       array1d< string > regions;
-      regions.emplace_back( getFractureRegionName());
+      regions.emplace_back( getUniqueFractureRegionName() );
       meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
     } );
 
@@ -272,7 +272,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -354,7 +354,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
 
     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
@@ -422,7 +422,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
 
     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
@@ -649,7 +649,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
     fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
-                                     { getFractureRegionName() } );
+                                     { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -668,7 +668,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionNames[0] );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );

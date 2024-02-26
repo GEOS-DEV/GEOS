@@ -378,7 +378,7 @@ void SinglePhasePoromechanicsConformingFractures::
     FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( solidMechanicsSolver()->getStabilizationName() );
 
     SurfaceElementRegion const & fractureRegion =
-      elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getFractureRegionName() );
+      elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getUniqueFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 

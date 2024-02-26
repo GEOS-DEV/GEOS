@@ -42,7 +42,7 @@ public:
                 integer const cycleNumber,
                 DomainPartition & domain ) override final;
 
-  string const & getFractureRegionName() const { return m_fractureRegionNames[0]; }
+  string const & getUniqueFractureRegionName() const { return m_fractureRegionNames[0]; }
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 

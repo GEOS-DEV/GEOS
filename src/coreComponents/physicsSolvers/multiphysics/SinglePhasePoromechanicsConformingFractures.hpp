@@ -21,17 +21,17 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public SinglePhasePoromechanics< SinglePhaseBase, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >
 {
 public:
 
-  using Base = SinglePhasePoromechanics< SinglePhaseBase, LagrangianContactSolver >;
+  using Base = SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;

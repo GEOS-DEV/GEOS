@@ -9,7 +9,7 @@
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
   <!-- SPHINX_SNEDDON_SOLVER -->
-  <LagrangianContact
+  <SolidMechanicsLagrangeContact
     name="lagrangiancontact"
     stabilizationName="TPFAstabilization"
     timeIntegrationOption="QuasiStatic"
@@ -28,7 +28,7 @@
         solverType="gmres"
         preconditionerType="mgr"
         logLevel="0"/>
-  </LagrangianContact>
+  </SolidMechanicsLagrangeContact>
 
     <SurfaceGenerator
       name="SurfaceGen"

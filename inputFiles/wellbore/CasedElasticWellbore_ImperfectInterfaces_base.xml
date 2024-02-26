@@ -2,7 +2,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
@@ -16,7 +16,7 @@
         />
       <LinearSolverParameters
         directParallel="0"/>
-    </LagrangianContact>
+    </SolidMechanicsLagrangeContact>
 
     <!-- SPHINX_SolversSurfaceGenerator -->
     <SurfaceGenerator
