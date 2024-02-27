@@ -50,10 +50,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
-
-  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-    setInputFlag( dataRepository::InputFlags::FALSE );
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -63,7 +59,7 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 
 void SolidMechanicsEmbeddedFractures::postProcessInput()
 {
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  SolidMechanicsLagrangianFEM::postProcessInput();
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
 
@@ -85,12 +81,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
   using namespace fields::contact;
 
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< dTraction_dJump >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
@@ -100,23 +93,18 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
+  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
-
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_solidSolver->resetStateToBeginningOfStep( domain );
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
 
   // reset displacementJump
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
     {
       arrayView2d< real64 > const & jump  =
         subRegion.getField< contact::dispJump >();
@@ -142,18 +130,11 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
   updateState( domain );
 }
 
-void SolidMechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-                                                         real64 const & dt,
-                                                         DomainPartition & domain )
-{
-  m_solidSolver->implicitStepSetup( time_n, dt, domain );
-}
-
 void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
                                                             real64 const & dt,
                                                             DomainPartition & domain )
 {
-  m_solidSolver->implicitStepComplete( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -161,7 +142,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     arrayView2d< real64 > oldDispJump = subRegion.getField< contact::oldDispJump >();
@@ -179,23 +160,17 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  m_solidSolver->setupDofs( domain, dofManager );
+  SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
   if( !m_useStaticCondensation )
   {
     map< std::pair< string, string >, array1d< string > > meshTargets;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel const & meshLevel,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  arrayView1d< string const > const & )
     {
       array1d< string > regions;
-      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                      [&]( localIndex const,
-                                                                           SurfaceElementRegion const & region )
-      {
-        regions.emplace_back( region.getName() );
-      } );
+      regions.emplace_back( getUniqueFractureRegionName() );
       meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
     } );
 
@@ -209,6 +184,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                             DofManager::Connector::Elem );
   }
 }
+
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
@@ -267,7 +243,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
   }
   else
   {
-    m_solidSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
   }
 }
 
@@ -280,12 +256,12 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  m_solidSolver->assembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
+  SolidMechanicsLagrangianFEM::assembleSystem( time,
+                                               dt,
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
 
   // If specified as a b.c. apply traction
   applyTractionBC( time, dt, domain );
@@ -296,7 +272,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -325,7 +301,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                              constitutive::ElasticIsotropic,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
-                                                     m_solidSolver->getDiscretizationName(),
+                                                     getDiscretizationName(),
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
@@ -347,7 +323,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                              constitutive::SolidBase,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
-                                                     m_solidSolver->getDiscretizationName(),
+                                                     getDiscretizationName(),
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
@@ -378,7 +354,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
 
     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
@@ -446,7 +422,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
 
     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
@@ -557,7 +533,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
   GEOS_MARK_FUNCTION;
 
   // Matrix residual
-  real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
   if( !m_useStaticCondensation )
   {
@@ -573,12 +549,9 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
     real64 globalResidualNorm[2] = {0, 0};
 
     // Fracture residual
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel const & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+    forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion const & fractureRegion )
     {
-      mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                                EmbeddedSurfaceSubRegion const & subRegion )
+      fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
       {
         arrayView1d< globalIndex const > const &
         dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -599,7 +572,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
       } );
 
-      real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
+      real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
 
 
       int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -651,11 +624,11 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 {
   GEOS_MARK_FUNCTION;
 
-  m_solidSolver->applySystemSolution( dofManager,
-                                      localSolution,
-                                      scalingFactor,
-                                      dt,
-                                      domain );
+  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
+                                                    localSolution,
+                                                    scalingFactor,
+                                                    dt,
+                                                    domain );
 
   if( !m_useStaticCondensation )
   {
@@ -676,7 +649,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
     fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
-                                     { getFractureRegionName() } );
+                                     { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -695,7 +668,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
@@ -721,7 +694,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                            constitutive::SolidBase,
                            CellElementSubRegion >( mesh,
                                                    regionNames,
-                                                   m_solidSolver->getDiscretizationName(),
+                                                   getDiscretizationName(),
                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                    kernelFactory );
 
@@ -733,18 +706,12 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       arrayView2d< real64 const > const & jump = subRegion.getField< contact::dispJump >();
 
@@ -778,26 +745,17 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 {
   int hasConfigurationConverged = true;
 
-  using namespace fields::contact;
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-
-    // We want to update the configuration (fracture state in this case) and check if it has changed. If it hasn't changed
-    // then we know the configuartion loop has converged and we can return true.
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< fields::contact::dispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -819,6 +777,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       } );
     } );
   } );
+
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 
