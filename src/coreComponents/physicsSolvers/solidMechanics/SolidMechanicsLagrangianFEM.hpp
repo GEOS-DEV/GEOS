@@ -88,10 +88,7 @@ public:
 
   virtual void initializePreSubGroups() override;
 
-  virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
-  void updateIntrinsicNodalData( DomainPartition * const domain );
-
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -143,7 +140,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final
+  virtual void updateState( DomainPartition & domain ) override
   {
     // There should be nothing to update
     GEOS_UNUSED_VAR( domain );
@@ -233,7 +230,6 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
@@ -247,19 +243,13 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-    constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
+    static constexpr char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
-
-    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
-    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
-    dataRepository::ViewKey massDamping = { massDampingString() };
-    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
-  } solidMechanicsViewKeys;
+  };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -284,9 +274,9 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
@@ -298,19 +288,19 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_contactRelationName;
   MPI_iCommData m_iComm;
   bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
-  SolverBase * m_surfaceGenerator;
-  string m_surfaceGeneratorName;
-
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  string m_contactRelationName;
+
+  SolverBase * m_surfaceGenerator;
+  string m_surfaceGeneratorName;
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
