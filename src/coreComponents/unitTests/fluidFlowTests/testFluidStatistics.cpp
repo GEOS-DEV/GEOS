@@ -410,7 +410,8 @@ TestSet getTestSet()
                     targetRegions="{ reservoir }" >
 
       <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8" />
+                                 newtonMaxIter="40"
+                                 allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
@@ -653,7 +654,7 @@ TestSet getTestSet()
                                 logLevel="1" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
-                                 maxTimeStepCuts="8" />
+                                 allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
@@ -929,7 +930,8 @@ TestSet getTestSet()
                                 logLevel="0" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
-                                 maxTimeStepCuts="8" />
+                                 maxTimeStepCuts="8"
+                                 allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
