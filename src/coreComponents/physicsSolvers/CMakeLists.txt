@@ -145,6 +145,11 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIZhangWaveEquationSEM.hpp
      wavePropagation/AcousticVTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/AcousticVTIFields.hpp
+     wavePropagation/AcousticTTIFletcherWaveEquationSEM.hpp
+     wavePropagation/AcousticTTIFletcherWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticTTIZhangWaveEquationSEM.hpp
+     wavePropagation/AcousticTTIZhangWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticTTIFields.hpp
      wavePropagation/AcoustoElasticFields.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp
@@ -212,6 +217,8 @@ set( physicsSolvers_sources
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticVTIFletcherWaveEquationSEM.cpp
      wavePropagation/AcousticVTIZhangWaveEquationSEM.cpp
+     wavePropagation/AcousticTTIFletcherWaveEquationSEM.cpp
+     wavePropagation/AcousticTTIZhangWaveEquationSEM.cpp
      wavePropagation/AcousticElasticWaveEquationSEM.cpp
      )
 
