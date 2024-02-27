@@ -105,7 +105,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" );
+    setDescription( "Write PVT tables into a CSV file" ).
+    setDefaultValue( 1 );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -132,8 +133,6 @@ std::unique_ptr< ConstitutiveBase >
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 deliverClone( string const & name, Group * const parent ) const
 {
-  std::cout<< "deliverClone" << std::endl;
-
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
   CO2BrineFluid & newConstitutiveRelation = dynamicCast< CO2BrineFluid & >( *clone );
@@ -238,11 +237,18 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  std::cout << "test clone " << m_isClone << std::endl;
-  std::cout << " getParent().getName() " <<  getParent().getName() << std::endl;
   bool isClone = true;
   if( getParent().getName() == "Constitutive" )
   {
+    string sectionOutput;
+    string sectionName = "Section : PVT Table generation";
+
+    sectionOutput = GEOS_FMT( "\n{:=^{}}\n", "=", sectionName.size() + 5 );
+    sectionOutput += GEOS_FMT( "{:^{}}\n", sectionName, sectionName.size() + 5 );
+    sectionOutput += GEOS_FMT( "{:=^{}}\n\n", "=", sectionName.size() + 5 );
+
+    std::cout << sectionOutput;
+
     isClone = false;
   }
 
@@ -341,14 +347,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                  InputError );
 
   // then, we are ready to instantiate the phase models
-
-  //temp
-  m_writeCSV = 1;
-  std::cout<<  Group::getPath() << std::endl;
-  std::cout << "test clone int create" << isClone << std::endl;
-
   bool const writeCSV = !isClone && m_writeCSV;
-  bool const writeInLog = !isClone && (getLogLevel() > 0 && logger::internal::rank==0);
+  bool const writeInLog = !isClone && (getLogLevel() >= 0 && logger::internal::rank==0);
+
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
                                          writeCSV, writeInLog );
   m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
@@ -379,7 +380,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                                                  m_phaseNames,
                                                  m_componentNames,
                                                  m_componentMolarWeight,
-                                                 writeCSV, 
+                                                 writeCSV,
                                                  writeInLog );
           }
         }
@@ -420,7 +421,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                                          m_phaseNames,
                                          m_componentNames,
                                          m_componentMolarWeight,
-                                         writeCSV, 
+                                         writeCSV,
                                          writeInLog );
   }
 

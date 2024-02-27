@@ -182,9 +182,9 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                  SimulationError );
 }
 
-void TableFunction::printInCSV( string const filename ) const
+void TableFunction::printInCSV( string const & filename ) const
 {
-  std::ofstream os( filename + ".csv" );
+  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 
@@ -253,11 +253,16 @@ void TableFunction::printInCSV( string const filename ) const
   os.close();
 }
 
-void TableFunction::printInLog( string const filename ) const
+void TableFunction::printInLog( string const & filename ) const
 {
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-  std::cout << "in function printInLog " <<  numDimensions << std::endl;
+   
+  std::cout << GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
+                         OutputBase::getOutputDirectory(),
+                         filename );
+  std::cout << GEOS_FMT( "Values in the table are represented by : {}", units::getDescription( m_valueUnit ));
+
   if( numDimensions == 1 )
   {
     Table pvtTable1D = Table(
@@ -282,6 +287,9 @@ void TableFunction::printInLog( string const filename ) const
     integer const nX = coordsX.size();
     integer const nY = coordsY.size();
     std::vector< string > vecDescription;
+    std::vector< std::vector< string > > vRowsValues;
+    integer nbRows = 0;
+
     vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
 
     for( integer idxY = 0; idxY < nY; idxY++ )
@@ -291,18 +299,33 @@ void TableFunction::printInLog( string const filename ) const
     }
 
     Table pvtTable2D = Table( vecDescription );
+    pvtTable2D.setTitle( filename );
 
     for( integer i = 0; i < nX; i++ )
     {
-      std::vector< string > vecValues;
-      vecValues.push_back( std::to_string( coordsX[i] ));
+      std::vector< string > vValues;
+      vValues.push_back( std::to_string( coordsX[i] ));
       for( integer j = 0; j < nY; j++ )
       {
-        vecValues.push_back( std::to_string( m_values[ j*nX + i ] ));
+        vValues.push_back( std::to_string( m_values[ j*nX + i ] ));
       }
+      vRowsValues.push_back( vValues );
+      nbRows++;
     }
-    
-    pvtTable2D.draw();
+
+    if( nbRows <= 500 )
+    {
+      pvtTable2D.addRowsFromVectors( vRowsValues );
+      pvtTable2D.draw();
+    }
+    else
+    {
+      string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
+      Table pvtTable2DLog = Table( {Table::ColumnParam{{log}, Table::Alignment::left}} );
+      pvtTable2DLog.setTitle( filename );
+      pvtTable2DLog.draw();
+    }
+
   }
 
 }

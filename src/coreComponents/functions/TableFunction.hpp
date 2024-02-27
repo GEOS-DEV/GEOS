@@ -321,9 +321,13 @@ private:
    * @brief Print table into a CSV file (only 1d and 2d tables are supported)
    * @param filename Filename for output
    */
-  void printInCSV( string const filename ) const;
+  void printInCSV( string const & filename ) const;
 
-  void printInLog( string const filename ) const;
+  /**
+   * @brief Print table to the log (only 1d and 2d tables are supported).
+   * @param filename Filename for output
+   */
+  void printInLog( string const & filename ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
