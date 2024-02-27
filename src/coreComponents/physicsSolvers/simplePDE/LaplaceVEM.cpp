@@ -13,14 +13,15 @@
  */
 
 /**
- * @file LaplaceFEM.cpp
+ * @file LaplaceVEM.cpp
  */
 
 // Source includes
-#define SELECTED_FE_TYPES FE_1_TYPES
+#define SELECTED_FE_TYPES VEM_TYPES
 
-#include "LaplaceFEM.hpp"
-#include "LaplaceFEMKernels.hpp"
+#include "LaplaceVEM.hpp"
+#include "LaplaceVEMKernels.hpp"
+
 
 namespace geos
 {
@@ -76,13 +77,13 @@ using namespace dataRepository;
  */
 
 //START_SPHINX_INCLUDE_CONSTRUCTOR
-LaplaceFEM::LaplaceFEM( const string & name,
+LaplaceVEM::LaplaceVEM( const string & name,
                         Group * const parent ):
   LaplaceBaseH1( name, parent )
 {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
-LaplaceFEM::~LaplaceFEM()
+LaplaceVEM::~LaplaceVEM()
 {
   // TODO Auto-generated destructor stub
 }
@@ -90,7 +91,7 @@ LaplaceFEM::~LaplaceFEM()
 /* SETUP SYSTEM
    Setting up the system using the base class method
  */
-void LaplaceFEM::setupSystem( DomainPartition & domain,
+void LaplaceVEM::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
                               ParallelVector & rhs,
@@ -114,19 +115,12 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                                                     8*8*3 );
 
     finiteElement::fillSparsity< CellElementSubRegion,
-                                 LaplaceFEMKernel >( mesh,
+                                 LaplaceVEMKernel >( mesh,
                                                      regionNames,
                                                      this->getDiscretizationName(),
                                                      dofIndex,
                                                      dofManager.rankOffset(),
                                                      sparsityPattern );
-    // finiteElement::fillSparsity< CellElementSubRegion,
-    //                              LaplaceFEMKernel >( mesh,
-    //                                                  regionNames,
-    //                                                  this->getDiscretizationName(),
-    //                                                  dofIndex,
-    //                                                  dofManager.rankOffset(),
-    //                                                  sparsityPattern );
 
     sparsityPattern.compress();
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
@@ -151,7 +145,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
    See the implementation in LaplaceFEMKernel.cpp.
  */
 //START_SPHINX_INCLUDE_ASSEMBLY
-void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
+void LaplaceVEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const dt,
                                  DomainPartition & domain,
                                  DofManager const & dofManager,
@@ -167,7 +161,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
     arrayView1d< globalIndex const > const &
     dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
-    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, dt, m_fieldName );
+    LaplaceVEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, dt, m_fieldName );
 
     string const dummyString = "dummy";
 
@@ -186,6 +180,6 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 //END_SPHINX_INCLUDE_ASSEMBLY
 
 //START_SPHINX_INCLUDE_REGISTER
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceVEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geos */

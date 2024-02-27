@@ -605,6 +605,13 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
+.. _XML_LaplaceVEM:
+
+Element: LaplaceVEM
+===================
+.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
+
+
 .. _XML_LinearIsotropicDispersion:
 
 Element: LinearIsotropicDispersion
@@ -2014,6 +2021,13 @@ Datastructure: JFunctionCapillaryPressure
 Datastructure: LaplaceFEM
 =========================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
+
+
+.. _DATASTRUCTURE_LaplaceVEM:
+
+Datastructure: LaplaceVEM
+=========================
+.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
 .. _DATASTRUCTURE_Level0:
