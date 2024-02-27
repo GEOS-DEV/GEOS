@@ -31,14 +31,12 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER,
-                                                  SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER,
-                              SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -73,6 +71,16 @@ public:
       setApplyDefaultValue( false ).
       setInputFlag( dataRepository::InputFlags::FALSE ).
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+  }
+
+  void initializePostInitialConditionsPreSubGroups()
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
+                             this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
+                   InputError );
   }
 
   virtual void initializePreSubGroups() override
@@ -183,7 +191,7 @@ public:
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  MECHANICS_SOLVER * solidMechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
   }
@@ -346,9 +354,6 @@ protected:
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {
-      // save pressure and temperature at the end of this iteration
-      flowSolver()->saveIterationState( domain );
-
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
                                                                                   arrayView1d< string const > const & regionNames )
