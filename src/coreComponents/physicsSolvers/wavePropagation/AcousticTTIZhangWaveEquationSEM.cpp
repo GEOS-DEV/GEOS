@@ -61,53 +61,50 @@ void AcousticTTIZhangWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::wavesolverfields::Pressure_p_nm1,
-                               fields::wavesolverfields::Pressure_p_n,
-                               fields::wavesolverfields::Pressure_p_np1,
-                               fields::wavesolverfields::Pressure_q_nm1,
-                               fields::wavesolverfields::Pressure_q_n,
-                               fields::wavesolverfields::Pressure_q_np1,
-                               fields::wavesolverfields::ForcingRHS,
-                               fields::wavesolverfields::AcousticMassVector,
-                               fields::wavesolverfields::DampingVector_p,
-                               fields::wavesolverfields::DampingVector_pq,
-                               fields::wavesolverfields::DampingVector_q,
-                               fields::wavesolverfields::DampingVector_qp,
-                               fields::wavesolverfields::StiffnessVector_p,
-                               fields::wavesolverfields::StiffnessVector_q,
-                               fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator,
-                               fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator,
-                               fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >( getName() );
+    nodeManager.registerField< fields::acousticttifields::Pressure_p_nm1,
+                               fields::acousticttifields::Pressure_p_n,
+                               fields::acousticttifields::Pressure_p_np1,
+                               fields::acousticttifields::Pressure_q_nm1,
+                               fields::acousticttifields::Pressure_q_n,
+                               fields::acousticttifields::Pressure_q_np1,
+                               fields::acousticttifields::ForcingRHS,
+                               fields::acousticttifields::AcousticMassVector,
+                               fields::acousticttifields::DampingVector_p,
+                               fields::acousticttifields::DampingVector_pq,
+                               fields::acousticttifields::DampingVector_q,
+                               fields::acousticttifields::DampingVector_qp,
+                               fields::acousticttifields::StiffnessVector_p,
+                               fields::acousticttifields::StiffnessVector_q,
+                               fields::acousticttifields::AcousticFreeSurfaceNodeIndicator,
+                               fields::acousticttifields::AcousticLateralSurfaceNodeIndicator,
+                               fields::acousticttifields::AcousticBottomSurfaceNodeIndicator >( getName() );
 
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >( getName() );
-    faceManager.registerField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >( getName() );
-    faceManager.registerField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::acousticttifields::AcousticFreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::acousticttifields::AcousticLateralSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::acousticttifields::AcousticBottomSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::wavesolverfields::AcousticDipX>( getName() );
-      subRegion.registerField< fields::wavesolverfields::AcousticDipY >( getName() );
-      subRegion.registerField< fields::wavesolverfields::AcousticDelta >( getName() );
-      subRegion.registerField< fields::wavesolverfields::AcousticEpsilon >( getName() );
-      subRegion.registerField< fields::wavesolverfields::AcousticVelocity >( getName() );
-      subRegion.registerField< fields::wavesolverfields::AcousticDensity >( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticDipX>( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticDipY >( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticDelta >( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticEpsilon >( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticVelocity >( getName() );
+      subRegion.registerField< fields::acousticttifields::AcousticDensity >( getName() );
     } );
   } );
 }
 
 
-void AcousticTTIZhangWaveEquationSEM::postProcessInput()
+void AcousticTTIFletcherWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
 void AcousticTTIZhangWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
@@ -176,9 +173,8 @@ void AcousticTTIZhangWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        numNodesPerElem,
         numFacesPerElem,
-        X32,
+        nodeCoords32,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
@@ -251,22 +247,22 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::wavesolverfields::AcousticMassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::acousticttifields::AcousticMassVector >();
     mass.zero();
     /// damping matrices to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping_p  = nodeManager.getField< fields::wavesolverfields::DampingVector_p >();
-    arrayView1d< real32 > const damping_pq = nodeManager.getField< fields::wavesolverfields::DampingVector_pq >();
-    arrayView1d< real32 > const damping_q  = nodeManager.getField< fields::wavesolverfields::DampingVector_q >();
-    arrayView1d< real32 > const damping_qp = nodeManager.getField< fields::wavesolverfields::DampingVector_qp >();
+    arrayView1d< real32 > const damping_p  = nodeManager.getField< fields::acousticttifields::DampingVector_p >();
+    arrayView1d< real32 > const damping_pq = nodeManager.getField< fields::acousticttifields::DampingVector_pq >();
+    arrayView1d< real32 > const damping_q  = nodeManager.getField< fields::acousticttifields::DampingVector_q >();
+    arrayView1d< real32 > const damping_qp = nodeManager.getField< fields::acousticttifields::DampingVector_qp >();
     damping_p.zero();
     damping_pq.zero();
     damping_q.zero();
     damping_qp.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
-    arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >();
-    arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticFreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticLateralSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticBottomSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -274,12 +270,12 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::AcousticVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::AcousticDensity >();
-      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::AcousticEpsilon >();
-      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::AcousticDelta >();
-      arrayView1d< real32 const > const tti_dipx    = elementSubRegion.getField< fields::wavesolverfields::AcousticDipX >();
-      arrayView1d< real32 const > const tti_dipy      = elementSubRegion.getField< fields::wavesolverfields::AcousticDipY >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::acousticttifields::AcousticVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::acousticttifields::AcousticDensity >();
+      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::acousticttifields::AcousticEpsilon >();
+      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::acousticttifields::AcousticDelta >();
+      arrayView1d< real32 const > const tti_dipx    = elementSubRegion.getField< fields::acousticttifields::AcousticDipX >();
+      arrayView1d< real32 const > const tti_dipy      = elementSubRegion.getField< fields::acousticttifields::AcousticDipY >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -335,14 +331,14 @@ void AcousticTTIZhangWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPar
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on lateral surface; 0 otherwise
-  arrayView1d< localIndex > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const lateralSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticLateralSurfaceFaceIndicator >();
   /// array of indicators: 1 if a node is on on lateral surface; 0 otherwise
-  arrayView1d< localIndex > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticLateralSurfaceNodeIndicator >();
 
   /// array of indicators: 1 if a face is on on bottom surface; 0 otherwise
-  arrayView1d< localIndex > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const bottomSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticBottomSurfaceFaceIndicator >();
   /// array of indicators: 1 if a node is on on bottom surface; 0 otherwise
-  arrayView1d< localIndex > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticBottomSurfaceNodeIndicator >();
 
   // Lateral surfaces
   fsManager.apply< FaceManager >( time,
@@ -419,21 +415,21 @@ void AcousticTTIZhangWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPar
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_nm1 >();
-  arrayView1d< real32 > const p_n = nodeManager.getField< fields::wavesolverfields::Pressure_p_n >();
-  arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_np1 >();
+  arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_p_nm1 >();
+  arrayView1d< real32 > const p_n = nodeManager.getField< fields::acousticttifields::Pressure_p_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::acousticttifields::Pressure_p_np1 >();
 
-  arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_nm1 >();
-  arrayView1d< real32 > const q_n = nodeManager.getField< fields::wavesolverfields::Pressure_q_n >();
-  arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_np1 >();
+  arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_q_nm1 >();
+  arrayView1d< real32 > const q_n = nodeManager.getField< fields::acousticttifields::Pressure_q_n >();
+  arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::acousticttifields::Pressure_q_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticttifields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticFreeSurfaceNodeIndicator >();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -493,13 +489,13 @@ real64 AcousticTTIZhangWaveEquationSEM::explicitStepForward( real64 const & time
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getField< fields::wavesolverfields::Pressure_p_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_p_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::acousticttifields::Pressure_p_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::acousticttifields::Pressure_p_np1 >();
 
-    arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_nm1 >();
-    arrayView1d< real32 > const q_n = nodeManager.getField< fields::wavesolverfields::Pressure_q_n >();
-    arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_np1 >();
+    arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_q_nm1 >();
+    arrayView1d< real32 > const q_n = nodeManager.getField< fields::acousticttifields::Pressure_q_n >();
+    arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::acousticttifields::Pressure_q_np1 >();
 
     if( computeGradient )
     {
@@ -559,26 +555,26 @@ real64 AcousticTTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::wavesolverfields::AcousticMassVector >();
-    arrayView1d< real32 const > const damping_p = nodeManager.getField< fields::wavesolverfields::DampingVector_p >();
-    arrayView1d< real32 const > const damping_q = nodeManager.getField< fields::wavesolverfields::DampingVector_q >();
-    arrayView1d< real32 const > const damping_pq = nodeManager.getField< fields::wavesolverfields::DampingVector_pq >();
-    arrayView1d< real32 const > const damping_qp = nodeManager.getField< fields::wavesolverfields::DampingVector_qp >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::acousticttifields::AcousticMassVector >();
+    arrayView1d< real32 const > const damping_p = nodeManager.getField< fields::acousticttifields::DampingVector_p >();
+    arrayView1d< real32 const > const damping_q = nodeManager.getField< fields::acousticttifields::DampingVector_q >();
+    arrayView1d< real32 const > const damping_pq = nodeManager.getField< fields::acousticttifields::DampingVector_pq >();
+    arrayView1d< real32 const > const damping_qp = nodeManager.getField< fields::acousticttifields::DampingVector_qp >();
 
-    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_nm1 >();
-    arrayView1d< real32 > const p_n = nodeManager.getField< fields::wavesolverfields::Pressure_p_n >();
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_np1 >();
+    arrayView1d< real32 > const p_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_p_nm1 >();
+    arrayView1d< real32 > const p_n = nodeManager.getField< fields::acousticttifields::Pressure_p_n >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::acousticttifields::Pressure_p_np1 >();
 
-    arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_nm1 >();
-    arrayView1d< real32 > const q_n = nodeManager.getField< fields::wavesolverfields::Pressure_q_n >();
-    arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_np1 >();
+    arrayView1d< real32 > const q_nm1 = nodeManager.getField< fields::acousticttifields::Pressure_q_nm1 >();
+    arrayView1d< real32 > const q_n = nodeManager.getField< fields::acousticttifields::Pressure_q_n >();
+    arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::acousticttifields::Pressure_q_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator >();
-    arrayView1d< localIndex const > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator >();
-    arrayView1d< localIndex const > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >();
-    arrayView1d< real32 > const stiffnessVector_p = nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >();
-    arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >();
-    arrayView1d< real32 > const rhs = nodeManager.getField< fields::wavesolverfields::ForcingRHS >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticFreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticLateralSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::acousticttifields::AcousticBottomSurfaceNodeIndicator >();
+    arrayView1d< real32 > const stiffnessVector_p = nodeManager.getField< fields::acousticttifields::StiffnessVector_p >();
+    arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::acousticttifields::StiffnessVector_q >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< fields::acousticttifields::ForcingRHS >();
 
     auto kernelFactory = acousticTTIZhangWaveEquationSEMKernels::ExplicitAcousticTTIZhangSEMFactory( dt );
 
@@ -645,8 +641,8 @@ real64 AcousticTTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { fields::wavesolverfields::Pressure_p_np1::key() } );
-    fieldsToBeSync.addFields( FieldLocation::Node, { fields::wavesolverfields::Pressure_q_np1::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::acousticttifields::Pressure_p_np1::key() } );
+    fieldsToBeSync.addFields( FieldLocation::Node, { fields::acousticttifields::Pressure_q_np1::key() } );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -688,8 +684,8 @@ void AcousticTTIZhangWaveEquationSEM::cleanup( real64 const time_n,
                                                                 arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const p_n   = nodeManager.getField< fields::wavesolverfields::Pressure_p_n >();
-    arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_p_np1 >();
+    arrayView1d< real32 const > const p_n   = nodeManager.getField< fields::acousticttifields::Pressure_p_n >();
+    arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::acousticttifields::Pressure_p_np1 >();
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
 

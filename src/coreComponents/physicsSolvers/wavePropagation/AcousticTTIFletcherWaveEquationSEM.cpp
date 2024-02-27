@@ -105,10 +105,7 @@ void AcousticTTIFletcherWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
 void AcousticTTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
@@ -177,9 +174,8 @@ void AcousticTTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLe
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        numNodesPerElem,
         numFacesPerElem,
-        X32,
+        nodeCoords32,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
