@@ -1187,11 +1187,9 @@ private:
   ElementRegionManager & operator=( const ElementRegionManager & );
 
   /**
-   * @brief Check that the loaded sub regions are:
-   * 1. from an unique cellBlock,
-   * 2. all loaded.
+   * @brief Check that the loaded sub regions are all linked with a cellBlock,
    */
-  void checkSubRegions( Group const & cellBlocks );
+  void checkSubRegionRegistering( Group const & cellBlocks );
 };
 
 

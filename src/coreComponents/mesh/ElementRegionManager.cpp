@@ -130,7 +130,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
 
-  checkSubRegions( cellBlockManager.getCellBlocks() );
+  checkSubRegionRegistering( cellBlockManager.getCellBlocks() );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
   // For the moment, those mappings only point to cell block indices.
@@ -154,7 +154,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   } );
 
 }
-void ElementRegionManager::checkSubRegions( Group const & cellBlocks )
+void ElementRegionManager::checkSubRegionRegistering( Group const & cellBlocks )
 {
   // Each cellBlock must be referenced by exactly one sub region.
   std::map< string, CellElementSubRegion const * > cellBlocksSubRegion;
