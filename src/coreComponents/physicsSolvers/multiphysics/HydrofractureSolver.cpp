@@ -382,8 +382,6 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
 {
-  GEOS_MARK_FUNCTION;
-
   if( m_isMatrixPoroelastic )
   {
     Base::setupCoupling( domain, dofManager );
