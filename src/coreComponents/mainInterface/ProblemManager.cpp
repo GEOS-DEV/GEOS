@@ -969,9 +969,9 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                 } );
               } );
 
-              // For now FaceElementSubRegions do not have a FE type associated with them. They don't need one for now and
+              // For now SurfaceElementSubRegion do not have a FE type associated with them. They don't need one for now and
               // it would have to be a heterogeneous one coz they are usually heterogeneous subregions.
-              elemRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+              elemRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
               {
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                             meshLevel.getName(),

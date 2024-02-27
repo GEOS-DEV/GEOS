@@ -7,8 +7,8 @@
       name="fractureThermoPoroElasticSolver"
       targetRegions="{ casing, cement, rock, Fracture }"
       initialDt="1e-3"
-      LagrangianContactSolverName="lagrangiancontact"
-      poromechanicsSolverName="thermoElasticSolver"
+      flowSolverName="flowSolver"
+      solidSolverName="lagrangiancontact"
       logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
@@ -21,29 +21,12 @@
     </SinglePhasePoromechanicsConformingFractures>
     <!-- SPHINX_ContactTHMSolverEnd -->
 
-    <SinglePhasePoromechanics
-      name="thermoElasticSolver"
-      solidSolverName="solidMechSolver"
-      flowSolverName="flowSolver"
-      logLevel="1"
-      isThermal="1"
-      targetRegions="{ casing, cement, rock, Fracture }">
-      <NonlinearSolverParameters
-        couplingType="FullyImplicit"
-	    maxAllowedResidualNorm="1e19"
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanics>
-
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      solidSolverName="solidMechSolver"
+      timeIntegrationOption="QuasiStatic"
       stabilizationName="tpfaFlow"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
-      contactRelationName="fractureContact"
-      fractureRegionName="Fracture"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -52,21 +35,9 @@
         />
       <LinearSolverParameters
         directParallel="0"/>
-    </LagrangianContact>
+    </SolidMechanicsLagrangeContact>
 
 
-    <SolidMechanicsLagrangianSSLE
-      name="solidMechSolver"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ casing, cement, rock }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
-   
     <SinglePhaseFVM
       name="flowSolver"
       logLevel="1"

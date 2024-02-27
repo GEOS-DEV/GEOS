@@ -209,7 +209,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr char const * elemDofFieldString() { return "primaryVariables"; }
+    static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
 
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
