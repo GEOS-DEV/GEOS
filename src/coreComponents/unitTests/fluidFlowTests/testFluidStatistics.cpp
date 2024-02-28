@@ -59,7 +59,7 @@ struct TestInputs
 
   /// In order to be sure that sub-timestepping is supported, requires the test to have at least one sub-timestep.
   /// At least one simulation should test the timestep cuts !
-  integer requiredSubTimeStep;
+  integer requiredSubTimeStep = 0;
 };
 
 /**
@@ -582,8 +582,6 @@ TestSet getTestSet()
   testInputs.sourceRateFactor = -1.0;
   testInputs.sinkRateFactor = 3.0;
 
-  testInputs.requiredSubTimeStep = 0;
-
   return TestSet( testInputs );
 }
 
@@ -655,8 +653,9 @@ TestSet getTestSet()
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="direct"
-                              preconditionerType="none"
+      <LinearSolverParameters solverType="fgmres"
+                              preconditionerType="iluk"
+                              ilukFill="1"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
   </Solvers>
@@ -872,8 +871,6 @@ TestSet getTestSet()
 
   testInputs.sourceRateFactor = -44e-3;
   testInputs.sinkRateFactor = 18e-3;
-
-  testInputs.requiredSubTimeStep = 0;
 
   return TestSet( testInputs );
 }
