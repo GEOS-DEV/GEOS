@@ -18,7 +18,7 @@
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "codingUtilities/Table.hpp"
-#include "common/Units.hpp"
+#include "common/Format.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -528,14 +528,6 @@ void WellGeneratorBase::debugWellGeometry() const
   {
     return;
   }
-  string sectionOutput;
-  string sectionName = "Section : Well generation";
-
-  sectionOutput = GEOS_FMT( "\n{:=^{}}\n", "=", sectionName.size() + 5 );
-  sectionOutput += GEOS_FMT( "{:^{}}\n", sectionName, sectionName.size() + 5 );
-  sectionOutput += GEOS_FMT( "{:=^{}}\n", "=", sectionName.size() + 5 );
-
-  std::cout << sectionOutput;
 
   std::vector< string > row;
   std::ostringstream oss;
@@ -578,7 +570,7 @@ void WellGeneratorBase::debugWellGeometry() const
         //std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
       }
     }
-    table.addRow< 6 >( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
+    table.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
 
   }
   table.draw();
@@ -589,7 +581,7 @@ void WellGeneratorBase::debugWellGeometry() const
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    tablePerforation.addRow< 3 >( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
+    tablePerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
   tablePerforation.draw();

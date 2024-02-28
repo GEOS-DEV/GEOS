@@ -67,20 +67,18 @@ public:
   /**
    * @brief Add a row the the table.
    *
-   * @param N The number expected by the table
    * @param Args The values passed to addRow (can be any type).
    * @param args Cell values to be added to the line.
    *
-   * @pre The number of arguments must correspond to the expected number of cells per line (N).
    */
-  template< size_t N, typename ... Args >
+  template< typename ... Args >
   void addRow( Args const & ... args );
 
   /**
    * @brief Add rows from vectors to the table.
    * @param vecRows Vector who contains all the table rows
    */
-  void addRowsFromVectors( std::vector< std::vector< string > > tableRows );
+  void addRowsFromVectors( std::vector< std::vector< string > > const & tableRows );
 
   /**
    * @brief Write the table into a specified stream
@@ -171,7 +169,7 @@ private:
    * @param topSeparator The top line separator
    * @param sectionSeparator The section line separator
    */
-  void buildTitleRow( string & titleRows, string topSeparator, string sectionSeparator );
+  void buildTitleRow( string & titleRows, string_view topSeparator, string_view sectionSeparator );
 
   /**
    * @brief Build a section by specifying it's type ( header or section )
@@ -180,7 +178,7 @@ private:
    * @param nbRows Indicates the number of lines in a section
    * @param section The section to be built
    */
-  void buildSectionRows( string sectionSeparator,
+  void buildSectionRows( string_view sectionSeparator,
                          string & rows,
                          integer const nbRows,
                          Section const section );
@@ -199,13 +197,9 @@ private:
 
 };
 
-template< size_t N, typename ... Args >
+template< typename ... Args >
 void Table::addRow( Args const &... args )
 {
-  constexpr std::size_t nbColumn_ = sizeof...(args);
-  static_assert( nbColumn_ == N,
-                 "The number of cells per line does not correspond to the number of parameters." );
-
   std::vector< string > rowsValues;
   int idx = 0;
   ( [&] {

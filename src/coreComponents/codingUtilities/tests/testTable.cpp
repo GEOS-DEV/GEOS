@@ -35,10 +35,10 @@ TEST( testTable, tableClass )
                     "Next\nelement"}
                    );
   tableTest.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest.addRow< 5 >( "value1", "[30.21543]", "3.0", 54, 0 );
-  tableTest.addRow< 5 >( "", "", "", "", "" );
-  tableTest.addRow< 5 >( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante", "[30.21543]", "30.45465142",
-                         787442, 10 );
+  tableTest.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
+  tableTest.addRow( "", "", "", "", "" );
+  tableTest.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante", "[30.21543]", "30.45465142",
+                    787442, 10 );
   tableTest.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -65,9 +65,9 @@ TEST( testTable, tableClass )
                      "Next\nelement"}
                     );
   tableTest2.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest2.addRow< 5 >( "value1", "[30.21543]", "3.0", 54, 0 );
-  tableTest2.addRow< 5 >( "", "", "", "", "" );
-  tableTest2.addRow< 5 >( "value23", "[30.21543]", "30.45465142", 787442, 10 );
+  tableTest2.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
+  tableTest2.addRow( "", "", "", "", "" );
+  tableTest2.addRow( "value23", "[30.21543]", "30.45465142", 787442, 10 );
   tableTest2.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -116,8 +116,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::right}
   } );
   tableTest4.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest4.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest4.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest4.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest4.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest4.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -144,8 +144,8 @@ TEST( testTable, tableClass )
 
   } );
   tableTest5.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest5.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest5.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest5.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest5.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest5.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -170,8 +170,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
   } );
   tableTest6.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest6.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest6.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest6.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest6.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest6.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -197,8 +197,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle, false},
   } );
   tableTest7.setTitle( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
-  tableTest7.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest7.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest7.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest7.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest7.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -223,8 +223,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
   } );
   tableTest8.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
-  tableTest8.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest8.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest8.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest8.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest8.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -246,8 +246,8 @@ TEST( testTable, tableClass )
 
   } );
   tableTest9.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
-  tableTest9.addRow< 1 >( "value1" );
-  tableTest9.addRow< 1 >( "val1" );
+  tableTest9.addRow( "value1" );
+  tableTest9.addRow( "val1" );
   tableTest9.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -267,8 +267,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Cras egestas"}, Table::Alignment::middle},
   } );
   tableTest10.setTitle( "title1" );
-  tableTest10.addRow< 1 >( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
-  tableTest10.addRow< 1 >( "val1" );
+  tableTest10.addRow( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
+  tableTest10.addRow( "val1" );
   tableTest10.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -308,8 +308,8 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Prev\nelement"}, Table::Alignment::left},
     Table::ColumnParam{{"Next\nelement"}, Table::Alignment::middle},
   } );
-  tableTest12.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest12.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest12.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest12.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest12.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
@@ -334,8 +334,8 @@ TEST( testTable, tableClass )
   } );
   tableTest13.setTitle( "InternalWellGenerator well_injector1" );
   tableTest13.setMargin( Table::MarginValue::tiny );
-  tableTest13.addRow< 6 >( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  tableTest13.addRow< 6 >( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  tableTest13.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  tableTest13.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
   tableTest13.draw( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
