@@ -7,6 +7,10 @@
 #
 ###############################################################################
 
+# Set GEOS_ROOT_DIR for later use
+set(GEOS_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." CACHE PATH "The path to the GEOS root directory" )
+message(STATUS "GEOS_ROOT_DIR: ${GEOS_ROOT_DIR}")
+
 # Fortran
 set(ENABLE_FORTRAN ON CACHE BOOL "")
 
