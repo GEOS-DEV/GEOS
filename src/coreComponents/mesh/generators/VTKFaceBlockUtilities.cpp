@@ -314,7 +314,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
-    if ( res->second >= 2 )
+    if( res->second >= 2 )
     {
       face2dToEdge[i] = LvArray::integerConversion< localIndex >( res->first );
     }
@@ -368,7 +368,7 @@ ArrayOfArrays< localIndex > buildElem2dToEdges( vtkIdType num2dElements,
   {
     for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      if ( face2dToEdge[face2dIndex] >= 0 ) // only add meaningful edges
+      if( face2dToEdge[face2dIndex] >= 0 )  // only add meaningful edges
         elem2dToEdges.emplaceBack( elemIndex, face2dToEdge[face2dIndex] );
     }
   }
