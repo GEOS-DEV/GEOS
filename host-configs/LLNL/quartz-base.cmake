@@ -36,14 +36,14 @@ set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 
 # PYGEOSX
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
-set(Python3_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python CACHE PATH "")
-set(Python3_EXECUTABLE ${Python3_ROOT_DIR}/bin/python3 CACHE PATH "")
+#set(Python3_ROOT_DIR /usr/tce CACHE PATH "")
+set(Python3_EXECUTABLE /usr/tce/bin/python3 CACHE PATH "")
 
 # YAPF python formatting
-set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
+#set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/yapf CACHE PATH "" FORCE)
 
 # Sphinx
-set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
+#set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
 
 set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)

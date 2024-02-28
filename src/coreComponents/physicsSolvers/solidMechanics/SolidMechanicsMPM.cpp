@@ -1210,7 +1210,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
-  // CC: why not compute element size directly from domain extent and number of cpps across direction?
+  // CC: why not compute element size directly from domain extent and number of 
+  // pps across direction?
+
   // Get element size
   m_hEl.resize(3);
   LvArray::tensorOps::fill< 3 >(m_hEl, DBL_MAX);
@@ -1218,10 +1220,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   {
     for( int i=0; i<3; i++ )
     {
-      real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
-                                                         // should only be those on the local partition
-      if( test > 0.0 ) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite
-                       // precision bug.
+      // By definition, this should always be positive. Furthermore, the 
+      // gridPosition should only be those on the local partition
+      real64 test = gridPosition[g][i] - m_xLocalMin[i];  
+
+      // We're looking for the smallest nonzero distance from the "min" node. 
+      // TODO: Could be vulnerable to a finite precision bug.       
+      if( test > 0.0 ) 
       {
         m_hEl[i] = std::fmin( test, m_hEl[i] );
       }
@@ -1236,11 +1241,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   {
     if( m_planeStrain )
     {
-      m_neighborRadius *= -1.0 * sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] );
+      m_neighborRadius *= -1.0 * sqrt( 
+        m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] );
     }
     else
     {
-      m_neighborRadius *= -1.0 * sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] + m_hEl[2] * m_hEl[2] );
+      m_neighborRadius *= -1.0 * sqrt( 
+        m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] + m_hEl[2] * m_hEl[2] );
     }
   }
 
@@ -1269,6 +1276,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Create element map
+  // loop through all nodes, i.e. numElems+1, identify closest integer of 
+  // hEl (stepsize) multiple.  m_ijkMap[0][0][0] -> [xmin, ymin, zmin]
   m_ijkMap.resize( m_nEl[0] + 1, m_nEl[1] + 1, m_nEl[2] + 1 );
   for( int g=0; g<numNodes; g++ )
   {
@@ -1290,29 +1299,40 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     std::set< localIndex > tmpBoundaryNodes;
     std::set< localIndex > tmpBufferNodes;
 
-    int dir0 = face / 2; // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+    // dir0 will be 0, 0, 1, 1, 2, 2 or associated axis of(x-, x+, y-, y+, z-, z+)
+    int dir0 = face / 2; 
 
-    int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+    // even -> -1 and odd -> +1 to get the sign of the direction i.e. x-, x+ ,...
+    int positiveNormal = face % 2; 
     int sign = 2 * positiveNormal - 1;
+
+    // minOrMax is globalMin if normal is positive, else globalMax
+    // So that face=0 gives x- and xmin
     real64 minOrMax = positiveNormal == 0 ? m_xGlobalMin[dir0] : m_xGlobalMax[dir0];
 
     for( localIndex g=0; g<numNodes; g++ )
     {
       real64 positionRelativeToBoundary = gridPosition[g][dir0] - minOrMax;
-      real64 tolerance = 1.0e-12 * m_hEl[dir0]; // small multiple of element dimension
+      // small multiple of element dimension
+      // CC::Jay: why is 1e-12 a reasonable choice? either co-located with boundary
+      //     or potential buffer node?
+      real64 tolerance = 1.0e-12 * m_hEl[dir0]; 
 
       if( std::fabs( positionRelativeToBoundary ) < tolerance )
       {
         tmpBoundaryNodes.insert( g );
       }
 
-      if( sign * positionRelativeToBoundary > 0 && std::fabs( positionRelativeToBoundary ) > tolerance ) // basically a dot product with the
-                                                                                                         // face normal
+      // basically a dot product with the face normal to ensure that point is 
+      // outside of the domain and not co-located with the boundary
+      if( sign * positionRelativeToBoundary > 0 && std::fabs( positionRelativeToBoundary ) > tolerance ) 
       {
         tmpBufferNodes.insert( g );
       }
     }
 
+    // CC::Jay: boundary and buffer nodes seem to define background grid elements
+    //     and are defined by element faces.  Is that correct?
     m_boundaryNodes[face].insert( tmpBoundaryNodes.begin(), tmpBoundaryNodes.end() );
     m_bufferNodes[face].insert( tmpBufferNodes.begin(), tmpBufferNodes.end() );
   }
@@ -1321,7 +1341,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Getters
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );    
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     arrayView2d< real64 const > const constitutiveDensity = constitutiveRelation.getDensity();
 
@@ -5187,6 +5207,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    string const & materialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     // Particle fields
     // ParticleType particleType = subRegion.getParticleType(); // CC: unused?
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
@@ -5196,7 +5217,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
     arrayView1d< int const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
     arrayView1d< real64 const > const particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
-
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
     arrayView2d< real64 const > const particleBodyForce = subRegion.getField< fields::mpm::particleBodyForce >();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
@@ -5213,7 +5233,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     arrayView3d< real64 > const gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
     arrayView2d< real64 > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
     arrayView2d< real64 > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
-
     arrayView2d< real64 > const gridMassWeightedDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massWeightedDamageString() );
     arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::normalStressString() );
 
