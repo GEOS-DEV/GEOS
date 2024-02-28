@@ -31,6 +31,20 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_AcousticTTIFletcherSEM:
+
+Element: AcousticTTIFletcherSEM
+===============================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIFletcherSEM.rst
+
+
+.. _XML_AcousticTTIZhangSEM:
+
+Element: AcousticTTIZhangSEM
+============================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIZhangSEM.rst
+
+
 .. _XML_AcousticVTIFletcherSEM:
 
 Element: AcousticVTIFletcherSEM
@@ -1440,6 +1454,20 @@ Datastructure: AcousticFirstOrderSEM
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticTTIFletcherSEM:
+
+Datastructure: AcousticTTIFletcherSEM
+=====================================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIFletcherSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticTTIZhangSEM:
+
+Datastructure: AcousticTTIZhangSEM
+==================================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIZhangSEM_other.rst
 
 
 .. _DATASTRUCTURE_AcousticVTIFletcherSEM:

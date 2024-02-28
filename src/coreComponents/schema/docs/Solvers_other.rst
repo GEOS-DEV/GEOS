@@ -6,6 +6,8 @@ Name                                          Type Description
 AcousticElasticSEM                            node :ref:`DATASTRUCTURE_AcousticElasticSEM`                            
 AcousticFirstOrderSEM                         node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                         
 AcousticSEM                                   node :ref:`DATASTRUCTURE_AcousticSEM`                                   
+AcousticTTIFletcherSEM                        node :ref:`DATASTRUCTURE_AcousticTTIFletcherSEM`                        
+AcousticTTIZhangSEM                           node :ref:`DATASTRUCTURE_AcousticTTIZhangSEM`                           
 AcousticVTIFletcherSEM                        node :ref:`DATASTRUCTURE_AcousticVTIFletcherSEM`                        
 AcousticVTIZhangSEM                           node :ref:`DATASTRUCTURE_AcousticVTIZhangSEM`                           
 CompositionalMultiphaseFVM                    node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                    
