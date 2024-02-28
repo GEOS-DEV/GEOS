@@ -401,10 +401,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticTTIFletcherSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                        CONSTITUTIVE_TYPE,
-                                                                        FE_TYPE,
-                                                                        1,
-                                                                        1 >
+                                                                         CONSTITUTIVE_TYPE,
+                                                                         FE_TYPE,
+                                                                         1,
+                                                                         1 >
 {
 public:
 
@@ -439,13 +439,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticTTIFletcherSEM( NodeManager & nodeManager,
-                                 EdgeManager const & edgeManager,
-                                 FaceManager const & faceManager,
-                                 localIndex const targetRegionIndex,
-                                 SUBREGION_TYPE const & elementSubRegion,
-                                 FE_TYPE const & finiteElementSpace,
-                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                 real64 const dt ):
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -546,29 +546,29 @@ public:
 
     real64 tti_tilt= 0;
     real64 tti_azimuth = 0;
-    real64 deg_to_rad = M_PI / 180 ;
+    real64 deg_to_rad = M_PI / 180;
     // Compute DIP with ATAN
-    real64 ftmp = atan(sqrt(m_tti_dipx[k] * m_tti_dipx[k] + m_tti_dipy[k] * m_tti_dipy[k]));
-    if ((ftmp < 0.) || (ftmp > M_PI * 0.5))
+    real64 ftmp = atan( sqrt( m_tti_dipx[k] * m_tti_dipx[k] + m_tti_dipy[k] * m_tti_dipy[k] ));
+    if((ftmp < 0.) || (ftmp > M_PI * 0.5))
     {
       // ierr=ierr_AZIMUTH
     }
-    tti_tilt = ftmp ;
+    tti_tilt = ftmp;
     // Compute Azimuth with ATAN2
-    ftmp = atan2(m_tti_dipy[k], m_tti_dipx[k]);
-    if ((ftmp < - M_PI) || (ftmp > M_PI))
+    ftmp = atan2( m_tti_dipy[k], m_tti_dipx[k] );
+    if((ftmp < -M_PI) || (ftmp > M_PI))
     {
       //ierr=ierr_DIP;
     }
-    else if (ftmp <= 0.)
+    else if( ftmp <= 0. )
     {
       ftmp = ftmp + 2 * M_PI;
     }
-    if (tti_tilt < (0.001*deg_to_rad))
+    if( tti_tilt < (0.001*deg_to_rad))
       tti_azimuth = 0.;
-    else if ((ftmp >= 0.) && (ftmp < M_PI))
+    else if((ftmp >= 0.) && (ftmp < M_PI))
       tti_azimuth = ftmp + M_PI;
-    else if ((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
+    else if((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
       tti_azimuth = ftmp - M_PI;
     real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
     // Pseudo Stiffness xy
@@ -636,7 +636,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticTTIFletcherWaveEquation kernel.
 using ExplicitAcousticTTIFletcherSEMFactory = finiteElement::KernelFactory< ExplicitAcousticTTIFletcherSEM,
-                                                                           real64 >;
+                                                                            real64 >;
 
 } // namespace AcousticTTIFletcherWaveEquationSEMKernels
 

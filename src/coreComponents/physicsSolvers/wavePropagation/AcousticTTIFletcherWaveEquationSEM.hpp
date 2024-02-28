@@ -36,15 +36,15 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticTTIFletcherWaveEquationSEM( const std::string & name,
-                                     Group * const parent );
+                                      Group * const parent );
 
   static string catalogName() { return "AcousticTTIFletcherSEM"; }
-  
+
   /**
-  * @copydoc SolverBase::getCatalogName()
-  */
+   * @copydoc SolverBase::getCatalogName()
+   */
   string getCatalogName() const override { return catalogName(); }
-  
+
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;

@@ -386,10 +386,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticTTIZhangSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                        CONSTITUTIVE_TYPE,
-                                                                        FE_TYPE,
-                                                                        1,
-                                                                        1 >
+                                                                      CONSTITUTIVE_TYPE,
+                                                                      FE_TYPE,
+                                                                      1,
+                                                                      1 >
 {
 public:
 
@@ -424,13 +424,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticTTIZhangSEM( NodeManager & nodeManager,
-                                 EdgeManager const & edgeManager,
-                                 FaceManager const & faceManager,
-                                 localIndex const targetRegionIndex,
-                                 SUBREGION_TYPE const & elementSubRegion,
-                                 FE_TYPE const & finiteElementSpace,
-                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                 real64 const dt ):
+                               EdgeManager const & edgeManager,
+                               FaceManager const & faceManager,
+                               localIndex const targetRegionIndex,
+                               SUBREGION_TYPE const & elementSubRegion,
+                               FE_TYPE const & finiteElementSpace,
+                               CONSTITUTIVE_TYPE & inputConstitutiveType,
+                               real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -530,41 +530,41 @@ public:
 
     real32 tti_tilt= 0;
     real32 tti_azimuth = 0;
-    real32 deg_to_rad = M_PI / 180 ;
+    real32 deg_to_rad = M_PI / 180;
     // Compute DIP with ATAN
-    real32 ftmp = atan(sqrt(m_tti_dipx[k] * m_tti_dipx[k] + m_tti_dipy[k] * m_tti_dipy[k]));
-    if ((ftmp < 0.) || (ftmp > M_PI * 0.5))
+    real32 ftmp = atan( sqrt( m_tti_dipx[k] * m_tti_dipx[k] + m_tti_dipy[k] * m_tti_dipy[k] ));
+    if((ftmp < 0.) || (ftmp > M_PI * 0.5))
     {
       // ierr=ierr_AZIMUTH
     }
-    tti_tilt = ftmp ;
+    tti_tilt = ftmp;
     // Compute Azimuth with ATAN2
-    ftmp = atan2(m_tti_dipy[k], m_tti_dipx[k]);
-    if ((ftmp < - M_PI) || (ftmp > M_PI))
+    ftmp = atan2( m_tti_dipy[k], m_tti_dipx[k] );
+    if((ftmp < -M_PI) || (ftmp > M_PI))
     {
       //ierr=ierr_DIP;
     }
-    else if (ftmp <= 0.)
+    else if( ftmp <= 0. )
     {
       ftmp = ftmp + 2 * M_PI;
     }
-    if (tti_tilt < (0.001*deg_to_rad))
+    if( tti_tilt < (0.001*deg_to_rad))
       tti_azimuth = 0.;
-    else if ((ftmp >= 0.) && (ftmp < M_PI))
+    else if((ftmp >= 0.) && (ftmp < M_PI))
       tti_azimuth = ftmp + M_PI;
-    else if ((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
+    else if((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
       tti_azimuth = ftmp - M_PI;
     // Pre compute variable
     // Make sure delta < epsilon (for stability)
-    real32 epsi = abs(m_vti_epsilon[k]);
-    real32 delt = abs(m_vti_delta[k]);
-    if(abs(epsi) < 1e-5)
+    real32 epsi = abs( m_vti_epsilon[k] );
+    real32 delt = abs( m_vti_delta[k] );
+    if( abs( epsi ) < 1e-5 )
       epsi = 0;
-    if(abs(delt) < 1e-5)
+    if( abs( delt ) < 1e-5 )
       delt = 0;
-    if(delt > epsi)
+    if( delt > epsi )
       delt = epsi;
-    real32 sqrtDelta = sqrt( 1 + 2 * delt);
+    real32 sqrtDelta = sqrt( 1 + 2 * delt );
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeRotatedStiffnessxyTerm( q, tti_tilt, tti_azimuth, stack.xLocal, [&] ( int i, int j, real64 val )
     {
@@ -626,7 +626,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticTTIZhangWaveEquation kernel.
 using ExplicitAcousticTTIZhangSEMFactory = finiteElement::KernelFactory< ExplicitAcousticTTIZhangSEM,
-                                                                           real64 >;
+                                                                         real64 >;
 
 } // namespace AcousticTTIZhangWaveEquationSEMKernels
 
