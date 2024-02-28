@@ -87,6 +87,7 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -314,6 +315,7 @@ struct DampingMatrixKernel
               xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
@@ -453,7 +455,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticTTIFletcherSEM Description
+   * ### ExplicitAcousticTTIZhangSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
