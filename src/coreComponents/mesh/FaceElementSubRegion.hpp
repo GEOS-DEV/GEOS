@@ -82,7 +82,7 @@ public:
    * @brief Fill the @p FaceElementSubRegion by copying those of the source face block
    * @param faceBlock the face block which properties (connectivity info) will be copied.
    */
-  void copyFromCellBlock( FaceBlockABC const & faceBlock );
+  void copyFromFaceBlock( FaceBlockABC const & faceBlock );
 
   /**
    * @name Geometry computation / Connectivity

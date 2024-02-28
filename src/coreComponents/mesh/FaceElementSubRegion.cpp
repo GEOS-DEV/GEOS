@@ -78,7 +78,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_numNodesPerElement = 8;
 }
 
-void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
+void FaceElementSubRegion::copyFromFaceBlock( FaceBlockABC const & faceBlock )
 {
   localIndex const num2dElements = faceBlock.num2dElements();
   resize( faceBlock.num2dElements() );
