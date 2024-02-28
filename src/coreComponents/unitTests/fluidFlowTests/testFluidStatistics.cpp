@@ -927,13 +927,13 @@ TestSet getTestSet()
                                 targetRegions="{ reservoir }"
                                 temperature="366.483"
                                 useMass="0"
-                                logLevel="0" >
+                                logLevel="1" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="gmres"
-                              preconditionerType="amg"
+      <LinearSolverParameters solverType="direct"
+                              preconditionerType="none"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
   </Solvers>
