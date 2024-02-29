@@ -18,6 +18,7 @@
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "codingUtilities/Table.hpp"
+#include "codingUtilities/Section.hpp"
 #include "common/Format.hpp"
 namespace geos
 {
@@ -531,6 +532,11 @@ void WellGeneratorBase::debugWellGeometry() const
 
   std::vector< string > row;
   std::ostringstream oss;
+
+  Section wellGeneratorSection;
+  wellGeneratorSection.setName("Well generator");
+  wellGeneratorSection.begin();
+
   Table table = Table( {
       Table::ColumnParam{{"Element no."}, Table::Alignment::right},
       Table::ColumnParam{{"CoordX"}, Table::Alignment::middle},
@@ -585,7 +591,7 @@ void WellGeneratorBase::debugWellGeometry() const
   }
 
   tablePerforation.draw();
-
+  wellGeneratorSection.end();
 }
 
 }

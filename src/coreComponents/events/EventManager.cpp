@@ -22,6 +22,7 @@
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/Units.hpp"
+#include "codingUtilities/Section.hpp"
 
 namespace geos
 {
@@ -170,6 +171,18 @@ bool EventManager::run( DomainPartition & domain )
 #endif
     }
 
+    string timeDescription = "- Time: " +  units::TimeFormatInfo::fromSeconds( m_time ).toString();
+    string deltaDescription = "- Delta time: " +  units::TimeFormatInfo::fromSeconds( m_dt ).toString();
+    string cycleDescription = "- Cycle: " +   std::to_string( m_cycle );
+
+    Section section;
+    section.setName( "TIMESTEP START" );
+    section.addDescription( timeDescription );
+    section.addDescription( deltaDescription );
+    section.addDescription( cycleDescription );
+    // The formating here is a work in progress.
+    section.begin();
+
     outputTime();
 
     // Execute
@@ -207,6 +220,7 @@ bool EventManager::run( DomainPartition & domain )
       }
     }
 
+    section.end();
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
     ++m_cycle;
@@ -226,17 +240,6 @@ bool EventManager::run( DomainPartition & domain )
 
 void EventManager::outputTime() const
 {
-  // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( GEOS_FMT( "\n"
-                             "------------------- TIMESTEP START -------------------\n"
-                             "    - Time:       {}\n"
-                             "    - Delta Time: {}\n"
-                             "    - Cycle:      {}\n"
-                             "------------------------------------------------------\n\n",
-                             units::TimeFormatInfo::fromSeconds( m_time ),
-                             units::TimeFormatInfo::fromSeconds( m_dt ),
-                             m_cycle ));
-
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
   {
