@@ -217,6 +217,7 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
+               -DGEOS_PYTHON_PACKAGES_BRANCH:STRING="bugfix/sherman/fixRebaselineLogging" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
