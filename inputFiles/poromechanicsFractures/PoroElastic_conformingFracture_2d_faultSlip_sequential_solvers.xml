@@ -19,6 +19,7 @@
         maxNumConfigurationAttempts="10"
         maxAllowedResidualNorm="1.0e15"/>
       <LinearSolverParameters
+        solverType="direct"
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
@@ -28,7 +29,11 @@
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"/>  
+      discretization="FE1">  
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SolidMechanicsLagrangeContact>
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -39,6 +44,7 @@
         newtonTol="1.0e-2"
         newtonMaxIter="8"/>
       <LinearSolverParameters
+        solverType="direct"
         directParallel="0"/>
     </SinglePhaseFVM>
 
