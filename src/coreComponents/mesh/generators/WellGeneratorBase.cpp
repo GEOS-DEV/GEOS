@@ -538,8 +538,7 @@ void WellGeneratorBase::debugWellGeometry() const
       Table::ColumnParam{{"CoordZ"}, Table::Alignment::middle},
       Table::ColumnParam{{"Prev\nElement"}, Table::Alignment::right},
       Table::ColumnParam{{"Next\nElement"}, Table::Alignment::right},
-    }
-                       );
+    } );
 
   string titleName = "InternalWellGenerator " + getName();
   table.setTitle( titleName );
@@ -559,23 +558,11 @@ void WellGeneratorBase::debugWellGeometry() const
       prevElement =  m_prevElemId[iwelem][0];
     }
 
-    for( globalIndex inode = 0; inode < m_numNodesPerElem; ++inode )
-    {
-      if( inode == 0 )
-      {
-        //std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-      else
-      {
-        //std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-    }
     table.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
-
   }
   table.draw();
 
-  Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected to" } );
+  Table tablePerforation = Table( {"Perforation no.", "Coordinates", "connected to" } );
   string titlePerfo = "Peforation table";
   tablePerforation.setTitle( titlePerfo );
 
