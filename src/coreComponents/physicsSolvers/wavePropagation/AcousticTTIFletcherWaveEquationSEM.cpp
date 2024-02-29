@@ -167,7 +167,6 @@ void AcousticTTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLe
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       acousticTTIFletcherWaveEquationSEMKernels::
@@ -276,8 +275,6 @@ void AcousticTTIFletcherWaveEquationSEM::initializePostInitialConditionsPreSubGr
       arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::acousticttifields::AcousticEpsilon >();
       arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::acousticttifields::AcousticDelta >();
       arrayView1d< real32 const > const vti_sigma    = elementSubRegion.getField< fields::acousticttifields::AcousticSigma >();
-      arrayView1d< real32 const > const tti_dipx    = elementSubRegion.getField< fields::acousticttifields::AcousticDipX >();
-      arrayView1d< real32 const > const tti_dipy      = elementSubRegion.getField< fields::acousticttifields::AcousticDipY >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -309,8 +306,6 @@ void AcousticTTIFletcherWaveEquationSEM::initializePostInitialConditionsPreSubGr
                                                                vti_epsilon,
                                                                vti_delta,
                                                                vti_sigma,
-                                                               tti_dipx,
-                                                               tti_dipy,
                                                                damping_p,
                                                                damping_q,
                                                                damping_pq,

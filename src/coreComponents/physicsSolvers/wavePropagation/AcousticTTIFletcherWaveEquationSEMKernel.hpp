@@ -270,8 +270,6 @@ struct DampingMatrixKernel
    * @param[in] vti_epsilon cell-wise Thomsen epsilon parameter
    * @param[in] vti_delta cell-wise Thomsen delta parameter
    * @param[in] vti_sigma cell-wise sigma parameter
-   * @param[in] tti_dipx cell-wise inline dip (for TTI medium)
-   * @param[in] tti_dipy cell-wise crossline dip (for TTI medium)
    * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
    * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
    * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
@@ -292,8 +290,6 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const vti_epsilon,
           arrayView1d< real32 const > const vti_delta,
           arrayView1d< real32 const > const vti_sigma,
-          arrayView1d< real32 const > const tti_dipx,
-          arrayView1d< real32 const > const tti_dipy,
           arrayView1d< real32 > const damping_p,
           arrayView1d< real32 > const damping_q,
           arrayView1d< real32 > const damping_pq,
