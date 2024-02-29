@@ -9,7 +9,6 @@ set( physicsSolvers_headers
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
-     contact/SolidMechanicsConformingFracturesVEM.hpp
      contact/SolidMechanicsEFEMKernelsBase.hpp
      contact/SolidMechanicsEFEMKernels.hpp
      contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
@@ -96,7 +95,6 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
-     multiphysics/SinglePhasePoromechanicsConformingFracturesVEM.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
@@ -191,7 +189,6 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanics.cpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.cpp
-     multiphysics/SinglePhasePoromechanicsConformingFracturesVEM.cpp
      multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
