@@ -655,7 +655,6 @@ TestSet getTestSet()
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
-                              ilukFill="1"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
   </Solvers>
