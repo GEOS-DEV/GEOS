@@ -345,6 +345,27 @@ public:
 
   /**@}*/
 
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override
+  {
+    bool isConverged = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      isConverged &= solver->checkSequentialSolutionIncrements( domain );
+    } );
+    return isConverged;
+  }
+
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      if( solver->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+      {
+        solver->saveSequentialIterationState( domain );
+      }
+    } );
+  }
+
 protected:
 
   /**
@@ -381,15 +402,10 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    // Only build the sparsity pattern if the mesh has changed
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-
-    // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
-    implicitStepSetup( time_n, dt, domain );
-
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-
-      // Only build the sparsity pattern if the mesh has changed
       if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
       {
         solver->setupSystem( domain,
@@ -399,10 +415,9 @@ protected:
                              solver->getSystemSolution() );
         solver->setSystemSetupTimestamp( meshModificationTimestamp );
       }
-
-      solver->implicitStepSetup( time_n, dt, domain );
-
     } );
+
+    implicitStepSetup( time_n, dt, domain );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer const maxNumberDtCuts = solverParams.m_maxTimeStepCuts;
@@ -463,14 +478,12 @@ protected:
                                                   stepDt,
                                                   domain );
 
+        // save fields (e.g. pressure and temperature) at the end of this iteration
+        saveSequentialIterationState( domain );
+
         if( isConverged )
         {
-          // Save Time step statistics for the subsolvers
-          forEachArgInTuple( m_solvers, [&]( auto & solver,
-                                             auto )
-          {
-            solver->getSolverStatistics().saveTimeStepStatistics();
-          } );
+          // exit outer loop
           break;
         }
         else
@@ -483,7 +496,12 @@ protected:
 
       if( isConverged )
       {
-        // get out of time loop
+        // Save time step statistics for the subsolvers
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getSolverStatistics().saveTimeStepStatistics();
+        } );
+        // get out of the time loop
         break;
       }
       else
@@ -494,8 +512,7 @@ protected:
 
         // notify the solver statistics counter that this is a time step cut
         m_solverStatistics.logTimeStepCut();
-        forEachArgInTuple( m_solvers, [&]( auto & solver,
-                                           auto )
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getSolverStatistics().logTimeStepCut();
         } );
@@ -527,7 +544,8 @@ protected:
    * @param domain the domain partition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+                                          integer const solverType )
   {
     GEOS_UNUSED_VAR( domain, solverType );
   }
@@ -535,7 +553,7 @@ protected:
   bool checkSequentialConvergence( int const & iter,
                                    real64 const & time_n,
                                    real64 const & dt,
-                                   DomainPartition & domain ) const
+                                   DomainPartition & domain )
   {
     NonlinearSolverParameters const & params = getNonlinearSolverParameters();
     bool isConverged = true;
@@ -546,9 +564,10 @@ protected:
     }
     else
     {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter + 1 ) );
+
       if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::ResidualNorm )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
         real64 residualNorm = 0;
 
         // loop over all the single-physics solvers
@@ -592,6 +611,7 @@ protected:
       }
       else if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::NumberOfNonlinearIterations )
       {
+        // TODO also make recursive?
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           NonlinearSolverParameters const & singlePhysicsParams = solver->getNonlinearSolverParameters();
@@ -600,6 +620,10 @@ protected:
             isConverged = false;
           }
         } );
+      }
+      else if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::SolutionIncrements )
+      {
+        isConverged = checkSequentialSolutionIncrements( domain );
       }
       else
       {

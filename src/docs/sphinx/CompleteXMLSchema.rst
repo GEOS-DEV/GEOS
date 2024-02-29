@@ -605,13 +605,6 @@ Element: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
-.. _XML_LagrangianContact:
-
-Element: LagrangianContact
-==========================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact.rst
-
-
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -1165,6 +1158,13 @@ Element: SolidMechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures.rst
 
 
+.. _XML_SolidMechanicsLagrangeContact:
+
+Element: SolidMechanicsLagrangeContact
+======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact.rst
+
+
 .. _XML_SolidMechanicsLagrangianSSLE:
 
 Element: SolidMechanicsLagrangianSSLE
@@ -1331,6 +1331,13 @@ Element: VTK
 Element: VTKMesh
 ================
 .. include:: ../../coreComponents/schema/docs/VTKMesh.rst
+
+
+.. _XML_VTKWell:
+
+Element: VTKWell
+================
+.. include:: ../../coreComponents/schema/docs/VTKWell.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -2023,13 +2030,6 @@ Datastructure: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_LagrangianContact:
-
-Datastructure: LagrangianContact
-================================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact_other.rst
-
-
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -2597,6 +2597,13 @@ Datastructure: SolidMechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
 
 
+.. _DATASTRUCTURE_SolidMechanicsLagrangeContact:
+
+Datastructure: SolidMechanicsLagrangeContact
+============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
 
 Datastructure: SolidMechanicsLagrangianSSLE
@@ -2770,6 +2777,13 @@ Datastructure: VTK
 Datastructure: VTKMesh
 ======================
 .. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
+
+
+.. _DATASTRUCTURE_VTKWell:
+
+Datastructure: VTKWell
+======================
+.. include:: ../../coreComponents/schema/docs/VTKWell_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
