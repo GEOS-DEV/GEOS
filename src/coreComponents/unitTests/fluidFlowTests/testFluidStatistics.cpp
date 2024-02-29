@@ -653,8 +653,8 @@ TestSet getTestSet()
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="fgmres"
-                              preconditionerType="iluk"
+      <LinearSolverParameters solverType="gmres"
+                              preconditionerType="amg"
                               ilukFill="1"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
@@ -929,8 +929,8 @@ TestSet getTestSet()
                                  newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="direct"
-                              preconditionerType="none"
+      <LinearSolverParameters solverType="gmres"
+                              preconditionerType="amg"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
   </Solvers>
