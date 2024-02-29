@@ -28,6 +28,8 @@ class Section
 {
 public:
 
+  Section();
+
   /**
    * @brief Set the name of the section
    * @param m_sectionTitle The name of the section
@@ -40,6 +42,11 @@ public:
    */
   void addDescription( string const & description );
 
+  /**
+   * @brief Set the minimal width of a row
+   * @param minWidth the minnimal width to set
+   */
+  void setMinWidth( integer const & minWidth );
   /**
    * @brief Draw the first part of the section. It include the title and, optionnaly, the description(s);
    * @param os An output stream (by default, std::cout)
@@ -68,21 +75,21 @@ private:
   void buildLineSection( string & lineSection );
 
   /**
-   * @brief Build and add the title to the first part of the section 
+   * @brief Build and add the title to the first part of the section
    * @param sectionToBeBuilt The current section being built
-   * @param title The section name 
+   * @param title The section name
    */
   void addTitleRow( string & sectionToBeBuilt, string const & title );
 
   /**
    * @brief Build and add the title to the last part of the section
    * @param sectionToBeBuilt The current section being built
-   * @param title The section name 
+   * @param title The section name
    */
   void addEndSectionRow( string & sectionToBeBuilt, string const & title );
-  
+
   /**
-   * @brief Build and add the descriptions to the first part of the section 
+   * @brief Build and add the descriptions to the first part of the section
    * @param sectionToBeBuilt The current section being built
    * @param rowsValue The vector of descriptions
    */
@@ -92,6 +99,7 @@ private:
 
   string m_sectionTitle;
   integer m_rowLength;
+  integer m_rowMinWidth;
 };
 }
 

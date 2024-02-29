@@ -17,9 +17,14 @@
  */
 
 #include "Section.hpp"
+#include <algorithm>
 
 namespace geos
 {
+
+Section::Section():
+  m_rowMinWidth( 20 )
+{}
 
 void Section::setName( string_view title )
 {
@@ -31,6 +36,11 @@ void Section::addDescription( string const & description )
   m_vDescriptions.push_back( description );
 }
 
+void Section::setMinWidth( integer const & minWidth )
+{
+  m_rowMinWidth = minWidth;
+}
+
 void Section::computeMaxRowSize( string const & title,
                                  std::vector< string > const & rowsDescription )
 {
@@ -39,9 +49,11 @@ void Section::computeMaxRowSize( string const & title,
   integer maxDescriptionLength = 0;
   integer titleLength = title.length() + marginBorder * 2 + nbSpecialChar * 2;
 
+
+  m_rowLength = std::max( m_rowMinWidth, titleLength );
+
   if( rowsDescription.size() == 0 )
   {
-    m_rowLength = titleLength;
     return;
   }
 
@@ -55,7 +67,7 @@ void Section::computeMaxRowSize( string const & title,
 
   maxDescriptionLength = integer( maxDescriptionSize.length()) + marginBorder * 2 + nbSpecialChar * 2;
 
-  m_rowLength = maxDescriptionLength > titleLength ? maxDescriptionLength : titleLength;
+  m_rowLength = std::max( maxDescriptionLength, m_rowLength );
 }
 
 void Section::buildLineSection( string & lineSection )
