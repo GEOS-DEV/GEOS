@@ -180,6 +180,7 @@ bool EventManager::run( DomainPartition & domain )
     section.addDescription( timeDescription );
     section.addDescription( deltaDescription );
     section.addDescription( cycleDescription );
+    section.setMinWidth(100);
     // The formating here is a work in progress.
     section.begin();
 
