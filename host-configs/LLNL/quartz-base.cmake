@@ -11,6 +11,32 @@
 set(GEOS_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." CACHE PATH "The path to the GEOS root directory" )
 message(STATUS "GEOS_ROOT_DIR: ${GEOS_ROOT_DIR}")
 
+set(PYTHON_DIR "/usr/tce/bin" CACHE PATH "Path to Python directory")
+message(STATUS "PYTHON_DIR: ${PYTHON_DIR}")
+execute_process(
+    COMMAND ${PYTHON_DIR}/python3 --version
+    RESULT_VARIABLE PYTHON_VERSION_RESULT
+    OUTPUT_VARIABLE PYTHON_VERSION_OUTPUT
+    ERROR_VARIABLE PYTHON_VERSION_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE
+)
+
+# Check the result variable to determine if the command was successful
+if (PYTHON_VERSION_RESULT EQUAL 0)
+    message(STATUS "Python version: ${PYTHON_VERSION_OUTPUT}")
+else()
+    message(STATUS "Failed to get Python version: ${PYTHON_VERSION_ERROR}")
+    message(FATAL_ERROR "Terminating process due to incorrect PYTHON_DIR variable.")
+endif()
+set(Python3_EXECUTABLE ${PYTHON_DIR}/python3 CACHE PATH "")
+
+#message(STATUS "Contents of the directory: ${CMAKE_CURRENT_SOURCE_DIR}/..")
+#execute_process(COMMAND ls ${CMAKE_CURRENT_SOURCE_DIR}/.. OUTPUT_VARIABLE dir_contents)
+#message(STATUS "Directory contents: ${dir_contents}")
+
+message( STATUS " MPI_HOME is set to ${MPI_HOME}" )
+
 # Fortran
 set(ENABLE_FORTRAN ON CACHE BOOL "")
 
@@ -40,8 +66,6 @@ set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
 
 # PYGEOSX
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
-#set(Python3_ROOT_DIR /usr/tce CACHE PATH "")
-set(Python3_EXECUTABLE /usr/tce/bin/python3 CACHE PATH "")
 
 # YAPF python formatting
 #set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/yapf CACHE PATH "" FORCE)

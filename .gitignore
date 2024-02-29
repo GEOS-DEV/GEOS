@@ -22,3 +22,5 @@ uberenv_libs
 spack-*.txt
 *~
 __pycache__
+
+/tplInstall*/

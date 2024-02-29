@@ -5207,7 +5207,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    string const & materialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    // string const & materialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     // Particle fields
     // ParticleType particleType = subRegion.getParticleType(); // CC: unused?
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();

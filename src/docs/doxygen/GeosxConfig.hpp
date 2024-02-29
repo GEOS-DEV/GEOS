@@ -168,7 +168,7 @@
 #define fmt_VERSION 8.0.1
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+#define Python3_VERSION 3.9.12
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
