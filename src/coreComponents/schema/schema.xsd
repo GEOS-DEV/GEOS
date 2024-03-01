@@ -409,10 +409,6 @@
 					<xsd:selector xpath="SinglePhasePoromechanicsConformingFractures" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="SolversSinglePhasePoromechanicsConformingFracturesVEMUniqueName">
-					<xsd:selector xpath="SinglePhasePoromechanicsConformingFracturesVEM" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="SolversSinglePhasePoromechanicsEmbeddedFracturesUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsEmbeddedFractures" />
 					<xsd:field xpath="@name" />
@@ -435,10 +431,6 @@
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseWellUniqueName">
 					<xsd:selector xpath="SinglePhaseWell" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="SolversSolidMechanicsConformingFracturesVEMUniqueName">
-					<xsd:selector xpath="SolidMechanicsConformingFracturesVEM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversSolidMechanicsEmbeddedFracturesUniqueName">
@@ -2141,7 +2133,6 @@ the relative residual norm satisfies:
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFractures" type="SinglePhasePoromechanicsConformingFracturesType" />
-			<xsd:element name="SinglePhasePoromechanicsConformingFracturesVEM" type="SinglePhasePoromechanicsConformingFracturesVEMType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFractures" type="SinglePhasePoromechanicsEmbeddedFracturesType" />
 			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
@@ -2153,7 +2144,6 @@ the relative residual norm satisfies:
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
-			<xsd:element name="SolidMechanicsConformingFracturesVEM" type="SolidMechanicsConformingFracturesVEMType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
@@ -3154,28 +3144,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesVEMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--SolidMechanicsConformingFracturesVEMSolverName => Name of the SolidMechanicsConformingFracturesVEM solver used by the coupled solver-->
-		<xsd:attribute name="SolidMechanicsConformingFracturesVEMSolverName" type="groupNameRef" use="required" />
-		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
-		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
-		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
-		<xsd:attribute name="isThermal" type="integer" default="0" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -3306,34 +3274,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--writeCSV => Write rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SolidMechanicsConformingFracturesVEMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
-		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="groupNameRef" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
-		<!--fractureRegionName => Name of the fracture region.-->
-		<xsd:attribute name="fractureRegionName" type="groupNameRef" use="required" />
-		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
-		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--polyMeshInfSup => Name of a boolean indicator if a polyhedral mesh is used for testing inf-sup stability.-->
-		<xsd:attribute name="polyMeshInfSup" type="string" default="" />
-		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
-		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
-		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->
-		<xsd:attribute name="stabilizationName" type="string" use="required" />
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

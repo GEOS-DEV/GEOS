@@ -1060,13 +1060,6 @@ Element: SinglePhasePoromechanicsConformingFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
-.. _XML_SinglePhasePoromechanicsConformingFracturesVEM:
-
-Element: SinglePhasePoromechanicsConformingFracturesVEM
-=======================================================
-.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesVEM.rst
-
-
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
 
 Element: SinglePhasePoromechanicsEmbeddedFractures
@@ -1142,13 +1135,6 @@ Element: SlipDependentPermeability
 Element: SolidInternalEnergy
 ============================
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
-
-
-.. _XML_SolidMechanicsConformingFracturesVEM:
-
-Element: SolidMechanicsConformingFracturesVEM
-=============================================
-.. include:: ../../coreComponents/schema/docs/SolidMechanicsConformingFracturesVEM.rst
 
 
 .. _XML_SolidMechanicsEmbeddedFractures:
@@ -2499,13 +2485,6 @@ Datastructure: SinglePhasePoromechanicsConformingFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
-.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesVEM:
-
-Datastructure: SinglePhasePoromechanicsConformingFracturesVEM
-=============================================================
-.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesVEM_other.rst
-
-
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
 
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
@@ -2581,13 +2560,6 @@ Datastructure: SlipDependentPermeability
 Datastructure: SolidInternalEnergy
 ==================================
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
-
-
-.. _DATASTRUCTURE_SolidMechanicsConformingFracturesVEM:
-
-Datastructure: SolidMechanicsConformingFracturesVEM
-===================================================
-.. include:: ../../coreComponents/schema/docs/SolidMechanicsConformingFracturesVEM_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
