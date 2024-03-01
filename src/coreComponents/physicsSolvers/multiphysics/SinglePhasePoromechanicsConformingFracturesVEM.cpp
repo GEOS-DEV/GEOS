@@ -534,7 +534,7 @@ void SinglePhasePoromechanicsConformingFracturesVEM::
       Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
-
+      
       globalIndex rowDOF[12];
       real64 nodeRHS[12];
       stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
