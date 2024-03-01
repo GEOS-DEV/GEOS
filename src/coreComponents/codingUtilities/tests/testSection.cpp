@@ -19,61 +19,73 @@
 
 using namespace geos;
 
-TEST( sectionTable, sectionClass )
+TEST( testSection, sectionClass )
 {
-  std::vector< string > testSectionOutput;
 
   std::ostringstream oss;
 
-  Section section1;
-  section1.setName( "section name" );
-  section1.begin( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[0], "" );
+  //testing section format with only title
+  {
+    Section section;
+    section.setName( "section name" );
+    section.begin( oss );
+    EXPECT_EQ( oss.str(),
+               "\n##############################\n"
+               "##  Section : section name  ##\n"
+               "##############################\n\n"
+               );
+    oss.clear();
+    oss.str( "" );
+    section.end( oss );
+    EXPECT_EQ( oss.str(),
+               "\n##    End : section name    ##\n"
+               "##############################\n\n"
+               );
+    oss.clear();
+    oss.str( "" );
+  }
 
-  section1.end( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[1], "" );
+  //testing section format with  title and one description
+  {
+    Section section;
+    section.setName( "section name" );
+    section.addDescription( "description name" );
+    section.begin( oss );
+    EXPECT_EQ( oss.str(),
+               "\n##############################\n"
+               "##  Section : section name  ##\n"
+               "##############################\n"
+               "##  description name        ##\n\n"
+               );
+    oss.clear();
+    oss.str( "" );
+  }
 
-  Section section2;
-  section2.setName( "section name" );
-  section2.addDescription( "description name" );
-  section2.begin( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[2], "" );
-
-  Section section3;
-  section3.setName( "section name" );
-  section3.addDescription( "description name 1" );
-  section3.addDescription( "description name 2" );
-  section3.begin( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[3], "" );
-
-  Section section4;
-  section4.setName( "section name" );
-  section4.addDescription( "description name 1" );
-  section4.addDescription( "description name 2" );
-  section4.setMinWidth( 100 );
-  section4.begin( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[4], "" );
-  section4.end( oss );
-  testSectionOutput.push_back( oss.str() );
-  oss.clear();
-  oss.str( "" );
-  EXPECT_EQ( testSectionOutput[5], "" );
-
+  //testing section format with title and multiple description with min width
+  {
+    Section section;
+    section.setName( "section name" );
+    section.addDescription( "description name 1" );
+    section.addDescription( "description name 2" );
+    section.setMinWidth( 100 );
+    section.begin( oss );
+    EXPECT_EQ( oss.str(),
+               "\n####################################################################################################\n"
+               "##                                     Section : section name                                     ##\n"
+               "####################################################################################################\n"
+               "##  description name 1                                                                            ##\n"
+               "##  description name 2                                                                            ##\n\n"
+               );
+    oss.clear();
+    oss.str( "" );
+    section.end( oss );
+    EXPECT_EQ( oss.str(),
+               "\n##                                       End : section name                                       ##\n"
+               "####################################################################################################\n\n"
+               );
+    oss.clear();
+    oss.str( "" );
+  }
 
 }
 
