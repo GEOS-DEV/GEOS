@@ -508,14 +508,14 @@ void SinglePhasePoromechanicsConformingFractures::
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                                        nodePosition, 
-                                                        faceToNodeMap, 
+                                                        nodePosition,
+                                                        faceToNodeMap,
                                                         faceToEdgeMap,
                                                         edgeToNodeMap,
                                                         faceCenters,
                                                         faceNormal,
                                                         faceAreas,
-                                                        nodalArea);
+                                                        nodalArea );
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );
@@ -626,14 +626,14 @@ void SinglePhasePoromechanicsConformingFractures::
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                                        nodePosition, 
-                                                        faceToNodeMap, 
+                                                        nodePosition,
+                                                        faceToNodeMap,
                                                         faceToEdgeMap,
                                                         edgeToNodeMap,
                                                         faceCenters,
                                                         faceNormal,
                                                         faceAreas,
-                                                        nodalArea);
+                                                        nodalArea );
 
           // TODO: move to something like this plus a static method.
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
@@ -685,14 +685,14 @@ void SinglePhasePoromechanicsConformingFractures::
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
-                                                      nodePosition, 
-                                                      faceToNodeMap, 
-                                                      faceToEdgeMap,
-                                                      edgeToNodeMap,
-                                                      faceCenters,
-                                                      faceNormal,
-                                                      faceAreas,
-                                                      nodalArea);
+                                                        nodePosition,
+                                                        faceToNodeMap,
+                                                        faceToEdgeMap,
+                                                        edgeToNodeMap,
+                                                        faceCenters,
+                                                        faceNormal,
+                                                        faceAreas,
+                                                        nodalArea );
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {

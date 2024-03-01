@@ -54,7 +54,7 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 using namespace finiteElement;
-const localIndex geos::SolidMechanicsLagrangeContact::m_MFN = 11; 
+const localIndex geos::SolidMechanicsLagrangeContact::m_MFN = 11;
 
 SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & name,
                                                               Group * const parent ):
@@ -473,24 +473,24 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
 
           array1d< real64 > nodalArea0, nodalArea1;
           computeFaceNodalArea( elemsToFaces[kfe][0],
-                            nodePosition, 
-                            faceToNodeMap, 
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceAreas,
-                            nodalArea0 );
+                                nodePosition,
+                                faceToNodeMap,
+                                faceToEdgeMap,
+                                edgeToNodeMap,
+                                faceCenters,
+                                faceNormals,
+                                faceAreas,
+                                nodalArea0 );
 
           computeFaceNodalArea( elemsToFaces[kfe][1],
-                            nodePosition, 
-                            faceToNodeMap, 
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceAreas,
-                            nodalArea1 );
+                                nodePosition,
+                                faceToNodeMap,
+                                faceToEdgeMap,
+                                edgeToNodeMap,
+                                faceCenters,
+                                faceNormals,
+                                faceAreas,
+                                nodalArea1 );
 
           real64 globalJumpTemp[ 3 ] = { 0 };
           for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -827,17 +827,17 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
 }
 
 void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                                                                localIndex const (&faceToNodes)[11],
-                                                                localIndex const (&faceToEdges)[11],
-                                                                localIndex const & numFaceVertices,
-                                                                real64 const & faceArea,
-                                                                real64 const (&faceCenter)[3],
-                                                                real64 const (&faceNormal)[3],
-                                                                arrayView2d< localIndex const > const & edgeToNodes,
-                                                                real64 const & invCellDiameter,
-                                                                real64 const (&cellCenter)[3],
-                                                                array1d< real64 > & basisIntegrals,
-                                                                real64 (& threeDMonomialIntegrals)[3] ) const
+                                                          localIndex const (&faceToNodes)[11],
+                                                          localIndex const (&faceToEdges)[11],
+                                                          localIndex const & numFaceVertices,
+                                                          real64 const & faceArea,
+                                                          real64 const (&faceCenter)[3],
+                                                          real64 const (&faceNormal)[3],
+                                                          arrayView2d< localIndex const > const & edgeToNodes,
+                                                          real64 const & invCellDiameter,
+                                                          real64 const (&cellCenter)[3],
+                                                          array1d< real64 > & basisIntegrals,
+                                                          real64 (& threeDMonomialIntegrals)[3] ) const
 {
   GEOS_MARK_FUNCTION;
   localIndex const MFN = m_MFN; // Max number of face vertices.
@@ -849,7 +849,7 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
   //  - below we compute the diameter, the rotated vertices and the rotated center.
   real64 faceRotatedVertices[ MFN ][ 2 ];
   real64 faceDiameter = 0;
-  
+
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
     // apply the transpose (that is the inverse) of the rotation matrix to face vertices.
@@ -866,8 +866,8 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
   }
 
   faceDiameter = SolidMechanicsLagrangeContact::
-                 computeDiameter< 2 >( faceRotatedVertices,
-                                       numFaceVertices );
+                   computeDiameter< 2 >( faceRotatedVertices,
+                                         numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;
   // - rotate the face centroid as done for the vertices.
   real64 faceRotatedCentroid[2];
@@ -1039,14 +1039,14 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
 }
 
 void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
-                          arrayView2d< localIndex const > const & edgeToNodeMap,
-                          arrayView2d< real64 const > const faceCenters,
-                          arrayView2d< real64 const > const faceNormals,
-                          arrayView1d< real64 const > const faceAreas,
-                          array1d< real64 > & basisIntegrals ) const
+                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                                                          arrayView2d< localIndex const > const & edgeToNodeMap,
+                                                          arrayView2d< real64 const > const faceCenters,
+                                                          arrayView2d< real64 const > const faceNormals,
+                                                          arrayView1d< real64 const > const faceAreas,
+                                                          array1d< real64 > & basisIntegrals ) const
 {
   GEOS_MARK_FUNCTION;
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
@@ -1101,7 +1101,7 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
       }
     }
   }
-  else if (numNodesPerFace > 4 && numNodesPerFace <= m_MFN)
+  else if( numNodesPerFace > 4 && numNodesPerFace <= m_MFN )
   {
     // we need to L2 projector based on VEM to approximate the quadrature weights
     // we need to use extra geometry information to computing L2 projector
@@ -1121,15 +1121,15 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
     }
     // - get outward face normal and center
     real64 faceNormal[3] = { faceNormals[faceIndex][0],
-                              faceNormals[faceIndex][1],
-                              faceNormals[faceIndex][2] };
+                             faceNormals[faceIndex][1],
+                             faceNormals[faceIndex][2] };
     real64 const faceCenter[3] { faceCenters[faceIndex][0],
-                                  faceCenters[faceIndex][1],
-                                  faceCenters[faceIndex][2] };
+                                 faceCenters[faceIndex][1],
+                                 faceCenters[faceIndex][2] };
     // - compute integrals calling auxiliary method
-    real64 threeDMonomialIntegrals[3] = { 0.0 };  
-    real64 const invCellDiameter = 0.0;           
-    real64 const cellCenter[3] { 0.0, 0.0, 0.0 }; 
+    real64 threeDMonomialIntegrals[3] = { 0.0 };
+    real64 const invCellDiameter = 0.0;
+    real64 const cellCenter[3] { 0.0, 0.0, 0.0 };
     computeFaceIntegrals( nodePosition,
                           faceToNodes,
                           faceToEdges,
@@ -1192,7 +1192,9 @@ void SolidMechanicsLagrangeContact::
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
       if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-      { return; }
+      {
+        return;
+      }
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
       globalIndex rowDOF[3 * m_MFN]; // this needs to be changed when dealing with arbitrary element types
@@ -1211,14 +1213,14 @@ void SolidMechanicsLagrangeContact::
         array1d< real64 > nodalArea;
         localIndex const faceIndex = elemsToFaces[kfe][kf];
         computeFaceNodalArea( faceIndex,
-                            nodePosition, 
-                            faceToNodeMap, 
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceAreas,
-                            nodalArea);
+                              nodePosition,
+                              faceToNodeMap,
+                              faceToEdgeMap,
+                              edgeToNodeMap,
+                              faceCenters,
+                              faceNormals,
+                              faceAreas,
+                              nodalArea );
 
         for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
@@ -1284,7 +1286,7 @@ void SolidMechanicsLagrangeContact::
   arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > faceAreas = faceManager.faceArea();
-  
+
   string const & tracDofKey = dofManager.getKey( contact::traction::key() );
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
@@ -1362,14 +1364,14 @@ void SolidMechanicsLagrangeContact::
                   // Compute local area contribution for each node
                   array1d< real64 > nodalArea;
                   computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                     nodePosition, 
-                                     faceToNodeMap, 
-                                     faceToEdgeMap,
-                                     edgeToNodeMap,
-                                     faceCenters,
-                                     faceNormals,
-                                     faceAreas,
-                                     nodalArea);
+                                        nodePosition,
+                                        faceToNodeMap,
+                                        faceToEdgeMap,
+                                        edgeToNodeMap,
+                                        faceCenters,
+                                        faceNormals,
+                                        faceAreas,
+                                        nodalArea );
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
                   {
@@ -1396,14 +1398,14 @@ void SolidMechanicsLagrangeContact::
                   // Compute local area contribution for each node
                   array1d< real64 > nodalArea;
                   computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                     nodePosition, 
-                                     faceToNodeMap, 
-                                     faceToEdgeMap,
-                                     edgeToNodeMap,
-                                     faceCenters,
-                                     faceNormals,
-                                     faceAreas,
-                                     nodalArea);
+                                        nodePosition,
+                                        faceToNodeMap,
+                                        faceToEdgeMap,
+                                        edgeToNodeMap,
+                                        faceCenters,
+                                        faceNormals,
+                                        faceAreas,
+                                        nodalArea );
 
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
                   {
@@ -1442,14 +1444,14 @@ void SolidMechanicsLagrangeContact::
                     // Compute local area contribution for each node
                     array1d< real64 > nodalArea;
                     computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                     nodePosition, 
-                                     faceToNodeMap, 
-                                     faceToEdgeMap,
-                                     edgeToNodeMap,
-                                     faceCenters,
-                                     faceNormals,
-                                     faceAreas,
-                                     nodalArea);
+                                          nodePosition,
+                                          faceToNodeMap,
+                                          faceToEdgeMap,
+                                          edgeToNodeMap,
+                                          faceCenters,
+                                          faceNormals,
+                                          faceAreas,
+                                          nodalArea );
 
                     for( localIndex a = 0; a < numNodesPerFace; ++a )
                     {
@@ -1702,24 +1704,24 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
         localIndex const faceIndex1 = elem2dToFaces[sei[iconn][1]][id1];
 
         computeFaceNodalArea( faceIndex0,
-                            nodePosition, 
-                            faceToNodeMap, 
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceArea,
-                            nodalArea0);
+                              nodePosition,
+                              faceToNodeMap,
+                              faceToEdgeMap,
+                              edgeToNodeMap,
+                              faceCenters,
+                              faceNormals,
+                              faceArea,
+                              nodalArea0 );
 
         computeFaceNodalArea( faceIndex1,
-                            nodePosition, 
-                            faceToNodeMap, 
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceArea,
-                            nodalArea1);
+                              nodePosition,
+                              faceToNodeMap,
+                              faceToEdgeMap,
+                              edgeToNodeMap,
+                              faceCenters,
+                              faceNormals,
+                              faceArea,
+                              nodalArea1 );
 
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 

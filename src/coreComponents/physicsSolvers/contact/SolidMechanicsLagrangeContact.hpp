@@ -144,27 +144,27 @@ public:
   //                           array1d< real64 > & nodalArea ) const;
 
   void computeFaceNodalArea( localIndex const kf0,
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
-                          arrayView2d< localIndex const > const & edgeToNodeMap,
-                          arrayView2d< real64 const > const faceCenters,
-                          arrayView2d< real64 const > const faceNormals,
-                          arrayView1d< real64 const > const faceAreas,
-                          array1d< real64 > & basisIntegrals ) const;                           
+                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                             arrayView2d< localIndex const > const & edgeToNodeMap,
+                             arrayView2d< real64 const > const faceCenters,
+                             arrayView2d< real64 const > const faceNormals,
+                             arrayView1d< real64 const > const faceAreas,
+                             array1d< real64 > & basisIntegrals ) const;
 
   void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                      localIndex const (&faceToNodes)[11],
-                      localIndex const (&faceToEdges)[11],
-                      localIndex const & numFaceVertices,
-                      real64 const & faceArea,
-                      real64 const (&faceCenter)[3],
-                      real64 const (&faceNormal)[3],
-                      arrayView2d< localIndex const > const & edgeToNodes,
-                      real64 const & invCellDiameter,
-                      real64 const (&cellCenter)[3],
-                      array1d< real64 > & basisIntegrals,
-                      real64 (& threeDMonomialIntegrals)[3] ) const;
+                             localIndex const (&faceToNodes)[11],
+                             localIndex const (&faceToEdges)[11],
+                             localIndex const & numFaceVertices,
+                             real64 const & faceArea,
+                             real64 const (&faceCenter)[3],
+                             real64 const (&faceNormal)[3],
+                             arrayView2d< localIndex const > const & edgeToNodes,
+                             real64 const & invCellDiameter,
+                             real64 const (&cellCenter)[3],
+                             array1d< real64 > & basisIntegrals,
+                             real64 ( &threeDMonomialIntegrals )[3] ) const;
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
@@ -186,7 +186,7 @@ private:
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOS_HOST_DEVICE
   inline static real64 computeDiameter( POINT_COORDS_TYPE points,
-                                localIndex const & numPoints )
+                                        localIndex const & numPoints )
   {
     real64 diameter = 0;
     for( localIndex numPoint = 0; numPoint < numPoints; ++numPoint )
