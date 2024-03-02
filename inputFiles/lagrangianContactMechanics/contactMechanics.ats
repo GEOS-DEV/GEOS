@@ -50,7 +50,7 @@ decks = [
         name="ContactMechanics_PEBI_patch_test",
         description=
         "Two cubes with a fracture separating them (unstructured PEBI grid)",
-        partitions=((1, 1, 1), ),
+        partitions=((1, 1, 1), (2, 1, 1)),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
