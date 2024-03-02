@@ -706,26 +706,6 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
 
   // update the stencil weights using the updated hydraulic aperture
   flowSolver()->updateStencilWeights( domain );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
-    {
-      // update fluid model
-      flowSolver()->updateFluidState( subRegion );
-      if( m_isThermal )
-      {
-        // update solid internal energy
-        flowSolver()->updateSolidInternalEnergyModel( subRegion );
-      }
-    } );
-  } );
 }
 
 void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
