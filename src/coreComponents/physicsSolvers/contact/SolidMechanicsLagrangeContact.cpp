@@ -54,7 +54,7 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 using namespace finiteElement;
-const localIndex geos::SolidMechanicsLagrangeContact::m_MFN = 11;
+const localIndex geos::SolidMechanicsLagrangeContact::m_maxFaceNodes = 11;
 
 SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & name,
                                                               Group * const parent ):
@@ -840,7 +840,7 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
                                                           real64 (& threeDMonomialIntegrals)[3] ) const
 {
   GEOS_MARK_FUNCTION;
-  localIndex const MFN = m_MFN; // Max number of face vertices.
+  localIndex const MFN = m_maxFaceNodes; // Max number of face vertices.
   basisIntegrals.resize( numFaceVertices );
   // Rotate the face.
   //  - compute rotation matrix.
@@ -1101,12 +1101,12 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
       }
     }
   }
-  else if( numNodesPerFace > 4 && numNodesPerFace <= m_MFN )
+  else if( numNodesPerFace > 4 && numNodesPerFace <= m_maxFaceNodes )
   {
     // we need to L2 projector based on VEM to approximate the quadrature weights
     // we need to use extra geometry information to computing L2 projector
 
-    localIndex const MFN = m_MFN; // Max number of face vertices.
+    localIndex const MFN = m_maxFaceNodes; // Max number of face vertices.
     localIndex const faceIndex = kf0;
     localIndex const numFaceNodes = faceToNodeMap[ faceIndex ].size();
 
@@ -1197,9 +1197,9 @@ void SolidMechanicsLagrangeContact::
       }
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
-      globalIndex rowDOF[3 * m_MFN]; // this needs to be changed when dealing with arbitrary element types
-      real64 nodeRHS[3 * m_MFN];
-      stackArray2d< real64, 3 * m_MFN * 3 > dRdT( 3 * m_MFN, 3 );
+      globalIndex rowDOF[3 * m_maxFaceNodes]; // this needs to be changed when dealing with arbitrary element types
+      real64 nodeRHS[3 * m_maxFaceNodes];
+      stackArray2d< real64, 3 * m_maxFaceNodes * 3 > dRdT( 3 * m_maxFaceNodes, 3 );
       globalIndex colDOF[3];
       for( localIndex i = 0; i < 3; ++i )
       {
@@ -1330,7 +1330,7 @@ void SolidMechanicsLagrangeContact::
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          globalIndex nodeDOF[2 * 3 * m_MFN];
+          globalIndex nodeDOF[2 * 3 * m_maxFaceNodes];
           globalIndex elemDOF[3];
           for( localIndex i = 0; i < 3; ++i )
           {
@@ -1340,7 +1340,7 @@ void SolidMechanicsLagrangeContact::
           real64 elemRHS[3] = {0.0, 0.0, 0.0};
           real64 const Ja = area[kfe];
 
-          stackArray2d< real64, 2 * 3 * m_MFN * 3 > dRdU( 3, 2 * 3 * m_MFN );
+          stackArray2d< real64, 2 * 3 * m_maxFaceNodes * 3 > dRdU( 3, 2 * 3 * m_maxFaceNodes );
           stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
 
           switch( fractureState[kfe] )
@@ -1576,8 +1576,6 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 
   GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
   ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
-
-  //GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =

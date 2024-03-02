@@ -173,7 +173,7 @@ private:
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
-  static const localIndex m_MFN; // Maximum number of nodes on a contact face
+  static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
 
   void createPreconditioner( DomainPartition const & domain );
 
