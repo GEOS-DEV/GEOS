@@ -139,10 +139,6 @@ public:
 
   void computeTolerances( DomainPartition & domain ) const;
 
-  //void computeFaceNodalArea( MeshLevel const & mesh,
-  //                           localIndex const kf0,
-  //                           array1d< real64 > & nodalArea ) const;
-
   void computeFaceNodalArea( localIndex const kf0,
                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
