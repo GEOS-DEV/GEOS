@@ -69,6 +69,13 @@ decks = [
              check_step=12,
              restartcheck_params=RestartcheckParameters(atol=1e-05,
                                                         rtol=4e-04))
+   TestDeck(
+        name="PoroElastic_dfm_vem_pebi",
+        description='Plane strain poro-elastic problems with conforming vertical fracture (unstructured PEBI grid)',
+        partitions=((1, 1, 1)),
+        restart_step=0,
+        check_step=5,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)
