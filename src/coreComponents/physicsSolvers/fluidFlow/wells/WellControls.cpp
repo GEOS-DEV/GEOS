@@ -80,6 +80,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the target phase" );
@@ -131,18 +132,22 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
   registerWrapper( viewKeyStruct::targetBHPTableNameString(), &m_targetBHPTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the BHP table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::targetTotalRateTableNameString(), &m_targetTotalRateTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the total rate table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateTableNameString(), &m_targetPhaseRateTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the phase rate table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
@@ -185,7 +190,7 @@ TableFunction * createWellTable( string const & tableName,
 
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ));
-  table->setTableCoordinates( timeCoord );
+  table->setTableCoordinates( timeCoord, { units::Time } );
   table->setTableValues( constantValueArray );
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   return table;
@@ -260,13 +265,7 @@ void WellControls::postProcessInput()
                  getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError );
 
-  // 4) check the flag for surface / reservoir conditions
-  GEOS_THROW_IF( m_useSurfaceConditions == 1 && m_surfacePres <= 0,
-                 "WellControls " << getDataContext() << ": When " << viewKeyStruct::useSurfaceConditionsString() << " == 1, " <<
-                 viewKeyStruct::surfacePressureString() << " must be defined",
-                 InputError );
-
-  // 5) check that at least one rate constraint has been defined
+  // 4) check that at least one rate constraint has been defined
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                   (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You need to specify a phase rate constraint or a total rate constraint. \n" <<
@@ -278,7 +277,7 @@ void WellControls::postProcessInput()
                  " or " << viewKeyStruct::targetTotalRateTableNameString(),
                  InputError );
 
-  // 6) check whether redundant information has been provided
+  // 5) check whether redundant information has been provided
   GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well phase rate." <<
                  " The keywords " << viewKeyStruct::targetPhaseRateString() << " and " << viewKeyStruct::targetPhaseRateTableNameString() << " cannot be specified together",

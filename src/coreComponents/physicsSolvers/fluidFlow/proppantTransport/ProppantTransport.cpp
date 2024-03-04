@@ -506,7 +506,7 @@ void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 }
 
 
-void ProppantTransport::assembleSystem( real64 const time,
+void ProppantTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -521,8 +521,7 @@ void ProppantTransport::assembleSystem( real64 const time,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -588,8 +587,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 }
 
 
-void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                           real64 const dt,
+void ProppantTransport::assembleFluxTerms( real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -860,6 +858,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                                                    dofKey,
                                                    localRhs,
                                                    subRegion,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 

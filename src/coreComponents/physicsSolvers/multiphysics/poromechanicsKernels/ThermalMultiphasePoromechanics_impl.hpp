@@ -51,6 +51,7 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
                                 string const inputFlowDofKey,
                                 localIndex const numComponents,
                                 localIndex const numPhases,
+                                integer const useTotalMassEquation,
                                 string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -68,6 +69,8 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
         inputFlowDofKey,
         numComponents,
         numPhases,
+        false, // do not use simple accumulation form
+        useTotalMassEquation,
         fluidModelKey ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
@@ -542,9 +545,12 @@ complete( localIndex const k,
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
-  // Apply equation/variable change transformation(s)
-  real64 work[maxNumComponents + 1]{};
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dTemperature, work );
+  if( m_useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[maxNumComponents + 1]{};
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dTemperature, work );
+  }
 
   // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix
 

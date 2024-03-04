@@ -27,7 +27,7 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
-
+#include "WaveSolverUtils.hpp"
 
 #if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
@@ -49,8 +49,9 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< >;
-  using wsCoordType = real32;
+  static constexpr real64 epsilonLoc = WaveSolverUtils::epsilonLoc;
+  using EXEC_POLICY = WaveSolverUtils::EXEC_POLICY;
+  using wsCoordType = WaveSolverUtils::wsCoordType;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -83,6 +84,8 @@ public:
     static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
+    static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
+    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
 
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
@@ -94,7 +97,6 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
@@ -107,23 +109,30 @@ public:
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
+    static constexpr char const * linearDASSamplesString() { return "linearDASSamples"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
+    static constexpr char const * linearDASVectorXString() { return "linearDASVectorX"; }
+    static constexpr char const * linearDASVectorYString() { return "linearDASVectorY"; }
+    static constexpr char const * linearDASVectorZString() { return "linearDASVectorZ"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
 
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */
   void reinit() override final;
+
+  SortedArray< localIndex > const & getSolverNodesSet() { return m_solverTargetNodesSet; }
+
+  void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                             localIndex const subRegionSize,
+                             localIndex const numQuadraturePointsPerElem );
 
 protected:
 
@@ -143,15 +152,45 @@ protected:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
 
-  /**
-   * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
-   */
-  virtual void initializeDAS();
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
   virtual void initializePML() = 0;
+
+  virtual void incrementIndexSeismoTrace( real64 const time_n );
+
+  /**
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
+   * @param coeffs a vector of receiver-dependent coefficients to be applied. Taken to be 1 by default
+   * @param add true if new values are added to the array, false if they overwrite current data
+   */
+  virtual void computeAllSeismoTraces( real64 const time_n,
+                                       real64 const dt,
+                                       arrayView1d< real32 const > const var_np1,
+                                       arrayView1d< real32 const > const var_n,
+                                       arrayView2d< real32 > varAtReceivers,
+                                       arrayView1d< real32 > coeffs = {},
+                                       bool add = false );
+  /**
+   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   * @param var_np1 the field values at time_n + dt
+   * @param var_n the field values at time_n
+   * @param varAtreceivers the array holding the trace values, where the output is written
+   */
+  virtual void compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                 real64 const time_n,
+                                                 real64 const dt,
+                                                 arrayView2d< real32 const > const var_np1,
+                                                 arrayView2d< real32 const > const var_n,
+                                                 arrayView2d< real32 > varAtReceivers );
 
   /**
    * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
@@ -159,8 +198,6 @@ protected:
    * @param domain the partition domain
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) = 0;
-
-
 
   /**
    * @brief Locate sources and receivers positions in the mesh elements, evaluate the basis functions at each point and save them to the
@@ -201,7 +238,6 @@ protected:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-
   localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
@@ -213,6 +249,9 @@ protected:
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
 
+  /// Source time delay (1 / f0 by default)
+  real32 m_timeSourceDelay;
+
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
 
@@ -220,7 +259,7 @@ protected:
   localIndex m_rickerOrder;
 
   /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
-  localIndex m_outputSeismoTrace;
+  integer m_outputSeismoTrace;
 
   /// Time step for seismoTrace output
   real64 m_dtSeismoTrace;
@@ -231,11 +270,23 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Flag to indicate if DAS type of data will be modeled
-  integer m_useDAS;
+  /// Flag to indicate which DAS type  will be modeled
+  WaveSolverUtils::DASType m_useDAS;
+
+  /// Number of points used for strain integration for dipole DAS
+  integer m_linearDASSamples;
 
   /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
   array2d< real64 > m_linearDASGeometry;
+
+  /// X component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorX;
+
+  /// Y component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorY;
+
+  /// Z component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorZ;
 
   /// Indicate if we want to compute forward ou backward
   localIndex m_forward;
@@ -267,6 +318,12 @@ protected:
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
 
+  /// Array containing the elements which contain a receiver
+  array1d< localIndex > m_rcvElem;
+
+  /// Array containing the elements which contain the region which the receiver belongs
+  array1d< localIndex > m_receiverRegion;
+
   /// Flag to enable LIFO
   localIndex m_enableLifo;
 
@@ -281,6 +338,9 @@ protected:
 
   /// LIFO to store p_dt2
   std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
+
+  /// A set of target nodes IDs that will be handled by the current solver
+  SortedArray< localIndex > m_solverTargetNodesSet;
 
   struct parametersPML
   {
@@ -306,7 +366,7 @@ protected:
 
 namespace fields
 {
-using reference32Type = array2d< WaveSolverBase::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+using reference32Type = array2d< WaveSolverUtils::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
 DECLARE_FIELD( referencePosition32,
                "referencePosition32",
                reference32Type,

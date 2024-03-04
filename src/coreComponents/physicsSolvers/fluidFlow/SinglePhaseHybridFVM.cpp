@@ -77,7 +77,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
-                           catalogName(), getDataContext().toString() ),
+                           getCatalogName(), getDataContext().toString() ),
                  InputError );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -85,7 +85,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 catalogName() << " " << getDataContext() <<
+                 getCatalogName() << " " << getDataContext() <<
                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
                  InputError );
 }
@@ -123,14 +123,14 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     } );
 
     GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                          catalogName() << " " << getDataContext() <<
+                          getCatalogName() << " " << getDataContext() <<
                           "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                           std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( catalogName() << " " << getDataContext() <<
+      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() <<
                        "The aquifer boundary condition " << bc.getDataContext() << " was requested in the XML file. \n" <<
                        "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
     } );
@@ -201,8 +201,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM(
                           DofManager::Connector::Elem );
 }
 
-void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                              real64 const dt,
+void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
                                               DomainPartition const & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -268,7 +267,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( ti
 
 }
 
-void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const time_n,
+void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -278,8 +277,7 @@ void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const time_n,
 {
   GEOS_UNUSED_VAR ( jumpDofKey );
 
-  assembleFluxTerms( time_n,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -494,6 +492,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
                                                    subRegion,
                                                    fluid,
                                                    solid,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 
@@ -535,6 +534,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
                                                  faceManager,
                                                  defaultViscosity,
                                                  dt,
+                                                 m_nonlinearSolverParameters.m_minNormalizer,
                                                  faceResidualNorm,
                                                  faceResidualNormalizer );
 

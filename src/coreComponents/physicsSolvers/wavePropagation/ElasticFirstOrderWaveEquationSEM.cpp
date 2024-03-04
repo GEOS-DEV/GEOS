@@ -54,32 +54,32 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxxNp1AtReceiversString(), &m_sigmaxxNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayyNp1AtReceiversString(), &m_sigmayyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmazzNp1AtReceiversString(), &m_sigmazzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxyNp1AtReceiversString(), &m_sigmaxyNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmaxzNp1AtReceiversString(), &m_sigmaxzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
 
-  registerWrapper( viewKeyStruct::displacementzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
+  registerWrapper( viewKeyStruct::sigmayzNp1AtReceiversString(), &m_sigmayzNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-components)" );
@@ -89,21 +89,10 @@ ElasticFirstOrderWaveEquationSEM::ElasticFirstOrderWaveEquationSEM( const std::s
     setSizedFromParent( 0 ).
     setDescription( "Element containing the sources" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Element containing the receivers" );
-
   registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Region containing the sources" );
-
-  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Region containing the receivers" );
-
 }
 
 ElasticFirstOrderWaveEquationSEM::~ElasticFirstOrderWaveEquationSEM()
@@ -128,35 +117,35 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< wavesolverfields::Displacementx_np1,
-                               wavesolverfields::Displacementy_np1,
-                               wavesolverfields::Displacementz_np1,
-                               wavesolverfields::ForcingRHS,
-                               wavesolverfields::MassVector,
-                               wavesolverfields::DampingVectorx,
-                               wavesolverfields::DampingVectory,
-                               wavesolverfields::DampingVectorz,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< elasticfields::Displacementx_np1,
+                               elasticfields::Displacementy_np1,
+                               elasticfields::Displacementz_np1,
+                               elasticfields::ForcingRHS,
+                               elasticfields::ElasticMassVector,
+                               elasticfields::DampingVectorx,
+                               elasticfields::DampingVectory,
+                               elasticfields::DampingVectorz,
+                               elasticfields::ElasticFreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< elasticfields::ElasticFreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( this->getName() );
-      subRegion.registerField< wavesolverfields::Lambda >( this->getName() );
-      subRegion.registerField< wavesolverfields::Mu >( this->getName() );
+      subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
+      subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
+      subRegion.registerField< elasticfields::ElasticDensity >( getName() );
+      subRegion.registerField< elasticfields::Lambda >( getName() );
+      subRegion.registerField< elasticfields::Mu >( getName() );
 
-      subRegion.registerField< wavesolverfields::Stresstensorxx >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensoryy >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorzz >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorxy >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorxz >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensoryz >( this->getName());
+      subRegion.registerField< elasticfields::Stresstensorxx >( getName());
+      subRegion.registerField< elasticfields::Stresstensoryy >( getName());
+      subRegion.registerField< elasticfields::Stresstensorzz >( getName());
+      subRegion.registerField< elasticfields::Stresstensorxy >( getName());
+      subRegion.registerField< elasticfields::Stresstensorxz >( getName());
+      subRegion.registerField< elasticfields::Stresstensoryz >( getName());
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -167,12 +156,12 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-        subRegion.getField< wavesolverfields::Stresstensorxx >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Stresstensoryy >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Stresstensorzz >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Stresstensorxy >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Stresstensorxz >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Stresstensoryz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensorxx >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensoryy >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensorzz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensorxy >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensorxz >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< elasticfields::Stresstensoryz >().resizeDimension< 1 >( numNodesPerElem );
       } );
 
 
@@ -196,18 +185,16 @@ void ElasticFirstOrderWaveEquationSEM::postProcessInput()
   m_rcvElem.resize( numReceiversGlobal );
   m_receiverRegion.resize( numReceiversGlobal );
 
-  m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_displacementyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_displacementzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_displacementyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_displacementzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 
-  m_sigmaxxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sigmayyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sigmazzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sigmaxyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sigmaxzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_sigmayzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-
-
+  m_sigmaxxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_sigmayyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_sigmazzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_sigmaxyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_sigmaxzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_sigmayzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
 
@@ -241,16 +228,14 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   receiverConstants.setValues< serialPolicy >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
 
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -275,7 +260,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       elasticFirstOrderWaveEquationSEMKernels::
@@ -283,7 +267,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
-        numNodesPerElem,
         numFacesPerElem,
         X,
         elemGhostRank,
@@ -306,34 +289,10 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder );
     } );
-  } );
-}
-
-
-void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
-{
-  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
-  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
-  arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
-                 getDataContext() << ": Too many steps compared to array size",
-                 std::runtime_error );
-
-  forAll< serialPolicy >( m_sourceConstants.size( 0 ), [=] ( localIndex const isrc )
-  {
-    if( sourceIsAccessible[isrc] == 1 )
-    {
-      for( localIndex inode = 0; inode < m_sourceConstants.size( 1 ); ++inode )
-      {
-        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
-      }
-    }
   } );
 }
 
@@ -342,7 +301,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
@@ -365,18 +324,18 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< elasticfields::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< elasticfields::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< elasticfields::DampingVectorz >();
     dampingx.zero();
     dampingy.zero();
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< elasticfields::ElasticFreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -384,9 +343,9 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
+      arrayView1d< real32 > const density = elementSubRegion.getField< elasticfields::ElasticDensity >();
+      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< elasticfields::ElasticVelocityVp >();
+      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -434,17 +393,17 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-  arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-  arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticfields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< elasticfields::ElasticFreeSurfaceFaceIndicator >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< elasticfields::ElasticFreeSurfaceNodeIndicator >();
 
   freeSurfaceFaceIndicator.zero();
   freeSurfaceNodeIndicator.zero();
@@ -539,15 +498,15 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 > const dampingx = nodeManager.getField< wavesolverfields::DampingVectorx >();
-    arrayView1d< real32 > const dampingy = nodeManager.getField< wavesolverfields::DampingVectory >();
-    arrayView1d< real32 > const dampingz = nodeManager.getField< wavesolverfields::DampingVectorz >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
+    arrayView1d< real32 > const dampingx = nodeManager.getField< elasticfields::DampingVectorx >();
+    arrayView1d< real32 > const dampingy = nodeManager.getField< elasticfields::DampingVectory >();
+    arrayView1d< real32 > const dampingz = nodeManager.getField< elasticfields::DampingVectorz >();
 
 
-    arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticfields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -555,19 +514,19 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
-      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< elasticfields::ElasticVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< elasticfields::ElasticDensity >();
 
-      arrayView1d< real32 > const lambda = elementSubRegion.getField< wavesolverfields::Lambda >();
-      arrayView1d< real32 > const mu = elementSubRegion.getField< wavesolverfields::Mu >();
+      arrayView1d< real32 > const lambda = elementSubRegion.getField< elasticfields::Lambda >();
+      arrayView1d< real32 > const mu = elementSubRegion.getField< elasticfields::Mu >();
 
-      arrayView2d< real32 > const stressxx = elementSubRegion.getField< wavesolverfields::Stresstensorxx >();
-      arrayView2d< real32 > const stressyy = elementSubRegion.getField< wavesolverfields::Stresstensoryy >();
-      arrayView2d< real32 > const stresszz = elementSubRegion.getField< wavesolverfields::Stresstensorzz >();
-      arrayView2d< real32 > const stressxy = elementSubRegion.getField< wavesolverfields::Stresstensorxy >();
-      arrayView2d< real32 > const stressxz = elementSubRegion.getField< wavesolverfields::Stresstensorxz >();
-      arrayView2d< real32 > const stressyz = elementSubRegion.getField< wavesolverfields::Stresstensoryz >();
+      arrayView2d< real32 > const stressxx = elementSubRegion.getField< elasticfields::Stresstensorxx >();
+      arrayView2d< real32 > const stressyy = elementSubRegion.getField< elasticfields::Stresstensoryy >();
+      arrayView2d< real32 > const stresszz = elementSubRegion.getField< elasticfields::Stresstensorzz >();
+      arrayView2d< real32 > const stressxy = elementSubRegion.getField< elasticfields::Stresstensorxy >();
+      arrayView2d< real32 > const stressxz = elementSubRegion.getField< elasticfields::Stresstensorxz >();
+      arrayView2d< real32 > const stressyz = elementSubRegion.getField< elasticfields::Stresstensoryz >();
 
 
       finiteElement::FiniteElementBase const &
@@ -643,15 +602,13 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
       compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressxy, stressxy, sigmaxyReceivers );
       compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressxz, stressxz, sigmaxzReceivers );
       compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressyz, stressyz, sigmayzReceivers );
-
-
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { wavesolverfields::Displacementx_np1::key(), wavesolverfields::Displacementy_np1::key(), wavesolverfields::Displacementz_np1::key()} );
-    fieldsToBeSync.addElementFields( {wavesolverfields::Stresstensorxx::key(), wavesolverfields::Stresstensoryy::key(), wavesolverfields::Stresstensorzz::key(),
-                                      wavesolverfields::Stresstensorxy::key(),
-                                      wavesolverfields::Stresstensorxz::key(), wavesolverfields::Stresstensoryz::key()}, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Node, { elasticfields::Displacementx_np1::key(), elasticfields::Displacementy_np1::key(), elasticfields::Displacementz_np1::key()} );
+    fieldsToBeSync.addElementFields( {elasticfields::Stresstensorxx::key(), elasticfields::Stresstensoryy::key(), elasticfields::Stresstensorzz::key(),
+                                      elasticfields::Stresstensorxy::key(),
+                                      elasticfields::Stresstensorxz::key(), elasticfields::Stresstensoryz::key()}, regionNames );
 
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
@@ -669,12 +626,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     computeAllSeismoTraces( time_n, dt, uy_np1, uy_np1, uyReceivers );
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_np1, uzReceivers );
 
-    // increment m_indexSeismoTrace
-    while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-    {
-      m_indexSeismoTrace++;
-    }
-
+    incrementIndexSeismoTrace( time_n );
   } );
 
   return dt;
@@ -699,12 +651,12 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      arrayView2d< real32 const > const stressxx = elementSubRegion.getField< wavesolverfields::Stresstensorxx >();
-      arrayView2d< real32 const > const stressyy = elementSubRegion.getField< wavesolverfields::Stresstensoryy >();
-      arrayView2d< real32 const > const stresszz = elementSubRegion.getField< wavesolverfields::Stresstensorzz >();
-      arrayView2d< real32 const > const stressxy = elementSubRegion.getField< wavesolverfields::Stresstensorxy >();
-      arrayView2d< real32 const > const stressxz = elementSubRegion.getField< wavesolverfields::Stresstensorxz >();
-      arrayView2d< real32 const > const stressyz = elementSubRegion.getField< wavesolverfields::Stresstensoryz >();
+      arrayView2d< real32 const > const stressxx = elementSubRegion.getField< elasticfields::Stresstensorxx >();
+      arrayView2d< real32 const > const stressyy = elementSubRegion.getField< elasticfields::Stresstensoryy >();
+      arrayView2d< real32 const > const stresszz = elementSubRegion.getField< elasticfields::Stresstensorzz >();
+      arrayView2d< real32 const > const stressxy = elementSubRegion.getField< elasticfields::Stresstensorxy >();
+      arrayView2d< real32 const > const stressxz = elementSubRegion.getField< elasticfields::Stresstensorxz >();
+      arrayView2d< real32 const > const stressyz = elementSubRegion.getField< elasticfields::Stresstensoryz >();
 
       arrayView2d< real32 > const sigmaxxReceivers   = m_sigmaxxNp1AtReceivers.toView();
       arrayView2d< real32 > const sigmayyReceivers   = m_sigmayyNp1AtReceivers.toView();
@@ -713,68 +665,35 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
       arrayView2d< real32 > const sigmaxzReceivers   = m_sigmaxzNp1AtReceivers.toView();
       arrayView2d< real32 > const sigmayzReceivers   = m_sigmayzNp1AtReceivers.toView();
 
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stressxx, stressxx, sigmaxxReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stressyy, stressyy, sigmayyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stresszz, stresszz, sigmazzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stressxy, stressxy, sigmaxyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stressxz, stressxz, sigmaxzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, stressyz, stressyz, sigmayzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxx, stressxx, sigmaxxReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyy, stressyy, sigmayyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stresszz, stresszz, sigmazzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxy, stressxy, sigmaxyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxz, stressxz, sigmaxzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyz, stressyz, sigmayzReceivers );
+
+      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                               m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxxReceivers, sigmayyReceivers, sigmazzReceivers );
+      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                               m_receiverIsLocal, m_nsamplesSeismoTrace, sigmaxyReceivers, sigmaxzReceivers, sigmayzReceivers );
+
     } );
-    arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticfields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
     // compute the seismic traces since last step.
-    arrayView2d< real32 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
-    arrayView2d< real32 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
-    arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+    arrayView2d< real32 > const uxReceivers = m_displacementxNp1AtReceivers.toView();
+    arrayView2d< real32 > const uyReceivers = m_displacementyNp1AtReceivers.toView();
+    arrayView2d< real32 > const uzReceivers = m_displacementzNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0, ux_np1, ux_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, 0, uy_np1, uy_np1, uyReceivers );
-    computeAllSeismoTraces( time_n, 0, uz_np1, uz_np1, uzReceivers );
+    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_np1, uxReceivers );
+    computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_np1, uyReceivers );
+    computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_np1, uzReceivers );
 
+    WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
   } );
-
-// increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
-
-}
-
-void ElasticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                               real64 const dt,
-                                                               arrayView1d< real32 const > const var_np1,
-                                                               arrayView1d< real32 const > const var_n,
-                                                               arrayView2d< real32 > varAtReceivers )
-{
-
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal,
-                                         m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
-  }
-}
-
-void ElasticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
-                                                                         real64 const time_n,
-                                                                         real64 const dt,
-                                                                         arrayView2d< real32 const > const var_np1,
-                                                                         arrayView2d< real32 const > const var_n,
-                                                                         arrayView2d< real32 > varAtReceivers )
-{
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, regionIndex, m_receiverRegion, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
-                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
-  }
 }
 
 void ElasticFirstOrderWaveEquationSEM::initializePML()

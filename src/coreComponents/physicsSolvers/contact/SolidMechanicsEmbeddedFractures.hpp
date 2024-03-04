@@ -26,8 +26,6 @@ namespace geos
 {
 using namespace constitutive;
 
-class SolidMechanicsLagrangianFEM;
-
 class SolidMechanicsEmbeddedFractures : public ContactSolverBase
 {
 public:
@@ -44,6 +42,10 @@ public:
   {
     return "SolidMechanicsEmbeddedFractures";
   }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -56,11 +58,6 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
-
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,

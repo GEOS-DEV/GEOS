@@ -30,6 +30,8 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
+#include "tests/meshDirName.hpp"
+
 using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
@@ -37,7 +39,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-char const * xmlInput =
+char const * PreXmlInput =
   R"xml(
   <Problem>
     <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
@@ -81,29 +83,10 @@ char const * xmlInput =
                     nx="{3}"
                     ny="{1}"
                     nz="{1}"
-                    cellBlockNames="{cb1}">
-        <InternalWell name="well_producer1"
-                      wellRegionName="wellRegion1"
-                      wellControlsName="wellControls1"
-                      polylineNodeCoords="{ {4.5, 0,  2  },
-                                             {4.5, 0,  0.5} }"
-                      polylineSegmentConn="{ {0, 1} }"
-                      radius="0.1"
-                      numElementsPerSegment="1">
-            <Perforation name="producer1_perf1"
-                         distanceFromHead="1.45"/>
-        </InternalWell>
-        <InternalWell name="well_injector1"
-                      wellRegionName="wellRegion2"
-                      wellControlsName="wellControls2"
-                      polylineNodeCoords="{ {0.5, 0, 2  },
-                                             {0.5, 0, 0.5} }"
-                      polylineSegmentConn="{ {0, 1} }"
-                      radius="0.1"
-                      numElementsPerSegment="1">
-            <Perforation name="injector1_perf1"
-                         distanceFromHead="1.45"/>
-        </InternalWell>
+                    cellBlockNames="{cb1}">)xml";
+
+char const * PostXmlInput =
+  R"xml(
       </InternalMesh>
     </Mesh>
     <NumericalMethods>
@@ -349,6 +332,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & so
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
+
 class SinglePhaseReservoirSolverTest : public ::testing::Test
 {
 public:
@@ -361,7 +345,6 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
@@ -372,24 +355,139 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution() );
 
-    solver->implicitStepSetup( time, dt, domain );
+    solver->implicitStepSetup( TIME, DT, domain );
   }
 
-  static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1e4;
-  static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
+  void TestAssembleCouplingTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->assembleCouplingTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssembleFluxTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assembleFluxTerms( DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssemblePressureRelations()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assemblePressureRelations( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  void TestAssembleAccumulationTerms()
+  {
+    real64 const perturb = std::sqrt( EPS );
+    real64 const tol = 1e-1; // 10% error margin
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    testNumericalJacobian( *solver, domain, perturb, tol,
+                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+    {
+      solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    } );
+  }
+
+  static real64 constexpr TIME = 0.0;
+  static real64 constexpr DT = 1e4;
+  static real64 constexpr EPS = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
   SinglePhaseReservoirAndWells< SinglePhaseBase > * solver;
 };
 
-real64 constexpr SinglePhaseReservoirSolverTest::time;
-real64 constexpr SinglePhaseReservoirSolverTest::dt;
-real64 constexpr SinglePhaseReservoirSolverTest::eps;
+real64 constexpr SinglePhaseReservoirSolverTest::TIME;
+real64 constexpr SinglePhaseReservoirSolverTest::DT;
+real64 constexpr SinglePhaseReservoirSolverTest::EPS;
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
+/**
+ * @brief Test SinglePhaseReservoirSolver with InternalWell generator
+ *
+ */
+class SinglePhaseReservoirSolverInternalWellTest : public SinglePhaseReservoirSolverTest
 {
-  real64 const perturb = std::sqrt( eps );
+
+public:
+
+  SinglePhaseReservoirSolverInternalWellTest():
+    SinglePhaseReservoirSolverTest()
+  {}
+
+protected:
+
+  void SetUp() override
+  {
+    string const internalWells =
+      R"(
+        <InternalWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      polylineNodeCoords="{ {4.5, 0,  2  },
+                                             {4.5, 0,  0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+        <InternalWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      polylineNodeCoords="{ {0.5, 0, 2  },
+                                             {0.5, 0, 0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>)";
+
+    string const xmlInput = PreXmlInput + internalWells + PostXmlInput;
+
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+    SinglePhaseReservoirSolverTest::SetUp();
+  }
+};
+
+
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Perforation )
+{
+  TestAssembleCouplingTerms();
+}
+
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux )
+{
+  real64 const perturb = std::sqrt( EPS );
   real64 const tol = 1e-1; // 10% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
@@ -398,55 +496,86 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleCouplingTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( DT, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_PressureRel )
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+  TestAssemblePressureRelations();
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
+TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Accum )
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->wellSolver()->assemblePressureRelations( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+  TestAssembleAccumulationTerms();
 }
 
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+
+/**
+ * @brief Test SinglePhaseReservoirSolver with VTKWell generator
+ *
+ */
+class SinglePhaseReservoirSolverVTKWellTest : public SinglePhaseReservoirSolverTest
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
 
-  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+public:
 
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
+  SinglePhaseReservoirSolverVTKWellTest():
+    SinglePhaseReservoirSolverTest()
+  {}
+
+protected:
+
+  void SetUp() override
   {
-    solver->wellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
+    string const vtkWells =  GEOS_FMT( R"(
+        <VTKWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      file="{}"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </VTKWell>
+        <VTKWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      file="{}"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </VTKWell>)", testMeshDir + "/well1.vtk",
+                                       testMeshDir + "/well2.vtk" );
+
+    string const xmlInput = PreXmlInput + vtkWells + PostXmlInput;
+
+    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str());
+    SinglePhaseReservoirSolverTest::SetUp();
+  }
+};
+
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Perforation )
+{
+  TestAssembleCouplingTerms();
 }
 
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Flux )
+{
+  TestAssembleFluxTerms();
+}
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_PressureRel )
+{
+  TestAssemblePressureRelations();
+}
+
+TEST_F( SinglePhaseReservoirSolverVTKWellTest, jacobianNumericalCheck_Accum )
+{
+  TestAssembleAccumulationTerms();
+}
 
 int main( int argc, char * * argv )
 {

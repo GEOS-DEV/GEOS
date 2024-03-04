@@ -21,12 +21,12 @@
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverBaseFields.hpp"
 #include "WaveSolverUtils.hpp"
-
+#include "AcousticVTIFields.hpp"
 
 namespace geos
 {
+using namespace fields;
 
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticVTIWaveEquationSEMKernels
@@ -34,17 +34,13 @@ namespace acousticVTIWaveEquationSEMKernels
 
 struct PrecomputeSourceAndReceiverKernel
 {
-
-
-
   /**
    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
    * @param[in] numFacesPerElem number of faces per element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemGhostRank the ghost ranks
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -61,14 +57,14 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] sourceValue the value of the source
    * @param[in] dt the time step size
    * @param[in] timeSourceFrequency the time frequency of the source
+   * @param[in] timeSourceDelay the time delay of the source
    * @param[in] rickerOrder the order of the ricker
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -86,8 +82,10 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -120,11 +118,11 @@ struct PrecomputeSourceAndReceiverKernel
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -135,8 +133,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
           }
         }
@@ -167,12 +164,12 @@ struct PrecomputeSourceAndReceiverKernel
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -202,7 +199,7 @@ struct MassMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
    * @param[out] mass diagonal of the mass matrix
@@ -210,32 +207,33 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      real32 const invC2 = 1.0 / pow( velocity[e], 2 );
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -258,8 +256,8 @@ struct DampingMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] X coordinates of the nodes
-   * @param[in] facesToElems map from faces to elements
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemsToFaces map from faces to elements
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
@@ -277,8 +275,8 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< localIndex const > const facesToElems,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
@@ -293,67 +291,66 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const damping_pq,
           arrayView1d< real32 > const damping_qp )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      // face on the domain boundary and not on free surface
-      if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+      for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
       {
-        localIndex k = facesToElems( f, 0 );
-        if( k < 0 )
+        localIndex const f = elemsToFaces( e, i );
+        // face on the domain boundary and not on free surface
+        if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          k = facesToElems( f, 1 );
-        }
-
-        // ABC coefficients
-        real32 alpha = 1.0 / velocity[k];
-        // VTI coefficients
-        real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
-        real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
-        if( lateralSurfaceFaceIndicator[f] == 1 )
-        {
-          // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt( 1+2*epsilon[k] );
-
-          vti_p_xy  = (1+2*epsilon[k]);
-          vti_q_xy  = -(vti_f[k]-1);
-          vti_qp_xy = (vti_f[k]+2*delta[k]);
-        }
-        if( bottomSurfaceFaceIndicator[f] == 1 )
-        {
-          // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt( 1+2*delta[k] );
-          vti_p_z  = -(vti_f[k]-1);
-          vti_pq_z = vti_f[k];
-          vti_q_z  = 1;
-        }
-
-        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-
-        real64 xLocal[ numNodesPerFace ][ 3 ];
-        for( localIndex a = 0; a < numNodesPerFace; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
+          // ABC coefficients
+          real32 alpha = 1.0 / velocity[e];
+          // VTI coefficients
+          real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
+          real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
+          if( lateralSurfaceFaceIndicator[f] == 1 )
           {
-            xLocal[a][i] = X( facesToNodes( k, a ), i );
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*epsilon[e] );
+
+            vti_p_xy  = (1+2*epsilon[e]);
+            vti_q_xy  = -(vti_f[e]-1);
+            vti_qp_xy = (vti_f[e]+2*delta[e]);
+          }
+          if( bottomSurfaceFaceIndicator[f] == 1 )
+          {
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*delta[e] );
+            vti_p_z  = -(vti_f[e]-1);
+            vti_pq_z = vti_f[e];
+            vti_q_z  = 1;
+          }
+          // only the four corners of the mesh face are needed to compute the Jacobian
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
+          {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
+            for( localIndex d = 0; d < 3; ++d )
+            {
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
+            }
+          }
+
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          {
+            real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
+            real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
+
+            real32 const localIncrement_pq = alpha*vti_pq_z * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
+
+            real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
+
+            real32 const localIncrement_qp = alpha*vti_qp_xy * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
           }
         }
-
-        for( localIndex q = 0; q < numNodesPerFace; ++q )
-        {
-          real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
-
-          real32 const localIncrement_pq = alpha*vti_pq_z * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes[f][q]], localIncrement_pq );
-
-          real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes[f][q]], localIncrement_q );
-
-          real32 const localIncrement_qp = alpha*vti_qp_xy * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes[f][q]], localIncrement_qp );
-        }
       }
-    } ); // end loop over element
+    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -432,14 +429,14 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< fields::wavesolverfields::Pressure_p_n >() ),
-    m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
-    m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::wavesolverfields::Delta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::F >() ),
+    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
+    m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
+    m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< acousticvtifields::StiffnessVector_q >() ),
+    m_epsilon( elementSubRegion.template getField< acousticvtifields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< acousticvtifields::Delta >() ),
+    m_vti_f( elementSubRegion.template getField< acousticvtifields::F >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -459,11 +456,17 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      xLocal()
+      xLocal(),
+      stiffnessVectorLocal_p(),
+      stiffnessVectorLocal_q()
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    /// only the eight corners of the mesh cell are needed to compute the Jacobian
+    real64 xLocal[ 8 ][ 3 ];
+    /// local (to this element) stiffness vectors
+    real32 stiffnessVectorLocal_p[ numNodesPerElem ]{};
+    real32 stiffnessVectorLocal_q[ numNodesPerElem ]{};
   };
   //***************************************************************************
 
@@ -479,16 +482,28 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a=0; a< 8; a++ )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      localIndex const nodeIndex = m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
       for( int i=0; i< 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const
+  {
+    for( int i=0; i<numNodesPerElem; i++ )
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], stack.stiffnessVectorLocal_p[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], stack.stiffnessVectorLocal_q[i] );
+    }
+    return 0;
+  }
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
@@ -506,9 +521,9 @@ public:
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
+      stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;
       real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(m_vti_f[k]-1)*m_q_n[m_elemsToNodes[k][j]]);
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+      stack.stiffnessVectorLocal_q[ i ] += localIncrement_q;
     } );
 
     // Pseudo-Stiffness z
@@ -516,16 +531,16 @@ public:
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
+      stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;
 
       real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
+      stack.stiffnessVectorLocal_q[ i ] += localIncrement_q;
     } );
   }
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;

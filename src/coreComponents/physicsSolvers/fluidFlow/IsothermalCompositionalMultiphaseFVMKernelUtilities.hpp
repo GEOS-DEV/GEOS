@@ -218,7 +218,6 @@ struct PPUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           //real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -345,10 +344,10 @@ struct C1PPUPhaseFlux
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
            real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    real64 dPresGrad_dP[numFluxSupportPoints];
-    real64 dPresGrad_dC[numFluxSupportPoints][numComp];
-    real64 dGravHead_dP[numFluxSupportPoints];
-    real64 dGravHead_dC[numFluxSupportPoints][numComp];
+    real64 dPresGrad_dP[numFluxSupportPoints]{};
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
+    real64 dGravHead_dP[numFluxSupportPoints]{};
+    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
                                                        gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,

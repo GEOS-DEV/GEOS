@@ -19,6 +19,7 @@
 #include "TableFunction.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -31,6 +32,7 @@ TableFunction::TableFunction( const string & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_interpolationMethod( InterpolationType::Linear ),
+  m_valueUnit( units::Unknown ),
   m_kernelWrapper( createKernelWrapper() )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
@@ -76,8 +78,10 @@ void TableFunction::setInterpolationMethod( InterpolationType const method )
   reInitializeFunction();
 }
 
-void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates )
+void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates,
+                                         std::vector< units::Unit > const & dimUnits )
 {
+  m_dimUnits = dimUnits;
   m_coordinates.resize( 0 );
   for( localIndex i = 0; i < coordinates.size(); ++i )
   {
@@ -93,9 +97,10 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   reInitializeFunction();
 }
 
-void TableFunction::setTableValues( real64_array values )
+void TableFunction::setTableValues( real64_array values, units::Unit unit )
 {
   m_values = std::move( values );
+  m_valueUnit = unit;
   reInitializeFunction();
 }
 
@@ -160,6 +165,91 @@ void TableFunction::reInitializeFunction()
 
   // Create the kernel wrapper
   m_kernelWrapper = createKernelWrapper();
+}
+
+void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
+{
+  GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
+                 GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
+                           getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
+                 SimulationError );
+  real64 const lowerBound = m_coordinates[dim][0];
+  real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
+  GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
+                 GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
+                           getDataContext(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
+                 SimulationError );
+}
+
+void TableFunction::print( std::string const & filename ) const
+{
+  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+
+  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
+
+  if( numDimensions != 2 )
+  {
+    // print header
+
+    for( integer d = 0; d < numDimensions; d++ )
+    {
+      os << units::getDescription( getDimUnit( d )) << ",";
+    }
+    os << units::getDescription( m_valueUnit ) << "\n";
+
+    // print values
+
+    // prepare dividers
+    std::vector< integer > div( numDimensions );
+    div[0] = 1;
+    for( integer d = 1; d < numDimensions; d++ )
+    {
+      div[d] = div[d-1] * m_coordinates[d-1].size();
+    }
+    // loop through all the values
+    for( integer v = 0; v < m_values.size(); v++ )
+    {
+      // find coords indices
+      std::vector< integer > idx( numDimensions );
+      integer r = v;
+      for( integer d = numDimensions-1; d >= 0; d-- )
+      {
+        idx[d] = r / div[d];
+        r = r % div[d];
+      }
+      // finally print out in right order
+      for( integer d = 0; d < numDimensions; d++ )
+      {
+        arraySlice1d< real64 const > const coords = m_coordinates[d];
+        os << coords[idx[d]] << ",";
+      }
+      os << m_values[v] << "\n";
+    }
+  }
+  else // numDimensions == 2
+  {
+    arraySlice1d< real64 const > const coordsX = m_coordinates[0];
+    arraySlice1d< real64 const > const coordsY = m_coordinates[1];
+    integer const nX = coordsX.size();
+    integer const nY = coordsY.size();
+    os<<units::getDescription( getDimUnit( 0 ));
+    for( integer j = 0; j < nY; j++ )
+    {
+      os << "," << units::getDescription( getDimUnit( 1 )) << "=" << coordsY[j];
+    }
+    os << "\n";
+    for( integer i = 0; i < nX; i++ )
+    {
+      os << coordsX[i];
+      for( integer j = 0; j < nY; j++ )
+      {
+        os << "," << m_values[ j*nX + i ];
+      }
+      os << "\n";
+    }
+  }
+
+  os.close();
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
