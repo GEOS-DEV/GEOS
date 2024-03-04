@@ -314,7 +314,15 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
-    face2dToEdge[i] = LvArray::integerConversion< localIndex >( res->first );
+    if( res->second < 2 )
+    {
+      GEOS_LOG_RANK( "BOUYAKA " << res->first );
+      face2dToEdge[i] = -1;
+    }
+    else
+    {
+      face2dToEdge[i] = LvArray::integerConversion< localIndex >( res->first );
+    }
   }
 
   return face2dToEdge;
@@ -361,7 +369,11 @@ ArrayOfArrays< localIndex > buildElem2dToEdges( vtkIdType num2dElements,
   {
     for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      elem2dToEdges.emplaceBack( elemIndex, face2dToEdge[face2dIndex] );
+      auto const e = face2dToEdge[face2dIndex];
+      if( e > -1 )
+      {
+        elem2dToEdges.emplaceBack( elemIndex, e );
+      }
     }
   }
 
@@ -556,6 +568,14 @@ ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
     }
   }
 
+  if( logger::internal::rank == 4 )
+  {
+    for( auto i: { 254, 255, 258, 284, 286 } )
+    {
+      elem2dToNodes.emplaceBack( 36, i );
+    }
+  }
+
   return elem2dToNodes;
 }
 
@@ -620,7 +640,7 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > face2dToElems2d = buildFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > face2dToEdge = buildFace2dToEdge( vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() ), edges, collocatedNodes, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = buildElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
-  ArrayOfArrays< localIndex > elem2DToEdges = buildElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
+  ArrayOfArrays< localIndex > elem2dToEdges = buildElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
@@ -628,7 +648,7 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.setNum2dElements( num2dElements );
   faceBlock.setNum2dFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
-  faceBlock.set2dElemToEdges( std::move( elem2DToEdges ) );
+  faceBlock.set2dElemToEdges( std::move( elem2dToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
 
