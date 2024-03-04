@@ -106,7 +106,8 @@ public:
   enum class SolubilityModel : integer
   {
     DuanSun,
-    SpycherPruess
+    SpycherPruess,
+    Tables
   };
 
 public:
@@ -339,7 +340,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
 ENUM_STRINGS( CO2Solubility::SolubilityModel,
               "DuanSun",
-              "SpycherPruess" );
+              "SpycherPruess",
+              "Tables" );
 
 } // end namespace PVTProps
 

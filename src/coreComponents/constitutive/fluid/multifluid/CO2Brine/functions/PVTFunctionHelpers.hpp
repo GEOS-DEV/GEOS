@@ -124,8 +124,8 @@ public:
   localIndex nPressures() const { return coords[coordType::PRES].size(); }
   localIndex nTemperatures() const { return coords[coordType::TEMP].size(); }
 
-  void appendPressure( const real64 & pres ) { coords[coordType::PRES].emplace_back( pres ); }
-  void appendTemperature( const real64 & temp ) { coords[coordType::TEMP].emplace_back( temp ); }
+  PTTableCoordinates & appendPressure( const real64 & pres ) { coords[coordType::PRES].emplace_back( pres ); return *this; }
+  PTTableCoordinates & appendTemperature( const real64 & temp ) { coords[coordType::TEMP].emplace_back( temp ); return *this; }
 
   real64 const & getPressure( localIndex i ) const { return coords[coordType::PRES][i]; }
   real64 const & getTemperature( localIndex i ) const { return coords[coordType::TEMP][i]; }

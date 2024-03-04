@@ -351,7 +351,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         {
           if( strs[1] == FLASH::catalogName() )
           {
-
             m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                                  strs,
                                                  m_phaseNames,
@@ -378,9 +377,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     // If 1 table is provided, it is the CO2 solubility table and water vapourisation is zero
     // If 2 tables are provided, they are the CO2 solubility and water vapourisation tables depending
     // on how phaseNames is arranged
+    string const solubilityModel = EnumStrings< CO2Solubility::SolubilityModel >::toString( CO2Solubility::SolubilityModel::Tables );
     string_array strs;
     strs.emplace_back( "FlashModel" );
-    strs.emplace_back( "Tables" );   // Marker to indicate that tables are provided
+    strs.emplace_back( solubilityModel );   // Marker to indicate that tables are provided
     strs.emplace_back( "" );   // 2 empty strings for the 2 phase tables gas first, then water
     strs.emplace_back( "" );
     if( m_solubilityTables.size() == 2 )
