@@ -19,14 +19,10 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_CO2SOLUBILITYSPYCHERPRUESS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_CO2SOLUBILITYSPYCHERPRUESS_HPP_
 
-#include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 
 namespace geos
 {
-
-class TableFunction;
-class FunctionManager;
-
 namespace constitutive
 {
 namespace PVTProps
@@ -37,18 +33,22 @@ struct CO2SolubilitySpycherPruess
 
 /**
  * @brief Create CO2 and H2O solubility table based on Spycher, Pruess, Ennis-King (2003)
- * @details The generated table is a 2D table with lookup properties pressure (in Pa) and
+ * @details Each generated table is a 2D table with lookup properties pressure (in Pa) and
  *          temperature (in degC). The returned CO2 solubility is in mole of CO2 per kg of
  *          H2O and the returned water vapourisation is in moles of H2O per kg of CO2.
- * @param[in] inputParams A list of input parameters
  * @param[in] functionName The name of the model
- * @param[in] functionManager The function manager to which the table should be attached
- * @return The created tables with first CO2 solubility table and second H2O solubility table
+ * @param[in] tableCoords The values of pressure and temperature
+ * @param[in] salinity The salinity of the brine
+ * @param[in] tolerance Tolerance to be used in solving for the solubility
+ * @param[out] co2SolubilityValues The CO2 solubility values (mol/kg) at the given pressures and temperatures
+ * @param[out] h2oSolubilityValues The H2O solubility values (mol/kg) at the given pressures and temperatures
  */
-  static std::pair< TableFunction const *, TableFunction const * >
-  makeSolubilityTables( string_array const & inputParams,
-                        string const & functionName,
-                        FunctionManager & functionManager );
+  static void populateSolubilityTables( string const & functionName,
+                                        PTTableCoordinates const & tableCoords,
+                                        real64 const & salinity,
+                                        real64 const & tolerance,
+                                        array1d< real64 > const & co2SolubilityValues,
+                                        array1d< real64 > const & h2oSolubilityValues );
 
 };
 

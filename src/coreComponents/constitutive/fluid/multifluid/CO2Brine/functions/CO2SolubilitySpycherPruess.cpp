@@ -17,20 +17,14 @@
  */
 
 #include "CO2SolubilitySpycherPruess.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
-#include "functions/TableFunction.hpp"
-#include "functions/FunctionManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
 {
-namespace constitutive
-{
-namespace PVTProps
-{
 
+namespace
+{
 /**
  * Physical constants
  * These correlations are developed with units: pressure [bar], volume [cm3], temperature [K].
@@ -43,55 +37,6 @@ static constexpr real64 molarMassCO2 = 44.01e-3;            // Molar mass of CO2
 static constexpr real64 molarMassH2O = 18.01e-3;            // Molar mass of H2O [kg/mol]
 static constexpr real64 v_av_H2O = 18.1;                    // Average partial molar volume of H2O [cm3/mol]
 static constexpr real64 v_av_CO2 = 32.6;                    // Average partial molar volume of CO2 [cm3/mol]
-
-TableFunction const * makeTable( string const & tableName,
-                                 PTTableCoordinates const & tableCoords,
-                                 array1d< real64 > && values,
-                                 FunctionManager & functionManager )
-{
-  if( functionManager.hasGroup< TableFunction >( tableName ) )
-  {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
-  }
-  else
-  {
-    TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    table->setTableCoordinates( tableCoords.getCoords(),
-                                { units::Pressure, units::TemperatureInC } );
-    table->setTableValues( values, units::Solubility );
-    table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    return table;
-  }
-}
-
-// Read the input parameters, populate tableCoords and return the salinity and tolerance
-std::pair< real64 const, real64 const > readInputParameters( string_array const & inputParams,
-                                                             string const & functionName,
-                                                             PTTableCoordinates & tableCoords )
-{
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  // Initialize salinity and tolerance
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
-
-  real64 tolerance = 1e-9;
-  real64 salinity = 0.0;
-  try
-  {
-    salinity = stod( inputParams[8] );
-    if( inputParams.size() >= 10 )
-    {
-      tolerance = stod( inputParams[9] );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-  return {salinity, tolerance};
-}
 
 /**
  * @brief Calculate the CO2 equilibrium constant from Spycher et al. (2003)
@@ -202,16 +147,19 @@ real64 computeB( real64 const P, real64 const T, real64 const rhoCO2, real64 con
   real64 const B = phi_CO2*P_in_bar/(55.508*k0_CO2) * exp( -(deltaP*v_av_CO2)/(R*TinK) );
   return B;
 }
+} // end namespace
 
-std::pair< TableFunction const *, TableFunction const * >
-CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputParams,
-                                                  string const & functionName,
-                                                  FunctionManager & functionManager )
+namespace constitutive
 {
-  // Initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  auto [salinity, tolerance] = readInputParameters( inputParams, functionName, tableCoords );
-
+namespace PVTProps
+{
+void CO2SolubilitySpycherPruess::populateSolubilityTables( string const & functionName,
+                                                           PTTableCoordinates const & tableCoords,
+                                                           real64 const & salinity,
+                                                           real64 const & tolerance,
+                                                           array1d< real64 > const & co2SolubilityValues,
+                                                           array1d< real64 > const & h2oSolubilityValues )
+{
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
@@ -222,8 +170,6 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
                                              tableCoords,
                                              densities );
 
-  array1d< real64 > co2Values( nPressures*nTemperatures );
-  array1d< real64 > h2oValues( nPressures*nTemperatures );
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const P = tableCoords.getPressure( i );
@@ -245,39 +191,10 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
       real64 const x_CO2 = B*(1.0 - y_H2O);
 
       // Calculate the solubility
-      co2Values[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*molarMassH2O);
-      h2oValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*molarMassCO2);
+      co2SolubilityValues[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*molarMassH2O);
+      h2oSolubilityValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*molarMassCO2);
     }
   }
-
-  // Truncate negative solubility and warn
-  for( localIndex i = 0; i < nPressures; ++i )
-  {
-    real64 const P = tableCoords.getPressure( i );
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      real64 const T = tableCoords.getTemperature( j );
-
-      if( co2Values[j*nPressures+i] < 0.0 )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "CO2SolubilitySpycherPruess: negative CO2 solubility value = {}, P = {}, T = {}; corrected to 0",
-                                   co2Values[j*nPressures+i], P, T ) );
-        co2Values[j*nPressures+i] = 0.0;
-      }
-      if( h2oValues[j*nPressures+i] < 0.0 )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "CO2SolubilitySpycherPruess: negative H2O solubility value = {}, P = {}, T = {}; corrected to 0",
-                                   h2oValues[j*nPressures+i], P, T ) );
-        h2oValues[j*nPressures+i] = 0.0;
-      }
-    }
-  }
-
-  string const co2TableName = GEOS_FMT( "{}_co2Solubility_table", functionName );
-  TableFunction const * co2SolubilityTable = makeTable( co2TableName, tableCoords, std::move( co2Values ), functionManager );
-  string const h2oTableName = GEOS_FMT( "{}_waterVaporization_table", functionName );
-  TableFunction const * h2oSolubilityTable = makeTable( h2oTableName, tableCoords, std::move( h2oValues ), functionManager );
-  return {co2SolubilityTable, h2oSolubilityTable};
 }
 
 } // end namespace PVTProps

@@ -105,7 +105,13 @@ protected:
 class CO2Solubility : public FlashModelBase
 {
 public:
+  enum class SolubilityModel : integer
+  {
+    DuanSun,
+    SpycherPruess
+  };
 
+public:
   CO2Solubility( string const & name,
                  string_array const & inputParams,
                  string_array const & phaseNames,
@@ -132,7 +138,6 @@ public:
   KernelWrapper createKernelWrapper() const;
 
 private:
-
   /// Table to compute solubility as a function of pressure and temperature
   TableFunction const * m_CO2SolubilityTable;
 
@@ -333,6 +338,10 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     }
   }
 }
+
+ENUM_STRINGS( CO2Solubility::SolubilityModel,
+              "DuanSun",
+              "SpycherPruess" );
 
 } // end namespace PVTProps
 

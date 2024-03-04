@@ -47,6 +47,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
+     fluid/multifluid/CO2Brine/functions/CO2SolubilityDuanSun.hpp
      fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.hpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.hpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.hpp
@@ -203,6 +204,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.cpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.cpp
      fluid/multifluid/CO2Brine/functions/CO2Solubility.cpp
+     fluid/multifluid/CO2Brine/functions/CO2SolubilityDuanSun.cpp
      fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.cpp
      fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.cpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.cpp
