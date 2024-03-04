@@ -44,11 +44,12 @@ public:
 
   /**
    * @brief Set the minimal width of a row
-   * @param minWidth the minnimal width to set
+   * @param minWidth the minimal width of the table
    */
   void setMinWidth( integer const & minWidth );
+
   /**
-   * @brief Draw the first part of the section. It include the title and, optionnaly, the description(s);
+   * @brief Draw the first part of the section. It include the title and optionnaly, the description(s);
    * @param os An output stream (by default, std::cout)
    */
   void begin( std::ostream & os = std::cout );
@@ -61,7 +62,7 @@ public:
 private:
 
   /**
-   * @brief Compute the max sectionToBeBuilt size (m_rowLength) between title and the description(s)
+   * @brief Compute the max string size (m_rowLength) between title and the description(s)
    * @param m_sectionTitle The title of the table
    * @param vDescriptions The vector of descriptions
    */

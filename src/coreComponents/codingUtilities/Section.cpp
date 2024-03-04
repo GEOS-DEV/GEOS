@@ -49,7 +49,6 @@ void Section::computeMaxRowSize( string const & title,
   integer maxDescriptionLength = 0;
   integer titleLength = title.length() + marginBorder * 2 + nbSpecialChar * 2;
 
-
   m_rowLength = std::max( m_rowMinWidth, titleLength );
 
   if( rowsDescription.size() == 0 )
