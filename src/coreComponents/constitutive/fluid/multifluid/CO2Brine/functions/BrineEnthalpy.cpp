@@ -206,18 +206,10 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  if( printInCsv || ( printInLog && m_CO2EnthalpyTable->numDimensions() >= 3 ) )
-  {
-    m_CO2EnthalpyTable->printInCSV( m_CO2EnthalpyTable->getName() );
-    m_brineEnthalpyTable->printInCSV( m_brineEnthalpyTable->getName() );
-  }
-  if( printInLog &&  m_CO2EnthalpyTable->numDimensions() <= 2 )
-  {
-    m_CO2EnthalpyTable->printInLog( m_CO2EnthalpyTable->getName() );
-    m_brineEnthalpyTable->printInLog( m_brineEnthalpyTable->getName() );
-  }
-
+  checkPrint( m_CO2EnthalpyTable, printInCsv, printInLog );
+  checkPrint( m_brineEnthalpyTable, printInCsv, printInLog );
 }
+
 
 void BrineEnthalpy::checkTablesParameters( real64 const pressure,
                                            real64 const temperature ) const

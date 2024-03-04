@@ -289,14 +289,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  if( printInCsv || ( printInLog && m_CO2DensityTable->numDimensions() >= 3 ) )
-  {
-    m_CO2DensityTable->printInCSV( m_CO2DensityTable->getName() );
-  }
-  if( printInLog &&  m_CO2DensityTable->numDimensions() <= 2 )
-  {
-    m_CO2DensityTable->printInLog( m_CO2DensityTable->getName() );
-  }
+  checkPrint( m_CO2DensityTable, printInCsv, printInLog );
 }
 
 void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,

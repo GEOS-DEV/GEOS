@@ -121,6 +121,19 @@ public:
    */
   void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
+  void checkPrint ( TableFunction const * table, bool const printInCsv, bool const printInLog
+                    )
+  {
+    if( printInCsv || ( printInLog && table->numDimensions() >= 3 ) )
+    {
+      table->printInCSV( table->getName() );
+    }
+    if( printInLog &&  table->numDimensions() <= 2 )
+    {
+      table->printInLog( table->getName() );
+    }
+  }
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CO2SolubilityUpdate;
 

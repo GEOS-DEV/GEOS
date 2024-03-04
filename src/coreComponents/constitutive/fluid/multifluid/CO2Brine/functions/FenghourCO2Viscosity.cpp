@@ -149,14 +149,7 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  if( printInCsv || ( printInLog &&   m_CO2ViscosityTable->numDimensions() >= 3 ) )
-  {
-    m_CO2ViscosityTable->printInCSV( m_CO2ViscosityTable->getName() );
-  }
-  if( printInLog &&  m_CO2ViscosityTable->numDimensions() <= 2 )
-  {
-    m_CO2ViscosityTable->printInLog( m_CO2ViscosityTable->getName() );
-  }
+  checkPrint( m_CO2ViscosityTable, printInCsv, printInLog );
 }
 
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,

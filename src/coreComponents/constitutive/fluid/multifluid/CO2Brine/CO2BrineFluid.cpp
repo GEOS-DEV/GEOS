@@ -240,15 +240,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   bool isClone = true;
   if( getParent().getName() == "Constitutive" )
   {
-    string sectionOutput;
-    string sectionName = "Section : PVT Table generation";
-
-    sectionOutput = GEOS_FMT( "\n{:=^{}}\n", "=", sectionName.size() + 5 );
-    sectionOutput += GEOS_FMT( "{:^{}}\n", sectionName, sectionName.size() + 5 );
-    sectionOutput += GEOS_FMT( "{:=^{}}\n\n", "=", sectionName.size() + 5 );
-
-    std::cout << sectionOutput;
-
     isClone = false;
   }
 

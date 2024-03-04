@@ -318,7 +318,7 @@ private:
   }
 
   /**
-   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
+   * @brief Print table into a CSV file
    * @param filename Filename for output
    */
   void printInCSV( string const & filename ) const;

@@ -190,14 +190,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  if( printInCsv || ( printInLog && m_brineDensityTable->numDimensions() >= 3 ) )
-  {
-    m_brineDensityTable->printInCSV( m_brineDensityTable->getName() );
-  }
-  if( printInLog &&  m_brineDensityTable->numDimensions() <= 2 )
-  {
-    m_brineDensityTable->printInLog( m_brineDensityTable->getName() );
-  }
+  checkPrint( m_brineDensityTable, printInCsv, printInLog );
 }
 
 PhillipsBrineDensity::KernelWrapper

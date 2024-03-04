@@ -393,16 +393,9 @@ CO2Solubility::CO2Solubility( string const & name,
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
   m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
 
-  if( printInCsv || ( printInLog && m_CO2SolubilityTable->numDimensions() >= 3 ) )
-  {
-    m_CO2SolubilityTable->printInCSV( m_CO2SolubilityTable->getName() );
-    m_WaterVapourisationTable->printInCSV( m_WaterVapourisationTable->getName() );
-  }
-  if( printInLog &&  m_CO2SolubilityTable->numDimensions() <= 2 )
-  {
-    m_CO2SolubilityTable->printInLog( m_CO2SolubilityTable->getName() );
-    m_WaterVapourisationTable->printInLog( m_WaterVapourisationTable->getName() );
-  }
+  checkPrint( m_CO2SolubilityTable, printInCsv, printInLog );
+  checkPrint( m_WaterVapourisationTable, printInCsv, printInLog );
+
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,
