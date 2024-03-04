@@ -237,13 +237,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  bool isClone = true;
-  if( getParent().getName() == "Constitutive" )
-  {
-    isClone = false;
-  }
-
-  createPVTModels( isClone );
+  createPVTModels( false );
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
