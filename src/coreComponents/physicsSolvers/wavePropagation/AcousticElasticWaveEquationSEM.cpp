@@ -150,6 +150,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 const > const ux_n   = nodeManager.getField< elasticfields::Displacementx_n >();
     arrayView1d< real32 const > const uy_n   = nodeManager.getField< elasticfields::Displacementy_n >();
     arrayView1d< real32 const > const uz_n   = nodeManager.getField< elasticfields::Displacementz_n >();
+    // acoutic -> elastic coupling vectors
     arrayView1d< real32 const > const atoex  = nodeManager.getField< acoustoelasticfields::CouplingVectorx >();
     arrayView1d< real32 const > const atoey  = nodeManager.getField< acoustoelasticfields::CouplingVectory >();
     arrayView1d< real32 const > const atoez  = nodeManager.getField< acoustoelasticfields::CouplingVectorz >();
