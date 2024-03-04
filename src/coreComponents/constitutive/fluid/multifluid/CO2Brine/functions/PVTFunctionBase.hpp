@@ -140,6 +140,12 @@ public:
    */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
 
+  /**
+   * @brief Check if the log should be printed on log (standard output) and/or CSV files
+   * @param table The target table to be printed
+   * @param printInCsv Boolean for printing in CSV
+   * @param printInLog Boolean for printing in Log
+   */
   void checkPrint ( TableFunction const * table, bool const printInCsv, bool const printInLog )
   {
     if( printInCsv || ( printInLog && table->numDimensions() >= 3 ) )
