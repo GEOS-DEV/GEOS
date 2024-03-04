@@ -269,7 +269,8 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
  * @param edges[in] The edges as computed by vtk.
  * @param collocatedNodes[in] The collocated nodes information.
  * @param nodeToEdges[in] The node to edges mapping.
- * @return The 2d face to 3d edge mapping.
+ * @return The 2d face to 3d edge mapping. In the case where the face is at the boundary of the MPI domain,
+ * then the edge index will be set to @e -1 for further actions.
  */
 array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          vtkPolyData * edges,
@@ -314,15 +315,10 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
-    if( res->second < 2 )
-    {
-      GEOS_LOG_RANK( "BOUYAKA " << res->first );
-      face2dToEdge[i] = -1;
-    }
-    else
-    {
-      face2dToEdge[i] = LvArray::integerConversion< localIndex >( res->first );
-    }
+    // If we're in a case where there aren't two edges sharing two nodes, then it means that we're in a corner case where the 2d element is on the boundary of the MPI domain,
+    // and maybe some nodes are missing for the 2d element to be properly and consistently defines.
+    // In this case, we explicitly set the edge index at `-1`, so we can get back on it later.
+    face2dToEdge[i] = res->second < 2 ? -1: LvArray::integerConversion< localIndex >( res->first );
   }
 
   return face2dToEdge;
@@ -369,7 +365,7 @@ ArrayOfArrays< localIndex > buildElem2dToEdges( vtkIdType num2dElements,
   {
     for( auto const & face2dIndex: elem2dToFace2d[elemIndex] )
     {
-      auto const e = face2dToEdge[face2dIndex];
+      localIndex const & e = face2dToEdge[face2dIndex];
       if( e > -1 )
       {
         elem2dToEdges.emplaceBack( elemIndex, e );
