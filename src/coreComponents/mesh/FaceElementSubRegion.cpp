@@ -478,81 +478,58 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
 /**
  * @brief Returns a mapping that links any collocated edge to the collocated edge with the lowest index.
  * @param referenceCollocatedNodes The mapping that links any collocated node to its collocated node with the lowest index.
- * @param nl2g The local to glocal mapping for nodes.
+ * @param nl2g The local to global mapping for nodes.
  * @param edgeToNodes The edge to nodes mapping.
- * @param elem2dToEdges The 2d elem to edges mapping.
  * @param edgeGhostRanks The ghost rank of the edges.
  * @return The computed map.
  */
 std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
                                                                   arrayView1d< globalIndex const > const nl2g,
                                                                   arrayView2d< localIndex const > const edgeToNodes,
-//                                                                  ArrayOfArraysView< localIndex const > const elem2dToEdges,
                                                                   arrayView1d< integer const > edgeGhostRanks )
 {
   GEOS_ASSERT_EQ( edgeToNodes.size( 1 ), 2 );
+  static constexpr std::string_view nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
 
-  // `edgeIds` maps the nodes of the edges of the face element sub-region to its index.
-  std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
-
+  // Checks if the node `gni` is handled as a collocated node on the curren rank.
   auto hasCollocatedNode = [&]( globalIndex const gni ) -> bool
   {
     return referenceCollocatedNodes.find( gni ) != referenceCollocatedNodes.cend();
   };
+
+  // `edgeIds` is a temporary container that maps the two nodes of any edge of all the face elements, to the local index of the edge itself.
+  // It's important to note that the key of `edgeIds` are the global indices of the nodes, in no particular order.
+  std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
   for( auto lei = 0; lei < edgeToNodes.size( 0 ); ++lei )
   {
     auto const & nodes = edgeToNodes[lei];
     globalIndex const & gni0 = nl2g[nodes[0]];
     globalIndex const & gni1 = nl2g[nodes[1]];
-    if( hasCollocatedNode( gni0 ) and hasCollocatedNode( gni1 ) )
+    if( hasCollocatedNode( gni0 ) && hasCollocatedNode( gni1 ) )
     {
-      std::pair< globalIndex, globalIndex > const p = std::minmax( { gni0, gni1 } );
-      edgesIds[p] = lei;
+//      std::pair< globalIndex, globalIndex > const p = std::minmax( { gni0, gni1 } );  // TODO maybe the sort is not required.
+//      edgesIds[p] = lei;
+      edgesIds[{ gni0, gni1 }] = lei;
     }
   }
-
-//  for( int ei = 0; ei < elem2dToEdges.size(); ++ei )
-//  {
-//    for( localIndex const & edi: elem2dToEdges[ei] )
-//    {
-//      if( edi < 0 )
-//      {
-//        GEOS_LOG_RANK( "BOMBOKLAT found a -1 for elem2d " << ei );
-//        continue;
-//      }
-//      auto const nodes = edgeToNodes[edi];
-//      GEOS_ASSERT_EQ( nodes.size(), 2 );
-//      auto const p = std::minmax( { nl2g[nodes[0]], nl2g[nodes[1]] } );
-//      edgesIds[p] = edi;
-//    }
-//  }
 
   // The key of the `collocatedEdgeBuckets` map (i.e. `std::pair< globalIndex, globalIndex >`) represents the global indices of two nodes.
   // Those two nodes are the lowest index of collocated nodes. As such, those two nodes may not form an existing edge.
   // But this trick lets us define some kind of _hash_ that allows to compare the location of the edges:
   // edges sharing the same hash lie in the same position.
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
-  // The `collocatedEdgeIds` map gathers all the collocated edges together.
-  std::set< globalIndex > requested;
   for( auto const & p: edgesIds )
   {
     std::pair< globalIndex, globalIndex > const & nodes = p.first;
     localIndex const & edge = p.second;
 
     auto it0 = referenceCollocatedNodes.find( nodes.first );
-    globalIndex const n0 = it0 != referenceCollocatedNodes.cend() ? it0->second : nodes.first;
-    requested.insert(nodes.first);
-    if( it0 == referenceCollocatedNodes.cend() )
-    {
-      GEOS_LOG_RANK("HELLO --> could not find node " << nodes.first );
-    }
+    GEOS_ERROR_IF( it0 == referenceCollocatedNodes.cend(), GEOS_FMT( nodeNotFound, nodes.first ) );
+    globalIndex const n0 = it0->second;
 
     auto it1 = referenceCollocatedNodes.find( nodes.second );
-    globalIndex const n1 = it1 != referenceCollocatedNodes.cend() ? it1->second : nodes.second;
-    if( it1 == referenceCollocatedNodes.cend() )
-    {
-      GEOS_LOG_RANK( "HELLO --> could not find node " << nodes.second );
-    }
+    GEOS_ERROR_IF( it1 == referenceCollocatedNodes.cend(), GEOS_FMT( nodeNotFound, nodes.second ) );
+    globalIndex const n1 = it1->second;
 
     std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( n0, n1 );
     collocatedEdgeBuckets[edgeHash].insert( edge );
