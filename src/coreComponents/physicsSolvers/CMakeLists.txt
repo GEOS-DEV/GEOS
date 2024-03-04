@@ -9,12 +9,12 @@ set( physicsSolvers_headers
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
-     contact/LagrangianContactSolver.hpp
      contact/SolidMechanicsEFEMKernelsBase.hpp
      contact/SolidMechanicsEFEMKernels.hpp
      contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
      contact/SolidMechanicsEFEMKernelsHelper.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
+     contact/SolidMechanicsLagrangeContact.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
@@ -130,17 +130,20 @@ set( physicsSolvers_headers
      surfaceGeneration/kernels/surfaceGenerationKernelsHelpers.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/WaveSolverUtils.hpp
-     wavePropagation/WaveSolverBaseFields.hpp
+     wavePropagation/AcousticFields.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticFields.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticVTIFields.hpp
      wavePropagation/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/AcoustoElasticFields.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp )
 
@@ -152,8 +155,8 @@ set( physicsSolvers_sources
      SolverBase.cpp
      SolverStatistics.cpp
      contact/ContactSolverBase.cpp
-     contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
+     contact/SolidMechanicsLagrangeContact.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp

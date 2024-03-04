@@ -156,7 +156,7 @@ private:
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
-    static constexpr char const * solubilityModelString() { return "solubilityModels"; }
+    static constexpr char const * solubilityTablesString() { return "solubilityTableNames"; }
     static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
   };
 
@@ -175,6 +175,9 @@ private:
 
   /// Name of the file defining the flash model
   Path m_flashModelParaFile;
+
+  /// Names of solubility tables for each phase
+  string_array m_solubilityTables;
 
   /// Index of the liquid phase
   integer m_p1Index;
