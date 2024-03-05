@@ -73,7 +73,7 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
-  void initializePostInitialConditionsPreSubGroups()
+  virtual void initializePostInitialConditionsPreSubGroups() override
   {
     Base::initializePostInitialConditionsPreSubGroups();
 
