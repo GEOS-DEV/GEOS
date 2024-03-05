@@ -295,7 +295,6 @@ protected:
   array1d< ParallelVector > m_rigidBodyModes;
 
 private:
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   string m_contactRelationName;
 
