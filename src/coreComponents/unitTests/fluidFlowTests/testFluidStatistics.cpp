@@ -17,8 +17,6 @@
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 
 #include <gtest/gtest.h>
 
