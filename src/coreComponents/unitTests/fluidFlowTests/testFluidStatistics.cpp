@@ -1143,11 +1143,20 @@ TestSet getTestSet()
                   { 0.0, 0.027 },
                   { 0.0, 0.000 } } );
 
-  // This simulation is set-up to have at least one timestep cut.
-  testInputs.requiredSubTimeStep = 2;
   // scale is set to high values to make the solver generate timestep cuts
   testInputs.sourceRateFactor = -8.0;
   testInputs.sinkRateFactor = 8.0;
+
+  if( std::is_same< LAInterface, HypreInterface >::value )
+  {
+    // With Hypre, this simulation is set-up to have at least one timestep cut.
+    testInputs.requiredSubTimeStep = 2;
+  }
+  else
+  {
+    // With other LAIs, the simulation doesn't behave the same way
+    testInputs.requiredSubTimeStep = 0;
+  }
 
   return TestSet( testInputs );
 }
