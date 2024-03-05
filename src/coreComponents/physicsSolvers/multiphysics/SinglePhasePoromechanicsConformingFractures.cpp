@@ -414,6 +414,8 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
     arrayView1d< globalIndex const > const &
     presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
 
+    globalIndex const rankOffset = dofManager.rankOffset();
+
     ArrayOfArraysView< localIndex const > const & elemsToFaces = fractureSubRegion.faceList().toViewConst();
 
     stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
@@ -431,7 +433,7 @@ addTransmissibilityCouplingPattern( DomainPartition const & domain,
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]];
+            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]] - rankOffset;
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
@@ -733,26 +735,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( Do
 
   // update the stencil weights using the updated hydraulic aperture
   this->flowSolver()->updateStencilWeights( domain );
-
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel & mesh,
-                                                                      arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
-    {
-      // update fluid model
-      this->flowSolver()->updateFluidState( subRegion );
-      if( this->m_isThermal )
-      {
-        // update solid internal energy
-        this->flowSolver()->updateSolidInternalEnergyModel( subRegion );
-      }
-    } );
-  } );
 }
 
 template< typename FLOW_SOLVER >
