@@ -82,6 +82,7 @@ public:
 
   /**
    * @brief Write the table into a string
+   * @return A string table
    */
   string drawToString();
 

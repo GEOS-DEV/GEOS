@@ -339,7 +339,7 @@ string Table::drawToString()
 {
   std::ostringstream oss;
   drawToStream( oss );
-  return oss.str(); 
+  return oss.str();
 }
 
 }
