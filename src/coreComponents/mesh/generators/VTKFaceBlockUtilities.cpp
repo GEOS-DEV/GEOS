@@ -383,11 +383,14 @@ struct Elem2dTo3dInfo
 {
   ToCellRelation< ArrayOfArrays< localIndex > > elem2dToElem3d;
   ArrayOfArrays< localIndex > elem2dToFaces;
+  ArrayOfArrays< localIndex > elem2dToNodesFallBack;
 
   Elem2dTo3dInfo( ToCellRelation< ArrayOfArrays< localIndex > > && elem2dToElem3d_,
-                  ArrayOfArrays< localIndex > && elem2dToFaces_ )
+                  ArrayOfArrays< localIndex > && elem2dToFaces_,
+                  ArrayOfArrays< localIndex > && elem2dToNodes )
     : elem2dToElem3d( elem2dToElem3d_ ),
-    elem2dToFaces( elem2dToFaces_ )
+      elem2dToFaces( elem2dToFaces_ ),
+      elem2dToNodesFallBack( elem2dToNodes )
   { }
 };
 
@@ -426,6 +429,12 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
 
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
   vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );
+
+  std::map< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
+  for( vtkIdType i = 0; i < globalPtIds->GetNumberOfValues(); ++i )
+  {
+    ng2l[globalPtIds->GetValue( i )] = i;
+  }
 
   // Let's build the elem2d to elem3d mapping. We need to find the 3d elements!
   // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
@@ -468,12 +477,13 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   ArrayOfArrays< localIndex > elem2dToElem3d( num2dElements, 2 );
   ArrayOfArrays< localIndex > elem2dToCellBlock( num2dElements, 2 );
   ArrayOfArrays< localIndex > elem2dToFaces( num2dElements, 2 );
+  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements, 10 );  // Fallback for case where the elem 2d has no neighbor on this rank.
 
   // Now we loop on all the 2d elements.
-  for( int i = 0; i < num2dElements; ++i )
+  for( int e2d = 0; e2d < num2dElements; ++e2d )
   {
     // We collect all the duplicated points that are involved for each 2d element.
-    vtkIdList * pointIds = faceMesh->GetCell( i )->GetPointIds();
+    vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
     std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
     // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
     std::set< vtkIdType > duplicatedPointOfElem2d;
@@ -481,6 +491,15 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     {
       std::vector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
+    }
+
+    for( vtkIdType const & gni: duplicatedPointOfElem2d )
+    {
+      auto it = ng2l.find( gni );
+      if( it != ng2l.cend() )
+      {
+        elem2dToNodes.emplaceBack( e2d, it->second );
+      }
     }
 
     // Here, we collect all the 3d elements that are concerned by at least one of those duplicated elements.
@@ -503,7 +522,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       if( e2n.second.size() == elem2dNumPoints )
       {
         // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        elem2dToElem3d.emplaceBack( i, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
+        elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
         // Computing the elem2dToFaces mapping.
         auto faces = elemToFaces[e2n.first];
         for( int j = 0; j < faces.size( 0 ); ++j )
@@ -517,8 +536,8 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
           }
           if( globalNodes == e2n.second )
           {
-            elem2dToFaces.emplaceBack( i, faceIndex );
-            elem2dToCellBlock.emplaceBack( i, elemToFaces.getCellBlockIndex( e2n.first ) );
+            elem2dToFaces.emplaceBack( e2d, faceIndex );
+            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( e2n.first ) );
             break;
           }
         }
@@ -527,7 +546,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   }
 
   auto cellRelation = ToCellRelation< ArrayOfArrays< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
-  return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ) );
+  return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ), std::move( elem2dToNodes ) );
 }
 
 
@@ -536,11 +555,13 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
  * @param num2dElements Number of (2d) elements in the fracture.
  * @param faceToNodes The face to nodes mapping.
  * @param elem2dToFaces The 2d element to faces mapping.
+ * @param elem2dToNodesFallBack The 2d element to nodes mapping that will be used in case the fracture has no face neighbor.
  * @return The computed mapping.
  */
 ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
                                                 ArrayOfArraysView< localIndex const > faceToNodes,
-                                                ArrayOfArraysView< localIndex const > elem2dToFaces )
+                                                ArrayOfArraysView< localIndex const > elem2dToFaces,
+                                                ArrayOfArraysView< localIndex const > elem2dToNodesFallBack )
 {
   ArrayOfArrays< localIndex > elem2dToNodes( LvArray::integerConversion< localIndex >( num2dElements ) );
   for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
@@ -564,11 +585,15 @@ ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
     }
   }
 
-  if( logger::internal::rank == 4 )
+  // Fallback when the elem 2d has no neighbor
+  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
   {
-    for( auto i: { 254, 255, 258, 284, 286 } )
+    if( elem2dToNodes.sizeOfArray( elem2dIndex ) == 0 )
     {
-      elem2dToNodes.emplaceBack( 36, i );
+      for( localIndex const lni: elem2dToNodesFallBack[elem2dIndex] )
+      {
+        elem2dToNodes.emplaceBack( elem2dIndex, lni );
+      }
     }
   }
 
@@ -631,7 +656,7 @@ void importFractureNetwork( string const & faceBlockName,
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
   Elem2dTo3dInfo elem2dTo3d = buildElem2dTo3dElemAndFaces( faceMesh, mesh, collocatedNodes, faceToNodes.toViewConst(), elemToFaces );
-  ArrayOfArrays< localIndex > elem2dToNodes = buildElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst() );
+  ArrayOfArrays< localIndex > elem2dToNodes = buildElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst(), elem2dTo3d.elem2dToNodesFallBack.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = buildFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > face2dToEdge = buildFace2dToEdge( vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() ), edges, collocatedNodes, nodeToEdges.toViewConst() );

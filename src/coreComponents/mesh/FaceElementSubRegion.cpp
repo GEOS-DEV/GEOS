@@ -732,14 +732,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   }
   GEOS_ASSERT_EQ( num2dFaces, m_2dFaceToEdge.size() );
 
-//  m_2dFaceToEdge.clear();
-//  m_2dFaceToEdge.reserve( num2dFaces );
-//  for( auto const & p: referenceCollocatedEdges )
-//  {
-//    globalIndex const & refEdge = p.second;
-//    m_2dFaceToEdge.emplace_back( refEdge );
-//  }
-//
   // `m_edgesTo2dFaces` is computed by the simple inversion of `m_2dFaceToEdge`
   m_edgesTo2dFaces.clear();
   for( localIndex i = 0; i < num2dFaces; ++i )
