@@ -414,7 +414,7 @@ TestSet getTestSet()
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="iluk"
-                              krylovTol="1.0e-10" />
+                              krylovTol="1.0e-6" />
 
     </SinglePhaseFVM>
   </Solvers>
@@ -656,7 +656,7 @@ TestSet getTestSet()
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="iluk"
-                              krylovTol="1.0e-10" />
+                              krylovTol="1.0e-6" />
     </CompositionalMultiphaseFVM>
   </Solvers>
 
