@@ -91,13 +91,14 @@ public:
    * @param[in] componentProperties The compositional component properties
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeLogFugacityCoefficients( integer const numComps,
                                   real64 const & pressure,
                                   real64 const & temperature,
-                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 const, USD > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   arraySlice1d< real64 > const & logFugacityCoefficients );
 
@@ -112,13 +113,14 @@ public:
    * @param[in] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeLogFugacityCoefficients( integer const numComps,
                                   real64 const & pressure,
                                   real64 const & temperature,
-                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 const, USD > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   arraySlice1d< real64 const > const & logFugacityCoefficients,
                                   arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
@@ -134,13 +136,14 @@ public:
    * @param[out] compressibilityFactor the current compressibility factor
    * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeCompressibilityFactor( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 real64 & compressibilityFactor,
                                 arraySlice1d< real64 > const & compressibilityFactorDerivs );
@@ -152,7 +155,6 @@ public:
    * @param[in] componentProperties The compositional model properties
    * @param[out] dimensionalVolumeShift The calculated dimensional volume shifts
    */
-  GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
                                                arraySlice1d< real64 > const & dimensionalVolumeShift );
@@ -217,13 +219,14 @@ public:
    * @param[out] aMixtureCoefficient mixture coefficient (A)
    * @param[out] bMixtureCoefficient mixture coefficient (B)
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeMixtureCoefficients( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const > const & composition,
+                              arraySlice1d< real64 const, USD > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               arraySlice1d< real64 > const & aPureCoefficient,
                               arraySlice1d< real64 > const & bPureCoefficient,
@@ -245,13 +248,14 @@ public:
    * @param[out] bMixtureCoefficientDerivs derivatives of mixture coefficient (B)
    * @note Assumes that pressure and temperature are strictly positive
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeMixtureCoefficients( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const > const & composition,
+                              arraySlice1d< real64 const, USD > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               arraySlice1d< real64 const > const & aPureCoefficient,
                               arraySlice1d< real64 const > const & bPureCoefficient,
@@ -271,11 +275,12 @@ public:
    * @param[in] bMixtureCoefficient mixture coefficient (B)
    * @param[out] compressibilityFactor compressibility factor
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeCompressibilityFactor( integer const numComps,
-                                arraySlice1d< real64 const > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 arraySlice1d< real64 const > const & aPureCoefficient,
                                 arraySlice1d< real64 const > const & bPureCoefficient,
@@ -317,11 +322,12 @@ public:
    * @param[in] bMixtureCoefficient mixture coefficient (B)
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    */
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
   computeLogFugacityCoefficients( integer const numComps,
-                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 const, USD > const & composition,
                                   arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                   real64 const & compressibilityFactor,
                                   arraySlice1d< real64 const > const & aPureCoefficient,
@@ -353,13 +359,14 @@ public:
 };
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 arraySlice1d< real64 > const & logFugacityCoefficients )
 {
@@ -406,13 +413,14 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arraySlice1d< real64 const > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
                                 arraySlice1d< real64 const > const & logFugacityCoefficients,
                                 arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
@@ -560,13 +568,14 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arraySlice1d< real64 const > const & composition,
+                              arraySlice1d< real64 const, USD > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
                               real64 & compressibilityFactor,
                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
@@ -631,7 +640,6 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
@@ -713,13 +721,14 @@ computePureCoefficients( integer const ic,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
-                            arraySlice1d< real64 const > const & composition,
+                            arraySlice1d< real64 const, USD > const & composition,
                             ComponentProperties::KernelWrapper const & componentProperties,
                             arraySlice1d< real64 > const & aPureCoefficient,
                             arraySlice1d< real64 > const & bPureCoefficient,
@@ -747,13 +756,14 @@ computeMixtureCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
-                            arraySlice1d< real64 const > const & composition,
+                            arraySlice1d< real64 const, USD > const & composition,
                             ComponentProperties::KernelWrapper const & componentProperties,
                             arraySlice1d< real64 const > const & aPureCoefficient,
                             arraySlice1d< real64 const > const & bPureCoefficient,
@@ -809,11 +819,12 @@ computeMixtureCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
-                              arraySlice1d< real64 const > const & composition,
+                              arraySlice1d< real64 const, USD > const & composition,
                               arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                               arraySlice1d< real64 const > const & aPureCoefficient,
                               arraySlice1d< real64 const > const & bPureCoefficient,
@@ -920,11 +931,12 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
+template< integer USD >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
-                                arraySlice1d< real64 const > const & composition,
+                                arraySlice1d< real64 const, USD > const & composition,
                                 arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 real64 const & compressibilityFactor,
                                 arraySlice1d< real64 const > const & aPureCoefficient,

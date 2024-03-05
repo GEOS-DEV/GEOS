@@ -35,15 +35,16 @@ class ConstantViscosityUpdate final : public FunctionBaseUpdate
 public:
   ConstantViscosityUpdate() = default;
 
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
-                arraySlice1d< real64 const > const & phaseComposition,
+                arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 const & density,
-                arraySlice1d< real64 const > const & dDensity,
+                arraySlice1d< real64 const, USD2 > const & dDensity,
                 real64 & viscosity,
-                arraySlice1d< real64 > const & dViscosity,
+                arraySlice1d< real64, USD2 > const & dViscosity,
                 bool useMass ) const;
 };
 
@@ -70,16 +71,17 @@ public:
   KernelWrapper createKernelWrapper() const;
 };
 
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
                                        real64 const & pressure,
                                        real64 const & temperature,
-                                       arraySlice1d< real64 const > const & phaseComposition,
+                                       arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                        real64 const & density,
-                                       arraySlice1d< real64 const > const & dDensity,
+                                       arraySlice1d< real64 const, USD2 > const & dDensity,
                                        real64 & viscosity,
-                                       arraySlice1d< real64 > const & dViscosity,
+                                       arraySlice1d< real64, USD2 > const & dViscosity,
                                        bool useMass ) const
 {
   GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );

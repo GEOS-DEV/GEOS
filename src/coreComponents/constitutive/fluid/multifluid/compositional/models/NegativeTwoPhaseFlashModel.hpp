@@ -51,13 +51,13 @@ public:
   GEOS_HOST_DEVICE
   static constexpr integer getNumberOfPhases() { return 2; }
 
-  template< int USD1 >
+  template< int USD1, int USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
-                arraySlice2d< real64 > const & kValues,
+                arraySlice2d< real64, USD2 > const & kValues,
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
@@ -74,8 +74,9 @@ public:
       phaseFraction.value[m_vapourIndex],
       phaseCompFraction.value[m_liquidIndex],
       phaseCompFraction.value[m_vapourIndex] );
-    GEOS_WARNING_IF( !flashStatus,
-                     GEOS_FMT( "Negative two phase flash failed to converge {:.5e} {:.3f}", pressure, temperature ));
+    GEOS_UNUSED_VAR( flashStatus );
+    //GEOS_ERROR_IF( !flashStatus,
+    //                 GEOS_FMT( "Negative two phase flash failed to converge {:.5e} {:.3f}", pressure, temperature ));
 
     // Calculate derivatives
     NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
@@ -85,8 +86,8 @@ public:
       compFraction,
       componentProperties,
       phaseFraction.value[m_vapourIndex],
-      phaseCompFraction.value[m_liquidIndex],
-      phaseCompFraction.value[m_vapourIndex],
+      phaseCompFraction.value[m_liquidIndex].toSliceConst(),
+      phaseCompFraction.value[m_vapourIndex].toSliceConst(),
       phaseFraction.derivs[m_vapourIndex],
       phaseCompFraction.derivs[m_liquidIndex],
       phaseCompFraction.derivs[m_vapourIndex] );

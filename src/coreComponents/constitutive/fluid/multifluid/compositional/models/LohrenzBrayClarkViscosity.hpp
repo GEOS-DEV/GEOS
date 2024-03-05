@@ -47,15 +47,16 @@ public:
 public:
   explicit LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type );
 
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
-                arraySlice1d< real64 const > const & phaseComposition,
+                arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 const & density,
-                arraySlice1d< real64 const > const & dDensity,
+                arraySlice1d< real64 const, USD2 > const & dDensity,
                 real64 & viscosity,
-                arraySlice1d< real64 > const & dViscosity,
+                arraySlice1d< real64, USD2 > const & dViscosity,
                 bool useMass ) const;
 
   GEOS_HOST_DEVICE
@@ -99,15 +100,16 @@ private:
    * @param[out] phaseViscosity The phase viscosity
    * @param[out] dPhaseViscosity The phase viscosity derivatives
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void computePhaseDiluteViscosity_HerningZipperer( integer const numComponents,
                                                     ComponentProperties::KernelWrapper const & componentProperties,
                                                     real64 const temperature,
-                                                    arraySlice1d< real64 const > const & phaseComposition,
+                                                    arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                                     arraySlice1d< real64 const > const & componentDiluteViscosity,
                                                     arraySlice1d< real64 const > const & dComponentDiluteViscosity_dTemperature,
                                                     real64 & phaseViscosity,
-                                                    arraySlice1d< real64 > const & dPhaseViscosity ) const;
+                                                    arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const;
 
   /**
    * @brief Estimate phase viscosity at dilute-gas conditions using Wilke [1950]
@@ -122,15 +124,16 @@ private:
    * @param[out] phaseViscosity The phase viscosity
    * @param[out] dPhaseViscosity The phase viscosity derivatives
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void computePhaseDiluteViscosity_Wilke( integer const numComponents,
                                           ComponentProperties::KernelWrapper const & componentProperties,
                                           real64 const temperature,
-                                          arraySlice1d< real64 const > const & phaseComposition,
+                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           arraySlice1d< real64 const > const & componentDiluteViscosity,
                                           arraySlice1d< real64 const > const & dComponentDiluteViscosity_dTemperature,
                                           real64 & phaseViscosity,
-                                          arraySlice1d< real64 > const & dPhaseViscosity ) const;
+                                          arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const;
 
   /**
    * @brief Estimate phase viscosity at dilute-gas conditions using Brokaw[1968]
@@ -146,15 +149,16 @@ private:
    * @param[out] phaseViscosity The phase viscosity
    * @param[out] dPhaseViscosity The phase viscosity derivatives
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void computePhaseDiluteViscosity_Brokaw( integer const numComponents,
                                            ComponentProperties::KernelWrapper const & componentProperties,
                                            real64 const temperature,
-                                           arraySlice1d< real64 const > const & phaseComposition,
+                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                            arraySlice1d< real64 const > const & componentDiluteViscosity,
                                            arraySlice1d< real64 const > const & dComponentDiluteViscosity_dTemperature,
                                            real64 & phaseViscosity,
-                                           arraySlice1d< real64 > const & dPhaseViscosity ) const;
+                                           arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const;
 
   /**
    * @brief Estimates phase viscosity using Lohrenz, Bray & Clark [1964]
@@ -169,14 +173,15 @@ private:
    * @param[out] phaseViscosity The phase viscosity
    * @param[out] dPhaseViscosity The phase viscosity derivatives
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void computePhaseViscosity_LohrenzBrayClark( integer const numComponents,
                                                ComponentProperties::KernelWrapper const & componentProperties,
-                                               arraySlice1d< real64 const > const & phaseComposition,
+                                               arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                                real64 const phaseDensity,
-                                               arraySlice1d< real64 const > const & dPhaseDensity,
+                                               arraySlice1d< real64 const, USD2 > const & dPhaseDensity,
                                                real64 & phaseViscosity,
-                                               arraySlice1d< real64 > const & dPhaseViscosity ) const;
+                                               arraySlice1d< real64, USD2 > const & dPhaseViscosity ) const;
 
   /**
    * @brief Computes inverse chi parameter
@@ -246,5 +251,8 @@ ENUM_STRINGS( LohrenzBrayClarkViscosityUpdate::MixingType,
 } // end namespace constitutive
 
 } // end namespace geos
+
+// Implementation
+#include "LohrenzBrayClarkViscosityImpl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_

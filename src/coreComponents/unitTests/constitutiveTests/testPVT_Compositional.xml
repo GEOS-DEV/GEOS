@@ -20,7 +20,7 @@
       feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="100"
+      steps="1000"
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
@@ -44,7 +44,7 @@
       feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="100"
+      steps="1000"
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
@@ -158,15 +158,15 @@
     <TableFunction
       name="pressureFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0, 2.0 }"
-      values="{ 3.5e+07, 1.0e+07, 3.5e+07 }"/>
+      coordinates="{ 0.0, 0.5, 1.0, 1.5, 2.0 }"
+      values="{ 3.5e+07, 1.0e+07, 1.0e+05, 1.0e+07, 3.5e+07 }"/>
 
     <TableFunction
       name="temperatureFunction"
       inputVarNames="{ time }"
       interpolation="lower"
       coordinates="{ 0.0, 1.0, 2.0 }"
-      values="{ 323.15, 353.15, 353.15 }"/>
+      values="{ 553.15, 583.15, 583.15 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

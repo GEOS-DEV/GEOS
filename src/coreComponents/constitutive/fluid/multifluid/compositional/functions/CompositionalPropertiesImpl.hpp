@@ -13,8 +13,11 @@
  */
 
 /**
- * @file CompositionalProperties.hpp
+ * @file CompositionalPropertiesImpl.hpp
  */
+
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIESIMPL_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIESIMPL_HPP_
 
 #include "CompositionalProperties.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -34,16 +37,17 @@ namespace compositional
  *   Peneloux, A et al. 1982. Fluid phase equilibria, 8(1):7–23.
  *   https://doi.org/10.1016/0378-3812(82)80002-2
  */
+template <integer USD1, integer USD2>
 GEOS_HOST_DEVICE
 void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 const pressure,
                                                    real64 const temperature,
-                                                   arraySlice1d< real64 const > const & composition,
+                                                   arraySlice1d< real64 const, USD1 > const & composition,
                                                    arraySlice1d< real64 const > const & volumeShift,
                                                    real64 const compressibilityFactor,
                                                    arraySlice1d< real64 const > const & compressibilityFactorDerivs,
                                                    real64 & molarDensity,
-                                                   arraySlice1d< real64 > const & molarDensityDerivs )
+                                                   arraySlice1d< real64, USD2 > const & molarDensityDerivs )
 {
   real64 vEos = constants::gasConstant * temperature * compressibilityFactor / pressure;
   real64 vCorrected = vEos;
@@ -84,14 +88,15 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
   }
 }
 
+template <integer USD1, integer USD2>
 GEOS_HOST_DEVICE
 void CompositionalProperties::computeMassDensity( integer const numComps,
-                                                  arraySlice1d< real64 const > const & composition,
+                                                  arraySlice1d< real64 const, USD1 > const & composition,
                                                   arraySlice1d< real64 const > const & molecularWeight,
                                                   real64 const molarDensity,
-                                                  arraySlice1d< real64 const > const & molarDensityDerivs,
+                                                  arraySlice1d< real64 const, USD2 > const & molarDensityDerivs,
                                                   real64 & massDensity,
-                                                  arraySlice1d< real64 > const & massDensityDerivs )
+                                                  arraySlice1d< real64, USD2 > const & massDensityDerivs )
 {
   massDensity = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
@@ -127,3 +132,6 @@ void CompositionalProperties::computeMassDensity( integer const numComps,
 } // namespace constitutive
 
 } // namespace geos
+
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIESIMPL_HPP_
+

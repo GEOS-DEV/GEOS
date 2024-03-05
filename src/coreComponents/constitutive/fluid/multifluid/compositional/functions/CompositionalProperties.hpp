@@ -47,16 +47,17 @@ public:
    * @param[out] molarDensity the calculated molar density
    * @param[out] molarDensityDerivs derivatives of the molar density
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void computeMolarDensity( integer const numComps,
                                    real64 const pressure,
                                    real64 const temperature,
-                                   arraySlice1d< real64 const > const & composition,
+                                   arraySlice1d< real64 const, USD1 > const & composition,
                                    arraySlice1d< real64 const > const & volumeShift,
                                    real64 const compressibilityFactor,
                                    arraySlice1d< real64 const > const & compressibilityFactorDerivs,
                                    real64 & molarDensity,
-                                   arraySlice1d< real64 > const & molarDensityDerivs );
+                                   arraySlice1d< real64, USD2 > const & molarDensityDerivs );
 
   /**
    * @brief Compute the mass density and derivatives
@@ -68,14 +69,15 @@ public:
    * @param[out] massDensity mass density
    * @param[out] massDensityDerivs derivatives of the mass density
    */
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void computeMassDensity( integer const numComps,
-                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice1d< real64 const, USD1 > const & composition,
                                   arraySlice1d< real64 const > const & molecularWeight,
                                   real64 const molarDensity,
-                                  arraySlice1d< real64 const > const & molarDensityDerivs,
+                                  arraySlice1d< real64 const, USD2 > const & molarDensityDerivs,
                                   real64 & massDensity,
-                                  arraySlice1d< real64 > const & massDensityDerivs );
+                                  arraySlice1d< real64, USD2 > const & massDensityDerivs );
 };
 
 } //namespace compositional
@@ -83,5 +85,8 @@ public:
 } // namespace constitutive
 
 } // namespace geos
+
+// Implementation
+#include "CompositionalPropertiesImpl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIES_HPP_

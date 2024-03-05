@@ -145,7 +145,7 @@ private:
   array2d< real64 > m_componentBinaryCoeff;
 
   // backup data
-  array4d< real64 > m_kValues;
+  PhaseComp::ValueType m_kValues;
 };
 
 using CompositionalTwoPhasePengRobinsonConstantViscosity = CompositionalMultiphaseFluid<

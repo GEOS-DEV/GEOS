@@ -49,7 +49,7 @@ struct MultiFluidConstants
   /**
    * @brief Max number of SSI iterations
    */
-  static constexpr integer maxSSIIterations = 200;
+  static constexpr integer maxSSIIterations = 1000;
 
   /**
    * @brief Max number of Newton iterations

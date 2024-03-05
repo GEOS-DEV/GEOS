@@ -13,16 +13,14 @@
  */
 
 /*
- * PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+ * PVTDriverRunTestCompositionalPR.cpp
  */
 
-#ifdef GEOSX_USE_PVTPackage
 #include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidPVTPackage >( constitutive::CompositionalMultiphaseFluidPVTPackage &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhasePengRobinsonConstantViscosity >(
+  constitutive::CompositionalTwoPhasePengRobinsonConstantViscosity &, arrayView2d< real64 > const & );
 }
-
-#endif

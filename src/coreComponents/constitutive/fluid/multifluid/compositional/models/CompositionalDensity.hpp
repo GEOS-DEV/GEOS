@@ -42,15 +42,16 @@ public:
     : m_componentDimensionalVolumeShift( volumeShift )
   {}
 
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
-                arraySlice1d< real64 const > const & phaseComposition,
+                arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 & molarDensity,
-                arraySlice1d< real64 > const & dMolarDensity,
+                arraySlice1d< real64, USD2 > const & dMolarDensity,
                 real64 & massDensity,
-                arraySlice1d< real64 > const & dMassDensity,
+                arraySlice1d< real64, USD2 > const & dMassDensity,
                 bool useMass ) const;
 
 private:
@@ -95,16 +96,17 @@ private:
 };
 
 template< typename EOS_TYPE >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void CompositionalDensityUpdate< EOS_TYPE >::
 compute( ComponentProperties::KernelWrapper const & componentProperties,
          real64 const & pressure,
          real64 const & temperature,
-         arraySlice1d< real64 const > const & phaseComposition,
+         arraySlice1d< real64 const, USD1 > const & phaseComposition,
          real64 & molarDensity,
-         arraySlice1d< real64 > const & dMolarDensity,
+         arraySlice1d< real64, USD2 > const & dMolarDensity,
          real64 & massDensity,
-         arraySlice1d< real64 > const & dMassDensity,
+         arraySlice1d< real64, USD2 > const & dMassDensity,
          bool useMass ) const
 {
   GEOS_UNUSED_VAR( useMass );
@@ -121,23 +123,23 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
                                           phaseComposition,
                                           componentProperties,
                                           compressibilityFactor,
-                                          tempDerivs );
+                                          tempDerivs.toSlice() );
 
   CompositionalProperties::computeMolarDensity( numComps,
                                                 pressure,
                                                 temperature,
                                                 phaseComposition,
-                                                m_componentDimensionalVolumeShift,
+                                                m_componentDimensionalVolumeShift.toSliceConst(),
                                                 compressibilityFactor,
-                                                tempDerivs,
+                                                tempDerivs.toSlice(),
                                                 molarDensity,
                                                 dMolarDensity );
 
   CompositionalProperties::computeMassDensity( numComps,
                                                phaseComposition,
-                                               componentProperties.m_componentMolarWeight,
+                                               componentProperties.m_componentMolarWeight.toSliceConst(),
                                                molarDensity,
-                                               dMolarDensity,
+                                               dMolarDensity.toSliceConst(),
                                                massDensity,
                                                dMassDensity );
 }

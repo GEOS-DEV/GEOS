@@ -60,6 +60,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
+     fluid/multifluid/compositional/functions/CompositionalPropertiesImpl.hpp     
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
@@ -69,6 +70,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
+     fluid/multifluid/compositional/models/LohrenzBrayClarkViscosityImpl.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
@@ -211,14 +213,16 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
-     fluid/multifluid/compositional/functions/CompositionalProperties.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
-     fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalPR.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalPRLBC.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalSRK.cpp
+     fluid/multifluid/compositional/PVTDriverRunTestCompositionalSRKLBC.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
      fluid/multifluid/reactive/ReactiveFluidDriver.cpp
@@ -251,10 +255,10 @@ set( constitutive_sources
      relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
      relativePermeability/RelpermDriver.cpp
      relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
-        relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
+     relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
      relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
      relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
-        relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
+     relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/CompressibleSolid.cpp
@@ -298,7 +302,8 @@ if( ENABLE_PVTPackage )
 
     set( constitutive_sources
          ${constitutive_sources}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.cpp )
+         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.cpp
+         fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp )
 
     add_subdirectory( PVTPackage )
 

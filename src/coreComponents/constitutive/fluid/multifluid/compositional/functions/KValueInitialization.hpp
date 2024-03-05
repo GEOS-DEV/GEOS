@@ -42,6 +42,7 @@ public:
    * @param[in] componentProperties The compositional component properties
    * @param[out] kValues the calculated k-values
    **/
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
@@ -49,7 +50,7 @@ public:
                                 real64 const pressure,
                                 real64 const temperature,
                                 ComponentProperties::KernelWrapper const & componentProperties,
-                                arraySlice1d< real64 > const & kValues )
+                                arraySlice1d< real64, USD > const & kValues )
   {
     arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
     arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
@@ -63,13 +64,14 @@ public:
   }
 
   /**
-   * @brief Calculate gas-liquid k-values based on the Wilson caorrelation
+   * @brief Calculate gas-liquid k-values near the convergence pressure
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] componentProperties The compositional component properties
    * @param[out] kValues the calculated k-values
    **/
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
@@ -77,7 +79,7 @@ public:
                                real64 const pressure,
                                real64 const temperature,
                                ComponentProperties::KernelWrapper const & componentProperties,
-                               arraySlice1d< real64 > const & kValues )
+                               arraySlice1d< real64, USD > const & kValues )
   {
     GEOS_UNUSED_VAR( pressure, temperature );
     arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;

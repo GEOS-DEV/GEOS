@@ -50,11 +50,12 @@ public:
    * @input[in] presentComponentIds the indices of components with a non-zero fractions
    * @return the gas mole fraction
    **/
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   real64
   static
-  solve( arraySlice1d< real64 const > const & kValues,
-         arraySlice1d< real64 const > const & feed,
+  solve( arraySlice1d< real64 const, USD2 > const & kValues,
+         arraySlice1d< real64 const, USD1 > const & feed,
          arraySlice1d< integer const > const & presentComponentIds )
   {
     real64 gasPhaseMoleFraction = 0;
@@ -167,11 +168,12 @@ private:
    * @input[in] x the value at which the Rachford-Rice function is evaluated
    * @return the value of the Rachford-Rice function at x
    **/
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   real64
   static
-  evaluate( arraySlice1d< real64 const > const & kValues,
-            arraySlice1d< real64 const > const & feed,
+  evaluate( arraySlice1d< real64 const, USD2 > const & kValues,
+            arraySlice1d< real64 const, USD1 > const & feed,
             arraySlice1d< integer const > const & presentComponentIds,
             real64 const & x )
   {
@@ -193,11 +195,12 @@ private:
    * @input[in] x the value at which the derivative of the Rachford-Rice function is evaluated
    * @return the value of the derivative of the Rachford-Rice function at x
    **/
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   real64
   static
-  evaluateDerivative( arraySlice1d< real64 const > const & kValues,
-                      arraySlice1d< real64 const > const & feed,
+  evaluateDerivative( arraySlice1d< real64 const, USD2 > const & kValues,
+                      arraySlice1d< real64 const, USD1 > const & feed,
                       arraySlice1d< integer const > const & presentComponentIds,
                       real64 const & x )
   {
@@ -219,11 +222,12 @@ private:
    * @input[out] minK the minimum k-value for non-zero components
    * @input[out] maxK the maximum k-value for non-zero components
    **/
+  template< integer USD >
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void
   static
-  findKValueRange( arraySlice1d< real64 const > const & kValues,
+  findKValueRange( arraySlice1d< real64 const, USD > const & kValues,
                    arraySlice1d< integer const > const & presentComponentIds,
                    real64 & minK,
                    real64 & maxK )

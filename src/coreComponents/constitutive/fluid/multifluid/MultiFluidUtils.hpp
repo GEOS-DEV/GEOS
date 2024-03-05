@@ -63,6 +63,8 @@ struct MultiFluidVarSlice
 
   internal::ArraySliceOrRef< T, DIM, USD > value;        /// variable value
   internal::ArraySliceOrRef< T, DIM + 1, USD_DC > derivs; /// derivative w.r.t. pressure, temperature, compositions
+
+  using ValueType = internal::ArraySliceOrRef< T, DIM, USD >;
 };
 
 /**
@@ -87,12 +89,14 @@ struct MultiFluidVarView
                       ArrayView< T, NDIM + 1, USD_DC > const & derivsSrc ):
     value( valueSrc ),
     derivs( derivsSrc )
-  {};
+  {}
 
   ArrayView< T, NDIM, USD > value;        ///< View into property values
   ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
 
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
+
+  using ValueType = ArrayView< T, NDIM, USD >;
 
   GEOS_HOST_DEVICE
   SliceType operator()( localIndex const k, localIndex const q ) const
@@ -118,6 +122,12 @@ struct MultiFluidVar
 
   using SliceType = typename ViewType::SliceType;
   using SliceTypeConst = typename ViewTypeConst::SliceType;
+
+  using ValueType = Array< real64, NDIM, PERM >;
+  template< int MAXSIZE >
+  using StackValueType = StackArray< real64, NDIM, MAXSIZE, PERM >;
+  using ViewValueType = typename ViewType::ValueType;
+  using SliceValueType = typename SliceType::ValueType;
 
   ViewType toView()
   {
