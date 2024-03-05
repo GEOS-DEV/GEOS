@@ -348,6 +348,13 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
   {
     this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
   }
+  else
+  {
+    if( this->flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+    {
+      this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridMultiphasePoromechanics;
+    }
+  }
 }
 
 template< typename FLOW_SOLVER >

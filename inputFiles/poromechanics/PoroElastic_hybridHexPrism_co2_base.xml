@@ -71,8 +71,9 @@
         order="1"/>
     </FiniteElements>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"/>
+      <HybridMimeticDiscretization
+        name="hybridMimetic"
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -262,7 +263,7 @@
       name="twoPhaseFlowStatistics"
       flowSolverName="twoPhaseFlow"
       logLevel="1"
-      computeCFLNumbers="1"
+      computeCFLNumbers="0"
       computeRegionStatistics="1"/>
   </Tasks>
   

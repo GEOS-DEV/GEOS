@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 
 namespace geos
 {
@@ -156,6 +155,15 @@ public:
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,
                              DomainPartition & domain ) override;
+
+  virtual void
+  keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                           real64 const dt,
+                                           DofManager const & dofManager,
+                                           DomainPartition & domain,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) const override;
+
 
   /**@}*/
 

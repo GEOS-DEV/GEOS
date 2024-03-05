@@ -25,7 +25,7 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
-     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseHybridFVMKernels.hpp     
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp
      fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp
@@ -162,7 +162,6 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseStatistics.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
-     fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
      fluidFlow/ReactiveCompositionalMultiphaseOBL.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/proppantTransport/ProppantTransport.cpp

@@ -348,11 +348,11 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] kernelOp the function used to customize the kernel
    */
-  template< typename FUNC = singlePhaseBaseKernels::NoOpFunc >
+  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
-                FUNC && kernelOp = singlePhaseBaseKernels::NoOpFunc{} ) const
+                FUNC && kernelOp = NoOpFunc{} ) const
   {
     GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
@@ -591,7 +591,7 @@ public:
     {
       using IP = TYPEOFREF( mimeticInnerProduct );
 
-      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
+      hybridFVMKernels::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
       {
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
