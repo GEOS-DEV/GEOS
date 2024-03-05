@@ -69,4 +69,31 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
   }
 }
 
+TEST( testComputationalGeometry, checkMeanCurvature3DPolygon)
+{
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > points;
+  array1d< localIndex > indices;
+  points.resize( 4, 3 );
+  LvArray::tensorOps::fill<4,3>(points, 0.0);
+  indices.resize(4);
+  for(localIndex i = 0; i < 4; ++i)
+  {
+    indices[i] = i;
+  }
+  points[0][0] = 0.0;
+  points[0][1] = 0.0;
+  points[1][0] = 1.0;
+  points[1][1] = 0.0;
+  points[2][0] = 1.0;
+  points[2][1] = 1.0;
+  points[3][0] = 0.0;
+  points[3][1] = 1.0;
+  points[3][2] = 1.0;
+
+  real64 curvature;
+  curvature = computationalGeometry::meanCurvature_3DPolygon<4>( indices.toSliceConst(), points.toViewConst() );
+  EXPECT_EQ( std::abs(curvature) < 1e-15, true);
+
+}
+
 } /* namespace geos */
