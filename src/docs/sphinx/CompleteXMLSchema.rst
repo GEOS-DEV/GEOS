@@ -612,13 +612,6 @@ Element: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
-.. _XML_LagrangianContact:
-
-Element: LagrangianContact
-==========================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact.rst
-
-
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -1163,6 +1156,13 @@ Element: SolidInternalEnergy
 Element: SolidMechanicsEmbeddedFractures
 ========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures.rst
+
+
+.. _XML_SolidMechanicsLagrangeContact:
+
+Element: SolidMechanicsLagrangeContact
+======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -2037,13 +2037,6 @@ Datastructure: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_LagrangianContact:
-
-Datastructure: LagrangianContact
-================================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact_other.rst
-
-
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -2602,6 +2595,13 @@ Datastructure: SolidInternalEnergy
 Datastructure: SolidMechanicsEmbeddedFractures
 ==============================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsLagrangeContact:
+
+Datastructure: SolidMechanicsLagrangeContact
+============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
