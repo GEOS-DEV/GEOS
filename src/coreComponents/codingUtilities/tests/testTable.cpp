@@ -13,8 +13,8 @@
  */
 
 // Source includes
-#include "../Table.hpp"
-#include "../../dataRepository/Group.hpp"
+#include "codingUtilities/Table.hpp"
+#include "dataRepository/Group.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 
@@ -39,7 +39,7 @@ TEST( testTable, tableClass )
   tableTest.addRow( "", "", "", "", "" );
   tableTest.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante", "[30.21543]", "30.45465142",
                     787442, 10 );
-  tableTest.draw( oss );
+  tableTest.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -68,7 +68,7 @@ TEST( testTable, tableClass )
   tableTest2.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
   tableTest2.addRow( "", "", "", "", "" );
   tableTest2.addRow( "value23", "[30.21543]", "30.45465142", 787442, 10 );
-  tableTest2.draw( oss );
+  tableTest2.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -91,7 +91,7 @@ TEST( testTable, tableClass )
     "CoordX", "C", "CoordZ",
   } );
   tableTest3.setTitle( "InternalWellGenerator well_injector1" );
-  tableTest3.draw( oss );
+  tableTest3.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -118,7 +118,7 @@ TEST( testTable, tableClass )
   tableTest4.setTitle( "InternalWellGenerator well_injector1" );
   tableTest4.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest4.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest4.draw( oss );
+  tableTest4.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -146,7 +146,7 @@ TEST( testTable, tableClass )
   tableTest5.setTitle( "InternalWellGenerator well_injector1" );
   tableTest5.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest5.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest5.draw( oss );
+  tableTest5.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -172,7 +172,7 @@ TEST( testTable, tableClass )
   tableTest6.setTitle( "InternalWellGenerator well_injector1" );
   tableTest6.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest6.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest6.draw( oss );
+  tableTest6.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -199,7 +199,7 @@ TEST( testTable, tableClass )
   tableTest7.setTitle( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
   tableTest7.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest7.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest7.draw( oss );
+  tableTest7.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -225,7 +225,7 @@ TEST( testTable, tableClass )
   tableTest8.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
   tableTest8.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest8.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest8.draw( oss );
+  tableTest8.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -248,7 +248,7 @@ TEST( testTable, tableClass )
   tableTest9.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
   tableTest9.addRow( "value1" );
   tableTest9.addRow( "val1" );
-  tableTest9.draw( oss );
+  tableTest9.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -269,7 +269,7 @@ TEST( testTable, tableClass )
   tableTest10.setTitle( "title1" );
   tableTest10.addRow( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
   tableTest10.addRow( "val1" );
-  tableTest10.draw( oss );
+  tableTest10.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -288,7 +288,7 @@ TEST( testTable, tableClass )
     Table::ColumnParam{{"Cras egestas"}, Table::Alignment::middle},
   } );
   tableTest11.setTitle( "title1" );
-  tableTest11.draw( oss );
+  tableTest11.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -310,7 +310,7 @@ TEST( testTable, tableClass )
   } );
   tableTest12.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest12.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest12.draw( oss );
+  tableTest12.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -336,7 +336,7 @@ TEST( testTable, tableClass )
   tableTest13.setMargin( Table::MarginValue::tiny );
   tableTest13.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
   tableTest13.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
-  tableTest13.draw( oss );
+  tableTest13.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );
@@ -368,7 +368,7 @@ TEST( testTable, tableClass )
   tableTest14.setTitle( "InternalWellGenerator well_injector1" );
   tableTest14.setMargin( Table::MarginValue::tiny );
   tableTest14.addRowsFromVectors( vecValues );
-  tableTest14.draw( oss );
+  tableTest14.drawToStream( oss );
   tableTestsOutput.push_back( oss.str() );
   oss.clear();
   oss.str( "" );

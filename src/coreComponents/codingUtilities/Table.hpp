@@ -81,10 +81,15 @@ public:
   void addRowsFromVectors( std::vector< std::vector< string > > const & tableRows );
 
   /**
+   * @brief Write the table into a string
+   */
+  string drawToString();
+
+  /**
    * @brief Write the table into a specified stream
    * @param os An output stream (by default, std::cout)
    */
-  void draw( std::ostream & os = std::cout );
+  void drawToStream( std::ostream & os = std::cout );
 
   /**
    * @brief Set the table name

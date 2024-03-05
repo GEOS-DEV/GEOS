@@ -303,7 +303,7 @@ void Table::fillColumnsValuesFromCellsRows()
   }
 }
 
-void Table::draw( std::ostream & oss )
+void Table::drawToStream( std::ostream & oss )
 {
   string rows;
   string titleRows;
@@ -333,6 +333,13 @@ void Table::draw( std::ostream & oss )
   string const tableOutput = titleRows + rows + '\n';
 
   oss << tableOutput;
+}
+
+string Table::drawToString()
+{
+  std::ostringstream oss;
+  drawToStream( oss );
+  return oss.str(); 
 }
 
 }

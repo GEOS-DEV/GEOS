@@ -529,8 +529,6 @@ void WellGeneratorBase::debugWellGeometry() const
     return;
   }
 
-  std::vector< string > row;
-  std::ostringstream oss;
   Table table = Table( {
       Table::ColumnParam{{"Element no."}, Table::Alignment::right},
       Table::ColumnParam{{"CoordX"}, Table::Alignment::middle},
@@ -560,7 +558,7 @@ void WellGeneratorBase::debugWellGeometry() const
 
     table.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
   }
-  table.draw();
+  table.drawToStream();
 
   Table tablePerforation = Table( {"Perforation no.", "Coordinates", "connected to" } );
   string titlePerfo = "Peforation table";
@@ -571,7 +569,7 @@ void WellGeneratorBase::debugWellGeometry() const
     tablePerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  tablePerforation.draw();
+  tablePerforation.drawToStream();
 
 }
 
