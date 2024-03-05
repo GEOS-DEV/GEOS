@@ -17,6 +17,8 @@
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 
 #include <gtest/gtest.h>
 
@@ -413,7 +415,7 @@ TestSet getTestSet()
                                  newtonMaxIter="40"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
-                              preconditionerType="amg"
+                              preconditionerType="iluk"
                               krylovTol="1.0e-10" />
 
     </SinglePhaseFVM>
@@ -652,9 +654,10 @@ TestSet getTestSet()
                                 logLevel="1" >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
+                                 maxTimeStepCuts="8"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
-                              preconditionerType="amg"
+                              preconditionerType="iluk"
                               krylovTol="1.0e-10" />
     </CompositionalMultiphaseFVM>
   </Solvers>
@@ -929,8 +932,8 @@ TestSet getTestSet()
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
-                              preconditionerType="amg"
-                              krylovTol="1.0e-10" />
+                              preconditionerType="iluk"
+                              krylovTol="1.0e-6" />
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -1147,16 +1150,8 @@ TestSet getTestSet()
   testInputs.sourceRateFactor = -8.0;
   testInputs.sinkRateFactor = 8.0;
 
-  if( std::is_same< LAInterface, HypreInterface >::value )
-  {
-    // With Hypre, this simulation is set-up to have at least one timestep cut.
-    testInputs.requiredSubTimeStep = 2;
-  }
-  else
-  {
-    // With other LAIs, the simulation doesn't behave the same way
-    testInputs.requiredSubTimeStep = 0;
-  }
+  // this simulation is set-up to have at least one timestep cut.
+  testInputs.requiredSubTimeStep = 2;
 
   return TestSet( testInputs );
 }
