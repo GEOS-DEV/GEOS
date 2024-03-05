@@ -153,6 +153,21 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 }
 
 
+TEST( LifoStorageTest, LifoStorageBufferOnHost )
+{
+  testLifoStorage< local::serialPolicy >( 10, 2, 3, 10 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
+{
+  testLifoStorage< local::serialPolicy >( 10, 0, 3, 10 );
+}
+
+TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
+{
+  testLifoStorageAsync< local::serialPolicy >( 10, 2, 3, 10 );
+}
+
 
 #ifdef GEOS_USE_CUDA
 TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
@@ -190,24 +205,6 @@ TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
 {
   testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
-
-#else 
-
-TEST( LifoStorageTest, LifoStorageBufferOnHost )
-{
-  testLifoStorage< local::serialPolicy >( 10, 2, 3, 10 );
-}
-
-TEST( LifoStorageTest, LifoStorageBufferOnHostNoDeviceBuffer )
-{
-  testLifoStorage< local::serialPolicy >( 10, 0, 3, 10 );
-}
-
-TEST( LifoStorageTest, LifoStorageAsyncBufferOnHost )
-{
-  testLifoStorageAsync< local::serialPolicy >( 10, 2, 3, 10 );
-}
-
 #endif
 
 }

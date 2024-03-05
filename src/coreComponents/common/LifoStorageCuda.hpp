@@ -133,7 +133,7 @@ public:
     {
       int bufferCount = baseLifo::m_bufferCount;
       auto cuda_event = m_popFromDeviceEvents[bufferCount].try_get< camp::resources::CudaEvent >();
-      //if( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
+      if( cuda_event ) cudaEventSynchronize( cuda_event->getCudaEvent_t() );
     }
   }
 
