@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 
 namespace geos
 {
@@ -33,35 +34,26 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
-  SinglePhaseCatalogNames {};
-
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
-template<> class SinglePhaseCatalogNames< SinglePhaseBase >
-{
-public:
-  // TODO: find a way to use the catalog name here
-  static string name() { return "SinglePhaseReservoir"; }
-};
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir"; }
-};
-}
-
 // provide a definition for catalogName()
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
+template<>
 string
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
-catalogName()
+SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
 {
-  return SinglePhaseCatalogNames< SINGLEPHASE_RESERVOIR_SOLVER >::name();
+  return "SinglePhaseReservoir";
+}
+// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
+template<>
+string
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::catalogName()
+{
+  return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir";
+}
+template<>
+string
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::catalogName()
+{
+  return SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >::catalogName()+"Reservoir";
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -93,6 +85,14 @@ flowSolver() const
 }
 
 template<>
+SinglePhaseBase *
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::
+flowSolver() const
+{
+  return this->reservoirSolver()->flowSolver();
+}
+
+template<>
 void
 SinglePhaseReservoirAndWells< SinglePhaseBase >::
 setMGRStrategy()
@@ -114,12 +114,20 @@ setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
   }
   else
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
+}
+
+template<>
+void
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::
+setMGRStrategy()
+{
+  GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -373,9 +381,11 @@ template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePha
 namespace
 {
 typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > > SinglePhasePoromechanicsConformingFracturesAndWells;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 
 } /* namespace geos */

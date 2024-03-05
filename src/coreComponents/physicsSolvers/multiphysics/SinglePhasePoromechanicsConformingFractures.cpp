@@ -23,6 +23,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
@@ -36,19 +37,33 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
-                                                                                          Group * const parent )
+// provide a definition for catalogName()
+template<>
+string SinglePhasePoromechanicsConformingFractures<>::catalogName()
+{
+  return "SinglePhasePoromechanicsConformingFractures";
+}
+template<>
+string SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > >::catalogName()
+{
+  return "SinglePhaseReservoirPoromechanicsConformingFractures";
+}
+
+template< typename FLOW_SOLVER >
+SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromechanicsConformingFractures( const string & name,
+                                                                                                         Group * const parent )
   : Base( name, parent )
 {
-  LinearSolverParameters & params = m_linearSolverParameters.get();
+  LinearSolverParameters & params = this->m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;
   params.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   params.dofsPerNode = 3;
 }
 
-void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
-                                                                 DofManager & dofManager ) const
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( DomainPartition const & domain,
+                                                                                DofManager & dofManager ) const
 {
   /// We need to add 2 coupling terms:
   // 1. Poromechanical coupling in the bulk
@@ -60,22 +75,25 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
                           DofManager::Connector::Elem );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateConfiguration( DomainPartition & domain )
 {
-  return solidMechanicsSolver()->updateConfiguration( domain );
+  return this->solidMechanicsSolver()->updateConfiguration( domain );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
+template< typename FLOW_SOLVER >
+bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::resetConfigurationToDefault( DomainPartition & domain ) const
 {
-  return solidMechanicsSolver()->resetConfigurationToDefault( domain );
+  return this->solidMechanicsSolver()->resetConfigurationToDefault( domain );
 }
 
-void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition & domain,
-                                                               DofManager & dofManager,
-                                                               CRSMatrix< real64, globalIndex > & localMatrix,
-                                                               ParallelVector & rhs,
-                                                               ParallelVector & solution,
-                                                               bool const setSparsity )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
+                                                                              DofManager & dofManager,
+                                                                              CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                              ParallelVector & rhs,
+                                                                              ParallelVector & solution,
+                                                                              bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
 
@@ -83,10 +101,10 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
 
   /// 1. Add all coupling terms handled directly by the DofManager
   dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
+  this->setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  if( getLogLevel() > 2 )
+  if( this->getLogLevel() > 2 )
   {
     dofManager.printFieldInfo();
   }
@@ -140,19 +158,20 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
   // }
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const time_n,
-                                                                  real64 const dt,
-                                                                  DomainPartition & domain,
-                                                                  DofManager const & dofManager,
-                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                  arrayView1d< real64 > const & localRhs )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem( real64 const time_n,
+                                                                                 real64 const dt,
+                                                                                 DomainPartition & domain,
+                                                                                 DofManager const & dofManager,
+                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                 arrayView1d< real64 > const & localRhs )
 {
 
   GEOS_MARK_FUNCTION;
 
-  solidMechanicsSolver()->synchronizeFractureState( domain );
+  this->solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  synchronizeNonLinearParameters();
+  this->synchronizeNonLinearParameters();
 
   assembleElementBasedContributions( time_n,
                                      dt,
@@ -162,13 +181,13 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                      localRhs );
 
   // Assemble fluxes 3D/2D and get dFluidResidualDAperture
-  flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs,
-                                            getDerivativeFluxResidual_dNormalJump() );
+  this->flowSolver()->assembleHydrofracFluxTerms( time_n,
+                                                  dt,
+                                                  domain,
+                                                  dofManager,
+                                                  localMatrix,
+                                                  localRhs,
+                                                  getDerivativeFluxResidual_dNormalJump() );
 
   // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   assembleCouplingTerms( time_n,
@@ -179,12 +198,13 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                          localRhs );
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributions( real64 const time_n,
-                                                                                     real64 const dt,
-                                                                                     DomainPartition & domain,
-                                                                                     DofManager const & dofManager,
-                                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                     arrayView1d< real64 > const & localRhs )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
+                                                                                                    real64 const dt,
+                                                                                                    DomainPartition & domain,
+                                                                                                    DofManager const & dofManager,
+                                                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n, dt );
 
@@ -196,32 +216,33 @@ void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributi
   /// way we scale the mechanics one.
 
   // Flow accumulation for fractures
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           FaceElementSubRegion const & subRegion )
     {
-      flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+      this->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 
-  solidMechanicsSolver()->assembleContact( domain, dofManager, localMatrix, localRhs );
+  this->solidMechanicsSolver()->assembleContact( domain, dofManager, localMatrix, localRhs );
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 const time_n,
-                                                                         real64 const dt,
-                                                                         DomainPartition const & domain,
-                                                                         DofManager const & dofManager,
-                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                         arrayView1d< real64 > const & localRhs )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
+                                                                                        real64 const dt,
+                                                                                        DomainPartition const & domain,
+                                                                                        DofManager const & dofManager,
+                                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n, dt );
   // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
     assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
@@ -229,14 +250,15 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
-  setUpDflux_dApertureMatrix( DomainPartition & domain,
-                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                              CRSMatrix< real64, globalIndex > & localMatrix )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
+setUpDflux_dApertureMatrix( DomainPartition & domain,
+                            DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                            CRSMatrix< real64, globalIndex > & localMatrix )
 {
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
 
@@ -267,7 +289,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( flowSolver()->getDiscretizationName() );
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -288,16 +310,17 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
-  addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                  DofManager const & dofManager,
-                                  arrayView1d< localIndex > const & rowLengths ) const
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
+addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+                                DofManager const & dofManager,
+                                arrayView1d< localIndex > const & rowLengths ) const
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & ) // regionNames
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & ) // regionNames
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -307,7 +330,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( solidMechanicsSolver()->getStabilizationName() );
+    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
 
     stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -350,16 +373,17 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
-  addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      SparsityPatternView< globalIndex > const & pattern ) const
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
+addTransmissibilityCouplingPattern( DomainPartition const & domain,
+                                    DofManager const & dofManager,
+                                    SparsityPatternView< globalIndex > const & pattern ) const
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel const & mesh,
+                                                                      arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -375,15 +399,15 @@ void SinglePhasePoromechanicsConformingFractures::
     // Get the finite volume method used to compute the stabilization
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( solidMechanicsSolver()->getStabilizationName() );
+    FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
 
     SurfaceElementRegion const & fractureRegion =
-      elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getUniqueFractureRegionName() );
+      elemManager.getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
     GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
-                   getDataContext() << ": The fracture subregion must contain pressure field." );
+                   this->getDataContext() << ": The fracture subregion must contain pressure field." );
 
     ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
@@ -443,12 +467,13 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
-  assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
-                                              arrayView1d< string const > const & regionNames,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
+assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
+                                            arrayView1d< string const > const & regionNames,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -503,7 +528,7 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );
@@ -538,12 +563,13 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
-  assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                      arrayView1d< string const > const & regionNames,
-                                                      DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
+assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+                                                    arrayView1d< string const > const & regionNames,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_MARK_FUNCTION;
 
@@ -573,7 +599,7 @@ void SinglePhasePoromechanicsConformingFractures::
   {
     string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+    SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
     arrayView2d< real64 const > const & density = fluid.density();
 
     arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
@@ -608,7 +634,7 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
           // TODO: move to something like this plus a static method.
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
@@ -659,7 +685,7 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
+          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
@@ -690,26 +716,27 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   // call base poromechanics update
   Base::updateState( domain );
   // need to call solid mechanics update separately to compute face displacement jump
-  solidMechanicsSolver()->updateState( domain );
+  this->solidMechanicsSolver()->updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
-  flowSolver()->prepareStencilWeights( domain );
+  this->flowSolver()->prepareStencilWeights( domain );
 
   updateHydraulicApertureAndFracturePermeability( domain );
 
   // update the stencil weights using the updated hydraulic aperture
-  flowSolver()->updateStencilWeights( domain );
+  this->flowSolver()->updateStencilWeights( domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -718,21 +745,22 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
                                                                    FaceElementSubRegion & subRegion )
     {
       // update fluid model
-      flowSolver()->updateFluidState( subRegion );
-      if( m_isThermal )
+      this->flowSolver()->updateFluidState( subRegion );
+      if( this->m_isThermal )
       {
         // update solid internal energy
-        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+        this->flowSolver()->updateSolidInternalEnergyModel( subRegion );
       }
     } );
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
 {
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -780,11 +808,18 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 }
 
 
-void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  solidMechanicsSolver()->outputConfigurationStatistics( domain );
+  this->solidMechanicsSolver()->outputConfigurationStatistics( domain );
 }
 
+namespace
+{
+typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanicsConformingFractures;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
+typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > SinglePhasePoromechanicsConformingFractures;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
+}
 
 } /* namespace geos */

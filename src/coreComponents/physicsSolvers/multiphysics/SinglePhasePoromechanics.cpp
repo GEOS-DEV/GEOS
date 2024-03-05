@@ -355,6 +355,8 @@ template class SinglePhasePoromechanics< SinglePhaseBase >;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >;
 template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
+template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase >, SolidMechanicsLagrangeContact >;
+template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase >, SolidMechanicsEmbeddedFractures >;
 
 namespace
 {
