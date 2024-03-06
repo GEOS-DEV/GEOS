@@ -6,7 +6,10 @@
 
 using namespace geos;
 
-TEST( testHDFIO_parallel, SingleValueHistory )
+class HDFParallelFileIOTest : public ::testing::TestWithParam<bool> {
+};
+
+TEST_P( HDFParallelFileIOTest, SingleValueHistory )
 {
   GEOS_MARK_FUNCTION;
   string filename( "single_value_parallel" );
@@ -14,7 +17,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 
   int rank = MpiWrapper::commRank( );
 
-  HDFHistoryIO io( filename, spec );
+  HDFHistoryIO io( filename, GetParam(), spec );
   io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
@@ -29,7 +32,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 }
 
 
-TEST( testHDFIO_parallel, DynamicHistory )
+TEST_P( HDFParallelFileIOTest, DynamicHistory )
 {
   GEOS_MARK_FUNCTION;
   string filename( "dynamic_parallel" );
@@ -37,7 +40,7 @@ TEST( testHDFIO_parallel, DynamicHistory )
 
   int rnk = MpiWrapper::commRank( );
 
-  HDFHistoryIO io( filename, singleItemSpec );
+  HDFHistoryIO io( filename, GetParam(), singleItemSpec );
   io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 4; ++tidx )
@@ -75,6 +78,12 @@ TEST( testHDFIO_parallel, DynamicHistory )
   io.write( );
   io.compressInFile();
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    HDFParallelFileIOTests,
+    HDFParallelFileIOTest,
+    ::testing::Values( true, false )
+);
 
 int main( int ac, char * av[] )
 {

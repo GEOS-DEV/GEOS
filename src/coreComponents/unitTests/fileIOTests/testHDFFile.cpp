@@ -7,7 +7,10 @@
 
 using namespace geos;
 
-TEST( testHDFIO, HDFFile )
+class HDFFileIOTest : public ::testing::TestWithParam<bool> {
+};
+
+TEST_P( HDFFileIOTest, HDFFile )
 {
   GEOS_MARK_FUNCTION;
   HDFFile file( "empty", true, false, MPI_COMM_GEOSX );
@@ -15,13 +18,13 @@ TEST( testHDFIO, HDFFile )
   H5Fclose( file_id );
 }
 
-TEST( testHDFIO, SingleValueHistory )
+TEST_P( HDFFileIOTest, SingleValueHistory )
 {
   string filename( "single_value" );
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   real64 time = 0.0;
-  HDFHistoryIO io( filename, spec );
+  HDFHistoryIO io( filename, GetParam(), spec );
   io.init( true );
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
@@ -32,7 +35,7 @@ TEST( testHDFIO, SingleValueHistory )
   io.write( );
 }
 
-TEST( testHDFIO, ArrayHistory )
+TEST_P( HDFFileIOTest, ArrayHistory )
 {
   srand( time( NULL ));
 
@@ -46,7 +49,7 @@ TEST( testHDFIO, ArrayHistory )
     } );
 
     HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ), 1 );
-    HDFHistoryIO io( filename, spec );
+    HDFHistoryIO io( filename, GetParam(), spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
@@ -69,7 +72,7 @@ TEST( testHDFIO, ArrayHistory )
     } );
 
     HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ), 4 );
-    HDFHistoryIO io( filename, spec );
+    HDFHistoryIO io( filename, GetParam(), spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
@@ -84,7 +87,7 @@ TEST( testHDFIO, ArrayHistory )
   }
 }
 
-TEST( testHDFIO, IdxArrayHistory )
+TEST_P( HDFFileIOTest, IdxArrayHistory )
 {
   srand( time( NULL ));
   {
@@ -102,7 +105,7 @@ TEST( testHDFIO, IdxArrayHistory )
     } );
 
     HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), 4, idx.size( ));
-    HDFHistoryIO io( filename, spec );
+    HDFHistoryIO io( filename, GetParam(), spec );
     io.init( true );
 
     buffer_unit_type * buffer = io.getBufferHead( );
@@ -113,6 +116,12 @@ TEST( testHDFIO, IdxArrayHistory )
     io.write( );
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    HDFFileIOTests,
+    HDFFileIOTest,
+    ::testing::Values( true, false )
+);
 
 int main( int ac, char * av[] )
 {

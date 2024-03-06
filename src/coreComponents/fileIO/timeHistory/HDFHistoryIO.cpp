@@ -134,7 +134,7 @@ void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
     color = 0;
   }
 
-  std::vector< globalIndex > counts( size, 0  );
+  std::vector< globalIndex > counts( size, 0 );
   if ( m_useMPIO )
   {
     MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
