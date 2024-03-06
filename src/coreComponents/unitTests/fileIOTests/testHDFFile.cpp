@@ -14,7 +14,9 @@ TEST_P( HDFFileIOTest, HDFFile )
 {
   GEOS_MARK_FUNCTION;
   bool useMPIO = GetParam();
-  HDFFile file( "empty", true, useMPIO, MPI_COMM_GEOSX );
+  {
+    HDFFile file( "empty", true, useMPIO, MPI_COMM_GEOSX );
+  }
   hid_t file_id = 0;
   if( useMPIO )
   {
@@ -43,6 +45,7 @@ TEST_P( HDFFileIOTest, SingleValueHistory )
     memcpy( buffer, &time, sizeof(real64));
   }
   io.write( );
+  io.compressInFile();
 }
 
 TEST_P( HDFFileIOTest, ArrayHistory )
@@ -91,6 +94,7 @@ TEST_P( HDFFileIOTest, ArrayHistory )
     waitAllDeviceEvents( packEvents );
 
     io.write( );
+    io.compressInFile();
 
     //read and check the data using hdf api
     // remove( filename.c_str() );
@@ -124,6 +128,7 @@ TEST_P( HDFFileIOTest, IdxArrayHistory )
     waitAllDeviceEvents( packEvents );
 
     io.write( );
+    io.compressInFile();
   }
 }
 

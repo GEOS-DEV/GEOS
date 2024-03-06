@@ -57,7 +57,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether to use MPIO to write a single file or a separate file for each rank (only applicable to HDF5 format)." );
 
-}`
+}
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
