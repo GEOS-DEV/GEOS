@@ -24,7 +24,8 @@ TEST_P( HDFFileIOTest, HDFFile )
   {
     file_id = H5Fcreate( "empty.0.hdf5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
   }
-  H5Fclose( file_id );
+  herr_t err = H5Fclose( file_id );
+  GEOS_ERROR_IF( err < 0, "H5Fclose failed." );
 }
 
 TEST_P( HDFFileIOTest, SingleValueHistory )

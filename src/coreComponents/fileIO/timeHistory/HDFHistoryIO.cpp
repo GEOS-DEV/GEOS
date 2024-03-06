@@ -279,8 +279,6 @@ void HDFHistoryIO::write()
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
 
-        std::cout << "1" << std::endl;
-
         std::vector< hsize_t > fileOffset( m_rank+1 );
         fileOffset[0] = LvArray::integerConversion< hsize_t >( m_writeHead );
         // the m_globalIdxOffset will be updated for each row during the partition setup if the size has changed during buffered collection
@@ -295,17 +293,11 @@ void HDFHistoryIO::write()
         }
         hid_t memspace = H5Screate_simple( m_rank+1, &bufferedCounts[0], nullptr );
 
-        std::cout << "2" << std::endl;
-
         hid_t fileHyperslab = filespace;
         herr_t err = H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
         GEOS_ERROR_IF( err < 0, "H5Sselect_hyperslab failed.");
-        std::cout << "3" << std::endl;
-
         err = H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
         GEOS_ERROR_IF( err < 0, "H5Dwrite failed.");
-        std::cout << "4" << std::endl;
-
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
