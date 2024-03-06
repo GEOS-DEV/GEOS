@@ -108,10 +108,10 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
+  void updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -153,9 +153,7 @@ public:
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveIterationState( DomainPartition & domain ) const override final;
-
-  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const override final;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -256,6 +254,7 @@ public:
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
+    static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
 
   };
 
@@ -267,7 +266,7 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -374,7 +373,11 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
+
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
 
@@ -413,6 +416,8 @@ protected:
                         char const logMessage[],
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
+
+  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const override final;
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -476,6 +481,9 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// maximum (absolute) component density change in a sequential iteration
+  real64 m_maxSequentialCompDensChange;
 
   /// the targeted CFL for timestep
   real64 m_targetFlowCFL;

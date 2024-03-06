@@ -63,8 +63,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  localIndex numDofPerCell() const { return m_numDofPerCell; }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
@@ -75,6 +73,8 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
+    static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
   };
 
   /**
@@ -101,7 +101,7 @@ public:
    * @brief Utility function to save the iteration state (useful for sequential simulations)
    * @param[in] domain the domain partition
    */
-  virtual void saveIterationState( DomainPartition & domain ) const;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -136,6 +136,8 @@ public:
    */
   void allowNegativePressure() { m_allowNegativePressure = 1; }
 
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
+
 protected:
 
   /**
@@ -161,7 +163,7 @@ protected:
    * @brief Utility function to save the state at the end of a sequential iteration
    * @param[in] subRegion the element subRegion
    */
-  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const;
+  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Helper function to compute/report the elements with small pore volumes
@@ -187,11 +189,17 @@ protected:
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
 
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
+
   /// maximum (absolute) pressure change in a Newton iteration
   real64 m_maxAbsolutePresChange;
 
-  /// flag if negative pressure is allowed
-  integer m_allowNegativePressure;
+  /// maximum (absolute) pressure change in a sequential iteration
+  real64 m_maxSequentialPresChange;
+
+  /// maximum (absolute) temperature change in a sequential iteration
+  real64 m_maxSequentialTempChange;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
