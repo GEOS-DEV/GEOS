@@ -383,6 +383,14 @@ struct Elem2dTo3dInfo
 {
   ToCellRelation< ArrayOfArrays< localIndex > > elem2dToElem3d;
   ArrayOfArrays< localIndex > elem2dToFaces;
+  /**
+   * @brief All the neighboring points of the 2d element.
+   * @details During the MPI partitioning, a 2d element may not have its neighbor already (face, 3d element).
+   * But this does not mean that the 2d element has no neighboring points.
+   * This fallback container is here to provide this information in those corner cases.
+   * @note This container is unlikely to keep the order of the nodes.
+   * To get the order, it's more convenient to use the faces information.
+   */
   ArrayOfArrays< localIndex > elem2dToNodesFallBack;
 
   Elem2dTo3dInfo( ToCellRelation< ArrayOfArrays< localIndex > > && elem2dToElem3d_,
@@ -496,7 +504,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     for( vtkIdType const & gni: duplicatedPointOfElem2d )
     {
       auto it = ng2l.find( gni );
-      if( it != ng2l.cend() )
+      if( it != ng2l.cend() )  // If the node is not on this rank, it's fair to ignore it.
       {
         elem2dToNodes.emplaceBack( e2d, it->second );
       }
@@ -585,7 +593,10 @@ ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
     }
   }
 
-  // Fallback when the elem 2d has no neighbor
+  // Fallback when the elem 2d has no neighbor.
+  // Note that this container is unlikely to keep the node order of the element.
+  // But in the future, there may be some code doing the reordering,
+  // so maybe using the fallback may become the standard (and unique) way to do.
   for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
   {
     if( elem2dToNodes.sizeOfArray( elem2dIndex ) == 0 )

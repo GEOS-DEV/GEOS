@@ -655,19 +655,18 @@ void fillFaceElementSubRegionToNodesRelation( ArrayOfArrays< array1d< globalInde
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
     auto bucket = elem2dToCollocatedNodesBuckets[e2d];
-    std::set< globalIndex > nodes; // Intended to hold all the collocated nodes of the 2d elem.
-    for( array1d< globalIndex > collocatedNodes: bucket )
+    for( array1d< globalIndex > const & collocatedNodes: bucket )
     {
-      for( globalIndex const collocatedNode: collocatedNodes )
+      for( globalIndex const & collocatedNode: collocatedNodes )
       {
         auto g2l = ng2l.find( collocatedNode );
         if( g2l != ng2l.cend() )
         {
-          localIndex const li = g2l->second;
-          auto nodeNeighbors = elem2dToNodes[e2d];
-          if( std::find( nodeNeighbors.begin(), nodeNeighbors.end(), li ) == nodeNeighbors.end() )
+          localIndex const lni = g2l->second;
+          auto nodes = elem2dToNodes[e2d];
+          if( std::find( nodes.begin(), nodes.end(), lni ) == nodes.end() )
           {
-            elem2dToNodes.emplaceBack( e2d, li );
+            elem2dToNodes.emplaceBack( e2d, lni );
           }
         }
       }

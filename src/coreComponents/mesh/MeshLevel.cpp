@@ -346,7 +346,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
       {
         nodeAdjacencySet.insert( ni );
       }
-      for( localIndex const & edi: elem2dToEdges[ei] )  // TODO remove -1?!
+      for( localIndex const & edi: elem2dToEdges[ei] )
       {
         if( edi > -1 )
         {
