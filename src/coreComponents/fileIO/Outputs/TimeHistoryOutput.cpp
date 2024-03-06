@@ -52,6 +52,12 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
+  registerWrapper( viewKeys::timeHistoryRestartMPIO(), &m_useMPIO ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Whether to use MPIO to write a single file or a separate file for each (only applicable to HDF5 format)." )
+
 }
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
@@ -119,7 +125,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX );
     string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    HDFFile( outputFile, (m_recordCount == 0), static_cast<bool>(m_useMPIO), MPI_COMM_GEOSX );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );

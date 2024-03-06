@@ -29,8 +29,7 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
   m_mpioFapl( parallelAccess ),
   m_comm( comm )
 {
-  int rnk = MpiWrapper::commRank( comm );
-#ifdef GEOSX_USE_MPI
+  int rnk = MpiWrapper::commRank( m_comm );
   if( m_mpioFapl )
   {
     m_faplId = H5Pcreate( H5P_FILE_ACCESS );
@@ -42,10 +41,6 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
     m_faplId = H5P_DEFAULT;
     m_filename = fnm + "." + std::to_string( rnk ) + ".hdf5";
   }
-#else
-  m_faplId = H5P_DEFAULT;
-  m_filename = fnm + ".hdf5";
-#endif
   // check if file already exists
   htri_t exists = 0;
   H5E_BEGIN_TRY

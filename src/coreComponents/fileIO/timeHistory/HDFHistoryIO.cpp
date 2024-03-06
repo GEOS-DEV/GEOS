@@ -82,6 +82,7 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
 }
 
 HDFHistoryIO::HDFHistoryIO( string const & filename,
+                            bool useMPIO,
                             localIndex rank,
                             std::vector< localIndex > const & dims,
                             string const & name,
@@ -94,6 +95,7 @@ HDFHistoryIO::HDFHistoryIO( string const & filename,
   m_bufferHead( nullptr ),
   m_dataBuffer( 0 ),
   m_filename( filename ),
+  m_useMPIO(useMPIO ),
   m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
   m_globalIdxCount( 0 ),
@@ -132,8 +134,11 @@ void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
     color = 0;
   }
 
-  std::vector< globalIndex > counts( size );
-  MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  std::vector< globalIndex > counts( size ){ 0 };
+  if ( m_useMIO )
+  {
+    MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  }
 
   m_chunkSize = std::numeric_limits< hsize_t >::max( );
   globalIndex globalIdxCount = 0;
@@ -213,7 +218,7 @@ void HDFHistoryIO::init( bool existsOkay )
     dimChunks[1] = m_chunkSize;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
-    HDFFile target( m_filename, false, true, subcomm );
+    HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? subcomm : m_comm );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
@@ -267,7 +272,7 @@ void HDFHistoryIO::write()
 
       if( m_subcomm != MPI_COMM_NULL )
       {
-        HDFFile target( m_filename, false, true, m_subcomm );
+        HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? m_subcomm : m_comm );
 
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
@@ -339,7 +344,7 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
-    HDFFile target( m_filename, false, true, m_subcomm );
+    HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? m_subcomm : m_comm );
     std::vector< hsize_t > maxFileDims( m_rank+1 );
     maxFileDims[0] = rowLimit;
     maxFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxHighwater );
