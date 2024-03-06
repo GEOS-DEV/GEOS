@@ -24,7 +24,9 @@
 #include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
 //#include "constitutive/relativePermeability/TableRelativePermeability.hpp"
 //#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyStone2RelativePermeability.hpp"
 #include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenStone2RelativePermeability.hpp"
 
 namespace geos
 {
@@ -49,6 +51,9 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
 //                               TableRelativePermeability,
 //                               TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               BrooksCoreyStone2RelativePermeability,
+                               VanGenuchtenBakerRelativePermeability,
+                               VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -57,6 +62,9 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
 {
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
+                               BrooksCoreyStone2RelativePermeability,
+                               VanGenuchtenBakerRelativePermeability,
+                               VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 //                               TableRelativePermeability,
 //                               TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );

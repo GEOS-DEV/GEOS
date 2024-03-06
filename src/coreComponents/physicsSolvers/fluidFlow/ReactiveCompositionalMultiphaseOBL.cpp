@@ -111,6 +111,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of component names" );
 
   this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
@@ -1333,6 +1334,8 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 
 void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )

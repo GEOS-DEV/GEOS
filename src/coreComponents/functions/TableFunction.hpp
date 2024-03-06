@@ -293,11 +293,35 @@ private:
                             std::vector< units::Unit > const & dimUnits = {} );
 
   /**
+   * @brief Set the units of each dimension
+   * @param dimUnits The units of each dimension
+   */
+  void setDimUnits( std::vector< units::Unit > const & dimUnits )
+  {
+    m_dimUnits = dimUnits;
+  }
+
+  /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
    * @param unit The unit of the given values
    */
   void setTableValues( real64_array values, units::Unit unit = units::Unknown );
+
+  /**
+   * @brief Set the table value units
+   * @param unit The unit of the values
+   */
+  void setValueUnits( units::Unit unit )
+  {
+    m_valueUnit = unit;
+  }
+
+  /**
+   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
+   * @param filename Filename for output
+   */
+  void print( std::string const & filename ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper

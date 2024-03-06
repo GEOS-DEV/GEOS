@@ -433,7 +433,6 @@ public:
                    localIndex const numPhases,
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
-                   integer const useSimpleAccumulation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -450,8 +449,6 @@ public:
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
-      if( useSimpleAccumulation )
-        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::SimpleAccumulation );
 
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
@@ -552,6 +549,7 @@ public:
    * @param[in] temperatureFactor the temperature local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+                                  real64 const maxAbsolutePresChange,
                                   real64 const maxRelativeTempChange,
                                   real64 const maxCompFracChange,
                                   globalIndex const rankOffset,
@@ -566,6 +564,7 @@ public:
                                   arrayView1d< real64 > compDensScalingFactor,
                                   arrayView1d< real64 > temperatureScalingFactor )
     : Base( maxRelativePresChange,
+            maxAbsolutePresChange,
             maxCompFracChange,
             rankOffset,
             numComp,
@@ -670,6 +669,7 @@ public:
   template< typename POLICY >
   static ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxAbsolutePresChange,
                    real64 const maxRelativeTempChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
@@ -684,7 +684,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeTempChange, maxCompFracChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens, pressureScalingFactor,
                                            temperatureScalingFactor, compDensScalingFactor );
@@ -725,6 +725,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
@@ -739,6 +740,7 @@ public:
                        arrayView1d< real64 > compDensScalingFactor,
                        arrayView1d< real64 > temperatureScalingFactor )
     : Base( allowCompDensChopping,
+            allowNegativePressure,
             scalingType,
             scalingFactor,
             rankOffset,
@@ -805,8 +807,9 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static integer
+  static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
@@ -824,7 +827,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens, pressureScalingFactor, temperatureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );

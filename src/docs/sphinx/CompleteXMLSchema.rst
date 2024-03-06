@@ -10,6 +10,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticElasticSEM:
+
+Element: AcousticElasticSEM
+===========================
+.. include:: ../../coreComponents/schema/docs/AcousticElasticSEM.rst
+
+
 .. _XML_AcousticFirstOrderSEM:
 
 Element: AcousticFirstOrderSEM
@@ -92,6 +99,13 @@ Element: BrooksCoreyCapillaryPressure
 Element: BrooksCoreyRelativePermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
+
+
+.. _XML_BrooksCoreyStone2RelativePermeability:
+
+Element: BrooksCoreyStone2RelativePermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability.rst
 
 
 .. _XML_CO2BrineEzrokhiFluid:
@@ -185,6 +199,20 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseReservoirPoromechanics:
+
+Element: CompositionalMultiphaseReservoirPoromechanics
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics.rst
+
+
+.. _XML_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Element: CompositionalMultiphaseReservoirPoromechanicsInitialization
+====================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization.rst
+
+
 .. _XML_CompositionalMultiphaseStatistics:
 
 Element: CompositionalMultiphaseStatistics
@@ -197,6 +225,20 @@ Element: CompositionalMultiphaseStatistics
 Element: CompositionalMultiphaseWell
 ====================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
+
+
+.. _XML_CompositonalTwoPhaseFluidPengRobinson:
+
+Element: CompositonalTwoPhaseFluidPengRobinson
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson.rst
+
+
+.. _XML_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+
+Element: CompositonalTwoPhaseFluidSoaveRedlichKwong
+===================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -556,13 +598,6 @@ Element: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
-.. _XML_LagrangianContact:
-
-Element: LagrangianContact
-==========================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact.rst
-
-
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -780,6 +815,27 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousDamageElasticIsotropic:
+
+Element: PorousDamageElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic.rst
+
+
+.. _XML_PorousDamageSpectralElasticIsotropic:
+
+Element: PorousDamageSpectralElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic.rst
+
+
+.. _XML_PorousDamageVolDevElasticIsotropic:
+
+Element: PorousDamageVolDevElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic.rst
+
+
 .. _XML_PorousDelftEgg:
 
 Element: PorousDelftEgg
@@ -827,6 +883,27 @@ Element: PorousExtendedDruckerPrager
 Element: PorousModifiedCamClay
 ==============================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
+
+
+.. _XML_PorousViscoDruckerPrager:
+
+Element: PorousViscoDruckerPrager
+=================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager.rst
+
+
+.. _XML_PorousViscoExtendedDruckerPrager:
+
+Element: PorousViscoExtendedDruckerPrager
+=========================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager.rst
+
+
+.. _XML_PorousViscoModifiedCamClay:
+
+Element: PorousViscoModifiedCamClay
+===================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay.rst
 
 
 .. _XML_PressurePorosity:
@@ -1018,6 +1095,20 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseReservoirPoromechanics:
+
+Element: SinglePhaseReservoirPoromechanics
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics.rst
+
+
+.. _XML_SinglePhaseReservoirPoromechanicsInitialization:
+
+Element: SinglePhaseReservoirPoromechanicsInitialization
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization.rst
+
+
 .. _XML_SinglePhaseStatistics:
 
 Element: SinglePhaseStatistics
@@ -1051,6 +1142,13 @@ Element: SolidInternalEnergy
 Element: SolidMechanicsEmbeddedFractures
 ========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures.rst
+
+
+.. _XML_SolidMechanicsLagrangeContact:
+
+Element: SolidMechanicsLagrangeContact
+======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -1221,6 +1319,13 @@ Element: VTKMesh
 .. include:: ../../coreComponents/schema/docs/VTKMesh.rst
 
 
+.. _XML_VTKWell:
+
+Element: VTKWell
+================
+.. include:: ../../coreComponents/schema/docs/VTKWell.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -1233,6 +1338,13 @@ Element: VanGenuchtenBakerRelativePermeability
 Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
+
+
+.. _XML_VanGenuchtenStone2RelativePermeability:
+
+Element: VanGenuchtenStone2RelativePermeability
+===============================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability.rst
 
 
 .. _XML_ViscoDruckerPrager:
@@ -1300,6 +1412,13 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
+
+
+.. _DATASTRUCTURE_AcousticElasticSEM:
+
+Datastructure: AcousticElasticSEM
+=================================
+.. include:: ../../coreComponents/schema/docs/AcousticElasticSEM_other.rst
 
 
 .. _DATASTRUCTURE_AcousticFirstOrderSEM:
@@ -1384,6 +1503,13 @@ Datastructure: BrooksCoreyCapillaryPressure
 Datastructure: BrooksCoreyRelativePermeability
 ==============================================
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_BrooksCoreyStone2RelativePermeability:
+
+Datastructure: BrooksCoreyStone2RelativePermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
@@ -1477,6 +1603,20 @@ Datastructure: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanics:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanics
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanicsInitialization
+==========================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
 
 Datastructure: CompositionalMultiphaseStatistics
@@ -1489,6 +1629,20 @@ Datastructure: CompositionalMultiphaseStatistics
 Datastructure: CompositionalMultiphaseWell
 ==========================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
+
+
+.. _DATASTRUCTURE_CompositonalTwoPhaseFluidPengRobinson:
+
+Datastructure: CompositonalTwoPhaseFluidPengRobinson
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson_other.rst
+
+
+.. _DATASTRUCTURE_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+
+Datastructure: CompositonalTwoPhaseFluidSoaveRedlichKwong
+=========================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
@@ -1855,13 +2009,6 @@ Datastructure: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_LagrangianContact:
-
-Datastructure: LagrangianContact
-================================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact_other.rst
-
-
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -2093,6 +2240,27 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+.. _DATASTRUCTURE_PorousDamageElasticIsotropic:
+
+Datastructure: PorousDamageElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageSpectralElasticIsotropic:
+
+Datastructure: PorousDamageSpectralElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageVolDevElasticIsotropic:
+
+Datastructure: PorousDamageVolDevElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_PorousDelftEgg:
 
 Datastructure: PorousDelftEgg
@@ -2140,6 +2308,27 @@ Datastructure: PorousExtendedDruckerPrager
 Datastructure: PorousModifiedCamClay
 ====================================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoDruckerPrager:
+
+Datastructure: PorousViscoDruckerPrager
+=======================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoExtendedDruckerPrager:
+
+Datastructure: PorousViscoExtendedDruckerPrager
+===============================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoModifiedCamClay:
+
+Datastructure: PorousViscoModifiedCamClay
+=========================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
@@ -2331,6 +2520,20 @@ Datastructure: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanics:
+
+Datastructure: SinglePhaseReservoirPoromechanics
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanicsInitialization:
+
+Datastructure: SinglePhaseReservoirPoromechanicsInitialization
+==============================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseStatistics:
 
 Datastructure: SinglePhaseStatistics
@@ -2364,6 +2567,13 @@ Datastructure: SolidInternalEnergy
 Datastructure: SolidMechanicsEmbeddedFractures
 ==============================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsLagrangeContact:
+
+Datastructure: SolidMechanicsLagrangeContact
+============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
@@ -2541,6 +2751,13 @@ Datastructure: VTKMesh
 .. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
 
 
+.. _DATASTRUCTURE_VTKWell:
+
+Datastructure: VTKWell
+======================
+.. include:: ../../coreComponents/schema/docs/VTKWell_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -2553,6 +2770,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VanGenuchtenStone2RelativePermeability:
+
+Datastructure: VanGenuchtenStone2RelativePermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_ViscoDruckerPrager:

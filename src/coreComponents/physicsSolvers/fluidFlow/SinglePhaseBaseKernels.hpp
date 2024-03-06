@@ -590,7 +590,7 @@ struct SolutionCheckKernel
                                               real64 const scalingFactor )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -602,13 +602,13 @@ struct SolutionCheckKernel
         if( newPres < 0.0 )
         {
           numNegativePressures += 1;
-          minValue.min( newPres );
+          minPres.min( newPres );
         }
       }
 
     } );
 
-    return { numNegativePressures.get(), minValue.get() };
+    return { numNegativePressures.get(), minPres.get() };
   }
 
 };
@@ -622,7 +622,7 @@ struct ScalingForSystemSolutionKernel
                                              globalIndex const rankOffset,
                                              arrayView1d< globalIndex const > const & dofNumber,
                                              arrayView1d< integer const > const & ghostRank,
-                                             real64 const maxAllowedPressureChange )
+                                             real64 const maxAbsolutePresChange )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
@@ -637,10 +637,10 @@ struct ScalingForSystemSolutionKernel
         real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
         maxDeltaPres.max( absPresChange );
 
-        // maxAllowedPressureChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
-        if( maxAllowedPressureChange > 0.0 && absPresChange > maxAllowedPressureChange )
+        // maxAbsolutePresChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
+        if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
         {
-          real64 const presScalingFactor = maxAllowedPressureChange / absPresChange;
+          real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
           scalingFactor.min( presScalingFactor );
         }
       }
@@ -674,15 +674,21 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & deltaPres,
+          arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
+          arrayView2d< real64 const > const & density,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
           real64 & minDeltaPres,
           real64 & maxDeltaPres,
+          real64 & minTemp,
+          real64 & avgTempNumerator,
+          real64 & maxTemp,
           real64 & totalUncompactedPoreVol,
-          real64 & totalPoreVol )
+          real64 & totalPoreVol,
+          real64 & totalMass )
   {
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
@@ -691,8 +697,13 @@ struct StatisticsKernel
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinDeltaPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxDeltaPres( -LvArray::NumericLimits< real64 >::max );
 
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemp( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTempNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemp( -LvArray::NumericLimits< real64 >::max );
+
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalMass( 0.0 );
 
     forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -712,8 +723,13 @@ struct StatisticsKernel
       subRegionMinDeltaPres.min( deltaPres[ei] );
       subRegionMaxDeltaPres.max( deltaPres[ei] );
 
+      subRegionMinTemp.min( temp[ei] );
+      subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
+      subRegionMaxTemp.max( temp[ei] );
+
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       subRegionTotalPoreVol += dynamicPoreVol;
+      subRegionTotalMass += dynamicPoreVol * density[ei][0];
     } );
 
     minPres = subRegionMinPres.get();
@@ -723,8 +739,13 @@ struct StatisticsKernel
     minDeltaPres = subRegionMinDeltaPres.get();
     maxDeltaPres = subRegionMaxDeltaPres.get();
 
+    minTemp = subRegionMinTemp.get();
+    avgTempNumerator = subRegionAvgTempNumerator.get();
+    maxTemp = subRegionMaxTemp.get();
+
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
     totalPoreVol = subRegionTotalPoreVol.get();
+    totalMass = subRegionTotalMass.get();
   }
 };
 
@@ -757,7 +778,10 @@ struct HydrostaticPressureKernel
 
     real64 dens = 0.0;
     real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        pres0,
+                                                        dens,
+                                                        visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
     // Step 3: fixed-point iteration until convergence
@@ -777,7 +801,10 @@ struct HydrostaticPressureKernel
       }
 
       // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
+      constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                          pres0,
+                                                          dens,
+                                                          visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
@@ -811,9 +838,10 @@ struct HydrostaticPressureKernel
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
 
-    fluidWrapper.compute( datumPres,
-                          datumDens,
-                          datumVisc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        datumPres,
+                                                        datumDens,
+                                                        datumVisc );
 
     // Step 2: find the closest elevation to datumElevation
 

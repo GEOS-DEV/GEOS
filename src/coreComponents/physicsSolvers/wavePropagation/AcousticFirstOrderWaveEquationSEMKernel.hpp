@@ -39,7 +39,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
    * @param[in] numFacesPerElem number of faces per element
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemGhostRank rank of the ghost element
@@ -68,7 +67,6 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const regionIndex,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
@@ -95,6 +93,7 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -133,7 +132,7 @@ struct PrecomputeSourceAndReceiverKernel
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
             sourceRegion[isrc] = regionIndex;
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -181,7 +180,7 @@ struct PrecomputeSourceAndReceiverKernel
             rcvElem[ircv] = k;
             receiverRegion[ircv] = regionIndex;
 
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -227,26 +226,27 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      real32 const invC2 = 1.0 / ( density[e] * pow( velocity[e], 2 ) );
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -296,17 +296,19 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          // only the four corners of the mesh face are needed to compute the Jacobian
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
 
           real32 const alpha = 1.0 / velocity[e];
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
@@ -359,18 +361,18 @@ struct VelocityComputation
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemx[numNodesPerElem] = {0.0};
       real32 uelemy[numNodesPerElem] = {0.0};
       real32 uelemz[numNodesPerElem] = {0.0};
@@ -386,10 +388,8 @@ struct VelocityComputation
         uelemz[i] = massLoc*velocity_z[k][i];
       }
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
-
-
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
@@ -494,18 +494,18 @@ struct PressureComputation
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      // only the eight corners of the mesh cell are needed to compute the Jacobian
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 auxx[numNodesPerElem]  = {0.0};
       real32 auyy[numNodesPerElem]  = {0.0};
       real32 auzz[numNodesPerElem]  = {0.0};
@@ -513,7 +513,7 @@ struct PressureComputation
 
 
       // Volume integration
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q=0; q < numNodesPerElem; q++ )
       {
 
 

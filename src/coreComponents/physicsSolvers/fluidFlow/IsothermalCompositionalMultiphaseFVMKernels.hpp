@@ -49,26 +49,29 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 
-namespace geos {
+namespace geos
+{
 
-    namespace isothermalCompositionalMultiphaseFVMKernels {
+namespace isothermalCompositionalMultiphaseFVMKernels
+{
 
-        using namespace constitutive;
+using namespace constitutive;
 
-        enum class FaceBasedAssemblyKernelFlags {
-            /// Flag to specify whether capillary pressure is used or not
-            CapPressure = 1 << 0, // 1
-            /// Flag indicating whether total mass equation is formed or not
-            TotalMassEquation = 1 << 1, // 2
-            /// Flag indicating whether C1-PPU is used or not
-            C1PPU = 1 << 2, // 4
-            /// Add more flags like that if needed:
-            // Flag4 = 1 << 3, // 8
-            // Flag5 = 1 << 4, // 16
-            // Flag6 = 1 << 5, // 32
-            // Flag7 = 1 << 6, // 64
-            // Flag8 = 1 << 7  //128
-        };
+enum class FaceBasedAssemblyKernelFlags
+{
+  /// Flag to specify whether capillary pressure is used or not
+  CapPressure = 1 << 0, // 1
+  /// Flag indicating whether total mass equation is formed or not
+  TotalMassEquation = 1 << 1, // 2
+  /// Flag indicating whether C1-PPU is used or not
+  C1PPU = 1 << 2, // 4
+  /// Add more flags like that if needed:
+  // Flag4 = 1 << 3, // 8
+  // Flag5 = 1 << 4, // 16
+  // Flag6 = 1 << 5, // 32
+  // Flag7 = 1 << 6, // 64
+  // Flag8 = 1 << 7  //128
+};
 
 /******************************** PhaseMobilityKernel ********************************/
 
@@ -78,56 +81,58 @@ namespace geos {
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
-        template<integer NUM_COMP, integer NUM_PHASE>
-        class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase<NUM_COMP> {
-        public:
+template< integer NUM_COMP, integer NUM_PHASE >
+class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+{
+public:
 
-            using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase<NUM_COMP>;
-            using Base::numComp;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base::numComp;
 
-            /// Compile time value for the number of phases
-            static constexpr integer numPhase = NUM_PHASE;
+  /// Compile time value for the number of phases
+  static constexpr integer numPhase = NUM_PHASE;
 
-            /**
+  /**
    * @brief Constructor
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    * @param[in] relperm the relperm model
    */
-            PhaseMobilityKernel(ObjectManagerBase &subRegion,
-                                MultiFluidBase const &fluid,
-                                RelativePermeabilityBase const &relperm)
-                    : Base(),
-                      m_phaseVolFrac(subRegion.getField<fields::flow::phaseVolumeFraction>()),
-                      m_dPhaseVolFrac(subRegion.getField<fields::flow::dPhaseVolumeFraction>()),
-                      m_dCompFrac_dCompDens(subRegion.getField<fields::flow::dGlobalCompFraction_dGlobalCompDensity>()),
-                      m_phaseDens(fluid.phaseDensity()),
-                      m_dPhaseDens(fluid.dPhaseDensity()),
-                      m_phaseVisc(fluid.phaseViscosity()),
-                      m_dPhaseVisc(fluid.dPhaseViscosity()),
-                      m_phaseRelPerm(relperm.phaseRelPerm()),
-                      m_dPhaseRelPerm_dPhaseVolFrac(relperm.dPhaseRelPerm_dPhaseVolFraction()),
-                      m_phaseMob(subRegion.getField<fields::flow::phaseMobility>()),
-                      m_dPhaseMob(subRegion.getField<fields::flow::dPhaseMobility>()) {}
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,
+                       MultiFluidBase const & fluid,
+                       RelativePermeabilityBase const & relperm )
+    : Base(),
+    m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseDens( fluid.phaseDensity() ),
+    m_dPhaseDens( fluid.dPhaseDensity() ),
+    m_phaseVisc( fluid.phaseViscosity() ),
+    m_dPhaseVisc( fluid.dPhaseViscosity() ),
+    m_phaseRelPerm( relperm.phaseRelPerm() ),
+    m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
+    m_phaseMob( subRegion.getField< fields::flow::phaseMobility >() ),
+    m_dPhaseMob( subRegion.getField< fields::flow::dPhaseMobility >() )
+  {}
 
-            /**
+  /**
    * @brief Compute the phase mobilities in an element
    * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-            template<typename FUNC = NoOpFunc>
-            GEOS_HOST_DEVICE
-            void compute(localIndex const ei,
-                         FUNC &&phaseMobilityKernelOp = NoOpFunc{}) const {
-                using Deriv = multifluid::DerivativeOffset;
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
+  {
+    using Deriv = multifluid::DerivativeOffset;
 
-                arraySlice2d<real64 const,
-                        compflow::USD_COMP_DC - 1> const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
-                arraySlice1d<real64 const, multifluid::USD_PHASE - 2> const phaseDens = m_phaseDens[ei][0];
-                arraySlice2d<real64 const, multifluid::USD_PHASE_DC - 2> const dPhaseDens = m_dPhaseDens[ei][0];
-                arraySlice1d<real64 const, multifluid::USD_PHASE - 2> const phaseVisc = m_phaseVisc[ei][0];
-                arraySlice2d<real64 const, multifluid::USD_PHASE_DC - 2> const dPhaseVisc = m_dPhaseVisc[ei][0];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
                 arraySlice2d<real64 const, relperm::USD_RELPERM - 2> const phaseRelPerm = m_phaseRelPerm[ei][0];
                 arraySlice3d<real64 const, relperm::USD_RELPERM_DS -
                                            2> const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
@@ -1847,7 +1852,8 @@ namespace geos {
                         multifluid::LAYOUT_PHASE_COMP> facePhaseCompFrac(1, 1, m_numPhases, NUM_COMP);
                 real64 faceTotalDens = 0.0;
 
-                m_fluidWrapper.compute(m_facePres[kf],
+    MultiFluidBase::KernelWrapper::computeValues( m_fluidWrapper,
+                                                  m_facePres[kf],
                                        m_faceTemp[kf],
                                        m_faceCompFrac[kf],
                                        facePhaseFrac[0][0],

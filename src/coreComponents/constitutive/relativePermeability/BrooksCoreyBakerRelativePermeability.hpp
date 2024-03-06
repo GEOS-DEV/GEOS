@@ -22,11 +22,14 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 
-namespace geos {
-    namespace constitutive {
+namespace geos
+{
+namespace constitutive
+{
 
-        class BrooksCoreyBakerRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate {
-        public:
+class BrooksCoreyBakerRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
+{
+public:
 
             BrooksCoreyBakerRelativePermeabilityUpdate(arrayView1d<real64 const> const &phaseMinVolumeFraction,
                                                        arrayView2d<real64 const> const &waterOilRelPermExponent,

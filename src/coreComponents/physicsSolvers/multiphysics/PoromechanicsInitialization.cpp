@@ -22,6 +22,9 @@
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 
 namespace geos
 {
@@ -35,17 +38,27 @@ namespace
 template< typename POROMECHANICS_SOLVER > class
   PoromechanicsCatalogNames {};
 
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics >
+// Class specializations for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
+template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
 {
 public:
-  static string name() { return "SinglePhasePoromechanicsInitialization"; }
+  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName() + "Initialization"; }
 };
-// Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class PoromechanicsCatalogNames< MultiphasePoromechanics >
+template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > >
 {
 public:
-  static string name() { return "MultiphasePoromechanicsInitialization"; }
+  static string name() { return SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >::catalogName() + "Initialization"; }
+};
+// Class specializations for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
+template<> class PoromechanicsCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
+{
+public:
+  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseBase >::catalogName() + "Initialization"; }
+};
+template<> class PoromechanicsCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > >
+{
+public:
+  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >::catalogName() + "Initialization"; }
 };
 
 }
@@ -70,6 +83,7 @@ PoromechanicsInitialization( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the poromechanics solver" );
 
@@ -134,10 +148,14 @@ execute( real64 const time_n,
 
 namespace
 {
-typedef PoromechanicsInitialization< MultiphasePoromechanics > MultiphasePoromechanicsInitialization;
-typedef PoromechanicsInitialization< SinglePhasePoromechanics > SinglePhasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > > MultiphaseReservoirPoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > > SinglePhaseReservoirPoromechanicsInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
 }
 
 } /* namespace geos */
