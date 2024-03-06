@@ -617,7 +617,6 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
     {
       if( e < 0 )
       {
-        GEOS_LOG_RANK( "in build2dFaceTo2dElems ignored -1 edges for elem2d " << i );
         continue;
       }
       tmp[edgesTo2dFaces.at( referenceCollocatedEdges.at( e ) )].push_back( i );
@@ -722,7 +721,6 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     elem2dToEdges.clearArray( e2d );
     for( localIndex const & e: allEdges )
     {
-      GEOS_LOG_RANK( "Adding edge " << e << " to elem2d " << e2d );
       elem2dToEdges.emplaceBack( e2d, e );
     }
   }
@@ -854,13 +852,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
         if( it != referenceCollocatedNodes.cend() )
         {
           refNodes.insert( it->second );
-        }
-        else
-        {
-          if( e2d == 36 and logger::internal::rank == 4 )
-          {
-            GEOS_LOG_RANK( "NO REF COLLOCATED NODES FOR GLOBAL NODE : " << gn );
-          }
         }
       }
     }
