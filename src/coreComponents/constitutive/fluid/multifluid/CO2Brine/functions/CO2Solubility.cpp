@@ -187,8 +187,8 @@ makeSolubilityTables( string const & functionName,
         << std::setw( 15 ) << badValues( row, 3 ) << " "
         << "\n";
     }
-    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered. These will be truncated to zero.\n{}",
-                               badCount, badValueTable.str() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered. These will be truncated to zero.\n Check out report table {} with max {} values",
+                               badCount, badValueTable.str(), maxBad ) );
   }
 
   string const co2TableName = functionName + "_co2Dissolution_table";
