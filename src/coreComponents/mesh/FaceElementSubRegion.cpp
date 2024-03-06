@@ -476,21 +476,21 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
 
 
 /**
- * @brief Returns a mapping that links any collocated edge to the collocated edge with the lowest index.
- * @param referenceCollocatedNodes The mapping that links any collocated node to its collocated node with the lowest index.
- * @param nl2g The local to global mapping for nodes.
- * @param edgeToNodes The edge to nodes mapping.
- * @param edgeGhostRanks The ghost rank of the edges.
- * @return The computed map.
+ * @brief Computes the mapping with links a pair of collocated nodes to all the edges having their nodes collocated to the key pair of nodes.
+ * @param referenceCollocatedNodes Mapping that link all the collocated nodes to the collocated node with the lowest index (considered as a reference).
+ * The reference node can then be used to make connection between geometrical objects relying on collocated noes (in the case of this function, edges).
+ * @param nl2g The node local to global mapping.
+ * @param edgeToNodes The mapping from local edges to local nodes.
+ * @return The computed mapping.
+ * @details For each edge based on collocated nodes (i.e. each edge on the fracture),
+ * we consider each node and compute the reference collocated node.
+ * There will be multiple edges with the same pair of reference collocated nodes.
+ * This information is contained in the returned mapping.
  */
-//std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
-std::pair<
-std::map< localIndex, localIndex >,
-  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > >
-> buildReferenceCollocatedEdges( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
-                                                                  arrayView1d< globalIndex const > const nl2g,
-                                                                  arrayView2d< localIndex const > const edgeToNodes,
-                                                                  arrayView1d< integer const > edgeGhostRanks )
+std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > >
+buildCollocatedEdgeBuckets( std::map< globalIndex, globalIndex > const & referenceCollocatedNodes,
+                            arrayView1d< globalIndex const > const nl2g,
+                            arrayView2d< localIndex const > const edgeToNodes )
 {
   GEOS_ASSERT_EQ( edgeToNodes.size( 1 ), 2 );
   static constexpr std::string_view nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
@@ -539,6 +539,19 @@ std::map< localIndex, localIndex >,
     collocatedEdgeBuckets[edgeHash].insert( edge );
   }
 
+  return collocatedEdgeBuckets;
+}
+
+
+/**
+ * @brief Returns a mapping that links any collocated edge to the collocated edge with the lowest index.
+ * @param collocatedEdgeBuckets Links the pairs of reference collocated nodes to the edges overlapping those nodes (even with other nodes).
+ * @param edgeGhostRanks The ghost rank of the edges.
+ * @return The computed mapping.
+ */
+std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets,
+                                                                  arrayView1d< integer const > edgeGhostRanks )
+{
   std::map< localIndex, localIndex > referenceCollocatedEdges;
 
   // We want to consider in priority the edges that are owned by the rank.
@@ -561,8 +574,7 @@ std::map< localIndex, localIndex >,
     }
   }
 
-//  return referenceCollocatedEdges;
-  return { referenceCollocatedEdges, collocatedEdgeBuckets };
+  return referenceCollocatedEdges;
 }
 
 
@@ -786,15 +798,10 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
 
   fillFaceElementSubRegionToNodesRelation( m_2dElemToCollocatedNodesBuckets, nodeManager.globalToLocalMap(), m_toNodesRelation );
 
-//  std::map< localIndex, localIndex > const referenceCollocatedEdges =
-//    buildReferenceCollocatedEdges( referenceCollocatedNodes, nl2g, edgeManager.nodeList(), edgeManager.ghostRank().toViewConst() );
-  auto const refCollocatedEdges =
-    buildReferenceCollocatedEdges( referenceCollocatedNodes, nl2g, edgeManager.nodeList(), edgeManager.ghostRank().toViewConst() );
-  std::map< localIndex, localIndex > const & referenceCollocatedEdges = refCollocatedEdges.first;
-  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const & collocatedEdgeBuckets = refCollocatedEdges.second;
+  std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const collocatedEdgeBuckets = buildCollocatedEdgeBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList() );
+  std::map< localIndex, localIndex > const referenceCollocatedEdges = buildReferenceCollocatedEdges( collocatedEdgeBuckets, edgeManager.ghostRank() );
 
   localIndex const num2dElems = this->size();
-//  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( referenceCollocatedEdges.size() );
 
   // For the `m_2dFaceToEdge`, we can select any values that we want.
   // But then we need to be consistent...
