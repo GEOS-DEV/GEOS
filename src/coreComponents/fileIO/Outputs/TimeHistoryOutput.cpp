@@ -54,9 +54,9 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
   registerWrapper( viewKeys::timeHistoryMPIOString(), &m_useMPIO ).
     setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::FALSE ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Whether to use MPIO to write a single file or a separate file for each (only applicable to HDF5 format)." );
+    setDescription( "Whether to use MPIO to write a single file or a separate file for each rank (only applicable to HDF5 format)." );
 
 }
 
