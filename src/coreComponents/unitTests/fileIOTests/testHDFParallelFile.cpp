@@ -12,7 +12,7 @@ class HDFParallelFileIOTest : public ::testing::TestWithParam<bool> {
 TEST_P( HDFParallelFileIOTest, SingleValueHistory )
 {
   GEOS_MARK_FUNCTION;
-  string filename( "single_value_parallel" );
+  string filename( GEOS_FMT( "single_value_parallel_{}", static_cast<int>( GetParam() ) ) );
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   int rank = MpiWrapper::commRank( );
@@ -35,7 +35,7 @@ TEST_P( HDFParallelFileIOTest, SingleValueHistory )
 TEST_P( HDFParallelFileIOTest, DynamicHistory )
 {
   GEOS_MARK_FUNCTION;
-  string filename( "dynamic_parallel" );
+  string filename( GEOS_FMT( "dynamic_parallel_{}", static_cast<int>( GetParam() ) ) );
   HistoryMetadata singleItemSpec( "some_real", 1, std::type_index( typeid(real64)));
 
   int rnk = MpiWrapper::commRank( );

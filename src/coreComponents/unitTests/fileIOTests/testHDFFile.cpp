@@ -13,14 +13,23 @@ class HDFFileIOTest : public ::testing::TestWithParam<bool> {
 TEST_P( HDFFileIOTest, HDFFile )
 {
   GEOS_MARK_FUNCTION;
-  HDFFile file( "empty", true, false, MPI_COMM_GEOSX );
-  hid_t file_id = H5Fcreate( "empty", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+  bool useMPIO = GetParam();
+  HDFFile file( "empty", true, useMPIO, MPI_COMM_GEOSX );
+  hid_t file_id = 0;
+  if( useMPIO )
+  {
+    file_id = H5Fcreate( "empty.hdf5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+  }
+  else
+  {
+    file_id = H5Fcreate( "empty.0.hdf5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+  }
   H5Fclose( file_id );
 }
 
 TEST_P( HDFFileIOTest, SingleValueHistory )
 {
-  string filename( "single_value" );
+  string filename( GEOS_FMT( "single_value_{}", static_cast<int>( GetParam() ) ) );
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   real64 time = 0.0;
@@ -40,7 +49,7 @@ TEST_P( HDFFileIOTest, ArrayHistory )
   srand( time( NULL ));
 
   {
-    string filename( "array1d_history" );
+    string filename( GEOS_FMT( "array1d_history_{}", static_cast<int>( GetParam() ) ) ); 
     Array< real64, 1 > arr( 4096 );
     real64 count = 0.0;
     forValuesInSlice( arr.toSlice(), [&count]( real64 & value )
@@ -91,7 +100,7 @@ TEST_P( HDFFileIOTest, IdxArrayHistory )
 {
   srand( time( NULL ));
   {
-    string filename( "array1d_idx_history" );
+    string filename( GEOS_FMT( "array1d_idx_history_{}", static_cast<int>( GetParam() ) ) );
     Array< localIndex, 1 > idx( 256 );
     Array< real64, 2 > arr( 1024, 4 );
     real64 count = 0.0;
