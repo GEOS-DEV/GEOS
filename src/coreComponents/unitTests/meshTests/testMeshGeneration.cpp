@@ -121,7 +121,6 @@ protected:
 
     problemManager.problemSetup();
     problemManager.applyInitialConditions();
-    domain.setupBaseLevelMeshGlobalInfo();
   }
 };
 
@@ -523,17 +522,16 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
   ProblemManager & problemManager = getGlobalState().getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
   MeshBody & meshBody = domain.getMeshBody( 0 );
-  MeshLevel const & baseLevel = meshBody.getBaseDiscretization();
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshes( domain );
   for( int order = minOrder; order < maxOrder; order++ )
   {
     MeshLevel & meshLevel = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(), GEOS_FMT( "TestLevel{}", order ), order );
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
     CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager, false );
     edgeManager.setGeometricalRelations( cellBlockManager, false );
     faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager, false );
