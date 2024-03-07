@@ -526,8 +526,6 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
   meshManager.generateMeshes( domain );
   for( int order = minOrder; order < maxOrder; order++ )
   {
-    int op2 = pow( order + 1, 2 );
-    int op3 = pow( order + 1, 3 );
     MeshLevel & meshLevel = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(), GEOS_FMT( "TestLevel{}", order ), order );
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -562,7 +560,7 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
     for( localIndex f = 0; f < faceManager.size(); ++f )
     {
-      GEOS_ERROR_IF_NE( faceToNodeMap.sizeOfArray( f ), pow( order+1, 2 ) );
+      EXPECT_EQ( faceToNodeMap.sizeOfArray( f ), pow( order+1, 2 ) );
     }
   }
 }
