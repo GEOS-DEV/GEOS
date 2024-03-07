@@ -177,7 +177,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
   auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
   auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
+  auto totalDensCopy = [&]() { return GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity ); };
 
 #undef GET_FLUID_DATA
 
@@ -211,7 +211,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        dP, relTol, absTol, "phaseDens", "Pres", phases );
       checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseVisc", "Pres", phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dP],
+      checkDerivative( totalDensCopy(), totalDens.value, dTotalDens[Deriv::dP],
                        dP, relTol, absTol, "totalDens", "Pres" );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseCompFrac", "Pres", phases, components );
@@ -228,7 +228,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        dT, relTol, absTol, "phaseDens", "Temp", phases );
       checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseVisc", "Temp", phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dT],
+      checkDerivative( totalDensCopy(), totalDens.value, dTotalDens[Deriv::dT],
                        dT, relTol, absTol, "totalDens", "Temp" );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseCompFrac", "Temp", phases, components );
@@ -277,7 +277,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                        dC, relTol, absTol, "phaseDens", var, phases );
       checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseVisc", var, phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC+jc],
+      checkDerivative( totalDensCopy(), totalDens.value, dTotalDens[Deriv::dC+jc],
                        dC, relTol, absTol, "totalDens", var );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseCompFrac", var, phases, components );

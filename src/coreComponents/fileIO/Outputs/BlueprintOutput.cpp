@@ -35,7 +35,7 @@ namespace internal
 {
 
 /**
- * @brief @return The Blueprint shape from the GEOSX element type string.
+ * @brief @return The Blueprint shape from the GEOS element type string.
  * @param elementType the elementType to look up.
  */
 string toBlueprintShape( ElementType const elementType )
@@ -137,26 +137,9 @@ bool BlueprintOutput::execute( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
-
   conduit::Node meshRoot;
   conduit::Node & mesh = meshRoot[ "mesh" ];
-  conduit::Node & coordset = mesh[ "coordsets/nodes" ];
-  conduit::Node & topologies = mesh[ "topologies" ];
-
-  mesh[ "state/time" ] = time;
-  mesh[ "state/cycle" ] = cycle;
-
-  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
-
-  dataRepository::Group averagedElementData( "averagedElementData", this );
-  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
-
-  /// The Blueprint will complain if the fields node is present but empty.
-  if( mesh[ "fields" ].number_of_children() == 0 )
-  {
-    mesh.remove( "fields" );
-  }
+  this->mapMesh(time, cycle, domain, mesh);
 
   /// Verify that the mesh conforms to the Blueprint.
   conduit::Node info;
@@ -177,6 +160,34 @@ bool BlueprintOutput::execute( real64 const time,
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 
   return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void BlueprintOutput::mapMesh( real64 const time,
+                               integer const cycle,
+                               DomainPartition & domain,
+                               conduit::Node & mesh )
+{
+  GEOS_MARK_FUNCTION;
+
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+
+  conduit::Node & coordset = mesh[ "coordsets/nodes" ];
+  conduit::Node & topologies = mesh[ "topologies" ];
+
+  mesh[ "state/time" ] = time;
+  mesh[ "state/cycle" ] = cycle;
+
+  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
+
+  dataRepository::Group averagedElementData( "averagedElementData", this );
+  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
+
+  /// The Blueprint will complain if the fields node is present but empty.
+  if( mesh[ "fields" ].number_of_children() == 0 )
+  {
+    mesh.remove( "fields" );
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

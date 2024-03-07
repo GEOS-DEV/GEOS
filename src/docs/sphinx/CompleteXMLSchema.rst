@@ -143,6 +143,13 @@ Element: CarmanKozenyPermeability
 .. include:: ../../coreComponents/schema/docs/CarmanKozenyPermeability.rst
 
 
+.. _XML_Catalyst:
+
+Element: Catalyst
+=================
+.. include:: ../../coreComponents/schema/docs/Catalyst.rst
+
+
 .. _XML_CellElementRegion:
 
 Element: CellElementRegion
@@ -1545,6 +1552,13 @@ Datastructure: CO2BrinePhillipsThermalFluid
 Datastructure: CarmanKozenyPermeability
 =======================================
 .. include:: ../../coreComponents/schema/docs/CarmanKozenyPermeability_other.rst
+
+
+.. _DATASTRUCTURE_Catalyst:
+
+Datastructure: Catalyst
+=======================
+.. include:: ../../coreComponents/schema/docs/Catalyst_other.rst
 
 
 .. _DATASTRUCTURE_CellElementRegion:

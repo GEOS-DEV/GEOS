@@ -30,7 +30,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 /* #undef GEOS_USE_CUDA */
@@ -123,7 +123,7 @@
 #define HDF5_VERSION 1.12.1
 
 /// Version information for Conduit
-#define Conduit_VERSION 0.8.2
+#define Conduit_VERSION 0.8.6
 
 /// Version information for RAJA
 #define RAJA_VERSION 2023.6.1
@@ -165,13 +165,13 @@
 #define petsc_VERSION 3.13.0
 
 /// Version information for VTK
-#define VTK_VERSION 9.2.6
+#define VTK_VERSION 9.2.20230719
 
 /// Version information for fmt
-#define fmt_VERSION 10.0.0
+#define fmt_VERSION 9.1.0
 
 /// Version information for python
-#define Python3_VERSION 3.10.6
+#define Python3_VERSION 3.11.5
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
