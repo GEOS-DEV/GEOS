@@ -1227,6 +1227,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
+  if( m_keepFlowVariablesConstantDuringInitStep )
+    return;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
