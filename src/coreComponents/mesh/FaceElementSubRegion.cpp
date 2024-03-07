@@ -726,21 +726,26 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
 }
 
 
+/**
+ * @brief Builds a 2d face to edges mapping
+ * @param referenceCollocatedEdges Maps all the collocated edges to a single reference collocated edge.
+ * @return A 1d array that maps local index of a 2d face to the equivalent (3d) reference edge.
+ * @details The @p referenceCollocatedEdges input basically contains all the edges of the fracture.
+ * This function only selects the reference edges and builds a 2d face for each.
+ * The 2d face ordering is more or less random (actually it's sorted on the index of the reference edge).
+ * But the ordering is not critical as long as it's consistent withing the fracture.
+ */
 array1d< localIndex > build2dFaceToEdge( std::map< localIndex, localIndex > const & referenceCollocatedEdges )
 {
-  std::set< localIndex > tmp;
-  std::transform( referenceCollocatedEdges.cbegin(), referenceCollocatedEdges.cend(),
-                  std::inserter( tmp, tmp.end() ),
-                  [&]( std::pair< localIndex, localIndex > const & p )
-                  { return p.second; } ); // TODO use std::get
+  std::set< localIndex > const referenceEdges = mapValues< std::set >( referenceCollocatedEdges );
 
-  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( tmp.size() );
+  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( referenceEdges.size() );
 
   // For the `m_2dFaceToEdge`, we can select any values that we want.
   // But then we need to be consistent...
   array1d< localIndex > face2dToEdge;
   face2dToEdge.reserve( num2dFaces );
-  for( localIndex const & refEdge: tmp )
+  for( localIndex const & refEdge: referenceEdges )
   {
     face2dToEdge.emplace_back( refEdge );
   }
