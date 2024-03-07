@@ -363,7 +363,7 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
  * in the sense that each @p face for a given index must "belong" to @p 3d @p element at the same index.
  * @param[in] fractureName The name of the fracture for which we're checking the mapping consistency.
  * @param[in] elem2dToElems3d A mapping.
- * @param[inout] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
+ * @param[in,out] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
  */
 void fixNeighborMappingsInconsistency( string const & fractureName,
                                        OrderedVariableToManyElementRelation const & elem2dToElems3d,
@@ -502,7 +502,7 @@ buildCollocatedEdgeBuckets( std::map< globalIndex, globalIndex > const & referen
   // `edgeIds` is a temporary container that maps the two nodes of any edge of all the face elements, to the local index of the edge itself.
   // It's important to note that the key of `edgeIds` are the global indices of the nodes, in no particular order.
   std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
-  for( auto lei = 0; lei < edgeToNodes.size( 0 ); ++lei )
+  for( localIndex lei = 0; lei < edgeToNodes.size( 0 ); ++lei )
   {
     auto const & nodes = edgeToNodes[lei];
     globalIndex const & gni0 = nl2g[nodes[0]];
@@ -646,12 +646,22 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
 }
 
 
-void fillFaceElementSubRegionToNodesRelation( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets,
-                                              unordered_map< globalIndex, localIndex > const & ng2l,
-                                              SurfaceElementSubRegion::NodeMapType & elem2dToNodes )
+/**
+ * @brief Adds some missing connections to the @p elem2dToNodes mapping.
+ * @param[in] elem2dToCollocatedNodesBuckets The bucket of all the collocated nodes nodes, for each 2d element.
+ * @param[in] ng2l The global to local node mapping.
+ * @param[in,out] elem2dToNodes The 2d element to nodes mapping that will receive new connections
+ * @details Due to the specific way 2d elements are managing nodes, some connections may be missing before the ghosting process.
+ * After the ghosting's been performed, those connections can be reset.
+ */
+void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets,
+                               unordered_map< globalIndex, localIndex > const & ng2l,
+                               SurfaceElementSubRegion::NodeMapType & elem2dToNodes )
 {
   auto const num2dElems = elem2dToNodes.size();
 
+  // We loop over all the collocated nodes attached to the 2d elements.
+  // If a node is on the rank while not attached to the 2d element, then we add a connection.
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
     auto bucket = elem2dToCollocatedNodesBuckets[e2d];
@@ -675,6 +685,21 @@ void fillFaceElementSubRegionToNodesRelation( ArrayOfArrays< array1d< globalInde
 }
 
 
+/**
+ * @brief Adds some missing connections to the @p elem2dToEdges mapping.
+ * @param[in] elem2dToNodes The 2d elements to nodes mappings.
+ * @param[in] nodesToEdges The nodes to edges mapping.
+ * @param[in] nl2g The global to local mapping for nodes.
+ * @param[in] referenceCollocatedNodes A mapping that link all each collocated node to the node that must be used as a reference.
+ * @param[in] collocatedEdgeBuckets A specific mapping that links all pair of collocated nodes to the reference edge built on top of the two locations.
+ * @param[in,out] elem2dToEdges The 2d element to edges that will be completed/corrected.
+ * @details The @p elem2dToEdges is (for the moment) used to build connection between the 2d elements.
+ * Due to the specific way 2d elements are managing nodes, before the ghosting process:
+ *   - some edges may be missing,
+ *   - some edges may be "wrong" (in the sense where there may be multiple collocated edges,
+ *     and we must be sure that all the elements use the same reference edges).
+ * After the ghosting's been performed, those connections can be reset.
+ */
 void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2dToNodes,
                                ArrayOfSetsView< localIndex const > const nodesToEdges,
                                arrayView1d< globalIndex const > const nl2g,
@@ -689,36 +714,44 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     auto const numEdges = elem2dToEdges.sizeOfArray( e2d );
     if( 2 * numEdges == numNodes )
     {
+      // If the previous conditions is true, all the information could be constructed and therefore should be OK.
+      // There's no need to proceed.
       continue;
     }
 
-    std::map< localIndex, std::vector< localIndex > > edgesTouchingElem2d, edgesOfElem2d;
+    // `nodesOfEdgesTouching2dElem` deals with the edges that have at least one point touching the 2d element.
+    // While `nodesOfEdgesOf2dElem` deals with the edges for which all two nodes are on the 2d element.
+    // For both mappings, the key is the edge index and the values are the local nodes indices of the concerned edges.
+    std::map< localIndex, std::vector< localIndex > > nodesOfEdgesTouching2dElem, nodesOfEdgesOf2dElem;
     for( localIndex const & n: elem2dToNodes[e2d] )
     {
       for( localIndex const & e: nodesToEdges[n] )
       {
-        edgesTouchingElem2d[e].push_back( n );
+        nodesOfEdgesTouching2dElem[e].push_back( n );
       }
     }
-    for( auto const & ens: edgesTouchingElem2d )
+    for( auto const & ens: nodesOfEdgesTouching2dElem )
     {
       if( ens.second.size() == 2 )
       {
-        edgesOfElem2d.insert( ens );
+        nodesOfEdgesOf2dElem.insert( ens );
       }
     }
-    std::set< localIndex > allEdges;
-    for( auto const & ens: edgesOfElem2d )
+    // We are now recomputing all the edges of the 2d elements.
+    // Even if some edges were already present in the initial `elem2dToEdges` mapping,
+    // we'll ditch them and start with a new collection.
+    std::set< localIndex > allEdgesOf2dElem;
+    for( auto const & ens: nodesOfEdgesOf2dElem )
     {
-      std::vector< localIndex > const & ns = ens.second;
-      globalIndex const & gn0 = referenceCollocatedNodes.at( nl2g[ ns[0] ] );
-      globalIndex const & gn1 = referenceCollocatedNodes.at( nl2g[ ns[1] ] );
+      std::vector< localIndex > const & nodesOfEdge = ens.second;
+      globalIndex const & gn0 = referenceCollocatedNodes.at( nl2g[ nodesOfEdge[0] ] );
+      globalIndex const & gn1 = referenceCollocatedNodes.at( nl2g[ nodesOfEdge[1] ] );
       std::set< localIndex > candidateEdges = collocatedEdgeBuckets.at( std::minmax( { gn0, gn1 } ) );
       auto const min = std::min_element( candidateEdges.cbegin(), candidateEdges.cend() );
-      allEdges.insert( *min );
+      allEdgesOf2dElem.insert( *min );
     }
     elem2dToEdges.clearArray( e2d );
-    for( localIndex const & e: allEdges )
+    for( localIndex const & e: allEdgesOf2dElem )
     {
       elem2dToEdges.emplaceBack( e2d, e );
     }
@@ -784,7 +817,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   // First let's create the reference mappings for both nodes and edges.
   std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
 
-  fillFaceElementSubRegionToNodesRelation( m_2dElemToCollocatedNodesBuckets, nodeManager.globalToLocalMap(), m_toNodesRelation );
+  fillMissing2dElemToNodes( m_2dElemToCollocatedNodesBuckets, nodeManager.globalToLocalMap(), m_toNodesRelation );
 
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const collocatedEdgeBuckets = buildCollocatedEdgeBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList() );
   std::map< localIndex, localIndex > const referenceCollocatedEdges = buildReferenceCollocatedEdges( collocatedEdgeBuckets, edgeManager.ghostRank() );
