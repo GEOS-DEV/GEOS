@@ -28,14 +28,14 @@ struct TestCase
   string_view xmlRegions;
 };
 
-class CellBlocksTestFixture : public ::testing::TestWithParam< TestCase >
+class ElementRegionTestFixture : public ::testing::TestWithParam< TestCase >
 {
 public:
-  CellBlocksTestFixture():
+  ElementRegionTestFixture():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
-  virtual ~CellBlocksTestFixture() = default;
+  virtual ~ElementRegionTestFixture() = default;
 private:
   GeosxState state;
 
@@ -46,7 +46,7 @@ private:
   {}
 };
 
-TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
+TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
 {
   TestCase const testCase = GetParam();
 
@@ -66,14 +66,8 @@ TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
                                     testMeshDir + "/box_hybrid_mesh.vtu",
                                     testCase.xmlRegions );
 
-  std::cout<<"TEST CASE : "<<testCase.name<<std::endl;
-  std::cout<<xmlInput<<std::endl;
-
   ProblemManager & problem = getGlobalState().getProblemManager();
   problem.parseInputString( xmlInput );
-  problem.getGroupByPath( "/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup" ).forSubGroups( []( Group & group ) {
-    GEOS_LOG( " - region '"<<group.getName()<<"'" );
-  } );
 
   if( testCase.isExpectedToPass )
   {
@@ -81,7 +75,6 @@ TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
     {
       EXPECT_NO_FATAL_FAILURE( problem.problemSetup() ) << GEOS_FMT( "Test case '{}' did throw an error.",
                                                                      testCase.name );
-      GEOS_LOG( "COUCOU ça crash po !" );
     }
     catch( std::exception const & e )
     {
@@ -93,7 +86,6 @@ TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
   {
     try
     {
-      GEOS_LOG( "COUCOU ça crash ?" );
       EXPECT_NO_FATAL_FAILURE( problem.problemSetup() ) << GEOS_FMT( "Test case '{}' did throw an error.",
                                                                      testCase.name );
       GTEST_FAIL() << GEOS_FMT( "Test case '{}' did not thrown any exception but was expected to.",
@@ -102,7 +94,6 @@ TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
     catch( InputError const & e )
     {
       string const expStr = e.what();
-      GEOS_LOG( "COUCOU erreur correctement détextée : \n"<<expStr );
       for( auto const & str : testCase.stringsToMention )
       {
         bool isExceptionContainingStr = expStr.find( str ) != string::npos;
@@ -121,12 +112,9 @@ TEST_P( CellBlocksTestFixture, cellBlocksFormulations )
                                 testCase.name );
     }
   }
-
-  std::cout<<"TEST CASE YOUPI "<<testCase.name<<std::endl;
-
 }
 
-TestCase const cellBlocksFormulationTests[] = {
+TestCase const vtkImportRegionSyntaxCases[] = {
   { // should not crash
     "regular subRegion list", true, { },
     R"xml(
@@ -213,8 +201,8 @@ TestCase const cellBlocksFormulationTests[] = {
     )xml"
   }
 };
-INSTANTIATE_TEST_SUITE_P( VTKImportCellBlocks, CellBlocksTestFixture,
-                          ::testing::ValuesIn( cellBlocksFormulationTests ) );
+INSTANTIATE_TEST_SUITE_P( testElementRegions, ElementRegionTestFixture,
+                          ::testing::ValuesIn( vtkImportRegionSyntaxCases ) );
 
 
 int main( int argc, char * * argv )
