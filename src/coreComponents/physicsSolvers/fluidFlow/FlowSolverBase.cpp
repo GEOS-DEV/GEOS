@@ -489,7 +489,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    if(m_isFixedStressPoromechanicsUpdate)
+    if( m_isFixedStressPoromechanicsUpdate )
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
