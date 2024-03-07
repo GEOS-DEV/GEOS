@@ -277,6 +277,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
   # Therefore, `ats` will exit with error code 0, even if some tests fail.
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
+  cd ${GEOSX_DIR}/integratedTests
+  git lfs install
+  git lfs pull
+  cd ${GEOSX_BUILD_DIR}
   integratedTests/geos_ats.sh
   # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.
