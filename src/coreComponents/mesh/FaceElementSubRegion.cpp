@@ -807,6 +807,27 @@ map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const 
 }
 
 
+void fixNodesOrder( ArrayOfArraysView< localIndex const > const elem2dToFaces,
+                    ArrayOfArraysView< localIndex const > const facesToNodes,
+                    ArrayOfArrays< localIndex > & elem2dToNodes )
+{
+  localIndex const num2dElems = elem2dToNodes.size();
+  for( localIndex e2d = 0; e2d < num2dElems; ++e2d )
+  {
+    std::vector< localIndex > nodesOfFace;
+    for( localIndex fi: elem2dToFaces[e2d] )
+    {
+      for( localIndex ni: facesToNodes[fi] )
+      {
+        nodesOfFace.push_back( ni );
+      }
+    }
+    elem2dToNodes.clearArray( e2d );
+    elem2dToNodes.appendToArray( e2d, nodesOfFace.cbegin(), nodesOfFace.cend() );
+  }
+}
+
+
 void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager,
                                                  EdgeManager const & edgeManager,
                                                  FaceManager const & faceManager,
@@ -977,6 +998,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   m_2dFaceTo2dElems = build2dFaceTo2dElems( num2dFaces, num2dElems, m_toEdgesRelation.toViewConst(), m_edgesTo2dFaces, referenceCollocatedEdges );
 
   fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
+//  fixNodesOrder( m_toFacesRelation.toViewConst(), faceManager.nodeList().toViewConst(), m_toNodesRelation );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
