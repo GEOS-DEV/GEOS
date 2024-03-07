@@ -64,6 +64,8 @@ makeSolubilityTables( string const & functionName,
   if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::Tables )
   {
     // The default table is a table with all zeros unless the name is explicitly provided
+    // The pressure and temperature values below will be used only to create the zero table so they
+    // simply give a range large enough to cover most values.
     tableCoords.appendPressure( 1.0e5 ).appendPressure( 1.0e8 )
       .appendTemperature( 0.0 ).appendTemperature( 800.0 );
 
