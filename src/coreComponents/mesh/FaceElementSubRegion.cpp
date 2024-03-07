@@ -607,7 +607,7 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
                                                         map< localIndex, localIndex > const & edgesTo2dFaces,
                                                         std::map< geos::localIndex, geos::localIndex > const & referenceCollocatedEdges )
 {
-  ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
+  ArrayOfArrays< localIndex > face2dTo2dElems;
   // `tmp` contains the 2d face to 2d elements mappings as a `std` container.
   // Eventually, it's copied into an `LvArray` container.
   std::vector< std::vector< localIndex > > tmp( num2dFaces );
@@ -628,21 +628,21 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
   {
     sizes.push_back( t.size() );
   }
-  for( auto i = 0; i < m_2dFaceTo2dElems.size(); ++i )
+  for( auto i = 0; i < face2dTo2dElems.size(); ++i )
   {
-    m_2dFaceTo2dElems.clearArray( i );
+    face2dTo2dElems.clearArray( i );
   }
-  m_2dFaceTo2dElems.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
+  face2dTo2dElems.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
 
   for( std::size_t i = 0; i < tmp.size(); ++i )
   {
     for( std::size_t j = 0; j < tmp[i].size(); ++j )
     {
-      m_2dFaceTo2dElems.emplaceBack( i, tmp[i][j] );
+      face2dTo2dElems.emplaceBack( i, tmp[i][j] );
     }
   }
 
-  return m_2dFaceTo2dElems;
+  return face2dTo2dElems;
 }
 
 
@@ -726,6 +726,49 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
 }
 
 
+array1d< localIndex > build2dFaceToEdge( std::map< localIndex, localIndex > const & referenceCollocatedEdges )
+{
+  std::set< localIndex > tmp;
+  std::transform( referenceCollocatedEdges.cbegin(), referenceCollocatedEdges.cend(),
+                  std::inserter( tmp, tmp.end() ),
+                  [&]( std::pair< localIndex, localIndex > const & p )
+                  { return p.second; } ); // TODO use std::get
+
+  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( tmp.size() );
+
+  // For the `m_2dFaceToEdge`, we can select any values that we want.
+  // But then we need to be consistent...
+  array1d< localIndex > face2dToEdge;
+  face2dToEdge.reserve( num2dFaces );
+  for( localIndex const & refEdge: tmp )
+  {
+    face2dToEdge.emplace_back( refEdge );
+  }
+  GEOS_ASSERT_EQ( num2dFaces, face2dToEdge.size() );
+
+  return face2dToEdge;
+}
+
+
+/**
+ * @brief Builds the edges to 2d faces mappings by inverting the 2d faces to edges mappings.
+ * @param face2dToEdges The mappings to be inverted.
+ * @return The mapping
+ */
+map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const > const face2dToEdges )
+{
+  map< localIndex, localIndex > edgesToFace2d;
+  localIndex const num2dFaces = face2dToEdges.size();
+
+  for( localIndex i = 0; i < num2dFaces; ++i )
+  {
+    edgesToFace2d[face2dToEdges[i]] = i;
+  }
+
+  return edgesToFace2d;
+}
+
+
 void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager,
                                                  EdgeManager const & edgeManager,
                                                  FaceManager const & faceManager,
@@ -741,33 +784,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const collocatedEdgeBuckets = buildCollocatedEdgeBuckets( referenceCollocatedNodes, nl2g, edgeManager.nodeList() );
   std::map< localIndex, localIndex > const referenceCollocatedEdges = buildReferenceCollocatedEdges( collocatedEdgeBuckets, edgeManager.ghostRank() );
 
+  m_2dFaceToEdge = build2dFaceToEdge( referenceCollocatedEdges );
+  m_edgesTo2dFaces = buildEdgesToFace2d( m_2dFaceToEdge.toViewConst() );
+
   localIndex const num2dElems = this->size();
-
-  std::set< localIndex > tmp;
-  std::transform( referenceCollocatedEdges.cbegin(), referenceCollocatedEdges.cend(),
-                  std::inserter( tmp, tmp.end() ),
-                  [&]( std::pair< localIndex, localIndex > const & p )
-                  { return p.second; } ); // TODO use std::get
-
-  localIndex const num2dFaces = LvArray::integerConversion< localIndex >( tmp.size() );
-
-  // For the `m_2dFaceToEdge`, we can select any values that we want.
-  // But then we need to be consistent...
-  m_2dFaceToEdge.clear();
-  m_2dFaceToEdge.reserve( num2dFaces );
-  for( localIndex const & refEdge: tmp )
-  {
-    m_2dFaceToEdge.emplace_back( refEdge );
-  }
-  GEOS_ASSERT_EQ( num2dFaces, m_2dFaceToEdge.size() );
-
-  // `m_edgesTo2dFaces` is computed by the simple inversion of `m_2dFaceToEdge`
-  m_edgesTo2dFaces.clear();
-  for( localIndex i = 0; i < num2dFaces; ++i )
-  {
-    m_edgesTo2dFaces[m_2dFaceToEdge[i]] = i;
-  }
-
+  localIndex const num2dFaces = m_2dFaceToEdge.size();
   // Mark 2d elements and their connections as "new" so they get considered during the stencil computations.
   // This is mainly due to the dynamic process of the fracture propagation and the legacy unique way to import the fracture
   // by splitting the mesh during the first steps of the simulations.
