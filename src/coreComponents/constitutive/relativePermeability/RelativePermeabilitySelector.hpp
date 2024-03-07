@@ -50,7 +50,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
                                BrooksCoreyBakerRelativePermeability,
 //                               TableRelativePermeability,
 //                               TableRelativePermeabilityHysteresis,
-                               VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenBakerRelativePermeability,
                                BrooksCoreyStone2RelativePermeability,
                                VanGenuchtenBakerRelativePermeability,
                                VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
@@ -64,7 +64,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
                                BrooksCoreyBakerRelativePermeability,
                                BrooksCoreyStone2RelativePermeability,
                                VanGenuchtenBakerRelativePermeability,
-                               VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenStone2RelativePermeability,
 //                               TableRelativePermeability,
 //                               TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );

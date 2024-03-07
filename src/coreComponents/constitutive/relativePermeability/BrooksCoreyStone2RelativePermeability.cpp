@@ -114,46 +114,43 @@ void BrooksCoreyStone2RelativePermeability::postProcessInput()
                         InputError );
 
 
-  for( integer ip = 0; ip < 2; ++ip )
-  {
-    auto const errorMsg = [&]( auto const & attribute )
-    {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
-    };
-    if( m_phaseOrder[PhaseType::WATER] >= 0 )
-    {
-      GEOS_THROW_IF_LT_MSG( m_waterOilRelPermExponent[ip], 0.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermExponentString() ),
-                            InputError );
-      GEOS_THROW_IF_LT_MSG( m_waterOilRelPermMaxValue[ip], 0.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermMaxValueString() ),
-                            InputError );
-      GEOS_THROW_IF_GT_MSG( m_waterOilRelPermMaxValue[ip], 1.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermMaxValueString() ),
-                            InputError );
-    }
+    for (int dir=0; dir<3;++dir) {
+        for (integer ip = 0; ip < 2; ++ip) {
+            auto const errorMsg = [&](auto const &attribute) {
+                return GEOS_FMT("{}: invalid value at {}[{}]", getFullName(), attribute, ip);
+            };
+            if (m_phaseOrder[PhaseType::WATER] >= 0) {
+                GEOS_THROW_IF_LT_MSG(m_waterOilRelPermExponent[dir][ip], 0.0,
+                                     errorMsg(viewKeyStruct::waterOilRelPermExponentString()),
+                                     InputError);
+                GEOS_THROW_IF_LT_MSG(m_waterOilRelPermMaxValue[dir][ip], 0.0,
+                                     errorMsg(viewKeyStruct::waterOilRelPermMaxValueString()),
+                                     InputError);
+                GEOS_THROW_IF_GT_MSG(m_waterOilRelPermMaxValue[dir][ip], 1.0,
+                                     errorMsg(viewKeyStruct::waterOilRelPermMaxValueString()),
+                                     InputError);
+            }
 
-    if( m_phaseOrder[PhaseType::GAS] >= 0 )
-    {
-      GEOS_THROW_IF_LT_MSG( m_gasOilRelPermExponent[ip], 0.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermExponentString() ),
-                            InputError );
-      GEOS_THROW_IF_LT_MSG( m_gasOilRelPermMaxValue[ip], 0.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermMaxValueString() ),
-                            InputError );
-      GEOS_THROW_IF_GT_MSG( m_gasOilRelPermMaxValue[ip], 1.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermMaxValueString() ),
-                            InputError );
-    }
-  }
+            if (m_phaseOrder[PhaseType::GAS] >= 0) {
+                GEOS_THROW_IF_LT_MSG(m_gasOilRelPermExponent[dir][ip], 0.0,
+                                     errorMsg(viewKeyStruct::gasOilRelPermExponentString()),
+                                     InputError);
+                GEOS_THROW_IF_LT_MSG(m_gasOilRelPermMaxValue[dir][ip], 0.0,
+                                     errorMsg(viewKeyStruct::gasOilRelPermMaxValueString()),
+                                     InputError);
+                GEOS_THROW_IF_GT_MSG(m_gasOilRelPermMaxValue[dir][ip], 1.0,
+                                     errorMsg(viewKeyStruct::gasOilRelPermMaxValueString()),
+                                     InputError);
+            }
+        }
 
-  if( m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0 )
-  {
-    real64 const mean = 0.5 * ( m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]
-                                + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
-    m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]     = mean;
-    m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] = mean;
-  }
+        if (m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0) {
+            real64 const mean = 0.5 * (m_gasOilRelPermMaxValue[dir][GasOilPairPhaseType::OIL]
+                                       + m_waterOilRelPermMaxValue[dir][WaterOilPairPhaseType::OIL]);
+            m_gasOilRelPermMaxValue[dir][GasOilPairPhaseType::OIL] = mean;
+            m_waterOilRelPermMaxValue[dir][WaterOilPairPhaseType::OIL] = mean;
+        }
+    }
 }
 
 BrooksCoreyStone2RelativePermeability::KernelWrapper
