@@ -176,16 +176,18 @@ ArrayOfArrays< localIndex > build2dElemTo2dNodes( vtkSmartPointer< vtkDataSet > 
 ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap( ArrayOfArrays< localIndex > const & elem2dTo2dNodes,
                                                                                  ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
 {
+  localIndex const num2dElems = elem2dTo2dNodes.size();
   ArrayOfArrays< array1d< globalIndex > > result;
   // Allocation...
-  result.resize( elem2dTo2dNodes.size() );
-  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
+  result.resize( num2dElems );
+  for( localIndex e2d = 0; e2d < num2dElems; ++e2d )
   {
     result.resizeArray( e2d, elem2dTo2dNodes[e2d].size() );
   }
-  for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
+  for( localIndex e2d = 0; e2d < num2dElems; ++e2d )
   {
-    for( integer ni = 0; ni < elem2dTo2dNodes[e2d].size(); ++ni )
+    auto const numNodes = elem2dTo2dNodes[e2d].size();
+    for( integer ni = 0; ni < numNodes; ++ni )
     {
       auto & dest = result( e2d, ni );
       localIndex const node = elem2dTo2dNodes[e2d][ni];
