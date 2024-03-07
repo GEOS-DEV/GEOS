@@ -182,6 +182,9 @@ jobs:
           fi
         fi
         
+        # manually remove the workspace to avoid issues with the next job when using self-hosted runners
+        rm -rf ${GITHUB_WORKSPACE} 
+
         exit ${EXIT_STATUS}
 
     - name: Upload coverage to Codecov
