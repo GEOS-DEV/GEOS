@@ -152,9 +152,9 @@ smallStrainUpdate( localIndex const k,
 
   // Step 1: call the constitutive model to evaluate the total stress and compute porosity
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
-                                                       m_pressure_n[k],
-                                                       m_pressure[k],
                                                        m_dt,
+                                                       m_pressure[k],
+                                                       m_pressure_n[k],
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,

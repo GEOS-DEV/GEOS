@@ -112,8 +112,6 @@ public:
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
-
-
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
           // get the solid model to know the number of quadrature points and resize the bulk density
@@ -387,6 +385,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
