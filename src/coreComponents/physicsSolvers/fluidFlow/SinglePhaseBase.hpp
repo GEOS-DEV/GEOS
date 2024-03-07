@@ -214,6 +214,9 @@ public:
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+    // cellwise pressure gradient
+    static constexpr char const * pressureGradientString() { return "pressureGradient"; }
   };
 
   /**
@@ -312,6 +315,14 @@ public:
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
+
+  /**
+   * @brief Update the cell-wise pressure gradient
+   */
+  virtual void updatePressureGradient( DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( domain );
+  }
 
   /**
    * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)

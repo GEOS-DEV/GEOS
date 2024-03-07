@@ -359,7 +359,10 @@ public:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->saveSequentialIterationState( domain );
+      if( solver->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+      {
+        solver->saveSequentialIterationState( domain );
+      }
     } );
   }
 

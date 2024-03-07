@@ -120,6 +120,11 @@ public:
                      DomainPartition & domain ) override;
 
   virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
+
+  virtual void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -156,6 +161,8 @@ public:
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,
                              DomainPartition & domain ) override;
+
+  virtual void updatePressureGradient( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces

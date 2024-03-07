@@ -29,6 +29,7 @@ ConstantDiffusion                             node         :ref:`XML_ConstantDif
 ConstantPermeability                          node         :ref:`XML_ConstantPermeability`                          
 Coulomb                                       node         :ref:`XML_Coulomb`                                       
 DamageElasticIsotropic                        node         :ref:`XML_DamageElasticIsotropic`                        
+DamagePermeability                            node         :ref:`XML_DamagePermeability`                            
 DamageSpectralElasticIsotropic                node         :ref:`XML_DamageSpectralElasticIsotropic`                
 DamageVolDevElasticIsotropic                  node         :ref:`XML_DamageVolDevElasticIsotropic`                  
 DeadOilFluid                                  node         :ref:`XML_DeadOilFluid`                                  

@@ -110,7 +110,8 @@ public:
                           arrayView1d< real64 > const inputRhs,
                           real64 const inputDt,
                           string const fieldName,
-                          LocalDissipation localDissipationOption ):
+                          LocalDissipation localDissipationOption,
+                          real64 const inputCurrentTime ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -125,9 +126,10 @@ public:
           inputDt ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_quadDamage( inputConstitutiveType.getDamage() ),
+    m_quadDamage( inputConstitutiveType.getNewDamage() ),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
-    m_localDissipationOption( localDissipationOption )
+    m_localDissipationOption( localDissipationOption ),
+    m_currentTime( inputCurrentTime )
   {}
 
   //***************************************************************************
@@ -203,8 +205,10 @@ public:
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
-    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
+    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy( k );
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
+    real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
+    real64 const currentDamagePressure = m_currentTime * m_constitutiveUpdate.getDamagePressure();
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -229,29 +233,36 @@ public:
       {
         stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
                                              + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
+                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( k, qp_damage ) * N[a]
                                              + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
       }
       else
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
                                              + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
+                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( k, qp_damage ) ) );
 
       }
+
+      /// Add the pressure term
+      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] );
+
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == LocalDissipation::Linear )
         {
           stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
+                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage ) * N[a] * N[b] );
 
         }
         else
         {
           stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
+                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
+
+        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc *
+                                         ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
       }
     }
 
@@ -306,6 +317,8 @@ protected:
 
   PhaseFieldDamageKernelLocalDissipation m_localDissipationOption;
 
+  real64 const m_currentTime;
+
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
@@ -315,7 +328,8 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     arrayView1d< real64 > const,
                                                                     real64 const,
                                                                     string const,
-                                                                    PhaseFieldDamageKernelLocalDissipation >;
+                                                                    PhaseFieldDamageKernelLocalDissipation,
+                                                                    real64 >;
 
 } // namespace geos
 
