@@ -183,7 +183,9 @@ jobs:
         fi
         
         # manually remove the workspace to avoid issues with the next job when using self-hosted runners
-        rm -rf ${GITHUB_WORKSPACE} 
+        if [ -d "${GITHUB_WORKSPACE}" ]; then
+          rm -rf ${GITHUB_WORKSPACE} 
+        fi
 
         exit ${EXIT_STATUS}
 
