@@ -533,7 +533,7 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
-    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();SSER1
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager, false );
     edgeManager.setGeometricalRelations( cellBlockManager, false );
     faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager, false );
