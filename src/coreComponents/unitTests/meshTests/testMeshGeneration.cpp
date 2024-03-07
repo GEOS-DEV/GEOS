@@ -526,12 +526,14 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
   meshManager.generateMeshes( domain );
   for( int order = minOrder; order < maxOrder; order++ )
   {
+    int op2 = pow( order + 1, 2 );
+    int op3 = pow( order + 1, 3 );
     MeshLevel & meshLevel = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(), GEOS_FMT( "TestLevel{}", order ), order );
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     NodeManager & nodeManager = meshLevel.getNodeManager();
     FaceManager & faceManager = meshLevel.getFaceManager();
     EdgeManager & edgeManager = meshLevel.getEdgeManager();
-    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();SSER1
     nodeManager.setGeometricalRelations( cellBlockManager, elemManager, false );
     edgeManager.setGeometricalRelations( cellBlockManager, false );
     faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager, false );
@@ -554,9 +556,9 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
     EXPECT_EQ( numNodes, nodeManager.size() );
 
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & nodeMap = subRegion.nodeList();
-    GEOS_ERROR_IF_NE( nodeMap.size( 1 ), pow( order+1, 3 ) );
+    EXPECT_EQ( nodeMap.size( 1 ), pow( order+1, 3 ) );
     arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList();
-    GEOS_ERROR_IF_NE( edgeToNodeMap.size( 1 ), order+1 );
+    EXPECT_EQ( edgeToNodeMap.size( 1 ), order+1 );
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
     for( localIndex f = 0; f < faceManager.size(); ++f )
     {
