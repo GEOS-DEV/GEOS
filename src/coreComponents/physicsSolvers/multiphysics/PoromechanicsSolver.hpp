@@ -73,7 +73,7 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
-  void initializePostInitialConditionsPreSubGroups()
+  virtual void initializePostInitialConditionsPreSubGroups() override
   {
     Base::initializePostInitialConditionsPreSubGroups();
 
@@ -111,8 +111,6 @@ public:
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
-
-
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
@@ -387,6 +385,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
