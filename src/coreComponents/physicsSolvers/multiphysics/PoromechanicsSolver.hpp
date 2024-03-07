@@ -385,6 +385,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
