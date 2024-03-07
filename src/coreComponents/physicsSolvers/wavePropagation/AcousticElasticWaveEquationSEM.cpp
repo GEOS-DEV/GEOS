@@ -58,6 +58,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       m_interfaceNodesSet.insert( val );
   }
   localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "AcousticElastic solver, {} interface nodes", m_interfaceNodesSet.size() ) );
   GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
@@ -164,39 +165,39 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const idx )
     {
-      localIndex const a = interfaceNodesSet[n];
-      if( elasticFSNodeIndicator[a] == 1 )
+      localIndex const n = interfaceNodesSet[idx];
+      if( elasticFSNodeIndicator[n] == 1 )
         return;
 
-      real32 const aux = -p_n[a] / elasticMass[a];
-      real32 const localIncrementx = dt2 * atoex[a] * aux;
-      real32 const localIncrementy = dt2 * atoey[a] * aux;
-      real32 const localIncrementz = dt2 * atoez[a] * aux;
+      real32 const aux = -p_n[n] / elasticMass[n];
+      real32 const localIncrementx = dt2 * atoex[n] * aux;
+      real32 const localIncrementy = dt2 * atoey[n] * aux;
+      real32 const localIncrementz = dt2 * atoez[n] * aux;
 
-      RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[n], localIncrementx );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[n], localIncrementy );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[n], localIncrementz );
     } );
 
     elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
     acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const idx )
     {
-      localIndex const a = interfaceNodesSet[n];
-      if( acousticFSNodeIndicator[a] == 1 )
+      localIndex const n = interfaceNodesSet[idx];
+      if( acousticFSNodeIndicator[n] == 1 )
         return;
 
       real32 const localIncrement = (
-        atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-        atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-        atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / acousticMass[a];
+        atoex[n] * ( ux_np1[n] - 2.0 * ux_n[n] + ux_nm1[n] ) +
+        atoey[n] * ( uy_np1[n] - 2.0 * uy_n[n] + uy_nm1[n] ) +
+        atoez[n] * ( uz_np1[n] - 2.0 * uz_n[n] + uz_nm1[n] )
+        ) / acousticMass[n];
 
-      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[n], localIncrement );
     } );
 
     acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
