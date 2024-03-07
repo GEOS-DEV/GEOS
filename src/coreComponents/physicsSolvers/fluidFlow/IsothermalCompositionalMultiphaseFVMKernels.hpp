@@ -65,12 +65,13 @@ enum class FaceBasedAssemblyKernelFlags
   TotalMassEquation = 1 << 1, // 2
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
-  /// Add more flags like that if needed:
+  /// Flag indicating whether IHU is used or not
   IHU = 1 << 3 // 8
-        // Flag5 = 1 << 4, // 16
-        // Flag6 = 1 << 5, // 32
-        // Flag7 = 1 << 6, // 64
-        // Flag8 = 1 << 7  //128
+  /// Add more flags like that if needed:
+  // Flag5 = 1 << 4, // 16
+  // Flag6 = 1 << 5, // 32
+  // Flag7 = 1 << 6, // 64
+  // Flag8 = 1 << 7  //128
 };
 
 /******************************** PhaseMobilityKernel ********************************/

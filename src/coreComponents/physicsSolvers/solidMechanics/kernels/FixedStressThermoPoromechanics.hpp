@@ -188,19 +188,19 @@ protected:
   /// The gravity vector.
   real64 const m_gravityVector[3];
 
-  /// The rank global bulk densities
+  /// The rank global bulk density
   arrayView2d< real64 const > const m_bulkDensity;
 
   /// The rank-global fluid pressure arrays.
-  arrayView1d< real64 const > const m_pressure_n;
   arrayView1d< real64 const > const m_pressure;
+  arrayView1d< real64 const > const m_pressure_n;
 
   /// The rank-global initial temperature array
   arrayView1d< real64 const > const m_initialTemperature;
 
   /// The rank-global temperature arrays.
-  arrayView1d< real64 const > const m_temperature_n;
   arrayView1d< real64 const > const m_temperature;
+  arrayView1d< real64 const > const m_temperature_n;
 
   /**
    * @brief Get a parameter representative of the stiffness, used as physical scaling for the
