@@ -562,7 +562,6 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
     for( localIndex f = 0; f < faceManager.size(); ++f )
     {
-      std::cout << f << " "  << faceToNodeMap( f, 1 ) << std::endl;
       GEOS_ERROR_IF_NE( faceToNodeMap.sizeOfArray( f ), pow( order+1, 2 ) );
     }
   }
