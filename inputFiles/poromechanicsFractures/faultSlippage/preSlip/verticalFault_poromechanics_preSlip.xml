@@ -6,8 +6,8 @@
       name="poroFractureSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Fault}" 
       initialDt="1e-3"
-      LagrangianContactSolverName="fractureMechSolver"
-      poromechanicsSolverName="poroSolver"
+      flowSolverName="singlePhaseFlowSolver"
+      solidSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
@@ -15,34 +15,21 @@
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
+        solverType="direct"
         directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
-    <SinglePhasePoromechanics 
-      name="poroSolver" 
-      solidSolverName="mechanicsSolver"
-      flowSolverName="singlePhaseFlowSolver"
-      logLevel="1"
-      targetRegions="{ Reservoir, Overburden, Underburden, Fault}" >
-    </SinglePhasePoromechanics>
-
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
-      solidSolverName="mechanicsSolver"
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ Reservoir, Overburden, Underburden, Fault}" 
-      fractureRegionName="Fault"
       discretization="FE1"
-      contactRelationName="fractureContact"/>  
-
-    <SolidMechanicsLagrangianSSLE 
-      name="mechanicsSolver" 
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Reservoir, Overburden, Underburden }" >
-    </SolidMechanicsLagrangianSSLE>
+      timeIntegrationOption="QuasiStatic">  
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SolidMechanicsLagrangeContact>  
 
     <SinglePhaseFVM 
       name="singlePhaseFlowSolver"
