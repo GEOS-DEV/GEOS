@@ -43,6 +43,11 @@ WellSolverBase::WellSolverBase( string const & name,
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Write rates into a CSV file" );
 }
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -73,7 +78,7 @@ void WellSolverBase::postProcessInput()
   SolverBase::postProcessInput();
 
   // create dir for rates output
-  if( getLogLevel() > 0 )
+  if( m_writeCSV > 0 )
   {
     if( MpiWrapper::commRank() == 0 )
     {
@@ -191,6 +196,7 @@ void WellSolverBase::assembleSystem( real64 const time,
 
 void WellSolverBase::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
