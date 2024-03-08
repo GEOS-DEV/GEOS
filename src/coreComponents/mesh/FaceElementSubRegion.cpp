@@ -594,20 +594,20 @@ SortedArray< localIndex > makeSortedArrayIota( localIndex newSize, localIndex va
 
 /**
  * @brief Builds the 2d face to 2d elements mapping.
- * @param num2dFaces The number of 2d faces.
- * @param num2dElems The number of 2d elements.
  * @param elem2dToEdges The 2d element (geometrical faces in 3d) to edges mapping.
  * @param edgesTo2dFaces The edges to 2d faces (geometrical edges in 3d) mapping.
  * @param referenceCollocatedEdges The mapping that, for a given edge index, returns the collocated edge with lowest index.
  * @return The computed mapping.
  */
-ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
-                                                        localIndex num2dElems,
-                                                        ArrayOfArraysView< localIndex const > const elem2dToEdges,
+ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< localIndex const > const elem2dToEdges,
                                                         map< localIndex, localIndex > const & edgesTo2dFaces,
                                                         std::map< geos::localIndex, geos::localIndex > const & referenceCollocatedEdges )
 {
   ArrayOfArrays< localIndex > face2dTo2dElems;
+
+  auto const num2dElems = elem2dToEdges.size();
+  auto const num2dFaces = edgesTo2dFaces.size();
+
   // `tmp` contains the 2d face to 2d elements mappings as a `std` container.
   // Eventually, it's copied into an `LvArray` container.
   std::vector< std::vector< localIndex > > tmp( num2dFaces );
@@ -628,10 +628,7 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( std::size_t num2dFaces,
   {
     sizes.push_back( t.size() );
   }
-  for( auto i = 0; i < face2dTo2dElems.size(); ++i )
-  {
-    face2dTo2dElems.clearArray( i );
-  }
+
   face2dTo2dElems.resizeFromCapacities< serialPolicy >( sizes.size(), sizes.data() );
 
   for( std::size_t i = 0; i < tmp.size(); ++i )
@@ -803,10 +800,23 @@ map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const 
     edgesToFace2d[face2dToEdges[i]] = i;
   }
 
+  GEOS_ASSERT_EQ_MSG( LvArray::integerConversion< localIndex >( edgesToFace2d.size() ), num2dFaces, "Internal error. The mappings `edgesToFace2d` and `face2dToEdges` should have the same size" );
+
   return edgesToFace2d;
 }
 
 
+/**
+ * @brief Uses the two input mappings to reorder the @p elem2dToNodes mapping.
+ * @param[in] elem2dToFaces The 2d element to faces mapping.
+ * @param[in] facesToNodes The face to nodes mapping.
+ * @param[out] elem2dToNodes The 2d element to nodes that will be overwritten.
+ * @details The @p elem2dToNodes a priori does not respect any specific nodes order.
+ * But the vtk output await the first part of the nodes to make a first face (in the correct order),
+ * and the second to make a second face. But nothing imposes this in our design.
+ * Even if we should have a more explicit design,
+ * the current function resets this implicit information in our mappings.
+ */
 void fixNodesOrder( ArrayOfArraysView< localIndex const > const elem2dToFaces,
                     ArrayOfArraysView< localIndex const > const facesToNodes,
                     ArrayOfArrays< localIndex > & elem2dToNodes )
@@ -834,6 +844,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                  ElementRegionManager const & elemManager )
 {
   arrayView1d< globalIndex const > const nl2g = nodeManager.localToGlobalMap();
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   // First let's create the reference mappings for both nodes and edges.
   std::map< globalIndex, globalIndex > const referenceCollocatedNodes = buildReferenceCollocatedNodes( m_2dElemToCollocatedNodesBuckets );
@@ -880,7 +891,6 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                                                                          CellElementSubRegion const & subRegion )
   {
     auto const & elemToFaces = subRegion.faceList().base();
-    auto const & faceToNodes = faceManager.nodeList();
     for( localIndex ei = 0; ei < elemToFaces.size( 0 ); ++ei )
     {
       for( auto const & face: elemToFaces[ei] )
@@ -903,10 +913,11 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
         }
         // We still double-check that all the nodes of the face were found,
         // even if there's no chance for this entry to successfully match any request.
-        if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( faceToNodes[face].size() ) )
+        auto const & nodes = faceToNodes[face];
+        if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( nodes.size() ) )
         {
-          std::vector< localIndex > const nodes( faceToNodes[face].begin(), faceToNodes[face].end() );
-          faceRefNodesToElems[nodesOfFace].insert( ElemPath{ er, esr, ei, face, nodes } );
+          std::vector< localIndex > const ns( nodes.begin(), nodes.end() );
+          faceRefNodesToElems[nodesOfFace].insert( ElemPath{ er, esr, ei, face, ns } );
         }
       }
     }
@@ -995,7 +1006,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
                             collocatedEdgeBuckets,
                             m_toEdgesRelation );
 
-  m_2dFaceTo2dElems = build2dFaceTo2dElems( num2dFaces, num2dElems, m_toEdgesRelation.toViewConst(), m_edgesTo2dFaces, referenceCollocatedEdges );
+  m_2dFaceTo2dElems = build2dFaceTo2dElems( m_toEdgesRelation.toViewConst(), m_edgesTo2dFaces, referenceCollocatedEdges );
 
   fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 //  fixNodesOrder( m_toFacesRelation.toViewConst(), faceManager.nodeList().toViewConst(), m_toNodesRelation );
