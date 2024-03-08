@@ -32,7 +32,7 @@ CommandLineOptions g_commandLineOptions;
 
 
 /**
- * @brief this struct is used to provide the input data of each fluid tests
+ * @brief this struct is used to provide the input data of each flow tests
  */
 struct TestInputs
 {
@@ -186,7 +186,7 @@ private:
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
 
 
-class FluidStatisticsTest : public ::testing::Test
+class FlowStatisticsTest : public ::testing::Test
 {
 public:
 
@@ -584,7 +584,7 @@ TestSet getTestSet()
   return TestSet( testInputs );
 }
 
-TEST_F( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
+TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
 {
   TestSet const testSet = getTestSet();
 
@@ -874,7 +874,7 @@ TestSet getTestSet()
 }
 
 
-TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatisticsMass )
+TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 {
   TestSet const testSet = getTestSet();
   writeTableFiles( testSet.inputs.tableFiles );
@@ -1152,7 +1152,7 @@ TestSet getTestSet()
 }
 
 
-TEST_F( FluidStatisticsTest, checkMultiPhaseFluxStatisticsMol )
+TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 {
   TestSet const testSet = getTestSet();
   writeTableFiles( testSet.inputs.tableFiles );
