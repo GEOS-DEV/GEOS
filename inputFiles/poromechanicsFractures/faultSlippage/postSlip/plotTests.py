@@ -42,7 +42,7 @@ def main():
     dnlist = []
     dslist = []
     for i in range(0, len(zcord)):
-        if abs(zcord[i] / 250 - 1.) < 0.01:            
+        if abs(zcord[i] / 12.5 - 1.) < 0.01:            
             depth.append(ycord[i])
             tnlist.append(normalTraction[i] / 1.0e6)
             tslist.append(shearTraction[i] / 1.0e6)
