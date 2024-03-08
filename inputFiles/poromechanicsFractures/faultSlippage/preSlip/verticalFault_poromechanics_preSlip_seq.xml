@@ -10,8 +10,11 @@
       solidSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        maxTimeStepCuts="3"
-        newtonTol="1.0e0"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        newtonTol="1e0"
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
@@ -41,7 +44,6 @@
         newtonMaxIter="8"
         allowNonConverged="1"/>
       <LinearSolverParameters
-        solverType="direct"
         directParallel="0"/> 
     </SinglePhaseFVM>
 
@@ -157,7 +159,7 @@
 
     <Coulomb
       name="fractureContact"
-      cohesion="0.0e6"
+      cohesion="40.0e6"
       frictionCoefficient="0.01"
       apertureTableName="apertureTable"/>
 
@@ -239,15 +241,15 @@
       scale="35.0e6"/>
 
     <FieldSpecification
-      name="initialReservoirPressure"
+      name="reservoirPressure"
       initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir"
       fieldName="pressure"
-      scale="35.0e6"/>  
+      scale="10.0e6"/>  
 
     <FieldSpecification 
-      name="reservoirStress1"
+      name="initialStress1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir"
@@ -256,7 +258,7 @@
       scale="-28.499545e6"/>
       
     <FieldSpecification 
-      name="reservoirStress2"
+      name="initialStress2"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir"
@@ -265,7 +267,7 @@
       scale="-38.499545e6"/>
       
     <FieldSpecification 
-      name="reservoirStress3"
+      name="initialStress3"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir"
@@ -274,7 +276,7 @@
       scale="-28.499545e6"/>  
 
     <FieldSpecification 
-      name="overburdenStress1"
+      name="OverburdenStress1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Overburden"
@@ -283,7 +285,7 @@
       scale="-28.499545e6"/>
       
     <FieldSpecification 
-      name="overburdenStress2"
+      name="OverburdenStress2"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Overburden"
@@ -292,7 +294,7 @@
       scale="-38.499545e6"/>
       
     <FieldSpecification 
-      name="overburdenStress3"
+      name="OverburdenStress3"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Overburden"
@@ -301,7 +303,7 @@
       scale="-28.499545e6"/>  
 
    <FieldSpecification 
-      name="underburdenStress1"
+      name="UnderburdenStress1"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Underburden"
@@ -310,7 +312,7 @@
       scale="-28.499545e6"/>
       
     <FieldSpecification 
-      name="underburdenStress2"
+      name="UnderburdenStress2"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Underburden"
@@ -319,7 +321,7 @@
       scale="-38.499545e6"/>
       
     <FieldSpecification 
-      name="underburdenStress3"
+      name="UnderburdenStress3"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Underburden"
@@ -333,14 +335,6 @@
       tractionType="normal"
       scale="-70.0e6"      
       setNames="{ ypos }"/>
-
-    <FieldSpecification
-      name="reservoirPressure"
-      setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
-      fieldName="pressure"
-      scale="10.0e6"
-      functionName="timeFunction"/>  
   </FieldSpecifications>
 
   <Functions>
@@ -348,12 +342,6 @@
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-3, 1.0e-3 }"/>
-
-    <TableFunction
-      name="timeFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 100.0 }"
-      values="{ 3.5, 1.0 }"/>
   </Functions>
 
   <Tasks>
@@ -397,7 +385,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10.0"
+      forceDt="100"
       target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent

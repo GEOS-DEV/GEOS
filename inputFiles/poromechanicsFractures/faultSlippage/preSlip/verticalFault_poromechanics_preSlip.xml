@@ -59,10 +59,10 @@
     elementTypes="{ C3D8 }"
     xCoords="{ -2250, 0, 2250 }"
     yCoords="{ -2250, -150, -75, 75, 150, 2250 }"
-    zCoords="{ 0, 500 }"
-    nx="{ 60, 60 }"
+    zCoords="{ 0, 50 }"
+    nx="{ 40, 40 }"
     ny="{ 200, 20, 40, 20, 200 }"
-    nz="{ 1 }"
+    nz="{ 2 }"
     cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8, cb9, cb10 }"/>
   </Mesh> 
 
@@ -92,16 +92,6 @@
     name="fault"
     xMin="{ -0.01,  -2250.01,   -0.01 }"
     xMax="{ 0.01,    2250.01,   500.01 }"/>
-
-    <Box
-    name="zposFace"
-    xMin="{ -2250.01,  -2250.01,     499.99 }"
-    xMax="{ 2250.01,   2250.01,   500.01 }"/>
-
-    <Box
-    name="znegFace"
-    xMin="{ -2250.01,  -2250.01,   -0.01 }"
-    xMax="{ 2250.01,   2250.01,   0.01 }"/>
   </Geometry>
 
   <NumericalMethods>
@@ -229,7 +219,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zposFace, znegFace}"/>
+      setNames="{zpos, zneg}"/>
     
     <FieldSpecification
       name="underburdenPressure"

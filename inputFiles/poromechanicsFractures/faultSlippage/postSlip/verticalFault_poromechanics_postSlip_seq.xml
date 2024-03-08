@@ -10,8 +10,11 @@
       solidSolverName="fractureMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
         maxTimeStepCuts="3"
-        newtonTol="1.0e0"
+        newtonTol="1e0"
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
@@ -26,6 +29,9 @@
       targetRegions="{ Reservoir, Overburden, Underburden, Fault}" 
       discretization="FE1"
       timeIntegrationOption="QuasiStatic">  
+      <NonlinearSolverParameters
+        newtonTol="1e0"
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"/>
@@ -41,7 +47,6 @@
         newtonMaxIter="8"
         allowNonConverged="1"/>
       <LinearSolverParameters
-        solverType="direct"
         directParallel="0"/> 
     </SinglePhaseFVM>
 
@@ -397,7 +402,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10.0"
+      forceDt="10"
       target="/Solvers/poroFractureSolver"/>
 
     <PeriodicEvent
