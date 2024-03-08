@@ -805,10 +805,10 @@ TestSet getTestSet()
 
     <TableFunction name="initGasCompFracTable"
                    coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{        0.0,  0.0,  0.0,  0.0 }" />
+                   values="{      0.001,  0.001,  0.001,  0.001 }" />
     <TableFunction name="initWaterCompFracTable"
                    coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{        1.0,  1.0,  1.0,  1.0 }" />
+                   values="{      0.999,  0.999,  0.999,  0.999 }" />
     <TableFunction name="initTempTable"
                    coordinates="{ -10.0,   -7.0,   -3.0,   -1.0 }"
                    values="{     395.15, 389.15, 382.15, 378.15 }" />
@@ -1080,10 +1080,10 @@ TestSet getTestSet()
 
     <TableFunction name="initGasCompFracTable"
                    coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{        0.0,  0.0,  0.0,  0.0 }" />
+                   values="{      0.001,  0.001,  0.001,  0.001 }" />
     <TableFunction name="initWaterCompFracTable"
                    coordinates="{ -10.0, -7.0, -3.0, -1.0 }"
-                   values="{        1.0,  1.0,  1.0,  1.0 }" />
+                   values="{      0.999,  0.999,  0.999,  0.999 }" />
     <TableFunction name="initTempTable"
                    coordinates="{ -10.0,   -7.0,   -3.0,   -1.0 }"
                    values="{     395.15, 389.15, 382.15, 378.15 }" />
