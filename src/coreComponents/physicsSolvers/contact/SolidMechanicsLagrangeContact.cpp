@@ -866,7 +866,7 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
   }
 
   faceDiameter = computationalGeometry::computeDiameter< 2 >( faceRotatedVertices,
-                                         numFaceVertices );
+                                                              numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;
   // - rotate the face centroid as done for the vertices.
   real64 faceRotatedCentroid[2];
