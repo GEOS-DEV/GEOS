@@ -1188,16 +1188,16 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
       array1d< localIndex > const elemToNodeMapWork( numNodesPerCell );
-      for( localIndex iter_node=0; iter_node<numVerticesPerCell; iter_node++ )
+      for( localIndex iter_node=0; iter_node < numVerticesPerCell; iter_node++ )
       {
         elemVertID[ iter_node ] = elemsToNodesSource[ iter_elem ][ iter_node ];
         elemToNodeMapWork[ iter_node ] = elemVertID[ iter_node ];
         nodeIDs[ createNodeKey( elemVertID[ iter_node ] ) ] = iter_node;
       }
 
-      for( localIndex iter_edge=0; iter_edge<numEdgesPerCell; iter_edge++ )
+      for( localIndex iter_edge=0; iter_edge < numEdgesPerCell; iter_edge++ )
       {
-        for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
+        for( localIndex iter_node=0; iter_node < numInternalNodesPerEdge; iter_node++ )
         {
           localIndex nodeIdxInMap = numVerticesPerCell + iter_edge * numInternalNodesPerEdge + iter_node;
           localIndex edge = elemsToEdges[iter_elem][iter_edge];
@@ -1205,9 +1205,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
           nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ] = nodeIdxInMap;
         }
       }
-      for( localIndex iter_face=0; iter_face<numFacesPerCell; iter_face++ )
+      for( localIndex iter_face=0; iter_face < numFacesPerCell; iter_face++ )
       {
-        for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
+        for( localIndex iter_node=0; iter_node < numInternalNodesPerFace; iter_node++ )
         {
           localIndex q1 = iter_node % numInternalNodesPerEdge;
           localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
@@ -1218,7 +1218,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   faceToNodeMapNew[ face ][ numNodesPerFace - numNodesPerEdge ], faceToNodeMapNew[ face ][ numNodesPerFace- 1 ], q1 + 1, q2 + 1, order ) ] = nodeIdxInMap;
         }
       }
-      for( localIndex iter_node=0; iter_node<numInternalNodesPerCell; iter_node++ )
+      for( localIndex iter_node=0; iter_node < numInternalNodesPerCell; iter_node++ )
       {
         localIndex q1 = iter_node % numInternalNodesPerEdge;
         localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
@@ -1228,7 +1228,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
 
         localIndex nodeLocalID = localNodeOffset + iter_elem * numInternalNodesPerCell + iter_node;
-        elemsToNodesNew[ iter_elem ][ (q3 + 1)*numNodesPerFace + (q2+1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
+        elemsToNodesNew[ iter_elem ][ (q3 + 1) * numNodesPerFace + (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
         nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + iter_node;
         trilinearInterp( alpha, beta, gamma, refPosSrc, elemVertID, refPosNew, nodeLocalID );
 
@@ -1246,6 +1246,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         }
       }
     } );
+    localNodeOffset += numCellElements;
   } );
 }
 
