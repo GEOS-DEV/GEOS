@@ -41,6 +41,6 @@
   </Mesh>
 
   <Included>
-    <File name="./acouselas3D_Q2_layers_base.xml"/>
+    <File name="./acouselas3D_layers_base.xml"/>
   </Included>
 </Problem>
