@@ -66,37 +66,37 @@ public:
   {
 public:
 
-    KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
+    KernelWrapper( arrayView2d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
                    real64 const & waterOilPhaseMaxVolumeFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    ThreePhaseInterpolator const & threePhaseInterpolator,
-                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac );
+                   arrayView4d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                   arrayView5d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                   arrayView3d< real64, relperm::USD_PHASE > const & phaseTrappedVolFrac );
 
 
     GEOS_HOST_DEVICE
     void computeTwoPhase( integer const ipWetting,
                           integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                          arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
+                          arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                          arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOS_HOST_DEVICE
     void computeThreePhase( integer const ipWetting,
                             integer const ipInter,
                             integer const ipNonWetting,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
+                            arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                            arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOS_HOST_DEVICE
     void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
-                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                  arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
+                  arraySlice1d< real64, relperm::USD_PHASE - 2 > const & phaseTrappedVolFrac,
+                  arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                  arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOS_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -114,7 +114,7 @@ private:
     ///  1- intermediate phase (wetting-intermediate data)
     ///  2- non-wetting-phase
     ///  3- intermediate phase (non-wetting-intermediate data)
-    arrayView1d< TableFunction::KernelWrapper const > m_relPermKernelWrappers;
+    arrayView2d< TableFunction::KernelWrapper const > m_relPermKernelWrappers;
 
     /// Minimum volume fraction for each phase (deduced from the table)
     arrayView1d< real64 const > m_phaseMinVolumeFraction;
@@ -155,13 +155,13 @@ private:
   void createAllTableKernelWrappers();
 
   /// Relative permeability table names (one for each phase in the wetting-non-wetting pair)
-  array1d< string > m_wettingNonWettingRelPermTableNames;
+  array2d< string > m_wettingNonWettingRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the wetting-intermediate pair)
-  array1d< string > m_wettingIntermediateRelPermTableNames;
+  array2d< string > m_wettingIntermediateRelPermTableNames;
 
   /// Relative permeability table names (one for each phase in the non-wetting-intermediate pair)
-  array1d< string > m_nonWettingIntermediateRelPermTableNames;
+  array2d< string > m_nonWettingIntermediateRelPermTableNames;
 
   /// Kernel wrappers for relative permeabilities in the following order:
   /// Two-phase flow:
@@ -172,7 +172,7 @@ private:
   ///  1- intermediate phase (wetting-intermediate data)
   ///  2- non-wetting-phase
   ///  3- intermediate phase (non-wetting-intermediate data)
-  array1d< TableFunction::KernelWrapper > m_relPermKernelWrappers;
+  array2d< TableFunction::KernelWrapper > m_relPermKernelWrappers;
 
   /// Min phase volume fractions (deduced from the tables). With Baker, only the water phase entry is used
   array1d< real64 > m_phaseMinVolumeFraction;
@@ -189,20 +189,21 @@ TableRelativePermeability::KernelWrapper::
   computeTwoPhase( integer const ipWetting,
                    integer const ipNonWetting,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                   arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                   arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+                   arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                   arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   using TPT = TableRelativePermeability::TwoPhasePairPhaseType;
+    for (int dir=0; dir<3; ++dir) {
+        // water rel perm
+        phaseRelPerm[ipWetting][dir] =
+                m_relPermKernelWrappers[dir][TPT::WETTING].compute(&(phaseVolFraction)[ipWetting],
+                                                                   &(dPhaseRelPerm_dPhaseVolFrac)[ipWetting][ipWetting][dir]);
 
-  // water rel perm
-  phaseRelPerm[ipWetting] =
-    m_relPermKernelWrappers[TPT::WETTING].compute( &(phaseVolFraction)[ipWetting],
-                                                   &(dPhaseRelPerm_dPhaseVolFrac)[ipWetting][ipWetting] );
-
-  // oil rel perm
-  phaseRelPerm[ipNonWetting] =
-    m_relPermKernelWrappers[TPT::NONWETTING].compute( &(phaseVolFraction)[ipNonWetting],
-                                                      &(dPhaseRelPerm_dPhaseVolFrac)[ipNonWetting][ipNonWetting] );
+        // oil rel perm
+        phaseRelPerm[ipNonWetting][dir] =
+                m_relPermKernelWrappers[dir][TPT::NONWETTING].compute(&(phaseVolFraction)[ipNonWetting],
+                                                                      &(dPhaseRelPerm_dPhaseVolFrac)[ipNonWetting][ipNonWetting][dir]);
+    }
 
 }
 
@@ -215,76 +216,75 @@ TableRelativePermeability::KernelWrapper::
                      integer const ipInter,
                      integer const ipNonWetting,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                     arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                     arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+                     arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                     arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  real64 interRelPerm_wi = 0; // oil rel perm using two-phase gas-oil data
-  real64 dInterRelPerm_wi_dInterVolFrac = 0; // derivative w.r.t to So
-  real64 interRelPerm_nwi = 0; // oil rel perm using two-phase gas-oil data
-  real64 dInterRelPerm_nwi_dInterVolFrac = 0; // derivative w.r.t to So
-  using TPT = TableRelativePermeability::ThreePhasePairPhaseType;
+    for (int dir=0; dir<3; ++dir) {
+        real64 interRelPerm_wi = 0; // oil rel perm using two-phase gas-oil data
+        real64 dInterRelPerm_wi_dInterVolFrac = 0; // derivative w.r.t to So
+        real64 interRelPerm_nwi = 0; // oil rel perm using two-phase gas-oil data
+        real64 dInterRelPerm_nwi_dInterVolFrac = 0; // derivative w.r.t to So
+        using TPT = TableRelativePermeability::ThreePhasePairPhaseType;
 
-  // 1) Wetting and intermediate phase relative permeabilities using two-phase wetting-intermediate data
+        // 1) Wetting and intermediate phase relative permeabilities using two-phase wetting-intermediate data
 
-  // wetting rel perm
-  phaseRelPerm[ipWetting] =
-    m_relPermKernelWrappers[TPT::WETTING].compute( &(phaseVolFraction)[ipWetting],
-                                                   &(dPhaseRelPerm_dPhaseVolFrac)[ipWetting][ipWetting] );
+        // wetting rel perm
+        phaseRelPerm[ipWetting][dir] =
+                m_relPermKernelWrappers[dir][TPT::WETTING].compute(&(phaseVolFraction)[ipWetting],
+                                                                   &(dPhaseRelPerm_dPhaseVolFrac)[ipWetting][ipWetting][dir]);
 
-  // intermediate rel perm
-  interRelPerm_wi =
-    m_relPermKernelWrappers[TPT::INTERMEDIATE_WETTING].compute( &(phaseVolFraction)[ipInter],
-                                                                &dInterRelPerm_wi_dInterVolFrac );
+        // intermediate rel perm
+        interRelPerm_wi =
+                m_relPermKernelWrappers[dir][TPT::INTERMEDIATE_WETTING].compute(&(phaseVolFraction)[ipInter],
+                                                                           &dInterRelPerm_wi_dInterVolFrac);
 
 
-  // 2) Non-wetting and intermediate phase relative permeabilities using two-phase non-wetting-intermediate data
+        // 2) Non-wetting and intermediate phase relative permeabilities using two-phase non-wetting-intermediate data
 
-  // gas rel perm
-  phaseRelPerm[ipNonWetting] =
-    m_relPermKernelWrappers[TPT::NONWETTING].compute( &(phaseVolFraction)[ipNonWetting],
-                                                      &(dPhaseRelPerm_dPhaseVolFrac)[ipNonWetting][ipNonWetting] );
+        // gas rel perm
+        phaseRelPerm[ipNonWetting][dir] =
+                m_relPermKernelWrappers[dir][TPT::NONWETTING].compute(&(phaseVolFraction)[ipNonWetting],
+                                                                 &(dPhaseRelPerm_dPhaseVolFrac)[ipNonWetting][ipNonWetting][dir]);
 
-  // oil rel perm
-  interRelPerm_nwi =
-    m_relPermKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &(phaseVolFraction)[ipInter],
-                                                                   &dInterRelPerm_nwi_dInterVolFrac );
+        // oil rel perm
+        interRelPerm_nwi =
+                m_relPermKernelWrappers[dir][TPT::INTERMEDIATE_NONWETTING].compute(&(phaseVolFraction)[ipInter],
+                                                                              &dInterRelPerm_nwi_dInterVolFrac);
 
-  // 3) Compute the "three-phase" oil relperm
+        // 3) Compute the "three-phase" oil relperm
 
-  // use saturation-weighted interpolation
-  real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
+        // use saturation-weighted interpolation
+        real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
 
-  if( m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
-  {
-    relpermInterpolators::Baker::compute( shiftedWettingVolFrac,
-                                          phaseVolFraction[ipNonWetting],
-                                          m_phaseOrder,
-                                          interRelPerm_wi,
-                                          dInterRelPerm_wi_dInterVolFrac,
-                                          interRelPerm_nwi,
-                                          dInterRelPerm_nwi_dInterVolFrac,
-                                          phaseRelPerm[ipInter],
-                                          dPhaseRelPerm_dPhaseVolFrac[ipInter] );
+        if (m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER) {
+            relpermInterpolators::Baker::compute(shiftedWettingVolFrac,
+                                                 phaseVolFraction[ipNonWetting],
+                                                 m_phaseOrder,
+                                                 interRelPerm_wi,
+                                                 dInterRelPerm_wi_dInterVolFrac,
+                                                 interRelPerm_nwi,
+                                                 dInterRelPerm_nwi_dInterVolFrac,
+                                                 phaseRelPerm[ipInter][dir],
+                                                 dPhaseRelPerm_dPhaseVolFrac[ipInter][dir]);
 
-  }
-  else// if( m_threePhaseInterpolator == ThreePhaseInterpolator::STONEII )
-  {
-    relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
-                                           phaseVolFraction[ipNonWetting],
-                                           m_phaseOrder,
-                                           m_waterOilRelPermMaxValue,
-                                           interRelPerm_wi,
-                                           dInterRelPerm_wi_dInterVolFrac,
-                                           interRelPerm_nwi,
-                                           dInterRelPerm_nwi_dInterVolFrac,
-                                           phaseRelPerm[ipWetting],
-                                           dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting],
-                                           phaseRelPerm[ipNonWetting],
-                                           dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting],
-                                           phaseRelPerm[ipInter],
-                                           dPhaseRelPerm_dPhaseVolFrac[ipInter] );
-  }
-
+        } else// if( m_threePhaseInterpolator == ThreePhaseInterpolator::STONEII )
+        {
+            relpermInterpolators::Stone2::compute(shiftedWettingVolFrac,
+                                                  phaseVolFraction[ipNonWetting],
+                                                  m_phaseOrder,
+                                                  m_waterOilRelPermMaxValue,
+                                                  interRelPerm_wi,
+                                                  dInterRelPerm_wi_dInterVolFrac,
+                                                  interRelPerm_nwi,
+                                                  dInterRelPerm_nwi_dInterVolFrac,
+                                                  phaseRelPerm[ipWetting][dir],
+                                                  dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting][dir],
+                                                  phaseRelPerm[ipNonWetting][dir],
+                                                  dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting][dir],
+                                                  phaseRelPerm[ipInter][dir],
+                                                  dPhaseRelPerm_dPhaseVolFrac[ipInter][dir]);
+        }
+    }
 
 
 }
@@ -294,9 +294,9 @@ GEOS_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
-           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+           arraySlice1d< real64, relperm::USD_PHASE - 2 > const & phaseTrappedVolFrac,
+           arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 

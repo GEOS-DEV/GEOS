@@ -110,8 +110,8 @@ set( constitutive_headers
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
-#     relativePermeability/TableRelativePermeability.hpp
-#     relativePermeability/TableRelativePermeabilityHelpers.hpp
+     relativePermeability/TableRelativePermeability.hpp
+     relativePermeability/TableRelativePermeabilityHelpers.hpp
 #     relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.hpp
@@ -243,8 +243,8 @@ set( constitutive_sources
         relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
-#     relativePermeability/TableRelativePermeability.cpp
-#     relativePermeability/TableRelativePermeabilityHelpers.cpp
+     relativePermeability/TableRelativePermeability.cpp
+     relativePermeability/TableRelativePermeabilityHelpers.cpp
 #     relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
 #     relativePermeability/RelpermDriver.cpp

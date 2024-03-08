@@ -219,13 +219,15 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
     { "string", Regex( strERegex, strEDesc ) },
     { "path", Regex( pathERegex, pathEDesc ) },
     { "string_array", constructArrayRegex( strRegex, strDesc, 1 ) },
+//    { "string_array2d", constructArrayRegex( strRegex, strDesc, 2 ) },
     { "path_array", constructArrayRegex( pathRegex, pathDesc, 1 ) },
 
     { string( CustomTypes::mapPair ), Regex( strERegex, strEDesc ) },
     { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
     { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
     { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
-    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
+    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) },
+    { string( CustomTypes::groupOfGroupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 2 ) }
   };
   return regexMap;
 }
