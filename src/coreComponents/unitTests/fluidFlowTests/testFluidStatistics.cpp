@@ -409,8 +409,7 @@ TestSet getTestSet()
                     discretization="singlePhaseTPFA"
                     targetRegions="{ reservoir }" >
 
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="40"
+      <NonlinearSolverParameters newtonMaxIter="40"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="iluk"
@@ -650,8 +649,7 @@ TestSet getTestSet()
                                 temperature="366.483"
                                 useMass="1"
                                 logLevel="1" >
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8"
+      <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
@@ -925,8 +923,7 @@ TestSet getTestSet()
                                 temperature="366.483"
                                 useMass="0"
                                 logLevel="1" >
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8"
+      <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
       <LinearSolverParameters solverType="gmres"
