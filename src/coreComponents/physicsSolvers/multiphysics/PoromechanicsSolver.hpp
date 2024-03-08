@@ -31,14 +31,12 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER,
-                                                  SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER,
-                              SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -75,6 +73,16 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
+  virtual void initializePostInitialConditionsPreSubGroups() override
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
+                             this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
+                   InputError );
+  }
+
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
@@ -103,8 +111,6 @@ public:
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
-
-
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
@@ -183,7 +189,7 @@ public:
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  MECHANICS_SOLVER * solidMechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
   }
@@ -379,6 +385,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
