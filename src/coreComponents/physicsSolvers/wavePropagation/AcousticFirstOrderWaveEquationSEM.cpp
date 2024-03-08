@@ -27,6 +27,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "AcousticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -212,9 +213,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticFirstOrderWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
+        < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,
