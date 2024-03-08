@@ -179,31 +179,6 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
-  template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
-  GEOS_HOST_DEVICE
-  inline static real64 computeDiameter( POINT_COORDS_TYPE points,
-                                        localIndex const & numPoints )
-  {
-    real64 diameter = 0;
-    for( localIndex numPoint = 0; numPoint < numPoints; ++numPoint )
-    {
-      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
-      {
-        real64 candidateDiameter = 0.0;
-        for( localIndex i = 0; i < DIMENSION; ++i )
-        {
-          real64 coordDiff = points[numPoint][i] - points[numOthPoint][i];
-          candidateDiameter += coordDiff * coordDiff;
-        }
-        if( diameter < candidateDiameter )
-        {
-          diameter = candidateDiameter;
-        }
-      }
-    }
-    return LvArray::math::sqrt< real64 >( diameter );
-  }
-
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
