@@ -58,7 +58,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       m_interfaceNodesSet.insert( val );
   }
   localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "AcousticElastic solver, {} interface nodes", m_interfaceNodesSet.size() ) );
+  // GEOS_LOG_RANK_0( GEOS_FMT( "AcousticElastic solver, {} interface nodes", m_interfaceNodesSet.size() ) );
   GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
@@ -165,9 +165,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const idx )
+    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const in )
     {
-      localIndex const n = interfaceNodesSet[idx];
+      localIndex const n = interfaceNodesSet[in];
       if( elasticFSNodeIndicator[n] == 1 )
         return;
 
@@ -185,9 +185,9 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const idx )
+    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const in )
     {
-      localIndex const n = interfaceNodesSet[idx];
+      localIndex const n = interfaceNodesSet[in];
       if( acousticFSNodeIndicator[n] == 1 )
         return;
 

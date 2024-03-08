@@ -34,6 +34,6 @@
   </Solvers>
 
   <Included>
-    <File name="./acouselas3D_benchmark_Q3_base.xml"/>
+    <File name="./acouselas3D_komatitsch_Q3_base.xml"/>
   </Included>
 </Problem>

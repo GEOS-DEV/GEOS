@@ -106,8 +106,7 @@
     </FiniteElements>
   </NumericalMethods>
 
-  <Events
-    maxTime="2.1">
+  <Events maxTime="2.1">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
@@ -138,8 +137,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <NullModel
-      name="nullModel"/>
+    <NullModel name="nullModel"/>
   </Constitutive>
 
   <FieldSpecifications>
