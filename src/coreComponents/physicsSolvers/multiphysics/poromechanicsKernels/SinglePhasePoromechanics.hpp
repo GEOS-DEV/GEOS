@@ -271,7 +271,7 @@ using SinglePhasePoromechanicsKernelFactory =
                                 string const >;
 
 /**
- * @class BulkDensityKernel
+ * @class SinglePhaseBulkDensityKernel
  * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
  */
 class SinglePhaseBulkDensityKernel
