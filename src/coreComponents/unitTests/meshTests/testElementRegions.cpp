@@ -38,12 +38,6 @@ public:
   virtual ~ElementRegionTestFixture() = default;
 private:
   GeosxState state;
-
-  void SetUp() override
-  {}
-
-  void TearDown() override
-  {}
 };
 
 TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
