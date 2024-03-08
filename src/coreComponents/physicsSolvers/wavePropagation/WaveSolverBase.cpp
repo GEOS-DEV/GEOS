@@ -431,10 +431,14 @@ void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells:
   m_solverTargetNodesSet.insert( scratch.begin(), scratch.begin() + numUniqueValues );
 }
 
-void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
+void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n, real64 const dt )
 {
-  while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  integer const dir = m_forward ? +1 : -1;
+  for(; m_indexSeismoTrace < m_nsamplesSeismoTrace; m_indexSeismoTrace++ )
   {
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? m_indexSeismoTrace : (m_nsamplesSeismoTrace - 1) - m_indexSeismoTrace);
+    if( dir * timeSeismo > dir * time_n +dt+ epsilonLoc )
+      break;
     m_indexSeismoTrace++;
   }
 }
@@ -467,7 +471,7 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
-    if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
+    if( dir * timeSeismo > dir * time_n + dt + epsilonLoc )
       break;
     WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );

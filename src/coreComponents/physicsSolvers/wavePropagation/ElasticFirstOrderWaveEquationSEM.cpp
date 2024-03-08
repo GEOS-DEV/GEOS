@@ -626,7 +626,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     computeAllSeismoTraces( time_n, dt, uy_np1, uy_np1, uyReceivers );
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_np1, uzReceivers );
 
-    incrementIndexSeismoTrace( time_n );
+    incrementIndexSeismoTrace( time_n, dt );
   } );
 
   return dt;

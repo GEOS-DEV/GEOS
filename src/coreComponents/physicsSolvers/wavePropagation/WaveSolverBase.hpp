@@ -158,7 +158,12 @@ protected:
    */
   virtual void initializePML() = 0;
 
-  virtual void incrementIndexSeismoTrace( real64 const time_n );
+  /**
+   * @brief Increments the index of the currently computed trace after @computeAllSeismoTraces
+   * @param time_n the time corresponding to the field values pressure_n
+   * @param dt the simulation timestep
+   */
+  virtual void incrementIndexSeismoTrace( real64 const time_n, real64 const dt );
 
   /**
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
