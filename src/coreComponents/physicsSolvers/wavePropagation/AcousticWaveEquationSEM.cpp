@@ -182,7 +182,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         GEOS_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
         PreComputeSourcesAndReceivers::
           Compute1DSourceAndReceiverConstants
-          < EXEC_POLICY, FE_TYPE >
+        < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
           numFacesPerElem,
           nodeCoords32,

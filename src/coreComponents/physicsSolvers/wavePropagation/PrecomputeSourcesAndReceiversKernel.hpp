@@ -25,7 +25,7 @@ namespace geos
 struct PreComputeSourcesAndReceivers
 {
 
-   using EXEC_POLICY = parallelDevicePolicy< >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
 
   /**
    * @brief Launches the precomputation of the source and receiver terms for 1D solution (2nd order acoustic)
@@ -180,7 +180,7 @@ struct PreComputeSourcesAndReceivers
   }
 
 
-    /**
+  /**
    * @brief Launches the precomputation of the source and receiver terms with storage of elements and region
    *        in which the receivers and sources are located
    * @tparam EXEC_POLICY execution policy

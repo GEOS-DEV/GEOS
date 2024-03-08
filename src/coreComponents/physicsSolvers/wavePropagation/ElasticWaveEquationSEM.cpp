@@ -281,7 +281,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
       PreComputeSourcesAndReceivers::
         Compute3DSourceAndReceiverConstantsWithDAS
-        < EXEC_POLICY, FE_TYPE >
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
         X,

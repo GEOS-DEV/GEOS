@@ -266,7 +266,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
       PreComputeSourcesAndReceivers::
         Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
-        < EXEC_POLICY, FE_TYPE >
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,
