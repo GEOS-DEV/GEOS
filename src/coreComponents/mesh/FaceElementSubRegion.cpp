@@ -1009,7 +1009,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   m_2dFaceTo2dElems = build2dFaceTo2dElems( m_toEdgesRelation.toViewConst(), m_edgesTo2dFaces, referenceCollocatedEdges );
 
   fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
-//  fixNodesOrder( m_toFacesRelation.toViewConst(), faceManager.nodeList().toViewConst(), m_toNodesRelation );
+
+  fixNodesOrder( m_toFacesRelation.toViewConst(), faceToNodes, m_toNodesRelation );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,
