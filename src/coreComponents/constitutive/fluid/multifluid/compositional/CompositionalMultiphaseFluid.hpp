@@ -22,6 +22,7 @@
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
@@ -77,6 +78,9 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
@@ -103,6 +107,8 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;
+
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
   /**
@@ -137,16 +143,27 @@ private:
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
+
+  // backup data
+  PhaseComp::ValueType m_kValues;
 };
 
-using CompositionalTwoPhasePengRobinsonConstantViscosity =  CompositionalMultiphaseFluid<
+using CompositionalTwoPhasePengRobinsonConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashPRPR,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
-using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity =  CompositionalMultiphaseFluid<
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashSRKSRK,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePengRobinsonLBCViscosity = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashPRPR,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashSRKSRK,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

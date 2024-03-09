@@ -35,18 +35,6 @@ class NullModelUpdate final : public FunctionBaseUpdate
 public:
   NullModelUpdate() = default;
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( ComponentProperties::KernelWrapper const & componentProperties,
-                real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const
-  {
-    GEOS_UNUSED_VAR( componentProperties, pressure, temperature, phaseComposition, value, useMass );
-  }
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,

@@ -43,6 +43,8 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                BlackOilFluid,
                                CompositionalTwoPhasePengRobinsonConstantViscosity,
                                CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
@@ -62,6 +64,8 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                BlackOilFluid,
                                CompositionalTwoPhasePengRobinsonConstantViscosity,
                                CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
