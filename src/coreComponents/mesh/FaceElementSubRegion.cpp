@@ -548,8 +548,8 @@ buildCollocatedEdgeBuckets( std::map< globalIndex, globalIndex > const & referen
  * @param edgeGhostRanks The ghost rank of the edges.
  * @return The computed mapping.
  */
-std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets,
-                                                                  arrayView1d< integer const > edgeGhostRanks )
+std::map< localIndex, localIndex > buildReferenceCollocatedEdges( std::map< std::pair< globalIndex, globalIndex >, std::set< localIndex > > const & collocatedEdgeBuckets,
+                                                                  arrayView1d< integer const > const edgeGhostRanks )
 {
   std::map< localIndex, localIndex > referenceCollocatedEdges;
 
@@ -656,7 +656,7 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< local
  */
 void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets,
                                unordered_map< globalIndex, localIndex > const & ng2l,
-                               SurfaceElementSubRegion::NodeMapType & elem2dToNodes )
+                               ArrayOfArrays< localIndex > & elem2dToNodes )
 {
   auto const num2dElems = elem2dToNodes.size();
 
