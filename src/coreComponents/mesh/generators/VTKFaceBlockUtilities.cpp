@@ -380,28 +380,28 @@ ArrayOfArrays< localIndex > buildElem2dToEdges( vtkIdType num2dElements,
 }
 
 /**
- * @brief Utility structure which connects 2d element to their 3d element and faces neighbors.
+ * @brief Utility structure which connects 2d element to their 3d element, faces and nodes neighbors.
  */
 struct Elem2dTo3dInfo
 {
   ToCellRelation< ArrayOfArrays< localIndex > > elem2dToElem3d;
   ArrayOfArrays< localIndex > elem2dToFaces;
   /**
-   * @brief All the neighboring points of the 2d element.
-   * @details During the MPI partitioning, a 2d element may not have its neighbor already (face, 3d element).
+   * @brief All the neighboring points of the 2d element @e available on the current MPI rank.
+   * @note During the MPI partitioning, a 2d element may not already have its neighbors (face, 3d element).
    * But this does not mean that the 2d element has no neighboring points.
-   * This fallback container is here to provide this information in those corner cases.
-   * @note This container is unlikely to keep the order of the nodes.
-   * To get the order, it's more convenient to use the faces information.
+   * @note This container will not keep the order of the nodes.
+   * @note This container may not contain all the nodes of the 2d element.
+   * The missing nodes must therefore be added as part of the ghosting process.
    */
-  ArrayOfArrays< localIndex > elem2dToNodesFallBack;
+  ArrayOfArrays< localIndex > elem2dToNodes;
 
   Elem2dTo3dInfo( ToCellRelation< ArrayOfArrays< localIndex > > && elem2dToElem3d_,
                   ArrayOfArrays< localIndex > && elem2dToFaces_,
-                  ArrayOfArrays< localIndex > && elem2dToNodes )
+                  ArrayOfArrays< localIndex > && elem2dToNodes_ )
     : elem2dToElem3d( elem2dToElem3d_ ),
-    elem2dToFaces( elem2dToFaces_ ),
-    elem2dToNodesFallBack( elem2dToNodes )
+      elem2dToFaces( elem2dToFaces_ ),
+      elem2dToNodes( elem2dToNodes_ )
   { }
 };
 
@@ -488,7 +488,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   ArrayOfArrays< localIndex > elem2dToElem3d( num2dElements, 2 );
   ArrayOfArrays< localIndex > elem2dToCellBlock( num2dElements, 2 );
   ArrayOfArrays< localIndex > elem2dToFaces( num2dElements, 2 );
-  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements, 10 );  // Fallback for case where the elem 2d has no neighbor on this rank.
+  ArrayOfArrays< localIndex > elem2dToNodes( num2dElements, 10 );
 
   // Now we loop on all the 2d elements.
   for( int e2d = 0; e2d < num2dElements; ++e2d )
@@ -507,8 +507,14 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     for( vtkIdType const & gni: duplicatedPointOfElem2d )
     {
       auto it = ng2l.find( gni );
-      if( it != ng2l.cend() )  // If the node is not on this rank, it's fair to ignore it.
+      if( it != ng2l.cend() )  // If the node is not on this rank, we want to ignore this entry.
       {
+        // The node lists in `elem2dToNodes` may be in any order.
+        // Anyway, there will be a specific step to reset the appropriate order.
+        // Note that due to ghosting, there will also always be some cases where
+        // some nodes will be missing in `elem2dToNodes` _before_ the ghosting.
+        // After the ghosting, the whole information will be gathered,
+        // but a reordering step will always be compulsory.
         elem2dToNodes.emplaceBack( e2d, it->second );
       }
     }
@@ -558,64 +564,6 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
 
   auto cellRelation = ToCellRelation< ArrayOfArrays< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
   return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ), std::move( elem2dToNodes ) );
-}
-
-
-/**
- * @brief Computes the 2d element to nodes mapping.
- * @param num2dElements Number of (2d) elements in the fracture.
- * @param faceToNodes The face to nodes mapping.
- * @param elem2dToFaces The 2d element to faces mapping.
- * @param elem2dToNodesFallBack The 2d element to nodes mapping that will be used in case the fracture has no face neighbor.
- * @return The computed mapping.
- * @note Since we are able to reorder the nodes of the 2d elements appropriately,
- * we could most probably solely rely on the information held by @p elem2dToNodesFallBack.
- * Nevertheless, the reordering is for the moment only done in parallel, and not in serial.
- * So we keep it for the moment, until deeper reorganisation is done.
- */
-ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
-                                                ArrayOfArraysView< localIndex const > faceToNodes,
-                                                ArrayOfArraysView< localIndex const > elem2dToFaces,
-                                                ArrayOfArraysView< localIndex const > elem2dToNodesFallBack )
-{
-  ArrayOfArrays< localIndex > elem2dToNodes( LvArray::integerConversion< localIndex >( num2dElements ) );
-  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
-  {
-    for( localIndex const & faceIndex: elem2dToFaces[elem2dIndex] )
-    {
-      if( faceIndex < 0 )
-      {
-        continue;
-      }
-      std::set< localIndex > tmp;
-      for( auto j = 0; j < faceToNodes[faceIndex].size(); ++j )
-      {
-        localIndex const & nodeIndex = faceToNodes[faceIndex][j];
-        tmp.insert( nodeIndex );
-      }
-      for( localIndex const & nodeIndex: tmp )
-      {
-        elem2dToNodes.emplaceBack( elem2dIndex, nodeIndex );
-      }
-    }
-  }
-
-  // Fallback when the elem 2d has no neighbor.
-  // Note that this container is unlikely to keep the node order of the element.
-  // But in the future, there may be some code doing the reordering,
-  // so maybe using the fallback may become the standard (and unique) way to do.
-  for( localIndex elem2dIndex = 0; elem2dIndex < elem2dToFaces.size(); ++elem2dIndex )
-  {
-    if( elem2dToNodes.sizeOfArray( elem2dIndex ) == 0 )
-    {
-      for( localIndex const lni: elem2dToNodesFallBack[elem2dIndex] )
-      {
-        elem2dToNodes.emplaceBack( elem2dIndex, lni );
-      }
-    }
-  }
-
-  return elem2dToNodes;
 }
 
 
@@ -674,7 +622,6 @@ void importFractureNetwork( string const & faceBlockName,
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
   Elem2dTo3dInfo elem2dTo3d = buildElem2dTo3dElemAndFaces( faceMesh, mesh, collocatedNodes, faceToNodes.toViewConst(), elemToFaces );
-  ArrayOfArrays< localIndex > elem2dToNodes = buildElem2dToNodes( num2dElements, faceToNodes.toViewConst(), elem2dTo3d.elem2dToFaces.toViewConst(), elem2dTo3d.elem2dToNodesFallBack.toViewConst() );
 
   ArrayOfArrays< localIndex > face2dToElems2d = buildFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > face2dToEdge = buildFace2dToEdge( vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() ), edges, collocatedNodes, nodeToEdges.toViewConst() );
@@ -686,7 +633,7 @@ void importFractureNetwork( string const & faceBlockName,
 
   faceBlock.setNum2dElements( num2dElements );
   faceBlock.setNum2dFaces( num2dFaces );
-  faceBlock.set2dElemToNodes( std::move( elem2dToNodes ) );
+  faceBlock.set2dElemToNodes( std::move( elem2dTo3d.elem2dToNodes ) );
   faceBlock.set2dElemToEdges( std::move( elem2dToEdges ) );
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
