@@ -400,8 +400,8 @@ struct Elem2dTo3dInfo
                   ArrayOfArrays< localIndex > && elem2dToFaces_,
                   ArrayOfArrays< localIndex > && elem2dToNodes_ )
     : elem2dToElem3d( elem2dToElem3d_ ),
-      elem2dToFaces( elem2dToFaces_ ),
-      elem2dToNodes( elem2dToNodes_ )
+    elem2dToFaces( elem2dToFaces_ ),
+    elem2dToNodes( elem2dToNodes_ )
   { }
 };
 
