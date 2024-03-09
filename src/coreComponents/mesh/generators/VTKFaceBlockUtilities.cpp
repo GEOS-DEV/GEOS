@@ -568,6 +568,10 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
  * @param elem2dToFaces The 2d element to faces mapping.
  * @param elem2dToNodesFallBack The 2d element to nodes mapping that will be used in case the fracture has no face neighbor.
  * @return The computed mapping.
+ * @note Since we are able to reorder the nodes of the 2d elements appropriately,
+ * we could most probably solely rely on the information held by @p elem2dToNodesFallBack.
+ * Nevertheless, the reordering is for the moment only done in parallel, and not in serial.
+ * So we keep it for the moment, until deeper reorganisation is done.
  */
 ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
                                                 ArrayOfArraysView< localIndex const > faceToNodes,
