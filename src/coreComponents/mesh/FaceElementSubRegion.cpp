@@ -474,9 +474,12 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
 
 
 /**
- * @brief Computes the mapping with links a pair of collocated nodes to all the edges having their nodes collocated to the key pair of nodes.
- * @param referenceCollocatedNodes Mapping that link all the collocated nodes to the collocated node with the lowest index (considered as a reference).
- * The reference node can then be used to make connection between geometrical objects relying on collocated noes (in the case of this function, edges).
+ * @brief Computes the mapping with links a pair of collocated nodes
+ * to all the edges having their nodes collocated to this key pair of nodes.
+ * @param referenceCollocatedNodes Mapping that link all the collocated nodes
+ * to the collocated node with the lowest index (considered as a reference).
+ * The reference node can then be used to make connection between geometrical objects
+ * relying on collocated noes (in the case of this function, edges).
  * @param nl2g The node local to global mapping.
  * @param edgeToNodes The mapping from local edges to local nodes.
  * @return The computed mapping.
@@ -688,7 +691,8 @@ void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & e
  * @param[in] nodesToEdges The nodes to edges mapping.
  * @param[in] nl2g The global to local mapping for nodes.
  * @param[in] referenceCollocatedNodes A mapping that link all each collocated node to the node that must be used as a reference.
- * @param[in] collocatedEdgeBuckets A specific mapping that links all pair of collocated nodes to the reference edge built on top of the two locations.
+ * @param[in] collocatedEdgeBuckets A specific mapping that links all pair of collocated nodes
+ * to the reference edge built on top of the two locations.
  * @param[in,out] elem2dToEdges The 2d element to edges that will be completed/corrected.
  * @details The @p elem2dToEdges is (for the moment) used to build connection between the 2d elements.
  * Due to the specific way 2d elements are managing nodes, before the ghosting process:

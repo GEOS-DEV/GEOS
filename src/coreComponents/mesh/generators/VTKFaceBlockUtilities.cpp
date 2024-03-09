@@ -317,7 +317,8 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
-    // If we're in a case where there aren't two edges sharing two nodes, then it means that we're in a corner case where the 2d element is on the boundary of the MPI domain,
+    // If we're in a case where there aren't two edges sharing two nodes,
+    // then it means that we're in a corner case where the 2d element is on the boundary of the MPI domain,
     // and maybe some nodes are missing for the 2d element to be properly and consistently defines.
     // In this case, we explicitly set the edge index at `-1`, so we can get back on it later.
     face2dToEdge[i] = res->second < 2 ? -1: LvArray::integerConversion< localIndex >( res->first );
@@ -399,8 +400,8 @@ struct Elem2dTo3dInfo
                   ArrayOfArrays< localIndex > && elem2dToFaces_,
                   ArrayOfArrays< localIndex > && elem2dToNodes )
     : elem2dToElem3d( elem2dToElem3d_ ),
-      elem2dToFaces( elem2dToFaces_ ),
-      elem2dToNodesFallBack( elem2dToNodes )
+    elem2dToFaces( elem2dToFaces_ ),
+    elem2dToNodesFallBack( elem2dToNodes )
   { }
 };
 
