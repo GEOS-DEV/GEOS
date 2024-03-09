@@ -27,9 +27,9 @@
       solidSolverName="linearElasticity"
       flowSolverName="twoPhaseFlow"
       stabilizationType="Global"
-      stabilizationRegionNames="{ channel, barrier }"
+      stabilizationRegionNames="{ channel }"
       logLevel="1"
-      targetRegions="{ channel, barrier }"/>
+      targetRegions="{ channel }"/>
 
     <SolidMechanicsLagrangianSSLE
       name="linearElasticity"
@@ -44,7 +44,7 @@
       discretization="fluidTPFA"
       targetRelativePressureChangeInTimeStep="1"
       targetPhaseVolFractionChangeInTimeStep="1"
-      targetRegions="{ channel, barrier  }"
+      targetRegions="{ channel  }"
       temperature="300"
       useMass="1"/>
 
