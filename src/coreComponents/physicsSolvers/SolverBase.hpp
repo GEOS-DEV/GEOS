@@ -629,7 +629,7 @@ public:
 
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const;
+  virtual void saveSequentialIterationState( DomainPartition & domain );
 
   /**
    * @brief accessor for the linear solver parameters.
