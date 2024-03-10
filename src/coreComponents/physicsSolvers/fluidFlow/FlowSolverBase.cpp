@@ -44,8 +44,10 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE porousWrapper,
                                                               CellElementSubRegion & subRegion,
                                                               arrayView1d< real64 const > const & pressure,
+                                                              arrayView1d< real64 const > const & pressure_k,
                                                               arrayView1d< real64 const > const & pressure_n,
                                                               arrayView1d< real64 const > const & temperature,
+                                                              arrayView1d< real64 const > const & temperature_k,
                                                               arrayView1d< real64 const > const & temperature_n )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
@@ -54,8 +56,10 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
     {
       porousWrapper.updateStateFromPressureAndTemperature( k, q,
                                                            pressure[k],
+                                                           pressure_k[k],
                                                            pressure_n[k],
                                                            temperature[k],
+                                                           temperature_k[k],
                                                            temperature_n[k] );
     }
   } );
@@ -224,31 +228,49 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   }
 }
 
-void FlowSolverBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
+void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
 {
   GEOS_ASSERT( m_isFixedStressPoromechanicsUpdate );
 
-  arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
-  arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
-  arrayView1d< real64 > const temp_k = subRegion.template getField< fields::flow::temperature_k >();
-  pres_k.setValues< parallelDevicePolicy<> >( pres );
-  temp_k.setValues< parallelDevicePolicy<> >( temp );
-}
-
-void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain ) const
-{
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+  real64 maxPresChange = 0.0;
+  real64 maxTempChange = 0.0;
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase & subRegion )
+    mesh.getElemManager().forElementSubRegions ( regionNames,
+                                                 [&]( localIndex const,
+                                                      ElementSubRegionBase & subRegion )
     {
-      saveSequentialIterationState( subRegion );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 > const pres_k = subRegion.getField< fields::flow::pressure_k >();
+      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView1d< real64 > const temp_k = subRegion.getField< fields::flow::temperature_k >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_k[ei] ) );
+          pres_k[ei] = pres[ei];
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_k[ei] ) );
+          temp_k[ei] = temp[ei];
+        }
+      } );
+
+      maxPresChange = LvArray::math::max( maxPresChange, subRegionMaxPresChange.get() );
+      maxTempChange = LvArray::math::max( maxTempChange, subRegionMaxTempChange.get() );
     } );
   } );
+
+  // store to be later used in convergence check
+  m_sequentialPresChange = MpiWrapper::max( maxPresChange );
+  m_sequentialTempChange = m_isThermal ? MpiWrapper::max( maxTempChange ) : 0.0;
 }
 
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
@@ -467,8 +489,16 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-
-    updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, temperature, temperature_n );
+    if( m_isFixedStressPoromechanicsUpdate )
+    {
+      arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
+      arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+    }
+    else
+    {
+      updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion, pressure, pressure_n, pressure_n, temperature, temperature_n, temperature_n );
+    }
   } );
 }
 
@@ -742,54 +772,19 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
   } );
 }
 
-bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const
+bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
-  real64 maxPresChange = 0.0;
-  real64 maxTempChange = 0.0;
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions ( regionNames,
-                                                 [&]( localIndex const,
-                                                      ElementSubRegionBase & subRegion )
-    {
-      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const pres_k = subRegion.getField< fields::flow::pressure_k >();
-      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-      arrayView1d< real64 const > const temp_k = subRegion.getField< fields::flow::temperature_k >();
-
-      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
-      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-      {
-        if( ghostRank[ei] < 0 )
-        {
-          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_k[ei] ) );
-          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_k[ei] ) );
-        }
-      } );
-
-      maxPresChange = LvArray::math::max( maxPresChange, subRegionMaxPresChange.get() );
-      maxTempChange = LvArray::math::max( maxTempChange, subRegionMaxTempChange.get() );
-    } );
-  } );
-
-  maxPresChange = MpiWrapper::max( maxPresChange );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
-                                      getName(), fmt::format( "{:.{}f}", maxPresChange, 3 ) ) );
+                                      getName(), fmt::format( "{:.{}f}", m_sequentialPresChange, 3 ) ) );
 
   if( m_isThermal )
   {
-    maxTempChange = MpiWrapper::max( maxTempChange );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max temperature change during outer iteration: {} K",
-                                        getName(), fmt::format( "{:.{}f}", maxTempChange, 3 ) ) );
+                                        getName(), fmt::format( "{:.{}f}", m_sequentialTempChange, 3 ) ) );
   }
 
-  return (maxPresChange < m_maxSequentialPresChange) && (maxTempChange < m_maxSequentialTempChange);
+  return (m_sequentialPresChange < m_maxSequentialPresChange) && (m_sequentialTempChange < m_maxSequentialTempChange);
 }
 
 } // namespace geos
