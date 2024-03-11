@@ -65,17 +65,17 @@ bool isSelectingAllCellsInOneRegion( string_array const & cellBlockNames, CellEl
   }
 }
 
-void registerSubRegion( CellElementRegion const & region, Group & elementSubRegions,
-                        CellBlockABC const & cellBlock )
+void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
 {
   GEOS_THROW_IF( cellBlock.getName() == CellElementRegion::viewKeyStruct::selectAllCellBlocksString() ||
                  cellBlock.getRegionName() == CellElementRegion::viewKeyStruct::selectAllCellBlocksString(),
                  GEOS_FMT( "{}: cellBlock named '{}' uses the reserved keyword '{}'.",
-                           region.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
+                           getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
                            cellBlock.getName(),
                            CellElementRegion::viewKeyStruct::selectAllCellBlocksString() ),
                  InputError );
 
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
   // For now, subRegion name must be the same as the cellBlock.
   CellElementSubRegion & subRegion =
     elementSubRegions.registerGroup< CellElementSubRegion >( cellBlock.getName() );
@@ -85,14 +85,12 @@ void registerSubRegion( CellElementRegion const & region, Group & elementSubRegi
 
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
-  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-
   // if we would like to select all cellBlocks on an unique CellElementRegion
   if( isSelectingAllCellsInOneRegion( m_cellBlockNames, *this ) )
   {
     cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
     {
-      registerSubRegion( *this, elementSubRegions, cellBlock );
+      registerSubRegion( cellBlock );
     } );
   }
   else
@@ -111,7 +109,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
       CellBlockABC const * exactCellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
       if( exactCellBlock != nullptr )
       {
-        registerSubRegion( *this, elementSubRegions, *exactCellBlock );
+        registerSubRegion( *exactCellBlock );
       }
       else
       {
@@ -122,7 +120,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
         {
           if( foundCellBlock.getRegionName() == cellBlockName )
           {
-            registerSubRegion( *this, elementSubRegions, foundCellBlock );
+            registerSubRegion( foundCellBlock );
             foundOneCellBlock = true;
           }
         } );

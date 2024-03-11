@@ -142,6 +142,14 @@ private:
   // Coarsening ratio
   real64 m_coarseningRatio;
 
+
+  /**
+   * @brief Register a CellElementSubRegion in the element sub region group (named after viewKeyStruct::elementSubRegions()).
+   * The sub-regions are a set of the region that groups the same primitives.
+   * @param cellBlock The cellBlock that the sub region will be made of.
+   */
+  void registerSubRegion( CellBlockABC const & cellBlock );
+
 };
 
 } /* namespace geos */
