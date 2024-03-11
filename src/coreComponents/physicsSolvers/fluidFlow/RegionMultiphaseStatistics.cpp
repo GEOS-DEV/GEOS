@@ -148,19 +148,6 @@ struct RegionMultiphaseStatistics::RegionStatisticsKernel
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolumeFraction,
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelativePermeability )
   {
-    GEOS_UNUSED_VAR( regionStatistics );
-    GEOS_UNUSED_VAR( regionMarkers );
-    GEOS_UNUSED_VAR( elementVolume );
-    GEOS_UNUSED_VAR( pressure );
-    GEOS_UNUSED_VAR( temperature );
-    GEOS_UNUSED_VAR( referencePorosity );
-    GEOS_UNUSED_VAR( porosity );
-    GEOS_UNUSED_VAR( phaseDensity );
-    GEOS_UNUSED_VAR( phaseComponentFraction );
-    GEOS_UNUSED_VAR( phaseVolumeFraction );
-    GEOS_UNUSED_VAR( phaseTrappedVolumeFraction );
-    GEOS_UNUSED_VAR( phaseRelativePermeability );
-
     integer const regionCount = regionIndices.size();
 
     auto populateMinMaxTotal = [regionStatistics,
@@ -324,9 +311,8 @@ void RegionMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
                                                               MeshLevel & mesh,
                                                               arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
-                                                        ElementSubRegionBase & subRegion )
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( fieldName ).
         setPlotLevel( PlotLevel::NOPLOT ).
