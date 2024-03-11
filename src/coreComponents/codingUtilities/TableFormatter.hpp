@@ -19,7 +19,6 @@
 #ifndef GEOS_COMMON_TABLEFORMATTER_HPP
 #define GEOS_COMMON_TABLEFORMATTER_HPP
 
-
 #include "codingUtilities/TableData.hpp"
 #include "codingUtilities/TableLayout.hpp"
 
@@ -30,30 +29,59 @@ class TableFormatter
 {
 public:
 
+  /**
+   * @brief Constructor by default
+   */
+  TableFormatter() = default;
+
+  /**
+   * @brief Construct a new Table Formatter from a tableLayout
+   * @param tableLayout Contain all column names and optionnaly the table title
+   */
   TableFormatter( TableLayout tableLayout );
 
-  std::vector< TableLayout::Column > m_columns;
-
-private:
+  TableLayout m_tableLayout;
 
   /**
    * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout who store all values in an unsorted order
    */
-  void fillTableColumnsFromRows( std::vector< std::vector< string > > & tableData );
+  void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
+                                 std::vector< std::vector< string > > const & tableData );
 
 };
 
 class TableCSVFormatter : public TableFormatter
 {
 public:
+  /**
+   * @brief Constructor by default
+   */
+  TableCSVFormatter() = default;
 
+  /**
+   * @brief Construct a new Table Formatter from a tableLayout
+   * @param tableLayout Contain all column names and optionnaly the table title
+   */
   TableCSVFormatter( TableLayout tableLayout );
 
+  /**
+   * @param tableData A 2-dimensions tabke
+   * @return A string of CSV data from a 2-dimensions table 
+   */
   string dataToString( TableData2D tableData );
 
+  /**
+   * @param tableData A 2-dimensions tabke
+   * @return A string of CSV data from a 1-dimensions table 
+   */
   string dataToString( TableData tableData );
 
-  string headerToString();
+  /**
+   * @param columns 
+   * @param nbRows 
+   * @return string 
+   */
+  string headerToString( std::vector< TableLayout::Column > & columns, integer nbRows );
 
 };
 
@@ -67,7 +95,12 @@ public:
   /**
    * @brief return a string following the formatter
    */
-  string ToString( TableData tableData );
+  string ToString( TableData & tableData );
+
+  /**
+   * @brief return a string following the formatter
+   */
+  string ToString( TableData2D & tableData );
 
 private:
 
@@ -76,10 +109,11 @@ private:
    * @param splitHeader A empty vector who will contain all split header names
    * @param largestHeaderVectorSize The largest split header vector size
    */
-  void parseAndStoreHeaderSections( size_t & largestHeaderVectorSize,
+  void parseAndStoreHeaderSections( std::vector< TableLayout::Column > & columns,
+                                    size_t & largestHeaderVectorSize,
                                     std::vector< std::vector< string > > & splitHeader );
 
-  string & getTableBuilt( std::vector< std::vector< string > > rowsValues );
+  string constructTable( std::vector< std::vector< string > > & rowsValues );
   /**
    * @brief Iterate throught the header names vector.
    * Adjust the size of each header vector by adding empty strings if needed.
@@ -87,13 +121,14 @@ private:
    * @param largestHeaderVectorSize The largest split header vector size
    * @param splitHeader A vector containing all split header names
    */
-  void adjustHeaderSizesAndStore( size_t largestHeaderVectorSize,
+  void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
+                                  size_t largestHeaderVectorSize,
                                   std::vector< std::vector< string > > & splitHeader );
 
   /**
    * @brief For each column find and set the column's longest string
    */
-  void findAndSetMaxStringSize();
+  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t nbRows );
 
   /**
    * @brief Compute the largest string size in the table. If the table title is the largest string size in the table, recalculate for all
@@ -101,7 +136,8 @@ private:
    * @param sectionlineLength The length of a section line
    * @param titleLineLength The length of a title line
    */
-  void computeAndSetMaxStringSize( string::size_type sectionlineLength,
+  void computeAndSetMaxStringSize( std::vector< TableLayout::Column > & columns,
+                                   string::size_type sectionlineLength,
                                    string::size_type titleLineLength );
 
   /**
@@ -109,7 +145,9 @@ private:
    * @param topSeparator An empty string to be built
    * @param sectionSeparator An empty string to be built
    */
-  void computeAndBuildSeparator( string & topSeparator, string & sectionSeparator );
+  void computeAndBuildSeparator( std::vector< TableLayout::Column > & columns,
+                                 string & topSeparator,
+                                 string & sectionSeparator );
 
   /**
    * @brief Build the table title section
@@ -126,7 +164,8 @@ private:
    * @param nbRows Indicates the number of lines in a section
    * @param section The section to be built
    */
-  void buildSectionRows( string_view sectionSeparator,
+  void buildSectionRows( std::vector< TableLayout::Column > & columns,
+                         string_view sectionSeparator,
                          string & rows,
                          integer const nbRows,
                          TableLayout::Section const section );

@@ -38,17 +38,27 @@ public:
 
   std::vector< std::vector< string > > m_rows;
 
-private:
-  std::vector< string > m_cellsValue;
 };
 
 class TableData2D : public TableData
 {
 public:
 
+  /**
+   * @brief Add a cell to the table.
+   * Construct a map of pair<x,y> and cell value
+   * @param T The value passed to addCell (can be any type).
+   * @param x The row index
+   * @param u The column index
+   * @param value Cell value to be added.
+   */
   template< typename T >
   void addCell( real64 x, real64 y, T value );
   // void printCount();
+  
+  /**
+   * @brief Construct all rows from all cell values stored in map previously 
+   */
   void buildRows();
 
 private:
@@ -60,7 +70,8 @@ private:
 template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
-  int idx = 0;
+  //int idx = 0;
+    std::vector< string > m_cellsValue;
   ( [&] {
     string cellValue = GEOS_FMT( "{}", args );
     // if( m_columns[idx].parameter.enabled )
@@ -77,7 +88,7 @@ void TableData2D::addCell( real64 x, real64 y, T value )
 {
   std::pair< real64, real64 > id = std::pair< real64, real64 >( x, y );
 
-  data[id] = GEOS_FMT( "{}", value ); 
+  data[id] = GEOS_FMT( "{}", value );
   columns.insert( x );
   row.insert( y );
 }

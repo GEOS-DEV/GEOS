@@ -38,18 +38,44 @@ public:
     large = 3
   };
 
+  enum Section { header, values };
+
   /**
    * @brief Structure to set up each colum parameters.
    */
   struct ColumnParam
   {
-    // A vector containing all string for a header name
-    std::vector< string > headerName;
+
+    string columnName;
     // Alignment for a column. By default aligned to the right side
     Alignment alignment = Alignment::right;
     // A boolean to display a colummn
     bool enabled = true;
+    // Vector containing substring column name delimited by "\n"
+    std::vector< string > splitColumnName;
+
+    ColumnParam( const std::string & name, Alignment align )
+      : columnName( name ), alignment( align )
+    {}
+
+    ColumnParam( const std::string & name, Alignment align, bool display )
+      : columnName( name ), alignment( align ), enabled( display )
+    {}
   };
+
+  /**
+   * @brief Struct for a column.
+   */
+  struct Column
+  {
+    ColumnParam parameter;
+    // A vector containing all column values
+    std::vector< string > columnValues;
+    // The largest string in the column
+    string m_maxStringSize;
+  };
+
+  TableLayout() = default;
 
   /**
    * @brief Construct a new Table object, all values in the table are centered by default
@@ -64,27 +90,45 @@ public:
    */
   TableLayout( std::vector< ColumnParam > const & columnParameter );
 
+  /**
+   * @brief Set the minimal margin width between row content and borders.
+   * @param marginType
+   */
   void setMargin( MarginValue marginType );
 
-  enum Section { header, values };
+  /**
+   * @brief Set the table name
+   * @param tableTitle The table name
+   */
+  void setTitle( string_view tableTitle );
 
   /**
-   * @brief Struct for a column.
+   * @return return the table name
    */
-  struct Column
-  {
-    ColumnParam parameter;
-    // A vector containing all column values
-    std::vector< string > columnValues;
-    // The largest string in the column
-    string m_maxStringSize;
-  };
+  string_view getTitle() const;
+
+  /**
+   * @return return the border margin
+   */
+  integer const & getBorderMargin() const;
+
+  /**
+   * @return return the column margin
+   */
+  integer const & getColumnMargin() const;
+
+  /**
+   * @return return the margin title
+   */
+  integer const & getMarginTitle() const;
 
   std::vector< Column > m_columns;
 
 private:
+  string tableTitle;
   integer borderMargin;
   integer columnMargin;
+  integer marginTitle = 2;
 
 };
 }

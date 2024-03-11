@@ -59,7 +59,7 @@ void TableData2D::buildRows()
       auto const dataIt = data.find( id );
       if( dataIt != data.end())
       {
-        values.push_back( GEOS_FMT( "{}", dataIt->secondue ));
+        values.push_back( GEOS_FMT( "{}", dataIt->second ));
       }
     }
 
