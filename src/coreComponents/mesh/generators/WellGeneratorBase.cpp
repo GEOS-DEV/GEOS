@@ -531,7 +531,8 @@ void WellGeneratorBase::debugWellGeometry() const
     return;
   }
 
-  TableLayout tableLayout = TableLayout( {
+  //1. formatting data
+  TableLayout tableWellLayout = TableLayout( {
       TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::middle},
       TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::middle},
@@ -540,9 +541,9 @@ void WellGeneratorBase::debugWellGeometry() const
       TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
     } );
 
-  tableLayout.setTitle( "InternalWellGenerator " + getName());
-  //1. formatting data
-  TableData tableData;
+  tableWellLayout.setTitle( "InternalWellGenerator " + getName());
+
+  TableData tableWellData;
 
   //2. collecting data
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
@@ -559,24 +560,24 @@ void WellGeneratorBase::debugWellGeometry() const
     {
       prevElement =  m_prevElemId[iwelem][0];
     }
-    
-    tableData.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
+
+    tableWellData.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
+  }
+  //3. dumping
+  TableTextFormatter tableFormatter( tableWellLayout );
+  GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));
+
+  TableLayout tableLayoutPerfo = TableLayout( {"Perforation no.", "Coordinates", "connected to" } );
+  tableLayoutPerfo.setTitle( "Peforation table" );
+
+  TableData tablePerfoData;
+  for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
+  {
+    tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableTextFormatter tableFormatter( tableLayout );
-  GEOS_LOG_RANK_0( tableFormatter.ToString( tableData ));
-  //3. dumping
-
-  // Table tablePerforation = Table( {"Perforation no.", "Coordinates", "connected to" } );
-  // string titlePerfo = "Peforation table";
-  // tablePerforation.setTitle( titlePerfo );
-
-  // for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
-  // {
-  //   tablePerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
-  // }
-
-  // tablePerforation.drawToStream();
+  TableTextFormatter tablePerfoLog( tableLayoutPerfo );
+  GEOS_LOG_RANK_0( tablePerfoLog.ToString( tablePerfoData ));
 
 }
 

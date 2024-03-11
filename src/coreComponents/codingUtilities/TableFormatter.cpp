@@ -32,30 +32,29 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
   {
     for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
-      std::cout << "column value " << rows[idxRow][idxColumn];
       columns[idxColumn].columnValues.push_back( rows[idxRow][idxColumn] );
     }
-     std::cout << std::endl;
   }
 }
 
-//----------------------------------------------//
+///////////////////////////////////////////////////////////////////////
+////// CSV Formatter implementation
+///////////////////////////////////////////////////////////////////////
 
 TableCSVFormatter::TableCSVFormatter( TableLayout tableLayout )
 {
   m_tableLayout = tableLayout;
 }
 
-string TableCSVFormatter::headerToString( std::vector< TableLayout::Column > & columns, integer nbRows )
+string TableCSVFormatter::headerToString( std::vector< TableLayout::Column > & columns )
 {
   string headerValues = "";
-  for( integer idxRow = 0; idxRow< nbRows; idxRow++ )
+
+  for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
   {
-    for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
-    {
-      headerValues += columns[idxColumn].parameter.columnName;
-    }
+    headerValues += columns[idxColumn].parameter.columnName;
   }
+
   return headerValues;
 }
 
@@ -96,7 +95,9 @@ string TableCSVFormatter::dataToString( TableData tableData )
   return data;
 }
 
-//----------------------------------------------//
+///////////////////////////////////////////////////////////////////////
+////// Log Formatter implementation
+///////////////////////////////////////////////////////////////////////
 
 /**
  * @brief Build a value cell given an alignment and spaces from "|"

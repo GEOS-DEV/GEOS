@@ -55,9 +55,9 @@ public:
   template< typename T >
   void addCell( real64 x, real64 y, T value );
   // void printCount();
-  
+
   /**
-   * @brief Construct all rows from all cell values stored in map previously 
+   * @brief Construct all rows from all cell values stored in map previously
    */
   void buildRows();
 
@@ -71,7 +71,7 @@ template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
   //int idx = 0;
-    std::vector< string > m_cellsValue;
+  std::vector< string > m_cellsValue;
   ( [&] {
     string cellValue = GEOS_FMT( "{}", args );
     // if( m_columns[idx].parameter.enabled )

@@ -66,22 +66,22 @@ public:
 
   /**
    * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 2-dimensions table 
+   * @return A string of CSV data from a 2-dimensions table
    */
   string dataToString( TableData2D tableData );
 
   /**
    * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 1-dimensions table 
+   * @return A string of CSV data from a 1-dimensions table
    */
   string dataToString( TableData tableData );
 
   /**
-   * @param columns 
-   * @param nbRows 
-   * @return string 
+   * @param columns
+   * @param nbRows
+   * @return A string with all column names
    */
-  string headerToString( std::vector< TableLayout::Column > & columns, integer nbRows );
+  string headerToString( std::vector< TableLayout::Column > & columns );
 
 };
 
