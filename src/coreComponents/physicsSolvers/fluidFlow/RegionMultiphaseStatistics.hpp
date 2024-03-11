@@ -91,54 +91,28 @@ private:
     constexpr static char const * fieldNameString() { return "_region"; }
   };
 
-   struct RegionStatistics
-   {
-    explicit RegionStatistics(integer regionCount);
-    /// average region pressure
-    real64 averagePressure;
-    /// minimum region pressure
-    real64 minPressure;
-    /// maximum region pressure
-    real64 maxPressure;
-
-    /// minimum region delta pressure
-    real64 minDeltaPressure;
-    /// maximum region delta pressure
-    real64 maxDeltaPressure;
-
-    /// average region temperature
-    real64 averageTemperature;
-    /// minimum region temperature
-    real64 minTemperature;
-    /// maximum region temperature
-    real64 maxTemperature;
-
-    /// total region pore volume
-    real64 totalPoreVolume;
-    /// total region uncompacted pore volume
-    real64 totalUncompactedPoreVolume;
-    /// phase region phase pore volume
-    array1d< real64 > phasePoreVolume;
-
-    /// region phase mass (trapped and non-trapped, immobile and mobile)
-    array1d< real64 > phaseMass;
-    /// trapped region phase mass
-    array1d< real64 > trappedPhaseMass;
-    /// immobile region phase mass
-    array1d< real64 > immobilePhaseMass;
-    /// region component mass
-    array2d< real64 > componentMass;
-   };
-
   void postProcessInput() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
+
+  /**
+   * @brief Compute some statistics on the regions
+   * @param[in] time current time
+   * @param[in] mesh the mesh level object
+   * @param[in] regionNames the array of target region names
+   */
+  void computeRegionStatistics( real64 const time,
+                                MeshLevel & mesh,
+                                arrayView1d< string const > const & regionNames ) const;
+
+  struct RegionStatistics;
+  struct RegionStatisticsKernel;
 
   // The names of regions
   string_array m_regionNames;
 
   // The ids of regions
-  array1d<localIndex> m_regionIdentifiers;
+  array1d< real64 > m_regionIdentifiers;
 
   // The names of properties to output
   string_array m_propertyNames;
