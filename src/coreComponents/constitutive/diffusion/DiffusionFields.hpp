@@ -32,7 +32,7 @@ namespace diffusion
 
 DECLARE_FIELD( diffusivity,
                "diffusivity",
-               array3d< real64 >,
+               array4d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -40,7 +40,7 @@ DECLARE_FIELD( diffusivity,
 
 DECLARE_FIELD( dDiffusivity_dTemperature,
                "dDiffusivity_dTemperature",
-               array3d< real64 >,
+               array4d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,

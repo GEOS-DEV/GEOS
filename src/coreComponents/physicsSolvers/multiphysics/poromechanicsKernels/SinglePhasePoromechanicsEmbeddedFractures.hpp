@@ -161,6 +161,7 @@ public:
   {
 
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      m_dPerm_dDispJump,

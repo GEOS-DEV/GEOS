@@ -333,6 +333,7 @@ public:
   {
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,

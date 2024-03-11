@@ -38,8 +38,8 @@ public:
    * @param diffusivity the array of cell-wise diffusivities in the subregion
    * @param dDiffusivity_dTemperature the array of cell-wise derivatives of diffusivities wrt temperature in the subregion
    */
-  ConstantDiffusionUpdate( arrayView3d< real64 > const & diffusivity,
-                           arrayView3d< real64 > const & dDiffusivity_dTemperature )
+  ConstantDiffusionUpdate( arrayView4d< real64 > const & diffusivity,
+                           arrayView4d< real64 > const & dDiffusivity_dTemperature )
     : DiffusionBaseUpdate( diffusivity, dDiffusivity_dTemperature )
   {}
 
@@ -100,7 +100,7 @@ protected:
 private:
 
   /// default diffusivity in the subRegion
-  array1d< real64 > m_diffusivityComponents;
+  array2d< real64 > m_diffusivityComponents;
 
 };
 

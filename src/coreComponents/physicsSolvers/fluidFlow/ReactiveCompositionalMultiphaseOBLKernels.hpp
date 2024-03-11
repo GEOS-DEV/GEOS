@@ -898,6 +898,7 @@ public:
 
     // in case mesh geometry/configuration is not changing during simulation, weights can be computed as a preprocessing step
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,

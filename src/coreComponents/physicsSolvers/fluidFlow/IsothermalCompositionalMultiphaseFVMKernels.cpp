@@ -187,6 +187,7 @@ CFLFluxKernel::
     real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
 
     stencilWrapper.computeWeights( iconn,
+                                   STENCILWRAPPER_TYPE::avgWeights,
                                    permeability,
                                    dPerm_dPres,
                                    transmissibility,
