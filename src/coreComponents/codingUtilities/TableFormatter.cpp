@@ -186,13 +186,14 @@ void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Colu
     maxStringSize = *it;
     for( size_t idxRow = 0; idxRow <  nbRows; idxRow++ )
     {
-      string cell =  columns[idxColumn].columnValues[idxRow];
+      string cell = columns[idxColumn].columnValues[idxRow];
 
       if( maxStringSize.length() < cell.length())
       {
         maxStringSize = cell;
       }
     }
+
     columns[idxColumn].m_maxStringSize = maxStringSize;
   }
 }
@@ -231,7 +232,7 @@ void TableTextFormatter::computeAndBuildSeparator( std::vector< TableLayout::Col
                                                    string & sectionSeparator )
 {
   integer columnMargin = m_tableLayout.getColumnMargin();
-  integer borderMargin = m_tableLayout.getColumnMargin();
+  integer borderMargin = m_tableLayout.getBorderMargin();
   integer marginTitle = m_tableLayout.getMarginTitle();
   string tableTitle = string( m_tableLayout.getTitle() );
 
@@ -301,7 +302,7 @@ void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & 
                                            TableLayout::Section const section )
 {
   integer columnMargin = m_tableLayout.getColumnMargin();
-  integer borderMargin = m_tableLayout.getColumnMargin();
+  integer borderMargin = m_tableLayout.getBorderMargin();
 
   for( integer idxRow = 0; idxRow< nbRows; idxRow++ )
   {
