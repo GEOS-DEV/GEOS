@@ -3,22 +3,22 @@
 <Problem>
   <Included>
     <File
-      name="./PoroElastic_conformingFracture_2d_openingFrac_solvers.xml"/>
+      name="./PoroElastic_conformingFracture_2d_openingFrac_sequential_solvers.xml"/>
   </Included> 
   <Included>
     <File
       name="./PoroElastic_conformingFracture_2d_openingFrac_base.xml"/>
   </Included> 
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
-      yCoords="{  -1, 1 }"
+      yCoords="{ -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
+      nx="{ 4 }"
+      ny="{ 2 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -26,8 +26,8 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ -0.01, -0.8, -0.01 }"
-      xMax="{ 0.01,  0.8,  1.01 }"/>
+      xMin="{ -0.8,-0.01, -0.01 }"
+      xMax="{  0.8, 0.01,  1.01 }"/>
 
     <Box name="bottomFace" 
          xMax="{1.01, 1.01,  0.01 }" 
@@ -36,23 +36,33 @@
     <Box name="topFace" 
          xMax="{1.01, 1.01,   1.01 }" 
          xMin="{-1.01, -1.01, 0.99 }"/>     
-  
+
   </Geometry>
 
   <Events
-    maxTime="10">
+    maxTime="10.0">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
+    <SoloEvent
+      name="preFractureplot"
+      target="/Outputs/vtkOutput"/>
+
     <PeriodicEvent
       name="solverApplications"
-      forceDt="2"
+      forceDt="1.0"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
       name="outputs"
+      cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restart"
+      cycleFrequency="5"
+      target="/Outputs/restarts"/>
   </Events>
 
   <FieldSpecifications>
@@ -88,14 +98,14 @@
       scale="1.0e5"
       functionName="injectionSchedule"/>
 
-    <FieldSpecification 
+    <FieldSpecification
       name="initialStress"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
-      component="0"
-      scale="-1.0e5"/>
+      component="1"
+      scale="-1.0e5"/>  
 
     <FieldSpecification
       name="xconstraint"
@@ -132,7 +142,10 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="poroElastic_openingFrac_vertical"/>
+      plotFileRoot="poroElastic_openingFrac_horizontal"/>
+
+    <Restart
+    name="restarts"/>  
   </Outputs>
 
 </Problem>

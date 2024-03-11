@@ -548,6 +548,17 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
                                                localRhs );
 
   assembleContact( domain, dofManager, localMatrix, localRhs );
+
+  // for sequenatial: add (fixed) pressure force contribution into residual (no derivatives)
+  if( m_isFixedStressPoromechanicsUpdate )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
+    } );
+  }
 }
 
 void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
@@ -565,6 +576,89 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
     /// assemble stabilization
     assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
+  } );
+}
+
+void SolidMechanicsLagrangeContact::
+  assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                             arrayView1d< string const > const & regionNames,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  arrayView1d< globalIndex const > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
+  {
+    arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+    {
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+      real64 Nbar[3];
+      Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+      Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+      Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+      LvArray::tensorOps::normalize< 3 >( Nbar );
+
+      globalIndex rowDOF[12];
+      real64 nodeRHS[12];
+      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+
+      for( localIndex kf=0; kf<2; ++kf )
+      {
+        localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          // Compute local area contribution for each node
+          array1d< real64 > nodalArea;
+          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+          real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
+          array1d< real64 > globalNodalForce( 3 );
+          LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
+          for( localIndex i=0; i<3; ++i )
+          {
+            rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+            // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+            nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+          }
+        }
+
+        for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
+          {
+            RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+          }
+        }
+      }
+    } );
   } );
 }
 

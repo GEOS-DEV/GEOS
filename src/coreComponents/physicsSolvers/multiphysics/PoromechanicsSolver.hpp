@@ -94,7 +94,7 @@ public:
                                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                          [&]( localIndex const,
                                                                               ElementSubRegionBase & subRegion )
       {
@@ -140,7 +140,7 @@ public:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
