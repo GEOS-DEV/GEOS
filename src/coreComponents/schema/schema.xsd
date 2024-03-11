@@ -483,6 +483,10 @@
 					<xsd:selector xpath="ReactiveFluidDriver" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksRegionMultiphaseStatisticsUniqueName">
+					<xsd:selector xpath="RegionMultiphaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksRelpermDriverUniqueName">
 					<xsd:selector xpath="RelpermDriver" />
 					<xsd:field xpath="@name" />
@@ -3544,6 +3548,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
+			<xsd:element name="RegionMultiphaseStatistics" type="RegionMultiphaseStatisticsType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
@@ -3644,6 +3649,22 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--temperatureControl => Function controlling temperature time history-->
 		<xsd:attribute name="temperatureControl" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="RegionMultiphaseStatisticsType">
+		<!--flowSolverName => Name of the flow solver-->
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--propertyNames => The list of names of properties to report-->
+		<xsd:attribute name="propertyNames" type="string_array" default="{}" />
+		<!--regionIdentifiers => The list of integer identifiers of the regions-->
+		<xsd:attribute name="regionIdentifiers" type="integer_array" use="required" />
+		<!--regionNames => The list of names of the regions-->
+		<xsd:attribute name="regionNames" type="string_array" use="required" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

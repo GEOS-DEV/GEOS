@@ -2085,6 +2085,40 @@ struct StatisticsKernel
   }
 };
 
+/******************************** RegionStatisticsKernel ********************************/
+
+struct RegionStatisticsKernel
+{
+  template< typename POLICY >
+  static void
+  launch( localIndex const size,
+          arrayView1d< integer const > const & elementGhostRank,
+          arrayView1d< real64 const > const & elementVolume,
+          arrayView1d< real64 const > const & pressure,
+          arrayView1d< real64 const > const & temperature,
+          arrayView1d< real64 const > const & referencePorosity,
+          arrayView2d< real64 const > const & porosity,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseComponentFraction,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolumeFraction,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolumeFraction,
+          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelativePermeability )
+  {
+GEOS_UNUSED_VAR(elementGhostRank);
+GEOS_UNUSED_VAR(elementVolume);
+GEOS_UNUSED_VAR(pressure);
+GEOS_UNUSED_VAR(temperature);
+GEOS_UNUSED_VAR(referencePorosity);
+GEOS_UNUSED_VAR(porosity);
+GEOS_UNUSED_VAR(phaseDensity);
+GEOS_UNUSED_VAR(phaseComponentFraction);
+GEOS_UNUSED_VAR(phaseVolumeFraction);
+GEOS_UNUSED_VAR(phaseTrappedVolumeFraction);
+GEOS_UNUSED_VAR(phaseRelativePermeability);
+  }
+};
+
+
 /******************************** HydrostaticPressureKernel ********************************/
 
 struct HydrostaticPressureKernel
