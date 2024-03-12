@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 printenv
 
 SCRIPT_NAME=$0

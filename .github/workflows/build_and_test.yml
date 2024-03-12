@@ -206,3 +206,12 @@ jobs:
         fail_ci_if_error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
