@@ -59,9 +59,8 @@ jobs:
         pwd
         echo "${GITHUB_WORKSPACE}"
         ls -la ./
-#        rm -rf ./* || true
-#        rm -rf ./.??* || true
-#        ls -la ./
+        rm -rf ./* || true
+        ls -la ./
 
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
