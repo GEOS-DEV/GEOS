@@ -73,6 +73,8 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
+      setConstitutiveNamesCallSuper( subRegion );
+
       subRegion.registerField< fields::contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );

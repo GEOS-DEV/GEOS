@@ -3886,6 +3886,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
+		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
+		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
