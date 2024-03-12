@@ -516,7 +516,6 @@
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
-			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
 			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
@@ -535,6 +534,7 @@
 			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
+			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
@@ -923,17 +923,6 @@
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="LagrangianContactType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-		</xsd:choice>
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
-	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1068,6 +1057,8 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1156,12 +1147,33 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="groupNameRef" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="groupNameRef" />
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
+		<!--surfaceGeneratorName => Name of the surface generator to use-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsLagrangeContactType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="groupNameRef" />
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
+		<!--surfaceGeneratorName => Name of the surface generator to use-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1438,6 +1450,8 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 		<!--solidBulkModulus => Solid bulk modulus-->
 		<xsd:attribute name="solidBulkModulus" type="real64_array" />
+		<!--solidShearModulus => Solid shear modulus-->
+		<xsd:attribute name="solidShearModulus" type="real64_array" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
