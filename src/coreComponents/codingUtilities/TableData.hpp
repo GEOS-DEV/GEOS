@@ -66,7 +66,7 @@ public:
 private:
   std::map< std::pair< real64, real64 >, string > data;
   std::set< real64 > columns;
-  std::set< real64 > row;
+  std::set< real64 > rows;
 };
 
 template< typename ... Args >
@@ -91,7 +91,7 @@ void TableData2D::addCell( real64 rowValue, real64 columnValue, T value )
   std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
   data[id] = GEOS_FMT( "{}", value );
   columns.insert( columnValue );
-  row.insert( rowValue );
+  rows.insert( rowValue );
 }
 
 }

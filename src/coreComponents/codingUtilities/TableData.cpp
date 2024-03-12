@@ -28,13 +28,13 @@ std::vector< std::vector< string > > & TableData::getTableDataRows()
 
 void TableData2D::buildRows( std::vector< std::vector< string > > & tableRows )
 {
-  for( real64 const & y : row )
+  for( real64 const & rowValue : rows )
   {
     std::vector< string > values;
-    values.push_back( GEOS_FMT( "{}", y ) );
-    for( real64 const & x : columns )
+    values.push_back( GEOS_FMT( "{}", rowValue ) );
+    for( real64 const & columnValue : columns )
     {
-      std::pair< real64, real64 > id = std::pair< real64, real64 >( y, x );
+      std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
       auto const dataIt = data.find( id );
 
       if( dataIt != data.end())
