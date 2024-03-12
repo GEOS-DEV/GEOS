@@ -55,6 +55,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Line search cut factor. For instance, a value of 0.5 will result in the effective application of"
                     " the last solution by a factor of (0.5, 0.25, 0.125, ...)" );
 
+  registerWrapper( viewKeysStruct::lineSearchStartingIterationString(), &m_lineSearchStartingIteration ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Iteration when line search starts." );
+
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( solverBaseKernels::NormType::Linf ).

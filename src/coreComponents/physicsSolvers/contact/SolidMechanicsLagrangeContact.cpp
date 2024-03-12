@@ -13,11 +13,11 @@
  */
 
 /**
- * @file LagrangianContactSolver.cpp
+ * @file SolidMechanicsLagrangeContact.cpp
  *
  */
 
-#include "LagrangianContactSolver.hpp"
+#include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -33,7 +33,6 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -56,8 +55,8 @@ using namespace dataRepository;
 using namespace fields;
 using namespace finiteElement;
 
-LagrangianContactSolver::LagrangianContactSolver( const string & name,
-                                                  Group * const parent ):
+SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & name,
+                                                              Group * const parent ):
   ContactSolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
@@ -65,25 +64,20 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  m_linearSolverParameters.get().mgr.separateComponents = false;
-  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  m_linearSolverParameters.get().dofsPerNode = 3;
+  LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
+  linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
+  linSolParams.mgr.separateComponents = true;
+  linSolParams.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  linSolParams.dofsPerNode = 3;
 }
 
-void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
+void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
-  using namespace fields::contact;
-
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
-                                                                                 SurfaceElementSubRegion & subRegion )
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -91,7 +85,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         setDescription( "An array that holds the rotation matrices on the fracture." ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      subRegion.registerField< deltaTraction >( getName() ).
+      subRegion.registerField< fields::contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
@@ -120,41 +114,27 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
     } );
 
-    FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
-      setApplyDefaultValue( 1.0 ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName() ).
-      setDescription( "An array that holds the permeability transmissibility multipliers" );
+    forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                      MeshLevel & mesh,
+                                                      arrayView1d< string const > const & )
+    {
+      FaceManager & faceManager = mesh.getFaceManager();
+
+      faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
+        setApplyDefaultValue( 1.0 ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the permeability transmissibility multipliers" );
+    } );
 
   } );
 }
 
-void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+void SolidMechanicsLagrangeContact::initializePreSubGroups()
 {
-  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
-
-  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-  contactRelationName = this->m_contactRelationName;
-  GEOS_ERROR_IF( contactRelationName.empty(),
-                 GEOS_FMT( "{}: Solid model not found on subregion {}",
-                           getDataContext(), subRegion.getName() ) );
-}
-
-
-void LagrangianContactSolver::initializePreSubGroups()
-{
-  SolverBase::initializePreSubGroups();
+  ContactSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-
-  ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
-  m_contactRelationFullIndex = contactRelation.getIndexInParent();
-
 
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
@@ -184,12 +164,12 @@ void LagrangianContactSolver::initializePreSubGroups()
 
 }
 
-void LagrangianContactSolver::setupSystem( DomainPartition & domain,
-                                           DofManager & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution,
-                                           bool const setSparsity )
+void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
+                                                 DofManager & dofManager,
+                                                 CRSMatrix< real64, globalIndex > & localMatrix,
+                                                 ParallelVector & rhs,
+                                                 ParallelVector & solution,
+                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
 {
   if( m_precond )
   {
@@ -197,7 +177,7 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -205,25 +185,22 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 }
 
-void LagrangianContactSolver::implicitStepSetup( real64 const & time_n,
-                                                 real64 const & dt,
-                                                 DomainPartition & domain )
+void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       DomainPartition & domain )
 {
   computeRotationMatrices( domain );
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  m_solidSolver->implicitStepSetup( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 }
 
-void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    DomainPartition & domain )
+void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
+                                                          real64 const & dt,
+                                                          DomainPartition & domain )
 {
-  if( m_setupSolidSolverDofs )
-  {
-    m_solidSolver->implicitStepComplete( time_n, dt, domain );
-  }
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -251,7 +228,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { contact::deltaTraction::key() },
-                                     { getFractureRegionName() } );
+                                     { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -261,18 +238,12 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   } );
 }
 
-void LagrangianContactSolver::postProcessInput()
-{
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  SolverBase::postProcessInput();
-}
-
-LagrangianContactSolver::~LagrangianContactSolver()
+SolidMechanicsLagrangeContact::~SolidMechanicsLagrangeContact()
 {
   // TODO Auto-generated destructor stub
 }
 
-void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) const
+void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -419,9 +390,9 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
   } );
 }
 
-void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+void SolidMechanicsLagrangeContact::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_solidSolver->resetStateToBeginningOfStep( domain );
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -454,7 +425,7 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
   } );
 }
 
-void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & domain )
+void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -518,14 +489,13 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
   } );
 }
 
-void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
-                                         DofManager & dofManager ) const
+void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
+                                               DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  if( m_setupSolidSolverDofs )
-  {
-    m_solidSolver->setupDofs( domain, dofManager );
-  }
+
+  SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
+
   // restrict coupling to fracture regions only
   map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
@@ -543,16 +513,6 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
-  dofManager.addField( solidMechanics::totalDisplacement::key(),
-                       FieldLocation::Node,
-                       3,
-                       meshTargets );
-
-  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                          solidMechanics::totalDisplacement::key(),
-                          DofManager::Connector::Elem,
-                          meshTargets );
-
   dofManager.addField( contact::traction::key(),
                        FieldLocation::Elem,
                        3,
@@ -569,42 +529,149 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
                           meshTargets );
 }
 
-void LagrangianContactSolver::assembleSystem( real64 const time,
-                                              real64 const dt,
-                                              DomainPartition & domain,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
+                                                    real64 const dt,
+                                                    DomainPartition & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
   synchronizeFractureState( domain );
 
-  m_solidSolver->assembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
+  SolidMechanicsLagrangianFEM::assembleSystem( time,
+                                               dt,
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
 
+  assembleContact( domain, dofManager, localMatrix, localRhs );
+
+  // for sequenatial: add (fixed) pressure force contribution into residual (no derivatives)
+  if( m_isFixedStressPoromechanicsUpdate )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
+    } );
+  }
+}
+
+void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
+                                                     DofManager const & dofManager,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    /// assemble Kut
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// assemble Ktu, Ktt blocks.
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// assemble stabilization
     assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
   } );
 }
 
-
-real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
-                                                       real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                       DomainPartition const & domain,
-                                                       DofManager const & dofManager,
-                                                       arrayView1d< real64 const > const & localRhs )
+void SolidMechanicsLagrangeContact::
+  assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                             arrayView1d< string const > const & regionNames,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  arrayView1d< globalIndex const > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
+  {
+    arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+    {
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+      real64 Nbar[3];
+      Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+      Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+      Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+      LvArray::tensorOps::normalize< 3 >( Nbar );
+
+      globalIndex rowDOF[12];
+      real64 nodeRHS[12];
+      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+
+      for( localIndex kf=0; kf<2; ++kf )
+      {
+        localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          // Compute local area contribution for each node
+          array1d< real64 > nodalArea;
+          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+          real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
+          array1d< real64 > globalNodalForce( 3 );
+          LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
+          for( localIndex i=0; i<3; ++i )
+          {
+            rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+            // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+            nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+          }
+        }
+
+        for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
+          {
+            RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+          }
+        }
+      }
+    } );
+  } );
+}
+
+real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time,
+                                                             real64 const & dt,
+                                                             DomainPartition const & domain,
+                                                             DofManager const & dofManager,
+                                                             arrayView1d< real64 const > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+
   real64 momentumR2 = 0.0;
   real64 contactR2 = 0.0;
 
@@ -715,17 +782,17 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
       globalResidualNorm[1],
       globalResidualNorm[2] );
   }
-  return globalResidualNorm[2];
+  return sqrt( globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual );
 }
 
-void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )
+void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
 {
   if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     // TODO: move among inputs (xml)
     string const leadingBlockApproximation = "blockJacobi";
 
-    LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
+    LinearSolverParameters mechParams = getLinearSolverParameters();
     // Because of boundary conditions
     mechParams.isSymmetric = false;
 
@@ -754,7 +821,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     }
     else
     {
-      GEOS_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
     }
 
     // Preconditioner for the leading block: tracPrecond
@@ -764,18 +831,18 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
-      if( m_solidSolver->getRigidBodyModes().empty() )
+      if( getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { solidMechanics::totalDisplacement::key() },
-                                                   m_solidSolver->getRigidBodyModes() );
+                                                   getRigidBodyModes() );
       }
     }
 
     // Preconditioner for the Schur complement: mechPrecond
-    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, getRigidBodyModes() );
     precond->setupBlock( 1,
                          { { solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::move( mechPrecond ) );
@@ -789,7 +856,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
   }
 }
 
-void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain ) const
+void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -830,10 +897,10 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
   } );
 }
 
-void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                                                    localIndex const kf0,
-                                                    array1d< real64 > & nodalArea ) const
+void SolidMechanicsLagrangeContact::computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                                                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                                                          localIndex const kf0,
+                                                          array1d< real64 > & nodalArea ) const
 {
   // I've tried to access the finiteElement::dispatch3D with
   // finiteElement::FiniteElementBase const &
@@ -896,12 +963,12 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   }
   else
   {
-    GEOS_ERROR( "LagrangianContactSolver " << getDataContext() << ": face with " << numNodesPerFace <<
+    GEOS_ERROR( "SolidMechanicsLagrangeContact " << getDataContext() << ": face with " << numNodesPerFace <<
                 " nodes. Only triangles and quadrilaterals are supported." );
   }
 }
 
-void LagrangianContactSolver::
+void SolidMechanicsLagrangeContact::
   assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                               arrayView1d< string const > const & regionNames,
                                               DofManager const & dofManager,
@@ -1039,7 +1106,7 @@ void LagrangianContactSolver::
   } );
 }
 
-void LagrangianContactSolver::
+void SolidMechanicsLagrangeContact::
   assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames,
                                                                 DofManager const & dofManager,
@@ -1066,7 +1133,8 @@ void LagrangianContactSolver::
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+    string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
@@ -1136,9 +1204,10 @@ void LagrangianContactSolver::
                     {
                       nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
 
-                      dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-                      dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
-                      dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
+                      for( localIndex j = 0; j < 3; ++j )
+                      {
+                        dRdU( j, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, j ) * pow( -1, kf );
+                      }
                     }
                   }
                 }
@@ -1258,6 +1327,7 @@ void LagrangianContactSolver::
 
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
+
           for( localIndex idof = 0; idof < 3; ++idof )
           {
             localRhs[localRow + idof] += elemRHS[idof];
@@ -1284,11 +1354,11 @@ void LagrangianContactSolver::
   } );
 }
 
-void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
-                                                     NumericalMethodsManager const & numericalMethodManager,
-                                                     DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mesh,
+                                                           NumericalMethodsManager const & numericalMethodManager,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1309,7 +1379,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
-  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+  SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
   GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(),
@@ -1695,18 +1765,15 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   } );
 }
 
-void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager,
-                                                   arrayView1d< real64 const > const & localSolution,
-                                                   real64 const scalingFactor,
-                                                   real64 const dt,
-                                                   DomainPartition & domain )
+void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofManager,
+                                                         arrayView1d< real64 const > const & localSolution,
+                                                         real64 const scalingFactor,
+                                                         real64 const dt,
+                                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
-  if( m_setupSolidSolverDofs )
-  {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-  }
+  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
 
   dofManager.addVectorToField( localSolution,
                                contact::traction::key(),
@@ -1730,7 +1797,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
     fieldsToBeSync.addElementFields( { contact::traction::key(),
                                        contact::deltaTraction::key(),
                                        contact::dispJump::key() },
-                                     { getFractureRegionName() } );
+                                     { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -1739,12 +1806,14 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   } );
 }
 
-void LagrangianContactSolver::updateState( DomainPartition & domain )
+void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   computeFaceDisplacementJump( domain );
 }
 
-bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & domain ) const
+bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -1775,7 +1844,7 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
   return false;
 }
 
-bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1792,7 +1861,8 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
@@ -1886,7 +1956,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   return hasConfigurationConvergedGlobally;
 }
 
-bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const
+bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
   globalIndex numStick, numSlip, numOpen;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1899,13 +1969,13 @@ bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition con
   return ( ( numSlip + numOpen ) == 0 );
 }
 
-real64 LagrangianContactSolver::setNextDt( real64 const & currentDt,
-                                           DomainPartition & domain )
+real64 SolidMechanicsLagrangeContact::setNextDt( real64 const & currentDt,
+                                                 DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( domain );
   return currentDt;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangeContact, string const &, Group * const )
 
 } /* namespace geos */

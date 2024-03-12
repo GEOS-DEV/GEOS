@@ -13,12 +13,12 @@
  */
 
 /**
- * @file LagrangianContactSolver.hpp
+ * @file SolidMechanicsLagrangeContact.hpp
  *
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
@@ -27,14 +27,14 @@ namespace geos
 
 class SolidMechanicsLagrangianFEM;
 
-class LagrangianContactSolver : public ContactSolverBase
+class SolidMechanicsLagrangeContact : public ContactSolverBase
 {
 public:
 
-  LagrangianContactSolver( const string & name,
-                           Group * const parent );
+  SolidMechanicsLagrangeContact( const string & name,
+                                 Group * const parent );
 
-  ~LagrangianContactSolver() override;
+  ~SolidMechanicsLagrangeContact() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -42,15 +42,12 @@ public:
    */
   static string catalogName()
   {
-    return "LagrangianContact";
+    return "SolidMechanicsLagrangeContact";
   }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
-
-  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "LagrangianContact"; }
 
   virtual void initializePreSubGroups() override;
 
@@ -66,7 +63,7 @@ public:
                CRSMatrix< real64, globalIndex > & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
-               bool const setSparsity = true ) override;
+               bool const setSparsity = true ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -109,6 +106,11 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
+  void assembleContact( DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
   void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
                                                    DofManager const & dofManager,
@@ -121,13 +123,17 @@ public:
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
+  void assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                                  arrayView1d< string const > const & regionNames,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
   void assembleStabilization( MeshLevel const & mesh,
                               NumericalMethodsManager const & numericalMethodManager,
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
-
-  string const & getContactRelationName() const { return m_contactRelationName; }
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
@@ -148,13 +154,8 @@ public:
 
   string getStabilizationName() const { return m_stabilizationName; }
 
-protected:
-  virtual void postProcessInput() override final;
-
 private:
   string m_stabilizationName;
-
-  localIndex m_contactRelationFullIndex;
 
   real64 const m_slidingCheckTolerance = 0.05;
 
@@ -164,28 +165,21 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-
-
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
 
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-    constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
-    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
-
+    constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
   };
 
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSLAGRANGECONTACT_HPP_ */
