@@ -54,6 +54,15 @@ jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
     steps:
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
+
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
       with:
@@ -181,11 +190,11 @@ jobs:
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
-
-        # Remove the container and the workspace to avoid any conflict with the next run.
-        echo github.workspace = ${{ github.workspace }}
-        #rm -rf ${{ github.workspace }}/*
-        #docker rm -f ${CONTAINER_NAME}
+        
+        # manually remove the workspace to avoid issues with the next job when using self-hosted runners
+        if [ -d "${GITHUB_WORKSPACE}/integratedTests" ]; then
+          rm -rf ${GITHUB_WORKSPACE}/integratedTests
+        fi
 
         exit ${EXIT_STATUS}
 
@@ -197,3 +206,12 @@ jobs:
         fail_ci_if_error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
