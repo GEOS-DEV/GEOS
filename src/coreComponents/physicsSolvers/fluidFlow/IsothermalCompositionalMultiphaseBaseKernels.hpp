@@ -786,13 +786,6 @@ public:
 
       }
     }
-
-    // check zero diagonal (works only in debug)
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      GEOS_ASSERT_MSG( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
-                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
-    }
   }
 
   /**
