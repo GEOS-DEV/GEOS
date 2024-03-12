@@ -68,20 +68,18 @@ public:
    * @param tableData A 2-dimensions tabke
    * @return A string of CSV data from a 2-dimensions table
    */
-  string dataToString( TableData2D tableData );
+  string dataToString( TableData2D & tableData );
 
   /**
    * @param tableData A 2-dimensions tabke
    * @return A string of CSV data from a 1-dimensions table
    */
-  string dataToString( TableData tableData );
+  string dataToString( TableData & tableData );
 
   /**
-   * @param columns
-   * @param nbRows
    * @return A string with all column names
    */
-  string headerToString( std::vector< TableLayout::Column > & columns );
+  string headerToString();
 
 };
 
@@ -93,14 +91,19 @@ public:
   TableTextFormatter( TableLayout tableLayout );
 
   /**
-   * @brief return a string following the formatter
+   * @brief return a table string from a TableData
    */
   string ToString( TableData & tableData );
 
   /**
-   * @brief return a string following the formatter
+   * @brief return a table string from a TableData2D
    */
   string ToString( TableData2D & tableData );
+
+  /**
+   * @return return a table string from a TableLayout
+   */
+  string layoutToString();
 
 private:
 
@@ -112,15 +115,6 @@ private:
   void parseAndStoreHeaderSections( std::vector< TableLayout::Column > & columns,
                                     size_t & largestHeaderVectorSize,
                                     std::vector< std::vector< string > > & splitHeader );
-
-  string constructTable( std::vector< std::vector< string > > & rowsValues );
-  /**
-   * @brief Iterate throught the header names vector.
-   * Adjust the size of each header vector by adding empty strings if needed.
-   * Store the modified header names in the corresponding column parameter.
-   * @param largestHeaderVectorSize The largest split header vector size
-   * @param splitHeader A vector containing all split header names
-   */
   void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
                                   size_t largestHeaderVectorSize,
                                   std::vector< std::vector< string > > & splitHeader );
@@ -169,6 +163,13 @@ private:
                          string & rows,
                          integer const nbRows,
                          TableLayout::Section const section );
+
+  /**
+   * @brief Construct a table from a tableData
+   * @param rowsValues All values sorted by rows
+   * @return A table string
+   */
+  string constructAndReturnTable( std::vector< std::vector< string > > & rowsValues );
 
 };
 }

@@ -21,49 +21,29 @@
 namespace geos
 {
 
-// void TableData2D::printCount()
-// {
-//   int nb=0, nbx=0, nby=0;
-
-//   for( real64 x : columns )
-//   {
-//     nbx++;
-//   }
-
-//   for( real64 y : row )
-//   {
-//     nby++;
-//     for( real64 x : columns )
-//     {
-//       auto const dataIt = data.find( std::pair< real64, real64 >( x, y ));
-//       if( dataIt != data.end())
-//       {
-//         nb++;
-//       }
-//     }
-//   }
-
-//   std::cout<<"total = "<<nb<<"  ;  "<<"totalx = "<<nbx<<"  ;  "<<"totaly = "<<nby<<std::endl;
-// }
-
-void TableData2D::buildRows()
+std::vector< std::vector< string > > & TableData::getTableDataRows()
 {
-  for( real64 y : row )
+  return m_rows;
+}
+
+void TableData2D::buildRows( std::vector< std::vector< string > > & tableRows )
+{
+  for( real64 const & y : row )
   {
     std::vector< string > values;
     values.push_back( GEOS_FMT( "{}", y ) );
-
-    for( real64 x : columns )
+    for( real64 const & x : columns )
     {
-      std::pair< real64, real64 > id = std::pair< real64, real64 >( x, y );
+      std::pair< real64, real64 > id = std::pair< real64, real64 >( y, x );
       auto const dataIt = data.find( id );
+
       if( dataIt != data.end())
       {
         values.push_back( GEOS_FMT( "{}", dataIt->second ));
       }
     }
-
-    m_rows.push_back( values );
+    tableRows.push_back( values );
   }
 }
+
 }
