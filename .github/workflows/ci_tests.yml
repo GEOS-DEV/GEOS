@@ -187,7 +187,7 @@ jobs:
   run_integrated_tests:
     needs:
       - is_not_draft_pull_request
-      - cpu_builds
+#      - cpu_builds
     if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request' }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
