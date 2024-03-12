@@ -38,7 +38,7 @@ public:
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
-  TableFormatter( TableLayout tableLayout );
+  TableFormatter( TableLayout & tableLayout );
 
   TableLayout m_tableLayout;
 
@@ -62,7 +62,7 @@ public:
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
-  TableCSVFormatter( TableLayout tableLayout );
+  TableCSVFormatter( TableLayout & tableLayout );
 
   /**
    * @param tableData A 2-dimensions tabke
@@ -88,7 +88,7 @@ class TableTextFormatter : public TableFormatter
 
 public:
 
-  TableTextFormatter( TableLayout tableLayout );
+  TableTextFormatter( TableLayout & tableLayout );
 
   /**
    * @brief return a table string from a TableData

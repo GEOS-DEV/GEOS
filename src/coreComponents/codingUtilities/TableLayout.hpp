@@ -54,11 +54,11 @@ public:
     // Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnName;
 
-    ColumnParam( const std::string & name, Alignment align )
+    ColumnParam( std::string const & name, Alignment align )
       : columnName( name ), alignment( align )
     {}
 
-    ColumnParam( const std::string & name, Alignment align, bool display )
+    ColumnParam( std::string const & name, Alignment align, bool display )
       : columnName( name ), alignment( align ), enabled( display )
     {}
   };

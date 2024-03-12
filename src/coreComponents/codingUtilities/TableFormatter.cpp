@@ -20,7 +20,7 @@
 namespace geos
 {
 
-TableFormatter::TableFormatter( TableLayout tableLayout )
+TableFormatter::TableFormatter( TableLayout & tableLayout )
 {
   m_tableLayout = tableLayout;
 }
@@ -41,7 +41,7 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
 ////// CSV Formatter implementation
 ///////////////////////////////////////////////////////////////////////
 
-TableCSVFormatter::TableCSVFormatter( TableLayout tableLayout )
+TableCSVFormatter::TableCSVFormatter( TableLayout & tableLayout )
 {
   m_tableLayout = tableLayout;
 }
@@ -133,7 +133,7 @@ string buildValueCell( TableLayout::Alignment const alignment, string_view value
   }
 }
 
-TableTextFormatter::TableTextFormatter( TableLayout tableLayout ):
+TableTextFormatter::TableTextFormatter( TableLayout & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
