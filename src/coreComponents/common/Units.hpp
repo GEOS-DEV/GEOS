@@ -245,21 +245,4 @@ struct GEOS_FMT_NS::formatter< geos::units::TimeFormatInfo > : GEOS_FMT_NS::form
   }
 };
 
-/**
- * @brief Format the std::optional<T> to a string.
- * @return return the corresponding value string. If std::optional<T> is empty retun an empty string
- */
-template< typename T >
-struct GEOS_FMT_NS::formatter< std::optional< T > > : GEOS_FMT_NS::formatter< T >
-{
-  auto format( std::optional< T > const & opt, format_context & ctx )
-  {
-    if( opt )
-    {
-      return GEOS_FMT_NS::formatter< T >::format( *opt, ctx );
-    }
-    return GEOS_FMT_NS::format_to( ctx.out(), "" );
-  }
-};
-
 #endif //GEOS_MATH_PHYSICSCONSTANTS_HPP_

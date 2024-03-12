@@ -53,17 +53,18 @@
 //#include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <string>
-#include <map>
 #include <unordered_map>
 #include <vector>
-#include <set>
-#include <string_view>
 
-/**
+/*
  * top level geosx namespace contains all code that is specific to GEOSX
  */
 namespace geos
@@ -669,6 +670,29 @@ struct TypeName
 };
 
 }
+
+/**
+ * @brief Format to be able to directly use a std::optional<T>.
+ * @param T The type of the value contained std::optional and GEOS_FMT_NS::formatter.
+ */
+template< typename T >
+struct GEOS_FMT_NS::formatter< std::optional< T > > : GEOS_FMT_NS::formatter< T >
+{
+  /**
+   * @brief Format the std::optional<T> to a string.
+   * @param opt The std::optional< T > value to format
+   * @param ctx formatting state consisting of the formatting arguments and the output iterator
+   * @return return the corresponding value string. If std::optional<T> is empty retun an empty string
+   */
+  auto format( std::optional< T > const & opt, format_context & ctx )
+  {
+    if( opt )
+    {
+      return GEOS_FMT_NS::formatter< T >::format( *opt, ctx );
+    }
+    return GEOS_FMT_NS::format_to( ctx.out(), "" );
+  }
+};
 
 
 

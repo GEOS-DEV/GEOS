@@ -29,7 +29,7 @@ namespace geos
  * @param spaces
  * @return A cell value
  */
-string buildValueCell( Table::Alignment const alignment, string_view value, integer spaces )
+string buildValueCell( Table::Alignment const alignment, string_view value, integer const spaces )
 {
   switch( alignment )
   {
@@ -64,7 +64,7 @@ Table::Table( std::vector< ColumnParam > const & columnParameter )
   }
 }
 
-void Table::addRowsFromVectors( std::vector< std::vector< string > > tableRows )
+void Table::addRowsFromVectors( std::vector< std::vector< string > > const & tableRows )
 {
   for( size_t indexRow = 0; indexRow < tableRows.size(); indexRow++ )
   {
@@ -215,7 +215,7 @@ void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSep
   {
     for( std::size_t idxColumn = 0; idxColumn < m_columns.size(); ++idxColumn )
     {
-      integer cellSize = m_columns[idxColumn].m_maxStringSize.length();
+      integer const cellSize = m_columns[idxColumn].m_maxStringSize.length();
       if( idxColumn == 0 )
       {
         sectionSeparator +=  GEOS_FMT( "+{:-<{}}", "", ( cellSize + borderMargin ));
@@ -235,7 +235,7 @@ void Table::computeAndBuildSeparator( string & topSeparator, string & sectionSep
   topSeparator = GEOS_FMT( "+{:-<{}}+", "", sectionSeparator.size() - 2 );// -2 for ++
 }
 
-void Table::buildTitleRow( string & titleRows, string topSeparator, string sectionSeparator )
+void Table::buildTitleRow( string & titleRows, string_view topSeparator, string_view sectionSeparator )
 {
   titleRows = GEOS_FMT( "\n{}\n|", topSeparator );
   titleRows +=  buildValueCell( Alignment::middle,
@@ -245,7 +245,7 @@ void Table::buildTitleRow( string & titleRows, string topSeparator, string secti
   titleRows += GEOS_FMT( "{}\n", "|" );
 }
 
-void Table::buildSectionRows( string sectionSeparator,
+void Table::buildSectionRows( string_view sectionSeparator,
                               string & rows,
                               integer const nbRows,
                               Section const section )
@@ -265,7 +265,7 @@ void Table::buildSectionRows( string sectionSeparator,
       {
         cell = m_columns[idxColumn].columnValues[idxRow];
       }
-      integer cellSize = m_columns[idxColumn].m_maxStringSize.length();
+      integer const cellSize = m_columns[idxColumn].m_maxStringSize.length();
       rows += buildValueCell( m_columns[idxColumn].parameter.alignment,
                               cell,
                               cellSize );
@@ -303,9 +303,8 @@ void Table::fillColumnsValuesFromCellsRows()
   }
 }
 
-void Table::draw( std::ostream & oss )
+void Table::drawToStream( std::ostream & oss )
 {
-  string tableOutput;
   string rows;
   string titleRows;
   string topSeparator;
@@ -314,8 +313,8 @@ void Table::draw( std::ostream & oss )
   std::vector< std::vector< string > > splitHeader;
   size_t largestHeaderVectorSize = 0;
 
-
   fillColumnsValuesFromCellsRows();
+
   parseAndStoreHeaderSections( largestHeaderVectorSize, splitHeader );
   adjustHeaderSizesAndStore( largestHeaderVectorSize, splitHeader );
 
@@ -331,9 +330,16 @@ void Table::draw( std::ostream & oss )
   buildSectionRows( sectionSeparator, rows, largestHeaderVectorSize, Section::header );
   buildSectionRows( sectionSeparator, rows, m_cellsRows.size(), Section::values );
 
-  tableOutput = titleRows + rows + '\n';
+  string const tableOutput = titleRows + rows + '\n';
 
   oss << tableOutput;
+}
+
+string Table::drawToString()
+{
+  std::ostringstream oss;
+  drawToStream( oss );
+  return oss.str();
 }
 
 }
