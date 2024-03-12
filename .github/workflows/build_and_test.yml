@@ -54,6 +54,14 @@ jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
     steps:
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "${GITHUB_WORKSPACE}"
+        ls -la ./
+#        rm -rf ./* || true
+#        rm -rf ./.??* || true
+#        ls -la ./
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
       with:
