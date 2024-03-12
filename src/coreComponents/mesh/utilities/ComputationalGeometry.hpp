@@ -422,7 +422,7 @@ void getBoundingBox( localIndex const elemIndex,
                          LvArray::NumericLimits< real64 >::max };
 
   // boxDims is used to hold the max coordinates.
-  LvArray::tensorOps::fill< 3 >( boxDims, LvArray::NumericLimits< real64 >::min );
+  LvArray::tensorOps::fill< 3 >( boxDims, LvArray::NumericLimits< real64 >::lowest );
 
   // loop over all the vertices of the element to get the min and max coords
   for( localIndex a = 0; a < pointIndices.size( 1 ); ++a )
