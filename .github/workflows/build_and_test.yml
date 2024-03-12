@@ -57,9 +57,10 @@ jobs:
     - name: 'Cleanup build folder'
       run: |
         pwd
-        echo "${GITHUB_WORKSPACE}"
+        echo "cleaning ${GITHUB_WORKSPACE}"
         ls -la ./
-        rm -rf ./* || true
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
         ls -la ./
 
     - name: Checkout Repository
