@@ -4,7 +4,7 @@ pfwLocation=$(pwd)
 # Set full input file path where the input file is pfw_input_${fileName}.py 
 inputFile="examples/bar/pfw_input_bar.py"
 # Set full path to GEOS executable, which for example on quartz may be
-pathToGEOS="${pfwLocation}/../GEOS/build-quartz-clang@14-release/bin/geosx"
+pathToGEOS="${pfwLocation}/../../../build-quartz-clang@14-release/bin/geosx"
 # Set user bank for this parallel job allocation
 userBank="uco"
 
