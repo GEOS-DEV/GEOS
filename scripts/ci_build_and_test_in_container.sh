@@ -1,8 +1,6 @@
 #!/bin/bash
 set -o pipefail
 
-#export PYTHONDONTWRITEBYTECODE=1
-
 printenv
 
 SCRIPT_NAME=$0
@@ -63,8 +61,6 @@ EOF
 exit 1
 }
 
-
-
 # First working in the root of the cloned repository.
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
@@ -120,13 +116,9 @@ do
   esac
 done
 
- ls -la /tmp/geos/integratedTests
-
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
-else
-  echo "Repository folder is ${GEOS_SRC_DIR}"
 fi
 
 if [[ -z "${GEOSX_DIR}" ]]; then
@@ -217,7 +209,6 @@ or_die python3 scripts/config-build.py \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
-               -DGEOS_PYTHON_PACKAGES_BRANCH:STRING="bugfix/sherman/fixRebaselineLogging" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 

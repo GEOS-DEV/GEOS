@@ -79,7 +79,6 @@ HDFFile::~HDFFile()
   {
     H5Pclose( m_faplId );
   }
-  H5Fflush( m_fileId, H5F_SCOPE_GLOBAL );
   H5Fclose( m_fileId );
 }
 
