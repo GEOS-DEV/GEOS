@@ -39,8 +39,10 @@ public:
   enum PropertyNameType : integer
   {
     Pressure,
+    Temperature,
     PoreVolume,
-    Saturation
+    VolumeFraction,
+    Mass
   };
 
 public:
@@ -89,6 +91,8 @@ private:
     constexpr static char const * propertyNamesString() { return "propertyNames"; }
     /// String for the suffix of the field name
     constexpr static char const * fieldNameString() { return "_region"; }
+    /// String for the file name
+    constexpr static char const * fileNameString() { return "values"; }
   };
 
   void postProcessInput() override;
@@ -104,6 +108,11 @@ private:
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
                                 arrayView1d< string const > const & regionNames ) const;
+
+  void initializeFile() const;
+
+  template< typename ARRAY >
+  std::ostream & writeArray( std::ostream & os, ARRAY const & array ) const;
 
   struct RegionStatistics;
   struct RegionStatisticsKernel;
@@ -123,8 +132,10 @@ private:
 
 ENUM_STRINGS( RegionMultiphaseStatistics::PropertyNameType,
               "pressure",
+              "temperature",
               "poreVolume",
-              "saturation" );
+              "volumeFraction",
+              "mass" );
 
 } /* namespace geos */
 

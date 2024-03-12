@@ -3660,7 +3660,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--propertyNames => The list of names of properties to report-->
 		<xsd:attribute name="propertyNames" type="string_array" default="{}" />
 		<!--regionIdentifiers => The list of integer identifiers of the regions-->
-		<xsd:attribute name="regionIdentifiers" type="integer_array" use="required" />
+		<xsd:attribute name="regionIdentifiers" type="real64_array" use="required" />
 		<!--regionNames => The list of names of the regions-->
 		<xsd:attribute name="regionNames" type="string_array" use="required" />
 		<!--writeCSV => Write statistics into a CSV file-->
