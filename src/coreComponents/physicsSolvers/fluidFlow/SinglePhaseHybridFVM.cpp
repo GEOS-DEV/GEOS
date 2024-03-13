@@ -162,13 +162,6 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   } );
 }
 
-void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
-                                                 real64 const & dt,
-                                                 DomainPartition & domain )
-{
-  SinglePhaseBase::implicitStepComplete( time, dt, domain );
-}
-
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
 {
