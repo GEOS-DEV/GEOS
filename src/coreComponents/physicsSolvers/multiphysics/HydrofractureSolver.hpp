@@ -155,6 +155,8 @@ public:
     constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
 
     constexpr static char const * newFractureInitializationTypeString() { return "newFractureInitializationType"; }
+    
+    constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -226,6 +228,8 @@ private:
 
   // flag to determine which initialization type to use for the new fracture cell
   InitializationType m_newFractureInitializationType;
+  
+  integer m_useQuasiNewton;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
 
 };
 

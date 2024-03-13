@@ -102,6 +102,10 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( InitializationType::Pressure ).
     setDescription( "Type of new fracture element initialization. Can be Pressure or Displacement. " );
+    
+  registerWrapper( viewKeyStruct::useQuasiNewtonString(), &m_useQuasiNewton ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL );
 
   m_numResolves[0] = 0;
 
@@ -185,6 +189,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postProcessInput()
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 
   flowSolver()->allowNegativePressure();
+
+  GEOS_LOG_RANK_0_IF( m_useQuasiNewton, GEOS_FMT( "{}: activated Quasi-Newton", this->getName()));
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -394,8 +400,6 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
 {
-  GEOS_MARK_FUNCTION;
-
   if( m_isMatrixPoroelastic )
   {
     Base::setupCoupling( domain, dofManager );
@@ -852,6 +856,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,
+                                            m_useQuasiNewton,
                                             elemsToFaces,
                                             faceToNodeMap,
                                             faceNormal,
@@ -871,6 +876,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
   Base::updateState( domain );
 

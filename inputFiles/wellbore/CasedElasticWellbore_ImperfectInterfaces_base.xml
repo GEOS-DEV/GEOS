@@ -2,14 +2,12 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      solidSolverName="lagsolve"
+      timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
-      contactRelationName="fractureContact"
-      fractureRegionName="Fracture"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -18,18 +16,7 @@
         />
       <LinearSolverParameters
         directParallel="0"/>
-    </LagrangianContact>
-
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ casing, cement, rock }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangeContact>
 
     <!-- SPHINX_SolversSurfaceGenerator -->
     <SurfaceGenerator

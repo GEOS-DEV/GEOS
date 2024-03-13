@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 printenv
 
 SCRIPT_NAME=$0
@@ -143,6 +145,26 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
+  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+    DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
+    for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+      if [ -f "$file" ]; then
+        filename=$(basename -- "$file")
+        filename_no_ext="${filename%.*}"
+        new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
+        cp "$file" "$new_filename"
+        echo "Copied $filename to $new_filename"
+      fi
+    done
+    update-ca-certificates 
+    # gcloud config set core/custom_ca_certs_file cert.pem'
+    
+    NPROC=8
+  else
+    NPROC=$(nproc)
+  fi
+  echo "Using ${NPROC} cores."
+
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
@@ -154,7 +176,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  export ATS_FILTER="np<=2"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 
@@ -208,15 +231,15 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ninja -j $NPROC geosx
 else
-  or_die ninja -j $(nproc)
+  or_die ninja -j $NPROC
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
     # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
-    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
 
@@ -232,7 +255,11 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testLifoStorage|testExternalSolvers"
+  else
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+  fi
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
@@ -256,7 +283,19 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
+
+  # want to clean the integrated tests folder to avoid polluting the next build.
+  or_die integratedTests/geos_ats.sh -a clean
 fi
+
+# Cleaning the build directory.
+or_die ninja clean
+
+
+# Clean the repository
+or_die cd ${GEOS_SRC_DIR}/inputFiles
+find . -name *.pyc | xargs rm -f
+
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
