@@ -557,8 +557,8 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    for (auto jj : targetRegions)
-    std::cout << "forElementSubRegions " << jj << std::endl;
+    for( auto jj : targetRegions )
+      std::cout << "forElementSubRegions " << jj << std::endl;
     forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
                                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
                                                                                                                    localIndex const,

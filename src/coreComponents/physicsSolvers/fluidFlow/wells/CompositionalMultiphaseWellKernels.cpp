@@ -119,7 +119,7 @@ ControlEquationHelper::
   }
 }
 
-template< integer NC >
+template< integer NC , integer IS_THERMAL >
 GEOS_HOST_DEVICE
 inline
 void
@@ -136,7 +136,7 @@ ControlEquationHelper::
            real64 const & dCurrentBHP_dPres,
            arrayView1d< real64 const > const & dCurrentBHP_dCompDens,
            arrayView1d< real64 const > const & currentPhaseVolRate,
-           arrayView1d< real64 const > const & dCurrentPhaseVolRate,
+           arrayView2d< real64 const > const & dCurrentPhaseVolRate,
            arrayView1d< real64 const > const & dCurrentPhaseVolRate_dPres,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate_dCompDens,
            arrayView1d< real64 const > const & dCurrentPhaseVolRate_dRate,
@@ -151,9 +151,15 @@ ControlEquationHelper::
            arrayView1d< real64 > const & localRhs )
 {
 
-  GEOS_UNUSED_VAR(dCurrentBHP);
-  GEOS_UNUSED_VAR(dCurrentPhaseVolRate);
-  GEOS_UNUSED_VAR(dCurrentTotalVolRate);
+  //using ROFFSETC = compositionalMultiphaseWellKernels::RowOffsetComplete<NC>;
+  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac<NC>;
+  using Deriv = multifluid::DerivativeOffset;
+  //using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  //using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  GEOS_UNUSED_VAR( dCurrentBHP );
+  GEOS_UNUSED_VAR( dCurrentPhaseVolRate );
+  GEOS_UNUSED_VAR( dCurrentTotalVolRate );
   localIndex const eqnRowIndex      = dofNumber + ROFFSET::CONTROL - rankOffset;
   globalIndex const presDofColIndex = dofNumber + COFFSET::DPRES;
   globalIndex const rateDofColIndex = dofNumber + COFFSET::DCOMP + NC;
@@ -168,6 +174,7 @@ ControlEquationHelper::
   real64 dControlEqn_dPres = 0;
   real64 dControlEqn_dRate = 0;
   real64 dControlEqn_dComp[NC]{};
+  real64 dControlEqn[NC+2+IS_THERMAL]{};
 
   // Note: We assume in the computation of currentBHP that the reference elevation
   //       is in the top well element. This is enforced by a check in the solver.
@@ -181,43 +188,64 @@ ControlEquationHelper::
     // control equation is a difference between current BHP and target BHP
     controlEqn = currentBHP - targetBHP;
     dControlEqn_dPres = dCurrentBHP_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentBHP[Deriv::dP];
     for( integer ic = 0; ic < NC; ++ic )
     {
       dControlEqn_dComp[ic] = dCurrentBHP_dCompDens[ic];
+      dControlEqn[COFFSET_WJ::dC+ic] = dCurrentBHP[Deriv::dC+ic];
     }
+    if constexpr ( IS_THERMAL )
+    
+      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
+
   }
   // Oil volumetric rate control
   else if( currentControl == WellControls::Control::PHASEVOLRATE )
   {
     controlEqn = currentPhaseVolRate[targetPhaseIndex] - targetPhaseRate;
     dControlEqn_dPres = dCurrentPhaseVolRate_dPres[targetPhaseIndex];
+    dControlEqn[COFFSET_WJ::dP] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dP];
     dControlEqn_dRate = dCurrentPhaseVolRate_dRate[targetPhaseIndex];
+    dControlEqn[COFFSET_WJ::dQ] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dQ]; 
     for( integer ic = 0; ic < NC; ++ic )
     {
       dControlEqn_dComp[ic] = dCurrentPhaseVolRate_dCompDens[targetPhaseIndex][ic];
+      dControlEqn[COFFSET_WJ::dC+ic] = dCurrentPhaseVolRate[targetPhaseIndex][COFFSET_WJ::dC+ic];
     }
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentBHP[Deriv::dT];
   }
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
     controlEqn = currentTotalVolRate - targetTotalRate;
     dControlEqn_dPres = dCurrentTotalVolRate_dPres;
+    dControlEqn[COFFSET_WJ::dP] = dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn_dRate = dCurrentTotalVolRate_dRate;
+    dControlEqn[COFFSET_WJ::dQ] = dCurrentTotalVolRate[COFFSET_WJ::dQ];
     for( integer ic = 0; ic < NC; ++ic )
     {
       dControlEqn_dComp[ic] = dCurrentTotalVolRate_dCompDens[ic];
+      dControlEqn[COFFSET_WJ::dC+ic] = dCurrentTotalVolRate[COFFSET_WJ::dC+ic];
     }
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = dCurrentTotalVolRate[COFFSET_WJ::dT];
   }
   // Total mass rate control
   else if( currentControl == WellControls::Control::MASSRATE )
   {
     controlEqn = massDensity*currentTotalVolRate - targetMassRate;
     dControlEqn_dPres = massDensity*dCurrentTotalVolRate_dPres;
+    dControlEqn[COFFSET_WJ::dP] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn_dRate = massDensity*dCurrentTotalVolRate_dRate;
+    dControlEqn[COFFSET_WJ::dQ] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dQ];
     for( integer ic = 0; ic < NC; ++ic )
     {
       dControlEqn_dComp[ic] = massDensity*dCurrentTotalVolRate_dCompDens[ic];
+      dControlEqn[COFFSET_WJ::dC+ic] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dC+ic];
     }
+    if constexpr ( IS_THERMAL )
+      dControlEqn[COFFSET_WJ::dT] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dT];
   }
   else
   {
@@ -236,6 +264,12 @@ ControlEquationHelper::
                                                             compDofColIndices,
                                                             dControlEqn_dComp,
                                                             NC );
+  // tjb- remove when safe and modify local matrix updates
+  assert(fabs( dControlEqn[COFFSET_WJ::dP] -dControlEqn_dPres) < FLT_EPSILON);
+  assert(fabs( dControlEqn[COFFSET_WJ::dQ] - dControlEqn_dRate ) < FLT_EPSILON);
+  for( integer ic=0; ic<NC;++ic)
+    assert(fabs( dControlEqn[COFFSET_WJ::dC+ic] - dControlEqn_dComp[ic] ) < FLT_EPSILON);
+
 }
 
 /******************************** FluxKernel ********************************/
@@ -565,7 +599,7 @@ INST_FluxKernel( 5 );
 
 /******************************** PressureRelationKernel ********************************/
 
-template< integer NC >
+template< integer NC , integer IS_THERMAL >
 GEOS_HOST_DEVICE
 void
 PressureRelationKernel::
@@ -582,22 +616,24 @@ PressureRelationKernel::
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
            real64 & localPresRel,
-           real64 ( & localPresRelJacobian )[2*(NC+1)] )
+           real64 ( & localPresRelJacobian )[2*(NC+1 + IS_THERMAL)] )
 {
-  GEOS_UNUSED_VAR(dTotalMassDens);
-  GEOS_UNUSED_VAR(dTotalMassDensNext);
   // local working variables and arrays
   real64 dAvgMassDens_dCompCurrent[NC]{};
   real64 dAvgMassDens_dCompNext[NC]{};
 
   // compute the average density at the interface between well elements
   real64 const avgMassDens = 0.5 * ( totalMassDensNext + totalMassDens );
-  real64 const dAvgMassDens_dPresNext    = 0.5 * dTotalMassDens_dPresNext;
-  real64 const dAvgMassDens_dPresCurrent = 0.5 * dTotalMassDens_dPres;
+  //real64 const dAvgMassDens_dPresNext    = 0.5 * dTotalMassDens_dPresNext;
+  //real64 const dAvgMassDens_dPresCurrent = 0.5 * dTotalMassDens_dPres;
+  real64 const dAvgMassDens_dPresNext    = 0.5 * dTotalMassDensNext[Deriv::dP];
+  real64 const dAvgMassDens_dPresCurrent = 0.5 * dTotalMassDens[Deriv::dP];
   for( integer ic = 0; ic < NC; ++ic )
   {
-    dAvgMassDens_dCompNext[ic]    = 0.5 * dTotalMassDens_dCompDensNext[ic];
-    dAvgMassDens_dCompCurrent[ic] = 0.5 * dTotalMassDens_dCompDens[ic];
+    //dAvgMassDens_dCompNext[ic]    = 0.5 * dTotalMassDens_dCompDensNext[ic];
+    //dAvgMassDens_dCompCurrent[ic] = 0.5 * dTotalMassDens_dCompDens[ic];
+    dAvgMassDens_dCompNext[ic]    = 0.5 * dTotalMassDensNext[Deriv::dC+ic];
+    dAvgMassDens_dCompCurrent[ic] = 0.5 * dTotalMassDens[Deriv::dC+ic];
   }
 
   // compute depth diff times acceleration
@@ -606,23 +642,32 @@ PressureRelationKernel::
   // TODO: add friction and acceleration terms
 
   localPresRel = ( presNext - pres - avgMassDens * gravD );
-  localPresRelJacobian[TAG::NEXT *(NC+1)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
+
+  // localPresRelJacbain contains dP, dC and potentially dT derivatives for neighboring well elements
+  // TAG::NEXT is 1, CURRENT is 0 , not sure why indexes are setup as below
+  localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
   localPresRelJacobian[TAG::CURRENT *(NC+1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
 
   for( integer ic = 0; ic < NC; ++ic )
   {
-    localPresRelJacobian[TAG::NEXT *(NC+1) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
+    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
     localPresRelJacobian[TAG::CURRENT *(NC+1) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
+  }
+  if constexpr ( IS_THERMAL )
+  {
+    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
+    localPresRelJacobian[TAG::CURRENT *(NC+1)+1] = 0.5 * dTotalMassDens[Deriv::dT];
   }
 }
 
-template< integer NC >
+template< integer NC , integer IS_THERMAL >
 void
 PressureRelationKernel::
-  launch( localIndex const size,
+  launch(  localIndex const size,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
+          bool const isThermal,
           integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & timeAtEndOfStep,
@@ -638,7 +683,7 @@ PressureRelationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-
+  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac<NC>;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
@@ -651,7 +696,7 @@ PressureRelationKernel::
   real64 const & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
   arrayView1d< real64 const > const & dCurrentBHP =
-    wellControls.getReference<  array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );  
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );
   // tjb - remove
   real64 const & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
@@ -660,8 +705,8 @@ PressureRelationKernel::
 
   arrayView1d< real64 const > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
-  arrayView1d< real64 const > const & dCurrentPhaseVolRate =
-    wellControls.getReference<  array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRateString() );
+  arrayView2d< real64 const > const & dCurrentPhaseVolRate =
+    wellControls.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRateString() );
   // tjb - remove
   arrayView1d< real64 const > const & dCurrentPhaseVolRate_dPres =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dPresString() );
@@ -673,7 +718,7 @@ PressureRelationKernel::
   real64 const & currentTotalVolRate =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
   arrayView1d< real64 const > const & dCurrentTotalVolRate =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() ); 
+    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() );
   // tjb - remove
   real64 const & dCurrentTotalVolRate_dPres =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dPresString() );
@@ -709,8 +754,7 @@ PressureRelationKernel::
       {
         switchControl.max( 1 );
       }
-
-      ControlEquationHelper::compute< NC >( rankOffset,
+      ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
                                             newControl,
                                             targetPhaseIndex,
                                             targetBHP,
@@ -735,7 +779,6 @@ PressureRelationKernel::
                                             wellElemDofNumber[iwelemControl],
                                             localMatrix,
                                             localRhs );
-
       // TODO: for consistency, we should assemble here, not in compute...
 
     }
@@ -743,9 +786,10 @@ PressureRelationKernel::
     {
 
       real64 localPresRel = 0;
-      real64 localPresRelJacobian[2*(NC+1)]{};
+      real64 localPresRelJacobian[2*(NC+1+IS_THERMAL)]{};
 
-      compute< NC >( wellElemGravCoef[iwelem],
+      compute< NC , IS_THERMAL >( 
+                     wellElemGravCoef[iwelem],
                      wellElemGravCoef[iwelemNext],
                      wellElemPressure[iwelem],
                      wellElemPressure[iwelemNext],
@@ -762,24 +806,28 @@ PressureRelationKernel::
 
 
       // local working variables and arrays
-      globalIndex dofColIndices[2*(NC+1)];
+      globalIndex dofColIndices[2*(NC+1+IS_THERMAL)];
 
       globalIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::CONTROL - rankOffset;
-      dofColIndices[TAG::NEXT *(NC+1)]    = wellElemDofNumber[iwelemNext] + COFFSET::DPRES;
-      dofColIndices[TAG::CURRENT *(NC+1)] = wellElemDofNumber[iwelem] + COFFSET::DPRES;
+      dofColIndices[TAG::NEXT *(NC+1+IS_THERMAL)]    = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dP;
+      dofColIndices[TAG::CURRENT *(NC+1+IS_THERMAL)] = wellElemDofNumber[iwelem] + COFFSET_WJ::dP;
 
       for( integer ic = 0; ic < NC; ++ic )
       {
-        dofColIndices[TAG::NEXT *(NC+1) + ic+1]    = wellElemDofNumber[iwelemNext] + COFFSET::DCOMP + ic;
-        dofColIndices[TAG::CURRENT *(NC+1) + ic+1] = wellElemDofNumber[iwelem] + COFFSET::DCOMP + ic;
+        dofColIndices[TAG::NEXT *(NC+1+IS_THERMAL) + ic+1]    = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dC + ic;
+        dofColIndices[TAG::CURRENT *(NC+1+IS_THERMAL) + ic+1] = wellElemDofNumber[iwelem] + COFFSET_WJ::dC + ic;
       }
-
+      if constexpr ( IS_THERMAL ) 
+      {
+        dofColIndices[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    = wellElemDofNumber[iwelemNext] + COFFSET_WJ::dT;
+        dofColIndices[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = wellElemDofNumber[iwelem] + COFFSET_WJ::dT;      
+      }
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
                                                                           dofColIndices,
                                                                           localPresRelJacobian,
-                                                                          2 * (NC+1) );
+                                                                          2 * (NC+1+IS_THERMAL) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
@@ -787,13 +835,14 @@ PressureRelationKernel::
   controlHasSwitched = ( switchControl.get() == 1 );
 }
 
-#define INST_PressureRelationKernel( NC ) \
+#define INST_PressureRelationKernel( NC , IS_THERMAL  ) \
   template \
   void PressureRelationKernel:: \
-    launch< NC >( localIndex const size, \
+    launch< NC , IS_THERMAL >( localIndex const size, \
                   globalIndex const rankOffset, \
                   bool const isLocallyOwned, \
                   localIndex const iwelemControl, \
+                  bool const isThermal, \
                   integer const targetPhaseIndex, \
                   WellControls const & wellControls, \
                   real64 const & timeAtEndOfStep, \
@@ -809,16 +858,21 @@ PressureRelationKernel::
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
-INST_PressureRelationKernel( 1 );
-INST_PressureRelationKernel( 2 );
-INST_PressureRelationKernel( 3 );
-INST_PressureRelationKernel( 4 );
-INST_PressureRelationKernel( 5 );
+INST_PressureRelationKernel( 1, 0);
+INST_PressureRelationKernel( 1, 1);
+INST_PressureRelationKernel( 2, 0);
+INST_PressureRelationKernel( 2, 1);
+INST_PressureRelationKernel( 3, 0);
+INST_PressureRelationKernel( 3, 1);
+INST_PressureRelationKernel( 4, 0);
+INST_PressureRelationKernel( 4 ,1);
+INST_PressureRelationKernel( 5, 0);
+INST_PressureRelationKernel( 5 ,1);
 
 
 /******************************** PerforationKernel ********************************/
 
-template< integer NC, integer NP >
+template< integer NC, integer NP, integer IS_THERMAL >
 GEOS_HOST_DEVICE
 void
 PerforationKernel::
@@ -852,14 +906,14 @@ PerforationKernel::
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
   using Deriv = multifluid::DerivativeOffset;
-  GEOS_UNUSED_VAR(dWellElemTotalMassDens);
-  GEOS_UNUSED_VAR(dCompPerfRate);
+  using CP_Deriv = multifluid::DerivativeOffsetC<NC,IS_THERMAL>;
+  GEOS_UNUSED_VAR( dCompPerfRate );
   // local working variables and arrays
   real64 pres[2]{};
   real64 dPres_dP[2]{};
   real64 dPres_dC[2][NC]{};
   real64 dFlux_dP[2]{};
-  real64 dFlux_dC[2][NC]{};
+  real64 dFlux_dC[2][NC]{};   
   real64 dMult_dP[2]{};
   real64 dMult_dC[2][NC]{};
   real64 dPotDiff_dP[2]{};
@@ -873,9 +927,19 @@ PerforationKernel::
   real64 dMob_dC[NC]{};
   real64 dCompFrac_dCompDens[NC]{};
 
-
+  // local working variables - compact
+  // All derivative quantiites generated are stored in arrays using CP_Deriv offsets
+  // The input well/reservoir quantites use the Deriv offsets
+  // The arrays using the deriv offsets have extra column for dT in isothermal cases
+ 
+  real64 dPres[2][CP_Deriv::nDer]{};
+  real64 dFlux[2][CP_Deriv::nDer]{};
+  real64 dMob[CP_Deriv::nDer]{};
+  real64 dPotDiff[2][CP_Deriv::nDer]{};
+  real64 dCompFrac[CP_Deriv::nDer]{};
+ 
   // Step 1: reset the perforation rates
-
+  // tjb - remove when safe
   for( integer ic = 0; ic < NC; ++ic )
   {
     compPerfRate[ic] = 0.0;
@@ -888,7 +952,17 @@ PerforationKernel::
       }
     }
   }
-
+  for( integer ic = 0; ic < NC; ++ic )
+  {
+    compPerfRate[ic] = 0.0;
+    for( integer ke = 0; ke < 2; ++ke )
+    {
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+      {
+        dCompPerfRate[ke][ic][jc] = 0.0;
+      }
+    }
+  }
 
   // Step 2: copy the variables from the reservoir and well element
 
@@ -896,6 +970,7 @@ PerforationKernel::
 
   pres[TAG::RES] = resPres;
   dPres_dP[TAG::RES] = 1.0;
+  dPres[TAG::RES][CP_Deriv::dP] = 1.0;
   multiplier[TAG::RES] = 1.0;
 
   // Here in the absence of a buoyancy term we assume that the reservoir cell is perforated at its center
@@ -906,16 +981,25 @@ PerforationKernel::
 
   pres[TAG::WELL] = wellElemPres;
   dPres_dP[TAG::WELL] = 1.0;
+  dPres[TAG::WELL][CP_Deriv::dP] = 1.0;
   multiplier[TAG::WELL] = -1.0;
 
   real64 const gravD = ( perfGravCoef - wellElemGravCoef );
 
   pres[TAG::WELL] += wellElemTotalMassDens * gravD;
+  // Note RHS uses CP_Deriv while LHS uses Deriv !!!  
   dPres_dP[TAG::WELL] += dWellElemTotalMassDens_dPres * gravD;
+  dPres[TAG::WELL][CP_Deriv::dP] += dWellElemTotalMassDens_dPres * gravD;
+  if constexpr ( IS_THERMAL )
+  {
+    dPres[TAG::WELL][CP_Deriv::dT] += dWellElemTotalMassDens[Deriv::dT] * gravD;
+  }
   for( integer ic = 0; ic < NC; ++ic )
   {
     dPres_dC[TAG::WELL][ic] += dWellElemTotalMassDens_dCompDens[ic] * gravD;
+    dPres[TAG::WELL][CP_Deriv::dC+ic] += dWellElemTotalMassDens[Deriv::dC+ic] * gravD;
   }
+  
 
 
   // Step 3: compute potential difference
@@ -925,10 +1009,15 @@ PerforationKernel::
   {
     potDiff += multiplier[i] * trans * pres[i];
     dPotDiff_dP[i] += multiplier[i] * trans * dPres_dP[i];
-
+  
     for( integer ic = 0; ic < NC; ++ic )
     {
       dPotDiff_dC[i][ic] += multiplier[i] * trans * dPres_dC[i][ic];
+    }
+    // LHS & RHS both use CP_Deriv
+    for ( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
+    {
+       dPotDiff[i][ic] += multiplier[i] * trans * dPres[i][ic];
     }
   }
 
@@ -956,39 +1045,68 @@ PerforationKernel::
 
       // density
       real64 const resDens = resPhaseDens[ip];
+      real64 dDens[CP_Deriv::nDer]{};
+
       real64 const dResDens_dP  = dResPhaseDens[ip][Deriv::dP];
+      dDens[CP_Deriv::dP]  = dResPhaseDens[ip][Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dDens[CP_Deriv::dT]  = dResPhaseDens[ip][Deriv::dT];
+      }
       applyChainRule( NC, dResCompFrac_dCompDens,
                       dResPhaseDens[ip],
                       dDens_dC,
                       Deriv::dC );
-
+      applyChainRule( NC, dResCompFrac_dCompDens,
+                      dResPhaseDens[ip],
+                      &dDens[CP_Deriv::dC],
+                      Deriv::dC );
       // viscosity
       real64 const resVisc = resPhaseVisc[ip];
+      real64 dVisc[CP_Deriv::nDer]{};
       real64 const dResVisc_dP  = dResPhaseVisc[ip][Deriv::dP];
+      dVisc[CP_Deriv::dP]  = dResPhaseVisc[ip][Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dVisc[CP_Deriv::dT]  = dResPhaseVisc[ip][Deriv::dT];
+      }
       applyChainRule( NC, dResCompFrac_dCompDens,
                       dResPhaseVisc[ip],
                       dVisc_dC,
                       Deriv::dC );
+      applyChainRule( NC, dResCompFrac_dCompDens,
+                      dResPhaseVisc[ip],
+                       &dVisc[CP_Deriv::dC],
+                      Deriv::dC );                
 
       // relative permeability
       real64 const resRelPerm = resPhaseRelPerm[ip];
+      real64 dRelPerm[CP_Deriv::nDer]{};
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
         dRelPerm_dC[jc] = 0;
       }
-
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+      {
+        dRelPerm[CP_Deriv::dC+jc]=0;
+      }
       for( integer jp = 0; jp < NP; ++jp )
       {
         real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[ip][jp];
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
-
+        dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
+        if constexpr ( IS_THERMAL )
+        {
+          dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dT];
+        }
         for( integer jc = 0; jc < NC; ++jc )
         {
           dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
         }
       }
-
+      
       // compute the reservoir phase mobility, including phase density
       real64 const resPhaseMob = resDens * resRelPerm / resVisc;
       real64 const dResPhaseMob_dPres = dResRelPerm_dP * resDens / resVisc
@@ -997,6 +1115,12 @@ PerforationKernel::
       {
         dMob_dC[jc] = dRelPerm_dC[jc] * resDens / resVisc
                       + resPhaseMob * (dDens_dC[jc] / resDens - dVisc_dC[jc] / resVisc);
+      }
+      // Handles all dependencies 
+      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc)
+      {
+        dMob[jc] = dRelPerm[jc] * resDens / resVisc
+                      + resPhaseMob * (dDens[jc] / resDens - dVisc[jc] / resVisc);
       }
 
       // compute the phase flux and derivatives using upstream cell mobility
@@ -1009,7 +1133,12 @@ PerforationKernel::
         dFlux_dC[TAG::RES][ic] = dMob_dC[ic] * potDiff + resPhaseMob * dPotDiff_dC[TAG::RES][ic];
         dFlux_dC[TAG::WELL][ic] = resPhaseMob * dPotDiff_dC[TAG::WELL][ic];
       }
-
+      // Handles all dependencies 
+      for ( integer jc = 0;  jc < CP_Deriv::nDer; ++jc)
+      {
+        dFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMob * dPotDiff[TAG::RES][jc];
+        dFlux[TAG::WELL][jc] = resPhaseMob * dPotDiff[TAG::WELL][jc];
+      }   
       // increment component fluxes
       for( integer ic = 0; ic < NC; ++ic )
       {
@@ -1032,6 +1161,42 @@ PerforationKernel::
           dCompPerfRate_dComp[TAG::WELL][ic][jc] += dFlux_dC[TAG::WELL][jc] * resPhaseCompFrac[ip][ic];
         }
       }
+            // increment component fluxes
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        // Note this needs to be uncommented out
+        //compPerfRate[ic] += flux * resPhaseCompFrac[ip][ic];
+        dCompFrac[CP_Deriv::dP] = dResPhaseCompFrac[ip][ic][Deriv::dP];
+        if constexpr (IS_THERMAL)
+        {
+          dCompFrac[CP_Deriv::dT] = dResPhaseCompFrac[ip][ic][Deriv::dT];
+        }
+
+        applyChainRule( NC,
+                        dResCompFrac_dCompDens,
+                        dResPhaseCompFrac[ip][ic],
+                        &dCompFrac[CP_Deriv::dC],
+                        Deriv::dC );
+
+        for ( integer jc = 0;  jc < CP_Deriv::nDer; ++jc)
+        {
+          dCompPerfRate[TAG::RES][ic][jc]  += dFlux[TAG::RES][jc] * resPhaseCompFrac[ip][ic];
+          dCompPerfRate[TAG::RES][ic][jc]  += flux * dCompFrac[jc];
+          dCompPerfRate[TAG::WELL][ic][jc] += dFlux[TAG::WELL][jc] * resPhaseCompFrac[ip][ic];
+        }
+      }
+    }
+
+    // tjb- remove when safe  
+    for ( integer ic = 0; ic < NC; ic ++ )
+    {
+        assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) < FLT_EPSILON);
+        assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic]) < FLT_EPSILON);
+        for ( integer jc = 0;  jc < NC; ++jc)
+        {
+          assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc]) < FLT_EPSILON); 
+          assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc]) < FLT_EPSILON);          
+        }
     }
   }
   else // ** well is upstream **
@@ -1060,39 +1225,65 @@ PerforationKernel::
 
       // viscosity
       real64 const resVisc = resPhaseVisc[ip];
+      real64 dVisc[CP_Deriv::nDer]{};
       real64 const dResVisc_dP  = dResPhaseVisc[ip][Deriv::dP];
+      dVisc[CP_Deriv::dP]  = dResPhaseVisc[ip][Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dVisc[CP_Deriv::dT]  = dResPhaseVisc[ip][Deriv::dT];
+      }
       applyChainRule( NC, dResCompFrac_dCompDens,
                       dResPhaseVisc[ip],
                       dVisc_dC,
                       Deriv::dC );
-
+      applyChainRule( NC, dResCompFrac_dCompDens,
+                      dResPhaseVisc[ip],
+                       &dVisc[CP_Deriv::dC],
+                      Deriv::dC );
+    
+            
       // relative permeability
       real64 const resRelPerm = resPhaseRelPerm[ip];
+      real64 dRelPerm[CP_Deriv::nDer]{};
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
         dRelPerm_dC[jc] = 0;
       }
-
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+      {
+        dRelPerm[jc]=0;
+      }
       for( integer jp = 0; jp < NP; ++jp )
       {
         real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[ip][jp];
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
-
+        dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
+        if constexpr ( IS_THERMAL )
+        {
+          dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dT];
+        }
         for( integer jc = 0; jc < NC; ++jc )
         {
           dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
         }
       }
-
       // increment total mobility
       resTotalMob     += resRelPerm / resVisc;
+
       dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
                          / ( resVisc * resVisc );
       for( integer ic = 0; ic < NC; ++ic )
       {
         dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
                                / ( resVisc * resVisc );
+      }
+            // Handles all dependencies 
+      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc)
+      {
+        dMob[jc] += (dRelPerm[jc] *resVisc -  resRelPerm * dVisc[jc] )
+                      / ( resVisc * resVisc);
       }
     }
 
@@ -1101,12 +1292,27 @@ PerforationKernel::
     real64 const mult   = wellElemTotalDens * resTotalMob;
     dMult_dP[TAG::RES]  = wellElemTotalDens * dResTotalMob_dP;
     dMult_dP[TAG::WELL] = 0.0; // because totalDens does not depend on pressure
-
     for( integer ic = 0; ic < NC; ++ic )
     {
       dMult_dC[TAG::RES][ic]  = wellElemTotalDens * dResTotalMob_dC[ic];
       dMult_dC[TAG::WELL][ic] = resTotalMob;
     }
+
+    real64 dMult[2][CP_Deriv::nDer]{};
+    dMult[TAG::WELL][CP_Deriv::dP] = 0.0;
+    if constexpr ( IS_THERMAL ) 
+    {
+      dMult[TAG::WELL][CP_Deriv::dT] = 0.0;
+    }
+    for ( integer ic = 0; ic < NC; ++ic )
+    {
+      dMult[TAG::WELL][CP_Deriv::dC+ic] = resTotalMob;
+    }
+    for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+    {
+      dMult[TAG::RES][jc] = wellElemTotalDens * dMob[jc];
+    }
+    
 
     // compute the volumetric flux and derivatives using upstream cell mobility
     flux = mult * potDiff;
@@ -1118,7 +1324,12 @@ PerforationKernel::
       dFlux_dC[TAG::RES][ic]  = dMult_dC[TAG::RES][ic] * potDiff + mult * dPotDiff_dC[TAG::RES][ic];
       dFlux_dC[TAG::WELL][ic] = dMult_dC[TAG::WELL][ic] * potDiff + mult * dPotDiff_dC[TAG::WELL][ic];
     }
-
+    
+    for ( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
+    {
+      dFlux[TAG::RES][ic]  = dMult[TAG::RES][ic] * potDiff + mult * dPotDiff[TAG::RES][ic];
+      dFlux[TAG::WELL][ic] = dMult[TAG::WELL][ic] * potDiff + mult * dPotDiff[TAG::WELL][ic]; 
+    }
     // compute component fluxes
     for( integer ic = 0; ic < NC; ++ic )
     {
@@ -1133,10 +1344,47 @@ PerforationKernel::
         dCompPerfRate_dComp[TAG::WELL][ic][jc] += dWellElemCompFrac_dCompDens[ic][jc] * flux;
       }
     }
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      // Note this needs to be include below when this code above is removed 
+      //compPerfRate[ic] += wellElemCompFrac[ic] * flux;
+      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+      {
+        dCompPerfRate[TAG::RES][ic][jc]  = wellElemCompFrac[ic] * dFlux[TAG::RES][jc];
+      }
+    }
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] = wellElemCompFrac[ic] * dFlux[TAG::WELL][CP_Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dCompPerfRate[TAG::WELL][ic][CP_Deriv::dT] = wellElemCompFrac[ic] * dFlux[TAG::WELL][CP_Deriv::dT];
+      }
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc] += wellElemCompFrac[ic] * dFlux[TAG::WELL][CP_Deriv::dC+jc];
+        dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc] += dWellElemCompFrac_dCompDens[ic][jc] * flux;
+      }
+    }
+        // tjb- remove when safe  
+    for ( integer ic = 0; ic < NC; ic ++ )
+    {
+        if (fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) > FLT_EPSILON)
+        {
+          std::cout << ic << " " << dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] << " " << dCompPerfRate_dPres[TAG::RES][ic] << std::endl;
+        }
+        assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) < FLT_EPSILON);
+        assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic]) < FLT_EPSILON);
+        for ( integer jc = 0;  jc < NC; ++jc)
+        {
+          assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc]) < FLT_EPSILON); 
+          assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc]) < FLT_EPSILON);          
+        }
+    }
   }
 }
 
-template< integer NC, integer NP >
+template< integer NC, integer NP , integer IS_THERMAL>
 void
 PerforationKernel::
   launch( localIndex const size,
@@ -1186,7 +1434,7 @@ PerforationKernel::
     // get the index of the well elem
     localIndex const iwelem = perfWellElemIndex[iperf];
 
-    compute< NC, NP >( disableReservoirToWellFlow,
+    compute< NC, NP, IS_THERMAL >( disableReservoirToWellFlow,
                        resPres[er][esr][ei],
                        resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac[er][esr][ei],
@@ -1218,10 +1466,10 @@ PerforationKernel::
   } );
 }
 
-#define INST_PerforationKernel( NC, NP ) \
+#define INST_PerforationKernel( NC, NP, IS_THERMAL ) \
   template \
   void PerforationKernel:: \
-    launch< NC, NP >( localIndex const size, \
+    launch< NC, NP, IS_THERMAL >( localIndex const size, \
                       bool const disableReservoirToWellFlow, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
@@ -1255,17 +1503,26 @@ PerforationKernel::
                       arrayView3d< real64 > const & dCompPerfRate_dPres, \
                       arrayView4d< real64 > const & dCompPerfRate_dComp )
 
-INST_PerforationKernel( 1, 2 );
-INST_PerforationKernel( 2, 2 );
-INST_PerforationKernel( 3, 2 );
-INST_PerforationKernel( 4, 2 );
-INST_PerforationKernel( 5, 2 );
-INST_PerforationKernel( 1, 3 );
-INST_PerforationKernel( 2, 3 );
-INST_PerforationKernel( 3, 3 );
-INST_PerforationKernel( 4, 3 );
-INST_PerforationKernel( 5, 3 );
-
+INST_PerforationKernel( 1, 2 , 0 );
+INST_PerforationKernel( 2, 2 , 0 );
+INST_PerforationKernel( 3, 2 , 0 );
+INST_PerforationKernel( 4, 2 , 0 );
+INST_PerforationKernel( 5, 2 , 0 );
+INST_PerforationKernel( 1, 3 , 0 );
+INST_PerforationKernel( 2, 3 , 0 );
+INST_PerforationKernel( 3, 3 , 0 );
+INST_PerforationKernel( 4, 3 , 0 );
+INST_PerforationKernel( 5, 3 , 0 );
+INST_PerforationKernel( 1, 2 , 1 );
+INST_PerforationKernel( 2, 2 , 1 );
+INST_PerforationKernel( 3, 2 , 1 );
+INST_PerforationKernel( 4, 2 , 1 );
+INST_PerforationKernel( 5, 2 , 1 );
+INST_PerforationKernel( 1, 3 , 1 );
+INST_PerforationKernel( 2, 3 , 1 );
+INST_PerforationKernel( 3, 3 , 1 );
+INST_PerforationKernel( 4, 3 , 1 );
+INST_PerforationKernel( 5, 3 , 1 );
 /******************************** AccumulationKernel ********************************/
 
 template< integer NC >
@@ -1482,7 +1739,7 @@ VolumeBalanceKernel::
   localVolBalance = 1.0;
   for( integer ic = 0; ic < NC+1; ++ic )
   {
-    localVolBalanceJacobian[ic] = 0.0;
+    localVolBalanceJacobian[ic] = 0.0; 
   }
 
   // sum contributions to component accumulation from each phase

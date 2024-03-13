@@ -115,6 +115,52 @@ namespace internal
 {
 
 template< typename T, typename LAMBDA >
+void kernelLaunchSelectorCompThermSwitch( T value , bool const isThermal , LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
+  
+  //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
+  if ( isThermal )
+  {
+    switch( value )
+    {
+      case 1:
+      { 
+        lambda( std::integral_constant< T, 1 >() , std::integral_constant< T, 1 >() ); return; }
+      case 2:
+      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
+      case 3:
+      { lambda( std::integral_constant< T, 3 >() , std::integral_constant< T, 1 >() ); return; }
+      case 4:
+      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
+      case 5:
+      { lambda( std::integral_constant< T, 5 >() ,std::integral_constant< T, 1 >()); return; }
+      default:
+      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    }
+  }
+  else
+  {
+    switch( value )
+    {
+      case 1:
+      { 
+        lambda( std::integral_constant< T, 1 >() , std::integral_constant< T, 0 >() ); return; }
+      case 2:
+      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 0 >() ); return; }
+      case 3:
+      { lambda( std::integral_constant< T, 3 >() , std::integral_constant< T, 0 >() ); return; }
+      case 4:
+      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 0 >() ); return; }
+      case 5:
+      { lambda( std::integral_constant< T, 5 >() ,std::integral_constant< T, 0 >() ); return; }
+      default:
+      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    }
+  }
+}
+
+template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
@@ -768,12 +814,12 @@ public:
 
     // check zero diagonal (works only in debug)
     /*
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
+       for( integer ic = 0; ic < numComp; ++ic )
+       {
+       GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
                         GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
-    }
-    */
+       }
+     */
   }
 
   template< typename FUNC = NoOpFunc >
@@ -2417,6 +2463,16 @@ struct HydrostaticPressureKernel
 
 /******************************** Kernel launch machinery ********************************/
 
+
+template< typename KERNELWRAPPER, typename ... ARGS >
+void KernelLaunchSelectorCompTherm( integer const numComp, bool const isThermal , ARGS && ... args )
+{
+  internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal , [&] ( auto NC , auto ISTHERMAL )
+  {
+    KERNELWRAPPER::template launch< NC(), ISTHERMAL() >( std::forward< ARGS >( args )... );
+  } );
+}
+
 template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
 {
@@ -2447,6 +2503,54 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   else
   {
     GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+  }
+}
+
+template< typename KERNELWRAPPER, typename ... ARGS >
+void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numPhase ,integer const isThermal, ARGS && ... args )
+{
+  // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
+  if ( isThermal )
+  {
+  if( numPhase == 2 )
+  {
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      KERNELWRAPPER::template launch< NC(), 2, 1 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else if( numPhase == 3 )
+  {
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      KERNELWRAPPER::template launch< NC(), 3, 1 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+  }
+  }
+  else
+  {
+  if( numPhase == 2 )
+  {
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      KERNELWRAPPER::template launch< NC(), 2, 0 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else if( numPhase == 3 )
+  {
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      KERNELWRAPPER::template launch< NC(), 3, 0 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+  }
   }
 }
 

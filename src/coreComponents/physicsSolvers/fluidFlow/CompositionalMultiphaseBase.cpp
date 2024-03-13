@@ -1327,7 +1327,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      ElementSubRegionBase const & subRegion )
     {
       std::cout << "assembleAccumulationAndVolumeBalanceTerms : subregion " << subRegion.getName() << std::endl;
-   
+
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
@@ -2152,7 +2152,7 @@ void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & dom
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
       std::cout << "fluxApprox.forAllStencils : mesh " << mesh.getName()  << std::endl;
-      
+
       // While this kernel is waiting for a factory class, pass all the accessors here
       isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
       < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( numComps,

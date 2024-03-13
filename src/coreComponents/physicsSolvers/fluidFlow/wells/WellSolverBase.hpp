@@ -317,7 +317,7 @@ protected:
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
 
-    /// flag indicating whether thermal formulation is used
+  /// flag indicating whether thermal formulation is used
   integer m_isThermal;
 
   string const m_ratesOutputDir;

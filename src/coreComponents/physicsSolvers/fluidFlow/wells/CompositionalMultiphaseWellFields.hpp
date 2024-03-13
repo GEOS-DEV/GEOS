@@ -1,4 +1,4 @@
- /*
+/*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
@@ -113,22 +113,22 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
 /*
-DECLARE_FIELD( dCurrentBHP,
-               "dCurrentBHP",  
+   DECLARE_FIELD( dCurrentBHP,
+               "dCurrentBHP",
                array1d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,
                "Derivative of current BHP with respect to pressure, temperature, and global component density" );
 
-DECLARE_FIELD( dCurrentPhaseVolRate,
-               "dCurrentPhaseVolRate",  
+   DECLARE_FIELD( dCurrentPhaseVolRate,
+               "dCurrentPhaseVolRate",
                array2dLayoutPhase,
                0,
                NOPLOT,
                NO_WRITE,
                "Derivative of current phase volume rate with respect to pressure, temperature, and global component density" );
-*/
+ */
 DECLARE_FIELD( totalMassDensity,
                "totalMassDensity",
                array1d< real64 >,
@@ -138,7 +138,7 @@ DECLARE_FIELD( totalMassDensity,
                "Total mass density" );
 
 DECLARE_FIELD( dTotalMassDensity,
-               "dTotalMassDensity",  
+               "dTotalMassDensity",
                array2dLayoutFluid_dC,
                0,
                NOPLOT,
@@ -146,7 +146,7 @@ DECLARE_FIELD( dTotalMassDensity,
                "Derivative of total mass density with respect to pressure, temperature, and global component density" );
 
 //tjb - remove
-DECLARE_FIELD( dTotalMassDensity_dPressure,   
+DECLARE_FIELD( dTotalMassDensity_dPressure,
                "dTotalMassDensity_dPressure",
                array1d< real64 >,
                0,
@@ -160,7 +160,7 @@ DECLARE_FIELD( dTotalMassDensity_dTemperature,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of total mass density with respect to temperature" );            
+               "Derivative of total mass density with respect to temperature" );
 
 //tjb - remove
 DECLARE_FIELD( dTotalMassDensity_dGlobalCompDensity,

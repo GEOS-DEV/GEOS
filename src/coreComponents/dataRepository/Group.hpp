@@ -29,7 +29,7 @@
 
 
 #include <iostream>
-#include<typeinfo>
+#include <typeinfo>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 /// macro definition to enable/disable char * lookups
@@ -587,7 +587,7 @@ public:
   void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda )
   {
     localIndex counter = 0;
-    
+
     for( auto const & subgroup : subGroupKeys )
     {
       applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
