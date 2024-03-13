@@ -153,7 +153,7 @@ void TableTextFormatter::parseAndStoreHeaderSections( std::vector< TableLayout::
                                                       size_t & largestHeaderVectorSize,
                                                       std::vector< std::vector< string > > & splitHeader )
 {
-  for(  auto const & column : columns )
+  for( auto const & column : columns )
   {
     std::vector< string > splitHeaderParts;
     std::istringstream ss( column.parameter.columnName );
@@ -345,7 +345,7 @@ void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & 
       }
 
     }
-    
+
     if( columns.size() == 1 )
     {
       tableRows +=  GEOS_FMT( "{:>{}}\n", "|", columnMargin );
