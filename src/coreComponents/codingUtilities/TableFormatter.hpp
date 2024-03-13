@@ -25,6 +25,7 @@
 namespace geos
 {
 
+// Class for formatting table data
 class TableFormatter
 {
 public:
@@ -38,12 +39,14 @@ public:
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
-  TableFormatter( TableLayout tableLayout );
+  TableFormatter( TableLayout & tableLayout );
 
   TableLayout m_tableLayout;
 
   /**
-   * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout who store all values in an unsorted order
+   * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout, storing all values in an unsorted order.
+   * @param columns Vector of columns to be filled.
+   * @param tableData Vector of table data.
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData );
@@ -62,26 +65,26 @@ public:
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
-  TableCSVFormatter( TableLayout tableLayout );
+  TableCSVFormatter( TableLayout & tableLayout );
 
   /**
-   * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 2-dimensions table
+   * @brief Convert the table data to a CSV string.
+   * @param tableData The 2D table data.
+   * @return The CSV string representation of the table data.
    */
-  string dataToString( TableData2D tableData );
+  string dataToString( TableData2D & tableData );
 
   /**
-   * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 1-dimensions table
+   * @brief Convert the table data to a CSV string.
+   * @param tableData The 1D table data.
+   * @return The CSV string representation of the table data.
    */
-  string dataToString( TableData tableData );
+  string dataToString( TableData & tableData );
 
   /**
-   * @param columns
-   * @param nbRows
-   * @return A string with all column names
+   * @return The string with all column names.
    */
-  string headerToString( std::vector< TableLayout::Column > & columns );
+  string headerToString();
 
 };
 
@@ -90,17 +93,20 @@ class TableTextFormatter : public TableFormatter
 
 public:
 
-  TableTextFormatter( TableLayout tableLayout );
+  TableTextFormatter( TableLayout & tableLayout );
 
   /**
-   * @brief return a string following the formatter
+   * @brief Convert the TableData to a table string.
+   * @param tableData The TableData to convert.
+   * @return The table string representation of the TableData.
    */
   string ToString( TableData & tableData );
 
   /**
-   * @brief return a string following the formatter
+   * @brief Get a table string from the TableLayout.
+   * @return The table string representation of the TableLayout.
    */
-  string ToString( TableData2D & tableData );
+  string layoutToString();
 
 private:
 
@@ -112,23 +118,14 @@ private:
   void parseAndStoreHeaderSections( std::vector< TableLayout::Column > & columns,
                                     size_t & largestHeaderVectorSize,
                                     std::vector< std::vector< string > > & splitHeader );
-
-  string constructTable( std::vector< std::vector< string > > & rowsValues );
-  /**
-   * @brief Iterate throught the header names vector.
-   * Adjust the size of each header vector by adding empty strings if needed.
-   * Store the modified header names in the corresponding column parameter.
-   * @param largestHeaderVectorSize The largest split header vector size
-   * @param splitHeader A vector containing all split header names
-   */
   void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
-                                  size_t largestHeaderVectorSize,
+                                  size_t const & largestHeaderVectorSize,
                                   std::vector< std::vector< string > > & splitHeader );
 
   /**
    * @brief For each column find and set the column's longest string
    */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t nbRows );
+  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t const & nbRows );
 
   /**
    * @brief Compute the largest string size in the table. If the table title is the largest string size in the table, recalculate for all
@@ -169,6 +166,13 @@ private:
                          string & rows,
                          integer const nbRows,
                          TableLayout::Section const section );
+
+  /**
+   * @brief Construct a table from a tableData
+   * @param rowsValues All values sorted by rows
+   * @return A table string
+   */
+  string constructAndReturnTable( std::vector< std::vector< string > > const & rowsValues );
 
 };
 }

@@ -20,7 +20,7 @@
 namespace geos
 {
 
-TableFormatter::TableFormatter( TableLayout tableLayout )
+TableFormatter::TableFormatter( TableLayout & tableLayout )
 {
   m_tableLayout = tableLayout;
 }
@@ -41,54 +41,71 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
 ////// CSV Formatter implementation
 ///////////////////////////////////////////////////////////////////////
 
-TableCSVFormatter::TableCSVFormatter( TableLayout tableLayout )
+TableCSVFormatter::TableCSVFormatter( TableLayout & tableLayout )
 {
   m_tableLayout = tableLayout;
 }
 
-string TableCSVFormatter::headerToString( std::vector< TableLayout::Column > & columns )
+string TableCSVFormatter::headerToString()
 {
   string headerValues = "";
+  string separator = ",";
 
-  for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.m_columns.size(); ++idxColumn )
   {
-    headerValues += columns[idxColumn].parameter.columnName;
+    headerValues += m_tableLayout.m_columns[idxColumn].parameter.columnName;
+    if( idxColumn < m_tableLayout.m_columns.size() - 1 )
+    {
+      headerValues += separator;
+    }
   }
-
+  headerValues += "\n";
   return headerValues;
 }
 
-string TableCSVFormatter::dataToString( TableData2D tableData )
+string TableCSVFormatter::dataToString( TableData2D & tableData2D )
 {
-  std::vector< std::vector< string > > rowsValues = tableData.m_rows;
+
   string data;
+  TableData tableData;
+  std::vector< std::vector< string > > rowsValues;
 
-  tableData.buildRows();
-
-  for( std::vector< string > row : rowsValues )
+  tableData = tableData2D.buildTableData();
+  rowsValues = tableData.getTableDataRows();
+  data.reserve(tableData2D.getColumns().size() * tableData2D.getRows().size());
+  
+  for( std::vector< string > const & row : rowsValues )
   {
-    for( string value : row )
+    for( size_t idxRow = 0; idxRow < row.size(); idxRow++ )
     {
-      data += value + ",";
+      data += row[idxRow];
+      if( idxRow < row.size() - 1 )
+      {
+        data += ",";
+      }
     }
     data += "\n";
   }
   return data;
 }
 
-string TableCSVFormatter::dataToString( TableData tableData )
+string TableCSVFormatter::dataToString( TableData & tableData )
 {
-  std::vector< std::vector< string > > rowsValues = tableData.m_rows;
+  std::vector< std::vector< string > > rowsValues = tableData.getTableDataRows();
   std::vector< TableLayout::Column > columns = m_tableLayout.m_columns;
   string data;
 
   fillTableColumnsFromRows( columns, rowsValues );
 
-  for( std::vector< string > row : rowsValues )
+  for( std::vector< string > const & row : rowsValues )
   {
-    for( string value : row )
+    for( size_t idxRow = 0; idxRow < row.size(); idxRow++ )
     {
-      data += value + ",";
+      data += row[idxRow];
+      if( idxRow < row.size() - 1 )
+      {
+        data += ",";
+      }
     }
     data += "\n";
   }
@@ -118,19 +135,44 @@ string buildValueCell( TableLayout::Alignment const alignment, string_view value
   }
 }
 
-TableTextFormatter::TableTextFormatter( TableLayout tableLayout ):
+TableTextFormatter::TableTextFormatter( TableLayout & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
 string TableTextFormatter::ToString( TableData & tableData )
 {
-  return constructTable( tableData.m_rows );
+  return constructAndReturnTable( tableData.getTableDataRows() );
 }
 
-string TableTextFormatter::ToString( TableData2D & tableData )
+string TableTextFormatter::layoutToString()
 {
-  tableData.buildRows();
-  return constructTable( tableData.m_rows );
+  string titleRows;
+  string topSeparator;
+  string sectionSeparator;
+
+  size_t largestHeaderVectorSize = 0;
+  std::vector< std::vector< string > > splitHeader;
+  std::vector< TableLayout::Column > columns = m_tableLayout.m_columns;
+
+  string tableTitle = string( m_tableLayout.getTitle());
+
+  parseAndStoreHeaderSections( columns, largestHeaderVectorSize, splitHeader );
+  adjustHeaderSizesAndStore( columns, largestHeaderVectorSize, splitHeader );
+
+  findAndSetMaxStringSize( columns, 0 );
+  computeAndBuildSeparator( columns, topSeparator, sectionSeparator );
+
+  if( !tableTitle.empty())
+  {
+    buildTitleRow( titleRows, topSeparator, sectionSeparator );
+  }
+
+  string tableRows = GEOS_FMT( "{}\n", sectionSeparator );
+  buildSectionRows( columns, sectionSeparator, tableRows, largestHeaderVectorSize, TableLayout::Section::header );
+
+  string tableOutput = titleRows + tableRows + '\n';
+
+  return tableOutput;
 }
 
 void TableTextFormatter::parseAndStoreHeaderSections( std::vector< TableLayout::Column > & columns,
@@ -140,7 +182,6 @@ void TableTextFormatter::parseAndStoreHeaderSections( std::vector< TableLayout::
   for( size_t columnParamIdx = 0; columnParamIdx< columns.size(); columnParamIdx++ )
   {
     std::vector< string > splitHeaderParts;
-    //at this part column name isn't split
     std::istringstream ss( columns[columnParamIdx].parameter.columnName );
     string subColumnNames;
 
@@ -157,7 +198,7 @@ void TableTextFormatter::parseAndStoreHeaderSections( std::vector< TableLayout::
 }
 
 void TableTextFormatter::adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
-                                                    size_t largestHeaderVectorSize,
+                                                    size_t const & largestHeaderVectorSize,
                                                     std::vector< std::vector< string > > & splitHeader )
 {
   for( size_t columnParamIdx = 0; columnParamIdx < columns.size(); columnParamIdx++ )
@@ -172,7 +213,7 @@ void TableTextFormatter::adjustHeaderSizesAndStore( std::vector< TableLayout::Co
 }
 
 void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns,
-                                                  size_t nbRows )
+                                                  size_t const & nbRows )
 {
   string maxStringSize = "";
   for( size_t idxColumn  = 0; idxColumn <  columns.size(); idxColumn++ )
@@ -346,7 +387,7 @@ void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & 
   }
 }
 
-string TableTextFormatter::constructTable( std::vector< std::vector< string > > & rowsValues )
+string TableTextFormatter::constructAndReturnTable( std::vector< std::vector< string > > const & rowsValues )
 {
   string titleRows;
   string topSeparator;

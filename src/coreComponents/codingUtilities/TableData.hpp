@@ -24,6 +24,7 @@
 namespace geos
 {
 
+// Class for managing table data
 class TableData
 {
 public:
@@ -31,40 +32,51 @@ public:
   /**
    * @brief Add a row to the table.
    * @param Args The values passed to addRow (can be any type).
-   * @param args Cell values to be added to the line.
+   * @param args Cell values to be added to the row.
    */
   template< typename ... Args >
   void addRow( Args const & ... args );
+
+  /**
+   * @return The rows of the table
+   */
+  std::vector< std::vector< string > > & getTableDataRows();
+
+private:
 
   std::vector< std::vector< string > > m_rows;
 
 };
 
-class TableData2D : public TableData
+// Class for managing 2D table data
+class TableData2D
 {
 public:
+
+  TableData tableData;
 
   /**
    * @brief Add a cell to the table.
    * Construct a map of pair<x,y> and cell value
    * @param T The value passed to addCell (can be any type).
-   * @param x The row index
-   * @param u The column index
    * @param value Cell value to be added.
    */
   template< typename T >
   void addCell( real64 x, real64 y, T value );
-  // void printCount();
 
   /**
-   * @brief Construct all rows from all cell values stored in map previously
+   * @brief Construct a TableData from a Table2D
+   * @return A TableData 
    */
-  void buildRows();
+  TableData buildTableData() const;
+
+  std::set< real64 > const & getColumns() const;
+  std::set< real64 > const & getRows() const;
 
 private:
   std::map< std::pair< real64, real64 >, string > data;
   std::set< real64 > columns;
-  std::set< real64 > row;
+  std::set< real64 > rows;
 };
 
 template< typename ... Args >
@@ -84,13 +96,12 @@ void TableData::addRow( Args const &... args )
 }
 
 template< typename T >
-void TableData2D::addCell( real64 x, real64 y, T value )
+void TableData2D::addCell( real64 rowValue, real64 columnValue, T value )
 {
-  std::pair< real64, real64 > id = std::pair< real64, real64 >( x, y );
-
+  std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
   data[id] = GEOS_FMT( "{}", value );
-  columns.insert( x );
-  row.insert( y );
+  columns.insert( columnValue );
+  rows.insert( rowValue );
 }
 
 }
