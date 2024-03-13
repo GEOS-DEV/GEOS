@@ -24,6 +24,7 @@
 namespace geos
 {
 
+// Class for managing table data
 class TableData
 {
 public:
@@ -31,11 +32,14 @@ public:
   /**
    * @brief Add a row to the table.
    * @param Args The values passed to addRow (can be any type).
-   * @param args Cell values to be added to the line.
+   * @param args Cell values to be added to the row.
    */
   template< typename ... Args >
   void addRow( Args const & ... args );
 
+  /** 
+   * @return The rows of the table
+   */
   std::vector< std::vector< string > > & getTableDataRows();
 
 private:
@@ -44,6 +48,7 @@ private:
 
 };
 
+// Class for managing 2D table data
 class TableData2D : public TableData
 {
 public:

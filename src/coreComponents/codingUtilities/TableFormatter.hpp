@@ -25,6 +25,7 @@
 namespace geos
 {
 
+// Class for formatting table data
 class TableFormatter
 {
 public:
@@ -43,7 +44,9 @@ public:
   TableLayout m_tableLayout;
 
   /**
-   * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout who store all values in an unsorted order
+   * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout, storing all values in an unsorted order.
+   * @param columns Vector of columns to be filled.
+   * @param tableData Vector of table data.
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData );
@@ -65,19 +68,21 @@ public:
   TableCSVFormatter( TableLayout & tableLayout );
 
   /**
-   * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 2-dimensions table
+   * @brief Convert the table data to a CSV string.
+   * @param tableData The 2D table data.
+   * @return The CSV string representation of the table data.
    */
   string dataToString( TableData2D & tableData );
 
   /**
-   * @param tableData A 2-dimensions tabke
-   * @return A string of CSV data from a 1-dimensions table
+   * @brief Convert the table data to a CSV string.
+   * @param tableData The 1D table data.
+   * @return The CSV string representation of the table data.
    */
   string dataToString( TableData & tableData );
 
   /**
-   * @return A string with all column names
+   * @return The string with all column names.
    */
   string headerToString();
 
@@ -91,17 +96,22 @@ public:
   TableTextFormatter( TableLayout & tableLayout );
 
   /**
-   * @brief return a table string from a TableData
+   * @brief Convert the TableData to a table string.
+   * @param tableData The TableData to convert.
+   * @return The table string representation of the TableData.
    */
   string ToString( TableData & tableData );
 
   /**
-   * @brief return a table string from a TableData2D
+   * @brief Convert the TableData2D to a table string.
+   * @param tableData The TableData2D to convert.
+   * @return The table string representation of the TableData2D.
    */
   string ToString( TableData2D & tableData );
 
   /**
-   * @return return a table string from a TableLayout
+   * @brief Get a table string from the TableLayout.
+   * @return The table string representation of the TableLayout.
    */
   string layoutToString();
 

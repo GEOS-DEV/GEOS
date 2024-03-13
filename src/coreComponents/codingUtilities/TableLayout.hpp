@@ -38,6 +38,9 @@ public:
     large = 3
   };
 
+  /**
+   * @brief Enumeration for table sections.
+   */
   enum Section { header, values };
 
   /**
@@ -54,10 +57,21 @@ public:
     // Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnName;
 
+    /**
+     * @brief Construct a ColumnParam object with the specified name and alignment.
+     * @param name The name of the column
+     * @param align The alignment of the column
+     */
     ColumnParam( std::string const & name, Alignment align )
       : columnName( name ), alignment( align )
     {}
 
+    /**
+     * @brief Construct a ColumnParam object with the specified name, alignment, and display flag.
+     * @param name The name of the column
+     * @param align The alignment of the column
+     * @param display Flag indicating whether the column is enabled
+     */
     ColumnParam( std::string const & name, Alignment align, bool display )
       : columnName( name ), alignment( align ), enabled( display )
     {}
@@ -79,7 +93,7 @@ public:
 
   /**
    * @brief Construct a new Table object, all values in the table are centered by default
-   * @param columnNames
+   * @param columnNames The names of the columns
    */
   TableLayout( std::vector< string > const & columnNames );
 
@@ -92,7 +106,7 @@ public:
 
   /**
    * @brief Set the minimal margin width between row content and borders.
-   * @param marginType
+   * @param marginType The margin value
    */
   void setMargin( MarginValue marginType );
 
