@@ -37,7 +37,7 @@ public:
   template< typename ... Args >
   void addRow( Args const & ... args );
 
-  /** 
+  /**
    * @return The rows of the table
    */
   std::vector< std::vector< string > > & getTableDataRows();
@@ -49,9 +49,11 @@ private:
 };
 
 // Class for managing 2D table data
-class TableData2D : public TableData
+class TableData2D
 {
 public:
+
+  TableData tableData;
 
   /**
    * @brief Add a cell to the table.
@@ -63,10 +65,13 @@ public:
   void addCell( real64 x, real64 y, T value );
 
   /**
-   * @brief Construct all rows from all cell values stored in map previously
-   * @param tableRows Rows to be built
+   * @brief Construct a TableData from a Table2D
+   * @return A TableData 
    */
-  void buildRows( std::vector< std::vector< string > > & tableRows );
+  TableData buildTableData() const;
+
+  std::set< real64 > const & getColumns() const;
+  std::set< real64 > const & getRows() const;
 
 private:
   std::map< std::pair< real64, real64 >, string > data;

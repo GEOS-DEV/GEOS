@@ -63,15 +63,17 @@ string TableCSVFormatter::headerToString()
   return headerValues;
 }
 
-string TableCSVFormatter::dataToString( TableData2D & tableData )
+string TableCSVFormatter::dataToString( TableData2D & tableData2D )
 {
 
   string data;
+  TableData tableData;
+  std::vector< std::vector< string > > rowsValues;
 
-  std::vector< std::vector< string > > rowsValues = tableData.getTableDataRows();
-
-  tableData.buildRows( rowsValues );
-
+  tableData = tableData2D.buildTableData();
+  rowsValues = tableData.getTableDataRows();
+  data.reserve(tableData2D.getColumns().size() * tableData2D.getRows().size());
+  
   for( std::vector< string > const & row : rowsValues )
   {
     for( size_t idxRow = 0; idxRow < row.size(); idxRow++ )
@@ -142,13 +144,6 @@ string TableTextFormatter::ToString( TableData & tableData )
   return constructAndReturnTable( tableData.getTableDataRows() );
 }
 
-string TableTextFormatter::ToString( TableData2D & tableData )
-{
-  std::vector< std::vector< string > > tableRows = tableData.getTableDataRows();
-  tableData.buildRows( tableRows );
-  return constructAndReturnTable( tableRows );
-}
-
 string TableTextFormatter::layoutToString()
 {
   string titleRows;
@@ -203,7 +198,7 @@ void TableTextFormatter::parseAndStoreHeaderSections( std::vector< TableLayout::
 }
 
 void TableTextFormatter::adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
-                                                    size_t largestHeaderVectorSize,
+                                                    size_t const & largestHeaderVectorSize,
                                                     std::vector< std::vector< string > > & splitHeader )
 {
   for( size_t columnParamIdx = 0; columnParamIdx < columns.size(); columnParamIdx++ )
@@ -218,7 +213,7 @@ void TableTextFormatter::adjustHeaderSizesAndStore( std::vector< TableLayout::Co
 }
 
 void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns,
-                                                  size_t nbRows )
+                                                  size_t const & nbRows )
 {
   string maxStringSize = "";
   for( size_t idxColumn  = 0; idxColumn <  columns.size(); idxColumn++ )
@@ -392,7 +387,7 @@ void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & 
   }
 }
 
-string TableTextFormatter::constructAndReturnTable( std::vector< std::vector< string > > & rowsValues )
+string TableTextFormatter::constructAndReturnTable( std::vector< std::vector< string > > const & rowsValues )
 {
   string titleRows;
   string topSeparator;

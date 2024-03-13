@@ -26,8 +26,18 @@ std::vector< std::vector< string > > & TableData::getTableDataRows()
   return m_rows;
 }
 
-void TableData2D::buildRows( std::vector< std::vector< string > > & tableRows )
+ std::set< real64 > const & TableData2D::getColumns() const
+ {
+  return columns;
+ }
+  std::set< real64 > const & TableData2D::getRows() const
+  {
+    return rows;
+  }
+
+TableData TableData2D::buildTableData() const
 {
+  TableData tableDataToBeBuilt;
   for( real64 const & rowValue : rows )
   {
     std::vector< string > values;
@@ -42,8 +52,9 @@ void TableData2D::buildRows( std::vector< std::vector< string > > & tableRows )
         values.push_back( GEOS_FMT( "{}", dataIt->second ));
       }
     }
-    tableRows.push_back( values );
+    tableDataToBeBuilt.addRow( values );
   }
+  return tableDataToBeBuilt;
 }
 
 }

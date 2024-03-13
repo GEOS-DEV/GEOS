@@ -103,13 +103,6 @@ public:
   string ToString( TableData & tableData );
 
   /**
-   * @brief Convert the TableData2D to a table string.
-   * @param tableData The TableData2D to convert.
-   * @return The table string representation of the TableData2D.
-   */
-  string ToString( TableData2D & tableData );
-
-  /**
    * @brief Get a table string from the TableLayout.
    * @return The table string representation of the TableLayout.
    */
@@ -126,13 +119,13 @@ private:
                                     size_t & largestHeaderVectorSize,
                                     std::vector< std::vector< string > > & splitHeader );
   void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
-                                  size_t largestHeaderVectorSize,
+                                  size_t const & largestHeaderVectorSize,
                                   std::vector< std::vector< string > > & splitHeader );
 
   /**
    * @brief For each column find and set the column's longest string
    */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t nbRows );
+  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t const & nbRows );
 
   /**
    * @brief Compute the largest string size in the table. If the table title is the largest string size in the table, recalculate for all
@@ -179,7 +172,7 @@ private:
    * @param rowsValues All values sorted by rows
    * @return A table string
    */
-  string constructAndReturnTable( std::vector< std::vector< string > > & rowsValues );
+  string constructAndReturnTable( std::vector< std::vector< string > > const & rowsValues );
 
 };
 }
