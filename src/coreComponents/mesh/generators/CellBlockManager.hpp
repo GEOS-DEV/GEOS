@@ -165,11 +165,10 @@ public:
 
   /**
    * @brief Registers and returns a cell block of name @p name.
-   * @param name The name of the cell block containing region (typically the region attribute).
-   * @param name The unique name of the cell block Group.
+   * @param name The name of the created cell block.
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
-  CellBlock & registerCellBlock( string const & regionName, string const & groupName );
+  CellBlock & registerCellBlock( string const & name );
 
   /**
    * @brief Registers and returns a face block of name @p name.

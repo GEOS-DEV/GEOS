@@ -72,8 +72,7 @@ bool CellElementRegion::isSelectingAllCells()
 
 void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
 {
-  GEOS_THROW_IF( cellBlock.getName() == CellElementRegion::viewKeyStruct::selectAllCellBlocksString() ||
-                 cellBlock.getRegionName() == CellElementRegion::viewKeyStruct::selectAllCellBlocksString(),
+  GEOS_THROW_IF( cellBlock.getName() == CellElementRegion::viewKeyStruct::selectAllCellBlocksString(),
                  GEOS_FMT( "{}: cellBlock named '{}' uses the reserved keyword '{}'.",
                            getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
                            cellBlock.getName(),
@@ -110,36 +109,37 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
       }
       else
       {
-        bool foundOneCellBlock = false;
+        // TODO: replace commented code by new cellBlockMatch & cellBlockAttributeValues wrappers
+        // bool foundOneCellBlock = false;
 
         // if we want to add all region
-        cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & foundCellBlock )
-        {
-          if( foundCellBlock.getRegionName() == cellBlockName )
-          {
-            registerSubRegion( foundCellBlock );
-            foundOneCellBlock = true;
-          }
-        } );
+        // cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & foundCellBlock )
+        // {
+        //   if( foundCellBlock.getRegionName() == cellBlockName )
+        //   {
+        //     registerSubRegion( foundCellBlock );
+        //     foundOneCellBlock = true;
+        //   }
+        // } );
 
-        if( !foundOneCellBlock )
+        // if( !foundOneCellBlock )
+        // {
+        // std::set< string > regions;
+        std::vector< string > subRegions;
+        cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cb )
         {
-          std::set< string > regions;
-          std::vector< string > subRegions;
-          cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cb )
-          {
-            regions.insert( string( cb.getRegionName() ) );
-            subRegions.push_back( string( cb.getName() ) );
-          } );
-          GEOS_THROW( GEOS_FMT( "{}: region or sub-region '{}' not found.\n"
-                                "Available region list: {}\n"
-                                "Available sub-region list: {}",
-                                getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
-                                cellBlockName,
-                                stringutilities::join( regions, ", " ),
-                                stringutilities::join( subRegions, ", " ) ),
-                      InputError );
-        }
+          // regions.insert( string( cb.getRegionName() ) );
+          subRegions.push_back( string( cb.getName() ) );
+        } );
+        GEOS_THROW( GEOS_FMT( "{}: region or sub-region '{}' not found.\n"
+                              // "Available region list: {}\n"
+                              "Available sub-region list: {}",
+                              getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
+                              cellBlockName,
+                              // stringutilities::join( regions, ", " ),
+                              stringutilities::join( subRegions, ", " ) ),
+                    InputError );
+        // }
       }
     }
   }

@@ -59,17 +59,6 @@ public:
   virtual ElementType getElementType() const = 0;
 
   /**
-   * @return a string specifying the region attribute
-   */
-  virtual string_view getRegionName() const = 0;
-
-  /**
-   * @brief Set this cellBlock regionName.
-   * @param regionName A string specifying the region attribute.
-   */
-  virtual void setRegionName( string_view regionName ) = 0;
-
-  /**
    * @brief Get the number of nodes per element.
    * @return number of nodes per element
    */

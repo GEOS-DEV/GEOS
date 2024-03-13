@@ -2139,8 +2139,7 @@ void writeCells( integer const logLevel,
       GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
 
       // Create and resize the cell block.
-      CellBlock & cellBlock = cellBlockManager.registerCellBlock( std::to_string( regionId ),
-                                                                  cellBlockName );
+      CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
       cellBlock.setElementType( elemType );
       cellBlock.resize( LvArray::integerConversion< localIndex >( cellIds.size() ) );
 

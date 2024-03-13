@@ -1189,7 +1189,7 @@ private:
   /**
    * @brief Check that the loaded sub regions are all linked with a cellBlock,
    */
-  void checkSubRegionRegistering( Group const & cellBlocks );
+  void checkSubRegionRegistering( CellBlockManagerABC const & cellBlockManager );
 };
 
 

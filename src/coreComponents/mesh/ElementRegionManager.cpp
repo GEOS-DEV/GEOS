@@ -130,7 +130,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
 
-  checkSubRegionRegistering( cellBlockManager.getCellBlocks() );
+  checkSubRegionRegistering( cellBlockManager );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
   // For the moment, those mappings only point to cell block indices.
@@ -154,58 +154,56 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   } );
 
 }
-void ElementRegionManager::checkSubRegionRegistering( Group const & cellBlocks )
+void ElementRegionManager::checkSubRegionRegistering( CellBlockManagerABC const & cellBlockManager )
 {
-  // Each cellBlock must be referenced by exactly one sub region.
-  std::map< string, CellElementSubRegion const * > cellBlocksSubRegion;
-  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & sourceCellBlock )
-  {
-    cellBlocksSubRegion[ sourceCellBlock.getName() ] = nullptr;
-  } );
+  Group const & cellBlocks = cellBlockManager.getCellBlocks();
+  //std::map< string, CellElementSubRegion const * > cellBlocksSubRegion;
 
-  // We also keep track of the region in case of an error
+  // region that contain a cellBlock (name)
   std::map< string, CellElementRegion const * > cellBlocksRegion;
 
   // Let's find out which CellElementSubRegion is using each source cellBlock.
   forElementRegions< CellElementRegion >( [&]( CellElementRegion & region ) {
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion ) {
       string const & subRegionName = subRegion.getName();
-      auto const subRegionIter = cellBlocksSubRegion.find( subRegionName );
 
       // if no region already referenced the cellBlock
-      if( subRegionIter->second == nullptr )
+      if( cellBlocksRegion.find( subRegionName ) == cellBlocksRegion.end() )
       {
-        subRegionIter->second = &subRegion;
         cellBlocksRegion[ subRegionName ] = &region;
       }
       else
       {
-        CellElementRegion const & lastContainingRegion = *cellBlocksRegion[ subRegionName ];
-        CellBlockABC const & cellBlock = cellBlocks.getGroup< CellBlockABC >( subRegionIter->first );
-        GEOS_THROW( GEOS_FMT( "The sub-region '{}' from region '{}' has been referenced multiple times:\n"
+        CellElementRegion const & otherRegion = *cellBlocksRegion[ subRegionName ];
+        // For now, multiple regions per cell is not supported (by ElementRegionManager::getCellBlockToSubRegionMap())
+        // TODO: refactor the CellElementRegion & Mesh classes so regions are mapped to cellblocks IN the mesh (and potencially
+        // to multiple regions per cell). So, for external meshes, the cellblocks would no longer be exposed to the final user.
+        GEOS_THROW( GEOS_FMT( "The sub-region '{}' has been referenced in multiple region:\n"
                               "- {}\n- {}",
-                              cellBlock.getName(), cellBlock.getRegionName(),
-                              lastContainingRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
+                              subRegionName,
+                              otherRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
                               region.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) ),
                     InputError );
       }
     } );
   } );
 
-  for( auto const & [cellBlockName, subRegion] : cellBlocksSubRegion )
+  // checking if a cellBlock has not been referenced
+  std::vector< string > orphanCellBlocksNames;
+  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
-    if( subRegion == nullptr )
+    if( cellBlocksRegion.find( cellBlock.getName() ) == cellBlocksRegion.end() )
     {
-      CellBlockABC const & cellBlock = cellBlocks.getGroup< CellBlockABC >( cellBlockName );
-      GEOS_THROW( GEOS_FMT( "The sub-region '{}' from region '{}' has not been referenced.\n"
-                            "Please add this region or sub-region in an existing '{}', or consider creating "
-                            "a new {} to describe your model.",
-                            cellBlock.getName(), cellBlock.getRegionName(),
-                            CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
-                            CellElementRegion::catalogName() ),
-                  InputError );
+      orphanCellBlocksNames.push_back( GEOS_FMT( "\n- {}", cellBlock.getName() ) );
     }
-  }
+  } );
+  GEOS_THROW_IF( !orphanCellBlocksNames.empty(),
+                 GEOS_FMT( "The following sub-regions has not been referenced:{}\n"
+                           "Please add it in an existing '{}', or consider creating a new {} to describe your model.",
+                           stringutilities::join( orphanCellBlocksNames ),
+                           CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
+                           CellElementRegion::catalogName() ),
+                 InputError );
 }
 
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
