@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -101,6 +102,12 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of solubility tables for each phase" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Write PVT tables into a CSV file" ).
+    setDefaultValue( 1 );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -121,7 +128,6 @@ bool CO2BrineFluid< PHASE1, PHASE2, FLASH >::isThermal() const
            PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
 }
 
-
 template< typename PHASE1, typename PHASE2, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::
@@ -133,7 +139,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_p1Index = m_p1Index;
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation.createPVTModels();
+  newConstitutiveRelation.createPVTModels( true );
 
   return clone;
 }
@@ -231,13 +237,12 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  createPVTModels();
+  createPVTModels( false );
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
@@ -327,10 +332,14 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
+  bool const writeCSV = !isClone && m_writeCSV;
+  bool const writeInLog = !isClone && (getLogLevel() >= 0 && logger::internal::rank==0);
+
   m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV, writeInLog );
   m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV, writeInLog );
+
 
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
@@ -356,7 +365,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                                  m_phaseNames,
                                                  m_componentNames,
                                                  m_componentMolarWeight,
-                                                 getLogLevel() > 0 && logger::internal::rank==0 );
+                                                 writeCSV,
+                                                 writeInLog );
           }
         }
         else
@@ -396,7 +406,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                          m_phaseNames,
                                          m_componentNames,
                                          m_componentMolarWeight,
-                                         getLogLevel() > 0 && logger::internal::rank==0 );
+                                         writeCSV,
+                                         writeInLog );
   }
 
   GEOS_THROW_IF( m_flash == nullptr,

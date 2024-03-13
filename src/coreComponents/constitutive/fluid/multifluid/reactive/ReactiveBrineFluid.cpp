@@ -68,6 +68,11 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Write PVT tables into a CSV file" );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -93,11 +98,12 @@ std::unique_ptr< ConstitutiveBase >
 ReactiveBrineFluid< PHASE > ::
 deliverClone( string const & name, Group * const parent ) const
 {
+
   std::unique_ptr< ConstitutiveBase > clone = ReactiveMultiFluid::deliverClone( name, parent );
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
 
-  newConstitutiveRelation.createPVTModels();
+  newConstitutiveRelation.createPVTModels( true );
 
   return clone;
 }
@@ -113,6 +119,7 @@ integer ReactiveBrineFluid< PHASE > ::getWaterPhaseIndex() const
 template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::postProcessInput()
 {
+
   ReactiveMultiFluid::postProcessInput();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
@@ -122,11 +129,16 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
 
-  createPVTModels();
+  if( getParent().getName() == "ConstitutiveModels" )
+  {
+    m_isClone = true;
+  }
+
+  createPVTModels( m_isClone );
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels()
+void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
 {
 
   // TODO: get rid of these external files and move into XML, this is too error prone
@@ -192,9 +204,12 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
+  bool const writeCSV = !isClone && m_writeCSV;
+  bool const writeInLog = !isClone && (getLogLevel() > 0 && logger::internal::rank==0);
+
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       getLogLevel() > 0 && logger::internal::rank==0 );
+                                       writeCSV, writeInLog);
 }
 
 template< typename PHASE >

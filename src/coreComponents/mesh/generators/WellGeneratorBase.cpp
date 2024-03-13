@@ -17,7 +17,10 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-
+#include "codingUtilities/TableLayout.hpp"
+#include "codingUtilities/TableData.hpp"
+#include "codingUtilities/TableFormatter.hpp"
+#include "common/Format.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -528,54 +531,53 @@ void WellGeneratorBase::debugWellGeometry() const
     return;
   }
 
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "WellGeneratorBase = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::commRank( MPI_COMM_GEOSX ) << std::endl << std::endl;
-  std::cout << "Number of well elements = " << m_numElems << std::endl;
+  //1. formatting data
+  TableLayout tableWellLayout = TableLayout( {
+      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
+    } );
 
+  tableWellLayout.setTitle( "InternalWellGenerator " + getName());
+
+  TableData tableWellData;
+
+  //2. collecting data
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
-    std::cout << "Well element #" << iwelem << std::endl;
-    std::cout << "Coordinates of the element center: " << m_elemCenterCoords[iwelem] << std::endl;
-    if( m_nextElemId[iwelem] < 0 )
+    std::optional< globalIndex > nextElement;
+    std::optional< globalIndex > prevElement;
+
+    if( m_nextElemId[iwelem] >= 0 )
     {
-      std::cout << "No next well element" << std::endl;
+      nextElement =  m_nextElemId[iwelem];
     }
-    else
+
+    if( m_prevElemId[iwelem][0] >= 0 )
     {
-      std::cout << "Next well element # = " << m_nextElemId[iwelem] << std::endl;
+      prevElement =  m_prevElemId[iwelem][0];
     }
-    if( m_prevElemId[iwelem][0] < 0 )
-    {
-      std::cout << "No previous well element" << std::endl;
-    }
-    else
-    {
-      std::cout << "Previous well element #" << m_prevElemId[iwelem][0] << std::endl;
-    }
-    for( globalIndex inode = 0; inode < m_numNodesPerElem; ++inode )
-    {
-      if( inode == 0 )
-      {
-        std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-      else
-      {
-        std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-    }
+
+    tableWellData.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
   }
+  //3. dumping
+  TableTextFormatter tableFormatter( tableWellLayout );
+  GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));
 
-  std::cout << std::endl << "Number of perforations = " << m_numPerforations << std::endl;
+  TableLayout tableLayoutPerfo = TableLayout( {"Perforation no.", "Coordinates", "connected to" } );
+  tableLayoutPerfo.setTitle( "Peforation table" );
 
+  TableData tablePerfoData;
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    std::cout << "Perforation #" << iperf << std::endl;
-    std::cout << "Coordinates of the perforation: " << m_perfCoords[iperf] << std::endl;
-    std::cout << "Is connected to well element #" << m_perfElemId[iperf] << std::endl;
+    tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
-  std::cout << std::endl;
+
+  TableTextFormatter tablePerfoLog( tableLayoutPerfo );
+  GEOS_LOG_RANK_0( tablePerfoLog.ToString( tablePerfoData ));
 
 }
 

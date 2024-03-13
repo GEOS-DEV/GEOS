@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -117,6 +118,7 @@ public:
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const &,
+                                                             bool const,
                                                              bool const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
@@ -137,6 +139,24 @@ public:
    * @throw a SimulationError if one of the input values is out of bound.
    */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
+  /**
+   * @brief Check if the log should be printed on log (standard output) and/or CSV files
+   * @param table The target table to be printed
+   * @param printInCsv Boolean for printing in CSV
+   * @param printInLog Boolean for printing in Log
+   */
+  void checkPrint ( TableFunction const * table, bool const printInCsv, bool const printInLog )
+  {
+    if( printInCsv || ( printInLog && table->numDimensions() >= 3 ) )
+    {
+      table->printInCSV( table->getName() );
+    }
+    if( printInLog &&  table->numDimensions() <= 2 )
+    {
+      table->printInLog( table->getName() );
+    }
+  }
 
 protected:
 
