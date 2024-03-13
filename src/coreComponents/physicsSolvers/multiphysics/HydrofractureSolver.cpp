@@ -102,7 +102,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( InitializationType::Pressure ).
     setDescription( "Type of new fracture element initialization. Can be Pressure or Displacement. " );
-    
+
   registerWrapper( viewKeyStruct::useQuasiNewtonString(), &m_useQuasiNewton ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
@@ -992,10 +992,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( DomainPartition & domain )
 {
-#if !defined(ALLOW_CREATION_MASS)
-  static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1033,9 +1029,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       arrayView1d< real64 > const apertureF = subRegion.getReference< array1d< real64 > >( "apertureAtFailure" );
   #endif
 
-  #if ALLOW_CREATION_MASS==0
-      arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" ); // change it to make aperture zero
-  #endif
+      //     arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" ); // change it to make aperture
+      // zero
 
       forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {

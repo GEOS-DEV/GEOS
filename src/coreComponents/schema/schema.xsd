@@ -2801,6 +2801,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver&lt;geos_SinglePhasePoromechanics&lt;geos_SinglePhaseBase, geos_SolidMechanicsLagrangianFEM> >_InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
@@ -2812,6 +2814,11 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_HydrofractureSolver&lt;geos_SinglePhasePoromechanics&lt;geos_SinglePhaseBase, geos_SolidMechanicsLagrangianFEM> >_InitializationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

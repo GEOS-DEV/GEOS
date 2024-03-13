@@ -24,16 +24,6 @@
 namespace geos
 {
 
-/// @cond DO_NOT_DOCUMENT
-// TODO remove! This option allows for the creation of new mass inside a newly
-// created FaceElement. The new mass will be equal to:
-// creationMass = defaultDensity * defaultAperture * faceArea.
-// If 0, then the beginning of step density is artificially set to zero...which
-// may cause some newton convergence problems.
-#define ALLOW_CREATION_MASS 1
-
-/// @endcond
-
 /**
  * @brief Describes properties of SurfaceElementStencil.
  *
