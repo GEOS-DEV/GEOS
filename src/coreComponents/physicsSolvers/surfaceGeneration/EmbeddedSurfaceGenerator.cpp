@@ -68,20 +68,18 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
   registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
-
-  // this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-  // setInputFlag( InputFlags::FALSE );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
-
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()

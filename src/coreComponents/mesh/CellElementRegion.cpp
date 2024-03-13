@@ -24,10 +24,12 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 );
 }
 
 CellElementRegion::~CellElementRegion()

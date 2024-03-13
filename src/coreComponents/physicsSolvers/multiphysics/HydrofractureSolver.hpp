@@ -69,6 +69,10 @@ public:
   ~HydrofractureSolver() override {}
 
   static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanics"; }
@@ -110,7 +114,7 @@ public:
 
   /**@}*/
 
-  void updateDeformationForCoupling( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -124,12 +128,12 @@ public:
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
@@ -144,6 +148,7 @@ public:
 
     constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
 
+    constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -205,6 +210,8 @@ private:
   integer m_numResolves[2];
 
   integer m_isMatrixPoroelastic;
+
+  integer m_useQuasiNewton;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
 
 };
 

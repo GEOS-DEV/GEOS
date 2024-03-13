@@ -36,6 +36,7 @@ VTKOutput::VTKOutput( string const & name,
   m_plotLevel(),
   m_onlyPlotSpecifiedFieldNames(),
   m_fieldNames(),
+  m_levelNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   enableLogLevelInput();
@@ -66,8 +67,13 @@ VTKOutput::VTKOutput( string const & name,
     "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
 
   registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`" );
+
+  registerWrapper( viewKeysStruct::levelNames, &m_levelNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of mesh levels to output." );
 
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
@@ -87,6 +93,7 @@ void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
+  m_writer.setLevelNames( m_levelNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
 
   string const fieldNamesString = viewKeysStruct::fieldNames;

@@ -23,7 +23,8 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "WaveSolverBase.hpp"
-#include "WaveSolverBaseFields.hpp"
+#include "AcousticFields.hpp"
+#include "AcousticVTIFields.hpp"
 
 namespace geos
 {
@@ -39,6 +40,10 @@ public:
                               Group * const parent );
 
   static string catalogName() { return "AcousticVTISEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 

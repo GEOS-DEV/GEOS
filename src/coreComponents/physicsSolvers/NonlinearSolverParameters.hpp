@@ -63,6 +63,7 @@ public:
     m_lineSearchInterpType = params.m_lineSearchInterpType;
     m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
     m_lineSearchCutFactor = params.m_lineSearchCutFactor;
+    m_lineSearchStartingIteration = params.m_lineSearchStartingIteration;
 
     m_newtonTol = params.m_newtonTol;
     m_maxIterNewton = params.m_maxIterNewton;
@@ -101,6 +102,7 @@ public:
     static constexpr char const * lineSearchMaxCutsString()       { return "lineSearchMaxCuts"; }
     static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
+    static constexpr char const * lineSearchStartingIterationString() { return "lineSearchStartingIteration"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
     static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
@@ -128,6 +130,7 @@ public:
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+    static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
   } viewKeys;
 
   /**
@@ -164,7 +167,17 @@ public:
   enum class SequentialConvergenceCriterion : integer
   {
     ResidualNorm, ///< convergence achieved when the residual drops below a given norm
-    NumberOfNonlinearIterations ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+    NumberOfNonlinearIterations, ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+    SolutionIncrements ///< convergence achieved when the solution increments are small enough
+  };
+
+  /**
+   * @brief Nonlinear acceleration type
+   */
+  enum class NonlinearAccelerationType : integer
+  {
+    None, ///< no acceleration
+    Aitken ///< Aitken acceleration
   };
 
   /**
@@ -236,7 +249,7 @@ public:
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
-  /// Flag to pick the type of linesearch
+  /// Flag to pick the type of line search
   LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
@@ -244,6 +257,9 @@ public:
 
   /// The reduction factor for each line search cut.
   real64 m_lineSearchCutFactor;
+
+  /// Iteration when line search starts
+  integer m_lineSearchStartingIteration;
 
   /// Norm used to check the nonlinear loop convergence
   solverBaseKernels::NormType m_normType;
@@ -305,6 +321,9 @@ public:
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
 
+  /// Type of nonlinear acceleration for sequential solver
+  NonlinearAccelerationType m_nonlinearAccelerationType;
+
   /// Value used to make sure that residual normalizers are not too small when computing residual norm
   real64 m_minNormalizer = 1e-12;
 };
@@ -324,7 +343,12 @@ ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
 
 ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
               "ResidualNorm",
-              "NumberOfNonlinearIterations" );
+              "NumberOfNonlinearIterations",
+              "SolutionIncrements" );
+
+ENUM_STRINGS( NonlinearSolverParameters::NonlinearAccelerationType,
+              "None",
+              "Aitken" );
 
 } /* namespace geos */
 

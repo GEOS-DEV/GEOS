@@ -186,6 +186,13 @@ void ProblemManager::parseCommandLineInput()
   OutputBase::setOutputDirectory( outputDirectory );
 
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+
+  for( string const & xmlFile : opts.inputFileNames )
+  {
+    string const absPath = getAbsolutePath( xmlFile );
+    GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
+  }
+
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
@@ -198,7 +205,7 @@ void ProblemManager::parseCommandLineInput()
   if( schemaName.empty())
   {
     inputFileName = getAbsolutePath( inputFileName );
-    Path::pathPrefix() = splitPath( inputFileName ).first;
+    Path::setPathPrefix( splitPath( inputFileName ).first );
   }
 
   if( opts.traceDataMigration )
@@ -321,6 +328,11 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
   includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  // the name of includedFile is actually a Path.
+  includedFile.registerWrapper< string >( "name" ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
+    setDescription( "The relative file path." );
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
@@ -920,7 +932,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
             if( feDiscretization != nullptr )
             {
-              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
@@ -955,6 +967,20 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
+              } );
+
+              // For now SurfaceElementSubRegion do not have a FE type associated with them. They don't need one for now and
+              // it would have to be a heterogeneous one coz they are usually heterogeneous subregions.
+              elemRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
+              {
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            meshLevel.getName(),
+                                                                                            regionName,
+                                                                                            subRegion.getName() ) ];
+
+                localIndex const numQuadraturePoints = 1;
+
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
               } );
             }
             else   //if( fvFluxApprox != nullptr )

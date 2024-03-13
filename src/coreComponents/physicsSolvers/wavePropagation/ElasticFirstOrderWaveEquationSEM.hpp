@@ -21,7 +21,7 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "WaveSolverBaseFields.hpp"
+#include "ElasticFields.hpp"
 #include "WaveSolverBase.hpp"
 
 
@@ -35,14 +35,16 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  static constexpr real64 epsilonLoc = 1e-8;
-
   ElasticFirstOrderWaveEquationSEM( const std::string & name,
                                     Group * const parent );
 
   virtual ~ElasticFirstOrderWaveEquationSEM() override;
 
   static string catalogName() { return "ElasticFirstOrderSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -66,15 +68,6 @@ public:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
-
-  /**@}*/
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
 
   /**
@@ -187,4 +180,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASSTICWAVEEQUATIONSEM_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */

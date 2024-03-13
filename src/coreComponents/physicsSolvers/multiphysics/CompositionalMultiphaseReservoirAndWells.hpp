@@ -56,6 +56,10 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -94,6 +98,7 @@ public:
   { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
   integer & isThermal() { return flowSolver()->isThermal(); }
+  integer useSimpleAccumulation() const { return flowSolver()->useSimpleAccumulation(); }
   integer useTotalMassEquation() const { return flowSolver()->useTotalMassEquation(); }
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
@@ -101,7 +106,7 @@ public:
   void enableFixedStressPoromechanicsUpdate()
   { flowSolver()->enableFixedStressPoromechanicsUpdate();  }
 
-  void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final { flowSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

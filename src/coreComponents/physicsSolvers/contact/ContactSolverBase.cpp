@@ -40,68 +40,82 @@ using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolver( nullptr ),
-  m_setupSolidSolverDofs( true )
+  SolidMechanicsLagrangianFEM( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver in the rock matrix" );
+  this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
-
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
+  this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );
 }
 
 void ContactSolverBase::postProcessInput()
 {
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  SolverBase::postProcessInput();
+  SolidMechanicsLagrangianFEM::postProcessInput();
+
+  GEOS_THROW_IF( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic,
+                 GEOS_FMT( "{} {}: The attribute `{}` must be `{}`",
+                           this->getCatalogName(), this->getName(),
+                           viewKeyStruct::timeIntegrationOptionString(),
+                           EnumStrings< TimeIntegrationOption >::toString( TimeIntegrationOption::QuasiStatic ) ),
+                 InputError );
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  using namespace fields::contact;
+  SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
 
-  forDiscretizationOnMeshTargets( meshBodies,
-                                  [&]( string const,
-                                       MeshLevel & meshLevel,
-                                       arrayView1d< string const > const regionNames )
+  setFractureRegions( meshBodies );
+
+  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                           [&] ( localIndex const,
-                                                                 SurfaceElementRegion & region )
+    string const labels[3] = { "normal", "tangent1", "tangent2" };
+
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      string const labels[3] = { "normal", "tangent1", "tangent2" };
+      setConstitutiveNamesCallSuper( subRegion );
 
-      region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-      {
-        subRegion.registerField< dispJump >( getName() ).
-          setDimLabels( 1, labels ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< fields::contact::dispJump >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< deltaDispJump >( getName() ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< fields::contact::deltaDispJump >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< oldDispJump >( getName() ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< fields::contact::oldDispJump >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< traction >( getName() ).
-          setDimLabels( 1, labels ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< fields::contact::traction >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< fractureState >( getName() );
+      subRegion.registerField< fields::contact::fractureState >( getName() );
 
-        subRegion.registerField< oldFractureState >( getName() );
-      } );
+      subRegion.registerField< fields::contact::oldFractureState >( getName() );
+    } );
+
+  } );
+}
+
+void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel const & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames, [&] ( localIndex const, SurfaceElementRegion const & region )
+    {
+      m_fractureRegionNames.push_back( region.getName() );
     } );
   } );
+
+  // TODO remove once multiple regions are fully supported
+  GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
+                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
+                           this->getCatalogName(), this->getName() ),
+                 InputError );
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
@@ -184,26 +198,6 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
   }
 }
 
-void ContactSolverBase::applyBoundaryConditions( real64 const time,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  if( m_setupSolidSolverDofs )
-  {
-    m_solidSolver->applyBoundaryConditions( time,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs );
-  }
-}
-
 real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                         real64 const & dt,
                                         const int GEOS_UNUSED_PARAM( cycleNumber ),
@@ -222,13 +216,33 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, { getFractureRegionName() } );
+    fieldsToBeSync.addElementFields( { fields::contact::fractureState::key() }, { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
   } );
+}
+
+void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  if( dynamic_cast< CellElementSubRegion * >( &subRegion ) )
+  {
+    SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( subRegion );
+  }
+  else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
+  {
+    subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 );
+
+    string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
+    contactRelationName = SolverBase::getConstitutiveName< ContactBase >( subRegion );
+    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
+                                                          getDataContext(), subRegion.getDataContext() ) );
+  }
 }
 
 } /* namespace geos */

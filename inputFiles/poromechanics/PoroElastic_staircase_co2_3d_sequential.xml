@@ -13,7 +13,7 @@
       solidSolverName="linearElasticity"
       reservoirAndWellsSolverName="reservoirAndWells"
       logLevel="1"
-      targetRegions="{ channel, barrier, wellRegion1, wellRegion2 }">
+      targetRegions="{ channel }">
       <NonlinearSolverParameters
         couplingType="Sequential"
         subcycling="1"
@@ -36,7 +36,7 @@
       flowSolverName="twoPhaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ channel, barrier, wellRegion1, wellRegion2 }">
+      targetRegions="{ channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         lineSearchAction="None"
@@ -51,7 +51,7 @@
       discretization="fluidTPFA"
       targetRelativePressureChangeInTimeStep="1"
       targetPhaseVolFractionChangeInTimeStep="1"
-      targetRegions="{ channel, barrier  }"
+      targetRegions="{ channel  }"
       temperature="300"
       useMass="1"/>
 

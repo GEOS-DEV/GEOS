@@ -26,7 +26,7 @@
 namespace geos
 {
 
-class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics< SinglePhaseBase >
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >
 {
 public:
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
@@ -39,6 +39,10 @@ public:
    * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsEmbeddedFractures"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -122,15 +126,11 @@ public:
 
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
-    constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
-
     constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
   };
 
 
 protected:
-
-  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -146,10 +146,6 @@ private:
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const & dt );
-
-  string m_fracturesSolverName;
-
-  SolidMechanicsEmbeddedFractures * m_fracturesSolver;
 
 };
 
@@ -170,7 +166,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
-  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getUniqueFractureRegionName() );
   EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
@@ -197,7 +193,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                     CONSTITUTIVE_BASE,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
-                                                            m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                            solidMechanicsSolver()->getDiscretizationName(),
                                                             materialNamesString,
                                                             kernelWrapper );
 
@@ -217,7 +213,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                   CONSTITUTIVE_BASE,
                                   CellElementSubRegion >( mesh,
                                                           regionNames,
-                                                          m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                          solidMechanicsSolver()->getDiscretizationName(),
                                                           materialNamesString,
                                                           EFEMkernelWrapper );
 

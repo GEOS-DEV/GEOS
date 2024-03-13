@@ -92,13 +92,14 @@ public:
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
-  void updateIntrinsicNodalData( DomainPartition * const domain );
-
 
   /**
    * @defgroup Solver Interface Functions
