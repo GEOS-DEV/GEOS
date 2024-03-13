@@ -21,6 +21,10 @@
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "codingUtilities/Table.hpp"
+#include "codingUtilities/TableLayout.hpp"
+#include "codingUtilities/TableData.hpp"
+#include "codingUtilities/TableFormatter.hpp"
+
 
 #include <algorithm>
 
@@ -219,6 +223,7 @@ void TableFunction::printInCSV( string const & filename ) const
         r = r % div[d];
       }
       // finally print out in right order
+
       for( integer d = 0; d < numDimensions; d++ )
       {
         arraySlice1d< real64 const > const coords = m_coordinates[d];
@@ -233,23 +238,29 @@ void TableFunction::printInCSV( string const & filename ) const
     arraySlice1d< real64 const > const coordsY = m_coordinates[1];
     integer const nX = coordsX.size();
     integer const nY = coordsY.size();
-    os<<units::getDescription( getDimUnit( 0 ));
-    for( integer j = 0; j < nY; j++ )
+    std::vector< string > columnNames;
+
+    columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
+    for( integer idxY = 0; idxY < nY; idxY++ )
     {
-      os << "," << units::getDescription( getDimUnit( 1 )) << "=" << coordsY[j];
+      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
+      columnNames.push_back( description );
     }
-    os << "\n";
+    TableLayout tableLayout( columnNames );
+
+    TableData2D tableData2D;
     for( integer i = 0; i < nX; i++ )
     {
-      os << coordsX[i];
-      for( integer j = 0; j < nY; j++ )
+      for( integer y = 0; y < nY; y++ )
       {
-        os << "," << m_values[ j*nX + i ];
+        tableData2D.addCell( coordsX[i], y, m_values[ y*nX + i ] );
       }
-      os << "\n";
     }
-  }
 
+    TableCSVFormatter csvFormat( tableLayout );
+    os << csvFormat.headerToString();
+    os << csvFormat.dataToString( tableData2D );
+  }
   os.close();
 }
 
@@ -257,7 +268,7 @@ void TableFunction::printInLog( string const & filename ) const
 {
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-   
+
   std::cout << GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
                          OutputBase::getOutputDirectory(),
                          filename );
@@ -265,20 +276,23 @@ void TableFunction::printInLog( string const & filename ) const
 
   if( numDimensions == 1 )
   {
-    Table pvtTable1D = Table(
-      {
+    TableLayout tableLayout( {
         string( units::getDescription( getDimUnit( 0 ))),
         string( units::getDescription( m_valueUnit ))
       } );
-    pvtTable1D.setTitle( filename );
+
+    tableLayout.setTitle( filename );
+
+    TableData tableData;
     arraySlice1d< real64 const > const coords = m_coordinates[0];
 
     for( integer idx = 0; idx < m_values.size(); idx++ )
     {
-      pvtTable1D.addRow< 2 >( coords[idx], m_values[idx] );
+      tableData.addRow( coords[idx], m_values[idx] );
     }
 
-    pvtTable1D.draw();
+    TableTextFormatter logTable( tableLayout );
+    GEOS_LOG_RANK_0( logTable.ToString( tableData ));
   }
   else if( numDimensions == 2 )
   {
@@ -298,36 +312,35 @@ void TableFunction::printInLog( string const & filename ) const
       vecDescription.push_back( description );
     }
 
-    Table pvtTable2D = Table( vecDescription );
-    pvtTable2D.setTitle( filename );
+    TableLayout tableLayout( vecDescription );
+    tableLayout.setTitle( filename );
+
+    TableData2D tableData2D;
 
     for( integer i = 0; i < nX; i++ )
     {
-      std::vector< string > vValues;
-      vValues.push_back( std::to_string( coordsX[i] ));
       for( integer j = 0; j < nY; j++ )
       {
-        vValues.push_back( std::to_string( m_values[ j*nX + i ] ));
+        tableData2D.addCell( coordsX[i], j, m_values[ j*nX + i ] );
       }
-      vRowsValues.push_back( vValues );
       nbRows++;
     }
 
     if( nbRows <= 500 )
     {
-      pvtTable2D.addRowsFromVectors( vRowsValues );
-      pvtTable2D.draw();
+      TableTextFormatter table2DLog( tableLayout );
+      GEOS_LOG_RANK_0( table2DLog.ToString( tableData2D ));
     }
     else
     {
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      Table pvtTable2DLog = Table( {Table::ColumnParam{{log}, Table::Alignment::left}} );
-      pvtTable2DLog.setTitle( filename );
-      pvtTable2DLog.draw();
+      TableLayout tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}} );
+      tableLayoutInfos.setTitle( filename );
+
+      TableTextFormatter tableLog( tableLayoutInfos );
+      GEOS_LOG_RANK_0( tableLog.layoutToString() );
     }
-
   }
-
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
