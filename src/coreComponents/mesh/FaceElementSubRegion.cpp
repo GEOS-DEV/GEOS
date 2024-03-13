@@ -474,12 +474,12 @@ std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArray
 
 
 /**
- * @brief Computes the mapping with links a pair of collocated nodes
+ * @brief Computes the mapping which links a pair of collocated nodes
  * to all the edges having their nodes collocated to this key pair of nodes.
  * @param referenceCollocatedNodes Mapping that link all the collocated nodes
  * to the collocated node with the lowest index (considered as a reference).
  * The reference node can then be used to make connection between geometrical objects
- * relying on collocated noes (in the case of this function, edges).
+ * relying on collocated nodes (in the case of this function, edges).
  * @param nl2g The node local to global mapping.
  * @param edgeToNodes The mapping from local edges to local nodes.
  * @return The computed mapping.
@@ -816,7 +816,7 @@ map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const 
  * @param[in] facesToNodes The face to nodes mapping.
  * @param[out] elem2dToNodes The 2d element to nodes that will be overwritten.
  * @details The @p elem2dToNodes a priori does not respect any specific nodes order.
- * But the vtk output await the first part of the nodes to make a first face (in the correct order),
+ * But the vtk output expects the first half of the nodes to make a first face (in the correct order),
  * and the second to make a second face. But nothing imposes this in our design.
  * Even if we should have a more explicit design,
  * the current function resets this implicit information in our mappings.
