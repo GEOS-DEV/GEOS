@@ -106,7 +106,7 @@
     </FiniteElements>
   </NumericalMethods>
 
-  <Events maxTime="2.1">
+  <Events maxTime="1.95">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
