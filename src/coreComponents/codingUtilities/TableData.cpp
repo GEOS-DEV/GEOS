@@ -26,14 +26,14 @@ std::vector< std::vector< string > > & TableData::getTableDataRows()
   return m_rows;
 }
 
- std::set< real64 > const & TableData2D::getColumns() const
- {
+std::set< real64 > const & TableData2D::getColumns() const
+{
   return columns;
- }
-  std::set< real64 > const & TableData2D::getRows() const
-  {
-    return rows;
-  }
+}
+std::set< real64 > const & TableData2D::getRows() const
+{
+  return rows;
+}
 
 TableData TableData2D::buildTableData() const
 {

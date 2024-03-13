@@ -53,8 +53,6 @@ class TableData2D
 {
 public:
 
-  TableData tableData;
-
   /**
    * @brief Add a cell to the table.
    * Construct a map of pair<x,y> and cell value
@@ -66,7 +64,7 @@ public:
 
   /**
    * @brief Construct a TableData from a Table2D
-   * @return A TableData 
+   * @return A TableData
    */
   TableData buildTableData() const;
 

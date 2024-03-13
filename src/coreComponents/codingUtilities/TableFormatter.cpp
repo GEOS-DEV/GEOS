@@ -72,8 +72,8 @@ string TableCSVFormatter::dataToString( TableData2D & tableData2D )
 
   tableData = tableData2D.buildTableData();
   rowsValues = tableData.getTableDataRows();
-  data.reserve(tableData2D.getColumns().size() * tableData2D.getRows().size());
-  
+  data.reserve( tableData2D.getColumns().size() * tableData2D.getRows().size());
+
   for( std::vector< string > const & row : rowsValues )
   {
     for( size_t idxRow = 0; idxRow < row.size(); idxRow++ )
@@ -139,7 +139,7 @@ TableTextFormatter::TableTextFormatter( TableLayout & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-string TableTextFormatter::ToString( TableData & tableData )
+string TableTextFormatter::ToString( TableData tableData )
 {
   return constructAndReturnTable( tableData.getTableDataRows() );
 }

@@ -100,7 +100,7 @@ public:
    * @param tableData The TableData to convert.
    * @return The table string representation of the TableData.
    */
-  string ToString( TableData & tableData );
+  string ToString( TableData tableData );
 
   /**
    * @brief Get a table string from the TableLayout.
