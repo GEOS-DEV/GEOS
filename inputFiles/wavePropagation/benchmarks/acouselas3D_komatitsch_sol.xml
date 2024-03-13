@@ -11,14 +11,14 @@
       timeSourceDelay="0.115"
       rickerOrder="3"
       outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"
+      dtSeismoTrace="1e-3"
       receiverCoordinates="{ { 3752.2936, 2400, 2933.3333 } }"/>
     <ElasticSEM
       name="elasticSolver"
       discretization="FE1"
       targetRegions="{ Solid }"
       outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"
+      dtSeismoTrace="1e-3"
       receiverCoordinates="{ { 3752.2936, 2400, 1866.6667 } }"/>
     <AcousticElasticSEM
       name="acousticelasticSolver"
