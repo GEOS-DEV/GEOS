@@ -46,21 +46,26 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-bool isSelectingAllCellsInOneRegion( string_array const & cellBlockNames, CellElementRegion const & region )
+bool CellElementRegion::isSelectingAllCells()
 {
-  if( cellBlockNames.size() == 1 &&
-      cellBlockNames[0] == CellElementRegion::viewKeyStruct::selectAllCellBlocksString())
+  if( m_cellBlockNames.size() == 1 &&
+      m_cellBlockNames[0] == CellElementRegion::viewKeyStruct::selectAllCellBlocksString() )
   {
-    // check that we have only one cellBlock included
-    int n = 0;
-    region.getParent().forSubGroups< CellElementRegion >( [&] ( CellElementRegion const & elemRegion )
-    {
-      n += elemRegion.getCellBlockNames().size();
-    } );
-    return n == 1;
+    return true;
   }
   else
   {
+    // error if the all keyword is mixed with other cellBlocks names
+    for( string const & cellBlockName : m_cellBlockNames )
+    {
+      GEOS_THROW_IF( cellBlockName == viewKeyStruct::selectAllCellBlocksString(),
+                     GEOS_FMT( "{0}: The keyword '{1}' is useful to include all existing cells in a {2},"
+                               " it should be used alone in a unique {2}.",
+                               getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
+                               viewKeyStruct::selectAllCellBlocksString(),
+                               CellElementRegion::catalogName() ),
+                     InputError );
+    }
     return false;
   }
 }
@@ -86,7 +91,7 @@ void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
   // if we would like to select all cellBlocks on an unique CellElementRegion
-  if( isSelectingAllCellsInOneRegion( m_cellBlockNames, *this ) )
+  if( isSelectingAllCells() )
   {
     cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
     {
@@ -95,16 +100,8 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
   }
   else
   {
-    for( string const & cellBlockName : this->m_cellBlockNames )
+    for( string const & cellBlockName : m_cellBlockNames )
     {
-      GEOS_THROW_IF( cellBlockName == viewKeyStruct::selectAllCellBlocksString(),
-                     GEOS_FMT( "{0}: The keyword '{1}' is useful to include all existing cells in a {2},"
-                               " it should be used alone in a unique {2}.",
-                               getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
-                               viewKeyStruct::selectAllCellBlocksString(),
-                               CellElementRegion::catalogName() ),
-                     InputError );
-
       // if we want to add a specific cellBlock ("1_tetrahedra" form typically)
       CellBlockABC const * exactCellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
       if( exactCellBlock != nullptr )

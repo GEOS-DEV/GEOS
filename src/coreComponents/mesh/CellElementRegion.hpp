@@ -150,6 +150,8 @@ private:
    */
   void registerSubRegion( CellBlockABC const & cellBlock );
 
+  bool isSelectingAllCells();
+
 };
 
 } /* namespace geos */
