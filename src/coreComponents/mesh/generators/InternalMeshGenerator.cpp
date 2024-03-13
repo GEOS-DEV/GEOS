@@ -677,11 +677,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   // TODO This needs to be rewritten for dimensions lower than 3.
   localIndex regionOffset = 0;
-  for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock )
+  for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock )
   {
     for( integer jblock = 0; jblock < m_nElems[1].size(); ++jblock )
     {
-      for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset )
+      for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock, ++regionOffset )
       {
         numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
         elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
@@ -692,11 +692,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   regionOffset = 0;
   {
     localIndex iR = 0;
-    for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock )
+    for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock )
     {
       for( integer jblock = 0; jblock < m_nElems[1].size(); ++jblock )
       {
-        for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
+        for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock, ++regionOffset, ++iR )
         {
           integer numElemsInRegion = 1;
           numElemsInRegion *= lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1;
@@ -824,11 +824,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
       numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
     }
 
-    for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock )
+    for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock )
     {
       for( integer jblock = 0; jblock < m_nElems[1].size(); ++jblock )
       {
-        for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
+        for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock, ++regionOffset, ++iR )
         {
           ElementType const elementType = EnumStrings< ElementType >::fromString( m_elementType[iR] );
 
