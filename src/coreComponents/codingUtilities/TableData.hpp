@@ -55,8 +55,6 @@ class TableData2D
 {
 public:
 
-  TableData tableData;
-
   /**
    * @brief Add a cell to the table.
    * Construct a map of pair<x,y> and cell value
@@ -64,7 +62,7 @@ public:
    * @param value Cell value to be added.
    */
   template< typename T >
-  void addCell( real64 x, real64 y, T value );
+  void addCell( real64 rowValue, real64 columnValue, T value );
 
   /**
    * @brief Construct a TableData from a Table2D
@@ -84,14 +82,10 @@ private:
 template< typename ... Args >
 void TableData::addRow( Args const &... args )
 {
-  //int idx = 0;
   std::vector< string > m_cellsValue;
   ( [&] {
     string cellValue = GEOS_FMT( "{}", args );
-    // if( m_columns[idx].parameter.enabled )
-    // {
     m_cellsValue.push_back( cellValue );
-    // }
   } (), ...);
 
   m_rows.push_back( m_cellsValue );
