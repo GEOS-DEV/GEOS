@@ -502,7 +502,10 @@ buildCollocatedEdgeBuckets( std::map< globalIndex, globalIndex > const & referen
     return referenceCollocatedNodes.find( gni ) != referenceCollocatedNodes.cend();
   };
 
-  // `edgeIds` is a temporary container that maps the two nodes of any edge of all the face elements, to the local index of the edge itself.
+  // `edgeIds` is a temporary container that maps the two nodes of any edge of all the face elements,
+  // to the local index of the edge itself. We fill this container using the `edgeToNodes` mapping
+  // because we want to be sure to test all the combinations of nodes,
+  // and therefore not to forget any possible edge.
   // It's important to note that the key of `edgeIds` are the global indices of the nodes, in no particular order.
   std::map< std::pair< globalIndex, globalIndex >, localIndex > edgesIds;
   for( localIndex lei = 0; lei < edgeToNodes.size( 0 ); ++lei )
@@ -652,7 +655,8 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< local
  * @param[in] ng2l The global to local node mapping.
  * @param[in,out] elem2dToNodes The 2d element to nodes mapping that will receive new connections
  * @details Due to the specific way 2d elements are managing nodes, some connections may be missing before the ghosting process.
- * After the ghosting's been performed, those connections can be reset.
+ * After the ghosting has been performed, those connections can be added using this function.
+ * @note This functions is meant to be called after the ghosting has occurred.
  */
 void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets,
                                unordered_map< globalIndex, localIndex > const & ng2l,
