@@ -3,7 +3,7 @@
 <Problem>
   <Included>
     <File
-      name="./PoroElastic_conformingFracture_2d_faultSlip_solvers.xml"/>
+      name="./PoroElastic_conformingFracture_2d_faultSlip_sequential_solvers.xml"/>
   </Included> 
   <Included>
     <File
@@ -25,9 +25,11 @@
 
   <Events
     maxTime="1000.0">
+<!---->
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
+<!---->
 
     <SoloEvent
       name="preFractureplot"
@@ -40,7 +42,8 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"/>
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
       
     <PeriodicEvent
       name="restarts"
