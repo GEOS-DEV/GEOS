@@ -227,6 +227,32 @@ TEST( testTable, tableClass )
                "+------------+------+-------------------+---------+-------+-------+\n\n"
                );
   };
+
+  {
+    TableLayout tableLayout( {"FakePressure", "Value1", "Value2"} );
+    TableData2D tableData;
+
+    for( real64 p = 10000; p<20000; p+=5000 )
+    {
+      for( real64 t = 400; t>=270; t+=-50.0 )
+      {
+        real64 value = t/p;
+        tableData.addCell( t, p, value );
+      }
+    }
+
+    TableTextFormatter tableLog( tableLayout );
+    EXPECT_EQ( tableLog.ToString( tableData.buildTableData()),
+               "+----------------+----------+------------------------+\n"
+               "|  FakePressure  |  Value1  |         Value2         |\n"
+               "+----------------+----------+------------------------+\n"
+               "|      300       |   0.03   |          0.02          |\n"
+               "|      350       |  0.035   |  0.023333333333333334  |\n"
+               "|      400       |   0.04   |  0.02666666666666667   |\n"
+               "+----------------+----------+------------------------+\n\n"
+               );
+
+  }
 }
 
 int main( int argc, char * * argv )
