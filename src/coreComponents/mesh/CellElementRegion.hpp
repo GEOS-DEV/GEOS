@@ -128,9 +128,6 @@ public:
 
     /// @return String key for the cell block names
     static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
-
-    /// @return String key for selecting all cell blocks
-    static constexpr char const * selectAllCellBlocksString() {return "all"; }
   };
 
 
