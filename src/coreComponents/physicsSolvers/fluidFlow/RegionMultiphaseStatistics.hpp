@@ -40,10 +40,19 @@ public:
   {
     Pressure,
     Temperature,
+    StaticPoreVolume,
     PoreVolume,
-    VolumeFraction,
-    Mass
+    PhaseVolumeFraction,
+    PhasePoreVolume,
+    PhaseMass,
+    PhaseDensity,
+    PhaseViscosity,
+    PhaseComponentMass,
+    ComponentMass,
   };
+
+public:
+  struct Statistics;
 
 public:
 
@@ -78,6 +87,8 @@ private:
 
   using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
 
+  static constexpr real64 hugeValue = LvArray::NumericLimits< real64 >::max;
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -99,6 +110,11 @@ private:
 
   void registerDataOnMesh( Group & meshBodies ) override;
 
+  void initializePostInitialConditionsPreSubGroups() override;
+
+  template< typename LAMBDA >
+  void forRegions( Group & meshBodies, LAMBDA && lambda );
+
   /**
    * @brief Compute some statistics on the regions
    * @param[in] time current time
@@ -111,10 +127,19 @@ private:
 
   void initializeFile() const;
 
+  void populateColumns( real64 const time,
+                        array1d< real64 > & columns,
+                        arrayView2d< real64 const > const & regionStatistics ) const;
+
   template< typename ARRAY >
   std::ostream & writeArray( std::ostream & os, ARRAY const & array ) const;
 
-  struct RegionStatistics;
+  GEOS_HOST_DEVICE
+  static constexpr real64 safeInverse( real64 const val )
+  {
+    return (val < LvArray::NumericLimits< real64 >::epsilon) ? 0.0 : 1.0 / val;
+  }
+
   struct RegionStatisticsKernel;
 
   // The names of regions
@@ -133,9 +158,15 @@ private:
 ENUM_STRINGS( RegionMultiphaseStatistics::PropertyNameType,
               "pressure",
               "temperature",
+              "staticPoreVolume",
               "poreVolume",
-              "volumeFraction",
-              "mass" );
+              "phaseVolumeFraction",
+              "phasePoreVolume",
+              "phaseMass",
+              "phaseDensity",
+              "phaseViscosity",
+              "phaseComponentMass",
+              "componentMass" );
 
 } /* namespace geos */
 
