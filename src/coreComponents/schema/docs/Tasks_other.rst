@@ -15,6 +15,7 @@ SinglePhaseReservoirPoromechanicsInitialization             node :ref:`DATASTRUC
 SinglePhaseStatistics                                       node :ref:`DATASTRUCTURE_SinglePhaseStatistics`                                       
 SolidMechanicsStateReset                                    node :ref:`DATASTRUCTURE_SolidMechanicsStateReset`                                    
 SolidMechanicsStatistics                                    node :ref:`DATASTRUCTURE_SolidMechanicsStatistics`                                    
+SourceFluxStatistics                                        node :ref:`DATASTRUCTURE_SourceFluxStatistics`                                        
 TriaxialDriver                                              node :ref:`DATASTRUCTURE_TriaxialDriver`                                              
 =========================================================== ==== ================================================================================ 
 
