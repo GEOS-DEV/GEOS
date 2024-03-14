@@ -81,10 +81,10 @@ string getSchemaTypeName( string_view rtTypeName )
                                            "string" );
 
   // Replace '<', '>', spaces and ',' because the schema does not like them
-  xmlSafeName = std::regex_replace(xmlSafeName, std::regex("<"), "_lt_");
-  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(">"), "_gt_");
-  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(","), "_cm_");
-  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(" "), "-");
+  xmlSafeName = std::regex_replace( xmlSafeName, std::regex( "<" ), "_lt_" );
+  xmlSafeName = std::regex_replace( xmlSafeName, std::regex( ">" ), "_gt_" );
+  xmlSafeName = std::regex_replace( xmlSafeName, std::regex( "," ), "_cm_" );
+  xmlSafeName = std::regex_replace( xmlSafeName, std::regex( " " ), "-" );
 
   return xmlSafeName;
 }

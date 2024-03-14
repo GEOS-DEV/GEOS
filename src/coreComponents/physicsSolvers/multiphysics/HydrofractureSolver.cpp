@@ -1032,7 +1032,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       //     arrayView1d< real64 > const dens = subRegion.getReference< array1d< real64 > >( "density_n" ); // change it to make aperture
       // zero
 
-      forAll< parallelDevicePolicy<> >( newFractureElements.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      forAll< parallelHostPolicy >( newFractureElements.size(), [&] ( localIndex const k )
       {
         localIndex const newElemIndex = newFractureElements[k];
         real64 initialPressure = 1.0e99;
