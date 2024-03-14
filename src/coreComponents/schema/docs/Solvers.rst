@@ -18,7 +18,6 @@ ElasticSEM                                    node                 :ref:`XML_Ela
 EmbeddedSurfaceGenerator                      node                 :ref:`XML_EmbeddedSurfaceGenerator`                      
 FlowProppantTransport                         node                 :ref:`XML_FlowProppantTransport`                         
 Hydrofracture                                 node                 :ref:`XML_Hydrofracture`                                 
-LagrangianContact                             node                 :ref:`XML_LagrangianContact`                             
 LaplaceFEM                                    node                 :ref:`XML_LaplaceFEM`                                    
 MatrixFreeSolidMechanicsFEM                   node                 :ref:`XML_MatrixFreeSolidMechanicsFEM`                   
 MultiphasePoromechanics                       node                 :ref:`XML_MultiphasePoromechanics`                       
@@ -38,6 +37,7 @@ SinglePhaseReservoir                          node                 :ref:`XML_Sin
 SinglePhaseReservoirPoromechanics             node                 :ref:`XML_SinglePhaseReservoirPoromechanics`             
 SinglePhaseWell                               node                 :ref:`XML_SinglePhaseWell`                               
 SolidMechanicsEmbeddedFractures               node                 :ref:`XML_SolidMechanicsEmbeddedFractures`               
+SolidMechanicsLagrangeContact                 node                 :ref:`XML_SolidMechanicsLagrangeContact`                 
 SolidMechanicsLagrangianSSLE                  node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                  
 SolidMechanics_LagrangianFEM                  node                 :ref:`XML_SolidMechanics_LagrangianFEM`                  
 SolidMechanics_MPM                            node                 :ref:`XML_SolidMechanics_MPM`                            
