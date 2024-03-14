@@ -31,9 +31,9 @@ TEST( testTable, tableClass )
                               "CordX",
                               "CoordZ",
                               "Prev\nelement",
-                              "Next\nelement"}
+                              "Next\nelement"},
+                             "InternalWellGenerator well_injector1"
                              );
-    tableLayout.setTitle( "InternalWellGenerator well_injector1" );
 
     TableData tableData;
     tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
@@ -64,9 +64,7 @@ TEST( testTable, tableClass )
                               "CordX",
                               "CoordZ",
                               "Prev\nelement",
-                              "Next\nelement"}
-                             );
-    tableLayout.setTitle( "InternalWellGenerator well_injector1" );
+                              "Next\nelement"}, "InternalWellGenerator well_injector1" );
 
     TableData tableData;
     tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
@@ -96,9 +94,7 @@ TEST( testTable, tableClass )
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::right},
       TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::right}
-    }
-                             );
-    tableLayout.setTitle( "InternalWellGenerator well_injector1" );
+    }, "InternalWellGenerator well_injector1" );
 
     TableData tableData;
     tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
@@ -126,9 +122,7 @@ TEST( testTable, tableClass )
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left, false},
       TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center, false},
-    }
-                             );
-    tableLayout.setTitle( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
+    }, "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
 
     TableData tableData;
     tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
@@ -150,9 +144,7 @@ TEST( testTable, tableClass )
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-    }
-                             );
-    tableLayout.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
+    }, "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
 
     TableData tableData;
     tableData.addRow( "value1" );
@@ -206,8 +198,8 @@ TEST( testTable, tableClass )
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
-    } );
-    tableLayout.setTitle( "InternalWellGenerator well_injector1" );
+    }, "InternalWellGenerator well_injector1" );
+
     tableLayout.setMargin( TableLayout::MarginValue::tiny );
 
     TableData tableData;

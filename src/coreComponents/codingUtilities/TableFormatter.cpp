@@ -20,7 +20,7 @@
 namespace geos
 {
 
-TableFormatter::TableFormatter( TableLayout & tableLayout )
+TableFormatter::TableFormatter( TableLayout const & tableLayout )
 {
   m_tableLayout = tableLayout;
 }
@@ -105,12 +105,16 @@ string buildValueCell( TableLayout::Alignment const alignment, string_view value
     case TableLayout::right:   return GEOS_FMT( "{:>{}}", value, spaces );
     case TableLayout::left:    return GEOS_FMT( "{:<{}}", value, spaces );
     case TableLayout::center:  return GEOS_FMT( "{:^{}}", value, spaces );
-    default:             return GEOS_FMT( "{:<{}}", value, spaces );
+    default:                   return GEOS_FMT( "{:>{}}", value, spaces );
   }
 }
 
 TableTextFormatter::TableTextFormatter( TableLayout & tableLayout ):
   TableFormatter( tableLayout )
+{}
+
+TableTextFormatter::TableTextFormatter( std::vector< string > const & columnNames )
+  : TableFormatter( TableLayout( columnNames ))
 {}
 
 string TableTextFormatter::ToString( TableData tableData )

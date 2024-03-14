@@ -39,7 +39,7 @@ public:
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
-  TableFormatter( TableLayout & tableLayout );
+  TableFormatter( TableLayout const & tableLayout );
 
   TableLayout m_tableLayout;
 
@@ -87,6 +87,8 @@ class TableTextFormatter : public TableFormatter
 public:
 
   TableTextFormatter( TableLayout & tableLayout );
+
+  TableTextFormatter( std::vector< string > const & columnNames );
 
   /**
    * @brief Convert the TableData to a table string.
