@@ -26,6 +26,7 @@ using namespace geos;
 TEST( testTable, tableClass )
 {
 
+  //table with empty row
   {
     TableLayout tableLayout( {"Well\nelement no.\nPV weighted\nbar",
                               "CordX",
@@ -59,6 +60,7 @@ TEST( testTable, tableClass )
                );
   };
 
+  //same but with different values
   {
     TableLayout tableLayout( {"Duis fringilla, ligula sed porta fringilla,\nligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante",
                               "CordX",
@@ -86,6 +88,7 @@ TEST( testTable, tableClass )
                );
   }
 
+  //table with TableLayout::ColumnParam
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
@@ -114,6 +117,7 @@ TEST( testTable, tableClass )
                );
   }
 
+  //test with hidden column
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
@@ -140,7 +144,8 @@ TEST( testTable, tableClass )
                "+---------------------------+---------------------+----------------------------------+-----------------------------+\n\n"
                );
   }
-
+  
+  //test with 1 column
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
@@ -163,6 +168,7 @@ TEST( testTable, tableClass )
                );
   }
 
+  //test without title
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
@@ -190,6 +196,7 @@ TEST( testTable, tableClass )
                );
   };
 
+  //test with tiny margin
   {
     TableLayout tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
@@ -220,6 +227,7 @@ TEST( testTable, tableClass )
                );
   };
 
+  //test 2D table
   {
     TableLayout tableLayout( {"FakePressure", "Value1", "Value2"} );
     TableData2D tableData;

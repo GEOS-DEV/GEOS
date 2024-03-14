@@ -22,7 +22,7 @@ namespace geos
 {
 
 TableLayout::TableLayout( std::vector< string > const & headers, string const & title ):
-  tableTitle( title )
+  m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
   for( size_t idx = 0; idx< headers.size(); idx++ )
@@ -32,7 +32,7 @@ TableLayout::TableLayout( std::vector< string > const & headers, string const & 
 }
 
 TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title ):
-  tableTitle( title )
+  m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
 
@@ -46,31 +46,31 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameter, st
   }
 }
 
-void TableLayout::setMargin( MarginValue marginType )
+void TableLayout::setMargin( MarginValue marginValue )
 {
-  borderMargin = marginType;
-  columnMargin = integer( marginType ) * 2 + 1;
+  m_borderMargin = marginValue;
+  m_columnMargin = integer( marginValue ) * 2 + 1;
 }
 
 string_view TableLayout::getTitle() const
 {
-  return tableTitle;
+  return m_tableTitle;
 }
 
 
 integer const & TableLayout::getBorderMargin() const
 {
-  return borderMargin;
+  return m_borderMargin;
 }
 
 integer const & TableLayout::getColumnMargin() const
 {
-  return columnMargin;
+  return m_columnMargin;
 }
 
 integer const & TableLayout::getMarginTitle() const
 {
-  return marginTitle;
+  return m_marginTitle;
 }
 
 }

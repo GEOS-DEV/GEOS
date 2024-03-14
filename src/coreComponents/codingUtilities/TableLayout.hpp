@@ -108,7 +108,7 @@ public:
    * @brief Set the minimal margin width between row content and borders.
    * @param marginType The margin value
    */
-  void setMargin( MarginValue marginType );
+  void setMargin( MarginValue marginValue );
 
   /**
    * @return return the table name
@@ -133,10 +133,10 @@ public:
   std::vector< Column > m_columns;
 
 private:
-  string tableTitle;
-  integer borderMargin;
-  integer columnMargin;
-  integer marginTitle = 2;
+  string m_tableTitle;
+  integer m_borderMargin;
+  integer m_columnMargin;
+  integer m_marginTitle = 2;
 
 };
 }

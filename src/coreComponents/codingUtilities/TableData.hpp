@@ -25,7 +25,7 @@ namespace geos
 {
 template< typename T >
 constexpr bool is_string = std::is_same_v< T, std::string >;
-// Class for managing table data
+// Class for managing table m_data
 class TableData
 {
 public:
@@ -38,7 +38,16 @@ public:
   template< typename ... Args >
   void addRow( Args const & ... args );
 
+  /**
+   * @brief Add a row to the table
+   * @param row A vector of string who contains cell Values
+   */
   void addRow( std::vector< string > row );
+
+  /**
+   * @brief Reset data in the table
+   */
+  void clear();
 
   /**
    * @return The rows of the table
@@ -51,7 +60,7 @@ private:
 
 };
 
-// Class for managing 2D table data
+// Class for managing 2D table m_data
 class TableData2D
 {
 public:
@@ -71,13 +80,20 @@ public:
    */
   TableData buildTableData() const;
 
+  /**
+   * @return return all columns values for 2D table
+   */
   std::set< real64 > const & getColumns() const;
+
+  /**
+   * @return return all rows values for 2D table
+   */
   std::set< real64 > const & getRows() const;
 
 private:
-  std::map< std::pair< real64, real64 >, string > data;
-  std::set< real64 > columns;
-  std::set< real64 > rows;
+  std::map< std::pair< real64, real64 >, string > m_data;
+  std::set< real64 > m_columns;
+  std::set< real64 > m_rows;
 };
 
 template< typename ... Args >
@@ -97,9 +113,9 @@ template< typename T >
 void TableData2D::addCell( real64 rowValue, real64 columnValue, T value )
 {
   std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
-  data[id] = GEOS_FMT( "{}", value );
-  columns.insert( columnValue );
-  rows.insert( rowValue );
+  m_data[id] = GEOS_FMT( "{}", value );
+  m_columns.insert( columnValue );
+  m_rows.insert( rowValue );
 }
 
 }
