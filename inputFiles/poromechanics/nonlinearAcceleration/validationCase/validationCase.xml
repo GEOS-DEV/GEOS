@@ -174,7 +174,7 @@
                                 cb-0_0_6, cb-1_0_6, cb-2_0_6, cb-0_1_6, cb-1_1_6, cb-2_1_6, cb-0_2_6, cb-1_2_6, cb-2_2_6 }"
                   materialList="{fluid, porousRockExt}"/>
     <CellElementRegion name="reservoir"
-                  cellBlocks="{ b29 }"
+                  cellBlocks="{ cb-1_1_1 }"
                   materialList="{ fluid, porousRockRes }"/>
 
 
