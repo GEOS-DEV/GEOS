@@ -23,7 +23,8 @@
 
 namespace geos
 {
-
+template< typename T >
+constexpr bool is_string = std::is_same_v< T, std::string >;
 // Class for managing table data
 class TableData
 {
@@ -85,6 +86,7 @@ void TableData::addRow( Args const &... args )
   std::vector< string > m_cellsValue;
   ( [&] {
     string cellValue = GEOS_FMT( "{}", args );
+    static_assert( is_string< decltype(cellValue) >, "An argunment passed in addRow cannot be converted to string" );
     m_cellsValue.push_back( cellValue );
   } (), ...);
 

@@ -28,7 +28,7 @@ class TableLayout
 {
 
 public:
-  enum Alignment { right, left, middle };
+  enum Alignment { right, left, center };
 
   enum MarginValue : integer
   {

@@ -534,9 +534,9 @@ void WellGeneratorBase::debugWellGeometry() const
   //1. formatting data
   TableLayout tableWellLayout = TableLayout( {
       TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::middle},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::middle},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::center},
       TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
     } );
@@ -563,6 +563,7 @@ void WellGeneratorBase::debugWellGeometry() const
 
     tableWellData.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
   }
+
   //3. dumping
   TableTextFormatter tableFormatter( tableWellLayout );
   GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));

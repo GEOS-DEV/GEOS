@@ -104,7 +104,7 @@ string buildValueCell( TableLayout::Alignment const alignment, string_view value
   {
     case TableLayout::right:   return GEOS_FMT( "{:>{}}", value, spaces );
     case TableLayout::left:    return GEOS_FMT( "{:<{}}", value, spaces );
-    case TableLayout::middle:  return GEOS_FMT( "{:^{}}", value, spaces );
+    case TableLayout::center:  return GEOS_FMT( "{:^{}}", value, spaces );
     default:             return GEOS_FMT( "{:<{}}", value, spaces );
   }
 }
@@ -303,7 +303,7 @@ void TableTextFormatter::computeAndBuildSeparator( std::vector< TableLayout::Col
 void TableTextFormatter::buildTitleRow( string & titleRows, string_view topSeparator, string_view sectionSeparator )
 {
   titleRows = GEOS_FMT( "\n{}\n|", topSeparator );
-  titleRows +=  buildValueCell( TableLayout::Alignment::middle,
+  titleRows +=  buildValueCell( TableLayout::Alignment::center,
                                 m_tableLayout.getTitle(),
                                 (sectionSeparator.length() - 2) // -2 for ||
                                 );

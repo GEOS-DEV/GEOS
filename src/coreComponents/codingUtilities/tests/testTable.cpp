@@ -90,7 +90,7 @@ TEST( testTable, tableClass )
 
   {
     TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
@@ -120,12 +120,12 @@ TEST( testTable, tableClass )
 
   {
     TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left, false},
-      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::middle, false},
+      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center, false},
     }
                              );
     tableLayout.setTitle( "Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
@@ -149,7 +149,7 @@ TEST( testTable, tableClass )
 
   {
     TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
     }
                              );
     tableLayout.setTitle( "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
@@ -173,12 +173,12 @@ TEST( testTable, tableClass )
 
   {
     TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
-      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
     }
                              );
 
@@ -200,12 +200,12 @@ TEST( testTable, tableClass )
 
   {
     TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
-      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::middle},
+      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
     } );
     tableLayout.setTitle( "InternalWellGenerator well_injector1" );
     tableLayout.setMargin( TableLayout::MarginValue::tiny );
