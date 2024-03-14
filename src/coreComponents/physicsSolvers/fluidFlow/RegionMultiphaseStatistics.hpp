@@ -53,6 +53,7 @@ public:
 
 public:
   struct Statistics;
+  struct RegionStatisticsKernel;
 
 public:
 
@@ -83,6 +84,8 @@ public:
 
   /**@}*/
 
+  void initializePostInitialConditionsPreSubGroups() override;
+
 private:
 
   using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
@@ -109,8 +112,6 @@ private:
   void postProcessInput() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
-
-  void initializePostInitialConditionsPreSubGroups() override;
 
   template< typename LAMBDA >
   void forRegions( Group & meshBodies, LAMBDA && lambda );
@@ -139,8 +140,6 @@ private:
   {
     return (val < LvArray::NumericLimits< real64 >::epsilon) ? 0.0 : 1.0 / val;
   }
-
-  struct RegionStatisticsKernel;
 
   // The names of regions
   string_array m_regionNames;

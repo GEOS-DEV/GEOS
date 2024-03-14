@@ -78,7 +78,11 @@ struct RegionMultiphaseStatistics::Statistics
     return *this;
   }
 
-  Statistics( Statistics && ) = delete;
+  Statistics( Statistics && rhs )
+  {
+    std::swap( m_data, rhs.m_data );
+  }
+
   ~Statistics() = default;
 
   GEOS_HOST_DEVICE bool operator!=( Statistics const & ) const
