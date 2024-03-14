@@ -127,7 +127,7 @@ void
 SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::
 setMGRStrategy()
 {
-  GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
+  //GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >

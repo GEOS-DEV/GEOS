@@ -91,11 +91,11 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
-  bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
-
-  bool updateConfiguration( DomainPartition & domain ) override final;
-
-  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
+//  bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
+//
+//  bool updateConfiguration( DomainPartition & domain ) override final;
+//
+//  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
   /**@}*/
 

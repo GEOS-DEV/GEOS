@@ -21,6 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "../../mesh/DomainPartition.hpp"
+#include "../../common/DataTypes.hpp"
 
 #include <tuple>
 
@@ -355,6 +357,67 @@ public:
     return isConverged;
   }
 
+  virtual void setupSystem( DomainPartition & domain,
+                            DofManager & GEOS_UNUSED_PARAM(dofManager),
+                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM(localMatrix),
+                            ParallelVector & GEOS_UNUSED_PARAM(rhs),
+                            ParallelVector & GEOS_UNUSED_PARAM(solution),
+                            bool const setSparsity = true ) override
+  {
+    //std::cout << "CoupledSolver setupSystem" << std::endl;
+    // Only build the sparsity pattern if the mesh has changed
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution(),
+                             setSparsity );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+    } );
+  }
+
+  virtual bool updateConfiguration( DomainPartition & domain ) override
+  {
+    bool result = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      result &= solver->updateConfiguration(domain);
+    });
+    return result;
+  }
+
+  virtual void outputConfigurationStatistics( DomainPartition const & domain ) const override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->outputConfigurationStatistics(domain);
+    });
+  }
+
+  virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->resetConfigurationToBeginningOfStep(domain);
+    });
+  }
+
+  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const override
+  {
+    bool result = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      result &=solver->resetConfigurationToDefault(domain);
+    });
+    return result;
+  }
+
 protected:
 
   /**
@@ -391,20 +454,9 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    // Only build the sparsity pattern if the mesh has changed
-    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
-      {
-        solver->setupSystem( domain,
-                             solver->getDofManager(),
-                             solver->getLocalMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
-        solver->setSystemSetupTimestamp( meshModificationTimestamp );
-      }
-    } );
+    setupSystem( domain, this->getDofManager(), this->getLocalMatrix(),
+                 this->getSystemRhs(),
+                 this->getSystemSolution() );
 
     implicitStepSetup( time_n, dt, domain );
 
