@@ -34,17 +34,18 @@ struct RegionMultiphaseStatistics::Statistics
   static constexpr integer MAX_NUM_PHASE = 3;
   static constexpr integer MAX_NUM_COMPS = 5;
   /// Indices for properties
-  static constexpr integer STATIC_PORE_VOLUME = 0;
-  static constexpr integer PORE_VOLUME = 1;
+  static constexpr integer CELL_COUNT = 0;
+  static constexpr integer STATIC_PORE_VOLUME = 1;
+  static constexpr integer PORE_VOLUME = 2;
 
-  static constexpr integer MINIMUM_PRESSURE = 2;
-  static constexpr integer MAXIMUM_PRESSURE = 3;
-  static constexpr integer AVERAGE_PRESSURE = 4;
-  static constexpr integer MINIMUM_TEMPERATURE = 5;
-  static constexpr integer MAXIMUM_TEMPERATURE = 6;
-  static constexpr integer AVERAGE_TEMPERATURE = 7;
+  static constexpr integer MINIMUM_PRESSURE = 3;
+  static constexpr integer MAXIMUM_PRESSURE = 4;
+  static constexpr integer AVERAGE_PRESSURE = 5;
+  static constexpr integer MINIMUM_TEMPERATURE = 6;
+  static constexpr integer MAXIMUM_TEMPERATURE = 7;
+  static constexpr integer AVERAGE_TEMPERATURE = 8;
   // These are starting positions
-  static constexpr integer PHASE_PORE_VOLUME = 8;
+  static constexpr integer PHASE_PORE_VOLUME = 9;
   static constexpr integer PHASE_DENSITY = PHASE_PORE_VOLUME + MAX_NUM_PHASE;
   static constexpr integer PHASE_VISCOSITY = PHASE_DENSITY + MAX_NUM_PHASE;
   static constexpr integer PHASE_MASS = PHASE_VISCOSITY + MAX_NUM_PHASE;
@@ -200,6 +201,7 @@ struct RegionMultiphaseStatistics::RegionStatisticsKernel
       real64 const staticPoreVolume = elementVolume[ei] * referencePorosity[ei];
       real64 const poreVolume = elementVolume[ei] * porosity[ei][0];
 
+      stats.m_data[Statistics::CELL_COUNT] = 1.0;
       stats.m_data[Statistics::STATIC_PORE_VOLUME] = staticPoreVolume;
       stats.m_data[Statistics::PORE_VOLUME] = poreVolume;
 
@@ -221,8 +223,8 @@ struct RegionMultiphaseStatistics::RegionStatisticsKernel
         stats.m_data[Statistics::PHASE_PORE_VOLUME + phaseIndex] = elementPhaseVolume;
         stats.m_data[Statistics::PHASE_MASS + phaseIndex] = elementPhaseMass;
 
-        stats.m_data[Statistics::PHASE_DENSITY + phaseIndex] = elementPhaseVolume * elementPhaseDensity;
-        stats.m_data[Statistics::PHASE_VISCOSITY + phaseIndex] = elementPhaseVolume * elementPhaseViscosity;
+        stats.m_data[Statistics::PHASE_DENSITY + phaseIndex] = elementPhaseDensity;
+        stats.m_data[Statistics::PHASE_VISCOSITY + phaseIndex] = elementPhaseViscosity;
 
         integer const phaseMassIndex = Statistics::PHASE_COMP_MASS + phaseIndex*Statistics::MAX_NUM_COMPS;
         for( integer compIndex = 0; compIndex < componentCount; ++compIndex )
@@ -237,23 +239,27 @@ struct RegionMultiphaseStatistics::RegionStatisticsKernel
       minStats.min( stats );
     } );
 
-    auto const sumData = sumStats.get().m_data;
-    auto const minData = minStats.get().m_data;
+    auto const sumStatsData = sumStats.get();
+    auto const minStatsData = minStats.get();
+    auto const & sumData = sumStatsData.m_data;
+    auto const & minData = minStatsData.m_data;
 
-    arraySlice1d< real64 > regionData = regionStatistics[region];
+    arraySlice1d< real64 > regData = regionStatistics[region];
 
-    regionData[Statistics::MINIMUM_PRESSURE] = LvArray::math::min( regionData[Statistics::MINIMUM_PRESSURE], minData[Statistics::MINIMUM_PRESSURE] );
-    regionData[Statistics::MAXIMUM_PRESSURE] = LvArray::math::max( regionData[Statistics::MAXIMUM_PRESSURE], -minData[Statistics::MAXIMUM_PRESSURE] );
-    regionData[Statistics::MINIMUM_TEMPERATURE] = LvArray::math::min( regionData[Statistics::MINIMUM_TEMPERATURE], minData[Statistics::MINIMUM_TEMPERATURE] );
-    regionData[Statistics::MAXIMUM_TEMPERATURE] = LvArray::math::max( regionData[Statistics::MAXIMUM_TEMPERATURE], -minData[Statistics::MAXIMUM_TEMPERATURE] );
+    regData[Statistics::CELL_COUNT] += size;
+    regData[Statistics::STATIC_PORE_VOLUME] += sumData[Statistics::STATIC_PORE_VOLUME];
+    regData[Statistics::PORE_VOLUME] += sumData[Statistics::PORE_VOLUME];
 
-    regionData[Statistics::STATIC_PORE_VOLUME] += sumData[Statistics::STATIC_PORE_VOLUME];
-    regionData[Statistics::PORE_VOLUME] += sumData[Statistics::PORE_VOLUME];
-    regionData[Statistics::AVERAGE_PRESSURE] += sumData[Statistics::AVERAGE_PRESSURE];
-    regionData[Statistics::AVERAGE_TEMPERATURE] += sumData[Statistics::AVERAGE_TEMPERATURE];
+    regData[Statistics::MINIMUM_PRESSURE] = LvArray::math::min( regData[Statistics::MINIMUM_PRESSURE], minData[Statistics::MINIMUM_PRESSURE] );
+    regData[Statistics::MAXIMUM_PRESSURE] = LvArray::math::max( regData[Statistics::MAXIMUM_PRESSURE], -minData[Statistics::MAXIMUM_PRESSURE] );
+    regData[Statistics::MINIMUM_TEMPERATURE] = LvArray::math::min( regData[Statistics::MINIMUM_TEMPERATURE], minData[Statistics::MINIMUM_TEMPERATURE] );
+    regData[Statistics::MAXIMUM_TEMPERATURE] = LvArray::math::max( regData[Statistics::MAXIMUM_TEMPERATURE], -minData[Statistics::MAXIMUM_TEMPERATURE] );
+
+    regData[Statistics::AVERAGE_PRESSURE] += sumData[Statistics::AVERAGE_PRESSURE];
+    regData[Statistics::AVERAGE_TEMPERATURE] += sumData[Statistics::AVERAGE_TEMPERATURE];
     for( integer propIndex = Statistics::PHASE_PORE_VOLUME; propIndex < Statistics::END; ++propIndex )
     {
-      regionData[propIndex] += sumData[propIndex];
+      regData[propIndex] += sumData[propIndex];
     }
   }
 };
@@ -482,8 +488,6 @@ void RegionMultiphaseStatistics::computeRegionStatistics( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( time );
-
   integer const phaseCount = m_solver->numFluidPhases();
   integer const componentCount = m_solver->numFluidComponents();
   integer const regionCount = m_regionNames.size();
@@ -497,10 +501,10 @@ void RegionMultiphaseStatistics::computeRegionStatistics( real64 const time,
   arrayView2d< real64 > regionStatistics = regionStatisticsData.toView();
   for( integer region = 0; region < regionCount; ++region )
   {
-    regionStatistics( region, Statistics::MINIMUM_PRESSURE ) =  LvArray::NumericLimits< real64 >::max;
-    regionStatistics( region, Statistics::MAXIMUM_PRESSURE ) = -LvArray::NumericLimits< real64 >::max;
-    regionStatistics( region, Statistics::MINIMUM_TEMPERATURE ) =  LvArray::NumericLimits< real64 >::max;
-    regionStatistics( region, Statistics::MAXIMUM_TEMPERATURE ) = -LvArray::NumericLimits< real64 >::max;
+    regionStatistics( region, Statistics::MINIMUM_PRESSURE ) = hugeValue;
+    regionStatistics( region, Statistics::MAXIMUM_PRESSURE ) = -hugeValue;
+    regionStatistics( region, Statistics::MINIMUM_TEMPERATURE ) =  hugeValue;
+    regionStatistics( region, Statistics::MAXIMUM_TEMPERATURE ) = -hugeValue;
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -568,12 +572,11 @@ void RegionMultiphaseStatistics::computeRegionStatistics( real64 const time,
   } );
 
   // Step 4: synchronize the results over the MPI ranks
-  array1d< real64 > phaseVolumes( phaseCount );
-
   for( integer region =0; region<regionCount; region++ )
   {
     arraySlice1d< real64 > regData = regionStatistics[region];
 
+    regData[Statistics::CELL_COUNT] = MpiWrapper::sum( regData[Statistics::CELL_COUNT] );
     regData[Statistics::STATIC_PORE_VOLUME] = MpiWrapper::sum( regData[Statistics::STATIC_PORE_VOLUME] );
     regData[Statistics::PORE_VOLUME] = MpiWrapper::sum( regData[Statistics::PORE_VOLUME] );
 
@@ -595,12 +598,12 @@ void RegionMultiphaseStatistics::computeRegionStatistics( real64 const time,
     regData[Statistics::AVERAGE_PRESSURE] *= invStaticPoreVolume;
     regData[Statistics::AVERAGE_TEMPERATURE] *= invStaticPoreVolume;
 
-    // Calculate average density and viscosity
+    // Calculate average density and viscosity using cell count as weight
     for( integer phaseIndex = 0; phaseIndex < phaseCount; ++phaseIndex )
     {
-      real64 const invPhaseVolume = safeInverse( regData[Statistics::PHASE_PORE_VOLUME + phaseIndex] );
-      regData[Statistics::PHASE_DENSITY + phaseIndex] *= invPhaseVolume;
-      regData[Statistics::PHASE_VISCOSITY + phaseIndex] *= invPhaseVolume;
+      real64 const invCellCount = safeInverse( regData[Statistics::CELL_COUNT] );
+      regData[Statistics::PHASE_DENSITY + phaseIndex] *= invCellCount;
+      regData[Statistics::PHASE_VISCOSITY + phaseIndex] *= invCellCount;
     }
   }
 
