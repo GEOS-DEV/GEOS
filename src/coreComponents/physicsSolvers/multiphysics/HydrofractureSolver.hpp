@@ -138,7 +138,7 @@ public:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
-  enum class InitializationType
+  enum class InitializationType : integer
   {
     Pressure,
     Displacement,

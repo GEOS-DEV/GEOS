@@ -76,9 +76,15 @@ string getSchemaTypeName( string_view rtTypeName )
 
   // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
   auto constexpr typeMergingRegex = "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?";
-  string const xmlSafeName = std::regex_replace( sanitizedName,
-                                                 std::regex( typeMergingRegex ),
-                                                 "string" );
+  string xmlSafeName = std::regex_replace( sanitizedName,
+                                           std::regex( typeMergingRegex ),
+                                           "string" );
+
+  // Replace '<', '>', spaces and ',' because the schema does not like them
+  xmlSafeName = std::regex_replace(xmlSafeName, std::regex("<"), "_lt_");
+  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(">"), "_gt_");
+  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(","), "_cm_");
+  xmlSafeName = std::regex_replace(xmlSafeName, std::regex(" "), "-");
 
   return xmlSafeName;
 }
