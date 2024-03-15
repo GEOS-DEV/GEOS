@@ -207,6 +207,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: self-hosted
+      DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
 
   code_coverage:
     needs:
@@ -253,7 +254,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             RUNS_ON: self-hosted
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia --gpus all"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all"
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
