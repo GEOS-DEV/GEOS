@@ -23,9 +23,19 @@
 
 namespace geos
 {
+
+#if __cplusplus < 202002L
+template< class T >
+static constexpr bool has_formatter = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+#else
 template< typename T >
-constexpr bool is_string = std::is_same_v< T, std::string >;
-// Class for managing table m_data
+concept has_formatter = requires ( T& v, std::format_context ctx )
+{
+  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
+};
+#endif
+
+// Class for managing table data
 class TableData
 {
 public:
@@ -101,8 +111,8 @@ void TableData::addRow( Args const &... args )
 {
   std::vector< string > m_cellsValue;
   ( [&] {
+    static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
     string cellValue = GEOS_FMT( "{}", args );
-    static_assert( is_string< decltype(cellValue) >, "An argunment passed in addRow cannot be converted to string" );
     m_cellsValue.push_back( cellValue );
   } (), ...);
 
@@ -112,6 +122,7 @@ void TableData::addRow( Args const &... args )
 template< typename T >
 void TableData2D::addCell( real64 rowValue, real64 columnValue, T value )
 {
+  static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
   m_data[id] = GEOS_FMT( "{}", value );
   m_columns.insert( columnValue );
