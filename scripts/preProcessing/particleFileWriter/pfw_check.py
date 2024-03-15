@@ -80,7 +80,7 @@ mCores = pfw["mCores"]
 xpar = pfw["xpar"]
 ypar = pfw["ypar"]
 zpar = pfw["zpar"]
-stopTime = pfw["stopTime"]
+# stopTime = pfw["stopTime"]
 
 [wH,wM,wS]=mWallTime.split(":")
 mWallTimeMinutes=int(wH)*60+int(wM)
@@ -167,7 +167,7 @@ srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosInputFileName+""" -x """
   print('run_check output = ',output.strip())
 
   slurmScript = """#!/bin/bash
-#SBATCH -t 00:02:00
+#SBATCH -t 00:15:00
 #SBATCH -N 1
 #SBATCH -p """+ partition +"""
 #SBATCH -A """+mBank+"""
