@@ -193,7 +193,7 @@ def buildTableValues(type_map, link_string='XML', include_defaults=True):
 
                     # Fix type strings
                     if ('Type' in k):
-                        table_row[jj] = table_row[jj].replace('_lt_', '<').replace('_gt_', '>').replace('_cm_', ',')
+                        table_row[jj] = table_row[jj].replace('_lt_', '<').replace('_gt_', '>').replace('_cm_', ',').replace('-', ' ')
 
                     # Format any registration entries as links
                     if ('Registered' in k):
