@@ -48,8 +48,6 @@ public:
   template< typename ... Args >
   void addRow( Args const & ... args );
 
-  void addRow( std::vector< string > row);
-
   /**
    * @brief Add a row to the table
    * @param row A vector of string who contains cell Values

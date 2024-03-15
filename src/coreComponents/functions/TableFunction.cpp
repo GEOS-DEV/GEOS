@@ -239,14 +239,6 @@ void TableFunction::printInCSV( string const & filename ) const
     integer const nY = coordsY.size();
     std::vector< string > columnNames;
 
-    columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
-    for( integer idxY = 0; idxY < nY; idxY++ )
-    {
-      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-      columnNames.push_back( description );
-    }
-    TableLayout tableLayout( columnNames );
-
     TableData2D tableData2D;
     for( integer i = 0; i < nX; i++ )
     {
@@ -255,6 +247,14 @@ void TableFunction::printInCSV( string const & filename ) const
         tableData2D.addCell( coordsX[i], y, m_values[ y*nX + i ] );
       }
     }
+
+    columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
+    for( integer idxY = 0; idxY < nY; idxY++ )
+    {
+      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
+      columnNames.push_back( description );
+    }
+    TableLayout tableLayout( columnNames );
 
     TableCSVFormatter csvFormat( tableLayout );
     os << csvFormat.headerToString();
@@ -275,13 +275,6 @@ void TableFunction::printInLog( string const & filename ) const
 
   if( numDimensions == 1 )
   {
-    TableLayout tableLayout( {
-        string( units::getDescription( getDimUnit( 0 ))),
-        string( units::getDescription( m_valueUnit ))
-      } );
-
-    tableLayout.setTitle( filename );
-
     TableData tableData;
     arraySlice1d< real64 const > const coords = m_coordinates[0];
 
@@ -289,6 +282,11 @@ void TableFunction::printInLog( string const & filename ) const
     {
       tableData.addRow( coords[idx], m_values[idx] );
     }
+
+    TableLayout tableLayout( {
+        string( units::getDescription( getDimUnit( 0 ))),
+        string( units::getDescription( m_valueUnit ))
+      }, filename );
 
     TableTextFormatter logTable( tableLayout );
     GEOS_LOG_RANK_0( logTable.ToString( tableData ));
@@ -303,19 +301,8 @@ void TableFunction::printInLog( string const & filename ) const
     std::vector< std::vector< string > > vRowsValues;
     integer nbRows = 0;
 
-    vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
-
-    for( integer idxY = 0; idxY < nY; idxY++ )
-    {
-      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-      vecDescription.push_back( description );
-    }
-
-    TableLayout tableLayout( vecDescription );
-    tableLayout.setTitle( filename );
-
+    //1. collect
     TableData2D tableData2D;
-
     for( integer i = 0; i < nX; i++ )
     {
       for( integer j = 0; j < nY; j++ )
@@ -327,15 +314,26 @@ void TableFunction::printInLog( string const & filename ) const
 
     if( nbRows <= 500 )
     {
+      //2. format
+      vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
+      for( integer idxY = 0; idxY < nY; idxY++ )
+      {
+        string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
+        vecDescription.push_back( description );
+      }
+      TableLayout tableLayout( vecDescription, filename );
+
+      //3. log
       TableTextFormatter table2DLog( tableLayout );
       GEOS_LOG_RANK_0( table2DLog.ToString( tableData2D.buildTableData() ));
     }
     else
     {
+      //2. format
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}} );
-      tableLayoutInfos.setTitle( filename );
+      TableLayout tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
 
+      //3. log
       TableTextFormatter tableLog( tableLayoutInfos );
       GEOS_LOG_RANK_0( tableLog.layoutToString() );
     }
