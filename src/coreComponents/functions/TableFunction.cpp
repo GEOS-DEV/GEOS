@@ -20,7 +20,6 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "codingUtilities/Table.hpp"
 #include "codingUtilities/TableLayout.hpp"
 #include "codingUtilities/TableData.hpp"
 #include "codingUtilities/TableFormatter.hpp"
@@ -259,7 +258,7 @@ void TableFunction::printInCSV( string const & filename ) const
 
     TableCSVFormatter csvFormat( tableLayout );
     os << csvFormat.headerToString();
-    os << csvFormat.dataToString( tableData2D );
+    os << csvFormat.dataToString( tableData2D.buildTableData() );
   }
   os.close();
 }
@@ -329,7 +328,7 @@ void TableFunction::printInLog( string const & filename ) const
     if( nbRows <= 500 )
     {
       TableTextFormatter table2DLog( tableLayout );
-      GEOS_LOG_RANK_0( table2DLog.ToString( tableData2D ));
+      GEOS_LOG_RANK_0( table2DLog.ToString( tableData2D.buildTableData() ));
     }
     else
     {
