@@ -183,10 +183,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     // ideally we would just stop the simulation, but the SurfaceGenerator relies on this behavior
     for( auto const & mapEntry : isTargetSetEmpty )
     {
-      GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
+      GEOS_THROW_IF( ( mapEntry.second == 1 ), // target set is empty
+                     GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s) `{}` in `{}`.\n",
+                               fs.getDataContext(), mapEntry.first, fs.getObjectPath() ),
+                     InputError );
     }
 
     if( isFieldNameFound == 0 )

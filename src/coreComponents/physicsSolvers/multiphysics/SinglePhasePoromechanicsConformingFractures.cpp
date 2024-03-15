@@ -156,7 +156,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Do
   solution.setName( this->getName() + "/solution" );
   solution.create( numLocalRows, MPI_COMM_GEOSX );
 
-  //std::cout << " setUpDflux_dApertureMatrix " << std::endl;
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
   // if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
@@ -180,16 +179,12 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem(
 
   this->synchronizeNonLinearParameters();
 
-  //std::cout << "assembleElementBasedContributions" << std::endl;
-
   assembleElementBasedContributions( time_n,
                                      dt,
                                      domain,
                                      dofManager,
                                      localMatrix,
                                      localRhs );
-
-  //std::cout << "assembleHydrofracFluxTerms " << this->flowSolver()->getName() << std::endl;
 
   // Assemble fluxes 3D/2D and get dFluidResidualDAperture
   this->flowSolver()->assembleHydrofracFluxTerms( time_n,
@@ -199,8 +194,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem(
                                                   localMatrix,
                                                   localRhs,
                                                   getDerivativeFluxResidual_dNormalJump() );
-
-  //std::cout << "assembleCouplingTerms" << std::endl;
 
   // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   assembleCouplingTerms( time_n,

@@ -358,13 +358,12 @@ public:
   }
 
   virtual void setupSystem( DomainPartition & domain,
-                            DofManager & GEOS_UNUSED_PARAM(dofManager),
-                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM(localMatrix),
-                            ParallelVector & GEOS_UNUSED_PARAM(rhs),
-                            ParallelVector & GEOS_UNUSED_PARAM(solution),
+                            DofManager & GEOS_UNUSED_PARAM( dofManager ),
+                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                            ParallelVector & GEOS_UNUSED_PARAM( rhs ),
+                            ParallelVector & GEOS_UNUSED_PARAM( solution ),
                             bool const setSparsity = true ) override
   {
-    //std::cout << "CoupledSolver setupSystem" << std::endl;
     // Only build the sparsity pattern if the mesh has changed
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
@@ -387,8 +386,8 @@ public:
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      result &= solver->updateConfiguration(domain);
-    });
+      result &= solver->updateConfiguration( domain );
+    } );
     return result;
   }
 
@@ -396,16 +395,16 @@ public:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->outputConfigurationStatistics(domain);
-    });
+      solver->outputConfigurationStatistics( domain );
+    } );
   }
 
   virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->resetConfigurationToBeginningOfStep(domain);
-    });
+      solver->resetConfigurationToBeginningOfStep( domain );
+    } );
   }
 
   virtual bool resetConfigurationToDefault( DomainPartition & domain ) const override
@@ -413,8 +412,8 @@ public:
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      result &=solver->resetConfigurationToDefault(domain);
-    });
+      result &=solver->resetConfigurationToDefault( domain );
+    } );
     return result;
   }
 

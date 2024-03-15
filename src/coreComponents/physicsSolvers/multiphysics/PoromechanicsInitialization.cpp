@@ -48,7 +48,7 @@ public:
 template<> class PoromechanicsCatalogNames< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >
 {
 public:
-static string name() { return SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >::catalogName() + "Initialization"; }
+  static string name() { return SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >::catalogName() + "Initialization"; }
 };
 template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > >
 {

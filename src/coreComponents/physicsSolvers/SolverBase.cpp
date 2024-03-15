@@ -747,6 +747,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
         if( isConfigurationLoopConverged )
         {
+          GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration converged ----------" );
           break; // get out of configuration loop coz everything converged.
         }
         else
@@ -759,6 +760,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
       else if( !attemptedSimplestConfiguration )
       {
+        GEOS_LOG_LEVEL_RANK_0( 1, "---------- Restarting timestep with default configuration ----------" );
         resetStateToBeginningOfStep( domain );
         bool const breakLoop = resetConfigurationToDefault( domain );
         attemptedSimplestConfiguration = true;
