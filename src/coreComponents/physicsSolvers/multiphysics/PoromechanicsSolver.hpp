@@ -214,7 +214,7 @@ public:
 
   virtual bool updateConfiguration( DomainPartition & domain ) override
   {
-    if (m_performStressInitialization)
+    if (m_performStressInitialization) // assume no configuration change during initialization step
     {
       return true;
     }
