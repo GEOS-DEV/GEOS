@@ -23,6 +23,7 @@
 #include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "ElasticFields.hpp"
 
 namespace geos
 {
@@ -33,11 +34,6 @@ public:
 
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
 
   ElasticWaveEquationSEM( const std::string & name,
                           Group * const parent );
@@ -95,7 +91,8 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
-   * @brief Compute DAS data from the appropriate three-component receiver pairs
+   * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS
+   * type is set to 2
    * @param xCompRcv the array holding the x-component of pairs of receivers
    * @param yCompRcv the array holding the y-component of pairs of receivers
    * @param zCompRcv the array holding the z-component of pairs of receivers
@@ -103,7 +100,6 @@ public:
   void computeDAS( arrayView2d< real32 > const xCompRcv,
                    arrayView2d< real32 > const yCompRcv,
                    arrayView2d< real32 > const zCompRcv );
-
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -119,6 +115,8 @@ public:
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
+
+    static constexpr char const * dasSignalNp1AtReceiversString() { return "dasSignalNp1AtReceivers"; }
 
     static constexpr char const * sourceForceString() { return "sourceForce"; }
     static constexpr char const * sourceMomentString() { return "sourceMoment"; }
@@ -207,6 +205,9 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
 
+  /// DAS receiver signal at np1 for each time step for each receiver (z-component)
+  array2d< real32 > m_dasSignalNp1AtReceivers;
+
   /// Vector describing the force of the source
   R1Tensor m_sourceForce;
 
@@ -214,205 +215,6 @@ private:
   R2SymTensor m_sourceMoment;
 
 };
-
-
-namespace fields
-{
-
-DECLARE_FIELD( Displacementx_nm1,
-               "displacementx_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementy_nm1,
-               "displacementy_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementz_nm1,
-               "displacementz_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementx_n,
-               "displacementx_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementy_n,
-               "displacementy_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementz_n,
-               "displacementz_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementx_np1,
-               "displacementx_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "x-component of displacement at time n+1." );
-
-DECLARE_FIELD( Displacementy_np1,
-               "displacementy_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "y-component of displacement at time n+1." );
-
-DECLARE_FIELD( Displacementz_np1,
-               "displacementz_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "z-component of displacement at time n+1." );
-
-DECLARE_FIELD( ForcingRHSx,
-               "rhsx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for x-direction" );
-
-DECLARE_FIELD( ForcingRHSy,
-               "rhsy",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for y-direction" );
-
-DECLARE_FIELD( ForcingRHSz,
-               "rhsz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for z-direction" );
-
-DECLARE_FIELD( ElasticMassVector,
-               "elasticMassVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Mass Matrix." );
-
-DECLARE_FIELD( DampingVectorx,
-               "dampingVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in x-direction." );
-
-DECLARE_FIELD( DampingVectory,
-               "dampingVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in y-direction." );
-
-DECLARE_FIELD( DampingVectorz,
-               "dampingVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in z-direction." );
-
-DECLARE_FIELD( StiffnessVectorx,
-               "stiffnessVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectory,
-               "stiffnessVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectorz,
-               "stiffnessVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of stiffness vector." );
-
-DECLARE_FIELD( ElasticVelocityVp,
-               "elasticVelocityVp",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "P-waves speed in the cell" );
-
-DECLARE_FIELD( ElasticVelocityVs,
-               "elasticVelocityVs",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "S-waves speed in the cell" );
-
-DECLARE_FIELD( ElasticDensity,
-               "elasticDensity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium density of the cell" );
-
-DECLARE_FIELD( ElasticFreeSurfaceFaceIndicator,
-               "elasticFreeSurfaceFaceIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
-
-DECLARE_FIELD( ElasticFreeSurfaceNodeIndicator,
-               "elasticFreeSurfaceNodeIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
-
-}
-
 
 } /* namespace geos */
 
