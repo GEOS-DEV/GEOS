@@ -53,7 +53,10 @@ public:
   ~PoromechanicsInitialization() override;
 
   /// Accessor for the catalog name
-  static string catalogName();
+  static string catalogName()
+  {
+    return POROMECHANICS_SOLVER::catalogName() + "Initialization";
+  }
 
   /**
    * @defgroup Tasks Interface Functions

@@ -32,52 +32,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename POROMECHANICS_SOLVER > class
-  PoromechanicsCatalogNames {};
-
-// Class specializations for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName() + "Initialization"; }
-};
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >::catalogName() + "Initialization"; }
-};
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > >
-{
-public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >::catalogName() + "Initialization"; }
-};
-// Class specializations for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class PoromechanicsCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseBase >::catalogName() + "Initialization"; }
-};
-template<> class PoromechanicsCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > >
-{
-public:
-  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >::catalogName() + "Initialization"; }
-};
-
-}
-
-// provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-PoromechanicsInitialization< POROMECHANICS_SOLVER >::
-catalogName()
-{
-  return PoromechanicsCatalogNames< POROMECHANICS_SOLVER >::name();
-}
-
 template< typename POROMECHANICS_SOLVER >
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 PoromechanicsInitialization( const string & name,

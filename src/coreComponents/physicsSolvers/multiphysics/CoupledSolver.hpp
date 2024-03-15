@@ -21,8 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "../../mesh/DomainPartition.hpp"
-#include "../../common/DataTypes.hpp"
 
 #include <tuple>
 
