@@ -1067,17 +1067,14 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   globalNodeOffset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
 
   forAll< parallelHostPolicy >( numLocalFaces,
-                                [ faceToNodesMapSource=faceToNodesMapSource.toView(),
+                                [ =, faceToNodesMapSource=faceToNodesMapSource.toView(),
                                   edgeToNodeMapNew=edgeToNodeMapNew.toView(),
                                   faceToNodeMapNew=faceToNodeMapNew.toView(),
                                   m_faceToEdges=m_faceToEdges.toView(),
                                   refPosSrc=refPosSource.toView(),
                                   refPosNew=refPosNew.toView(),
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
-                                  nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
-                                  numNodesPerEdge, numEdgesPerFace, numVerticesPerFace,
-                                  numInternalNodesPerEdge, numInternalNodesPerFace, numNodesPerFace,
-                                  globalNodeOffset, glCoords, localNodeOffset, order ]( localIndex const iter_face )
+                                  nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_face )
   {
     std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex faceVertID[ numVerticesPerFace ];
@@ -1170,7 +1167,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     localIndex const numCellElements = cellBlock.numElements();
 
     forAll< parallelHostPolicy >( numCellElements,
-                                  [ elemsToNodesSource=elemsToNodesSource.toView(),
+                                  [ =,
+                                    elemsToNodesSource=elemsToNodesSource.toView(),
                                     elemsToNodesNew=elemsToNodesNew.toView(),
                                     elemsToEdges=elemsToEdges.toView(),
                                     elemsToFaces=elemsToFaces.toView(),
@@ -1179,11 +1177,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                     refPosSrc=refPosSource.toView(),
                                     refPosNew=refPosNew.toView(),
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
-                                    nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
-                                    numEdgesPerFace, numVerticesPerFace,
-                                    numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell, numNodesPerFace, numNodesPerEdge, order,
-                                    numInternalNodesPerCell, numInternalNodesPerEdge, numInternalNodesPerFace,
-                                    globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_elem )
+                                    nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_elem )
     {
       std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
