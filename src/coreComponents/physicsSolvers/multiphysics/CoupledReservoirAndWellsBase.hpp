@@ -126,8 +126,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    //std::cout <<"CoupledReservoirAndWellsBase setupSystem" << std::endl;
-
+    // call base setup for subsolvers
     Base::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
     dofManager.setDomain( domain );
@@ -221,21 +220,6 @@ public:
       m_isWellTransmissibilityComputed = true;
     }
   }
-
-//  virtual bool updateConfiguration( DomainPartition & domain ) override
-//  {
-//    return reservoirSolver()->updateConfiguration( domain );
-//  }
-//
-//  virtual void outputConfigurationStatistics( DomainPartition const & domain ) const override
-//  {
-//    reservoirSolver()->outputConfigurationStatistics( domain );
-//  }
-//
-//  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const override
-//  {
-//    return reservoirSolver()->resetConfigurationToDefault( domain );
-//  }
 
 protected:
 
