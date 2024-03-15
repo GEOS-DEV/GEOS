@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 
 namespace geos
 {
@@ -41,12 +41,12 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
-template< typename FLOW_SOLVER >
-class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = PoromechanicsSolver< FLOW_SOLVER >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -68,7 +68,21 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  template< typename _FLOW_SOLVER=FLOW_SOLVER >
+  static
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseBase >::value, string >::type
+  catalogName()
+  {
+    return "MultiphasePoromechanics";
+  }
+  template< typename _FLOW_SOLVER=FLOW_SOLVER >
+  static
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >::value, string >::type
+  catalogName()
+  {
+    return CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName() + "Poromechanics";
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -161,11 +175,11 @@ private:
 
 };
 
-template< typename FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 MultiphasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+real64 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
                                                                DofManager const & dofManager,
                                                                arrayView1d< string const > const & regionNames,
                                                                string const & materialNamesString,

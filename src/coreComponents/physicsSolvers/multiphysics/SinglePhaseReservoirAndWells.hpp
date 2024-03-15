@@ -86,16 +86,14 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper )
-  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );  }
+  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper ); }
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
-  {
-    flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
-  }
+  { flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs ); }
 
   void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
   { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }

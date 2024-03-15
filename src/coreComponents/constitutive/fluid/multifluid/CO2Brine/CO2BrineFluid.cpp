@@ -191,7 +191,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 {
-  GEOS_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
+  GEOS_THROW_IF( this->getCatalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
                  GEOS_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
                            CO2BrineEzrokhiThermalFluid::catalogName(),
                            CO2BrinePhillipsThermalFluid::catalogName() ),
