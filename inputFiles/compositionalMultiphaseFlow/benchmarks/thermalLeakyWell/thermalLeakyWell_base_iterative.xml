@@ -63,13 +63,13 @@
       name="aquiferBottom"
       cellBlocks="{ aquiferBottom00, aquiferBottom10, aquiferBottom20, aquiferBottom30, aquiferBottom40,
                     aquiferBottom01,                  aquiferBottom21,                  aquiferBottom41,
-		    aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42 }"
+		                aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42 }"
       materialList="{ fluid, rock, relperm, cappres }"/>
     <CellElementRegion
       name="aquiferTop"
       cellBlocks="{ aquiferTop00, aquiferTop10, aquiferTop20, aquiferTop30, aquiferTop40,
                     aquiferTop01,               aquiferTop21,               aquiferTop41,
-		    aquiferTop02, aquiferTop12, aquiferTop22, aquiferTop32, aquiferTop42 }"
+		                aquiferTop02, aquiferTop12, aquiferTop22, aquiferTop32, aquiferTop42 }"
       materialList="{ fluid, rock, relperm, cappres }"/>
     <CellElementRegion
       name="injectionWell"

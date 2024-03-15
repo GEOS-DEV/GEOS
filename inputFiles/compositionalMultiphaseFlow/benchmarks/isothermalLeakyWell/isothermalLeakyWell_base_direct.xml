@@ -47,7 +47,7 @@
       target="/Solvers/compflow"/>
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="1e5"   
+      beginTime="1e5"
       forceDt="1e5"
       target="/Solvers/compflow"/>
     <PeriodicEvent
@@ -74,7 +74,7 @@
       name="aquiferBottom"
       cellBlocks="{ aquiferBottom00, aquiferBottom10, aquiferBottom20, aquiferBottom30, aquiferBottom40,
                     aquiferBottom01,                  aquiferBottom21,                  aquiferBottom41,
-		    aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42 }"
+                    aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42 }"
       materialList="{ fluid, rock, relperm }"/>
     <CellElementRegion
       name="aquiferTop"

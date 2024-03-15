@@ -26,7 +26,7 @@
                              aquitard02,      aquitard12,      aquitard22,      aquitard32,      aquitard42, 
                            aquiferTop00,    aquiferTop10,    aquiferTop20,    aquiferTop30,    aquiferTop40,
                            aquiferTop01,    aquiferTop11,    aquiferTop21,    aquiferTop31,    aquiferTop41,
-			   aquiferTop02,    aquiferTop12,    aquiferTop22,    aquiferTop32,    aquiferTop42 }"/>
+                           aquiferTop02,    aquiferTop12,    aquiferTop22,    aquiferTop32,    aquiferTop42 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->  
   
