@@ -14,11 +14,11 @@
 
 
 /**
- * @file AcousticPOD.hpp
+ * @file AcousticROMFrechet.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICROMFRECHET_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICROMFRECHET_HPP_
 
 #include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
@@ -27,20 +27,32 @@
 namespace geos
 {
 
-class AcousticPOD : public WaveSolverBase
+class AcousticROMFrechet : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
-  using ATOMIC_POLICY = parallelDeviceAtomic;
+  using EXEC_POLICY = parallelDevicePolicy<  >;
+  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
-  AcousticPOD( const std::string & name,
-               Group * const parent );
+  AcousticROMFrechet( const std::string & name,
+                           Group * const parent );
 
-  virtual ~AcousticPOD() override;
+  virtual ~AcousticROMFrechet() override;
 
-  static string catalogName() { return "AcousticPOD"; }
-  
+  AcousticROMFrechet() = delete;
+  AcousticROMFrechet( AcousticROMFrechet const & ) = delete;
+  AcousticROMFrechet( AcousticROMFrechet && ) = default;
+
+  AcousticROMFrechet & operator=( AcousticROMFrechet const & ) = delete;
+  AcousticROMFrechet & operator=( AcousticROMFrechet && ) = delete;
+
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "acoustic"; }
+
+  static string catalogName() { return "AcousticFrechet"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
   string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
@@ -64,8 +76,7 @@ public:
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override {return 0;};
-
+                                       bool const computeGradient ) override;
 
   /**@}*/
 
@@ -76,43 +87,6 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtReceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  void computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
-				 arrayView2d< real32 > const massGradientPOD,
-				 arrayView2d< real32 > const dampingPOD,
-				 arrayView1d< real32 const > const mass,
-				 arrayView1d< real32 const > const massGradient,
-				 arrayView1d< real32 const > const damping,
-				 int const countPhi,
-				 int const shotIndex,
-				 arrayView1d< localIndex const > const nodesGhostRank );
-  
-
-  void computeSeismoTracePOD( real64 const time_n,
-			      real64 const dt,
-			      real64 const timeSeismo,
-			      localIndex iSeismo,
-			      arrayView2d< real64 const > const receiverConstants,
-			      arrayView1d< localIndex const > const receiverIsLocal,
-			      localIndex const nsamplesSeismoTrace,
-			      localIndex const outputSeismoTrace,
-			      arrayView1d< real32 const > const var_np1,
-			      arrayView1d< real32 const > const var_n,
-			      arrayView2d< real32 > varAtReceivers );
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -127,19 +101,13 @@ public:
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-    static constexpr char const * computePODmatrixString() { return "computePODmatrix"; }
-    static constexpr char const * computeSourceValueString() { return "computeSourceValue"; }
-    static constexpr char const * massPODString() { return "massPOD"; }
-    static constexpr char const * massGradientPODString() { return "massGradientPOD"; }
-    static constexpr char const * dampingPODString() { return "dampingPOD"; }
-    static constexpr char const * invAPODString() { return "invAPOD"; }
-    static constexpr char const * sourceConstantsPODString() { return "sourceConstantsPOD"; }
-    static constexpr char const * a_np1String() { return "a_np1"; }
-    static constexpr char const * a_nString() { return "a_n"; }
-    static constexpr char const * a_nm1String() { return "a_nm1"; }
-    static constexpr char const * sizePODString() { return "sizePOD"; }
+    static constexpr char const * orderFrechetString() { return "orderFrechet"; }
+    static constexpr char const * epsilonGSString() { return "epsilonGS"; }
+    static constexpr char const * count_qString() { return "count_q"; }
+    static constexpr char const * totcount_qString() { return "totcount_q"; }
+    static constexpr char const * selectionOrderString() { return "selectionOrder"; }
+    static constexpr char const * cycleOrderString() { return "cycleOrder"; }
     
   } waveEquationViewKeys;
 
@@ -158,8 +126,8 @@ public:
                                DomainPartition & domain );
 
   void computeUnknowns( real64 const & time_n,
-			real64 const & dt,
-			integer const cycleNumber,
+                        real64 const & dt,
+                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
                         arrayView1d< string const > const & regionNames );
@@ -170,7 +138,32 @@ public:
                             DomainPartition & domain,
                             MeshLevel & mesh,
                             arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
+
+  bool gramSchmidtROMStiffness(finiteElement::FiniteElementBase const & fe,
+                               arrayView1d< real32 const > const Ku,
+                               arrayView1d< real32 const > const u,
+                               arrayView1d< integer const > const nodeghostrank,
+                               localIndex const elemRegionSize,
+                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                               arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+                               localIndex const ordF);
+
+  void gramSchmidtROMStiffnessFinal(finiteElement::FiniteElementBase const & fe,
+				    arrayView1d< integer const > const nodeghostrank,
+				    localIndex const elemRegionSize,
+				    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+				    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X);
   
+  void reorthogonalization(finiteElement::FiniteElementBase const & fe,
+			   arrayView1d< integer const > const nodeghostrank,
+			   localIndex const elemRegionSize,
+			   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+			   arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+			   localIndex const nq,
+			   std::string path);
+
 protected:
 
   virtual void postProcessInput() override final;
@@ -200,51 +193,15 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  localIndex getNumNodesPerElem();
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
-
-  /// Whether or not to compute the POD matrices
-  int m_computePODmatrix;
-
-  /// Whether or not to compute the source and receivers
-  int m_computeSourceValue;
-
-  ///Mass Matrix in the POD basis forward
-  array2d< real32 > m_massPOD;
-
-  ///Mass Matrix with gradient in the pod basis
-  array2d< real32 > m_massGradientPOD;
-
-  ///Damping Matrix in the POD basis forward
-  array2d< real32 > m_dampingPOD;
-  
-  ///Inverse scalar product POD Matrix
-  array2d< real32 > m_invAPOD;
-
-  // Coefficient of the solution in the POD basis at time n+1
-  array1d< real32 > m_a_np1;
-
-  // Coefficient of the solution in the POD basis at time n
-  array1d< real32 > m_a_n;
-
-  // Coefficient of the solution in the POD basis at time n-1
-  array1d< real32 > m_a_nm1;
-
-  // Second derivative of a for all dtWaveField time steps
-  array2d< real32 > m_a_dt2;
-
-  // Right hand side in the POD basis
-  array1d< real32 > m_rhsPOD;
-
-  // Contribution on POD basis for the source
-  array2d< real64 > m_sourceConstantsPOD;
-
-  // Contribution on POD basis for the receivers
-  array2d< real64 > m_receiverConstantsPOD;
-
-  int m_sizePOD;
+  localIndex m_orderFrechet;
+  real32 m_epsilonGS;
+  array1d< int > m_count_q;
+  localIndex m_totcount_q;
+  array2d< int > m_selectionOrder;
+  array2d< int > m_cycleOrder;
 };
 
 
@@ -275,6 +232,30 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
+DECLARE_FIELD( PressureFrechet_nm1,
+               "pressureFrechet_nm1",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar Frechet derivative of pressure at time n-1." );
+
+DECLARE_FIELD( PressureFrechet_n,
+               "pressureFrechet_n",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Scalar Frechet derivative of pressure at time n." );
+
+DECLARE_FIELD( PressureFrechet_np1,
+               "pressureFrechet_np1",
+               array2d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Scalar Frechet derivative of pressure at time n+1." );
+
 DECLARE_FIELD( ForcingRHS,
                "rhs",
                array1d< real32 >,
@@ -282,6 +263,14 @@ DECLARE_FIELD( ForcingRHS,
                NOPLOT,
                WRITE_AND_READ,
                "RHS" );
+
+DECLARE_FIELD( AcousticMassVectorFrechet,
+               "acousticMassVectorFrechet",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Mass Matrix with gradient." );
 
 DECLARE_FIELD( AcousticMassVector,
                "acousticMassVector",
@@ -291,22 +280,14 @@ DECLARE_FIELD( AcousticMassVector,
                WRITE_AND_READ,
                "Diagonal of the Mass Matrix." );
 
-DECLARE_FIELD( AcousticMassGradientVector,
-               "acousticMassGradientVector",
-	       array1d< real32 >,
-               0,
-               NOPLOT,
-	       WRITE_AND_READ,
-	       "Diagonal of the Mass Matrix with gradient of velocity." );
-  
-DECLARE_FIELD( AcousticDampingVector,
-               "acousticDampingVector",
+DECLARE_FIELD( DampingVector,
+               "dampingVector",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix." );
-  
+
 DECLARE_FIELD( AcousticVelocity,
                "acousticVelocity",
                array1d< real32 >,
@@ -317,18 +298,26 @@ DECLARE_FIELD( AcousticVelocity,
 
 DECLARE_FIELD( AcousticDensity,
                "acousticDensity",
-	       array1d< real32 >,
-	       0,
+               array1d< real32 >,
+               0,
                NOPLOT,
                WRITE_AND_READ,
-	       "Medium density of the cell" );
-  
+               "Medium density of the cell" );
+
+DECLARE_FIELD( StiffnessVector,
+               "stiffnessVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Stiffness vector contains R_h*Pressure_n." );
+
 DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
                "acousticFreeSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
-	       WRITE_AND_READ,
+               WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
 DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
@@ -336,7 +325,7 @@ DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
                array1d< localIndex >,
                0,
                NOPLOT,
-	       WRITE_AND_READ,
+               WRITE_AND_READ,
                "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
 DECLARE_FIELD( PressureDoubleDerivative,
@@ -389,7 +378,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
 
 }
 
-
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPOD_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICROMFRECHET_HPP_ */

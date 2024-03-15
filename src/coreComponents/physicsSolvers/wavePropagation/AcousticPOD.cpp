@@ -26,6 +26,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "WaveSolverUtils.hpp"
 
 namespace geos
 {
@@ -52,46 +53,21 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 1 ).
     setDescription( "Bool for POD source and receivers computation" );
-  
-  registerWrapper( viewKeyStruct::computeStiffnessPODString(), &m_computeStiffnessPOD ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 1 ).
-    setDescription( "Bool for stiffness POD computation" );
 
-  registerWrapper( viewKeyStruct::invPODIsIdentityString(), &m_invPODIsIdentity ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 1 ).
-    setDescription( "Bool for mass POD computation and discretization formulation" );
-
-  registerWrapper( viewKeyStruct::stiffnessPOD_fString(), &m_stiffnessPOD_f ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Stiffness POD forward matrix" );
-
-  registerWrapper( viewKeyStruct::massPOD_fString(), &m_massPOD_f ).
+  registerWrapper( viewKeyStruct::massPODString(), &m_massPOD ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Mass POD forward matrix" );
 
-  registerWrapper( viewKeyStruct::dampingPOD_fString(), &m_dampingPOD_f ).
+  registerWrapper( viewKeyStruct::massGradientPODString(), &m_massGradientPOD ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Mass gradient POD forward matrix" );
+  
+  registerWrapper( viewKeyStruct::dampingPODString(), &m_dampingPOD ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Damping POD forward matrix" );
-
-  registerWrapper( viewKeyStruct::stiffnessPOD_bString(), &m_stiffnessPOD_b ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Stiffness POD backward matrix" );
-
-  registerWrapper( viewKeyStruct::massPOD_bString(), &m_massPOD_b ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Mass POD backward matrix" );
-
-  registerWrapper( viewKeyStruct::dampingPOD_bString(), &m_dampingPOD_b ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Damping POD backward matrix" );
 
   registerWrapper( viewKeyStruct::invAPODString(), &m_invAPOD ).
     setInputFlag( InputFlags::FALSE ).
@@ -117,54 +93,16 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "POD basis coefficients at time n-1" );
+
+  registerWrapper( viewKeyStruct::sizePODString(), &m_sizePOD ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setDescription( "POD basis size" );
 }
 
 AcousticPOD::~AcousticPOD()
 {
   // TODO Auto-generated destructor stub
-}
-
-localIndex AcousticPOD::getNumNodesPerElem()
-{
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
-
-  localIndex numNodesPerElem = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&]( string const &,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementRegions( regionNames,
-                                   [&] ( localIndex const,
-                                         ElementRegionBase const & elemRegion )
-    {
-      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
-      {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        localIndex const numSupportPoints = fe.getNumSupportPoints();
-        if( numSupportPoints > numNodesPerElem )
-        {
-          numNodesPerElem = numSupportPoints;
-        }
-      } );
-    } );
-
-
-  } );
-  return numNodesPerElem;
 }
 
 void AcousticPOD::initializePreSubGroups()
@@ -175,29 +113,30 @@ void AcousticPOD::initializePreSubGroups()
 
 void AcousticPOD::registerDataOnMesh( Group & meshBodies )
 {
-
+  WaveSolverBase::registerDataOnMesh( meshBodies );
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::Phi,
-                               fields::ForcingRHS,
-                               fields::MassVector,
-                               fields::DampingVector,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+    nodeManager.registerField< fields::ForcingRHS,
+                               fields::AcousticMassVector,
+			       fields::AcousticMassGradientVector,
+                               fields::AcousticDampingVector,
+                               fields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::AcousticFreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumVelocity >( this->getName() );
-      subRegion.registerField< fields::PartialGradient >( this->getName() );
+      subRegion.registerField< fields::AcousticVelocity >( getName() );
+      subRegion.registerField< fields::AcousticDensity >( getName() );
+      subRegion.registerField< fields::PartialGradient >( getName() );
     } );
 
   } );
@@ -210,49 +149,79 @@ void AcousticPOD::postProcessInput()
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  
-  if( m_forward == 0 )
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+				  [&] ( string const &,
+					MeshLevel & mesh,
+					arrayView1d< string const > const & regionNames )
   {
-    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                    [&] ( string const &,
-                                          MeshLevel & mesh,
-                                          arrayView1d< string const > const & regionNames )
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::AcousticFreeSurfaceFaceIndicator >();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+    
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+      nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    
+    // mass matrix to be computed in this function
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::AcousticMassVector >();
     {
-      NodeManager & nodeManager = mesh.getNodeManager();
-      arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+      GEOS_MARK_SCOPE( mass_zero );
       mass.zero();
+    }
+    arrayView1d< real32 > const massGradient = nodeManager.getField< fields::AcousticMassGradientVector >();
+    {
+      GEOS_MARK_SCOPE( massGradient_zero );
+      massGradient.zero();
+    }
+    /// damping matrix to be computed for each dof in the boundary of the mesh
+    arrayView1d< real32 > const damping = nodeManager.getField< fields::AcousticDampingVector >();
+    {
+      GEOS_MARK_SCOPE( damping_zero );
+      damping.zero();
+    }
+    
+    
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+											  CellElementSubRegion & elementSubRegion )
+    {
 
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
-      X = nodeManager.referencePosition().toViewConst();
-
-      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                            CellElementSubRegion & elementSubRegion )
-      {
-
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-
-	arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
-	grad.zero();
-	
-        finiteElement::FiniteElementBase const &
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::AcousticVelocity >();
+      arrayView1d< real32 const > const gradient = elementSubRegion.getField< fields::PartialGradient >();
+      
+      finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-        {
-          using FE_TYPE = TYPEOFREF( finiteElement );
-
-          acousticPODKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-
-          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                 X,
-                                                                 elemsToNodes,
-                                                                 velocity,
-                                                                 mass );
-        } );
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      {
+	using FE_TYPE = TYPEOFREF( finiteElement );
+	
+	acousticPODKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+	kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+							       nodeCoords32,
+							       elemsToNodes,
+							       velocity,
+							       gradient,
+							       mass,
+							       massGradient);
+	
+	acousticPODKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+	kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+							       nodeCoords32,
+							       elemsToFaces,
+							       facesToNodes,
+							       facesDomainBoundaryIndicator,
+							       freeSurfaceFaceIndicator,
+							       velocity,
+							       damping);
       } );
     } );
-  }
+  } );
+  
 
   if( m_computePODmatrix )
   {
@@ -266,50 +235,37 @@ void AcousticPOD::postProcessInput()
       NodeManager const & nodeManager = mesh.getNodeManager();
       FaceManager const & faceManager = mesh.getFaceManager();
 
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
-      ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-      arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-
-      arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
+      arrayView1d< real32 const > const mass = nodeManager.getField< fields::AcousticMassVector >();
+      arrayView1d< real32 const > const massGradient = nodeManager.getField< fields::AcousticMassGradientVector >();
+      arrayView1d< real32 const > const damping = nodeManager.getField< fields::AcousticDampingVector >();
+      
+      int sizePOD = m_sizePOD;
       arrayView1d< localIndex const > const nodesGhostRank = nodeManager.ghostRank();
 
       if( m_forward )
       {
-        m_stiffnessPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
-        m_massPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
-        m_dampingPOD_f.resize( phi.size( 0 ), phi.size( 0 ));
-        m_stiffnessPOD_f.zero();
-        m_massPOD_f.zero();
-        m_dampingPOD_f.zero();
-      }
-      else
-      {
-        m_stiffnessPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
-        m_massPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
-        m_dampingPOD_b.resize( phi.size( 0 ), phi.size( 0 ));
-        m_stiffnessPOD_b.zero();
-        m_massPOD_b.zero();
-        m_dampingPOD_b.zero();
+        m_massPOD.resize( sizePOD, sizePOD );
+	m_massGradientPOD.resize( sizePOD, sizePOD );
+        m_dampingPOD.resize( sizePOD, sizePOD );
+        m_massPOD.zero();
+        m_dampingPOD.zero();
       }
 
-      m_a_np1.resize( phi.size( 0 ));
-      m_a_n.resize( phi.size( 0 ));
-      m_a_nm1.resize( phi.size( 0 ));
-      m_rhsPOD.resize( phi.size( 0 ));
+      m_a_np1.resize( sizePOD );
+      m_a_n.resize( sizePOD );
+      m_a_nm1.resize( sizePOD );
+      m_rhsPOD.resize( sizePOD );
 
       m_a_n.zero();
       m_a_nm1.zero();
       m_a_np1.zero();
       m_rhsPOD.zero();
 
-      if(m_invPODIsIdentity == 0)
-      {
-	m_invAPOD.resize( phi.size( 0 ), phi.size( 0 ));
-	m_invAPOD.zero();
-      }
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
-      X = nodeManager.referencePosition().toViewConst();
+      m_invAPOD.resize( sizePOD, sizePOD );
+      m_invAPOD.zero();
+      
+      arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+	nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
@@ -318,162 +274,24 @@ void AcousticPOD::postProcessInput()
                         "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                         InputError );
 
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-
         if( m_forward )
         {
-          arrayView2d< real32 > const stiffnessPOD = m_stiffnessPOD_f.toView();
-          arrayView2d< real32 > const dampingPOD = m_dampingPOD_f.toView();
-          arrayView2d< real32 > const massPOD = m_massPOD_f.toView();
+          arrayView2d< real32 > const dampingPOD = m_dampingPOD.toView();
+          arrayView2d< real32 > const massPOD = m_massPOD.toView();
+	  arrayView2d< real32 > const massGradientPOD = m_massGradientPOD.toView();
+	  int const countPhi = m_sizePOD;
+	  int const shotIndex = m_shotIndex;
 
-          finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-          {
-            using FE_TYPE = TYPEOFREF( finiteElement );
-
-            acousticPODKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-
-            kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                                   X,
-                                                                   facesToElements,
-                                                                   facesToNodes,
-                                                                   facesDomainBoundaryIndicator,
-                                                                   freeSurfaceFaceIndicator,
-                                                                   velocity,
-                                                                   dampingPOD,
-                                                                   phi,
-                                                                   nodesGhostRank );
-
-            if( m_invPODIsIdentity == 0 )
-            {
-              acousticPODKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-              kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                     X,
-                                                                     elemsToNodes,
-                                                                     velocity,
-                                                                     massPOD,
-                                                                     phi,
-                                                                     nodesGhostRank );
-            }
-
-            if( m_computeStiffnessPOD )
-            {
-              acousticPODKernels::PrecomputeStiffnessPOD::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-                                                                                                         X,
-                                                                                                         stiffnessPOD,
-                                                                                                         phi,
-                                                                                                         nodesGhostRank,
-                                                                                                         elemsToNodes );
-            }
-
-          } );
-
-	  dampingPOD.move( MemorySpace::host, true );
-          MpiWrapper::allReduce( dampingPOD.data(),
-                                 dampingPOD.data(),
-                                 dampingPOD.size( 0 )*dampingPOD.size( 1 ),
-                                 MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                 MPI_COMM_GEOSX );
-
-          if( m_invPODIsIdentity == 0 )
-          {
-	    massPOD.move( MemorySpace::host, true );
-            MpiWrapper::allReduce( massPOD.data(),
-                                   massPOD.data(),
-                                   massPOD.size( 0 )*massPOD.size( 1 ),
-                                   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                   MPI_COMM_GEOSX );
-          }
-
-          if( m_computeStiffnessPOD )
-          {
-	    stiffnessPOD.move( MemorySpace::host, true );
-            MpiWrapper::allReduce( stiffnessPOD.data(),
-                                   stiffnessPOD.data(),
-                                   stiffnessPOD.size( 0 )*stiffnessPOD.size( 1 ),
-                                   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                   MPI_COMM_GEOSX );
-          }
-
-
-
-        }
-        else
-        {
-          arrayView2d< real32 > const stiffnessPOD = m_stiffnessPOD_b.toView();
-          arrayView2d< real32 > const dampingPOD = m_dampingPOD_b.toView();
-          arrayView2d< real32 > const massPOD = m_massPOD_b.toView();
-
-          finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-          {
-            using FE_TYPE = TYPEOFREF( finiteElement );
-
-            acousticPODKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-            kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                                   X,
-                                                                   facesToElements,
-                                                                   facesToNodes,
-                                                                   facesDomainBoundaryIndicator,
-                                                                   freeSurfaceFaceIndicator,
-                                                                   velocity,
-                                                                   dampingPOD,
-                                                                   phi,
-                                                                   nodesGhostRank );
-
-
-
-            if( m_invPODIsIdentity == 0 )
-            {
-              acousticPODKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-              kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                     X,
-                                                                     elemsToNodes,
-                                                                     velocity,
-                                                                     massPOD,
-                                                                     phi,
-                                                                     nodesGhostRank );
-            }
-
-	    if( m_computeStiffnessPOD )
-            {
-	      acousticPODKernels::PrecomputeStiffnessPOD::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-													 X,
-													 stiffnessPOD,
-													 phi,
-													 nodesGhostRank,
-													 elemsToNodes );
-	    }
-	  } );
-	  dampingPOD.move( MemorySpace::host, true );
-          MpiWrapper::allReduce( dampingPOD.data(),
-                                 dampingPOD.data(),
-                                 dampingPOD.size( 0 )*dampingPOD.size( 1 ),
-                                 MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                 MPI_COMM_GEOSX );
-
-	  if( m_invPODIsIdentity == 0 )
-          {
-            massPOD.move( MemorySpace::host, true );
-            MpiWrapper::allReduce( massPOD.data(),
-                                   massPOD.data(),
-                                   massPOD.size( 0 )*massPOD.size( 1 ),
-                                   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                                   MPI_COMM_GEOSX );
-          }
-
-	  if( m_computeStiffnessPOD )
-          {
-	    stiffnessPOD.move( MemorySpace::host, true );
-	    MpiWrapper::allReduce( stiffnessPOD.data(),
-				   stiffnessPOD.data(),
-				   stiffnessPOD.size( 0 )*stiffnessPOD.size( 1 ),
-				   MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-				   MPI_COMM_GEOSX );
-	  }
-        }
+	  computeMassAndDampingPOD( massPOD,
+				    massGradientPOD,
+				    dampingPOD,
+				    mass,
+				    massGradient,
+				    damping,
+				    countPhi,
+				    shotIndex,
+				    nodesGhostRank );
+	}
       } );
     } );
   }
@@ -485,18 +303,18 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
-  X = nodeManager.referencePosition().toViewConst();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+    nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
-  arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
+  int sizePOD = m_sizePOD;
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
 
-  m_sourceConstantsPOD.resize( sourceCoordinates.size( 0 ), phi.size( 0 ));
+  m_sourceConstantsPOD.resize( sourceCoordinates.size( 0 ), sizePOD );
 
   arrayView2d< real64 > const sourceConstantsPOD = m_sourceConstantsPOD.toView();
   arrayView1d< localIndex > const sourceIsAccessible = m_sourceIsAccessible.toView();
@@ -504,26 +322,24 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   sourceNodeIds.setValues< EXEC_POLICY >( -1 );
   sourceConstantsPOD.zero();
   sourceIsAccessible.zero();
-  
+
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
 
-  m_receiverConstantsPOD.resize( receiverCoordinates.size( 0 ), phi.size( 0 ));
-  
+  m_receiverConstantsPOD.resize( receiverCoordinates.size( 0 ), sizePOD );
+
   arrayView2d< real64 > const receiverConstantsPOD = m_receiverConstantsPOD.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstantsPOD.zero();
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   if( computeSourceValue )
   {
     sourceValue.zero();
   }
-  
+
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -546,7 +362,9 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
-
+    int const countPhi = m_sizePOD;
+    int const shotIndex = m_shotIndex;
+    
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -560,29 +378,31 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        numNodesPerElem,
-        numFacesPerElem,
-        X,
-        elemGhostRank,
-        elemsToNodes,
-        elemsToFaces,
-        elemCenter,
-        faceNormal,
-        faceCenter,
-        sourceCoordinates,
-        sourceIsAccessible,
-        sourceNodeIds,
-        sourceConstantsPOD,
-	computeSourceValue,
-        phi,
-        receiverCoordinates,
-        receiverIsLocal,
-	receiverNodeIds,
-	receiverConstantsPOD,
-        sourceValue,
-        dt,
-        timeSourceFrequency,
-        rickerOrder );
+	  numNodesPerElem,
+	  numFacesPerElem,
+	  nodeCoords32,
+	  elemGhostRank,
+	  elemsToNodes,
+	  elemsToFaces,
+	  elemCenter,
+	  faceNormal,
+	  faceCenter,
+	  sourceCoordinates,
+	  sourceIsAccessible,
+	  sourceNodeIds,
+	  sourceConstantsPOD,
+	  computeSourceValue,
+	  receiverCoordinates,
+	  receiverIsLocal,
+	  receiverNodeIds,
+	  receiverConstantsPOD,
+	  sourceValue,
+	  countPhi,
+	  shotIndex,
+	  dt,
+	  m_timeSourceFrequency,
+	  m_timeSourceDelay,
+	  m_rickerOrder );
     } );
   } );
 
@@ -626,7 +446,11 @@ void AcousticPOD::addSourceToRightHandSide( integer const & cycleNumber, arrayVi
 void AcousticPOD::initializePostInitialConditionsPreSubGroups()
 {
 
-  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  GEOS_MARK_FUNCTION;
+  {
+    GEOS_MARK_SCOPE( WaveSolverBase::initializePostInitialConditionsPreSubGroups );
+    WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+  }
   if( m_usePML )
   {
     AcousticPOD::initializePML();
@@ -660,10 +484,10 @@ void AcousticPOD::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::AcousticFreeSurfaceNodeIndicator >();
 
   //freeSurfaceFaceIndicator.zero();
   //freeSurfaceNodeIndicator.zero();
@@ -702,7 +526,10 @@ void AcousticPOD::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 }
 
 
-/**                                                                                                                                                                   * Checks if a directory exists.                                                                                                                                      *                                                                                                                                                                    * @param dirName Directory name to check existence of.                                                                                                               * @return true is dirName exists and is a directory.                                                                                                                 */
+/*** Checks if a directory exists.
+* @param dirName Directory name to check existence of.
+* @return true is dirName exists and is a directory.
+*/
 bool dirExistsPOD( const std::string & dirName )
 {
   struct stat buffer;
@@ -726,128 +553,6 @@ real64 AcousticPOD::explicitStepForward( real64 const & time_n,
     arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
     arrayView1d< real32 > const a_n = m_a_n.toView();
     arrayView1d< real32 > const a_np1 = m_a_np1.toView();
-    
-    if( computeGradient )
-    {
-      NodeManager & nodeManager = mesh.getNodeManager();
-      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
-      arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
-
-      array1d< real64 > phim;
-      phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-      arrayView1d< real64 > phimV = phim.toView();
-      for( localIndex m=0; m<phi.size( 0 ); ++m )
-      {
-	LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-	
-	forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
-	  {
-	    if(m==0)
-	    {
-	      p_dt2[nodeIdx] = 0;
-	    }
-	    p_dt2[nodeIdx] += (a_np1[m] - 2*a_n[m] + a_nm1[m]) * phimV[nodeIdx] / (dt*dt);
-	  } );
-      }
-      GEOS_MARK_SCOPE ( DirectWrite );
-      p_dt2.move( MemorySpace::host, false );
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
-      int lastDirSeparator = fileName.find_last_of( "/\\" );
-      std::string dirName = fileName.substr( 0, lastDirSeparator );
-      if( string::npos != (size_t)lastDirSeparator && !dirExistsPOD( dirName ))
-	makeDirsForPath( dirName );
-      
-      std::ofstream wf( fileName, std::ios::out | std::ios::binary );
-      GEOS_THROW_IF( !wf,
-		     "Could not open file "<< fileName << " for writting",
-		     InputError );
-      wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close( );
-      GEOS_THROW_IF( !wf.good(),
-		     "An error occured while writting "<< fileName,
-		     InputError );
-    
-    }
-    forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-      {
-        a_nm1[m] = a_n[m];
-        a_n[m]   = a_np1[m];
-      } );
-  } );
-
-  return dtOut;
-}
-
-
-real64 AcousticPOD::explicitStepBackward( real64 const & time_n,
-                                          real64 const & dt,
-                                          integer cycleNumber,
-                                          DomainPartition & domain,
-                                          bool computeGradient )
-{
-  real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&] ( string const &,
-                                        MeshLevel & mesh,
-                                        arrayView1d< string const > const & regionNames )
-  {
-    arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
-    arrayView1d< real32 > const a_n = m_a_n.toView();
-    arrayView1d< real32 > const a_np1 = m_a_np1.toView();
-
-    if( computeGradient )
-    {
-      NodeManager & nodeManager = mesh.getNodeManager();
-
-      arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-      arrayView2d< real64 const > const phi = nodeManager.getField< fields::Phi >();
-
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      arrayView1d< real32 > const p_dt2 = nodeManager.getField< fields::PressureDoubleDerivative >();
-
-      GEOS_MARK_SCOPE ( DirectRead );
-      
-      int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-      std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
-      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-      GEOS_THROW_IF( !wf,
-		     "Could not open file "<< fileName << " for reading",
-		     InputError );
-      
-      p_dt2.move( MemorySpace::host, true );
-      wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
-      wf.close( );
-      remove( fileName.c_str() );
-
-      
-      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  CellElementSubRegion & elementSubRegion )
-      {
-        arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-        arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-        constexpr localIndex numNodesPerElem = 8;
-
-        array1d< real64 > phim;
-        phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-	arrayView1d< real64 > phimV = phim.toView();
-	GEOS_MARK_SCOPE ( updatePartialGradient );
-	for( localIndex m=0; m<phi.size( 0 ); ++m )
-	{
-	  LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-          forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
-            {
-              for( localIndex i = 0; i < numNodesPerElem; ++i )
-              {
-                localIndex nodeIdx = elemsToNodes[eltIdx][i];
-                grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * a_n[m] * phimV[nodeIdx]);
-	      }
-            } );
-	}
-      } );
-    }
 
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
       {
@@ -870,127 +575,111 @@ real64 AcousticPOD::explicitStepInternal( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
-                                        MeshLevel &,
-                                        arrayView1d< string const > const & )
+                                        MeshLevel & mesh,
+                                        arrayView1d< string const > const & regionNames )
   {
-
-    arrayView1d< real32 > const rhs = m_rhsPOD.toView();
-
-    arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
-    arrayView1d< real32 > const a_n = m_a_n.toView();
-    arrayView1d< real32 > const a_np1 = m_a_np1.toView();
-
-    addSourceToRightHandSide( cycleNumber, rhs );
-
-    /// calculate your time integrators
-    real64 const dt2 = dt*dt;
-
-    GEOS_MARK_SCOPE ( updateP );
-
-    if( m_forward )
-    {
-      arrayView2d< real32 const > const stiffness = m_stiffnessPOD_f.toViewConst();
-      arrayView2d< real32 const > const damping = m_dampingPOD_f.toViewConst();
-      if( m_invPODIsIdentity )
-      {
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-          {
-            a_np1[m] = dt2 * rhs[m];
-            a_np1[m] += 2*a_n[m];
-            a_np1[m] -= a_nm1[m];
-            for( localIndex n = 0; n < a_n.size(); ++n )
-            {
-              a_np1[m] -= (dt * damping[m][n] + dt2*stiffness[m][n]) * a_n[n];
-              a_np1[m] += dt * damping[m][n] * a_nm1[n];
-            }
-            rhs[m] = 0.0;
-          } );
-      }
-      else
-      {
-        arrayView2d< real32 const > const mass = m_massPOD_f.toViewConst();
-        arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
-        array1d< real32 > b( a_n.size());
-	arrayView1d< real32 > bV = b.toView();
-	
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-        {
-          bV[m] = dt2 * rhs[m];
-	  for( localIndex n = 0; n < a_n.size(); ++n )
-          {
-            bV[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
-            bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
-          }
-          rhs[m] = 0.0;
-        } );
-
-	forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-        {
-	  a_np1[m] = 0.0;
-	  for( localIndex n = 0; n < a_n.size(); ++n )
-          {
-	    a_np1[m] += invA[m][n] * bV[n];
-	  }
-	} );
-      }
-    }
-    else
-    {
-      arrayView2d< real32 const > const stiffness = m_stiffnessPOD_b.toViewConst();
-      arrayView2d< real32 const > const damping = m_dampingPOD_b.toViewConst();
-      if( m_invPODIsIdentity )
-      {
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-          {
-            a_np1[m] = dt2 * rhs[m];
-            a_np1[m] += 2*a_n[m];
-            a_np1[m] -= a_nm1[m];
-            for( localIndex n = 0; n < a_n.size(); ++n )
-            {
-              a_np1[m] -= (dt * damping[m][n] + dt2*stiffness[m][n]) * a_n[n];
-              a_np1[m] += dt * damping[m][n] * a_nm1[n];
-            }
-            rhs[m] = 0.0;
-          } );
-      }
-      else
-      {
-        arrayView2d< real32 const > const mass = m_massPOD_b.toViewConst();
-        arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
-        array1d< real32 > b( a_n.size());
-	arrayView1d< real32 > bV = b.toView();
-
-	forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-        {
-          bV[m] = dt2 * rhs[m];
-          for( localIndex n = 0; n < a_n.size(); ++n )
-          {
-            bV[m] += (2 * mass[m][n] - dt2 * stiffness[m][n]) * a_n[n];
-            bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
-          }
-          rhs[m] = 0.0;
-        } );
-
-        forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
-        {
-          a_np1[m] = 0.0;
-          for( localIndex n = 0; n < a_n.size(); ++n )
-          {
-            a_np1[m] += invA[m][n] * bV[n];
-          }
-        } );
-      }
-    }
-
-    //compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
-
-    computeAllSeismoTraces( time_n, dt, a_np1, a_n, pReceivers );
-
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
   } );
-
   return dt;
 }
+
+void AcousticPOD::computeUnknowns( real64 const & time_n,
+				   real64 const & dt,
+				   integer cycleNumber,
+				   DomainPartition & domain,
+				   MeshLevel & mesh,
+				   arrayView1d< string const > const & regionNames )
+{  
+  arrayView1d< real32 > const rhs = m_rhsPOD.toView();
+  
+  arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
+  arrayView1d< real32 > const a_n = m_a_n.toView();
+  arrayView1d< real32 > const a_np1 = m_a_np1.toView();
+
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
+  addSourceToRightHandSide( cycleForSource, rhs );
+
+  /// calculate your time integrators
+  real64 const dt2 = dt*dt;
+  
+  GEOS_MARK_SCOPE ( updateP );
+  
+  if( m_forward )
+  {
+    arrayView2d< real32 const > const damping = m_dampingPOD.toViewConst();
+    arrayView2d< real32 const > const mass = m_massPOD.toViewConst();
+    arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
+    array1d< real32 > b( a_n.size());
+    arrayView1d< real32 > bV = b.toView();
+    
+    forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
+    {
+      bV[m] = dt2 * (rhs[m] - a_n[m]);
+      for( localIndex n = 0; n < a_n.size(); ++n )
+      {
+	bV[m] += 2 * mass[m][n] * a_n[n];
+	bV[m] -= (mass[m][n] - dt * 0.5 * damping[m][n]) * a_nm1[n];
+      }
+      rhs[m] = 0.0;
+    } );
+
+    forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
+    {
+      a_np1[m] = 0.0;
+      for( localIndex n = 0; n < a_n.size(); ++n )
+      {
+	a_np1[m] += invA[m][n] * bV[n];
+      }
+    } );
+  }
+}
+
+void AcousticPOD::synchronizeUnknowns( real64 const & time_n,
+				       real64 const & dt,
+				       integer const,
+				       DomainPartition & domain,
+				       MeshLevel & mesh,
+				       arrayView1d< string const > const & )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 > const a_n = m_a_n.toView();
+  arrayView1d< real32 > const a_np1 = m_a_np1.toView();
+
+  /// synchronize pressure fields
+  FieldIdentifiers fieldsToBeSync;
+
+  if( m_usePML )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, {
+        fields::AuxiliaryVar1PML::key(),
+        fields::AuxiliaryVar4PML::key() } );
+  }
+
+  /*CommunicationTools & syncFields = CommunicationTools::getInstance();
+  syncFields.synchronizeFields( fieldsToBeSync,
+                                mesh,
+                                domain.getNeighbors(),
+                                true );
+  */
+  /// compute the seismic traces since last step.
+  arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+
+  computeAllSeismoTraces( time_n, dt, a_np1, a_n, pReceivers );
+  incrementIndexSeismoTrace( time_n );
+
+  if( m_usePML )
+  {
+    arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
+    arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
+    grad_n.zero();
+    divV_n.zero();
+  }
+}
+
 
 void AcousticPOD::initializePML()
 {
@@ -1034,7 +723,8 @@ void AcousticPOD::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+      X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
     indicatorPML.zero();
 
     real32 xInteriorMin[3]{};
@@ -1162,7 +852,7 @@ void AcousticPOD::initializePML()
       CellElementSubRegion::NodeMapType const & elemToNodes =
         subRegion.getReference< CellElementSubRegion::NodeMapType >( CellElementSubRegion::viewKeyStruct::nodeListString() );
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::AcousticVelocity::key());
       finiteElement::FiniteElementBase const &
       fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -1268,7 +958,8 @@ void AcousticPOD::applyPML( real64 const time, DomainPartition & domain )
     arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
     arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
     arrayView1d< real32 const > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+      X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
     /// 'targetSet' contains the indices of the elements in a given subregion
@@ -1292,7 +983,7 @@ void AcousticPOD::applyPML( real64 const time, DomainPartition & domain )
       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst = elemToNodes.toViewConst();
 
       /// Array view of the wave speed
-      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::MediumVelocity::key());
+      arrayView1d< real32 const > const vel = subRegion.getReference< array1d< real32 > >( fields::AcousticVelocity::key());
 
       /// Get the object needed to determine the type of the element in the subregion
       finiteElement::FiniteElementBase const &
@@ -1387,14 +1078,164 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
    *  time_n - dt    timeSeismo    time_n
    *   ---|--------------|-------------|
    */
-  for( real64 timeSeismo;
-       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
-       ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
-       m_indexSeismoTrace++ )
+  if( m_nsamplesSeismoTrace == 0 )
+    return;
+  integer const dir = m_forward ? +1 : -1;
+  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    WaveSolverUtils::computeSeismoTracePOD( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverConstantsPOD,
-                                            m_receiverIsLocal,
-                                            m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+      break;
+    computeSeismoTracePOD( time_n,
+                           (m_forward)?dt:-dt,
+                           timeSeismo,
+                           (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1),
+                           m_receiverConstantsPOD,
+                           m_receiverIsLocal,
+                           m_nsamplesSeismoTrace,
+                           m_outputSeismoTrace,
+                           var_np1,
+                           var_n,
+                           varAtReceivers );
+  }
+}
+
+void AcousticPOD::computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
+					    arrayView2d< real32 > const massGradientPOD,
+					    arrayView2d< real32 > const dampingPOD,
+					    arrayView1d< real32 const > const mass,
+					    arrayView1d< real32 const > const massGradient,
+					    arrayView1d< real32 const > const damping,
+					    int const countPhi,
+					    int const shotIndex,
+					    arrayView1d< localIndex const > const nodesGhostRank )
+
+{
+  GEOS_LOG_RANK_0("Computing mass and damping POD...");
+  int size = mass.size();
+  array1d< real32 > phim( size );
+  array1d< real32 > phin( size );
+  arrayView1d< real32 > phimV = phim.toView();
+  arrayView1d< real32 > phinV	= phin.toView();
+  
+  GEOS_MARK_SCOPE ( DirectRead );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  for( localIndex m=0; m<countPhi; ++m )
+  {
+    std::string fileName1 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, m+1);
+    std::ifstream wf1( fileName1, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !wf1,
+		   ": Could not open file "<< fileName1 << " for reading",
+		   InputError );
+    phimV.move( MemorySpace::host, true );
+    wf1.read( (char *)&phimV[0], size*sizeof( real32 ) );
+    wf1.close( );
+
+    std::cout<<m<<std::endl;
+    for( localIndex n=0; n<m+1; ++n )
+    {
+      std::string fileName2 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, n+1);
+      std::ifstream wf2( fileName2, std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !wf2,
+		     ": Could not open file "<< fileName2 << " for reading",
+		     InputError );
+      phinV.move( MemorySpace::host, true );
+      wf2.read( (char *)&phinV[0], size*sizeof( real32 ) );
+      wf2.close( );
+
+      //std::cout<<m<<" , "<<n<<std::endl;
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+	if( nodesGhostRank[a] < 0 )
+        {
+	  if( abs(phimV[a]) > 1e-12 && abs(phinV[a]) > 1e-12 )
+	  {
+	    real32 localIncrement = phimV[a] * mass[a] * phinV[a];
+	    RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
+	    if( m!=n )
+	    {
+	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
+	    }
+	    
+	    if( massGradient[a] != 0 )
+	    {
+	      localIncrement = phimV[a] * massGradient[a] * phinV[a];
+              RAJA::atomicAdd< ATOMIC_POLICY >( &massGradientPOD[m][n], localIncrement );
+              if( m!=n )
+              {
+                RAJA::atomicAdd< ATOMIC_POLICY >( &massGradientPOD[n][m], localIncrement );
+              }
+	    }
+
+	    if( damping[a] != 0 )
+	    {
+	      localIncrement = phimV[a] * damping[a] * phinV[a];
+	      RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
+	      if( m!=n )
+	      {
+		RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
+	      }
+	    }
+	  }
+	}
+      } ); // end loop over element
+    }
+  }
+  massPOD.move( MemorySpace::host, true );
+  MpiWrapper::allReduce( massPOD.data(),
+			 massPOD.data(),
+			 massPOD.size( 0 )*massPOD.size( 1 ),
+			 MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+			 MPI_COMM_GEOSX );
+  massGradientPOD.move( MemorySpace::host, true );
+  MpiWrapper::allReduce( massGradientPOD.data(),
+                         massGradientPOD.data(),
+                         massGradientPOD.size( 0 )*massGradientPOD.size( 1 ),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                         MPI_COMM_GEOSX );
+  dampingPOD.move( MemorySpace::host, true );
+  MpiWrapper::allReduce( dampingPOD.data(),
+                         dampingPOD.data(),
+                         dampingPOD.size( 0 )*dampingPOD.size( 1 ),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                         MPI_COMM_GEOSX );
+}
+
+void AcousticPOD::computeSeismoTracePOD( real64 const time_n,
+					 real64 const dt,
+					 real64 const timeSeismo,
+					 localIndex iSeismo,
+					 arrayView2d< real64 const > const receiverConstants,
+					 arrayView1d< localIndex const > const receiverIsLocal,
+					 localIndex const nsamplesSeismoTrace,
+					 localIndex const outputSeismoTrace,
+					 arrayView1d< real32 const > const var_np1,
+					 arrayView1d< real32 const > const var_n,
+					 arrayView2d< real32 > varAtReceivers )
+{
+  real64 const time_np1 = time_n + dt;
+
+  real32 const a1 = (LvArray::math::abs( dt ) < WaveSolverBase::epsilonLoc ) ? 1.0 : (time_np1 - timeSeismo)/dt;
+  real32 const a2 = 1.0 - a1;
+  if( nsamplesSeismoTrace > 0 )
+  {
+    forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {	
+	varAtReceivers[iSeismo][ircv] = 0.0;
+	real32 vtmp_np1 = 0.0;
+	real32 vtmp_n = 0.0;
+	
+	for( localIndex m = 0; m<var_np1.size( 0 ); ++m )
+	{
+	  vtmp_np1 += var_np1[m] * receiverConstants[ircv][m];
+	  vtmp_n += var_n[m] * receiverConstants[ircv][m];
+	}
+	// linear interpolation between the pressure value at time_n and time_(n+1)
+	varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
+      }
+    } );
   }
 }
 

@@ -21,7 +21,6 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
-//#include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 
 namespace geos
 {
@@ -29,81 +28,6 @@ namespace geos
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticPODKernels
 {
-struct PrecomputeStiffnessPOD
-{
-
-  /**
-   * @brief Launches the precomputation of the source and receiver terms
-   * @tparam EXEC_POLICY execution policy
-   * @tparam FE_TYPE finite element type
-   * @param[in] size the number of cells in the subRegion
-   * @param[in] numQuadraturePointsPerElem number of quadrature points per element
-   * @param[in] X coordinates of the nodes
-   * @param[in] xLocal coordinates of the nodes
-   * @param[in] stiffnessPOD stiffness POD matrix
-   * @param[in] phi POD basis
-   * @param[in] elemsToNodes map from element to nodes
-   */
-  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< real32 > const stiffnessPOD,
-          arrayView2d< real64 const > const phi,
-          arrayView1d< localIndex const > const nodesGhostRank,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes )
-  {
-    GEOS_LOG_RANK_0("Computing stiffness POD...");
-    array1d< real64 > phim;
-    array1d< real64 > phin;
-    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    arrayView1d< real64 > phimV	= phim.toView();
-    arrayView1d< real64 > phinV	= phin.toView();
-
-    for( localIndex m=0; m<phi.size( 0 ); ++m )
-    {
-      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-
-      for( localIndex n=0; n<m+1; ++n )
-      {
-        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
-        
-        forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-        {
-	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-	  
-	  real64 xLocal[ numNodesPerElem ][ 3 ];
-	  for( localIndex a = 0; a < numNodesPerElem; ++a )
-	  {
-	    for( localIndex i = 0; i < 3; ++i )
-	    {
-	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
-	    }
-	  }
-
-	  for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-	  {
-	    FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
-	    {
-	      if( nodesGhostRank[elemsToNodes[k][i]] < 0 )
-	      {
-		real32 const localIncrement = phimV[elemsToNodes[k][i]]*val*phinV[elemsToNodes[k][j]];
-		RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[m][n], localIncrement );
-		if( m!=n )
-                {
-                  RAJA::atomicAdd< ATOMIC_POLICY >( &stiffnessPOD[n][m], localIncrement );
-                }
-	      }
-	    } );
-	  }
-	} );
-      }
-    }
-  }
-
-};
 
 struct PrecomputeSourceAndReceiverKernel
 {
@@ -135,7 +59,7 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+	  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -147,131 +71,141 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
 	  localIndex const computeSourceValue,
-          arrayView2d< real64 const > const phi,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
 	  arrayView2d< real64 > const receiverConstants,
           arrayView2d< real32 > const sourceValue,
+	  int const countPhi,
+	  int const shotIndex,
           real64 const dt,
-          real32 const timeSourceFrequency,
+	  real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
 
-    array1d< real64 > phim;
-    localIndex sizePhi = phi.size( 0 );
-    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    arrayView1d< real64 > phimV = phim.toView();
-    for( localIndex m=0; m<phi.size( 0 ); ++m )
+    array1d< real32 > phim( size );
+    arrayView1d< real32 > phimV = phim.toView();
+    
+    GEOS_MARK_SCOPE ( DirectRead );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    for( localIndex m=0; m<countPhi; ++m )
     {
-      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-
+      std::string fileName = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, m+1);
+      std::ifstream wf( fileName, std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !wf,
+                     ": Could not open file "<< fileName << " for reading",
+                     InputError );
+      phimV.move( MemorySpace::host, true );
+      wf.read( (char *)&phimV[0], size*sizeof( real32 ) );
+      wf.close( );
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            real64 const center[3] = { elemCenter[k][0],
-                                       elemCenter[k][1],
-                                       elemCenter[k][2] };
-
-            // Step 1: locate the sources, and precompute the source term
-
-            /// loop over all the source that haven't been found yet
-            for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
-            {
-              if( sourceIsAccessible[isrc] == 0 )
-              {
-                real64 const coords[3] = { sourceCoordinates[isrc][0],
-                                           sourceCoordinates[isrc][1],
-                                           sourceCoordinates[isrc][2] };
-
-                bool const sourceFound =
-                  WaveSolverUtils::locateSourceElement( numFacesPerElem,
-                                                        center,
-                                                        faceNormal,
-                                                        faceCenter,
-                                                        elemsToFaces[k],
-                                                        coords );
-                if( sourceFound and elemGhostRank[k]<0)
-                {
-                  real64 coordsOnRefElem[3]{};
-
-
-                  WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                                    elemsToNodes[k],
-                                                                                    X,
-                                                                                    coordsOnRefElem );
-                  if( m == sizePhi-1 )
-                  {
-                    sourceIsAccessible[isrc] = 1;
-                  }
-                  real64 Ntest[FE_TYPE::numNodes];
-                  FE_TYPE::calcN( coordsOnRefElem, Ntest );
-                  for( localIndex a = 0; a < numNodesPerElem; ++a )
-                  {
-                    sourceNodeIds[isrc][a] = elemsToNodes[k][a];
-                    sourceConstants[isrc][m] += phimV[sourceNodeIds[isrc][a]] * Ntest[a];
-                  }
-
-		  if( computeSourceValue )
-		  {
-		    for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
-		    {
-		      real64 const time = cycle*dt;
-		      sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
-		    }
-		  }
-                }
-              }
-            } // end loop over all sources
-          } );
-      
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-        {
-	  real64 const center[3] = { elemCenter[k][0],
-				     elemCenter[k][1],
-				     elemCenter[k][2] };
-	  // Step 2: locate the receivers, and precompute the receiver term
-	  
-	  /// loop over all the receivers that haven't been found yet
-	  for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
-          {
-	    if( receiverIsLocal[ircv] == 0 )
+      {
+	real64 const center[3] = { elemCenter[k][0],
+				   elemCenter[k][1],
+				   elemCenter[k][2] };
+	
+	// Step 1: locate the sources, and precompute the source term
+	
+	/// loop over all the source that haven't been found yet
+	for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+	{
+	  if( sourceIsAccessible[isrc] == 0 )
+	  {
+	    real64 const coords[3] = { sourceCoordinates[isrc][0],
+				       sourceCoordinates[isrc][1],
+				       sourceCoordinates[isrc][2] };
+	    
+	    bool const sourceFound =
+	      WaveSolverUtils::locateSourceElement( numFacesPerElem,
+						    center,
+						    faceNormal,
+						    faceCenter,
+						    elemsToFaces[k],
+						    coords );
+	    if( sourceFound and elemGhostRank[k]<0)
 	    {
-	      real64 const coords[3] = { receiverCoordinates[ircv][0],
-					 receiverCoordinates[ircv][1],
-					 receiverCoordinates[ircv][2] };
-
 	      real64 coordsOnRefElem[3]{};
-	      bool const receiverFound =
-		WaveSolverUtils::locateSourceElement( numFacesPerElem,
-						      center,
-						      faceNormal,
-						      faceCenter,
-						      elemsToFaces[k],
-						      coords );
 	      
-	      if( receiverFound && elemGhostRank[k] < 0 )
+	      
+	      WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+										elemsToNodes[k],
+										nodeCoords,
+										coordsOnRefElem );
+	      
+	      if( m == countPhi-1 )
 	      {
-		WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-										  elemsToNodes[k],
-										  X,
-										  coordsOnRefElem );
-
-		if( m == sizePhi-1)
+		sourceIsAccessible[isrc] = 1;
+	      }
+	      real64 Ntest[FE_TYPE::numNodes];
+	      FE_TYPE::calcN( coordsOnRefElem, Ntest );
+	      for( localIndex a = 0; a < numNodesPerElem; ++a )
+	      {
+		sourceNodeIds[isrc][a] = elemsToNodes( k, a );
+		sourceConstants[isrc][m] += phimV[sourceNodeIds[isrc][a]] * Ntest[a];
+	      }
+	      
+	      if( computeSourceValue && m == countPhi-1)
+	      {
+		for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
 		{
-		  receiverIsLocal[ircv] = 1;
-		}
-		real64 Ntest[FE_TYPE::numNodes];
-		FE_TYPE::calcN( coordsOnRefElem, Ntest );
-		
-		for( localIndex a = 0; a < numNodesPerElem; ++a )
-	        {
-		  receiverNodeIds[ircv][a] = elemsToNodes[k][a];
-		  receiverConstants[ircv][m] += phimV[receiverNodeIds[ircv][a]] * Ntest[a];
+		  real64 const time = cycle*dt;
+		  sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
 		}
 	      }
-	    } // end loop over receivers
+	    }
 	  }
-	} );
+	} // end loop over all sources
+      } );
+      
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+	real64 const center[3] = { elemCenter[k][0],
+				   elemCenter[k][1],
+				   elemCenter[k][2] };
+	// Step 2: locate the receivers, and precompute the receiver term
+	
+	/// loop over all the receivers that haven't been found yet
+	for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+        {
+	  if( receiverIsLocal[ircv] == 0 )
+	  {
+	    real64 const coords[3] = { receiverCoordinates[ircv][0],
+				       receiverCoordinates[ircv][1],
+				       receiverCoordinates[ircv][2] };
+	    
+	    real64 coordsOnRefElem[3]{};
+	    bool const receiverFound =
+	      WaveSolverUtils::locateSourceElement( numFacesPerElem,
+						    center,
+						    faceNormal,
+						    faceCenter,
+						    elemsToFaces[k],
+						    coords );
+	    
+	    if( receiverFound && elemGhostRank[k] < 0 )
+	    {
+	      WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+										elemsToNodes[k],
+										nodeCoords,
+										coordsOnRefElem );
+	      
+	      if( m == countPhi-1)
+	      {
+		receiverIsLocal[ircv] = 1;
+	      }
+	      real64 Ntest[FE_TYPE::numNodes];
+	      FE_TYPE::calcN( coordsOnRefElem, Ntest );
+	      
+	      for( localIndex a = 0; a < numNodesPerElem; ++a )
+	      {
+		receiverNodeIds[ircv][a] = elemsToNodes( k, a );
+		receiverConstants[ircv][m] += phimV[receiverNodeIds[ircv][a]] * Ntest[a];
+	      }
+	    }
+	  } // end loop over receivers
+	}
+      } );
     } // end loop over phi m
   }
 };
@@ -298,60 +232,76 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
           arrayView2d< real32 > const massPOD,
-          arrayView2d< real64 const > const phi,
+	  int const countPhi,
+	  int const shotIndex,
           arrayView1d< localIndex const > const nodesGhostRank )
 
   {
     GEOS_LOG_RANK_0("Computing mass POD...");
-    array1d< real64 > phim;
-    array1d< real64 > phin;
-    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    arrayView1d< real64 > phimV = phim.toView();
-    arrayView1d< real64 > phinV	= phin.toView();
-    
-    for( localIndex m=0; m<phi.size( 0 ); ++m )
+    array1d< real32 > phim( size );
+    array1d< real32 > phin( size );
+    arrayView1d< real32 > phimV = phim.toView();
+    arrayView1d< real32 > phinV	= phin.toView();
+
+    GEOS_MARK_SCOPE ( DirectRead );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    for( localIndex m=0; m<countPhi; ++m )
     {
-      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
+      std::string fileName1 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, m+1);
+      std::ifstream wf1( fileName1, std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !wf1,
+		     ": Could not open file "<< fileName1 << " for reading",
+		     InputError );
+      phimV.move( MemorySpace::host, true );
+      wf1.read( (char *)&phimV[0], size*sizeof( real32 ) );
+      wf1.close( );
 
       for( localIndex n=0; n<m+1; ++n )
       {
-        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
-        
+	std::string fileName2 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, n+1);
+	std::ifstream wf2( fileName2, std::ios::in | std::ios::binary );
+	GEOS_THROW_IF( !wf2,
+		       ": Could not open file "<< fileName2 << " for reading",
+		       InputError );
+	phinV.move( MemorySpace::host, true );
+	wf2.read( (char *)&phinV[0], size*sizeof( real32 ) );
+	wf2.close( );
+
+	//std::cout<<m<<" , "<<n<<std::endl;
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-            {
+        {
        		    
-              constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-              constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+	  
+	  real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+	  real64 xLocal[ numNodesPerElem ][ 3 ];
+	  for( localIndex a = 0; a < numNodesPerElem; ++a )
+	  {
+	    for( localIndex i = 0; i < 3; ++i )
+            {
+	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
+	    }
+	  }
 
-              real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-              real64 xLocal[ numNodesPerElem ][ 3 ];
-              for( localIndex a = 0; a < numNodesPerElem; ++a )
-              {
-                for( localIndex i = 0; i < 3; ++i )
-                {
-                  xLocal[a][i] = X( elemsToNodes( k, a ), i );
-                }
-              }
-
-              for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-              {
-                if( nodesGhostRank[elemsToNodes[k][q]] < 0 )
-                {
-                  real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-                  real32 const localIncrement = phimV[elemsToNodes[k][q]] * val * phinV[elemsToNodes[k][q]];
-                  RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
-                  if( m!=n )
-                  {
-                    RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
-                  }
-                }
-              }
-            } ); // end loop over element
+	  for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          {
+	    if( nodesGhostRank[elemsToNodes[k][q]] < 0 )
+	    {
+	      real32 const val = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+	      real32 const localIncrement = phimV[elemsToNodes[k][q]] * val * phinV[elemsToNodes[k][q]];
+	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[m][n], localIncrement );
+	      if( m!=n )
+	      {
+		RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
+	      }
+	    }
+	  }
+	} ); // end loop over element
       }
     }
   }
@@ -370,10 +320,12 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 > const mass )
+	  arrayView1d< real32 const > const gradient,
+          arrayView1d< real32 > const mass,
+	  arrayView1d< real32 > const massGradient)
 
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -394,8 +346,11 @@ struct MassMatrixKernel
 
           for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
           {
-            real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
+	    real32 const feTerm = m_finiteElement.computeMassTerm( q, xLocal );
+            real32 localIncrement = invC2 * feTerm;
             RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+	    localIncrement = gradient[k] * feTerm;
+	    RAJA::atomicAdd< ATOMIC_POLICY >( &massGradient[elemsToNodes[k][q]], localIncrement );
           }
         } ); // end loop over element
   }
@@ -406,6 +361,7 @@ struct MassMatrixKernel
 
 };
 
+  
 template< typename FE_TYPE >
 struct DampingMatrixKernel
 {
@@ -430,73 +386,144 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
           arrayView2d< real32 > const dampingPOD,
-          arrayView2d< real64 const > const phi,
+	  int const countPhi,
+	  int const shotIndex,
           arrayView1d< localIndex const > const nodesGhostRank )
   {
     GEOS_LOG_RANK_0("Computing damping POD...");
-    array1d< real64 > phim;
-    array1d< real64 > phin;
-    phim.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    phin.resizeWithoutInitializationOrDestruction(LvArray::MemorySpace::cuda, phi.size( 1 ));
-    arrayView1d< real64 > phimV	= phim.toView();
-    arrayView1d< real64 > phinV	= phin.toView();
-    
-    for( localIndex m=0; m<phi.size( 0 ); ++m )
+    array1d< real32 > phim( size );
+    array1d< real32 > phin( size );
+    arrayView1d< real32 > phimV = phim.toView();
+    arrayView1d< real32 > phinV = phin.toView();
+
+    GEOS_MARK_SCOPE ( DirectRead );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    for( localIndex m=0; m<countPhi; ++m )
     {
-      LvArray::memcpy(phim.toSlice(), phi[m].toSliceConst());
-      
+      std::string fileName1 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, m+1);
+      std::ifstream wf1( fileName1, std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !wf1,
+                     ": Could not open file "<< fileName1 << " for reading",
+                     InputError );
+      phimV.move( MemorySpace::host, true );
+      wf1.read( (char *)&phimV[0], size*sizeof( real32 ) );
+      wf1.close( );
+
       for( localIndex n=0; n<m+1; ++n )
       {
-        LvArray::memcpy(phin.toSlice(), phi[n].toSliceConst());
+        std::string fileName2 = GEOS_FMT( "phi/shot_{:05}/finalBases/rank_{:05}/vector_{:03}.dat", shotIndex, rank, n+1);
+        std::ifstream wf2( fileName2, std::ios::in | std::ios::binary );
+        GEOS_THROW_IF( !wf2,
+                       ": Could not open file "<< fileName2 << " for reading",
+                       InputError );
+        phinV.move( MemorySpace::host, true );
+        wf2.read( (char *)&phinV[0], size*sizeof( real32 ) );
+        wf2.close( );
 
+	//std::cout<<m<<" , "<<n<<std::endl;
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
         {
 	  // face on the domain boundary and not on free surface
 	  if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
-	    {
-	      localIndex k = facesToElems( f, 0 );
-	      if( k < 0 )
+	  {
+	    localIndex k = facesToElems( f, 0 );
+	    if( k < 0 )
+            {
+	      k = facesToElems( f, 1 );
+	    }
+	      
+	    real32 const alpha = 1.0 / velocity[k];
+	    
+	    constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+	    
+	    real64 xLocal[ numNodesPerFace ][ 3 ];
+	    for( localIndex a = 0; a < numNodesPerFace; ++a )
+            {
+	      for( localIndex i = 0; i < 3; ++i )
               {
-		k = facesToElems( f, 1 );
+		xLocal[a][i] = X( facesToNodes( k, a ), i );
 	      }
-	      
-	      real32 const alpha = 1.0 / velocity[k];
-	      
-	      constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-	      
-	      real64 xLocal[ numNodesPerFace ][ 3 ];
-	      for( localIndex a = 0; a < numNodesPerFace; ++a )
+	    }
+	    
+	    for( localIndex q = 0; q < numNodesPerFace; ++q )
+            {
+	      if( nodesGhostRank[facesToNodes[f][q]] < 0 )
               {
-		for( localIndex i = 0; i < 3; ++i )
+		real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
+		real32 const localIncrement = phimV[facesToNodes[f][q]] * val * phinV[facesToNodes[f][q]];
+		RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
+		if( m!=n )
                 {
-		  xLocal[a][i] = X( facesToNodes( k, a ), i );
-		}
-	      }
-	      
-	      for( localIndex q = 0; q < numNodesPerFace; ++q )
-              {
-		if( nodesGhostRank[facesToNodes[f][q]] < 0 )
-                {
-		  real32 const val = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-		  real32 const localIncrement = phimV[facesToNodes[f][q]] * val * phinV[facesToNodes[f][q]];
-		  RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[m][n], localIncrement );
-		  if( m!=n )
-                  {
-		    RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
-		  }
+		  RAJA::atomicAdd< ATOMIC_POLICY >( &dampingPOD[n][m], localIncrement );
 		}
 	      }
 	    }
+	  }
 	} ); // end loop over element
       }
     }
+  }
+
+
+/**                                                                                                                                                                 
+   * @brief Launches the precomputation of the damping matrices
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemsToFaces map from elements to faces
+   * @param[in] facesToNodes map from face to nodes
+   * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+   * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
+   * @param[out] damping diagonal of the damping matrix
+   */
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+  void
+  launch( localIndex const size,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< localIndex const > const elemsToFaces,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< integer const > const facesDomainBoundaryIndicator,
+          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 > const damping)
+  {
+  forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+    {
+      for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
+      {
+        localIndex const f = elemsToFaces( e, i );
+        // face on the domain boundary and not on free surface                                                                                                        
+        if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+        {
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+          real64 xLocal[ numNodesPerFace ][ 3 ];
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          {
+            for( localIndex d = 0; d < 3; ++d )
+            {
+              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+            }
+          }
+          real32 const alpha = 1.0 / velocity[e];
+
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          {
+            real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes( f, q )], localIncrement );
+          }
+        }
+      }
+    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -600,7 +627,7 @@ struct PMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const p_n,
@@ -747,7 +774,7 @@ struct waveSpeedPMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           real32 const (&xMin)[3],
@@ -984,7 +1011,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
