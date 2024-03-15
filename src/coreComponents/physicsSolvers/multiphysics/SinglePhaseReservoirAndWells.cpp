@@ -35,25 +35,15 @@ using namespace dataRepository;
 using namespace constitutive;
 
 // provide a definition for catalogName()
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
 template<>
-string
-SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
+string SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
 {
   return "SinglePhaseReservoir";
 }
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<>
-string
-SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::catalogName()
+template< typename POROMECHANICS_SOLVER >
+string SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::catalogName()
 {
-  return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir";
-}
-template<>
-string
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::catalogName()
-{
-  return SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >::catalogName()+"Reservoir";
+  return POROMECHANICS_SOLVER::catalogName()+"Reservoir";
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -76,17 +66,9 @@ flowSolver() const
   return this->reservoirSolver();
 }
 
-template<>
+template< typename POROMECHANICS_SOLVER >
 SinglePhaseBase *
-SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::
-flowSolver() const
-{
-  return this->reservoirSolver()->flowSolver();
-}
-
-template<>
-SinglePhaseBase *
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::
+SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -107,27 +89,19 @@ setMGRStrategy()
   }
 }
 
-template<>
+template< typename POROMECHANICS_SOLVER >
 void
-SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::
+SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
-  {
-    GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
-  }
-  else
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM )
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
-}
-
-template<>
-void
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >::
-setMGRStrategy()
-{
-  //GEOS_ERROR( "The MGR strategy for " << catalogName() << " is not implemented" );
+  else
+  {
+    GEOS_LOG_RANK_0( "The MGR strategy for " << catalogName() << " is not implemented" );
+  }
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -377,6 +351,7 @@ assembleCouplingTerms( real64 const time_n,
 
 template class SinglePhaseReservoirAndWells< SinglePhaseBase >;
 template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >;
 
 namespace
 {

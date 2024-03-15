@@ -23,7 +23,7 @@
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
+//#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
@@ -74,24 +74,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( 
                           fields::contact::traction::key(),
                           DofManager::Connector::Elem );
 }
-
-//template< typename FLOW_SOLVER >
-//bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateConfiguration( DomainPartition & domain )
-//{
-//  return this->solidMechanicsSolver()->updateConfiguration( domain );
-//}
-//
-//template< typename FLOW_SOLVER >
-//bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::resetConfigurationToDefault( DomainPartition & domain ) const
-//{
-//  return this->solidMechanicsSolver()->resetConfigurationToDefault( domain );
-//}
-//
-//template< typename FLOW_SOLVER >
-//void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::outputConfigurationStatistics( DomainPartition const & domain ) const
-//{
-//  this->solidMechanicsSolver()->outputConfigurationStatistics( domain );
-//}
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
@@ -800,7 +782,8 @@ template class SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >;
 
 namespace
 {
-//typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanicsConformingFractures;
+//typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > >
+// SinglePhaseReservoirPoromechanicsConformingFractures;
 //REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
 typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > SinglePhasePoromechanicsConformingFractures;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )

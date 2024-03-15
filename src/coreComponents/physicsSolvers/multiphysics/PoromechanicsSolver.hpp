@@ -214,13 +214,13 @@ public:
 
   virtual bool updateConfiguration( DomainPartition & domain ) override
   {
-    if (m_performStressInitialization)
+    if( m_performStressInitialization )
     {
       return true;
     }
     else
     {
-      return Base::updateConfiguration(domain);
+      return Base::updateConfiguration( domain );
     }
   }
 

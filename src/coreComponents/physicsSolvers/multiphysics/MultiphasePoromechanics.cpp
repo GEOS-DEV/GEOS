@@ -41,7 +41,7 @@ using namespace stabilization;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanics( const string & name,
-                                                                 Group * const parent )
+                                                                                   Group * const parent )
   : Base( name, parent )
 {
   this->registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
@@ -108,7 +108,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::registerDataOnMes
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                                                            DofManager & dofManager ) const
+                                                                              DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
@@ -117,11 +117,11 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( Do
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( real64 const time,
-                                                             real64 const dt,
-                                                             DomainPartition & domain,
-                                                             DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                             arrayView1d< real64 > const & localRhs )
+                                                                               real64 const dt,
+                                                                               DomainPartition & domain,
+                                                                               DofManager const & dofManager,
+                                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                               arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -156,11 +156,11 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( r
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBasedTerms( real64 const time_n,
-                                                                        real64 const dt,
-                                                                        DomainPartition & domain,
-                                                                        DofManager const & dofManager,
-                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                        arrayView1d< real64 > const & localRhs )
+                                                                                          real64 const dt,
+                                                                                          DomainPartition & domain,
+                                                                                          DofManager const & dofManager,
+                                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
@@ -417,8 +417,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
 }
 
 template class MultiphasePoromechanics< CompositionalMultiphaseBase >;
-template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
-template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsEmbeddedFractures >;
+//template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
+//template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsEmbeddedFractures >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >;
 
 namespace
