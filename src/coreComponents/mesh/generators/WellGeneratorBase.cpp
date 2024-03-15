@@ -566,7 +566,6 @@ void WellGeneratorBase::logInternalWell() const
       TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
     }, wellTitle );
 
-
   TableTextFormatter tableFormatter( tableWellLayout );
   GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));
 }

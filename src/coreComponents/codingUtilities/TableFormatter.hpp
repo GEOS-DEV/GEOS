@@ -113,6 +113,13 @@ private:
   void parseAndStoreHeaderSections( std::vector< TableLayout::Column > & columns,
                                     size_t & largestHeaderVectorSize,
                                     std::vector< std::vector< string > > & splitHeader );
+
+  /**
+   * @brief Set the same vector size for each split header and merge it into columns
+   * @param columns The table columns to be merged
+   * @param largestHeaderVectorSize The reference value for adjusting splitHeader vector
+   * @param splitHeader The vector containing all split headers 
+   */
   void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
                                   size_t const & largestHeaderVectorSize,
                                   std::vector< std::vector< string > > & splitHeader );

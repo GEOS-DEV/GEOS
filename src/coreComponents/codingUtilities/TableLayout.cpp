@@ -27,7 +27,7 @@ TableLayout::TableLayout( std::vector< string > const & headers, string const & 
   setMargin( MarginValue::medium );
   for( size_t idx = 0; idx< headers.size(); idx++ )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::center, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::right, true}, {}, ""} );
   }
 }
 

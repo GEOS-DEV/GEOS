@@ -93,10 +93,10 @@ string_view TableCSVFormatter::dataToString( TableData tableData )
 /**
  * @brief Build a value cell given an alignment and spaces from "|"
  *
- * @param alignment
- * @param value
- * @param spaces
- * @return A cell value
+ * @param alignment The aligment of cell value
+ * @param value The cell value
+ * @param spaces The number of spaces in the cell
+ * @return A formated cell
  */
 string buildValueCell( TableLayout::Alignment const alignment, string_view value, integer const spaces )
 {
