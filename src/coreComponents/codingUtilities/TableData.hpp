@@ -37,6 +37,8 @@ public:
   template< typename ... Args >
   void addRow( Args const & ... args );
 
+  void addRow( std::vector< string > row);
+
   /**
    * @return The rows of the table
    */

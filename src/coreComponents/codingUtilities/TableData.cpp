@@ -21,19 +21,24 @@
 namespace geos
 {
 
+void TableData::addRow( std::vector< string > row )
+{
+  m_rows.push_back( row );
+}
+
 std::vector< std::vector< string > > & TableData::getTableDataRows()
 {
   return m_rows;
 }
 
- std::set< real64 > const & TableData2D::getColumns() const
- {
+std::set< real64 > const & TableData2D::getColumns() const
+{
   return columns;
- }
-  std::set< real64 > const & TableData2D::getRows() const
-  {
-    return rows;
-  }
+}
+std::set< real64 > const & TableData2D::getRows() const
+{
+  return rows;
+}
 
 TableData TableData2D::buildTableData() const
 {
@@ -51,6 +56,7 @@ TableData TableData2D::buildTableData() const
       {
         values.push_back( GEOS_FMT( "{}", dataIt->second ));
       }
+
     }
     tableDataToBeBuilt.addRow( values );
   }

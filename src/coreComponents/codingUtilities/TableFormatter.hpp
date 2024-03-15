@@ -69,17 +69,10 @@ public:
 
   /**
    * @brief Convert the table data to a CSV string.
-   * @param tableData The 2D table data.
-   * @return The CSV string representation of the table data.
-   */
-  string dataToString( TableData2D & tableData );
-
-  /**
-   * @brief Convert the table data to a CSV string.
    * @param tableData The 1D table data.
    * @return The CSV string representation of the table data.
    */
-  string dataToString( TableData & tableData );
+  string dataToString( TableData tableData );
 
   /**
    * @return The string with all column names.
@@ -100,7 +93,7 @@ public:
    * @param tableData The TableData to convert.
    * @return The table string representation of the TableData.
    */
-  string ToString( TableData & tableData );
+  string ToString( TableData tableData );
 
   /**
    * @brief Get a table string from the TableLayout.
