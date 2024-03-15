@@ -335,12 +335,13 @@ struct MassMatrixKernel
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-          real64 xLocal[ numNodesPerElem ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerElem; ++a )
+          real64 xLocal[ 8 ][ 3 ];
+          for( localIndex a = 0; a < 8; ++a )
           {
+            localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
             for( localIndex i = 0; i < 3; ++i )
             {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              xLocal[a][i] = X( nodeIndex, i );
             }
           }
 
@@ -443,12 +444,13 @@ struct DampingMatrixKernel
 	    
 	    constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 	    
-	    real64 xLocal[ numNodesPerFace ][ 3 ];
-	    for( localIndex a = 0; a < numNodesPerFace; ++a )
+	    real64 xLocal[ 4 ][ 3 ];
+	    for( localIndex a = 0; a < 4; ++a )
             {
+              localIndex const nodeIndex = facesToNodes( k, FE_TYPE::meshIndexToLinearIndex2D( a ) );
 	      for( localIndex i = 0; i < 3; ++i )
               {
-		xLocal[a][i] = X( facesToNodes( k, a ), i );
+		xLocal[a][i] = X( nodeIndex, i );
 	      }
 	    }
 	    
@@ -506,12 +508,13 @@ struct DampingMatrixKernel
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
           real32 const alpha = 1.0 / velocity[e];
