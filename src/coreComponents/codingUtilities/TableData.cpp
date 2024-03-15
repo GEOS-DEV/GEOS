@@ -26,6 +26,11 @@ void TableData::addRow( std::vector< string > row )
   m_rows.push_back( row );
 }
 
+void TableData::clear()
+{
+  m_rows.clear();
+}
+
 std::vector< std::vector< string > > & TableData::getTableDataRows()
 {
   return m_rows;
@@ -33,26 +38,26 @@ std::vector< std::vector< string > > & TableData::getTableDataRows()
 
 std::set< real64 > const & TableData2D::getColumns() const
 {
-  return columns;
+  return m_columns;
 }
 std::set< real64 > const & TableData2D::getRows() const
 {
-  return rows;
+  return m_rows;
 }
 
 TableData TableData2D::buildTableData() const
 {
   TableData tableDataToBeBuilt;
-  for( real64 const & rowValue : rows )
+  for( real64 const & rowValue : m_rows )
   {
     std::vector< string > values;
     values.push_back( GEOS_FMT( "{}", rowValue ) );
-    for( real64 const & columnValue : columns )
+    for( real64 const & columnValue : m_columns )
     {
       std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
-      auto const dataIt = data.find( id );
+      auto const dataIt = m_data.find( id );
 
-      if( dataIt != data.end())
+      if( dataIt != m_data.end())
       {
         values.push_back( GEOS_FMT( "{}", dataIt->second ));
       }

@@ -146,7 +146,8 @@ void WellGeneratorBase::generateWellGeometry( )
 
   if( getLogLevel() >= 1 )
   {
-    debugWellGeometry();
+    logInternalWell();
+    logPerforationTable();
   }
 
 }
@@ -524,28 +525,14 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
   }
 }
 
-void WellGeneratorBase::debugWellGeometry() const
+void WellGeneratorBase::logInternalWell() const
 {
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0 )
   {
     return;
   }
 
-  //1. formatting data
-  TableLayout tableWellLayout = TableLayout( {
-      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::middle},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::middle},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::middle},
-      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
-    } );
-
-  tableWellLayout.setTitle( "InternalWellGenerator " + getName());
-
   TableData tableWellData;
-
-  //2. collecting data
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     std::optional< globalIndex > nextElement;
@@ -561,24 +548,42 @@ void WellGeneratorBase::debugWellGeometry() const
       prevElement =  m_prevElemId[iwelem][0];
     }
 
-    tableWellData.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
+    tableWellData.addRow( iwelem,
+                          m_elemCenterCoords[iwelem][0],
+                          m_elemCenterCoords[iwelem][1],
+                          m_elemCenterCoords[iwelem][2],
+                          prevElement,
+                          nextElement );
   }
-  //3. dumping
+
+  string wellTitle = "InternalWellGenerator " + getName();
+  TableLayout tableWellLayout = TableLayout( {
+      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
+    }, wellTitle );
+
+
   TableTextFormatter tableFormatter( tableWellLayout );
   GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));
+}
 
-  TableLayout tableLayoutPerfo = TableLayout( {"Perforation no.", "Coordinates", "connected to" } );
-  tableLayoutPerfo.setTitle( "Peforation table" );
-
+void WellGeneratorBase::logPerforationTable() const
+{
   TableData tablePerfoData;
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
     tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
+  TableLayout tableLayoutPerfo = TableLayout( {"Perforation no.", "Coordinates", "connected to" },
+                                              "Perforation table" );
+
   TableTextFormatter tablePerfoLog( tableLayoutPerfo );
   GEOS_LOG_RANK_0( tablePerfoLog.ToString( tablePerfoData ));
-
 }
 
 }

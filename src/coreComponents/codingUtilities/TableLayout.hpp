@@ -28,7 +28,7 @@ class TableLayout
 {
 
 public:
-  enum Alignment { right, left, middle };
+  enum Alignment { right, left, center };
 
   enum MarginValue : integer
   {
@@ -95,26 +95,20 @@ public:
    * @brief Construct a new Table object, all values in the table are centered by default
    * @param columnNames The names of the columns
    */
-  TableLayout( std::vector< string > const & columnNames );
+  TableLayout( std::vector< string > const & columnNames, string const & title = "" );
 
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
    * @param columnParameter List of structures to set up each colum parameters.
    */
-  TableLayout( std::vector< ColumnParam > const & columnParameter );
+  TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title = "" );
 
   /**
    * @brief Set the minimal margin width between row content and borders.
    * @param marginType The margin value
    */
-  void setMargin( MarginValue marginType );
-
-  /**
-   * @brief Set the table name
-   * @param tableTitle The table name
-   */
-  void setTitle( string_view tableTitle );
+  void setMargin( MarginValue marginValue );
 
   /**
    * @return return the table name
@@ -139,10 +133,10 @@ public:
   std::vector< Column > m_columns;
 
 private:
-  string tableTitle;
-  integer borderMargin;
-  integer columnMargin;
-  integer marginTitle = 2;
+  string m_tableTitle;
+  integer m_borderMargin;
+  integer m_columnMargin;
+  integer m_marginTitle = 2;
 
 };
 }
