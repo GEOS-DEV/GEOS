@@ -12,23 +12,24 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "mesh/generators/LineBlock.hpp"
+#include "codingUtilities/Utilities.hpp"
 
+#include <gtest/gtest.h>
 
-namespace geos
+#include <map>
+
+using namespace geos;
+
+TEST( Utilities, MapExtraction )
 {
+  std::map< string, int > const m{
+    { "k0", 0 },
+    { "k1", 1 },
+    { "k2", 2 }
+  };
 
-LineBlock::LineBlock( string const & name, Group * const parent ):
-  LineBlockABC( name, parent )
-{}
-
-void LineBlock::setPrevElemIndices( arrayView1d< arrayView1d< globalIndex const > const > prevElemIndices )
-{
-  int size = prevElemIndices.size();
-  m_prevElemId.resize( size );
-  for( int i = 0; i < size; i++ )
-  {
-    m_prevElemId[i] = prevElemIndices[i];
-  }
-}
+  EXPECT_EQ( mapKeys( m ), std::vector< string >( { "k0", "k1", "k2" } ) );
+  EXPECT_EQ( mapKeys< std::set >( m ), std::set< string >( { "k0", "k1", "k2" } ) );
+  EXPECT_EQ( mapValues( m ), std::vector< int >( { 0, 1, 2 } ) );
+  EXPECT_EQ( mapValues< std::set >( m ), std::set< int >( { 0, 1, 2 } ) );
 }
