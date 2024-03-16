@@ -416,16 +416,16 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
                                                subRegion );
 }
 
-template class MultiphasePoromechanics< CompositionalMultiphaseBase >;
+template class MultiphasePoromechanics<>;
 //template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
 //template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsEmbeddedFractures >;
-template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >;
+template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> >;
 
 namespace
 {
-typedef MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > MultiphaseReservoirPoromechanics;
+typedef MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > MultiphaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseReservoirPoromechanics, string const &, Group * const )
-typedef MultiphasePoromechanics< CompositionalMultiphaseBase > MultiphasePoromechanics;
+typedef MultiphasePoromechanics<> MultiphasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
 }
 

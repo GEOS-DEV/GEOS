@@ -36,14 +36,14 @@ using namespace constitutive;
 
 // provide a definition for catalogName()
 template<>
-string SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
+string SinglePhaseReservoirAndWells<>::catalogName()
 {
   return "SinglePhaseReservoir";
 }
 template< typename POROMECHANICS_SOLVER >
 string SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::catalogName()
 {
-  return POROMECHANICS_SOLVER::catalogName()+"Reservoir";
+  return POROMECHANICS_SOLVER::catalogName() + "Reservoir";
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
@@ -60,7 +60,7 @@ SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
 
 template<>
 SinglePhaseBase *
-SinglePhaseReservoirAndWells< SinglePhaseBase >::
+SinglePhaseReservoirAndWells<>::
 flowSolver() const
 {
   return this->reservoirSolver();
@@ -76,16 +76,20 @@ flowSolver() const
 
 template<>
 void
-SinglePhaseReservoirAndWells< SinglePhaseBase >::
+SinglePhaseReservoirAndWells<>::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
   }
-  else
+  else if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM )
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( "The MGR strategy for " << getCatalogName() << " is not implemented" );
   }
 }
 
@@ -100,7 +104,7 @@ setMGRStrategy()
   }
   else
   {
-    GEOS_LOG_RANK_0( "The MGR strategy for " << catalogName() << " is not implemented" );
+    GEOS_LOG_RANK_0( "The MGR strategy for " << getCatalogName() << " is not implemented" );
   }
 }
 
@@ -349,17 +353,17 @@ assembleCouplingTerms( real64 const time_n,
 
 }
 
-template class SinglePhaseReservoirAndWells< SinglePhaseBase >;
-template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >;
-template class SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > >;
+template class SinglePhaseReservoirAndWells<>;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >;
+template class SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> >;
 
 namespace
 {
-typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
+typedef SinglePhaseReservoirAndWells<> SinglePhaseFlowAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsAndWells;
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > > SinglePhasePoromechanicsConformingFracturesAndWells;
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 

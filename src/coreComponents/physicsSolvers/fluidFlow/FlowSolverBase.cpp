@@ -719,7 +719,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     if( bc.getLogLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
-                                 AquiferBoundaryCondition::catalogName(), bc.getName(),
+                                 bc.getCatalogName(), bc.getName(),
                                  time + dt, dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );

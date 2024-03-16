@@ -44,7 +44,7 @@ string SinglePhasePoromechanicsConformingFractures<>::catalogName()
   return "SinglePhasePoromechanicsConformingFractures";
 }
 //template<>
-//string SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > >::catalogName()
+//string SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >::catalogName()
 //{
 //  return "SinglePhaseReservoirPoromechanicsConformingFractures";
 //}
@@ -777,15 +777,15 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
   } );
 }
 
-template class SinglePhasePoromechanicsConformingFractures< SinglePhaseBase >;
-//template class SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
+template class SinglePhasePoromechanicsConformingFractures<>;
+//template class SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >;
 
 namespace
 {
-//typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells< SinglePhaseBase > >
+//typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >
 // SinglePhaseReservoirPoromechanicsConformingFractures;
 //REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
-typedef SinglePhasePoromechanicsConformingFractures< SinglePhaseBase > SinglePhasePoromechanicsConformingFractures;
+typedef SinglePhasePoromechanicsConformingFractures<> SinglePhasePoromechanicsConformingFractures;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
 }
 

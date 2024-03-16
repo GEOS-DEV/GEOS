@@ -34,38 +34,17 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename POROMECHANICS_SOLVER > class
-  HydrofractureSolverCatalogNames {};
-
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return "Hydrofracture"; }
-};
-
-// Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return "MultiphaseHydrofracture"; }
-};
-}
-
 // provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-HydrofractureSolver< POROMECHANICS_SOLVER >::
-catalogName()
+template<>
+string HydrofractureSolver< SinglePhasePoromechanics<> >::catalogName()
 {
-  return HydrofractureSolverCatalogNames< POROMECHANICS_SOLVER >::name();
+  return "Hydrofracture";
 }
-
+template<>
+string HydrofractureSolver< MultiphasePoromechanics<> >::catalogName()
+{
+  return "Hydrofracture";
+}
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
@@ -973,9 +952,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 
 namespace
 {
-typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
-// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
+typedef HydrofractureSolver<> SinglePhaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
+// typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 
