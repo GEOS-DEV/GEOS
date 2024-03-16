@@ -1956,7 +1956,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
 		<!--upwindingScheme => Type of upwinding scheme. Valid options:
 * PPU
-* C1PPU-->
+* C1PPU
+* IHU-->
 		<xsd:attribute name="upwindingScheme" type="geos_UpwindingScheme" default="PPU" />
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
@@ -1965,7 +1966,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geos_UpwindingScheme">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU" />
+			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU|IHU" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="OutputsType">
