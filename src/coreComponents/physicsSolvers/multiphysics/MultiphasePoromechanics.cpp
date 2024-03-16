@@ -441,7 +441,7 @@ template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells
 
 namespace
 {
-typedef MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > MultiphaseReservoirPoromechanics;
+typedef MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > MultiphaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseReservoirPoromechanics, string const &, Group * const )
 typedef MultiphasePoromechanics< CompositionalMultiphaseBase > MultiphasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )

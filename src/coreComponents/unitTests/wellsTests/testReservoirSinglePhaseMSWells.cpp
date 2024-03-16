@@ -136,14 +136,14 @@ char const * PostXmlInput =
   )xml";
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,
+void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell & wellSolver = *solver.wellSolver();
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
+  SinglePhaseFVM<> & flowSolver = dynamicCast< SinglePhaseFVM<> & >( *solver.reservoirSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
@@ -345,7 +345,7 @@ protected:
 
   void SetUp() override
   {
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -423,7 +423,7 @@ protected:
   static real64 constexpr EPS = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseReservoirAndWells< SinglePhaseBase > * solver;
+  SinglePhaseReservoirAndWells<> * solver;
 };
 
 real64 constexpr SinglePhaseReservoirSolverTest::TIME;

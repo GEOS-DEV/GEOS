@@ -26,7 +26,7 @@
 namespace geos
 {
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename COMPOSITIONAL_RESERVOIR_SOLVER = CompositionalMultiphaseBase >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< COMPOSITIONAL_RESERVOIR_SOLVER,
                                                                                       CompositionalMultiphaseWell >
 {

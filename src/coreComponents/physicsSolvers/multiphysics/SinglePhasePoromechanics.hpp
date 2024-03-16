@@ -26,7 +26,7 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER = SinglePhaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
@@ -62,10 +62,10 @@ public:
   }
   template< typename _FLOW_SOLVER=FLOW_SOLVER >
   static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseReservoirAndWells< SinglePhaseBase > >::value, string >::type
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseReservoirAndWells<> >::value, string >::type
   catalogName()
   {
-    return SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName() + "Poromechanics";
+    return SinglePhaseReservoirAndWells<>::catalogName() + "Poromechanics";
   }
 
   /**
