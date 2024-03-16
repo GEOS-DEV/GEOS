@@ -20,10 +20,10 @@
 #include "dataRepository/Group.hpp"
 
 #include <vtkCell.h>
-
+#include <vtkCellData.h>
 #include <vtkExtractEdges.h>
 #include <vtkGeometryFilter.h>
-#include <vtkCellData.h>
+#include <vtkPointData.h>
 
 #include <algorithm>
 

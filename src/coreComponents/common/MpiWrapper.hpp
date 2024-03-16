@@ -20,7 +20,6 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
-#include "mesh/ElementType.hpp"
 
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>

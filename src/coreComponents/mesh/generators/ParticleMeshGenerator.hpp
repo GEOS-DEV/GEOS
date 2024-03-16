@@ -19,8 +19,9 @@
 #ifndef GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 
+#include "mesh/generators/MeshGeneratorBase.hpp"
+
 #include "codingUtilities/EnumStrings.hpp"
-#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
 namespace geos
 {

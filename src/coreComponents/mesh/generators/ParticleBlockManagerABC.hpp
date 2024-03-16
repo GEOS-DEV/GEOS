@@ -16,9 +16,7 @@
 #define GEOSX_PARTICLEBLOCKMANAGERABC_HPP
 
 #include "dataRepository/Group.hpp"
-#include "mesh/ParticleType.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/Group.hpp"
 
 namespace geos
 {

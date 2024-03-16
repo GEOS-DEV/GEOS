@@ -20,7 +20,6 @@
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/generators/CellBlockManagerABC.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
