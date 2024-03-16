@@ -49,6 +49,9 @@ constexpr localIndex node_dK = numNodesInX * numNodesInY;
 constexpr localIndex elem_dJ = numElemsInX;
 constexpr localIndex elem_dK = numElemsInX * numElemsInY;
 
+constexpr localIndex minOrder = 1;
+constexpr localIndex maxOrder = 5;
+
 class MeshGenerationTest : public ::testing::Test
 {
 protected:
@@ -510,6 +513,54 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
         }
         ++elemID;
       }
+    }
+  }
+}
+
+TEST_F( MeshGenerationTest, highOrderMapsSizes )
+{
+  ProblemManager & problemManager = getGlobalState().getProblemManager();
+  DomainPartition & domain = problemManager.getDomainPartition();
+  MeshBody & meshBody = domain.getMeshBody( 0 );
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.generateMeshes( domain );
+  for( int order = minOrder; order < maxOrder; order++ )
+  {
+    MeshLevel & meshLevel = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(), GEOS_FMT( "TestLevel{}", order ), order );
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    nodeManager.setGeometricalRelations( cellBlockManager, elemManager, false );
+    edgeManager.setGeometricalRelations( cellBlockManager, false );
+    faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager, false );
+
+    ASSERT_EQ( elemManager.numRegions(), 1 );
+
+    ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
+    ASSERT_EQ( elemRegion.numSubRegions(), 1 );
+
+    CellElementSubRegion & subRegion = elemRegion.getSubRegion< CellElementSubRegion >( 0 );
+
+    EXPECT_EQ( subRegion.numNodesPerElement(), pow( order + 1, 3 ) );
+
+    localIndex const numVertices = numNodesInX * numNodesInY * numNodesInZ;
+    localIndex const numEdges = numNodesInX * numNodesInY * numElemsInZ + numNodesInX * numElemsInY * numNodesInZ + numElemsInX * numNodesInY *numNodesInZ;
+    localIndex const numFaces = numNodesInX * numElemsInY * numElemsInZ + numElemsInX * numElemsInY * numNodesInZ + numElemsInX * numNodesInY *numElemsInZ;
+    localIndex const numElems = numElemsInX * numElemsInY * numElemsInZ;
+    localIndex const numNodes = numVertices + numEdges * (order-1) + numFaces * pow((order-1), 2 ) + numElems * pow((order-1), 3 );
+
+    EXPECT_EQ( numNodes, nodeManager.size() );
+
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & nodeMap = subRegion.nodeList();
+    EXPECT_EQ( nodeMap.size( 1 ), pow( order+1, 3 ) );
+    arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList();
+    EXPECT_EQ( edgeToNodeMap.size( 1 ), order+1 );
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+    for( localIndex f = 0; f < faceManager.size(); ++f )
+    {
+      EXPECT_EQ( faceToNodeMap.sizeOfArray( f ), pow( order+1, 2 ) );
     }
   }
 }
