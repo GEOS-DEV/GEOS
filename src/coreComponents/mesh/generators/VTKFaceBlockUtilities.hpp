@@ -15,8 +15,9 @@
 #ifndef GEOS_VTKFACEBLOCKUTILITIES_HPP
 #define GEOS_VTKFACEBLOCKUTILITIES_HPP
 
-#include "common/DataTypes.hpp"
 #include "CellBlockManager.hpp"
+
+#include "common/DataTypes.hpp"
 
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>

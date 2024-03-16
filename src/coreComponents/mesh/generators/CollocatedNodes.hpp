@@ -17,13 +17,9 @@
 
 #include "common/DataTypes.hpp"
 
-#include "common/MpiWrapper.hpp"
-
 #include <vtkDataSet.h>
 #include <vtkIdTypeArray.h>
-#include <vtkPointData.h>
 #include <vtkSmartPointer.h>
-
 
 namespace geos::vtk
 {

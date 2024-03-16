@@ -15,8 +15,6 @@
 #include "CellBlockUtilities.hpp"
 
 #include "codingUtilities/Utilities.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "common/TimingMacros.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PrismUtilities.hpp"
 

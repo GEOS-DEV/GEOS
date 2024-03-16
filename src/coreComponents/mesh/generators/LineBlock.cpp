@@ -12,14 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file DomainPartition.cpp
- */
-
-#include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlock.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
-
 
 
 namespace geos
