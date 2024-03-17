@@ -225,7 +225,7 @@ template< template< typename ... > class C, typename MAP, typename TRANSFORMER >
 auto mapTransformer( MAP const & map,
                      TRANSFORMER const & transformer )
 {
-  using v = typename std::result_of< TRANSFORMER( typename MAP::const_reference ) >::type;
+  using v = std::invoke_result_t< TRANSFORMER, typename MAP::const_reference >;
   C< v > result;
   auto inserter = std::inserter( result, result.end() );
   std::transform( map.begin(), map.end(), inserter, transformer );
