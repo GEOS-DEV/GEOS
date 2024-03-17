@@ -17,11 +17,9 @@
  */
 
 #include "ParticleMeshGenerator.hpp"
-
-#include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "ParticleBlockManager.hpp"
+
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
