@@ -21,7 +21,7 @@
 namespace geos
 {
 
-void TableData::addRow( std::vector< string > row )
+void TableData::addRow( std::vector< string > const & row )
 {
   m_rows.push_back( row );
 }
@@ -31,7 +31,7 @@ void TableData::clear()
   m_rows.clear();
 }
 
-std::vector< std::vector< string > > & TableData::getTableDataRows()
+std::vector< std::vector< string > > const & TableData::getTableDataRows() const
 {
   return m_rows;
 }

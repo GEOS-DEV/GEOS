@@ -43,19 +43,19 @@ TEST( testTable, tableClass )
                       787442, 10 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString(
+    EXPECT_EQ( tableText.toString(
                  tableData ),
                "\n+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
                "|                                                                                InternalWellGenerator well_injector1                                                                                 |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                                                     Well                                                                     |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
-               "|                                                                 element no.                                                                  |              |               |  element  |  element  |\n"
-               "|                                                                 PV weighted                                                                  |              |               |           |           |\n"
-               "|                                                                     bar                                                                      |              |               |           |           |\n"
+               "|                                                                                                                                        Well  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
+               "|                                                                                                                                 element no.  |              |               |  element  |  element  |\n"
+               "|                                                                                                                                 PV weighted  |              |               |           |           |\n"
+               "|                                                                                                                                         bar  |              |               |           |           |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                                                    value1                                                                    |  [30.21543]  |      3.0      |    54     |     0     |\n"
+               "|                                                                                                                                      value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
                "|                                                                                                                                              |              |               |           |           |\n"
-               "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
+               "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
                );
   };
@@ -74,16 +74,16 @@ TEST( testTable, tableClass )
     tableData.addRow( "value23", "[30.21543]", "30.45465142", 787442, 10 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+---------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
                "|                                                          InternalWellGenerator well_injector1                                                           |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                           Duis fringilla, ligula sed porta fringilla,                            |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
+               "|                                                     Duis fringilla, ligula sed porta fringilla,  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
                "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |              |               |  element  |  element  |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                              value1                                              |  [30.21543]  |      3.0      |    54     |     0     |\n"
+               "|                                                                                          value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
                "|                                                                                                  |              |               |           |           |\n"
-               "|                                             value23                                              |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
+               "|                                                                                         value23  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
                );
   }
@@ -104,7 +104,7 @@ TEST( testTable, tableClass )
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+-----------------------------------------------------------------------------------------+\n"
                "|                          InternalWellGenerator well_injector1                           |\n"
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
@@ -133,7 +133,7 @@ TEST( testTable, tableClass )
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+------------------------------------------------------------------------------------------------------------------+\n"
                "|    Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis     |\n"
                "+---------------------------+---------------------+----------------------------------+-----------------------------+\n"
@@ -156,7 +156,7 @@ TEST( testTable, tableClass )
     tableData.addRow( "val1" );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+-------------------------------------------------------------------------------------------------------------------+\n"
                "|     Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis      |\n"
                "+-------------------------------------------------------------------------------------------------------------------+\n"
@@ -185,7 +185,7 @@ TEST( testTable, tableClass )
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
                "|  Cras egestas  |  CoordX  |           C           |  CoordZ     |  Prev     |   Next    |\n"
                "|                |          |                       |             |  element  |  element  |\n"
@@ -214,7 +214,7 @@ TEST( testTable, tableClass )
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
     TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+-----------------------------------------------------------------+\n"
                "|              InternalWellGenerator well_injector1               |\n"
                "+------------+------+-------------------+---------+-------+-------+\n"
@@ -242,13 +242,13 @@ TEST( testTable, tableClass )
     }
 
     TableTextFormatter tableLog( tableLayout );
-    EXPECT_EQ( tableLog.ToString( tableData.buildTableData()),
+    EXPECT_EQ( tableLog.toString( tableData.buildTableData()),
                "+----------------+----------+------------------------+\n"
-               "|  FakePressure  |  Value1  |         Value2         |\n"
+               "|  FakePressure  |  Value1  |                Value2  |\n"
                "+----------------+----------+------------------------+\n"
-               "|      300       |   0.03   |          0.02          |\n"
-               "|      350       |  0.035   |  0.023333333333333334  |\n"
-               "|      400       |   0.04   |  0.02666666666666667   |\n"
+               "|           300  |    0.03  |                  0.02  |\n"
+               "|           350  |   0.035  |  0.023333333333333334  |\n"
+               "|           400  |    0.04  |   0.02666666666666667  |\n"
                "+----------------+----------+------------------------+\n\n"
                );
 
