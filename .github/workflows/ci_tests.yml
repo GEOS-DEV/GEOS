@@ -5,6 +5,7 @@ on:
     branches: 
       - develop
   pull_request:
+      types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
 # Cancels in-progress workflows for a PR when updated
@@ -15,9 +16,26 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
+  # Checks if PR title follows conventional semantics
+  semantic_pull_request:    
+    permissions:
+      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
+      statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
+      contents: read    
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if the PR name has conventional semantics
+        uses: amannn/action-semantic-pull-request@e9fabac35e210fea40ca5b14c0da95a099eff26f # v5.4.0
+        id: lint_pr_title
+        with:
+          wip: true
+          # Configure that a scope doesn't need to be provided.
+          requireScope: false
+
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
+    needs: [semantic_pull_request]
     # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
     # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
