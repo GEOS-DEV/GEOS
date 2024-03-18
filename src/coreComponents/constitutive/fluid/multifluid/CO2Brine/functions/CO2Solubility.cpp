@@ -92,7 +92,7 @@ makeSolubilityTables( string const & functionName,
     return { tables[0], tables[1] };
   }
 
-  // If the tables have already been created, then simple retrieve them
+  // If the tables have already been created, then simply retrieve them
   string const co2TableName = functionName + "_co2Dissolution_table";
   string const h2oTableName = functionName + "_waterVaporization_table";
 
