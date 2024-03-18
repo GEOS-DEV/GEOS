@@ -451,9 +451,20 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    setupSystem( domain, this->getDofManager(), this->getLocalMatrix(),
-                 this->getSystemRhs(),
-                 this->getSystemSolution() );
+    // Only build the sparsity pattern if the mesh has changed
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                                   solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+    } );
 
     implicitStepSetup( time_n, dt, domain );
 
