@@ -23,6 +23,7 @@ jobs:
       statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
       contents: read    
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - name: Check if the PR name has conventional semantics
         uses: amannn/action-semantic-pull-request@e9fabac35e210fea40ca5b14c0da95a099eff26f # v5.4.0
