@@ -1452,6 +1452,8 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 		<!--solidBulkModulus => Solid bulk modulus-->
 		<xsd:attribute name="solidBulkModulus" type="real64_array" />
+		<!--solidShearModulus => Solid shear modulus-->
+		<xsd:attribute name="solidShearModulus" type="real64_array" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>

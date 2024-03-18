@@ -131,7 +131,7 @@ public:
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                        arrayView1d< real64 > const & localRhs );
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   enum class TimeIntegrationOption
   {
