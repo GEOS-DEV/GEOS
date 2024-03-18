@@ -52,6 +52,11 @@ void TableLayout::setMargin( MarginValue marginValue )
   m_columnMargin = integer( marginValue ) * 2 + 1;
 }
 
+std::vector< TableLayout::Column > const & TableLayout::getColumns() const
+{
+  return m_columns;
+}
+
 string_view TableLayout::getTitle() const
 {
   return m_tableTitle;

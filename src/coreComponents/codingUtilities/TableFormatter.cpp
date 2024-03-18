@@ -51,10 +51,10 @@ string_view TableCSVFormatter::headerToString() const
   std::stringstream oss;
   constexpr string_view separator = ",";
 
-  for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.m_columns.size(); ++idxColumn )
+  for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.getColumns().size(); ++idxColumn )
   {
-    oss << m_tableLayout.m_columns[idxColumn].parameter.columnName;
-    if( idxColumn < m_tableLayout.m_columns.size() - 1 )
+    oss << m_tableLayout.getColumns()[idxColumn].parameter.columnName;
+    if( idxColumn < m_tableLayout.getColumns().size() - 1 )
     {
       oss << separator;
     }
@@ -118,7 +118,7 @@ string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
   string sectionSeparator;
-  std::vector< TableLayout::Column > columns = m_tableLayout.m_columns;
+  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
   integer const nbRows = tableData.getTableDataRows().size();
 
   fillTableColumnsFromRows( columns, tableData.getTableDataRows() );
@@ -126,6 +126,17 @@ string TableTextFormatter::toString( TableData const & tableData ) const
   layoutToString( tableOutput, columns, nbRows, sectionSeparator );
   buildSectionRows( columns, sectionSeparator, tableOutput, nbRows, TableLayout::Section::values );
   tableOutput << '\n';
+
+  return tableOutput.str();
+}
+
+string TableTextFormatter::layoutToString() const
+{
+  std::ostringstream tableOutput;
+  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
+  string sectionSeparator;
+
+  layoutToString( tableOutput, columns, 0, sectionSeparator );
 
   return tableOutput.str();
 }

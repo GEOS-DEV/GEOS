@@ -99,15 +99,24 @@ public:
   string toString( TableData const & tableData ) const;
 
   /**
-   * @brief Get a table string from the TableLayout.
-   * @return The table string representation of the TableLayout.
+   *@brief Converts a TableLayout into a formatted string representation.
+   * @return string
+   */
+  string layoutToString() const;
+
+private:
+
+  /**
+   * @brief Converts a TableLayout into a formatted representation.
+   * @param tableOutput The output stream
+   * @param columns The vectors of table columns
+   * @param nbRows Number of rows in the table
+   * @param sectionSeparator An empty string for building the section separator
    */
   void layoutToString( std::ostringstream & tableOutput,
                        std::vector< TableLayout::Column > & columns,
                        integer const nbRows,
                        string & sectionSeparator ) const;
-
-private:
 
   /**
    * @brief Split all header names by detecting the newline \\n character.

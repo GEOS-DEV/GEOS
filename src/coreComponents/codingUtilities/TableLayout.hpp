@@ -111,28 +111,34 @@ public:
   void setMargin( MarginValue marginValue );
 
   /**
-   * @return return the table name
+   * @brief Get the columns vector
+   *
+   * @return std::vector< Column > const&
+   */
+  std::vector< Column > const & getColumns() const;
+
+  /**
+   * @return Get the table name
    */
   string_view getTitle() const;
 
   /**
-   * @return return the border margin
+   * @return Get the border margin
    */
   integer const & getBorderMargin() const;
 
   /**
-   * @return return the column margin
+   * @return Get the column margin
    */
   integer const & getColumnMargin() const;
 
   /**
-   * @return return the margin title
+   * @return Get the margin title
    */
   integer const & getMarginTitle() const;
 
-  std::vector< Column > m_columns;
-
 private:
+  std::vector< Column > m_columns;
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;
