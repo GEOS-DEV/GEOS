@@ -1,8 +1,10 @@
 # Specify list of tests
-set( gtest_geosx_tests
-     testSinglePhaseBaseKernels.cpp
-     testThermalCompMultiphaseFlow.cpp
-     testThermalSinglePhaseFlow.cpp )
+
+set(gtest_geosx_tests
+        testSinglePhaseBaseKernels.cpp
+        testThermalCompMultiphaseFlow.cpp
+        testThermalSinglePhaseFlow.cpp
+        )
 
 set( dependencyList ${parallelDeps} gtest )
 
