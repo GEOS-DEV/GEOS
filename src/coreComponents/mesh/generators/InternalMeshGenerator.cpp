@@ -20,7 +20,6 @@
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 
 #include <cmath>
 

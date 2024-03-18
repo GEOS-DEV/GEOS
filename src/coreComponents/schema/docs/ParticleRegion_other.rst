@@ -1,16 +1,16 @@
 
 
-======================= ====================================================================================== ========================================================= 
-Name                    Type                                                                                   Description                                               
-======================= ====================================================================================== ========================================================= 
-domainBoundaryIndicator integer_array                                                                          (no description available)                                
-ghostRank               integer_array                                                                          (no description available)                                
-globalToLocalMap        geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_ (no description available)                                
-isExternal              integer_array                                                                          (no description available)                                
-localToGlobalMap        globalIndex_array                                                                      Array that contains a map from localIndex to globalIndex. 
-neighborData            node                                                                                   :ref:`DATASTRUCTURE_neighborData`                         
-particleSubRegions      node                                                                                   :ref:`DATASTRUCTURE_particleSubRegions`                   
-sets                    node                                                                                   :ref:`DATASTRUCTURE_sets`                                 
-======================= ====================================================================================== ========================================================= 
+======================= ================================================================= ========================================================= 
+Name                    Type                                                              Description                                               
+======================= ================================================================= ========================================================= 
+domainBoundaryIndicator integer_array                                                     (no description available)                                
+ghostRank               integer_array                                                     (no description available)                                
+globalToLocalMap        geos_mapBase<long long, int, std_integral_constant<bool, false> > (no description available)                                
+isExternal              integer_array                                                     (no description available)                                
+localToGlobalMap        globalIndex_array                                                 Array that contains a map from localIndex to globalIndex. 
+neighborData            node                                                              :ref:`DATASTRUCTURE_neighborData`                         
+particleSubRegions      node                                                              :ref:`DATASTRUCTURE_particleSubRegions`                   
+sets                    node                                                              :ref:`DATASTRUCTURE_sets`                                 
+======================= ================================================================= ========================================================= 
 
 
