@@ -142,6 +142,7 @@ Thus, the generated mesh will be :
    :align: center
    :width: 500
 
+Note that ``CellBlocks`` are ordered following the natural IJK logic, with indices increasing first in I (x-direction), then in J (y-direction) and last in K (z-direction).
 
 .. _ExternalMeshUsage:
 
