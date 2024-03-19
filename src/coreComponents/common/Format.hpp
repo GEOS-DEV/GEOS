@@ -102,6 +102,20 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
   return true;
 }
 #endif
+
+/**
+ * @brief evaluates at compile time if a fmt::formatter exists for a given type
+ */
+#if __cplusplus < 202002L
+template< class T >
+static constexpr bool has_formatter = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+#else
+template< typename T >
+concept has_formatter = requires ( T& v, std::format_context ctx )
+{
+  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
+};
+#endif
 // End of the workaround for fmt compilation issues
 
 #endif //GEOS_COMMON_FORMAT_HPP_

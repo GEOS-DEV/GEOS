@@ -20,20 +20,10 @@
 #define GEOS_COMMON_TableData_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/Format.hpp"
 
 namespace geos
 {
-
-#if __cplusplus < 202002L
-template< class T >
-static constexpr bool has_formatter = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
-#else
-template< typename T >
-concept has_formatter = requires ( T& v, std::format_context ctx )
-{
-  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
-};
-#endif
 
 // Class for managing table data
 class TableData

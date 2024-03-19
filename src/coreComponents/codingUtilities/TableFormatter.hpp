@@ -99,7 +99,7 @@ public:
   string toString( TableData const & tableData ) const;
 
   /**
-   *@brief Converts a TableLayout into a formatted string representation.
+   * @brief Converts a TableLayout into a formatted string representation.
    * @return string
    */
   string layoutToString() const;
