@@ -162,6 +162,19 @@ void GEOS_dgetrs( char const * TRANS,
                   int const * LDB,
                   int * INFO );
 
+#define GEOS_dgels FORTRAN_MANGLE( dgels )
+void GEOS_dgels( char const * TRANS,
+                 int const * M,
+                 int const * N,
+                 int const * NRHS,
+                 double * A,
+                 int const * LDA,
+                 double * B,
+                 int const * LDB,
+                 double * WORK,
+                 int const * LWORK,
+                 int * INFO );
+
 }
 #endif
 

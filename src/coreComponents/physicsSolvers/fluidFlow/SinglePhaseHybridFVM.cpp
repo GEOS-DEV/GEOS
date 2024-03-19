@@ -627,5 +627,22 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   } );
 }
 
+void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      PressureGradientKernel::launch< parallelHostPolicy >( subRegion,
+                                                            faceManager );
+    } );
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )
 } /* namespace geos */
