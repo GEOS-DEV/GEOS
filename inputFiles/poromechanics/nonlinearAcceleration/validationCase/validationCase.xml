@@ -16,12 +16,6 @@
         lineSearchAction="None"
         subcycling="1"
         nonlinearAccelerationType="Aitken"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="mgr"
-        logLevel="1"
-        krylovTol="1.0e-6"
-        krylovMaxIter="100"/>
     </SinglePhasePoromechanics>
     <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
@@ -36,10 +30,8 @@
         newtonTol="1.0e-7"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        krylovTol="1.0e-6"
-        logLevel="1"/>
+        solverType="direct"
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>      
     <!-- SPHINX_MECHANICALSOLVER_END -->
 
@@ -54,10 +46,8 @@
         newtonTol="1.0e-7"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        krylovTol="1.0e-6"
-        logLevel="1"/>
+        solverType="direct"
+        directParallel="0"/>
     </SinglePhaseFVM>
     <!-- SPHINX_SINGLEPHASEFVM_END -->
 
@@ -191,7 +181,7 @@
 
   <Events
       minTime="0"
-      maxTime="8640000">
+      maxTime="3456000">
    
     <PeriodicEvent
       name="outputs"
@@ -220,7 +210,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="4320000"
+      timeFrequency="1728000"
       target="/Outputs/restartOutput"/>
 
   </Events>
