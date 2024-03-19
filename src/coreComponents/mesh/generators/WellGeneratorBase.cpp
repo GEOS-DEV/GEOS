@@ -144,7 +144,7 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     logInternalWell();
     logPerforationTable();
@@ -527,11 +527,6 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
 
 void WellGeneratorBase::logInternalWell() const
 {
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0 )
-  {
-    return;
-  }
-
   TableData tableWellData;
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
@@ -556,7 +551,7 @@ void WellGeneratorBase::logInternalWell() const
                           nextElement );
   }
 
-  string wellTitle = "InternalWellGenerator " + getName();
+  string wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
   TableLayout tableWellLayout = TableLayout( {
       TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
@@ -567,7 +562,7 @@ void WellGeneratorBase::logInternalWell() const
     }, wellTitle );
 
   TableTextFormatter tableFormatter( tableWellLayout );
-  GEOS_LOG_RANK_0( tableFormatter.ToString( tableWellData ));
+  GEOS_LOG_RANK_0( tableFormatter.toString( tableWellData ));
 }
 
 void WellGeneratorBase::logPerforationTable() const
@@ -582,7 +577,6 @@ void WellGeneratorBase::logPerforationTable() const
                                               "Perforation table" );
 
   TableTextFormatter tablePerfoLog( tableLayoutPerfo );
-  GEOS_LOG_RANK_0( tablePerfoLog.ToString( tablePerfoData ));
 }
 
 }
