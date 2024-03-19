@@ -11,9 +11,5 @@ add_subdirectory( finiteVolumeTests )
 add_subdirectory( fileIOTests )
 add_subdirectory( fluidFlowTests )
 add_subdirectory( wellsTests )
-<<<<<<< HEAD
 add_subdirectory( wavePropagationTests ) 
 add_subdirectory( inducedSeismicityTests ) 
-=======
-add_subdirectory( wavePropagationTests )
->>>>>>> origin/develop
