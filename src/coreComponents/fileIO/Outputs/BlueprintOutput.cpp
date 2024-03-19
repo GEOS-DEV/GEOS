@@ -118,6 +118,7 @@ BlueprintOutput::BlueprintOutput( string const & name,
   registerWrapper( "plotLevel", &m_plotLevel ).
     setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setRTTypeName( rtTypes::CustomTypes::plotLevel ).
     setDescription( "Determines which fields to write." );
 
   registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData ).
@@ -299,8 +300,8 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
       string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
-      averagedConstitutiveData.registerWrapper( wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
-        .addBlueprintField( fields, fieldName, topology );
+      averagedConstitutiveData.registerWrapper( wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) ).
+        addBlueprintField( fields, fieldName, topology );
     }
   } );
 }

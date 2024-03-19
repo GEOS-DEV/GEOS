@@ -16,7 +16,6 @@
 #define GEOSX_WELLBLOCK_HPP
 
 #include "mesh/generators/LineBlockABC.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
 
 
 namespace geos
@@ -157,7 +156,7 @@ public:
 
   /**
    * @brief Set the well skin factor at the perforations.
-   * @param perfSkin list of well skin factor at all the perforations on the well
+   * @param perfSkinFactor list of well skin factor at all the perforations on the well
    */
   void setPerfSkinFactor( arrayView1d< real64 const > perfSkinFactor ) { m_perfSkinFactor = perfSkinFactor; }
 

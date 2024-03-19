@@ -39,7 +39,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       rockToughness="1e4"
-      mpiCommOrder="1"/>
+      mpiCommOrder="1"
+      isPoroelastic="1"/>
   </Solvers>
 
   <NumericalMethods>
@@ -64,7 +65,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>

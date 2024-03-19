@@ -35,10 +35,12 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of primary solution field" ).setSizedFromParent( 0 );
 
   registerWrapper( viewKeyStruct::coeffNameString(), &m_coeffName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of coefficient field" );
 
@@ -57,10 +59,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setDescription( "Type of upwinding scheme. "
                     "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
 
-//  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
-//    setApplyDefaultValue( 1e-10 ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Tolerance for C1-PPU smoothing" );
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

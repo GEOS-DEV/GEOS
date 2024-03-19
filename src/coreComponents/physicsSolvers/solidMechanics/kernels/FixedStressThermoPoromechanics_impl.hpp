@@ -46,6 +46,7 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&inputGravityVector)[3] ):
   Base( nodeManager,
         edgeManager,
@@ -57,17 +58,18 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
         inputDofNumber,
         rankOffset,
         inputMatrix,
-        inputRhs ),
+        inputRhs,
+        inputDt ),
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_bulkDensity( elementSubRegion.template getField< fields::poromechanics::bulkDensity >() ),
-  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
+  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
-  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
+  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() ),
+  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -126,7 +128,6 @@ quadraturePointKernel( localIndex const k,
 
   real64 strainInc[6] = {0};
   real64 totalStress[6] = {0};
-  real64 timeIncrement = 0.0;
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
@@ -135,13 +136,12 @@ quadraturePointKernel( localIndex const k,
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)
-  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k,
-                                                                  q,
-                                                                  m_pressure_n[k],
+  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k, q,
+                                                                  m_dt,
                                                                   m_pressure[k],
-                                                                  timeIncrement,
-                                                                  m_temperature_n[k],
+                                                                  m_pressure_n[k],
                                                                   m_temperature[k],
+                                                                  m_temperature_n[k],
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );

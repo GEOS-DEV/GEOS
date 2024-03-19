@@ -79,7 +79,7 @@ DECLARE_FIELD( wellSkinFactor,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "For each perforation, well skin factor" ); 
+               "For each perforation, well skin factor" );
 
 DECLARE_FIELD( location,
                "location",

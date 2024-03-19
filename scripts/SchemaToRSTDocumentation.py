@@ -191,6 +191,10 @@ def buildTableValues(type_map, link_string='XML', include_defaults=True):
                 if k in type_map[att_name]:
                     table_row[jj] = type_map[att_name][k]
 
+                    # Fix type strings
+                    if ('Type' in k):
+                        table_row[jj] = table_row[jj].replace('_lt_', '<').replace('_gt_', '>').replace('_cm_', ',').replace('-', ' ')
+
                     # Format any registration entries as links
                     if ('Registered' in k):
                         table_row[jj] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in table_row[jj]])
@@ -258,13 +262,14 @@ touched_files = []
 # Build documentation tables
 with open('%s.rst' % (complete_output), 'w') as output_handle:
     # Write the file header
-    output_handle.write('======================\n')
+    output_handle.write('######################\n')
     output_handle.write('Datastructure Index\n')
-    output_handle.write('======================\n\n')
+    output_handle.write('######################\n\n')
 
     # Parse the input schema definitions
+    output_handle.write('**************************\n\n')
     output_handle.write('Input Schema Definitions\n')
-    output_handle.write('========================\n\n')
+    output_handle.write('**************************\n\n')
 
     output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
 

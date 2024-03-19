@@ -12,7 +12,7 @@
 #define GEOSX_USE_FPE
 
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
-#define GEOSX_USE_ARRAY_BOUNDS_CHECK
+/* #undef GEOSX_USE_ARRAY_BOUNDS_CHECK */
 
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #define GEOSX_USE_CALIPER
@@ -41,23 +41,26 @@
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
+/// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
+/* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
-#define GEOSX_USE_PYGEOSX
+/* #undef GEOSX_USE_PYGEOSX */
 
 /// Enables use of RAJA (CMake option ENABLE_RAJA)
 #define GEOSX_USE_RAJA
 
 /// Enables use of sys/time.h based timers (CMake option ENABLE_TIMERS)
-#define GEOSX_USE_TIMERS
+/* #undef GEOSX_USE_TIMERS */
 
 /// Enables use of additional debugging interface for TotalView (Cmake option ENABLE_TOTALVIEW_OUTPUT)
-#define GEOSX_USE_TOTALVIEW_OUTPUT
+/* #undef GEOSX_USE_TOTALVIEW_OUTPUT */
 
 /// Enables use of Intel MKL (CMake option ENABLE_MKL)
-#define GEOSX_USE_MKL
+/* #undef GEOSX_USE_MKL */
 
 /// Enables use of Trilinos library (CMake option ENABLE_TRILINOS)
 #define GEOSX_USE_TRILINOS
@@ -65,6 +68,7 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOSX_USE_HYPRE
 
+<<<<<<< HEAD
 #if defined( GEOSX_USE_HYPRE )
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
@@ -74,6 +78,8 @@
   #define HYPRE_VERSION_PATCH 0
 #endif
 
+=======
+>>>>>>> origin/develop
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
@@ -102,19 +108,19 @@
 /* #undef GEOSX_LA_INTERFACE_PETSC */
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
-#define FORTRAN_MANGLE_NO_UNDERSCORE
+/* #undef FORTRAN_MANGLE_NO_UNDERSCORE */
 
 /// USE OF SEPARATION COEFFICIENT IN FRACTURE FLOW
-#define GEOSX_USE_SEPARATION_COEFFICIENT
+/* #undef GEOSX_USE_SEPARATION_COEFFICIENT */
 
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
 /// The type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
+#define GEOSX_LOCALINDEX_TYPE int
 
 /// An integer flag representing the type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE_FLAG 3
+#define GEOSX_LOCALINDEX_TYPE_FLAG 0
 
 /// The type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE long long int
@@ -147,10 +153,10 @@
 #define caliper_VERSION 2.8.0
 
 /// Version information for Metis
-#define METIS_VERSION 5.1.0
+#define metis_VERSION 5.1.0
 
 /// Version information for ParMetis
-#define PARAMETIS_VERSION 4.0.3
+#define parmetis_VERSION 4.0.0
 
 /// Version information for scotch
 #define scotch_VERSION 6.0.9
@@ -161,6 +167,15 @@
 /// Version information for suitesparse
 #define suitesparse_VERSION 5.7.9
 
+/// Version information for hypre
+#define hypre_VERSION 2.29.0
+
+/// Version information for trilinos
+#define trilinos_VERSION 13.4.1
+
+/// Version information for petsc
+#define petsc_VERSION 3.13.0
+
 /// Version information for VTK
 #define VTK_VERSION 9.2.6
 
@@ -168,7 +183,11 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
+<<<<<<< HEAD
 #define Python3_VERSION 3.10.12
+=======
+#define Python3_VERSION 3.10.6
+>>>>>>> origin/develop
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
