@@ -1690,7 +1690,7 @@ PresTempCompFracInitializationKernel::
     {
       foundNegativeTemp.max( 1 );
     }
-    if( !isZero( sumCompFracForCheck - 1.0 ) )
+    if( !isZero( sumCompFracForCheck - 1.0, constitutive::MultiFluidConstants::minForSpeciesPresence ) )
     {
       foundInconsistentCompFrac.max( 1 );
     }
