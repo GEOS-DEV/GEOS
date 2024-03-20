@@ -461,7 +461,7 @@ protected:
                              solver->getDofManager(),
                              solver->getLocalMatrix(),
                              solver->getSystemRhs(),
-                                   solver->getSystemSolution() );
+                             solver->getSystemSolution() );
         solver->setSystemSetupTimestamp( meshModificationTimestamp );
       }
     } );
