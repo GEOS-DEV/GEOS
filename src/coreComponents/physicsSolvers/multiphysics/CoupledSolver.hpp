@@ -410,7 +410,7 @@ public:
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      result &=solver->resetConfigurationToDefault( domain );
+      result &= solver->resetConfigurationToDefault( domain );
     } );
     return result;
   }
