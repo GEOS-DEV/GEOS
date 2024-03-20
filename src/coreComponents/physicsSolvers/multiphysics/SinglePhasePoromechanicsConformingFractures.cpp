@@ -191,7 +191,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributi
   /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
 
   Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  this->solidMechanicsSolver()->getMaxForce() = 0.0;
+  //this->solidMechanicsSolver()->getMaxForce() = 0.0;
   /// TODO: this is to be consistent with old version but it should be changed. We likely want to scale the residual for contact the same
   /// way we scale the mechanics one.
 
