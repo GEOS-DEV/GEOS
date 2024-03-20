@@ -50,6 +50,7 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
 
 void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
 {
+#if defined(GEOS_USE_PARTICLE_METHOD)
   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
   if( meshBody.hasParticles() )
   {
@@ -61,6 +62,7 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
     fillParticleBlockManager( particleBlockManager, particleManager, partition );
   }
   else
+#endif
   {
     CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 

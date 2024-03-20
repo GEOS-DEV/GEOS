@@ -38,8 +38,9 @@ class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
 class CellBlockManagerABC;
+#if defined(GEOS_USE_PARTICLE_METHOD)
 class ParticleBlockManagerABC;
-
+#endif
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOS
@@ -345,9 +346,11 @@ private:
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   void generateMeshLevel( MeshLevel & meshLevel,
                           ParticleBlockManagerABC & particleBlockManager,
                           arrayView1d< string const > const & );
+#endif
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

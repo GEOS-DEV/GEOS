@@ -106,11 +106,8 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsMPM.hpp
-     solidMechanics/MPMSolverFields.hpp
      solidMechanics/kernels/ExplicitFiniteStrain.hpp
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
-     solidMechanics/kernels/ExplicitMPM.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
      solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
@@ -195,7 +192,6 @@ set( physicsSolvers_sources
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
-     solidMechanics/SolidMechanicsMPM.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
      solidMechanics/SolidMechanicsStatistics.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
@@ -210,8 +206,17 @@ set( physicsSolvers_sources
      wavePropagation/AcousticVTIWaveEquationSEM.cpp
      wavePropagation/AcousticElasticWaveEquationSEM.cpp )
 
-  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
-  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake )
+
+if( ENABLE_PARTICLE_METHOD )
+  set( physicsSolvers_headers ${physicsSolvers_headers}
+       solidMechanics/SolidMechanicsMPM.hpp
+       solidMechanics/MPMSolverFields.hpp
+       solidMechanics/kernels/ExplicitMPM.hpp )
+  set( physicsSolvers_sources ${physicsSolvers_sources}
+       solidMechanics/SolidMechanicsMPM.cpp )
+endif()
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )

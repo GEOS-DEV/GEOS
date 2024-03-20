@@ -4,7 +4,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CUDA
                           CUDA_NVTOOLSEXT
                           HIP
-			  FMT_CONST_FORMATTER_WORKAROUND
+                          FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
@@ -13,6 +13,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           MKL
                           MPI
                           PARMETIS
+                          PARTICLE_METHOD
                           PETSC
                           PVTPackage
                           PYGEOSX
@@ -32,7 +33,7 @@ foreach( DEP in ${PREPROCESSOR_DEFINES} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
-	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
+        message( STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}" )
     endif()
 endforeach()
 
@@ -44,7 +45,7 @@ foreach( DEP in ${STRICT_PPD} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
-	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
+        message( STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}" )
     endif()
 endforeach( )
 

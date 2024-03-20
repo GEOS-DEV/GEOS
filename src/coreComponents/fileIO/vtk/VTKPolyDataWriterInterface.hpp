@@ -31,11 +31,13 @@ namespace geos
 
 class DomainPartition;
 class ElementRegionBase;
-class ParticleRegionBase;
 class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
+#if defined(GEOS_USE_PARTICLE_METHOD)
+class ParticleRegionBase;
 class ParticleManager;
+#endif
 
 namespace vtk
 {
@@ -51,7 +53,9 @@ enum struct VTKRegionTypes
   CELL,
   WELL,
   SURFACE,
+#if defined(GEOS_USE_PARTICLE_METHOD)
   PARTICLE,
+#endif
   ALL
 };
 
@@ -61,13 +65,20 @@ ENUM_STRINGS( VTKOutputMode,
               "ascii" );
 
 /// Declare strings associated with region type enumeration values.
+#if defined(GEOS_USE_PARTICLE_METHOD)
 ENUM_STRINGS( VTKRegionTypes,
               "cell",
               "well",
               "surface",
               "particle",
               "all" );
-
+#else
+ENUM_STRINGS( VTKRegionTypes,
+              "cell",
+              "well",
+              "surface",
+              "all" );
+#endif
 /**
  * @brief Encapsulate output methods for vtk
  */
@@ -223,9 +234,11 @@ private:
                                 NodeManager const & nodeManager,
                                 string const & path ) const;
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   void writeParticleRegions( real64 const time,
                              ParticleManager const & particleManager,
                              string const & path ) const;
+#endif
 
   /**
    * @brief Writes the files containing the well representation
@@ -284,10 +297,10 @@ private:
    */
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData * cellData ) const;
-
+#if defined(GEOS_USE_PARTICLE_METHOD)
   void writeParticleFields( ParticleRegionBase const & region,
                             vtkCellData * cellData ) const;
-
+#endif
   /**
    * @brief Writes an unstructured grid
    * @details The unstructured grid is the last element in the hierarchy of the output,
