@@ -275,6 +275,32 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   } );
 }
 
+void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 > const energy = subRegion.getField< fields::flow::energy >();
+
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+  arrayView2d< real64 const > const rockInternalEnergy = porousSolid.getInternalEnergy();
+
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  arrayView2d< real64 const > const density = fluid.density();
+  arrayView2d< real64 const > const fluidInternalEnergy = fluid.internalEnergy();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    energy[ei] = ( volume[ei] + deltaVolume[ei] ) *
+                 (porosity[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] + ( 1.0 - porosity[ei][0] ) * rockInternalEnergy[ei][0]);
+  } );
+}
+
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
@@ -441,10 +467,10 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // Save initial pressure field
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
+      // Save initial pressure field
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
       arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
@@ -453,6 +479,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
 
       updateMass( subRegion );
+      updateEnergy( subRegion );
     } );
   } );
 
@@ -1243,6 +1270,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateEnergy( subRegion );
       }
     } );
   } );

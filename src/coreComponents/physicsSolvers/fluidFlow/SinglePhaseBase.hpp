@@ -293,6 +293,13 @@ public:
   updateMass( ElementSubRegionBase & dataGroup ) const;
 
   /**
+   * @brief Function to update energy
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateEnergy( ElementSubRegionBase & dataGroup ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */

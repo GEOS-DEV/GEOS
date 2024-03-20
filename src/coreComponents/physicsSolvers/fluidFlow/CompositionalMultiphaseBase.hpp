@@ -144,6 +144,12 @@ public:
   void updateCompAmount( ElementSubRegionBase & subRegion ) const;
 
   /**
+   * @brief Update energy
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
