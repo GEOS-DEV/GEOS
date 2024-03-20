@@ -56,7 +56,7 @@ public:
                        arrayView1d< real64 > const & averageMeanTotalStressIncrement_k,
                        arrayView1d< real64 > const & bulkModulus,
                        arrayView1d< real64 > const & shearModulus,
-                       real64 const & grainBulkModulus,
+                       arrayView1d< real64 > const & grainBulkModulus,
                        integer const useUniaxialFixedStress ): PorosityBaseUpdates( newPorosity,
                                                                                     porosity_n,
                                                                                     dPorosity_dPressure,
@@ -77,10 +77,10 @@ public:
   real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOS_HOST_DEVICE
-  real64 getGrainBulkModulus() const { return m_grainBulkModulus; }
+  real64 getGrainBulkModulus( localIndex const k ) const { return m_grainBulkModulus[k]; }
 
   GEOS_HOST_DEVICE
-  real64 dGrainDensity_dPressure() const { return 1.0 / m_grainBulkModulus; }
+  real64 dGrainDensity_dPressure( localIndex const k ) const { return 1.0 / m_grainBulkModulus[k]; }
 
   GEOS_HOST_DEVICE
   void updateFromPressureTemperatureAndStrain( localIndex const k,
@@ -92,7 +92,7 @@ public:
                                                real64 & dPorosity_dPressure,
                                                real64 & dPorosity_dTemperature ) const
   {
-    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
+    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus[k];
     real64 const porosityThermalExpansion = 3 * m_thermalExpansionCoefficient[k] * ( m_biotCoefficient[k] - m_referencePorosity[k] );
 
     real64 const porosity = m_porosity_n[k][q]
@@ -123,9 +123,10 @@ public:
                                    real64 const & thermalExpansionCoefficient,
                                    real64 const & averageMeanTotalStressIncrement_k,
                                    real64 const & bulkModulus,
-                                   real64 const & fixedStressModulus ) const
+                                   real64 const & fixedStressModulus,
+                                   real64 const & grainBulkModulus ) const
   {
-    real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
+    real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
     real64 const pressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
     real64 const temperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
@@ -175,16 +176,16 @@ public:
                                 m_thermalExpansionCoefficient[k],
                                 m_averageMeanTotalStressIncrement_k[k],
                                 m_bulkModulus[k],
-                                fixedStressModulus );
+                                fixedStressModulus,
+                                m_grainBulkModulus[k] );
   }
 
   GEOS_HOST_DEVICE
-  void updateBiotCoefficientAndAssignModuli( localIndex const k,
-                                             real64 const bulkModulus, real64 const shearModulus ) const
+  void assignModuli( localIndex const k,
+                     real64 const bulkModulus, real64 const shearModulus ) const
   {
     m_bulkModulus[k] = bulkModulus;
     m_shearModulus[k] = shearModulus;
-    m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;
   }
 
   GEOS_HOST_DEVICE
@@ -198,7 +199,7 @@ public:
 protected:
 
   /// Grain bulk modulus (read from XML)
-  real64 const m_grainBulkModulus;
+  arrayView1d< real64 > const m_grainBulkModulus;
 
   /// View on the thermal expansion coefficients (read from XML)
   arrayView1d< real64 const > const m_thermalExpansionCoefficient;
@@ -236,7 +237,7 @@ public:
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
-    static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
+    static constexpr char const *defaultGrainBulkModulusString() { return "defaultGrainBulkModulus"; }
 
     static constexpr char const *meanTotalStressIncrementString() { return "meanTotalStressIncrement"; }
 
@@ -249,6 +250,8 @@ public:
     static constexpr char const *defaultThermalExpansionCoefficientString() { return "defaultPorosityTEC"; }
 
     static constexpr char const *useUniaxialFixedStressString() { return "useUniaxialFixedStress"; }
+
+    static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
@@ -313,6 +316,9 @@ protected:
   /// Thermal expansion coefficients (read from XML)
   array1d< real64 > m_thermalExpansionCoefficient;
 
+  /// Default value of the Biot coefficient (read from XML)
+  real64 m_defaultBiotCoefficient;
+
   /// Biot coefficients (update in the update class, not read in input)
   array1d< real64 > m_biotCoefficient;
 
@@ -329,7 +335,10 @@ protected:
   array1d< real64 > m_averageMeanTotalStressIncrement_k;
 
   /// Grain bulk modulus (read from XML)
-  real64 m_grainBulkModulus;
+  real64 m_defaultGrainBulkModulus;
+
+  /// Grain bulk modulus (can be specified in XML)
+  array1d< real64 > m_grainBulkModulus;
 
   /// Flag enabling uniaxial approximation in fixed stress update
   integer m_useUniaxialFixedStress;

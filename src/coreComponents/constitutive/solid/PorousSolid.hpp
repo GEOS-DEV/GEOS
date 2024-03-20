@@ -62,7 +62,7 @@ public:
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const override final
   {
-    updateBiotCoefficientAndAssignModuli( k );
+    assignModuli( k );
 
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
@@ -117,7 +117,7 @@ public:
                      dPorosity_dTemperature );
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
-    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
 
   GEOS_HOST_DEVICE
@@ -210,13 +210,13 @@ private:
 
   GEOS_HOST_DEVICE
   inline
-  void updateBiotCoefficientAndAssignModuli( localIndex const k ) const
+  void assignModuli( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const shearModulus = m_solidUpdate.getShearModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficientAndAssignModuli( k, bulkModulus, shearModulus );
+    m_porosityUpdate.assignModuli( k, bulkModulus, shearModulus );
   }
 
   GEOS_HOST_DEVICE
@@ -267,7 +267,7 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
-    updateBiotCoefficientAndAssignModuli( k );
+    assignModuli( k );
 
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,

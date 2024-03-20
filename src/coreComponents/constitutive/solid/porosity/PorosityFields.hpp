@@ -82,7 +82,7 @@ DECLARE_FIELD( biotCoefficient,
                "biotCoefficient",
                array1d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Biot coefficient" );
 
@@ -109,6 +109,14 @@ DECLARE_FIELD( averageMeanTotalStressIncrement_k,
                NOPLOT,
                NO_WRITE,
                "Mean total stress increment averaged over quadrature points at the previous sequential iteration" );
+
+DECLARE_FIELD( grainBulkModulus,
+               "grainBulkModulus",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Biot coefficient" );
 
 
 

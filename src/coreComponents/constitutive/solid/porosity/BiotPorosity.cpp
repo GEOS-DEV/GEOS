@@ -31,7 +31,7 @@ namespace constitutive
 BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
+  registerWrapper( viewKeyStruct::defaultGrainBulkModulusString(), &m_defaultGrainBulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
@@ -45,9 +45,17 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
+  registerWrapper( viewKeyStruct::defaultBiotCoefficientString(), &m_defaultBiotCoefficient ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default Biot coefficient. If not specified it will be homogeneous for the material." );
+
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
-  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Biot coefficient" );
+
+  registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Grain Bulk modulus." );
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
@@ -78,6 +86,14 @@ void BiotPorosity::postProcessInput()
 
   getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+
+  // set results as array default values
+  getWrapper< array1d< real64 > >( fields::porosity::biotCoefficient::key() ).
+    setApplyDefaultValue( m_defaultBiotCoefficient );
+
+  // set results as array default values
+  getWrapper< array1d< real64 > >( fields::porosity::grainBulkModulus::key() ).
+    setApplyDefaultValue( m_defaultGrainBulkModulus );
 }
 
 void BiotPorosity::initializeState() const

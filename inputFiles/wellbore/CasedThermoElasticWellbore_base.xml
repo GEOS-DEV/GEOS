@@ -94,17 +94,17 @@
     <BiotPorosity
       name="casingPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="159.4202899e9"/>
+      defaultGrainBulkModulus="159.4202899e9"/>
 
     <BiotPorosity
       name="cementPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="2.298850575e9"/>
+      defaultGrainBulkModulus="2.298850575e9"/>
 
     <BiotPorosity
       name="rockPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="5.535714286e9"/>
+      defaultGrainBulkModulus="5.535714286e9"/>
     <!-- SPHINX_PoroElasticPropertiesEnd -->
 
     <!-- SPHINX_HeatCapacityProperties -->
