@@ -38,15 +38,15 @@ namespace mgr
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
  * dofLabel: 2 = displacement, z-component
- * dofLabel: 3 = pressure (cell elem + fracture elems)
- * dofLabel: 4 = face-centered lagrange multiplier (tn)
- * dofLabel: 5 = face-centered lagrange multiplier (tt1)
- * dofLabel: 6 = face-centered lagrange multiplier (tt2)
+ * dofLabel: 3 = face-centered lagrange multiplier (tn)
+ * dofLabel: 4 = face-centered lagrange multiplier (tt1)
+ * dofLabel: 5 = face-centered lagrange multiplier (tt2)
+ * dofLabel: 6 = pressure (cell elem + fracture elems)
 
  *
  * Ingredients:
- * 1. Level 1: F-points displacement (4,5,6), C-points pressure (0,1,2,3)
- * 2. Level 2: F-points displacement (0,1,2), C-points pressure (3)
+ * 1. Level 1: F-points displacement (3,4,5), C-points pressure (0,1,2,6)
+ * 2. Level 2: F-points displacement (0,1,2), C-points pressure (6)
  * 2. F-points smoother: BoomerAMG, single V-cycle
  * 3. C-points coarse-grid/Schur complement solver: BoomerAMG
  * 4. Global smoother: none
@@ -66,9 +66,9 @@ public:
     m_labels[0].push_back( 0 );
     m_labels[0].push_back( 1 );
     m_labels[0].push_back( 2 );
-    m_labels[0].push_back( 3 );
+    m_labels[0].push_back( 6 );
     // we keep p
-    m_labels[1].push_back( 3 );
+    m_labels[1].push_back( 6 );
 
     setupLabels();
 
