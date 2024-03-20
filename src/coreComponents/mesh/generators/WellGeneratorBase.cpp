@@ -573,10 +573,9 @@ void WellGeneratorBase::logPerforationTable() const
     tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableLayout tableLayoutPerfo = TableLayout( {"Perforation no.", "Coordinates", "connected to" },
-                                              "Perforation table" );
-
+  TableLayout tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to" }, "Perforation table" );
   TableTextFormatter tablePerfoLog( tableLayoutPerfo );
+  GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
 }
 
 }
