@@ -63,6 +63,9 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
+     inducedSeismicity/DieterichSeismicityRate.hpp
+     inducedSeismicity/inducedSeismicityFields.hpp
+     inducedSeismicity/SeismicityRateBase.hpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
      multiphysics/CoupledReservoirAndWellsBase.hpp
      multiphysics/CoupledSolver.hpp
@@ -179,6 +182,8 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
+     inducedSeismicity/DieterichSeismicityRate.cpp
+     inducedSeismicity/SeismicityRateBase.cpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
      multiphysics/CoupledReservoirAndWellsBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
