@@ -877,24 +877,6 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
-################################
-# Fesapi
-################################
-# if(DEFINED FESAPI_DIR)
-#     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
-
-#     find_and_import(NAME FesapiCpp
-#                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
-#                  HEADER fesapi/nsDefinitions.h
-#                  LIBRARIES FesapiCpp
-#                  DEPENDS hdf5)
-
-#     set(FESAPI_DIR ON CACHE BOOL "")
-#     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
-# else()
-    message(STATUS "Not using Fesapi")
-# endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
