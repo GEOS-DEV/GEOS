@@ -154,12 +154,18 @@ public:
 
   string getStabilizationName() const { return m_stabilizationName; }
 
+protected:
+
+  real64 calculateContactResidualNorm( DomainPartition const & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localRhs );
+
 private:
   string m_stabilizationName;
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
+  real64 m_initialContactResidual = 0.0;
 
   void createPreconditioner( DomainPartition const & domain );
 

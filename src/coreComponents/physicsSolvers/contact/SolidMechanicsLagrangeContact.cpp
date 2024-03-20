@@ -672,37 +672,24 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
 
   real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
-  real64 momentumR2 = 0.0;
-  real64 contactR2 = 0.0;
+  real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
+
+  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+}
+
+real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartition const & domain,
+                                                                    DofManager const & dofManager,
+                                                                    arrayView1d< real64 const > const & localRhs )
+{
+  string const & dofKey = dofManager.getKey( contact::traction::key() );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  real64 contactResidual = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    arrayView1d< globalIndex const > const & dispDofNumber =
-      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
-
-    string const & dofKey = dofManager.getKey( contact::traction::key() );
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-    arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
-    forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                      [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      if( elemGhostRank[k] < 0 )
-      {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( dispDofNumber[k] - rankOffset );
-        for( localIndex dim = 0; dim < 3; ++dim )
-        {
-          localSum0 += localRhs[localRow + dim] * localRhs[localRow + dim];
-        }
-      }
-    } );
-    momentumR2 += localSum0.get();
-
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
     {
@@ -721,68 +708,30 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
           }
         }
       } );
-      contactR2 += localSum.get();
+      contactResidual += localSum.get();
     } );
   } );
-  real64 localR2[2] = { momentumR2, contactR2 };
-  real64 globalResidualNorm[3]{};
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  array1d< real64 > globalR2( 2 * size );
-  globalR2.zero();
+  MpiWrapper::sum( contactResidual );
 
-  // Everything is done on rank 0
-  MpiWrapper::gather( localR2,
-                      2,
-                      globalR2.data(),
-                      2,
-                      0,
-                      MPI_COMM_GEOSX );
+  contactResidual = sqrt( contactResidual );
 
-  if( rank==0 )
+  if( this->m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    globalResidualNorm[0] = 0.0;
-    globalResidualNorm[1] = 0.0;
-    for( int r=0; r<size; ++r )
-    {
-      // sum across all ranks
-      globalResidualNorm[0] += globalR2[2 * r + 0];
-      globalResidualNorm[1] += globalR2[2 * r + 1];
-    }
-    globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
-    globalResidualNorm[0] = sqrt( globalResidualNorm[0] );
-    globalResidualNorm[1] = sqrt( globalResidualNorm[1] );
-    globalResidualNorm[2] = sqrt( globalResidualNorm[2] );
-  }
-
-  MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
-
-  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    m_initialResidual[0] = globalResidualNorm[0];
-    m_initialResidual[1] = globalResidualNorm[1];
-    m_initialResidual[2] = globalResidualNorm[2];
-    globalResidualNorm[0] = 1.0;
-    globalResidualNorm[1] = 1.0;
-    globalResidualNorm[2] = 1.0;
+    this->m_initialContactResidual = contactResidual;
+    contactResidual = 1.0;
   }
   else
   {
-    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
-    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
-    // Add 0 just to match Matlab code results
-    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+    contactResidual /= (this->m_initialContactResidual + 1.0);
   }
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout<< GEOS_FMT(
-      "        ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} )",
-      globalResidualNorm[0],
-      globalResidualNorm[1],
-      globalResidualNorm[2] );
+    std::cout << GEOS_FMT( "        ( Rtraction ) = ( {:15.6e} )", contactResidual );
   }
-  return sqrt( globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual );
+
+  return contactResidual;
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
@@ -1184,11 +1133,11 @@ void SolidMechanicsLagrangeContact::
                 {
                   if( i == 0 )
                   {
-                    elemRHS[i] = +Ja * dispJump[kfe][i];
+                    elemRHS[i] = Ja * dispJump[kfe][i];
                   }
                   else
                   {
-                    elemRHS[i] = +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
+                    elemRHS[i] = Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
                   }
                 }
 
@@ -1216,7 +1165,7 @@ void SolidMechanicsLagrangeContact::
             case contact::FractureState::Slip:
             case contact::FractureState::NewSlip:
               {
-                elemRHS[0] = +Ja * dispJump[kfe][0];
+                elemRHS[0] = Ja * dispJump[kfe][0];
 
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
@@ -1247,7 +1196,10 @@ void SolidMechanicsLagrangeContact::
                 {
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
+                    elemRHS[i] = Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
+
+                    dRdT( i, 0 ) = -Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
+                    dRdT( i, i ) = Ja;
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1275,11 +1227,6 @@ void SolidMechanicsLagrangeContact::
                       }
                     }
                   }
-                  for( localIndex i = 1; i < 3; ++i )
-                  {
-                    dRdT( i, 0 ) = Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
-                    dRdT( i, i ) = Ja;
-                  }
                 }
                 else
                 {
@@ -1289,11 +1236,10 @@ void SolidMechanicsLagrangeContact::
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
-                    }
-                    for( localIndex i = 1; i < 3; ++i )
-                    {
-                      dRdT( i, i ) = Ja;
+                      elemRHS[i] = Ja * traction[kfe][i] * ( 1.0 - limitTau / vauxNorm );
+
+                      dRdT( i, 0 ) = -Ja * traction[kfe][i] * dLimitTau_dNormalTraction / vauxNorm;
+                      dRdT( i, i ) = Ja * ( ( 1.0 - limitTau / vauxNorm ) - traction[kfe][i] * limitTau * traction[kfe][i] / vauxNorm );
                     }
                   }
                   else
@@ -1302,10 +1248,10 @@ void SolidMechanicsLagrangeContact::
                     {
                       elemRHS[i] = 0.0;
                     }
-                    for( localIndex i = 1; i < 3; ++i )
-                    {
-                      dRdT( i, i ) = Ja;
-                    }
+//                    for( localIndex i = 1; i < 3; ++i )
+//                    {
+//                      dRdT( i, i ) = Ja;
+//                    }
                   }
                 }
                 break;
@@ -1314,11 +1260,8 @@ void SolidMechanicsLagrangeContact::
               {
                 for( localIndex i = 0; i < 3; ++i )
                 {
-                  elemRHS[i] = +Ja * traction[kfe][i];
-                }
+                  elemRHS[i] = Ja * traction[kfe][i];
 
-                for( localIndex i = 0; i < 3; ++i )
-                {
                   dRdT( i, i ) = Ja;
                 }
                 break;
@@ -1852,6 +1795,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   int hasConfigurationConverged = true;
 
+  GEOS_LOG_RANK("pre forDiscretizationOnMeshTargets");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1942,9 +1886,14 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       hasConfigurationConverged &= checkActiveSetSub.get();
     } );
   } );
+  GEOS_LOG_RANK("post forDiscretizationOnMeshTargets");
+
+  GEOS_LOG_RANK("pre synchronizeFractureState");
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
+  GEOS_LOG_RANK("post synchronizeFractureState");
 
+  GEOS_LOG_RANK("pre allReduce");
   // Compute if globally the fracture state has changed
   int hasConfigurationConvergedGlobally;
   MpiWrapper::allReduce( &hasConfigurationConverged,
@@ -1952,6 +1901,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                          1,
                          MPI_LAND,
                          MPI_COMM_GEOSX );
+  GEOS_LOG_RANK("post allReduce");
 
   return hasConfigurationConvergedGlobally;
 }
