@@ -31,11 +31,32 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
-.. _XML_AcousticVTISEM:
+.. _XML_AcousticTTIFletcherSEM:
 
-Element: AcousticVTISEM
-=======================
-.. include:: ../../coreComponents/schema/docs/AcousticVTISEM.rst
+Element: AcousticTTIFletcherSEM
+===============================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIFletcherSEM.rst
+
+
+.. _XML_AcousticTTIZhangSEM:
+
+Element: AcousticTTIZhangSEM
+============================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIZhangSEM.rst
+
+
+.. _XML_AcousticVTIFletcherSEM:
+
+Element: AcousticVTIFletcherSEM
+===============================
+.. include:: ../../coreComponents/schema/docs/AcousticVTIFletcherSEM.rst
+
+
+.. _XML_AcousticVTIZhangSEM:
+
+Element: AcousticVTIZhangSEM
+============================
+.. include:: ../../coreComponents/schema/docs/AcousticVTIZhangSEM.rst
 
 
 .. _XML_Aquifer:
@@ -1435,11 +1456,32 @@ Datastructure: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
 
 
-.. _DATASTRUCTURE_AcousticVTISEM:
+.. _DATASTRUCTURE_AcousticTTIFletcherSEM:
 
-Datastructure: AcousticVTISEM
-=============================
-.. include:: ../../coreComponents/schema/docs/AcousticVTISEM_other.rst
+Datastructure: AcousticTTIFletcherSEM
+=====================================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIFletcherSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticTTIZhangSEM:
+
+Datastructure: AcousticTTIZhangSEM
+==================================
+.. include:: ../../coreComponents/schema/docs/AcousticTTIZhangSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticVTIFletcherSEM:
+
+Datastructure: AcousticVTIFletcherSEM
+=====================================
+.. include:: ../../coreComponents/schema/docs/AcousticVTIFletcherSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticVTIZhangSEM:
+
+Datastructure: AcousticVTIZhangSEM
+==================================
+.. include:: ../../coreComponents/schema/docs/AcousticVTIZhangSEM_other.rst
 
 
 .. _DATASTRUCTURE_Aquifer:

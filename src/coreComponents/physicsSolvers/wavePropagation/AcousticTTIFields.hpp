@@ -17,8 +17,8 @@
  * @file AcousticVTIFields.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFIELDS_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICTTIFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICTTIFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
@@ -30,7 +30,7 @@ namespace geos
 namespace fields
 {
 
-namespace acousticvtifields
+namespace acousticttifields
 {
 
 DECLARE_FIELD( AcousticVelocity,
@@ -72,6 +72,22 @@ DECLARE_FIELD( AcousticSigma,
                NOPLOT,
                WRITE_AND_READ,
                "Sigma quantity in VTI/TTI Fletcher's equations" );
+
+DECLARE_FIELD( AcousticDipX,
+               "acousticDipX",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Inline Dip for for pseudo-acoustic TTI" );
+
+DECLARE_FIELD( AcousticDipY,
+               "acousticDipY",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Crossline Dip for pseudo-acoustic TTI" );
 
 DECLARE_FIELD( AcousticMassVector,
                "acousticMassVector",
