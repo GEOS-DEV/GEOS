@@ -25,12 +25,12 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = PoromechanicsSolver< FLOW_SOLVER >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -84,6 +84,13 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  void assembleElementBasedTerms( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
+
   virtual void updateState( DomainPartition & domain ) override;
 
   /**@}*/
@@ -97,26 +104,6 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  void assembleElementBasedTerms( real64 const time_n,
-                                  real64 const dt,
-                                  DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
-
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
-
-private:
-
-  /**
-   * @brief Helper function to recompute the bulk density
-   * @param[in] subRegion the element subRegion
-   */
-  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
-
-  void createPreconditioner();
-
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
@@ -128,20 +115,31 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
+
+private:
+
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
+
+  void createPreconditioner();
+
 };
 
-template< typename FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
-                                                                DofManager const & dofManager,
-                                                                arrayView1d< string const > const & regionNames,
-                                                                string const & materialNamesString,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs,
-                                                                real64 const dt,
-                                                                PARAMS && ... params )
+real64 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+                                                                                  DofManager const & dofManager,
+                                                                                  arrayView1d< string const > const & regionNames,
+                                                                                  string const & materialNamesString,
+                                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                  arrayView1d< real64 > const & localRhs,
+                                                                                  real64 const dt,
+                                                                                  PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 
