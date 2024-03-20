@@ -132,7 +132,7 @@ public:
     Softened
   };
 
-    /**
+  /**
    * @enum OverlapCorrectionOption
    * 
    * The options for overlap correction
@@ -142,6 +142,19 @@ public:
     Off,
     NormalForce,
     SPH,
+  };
+
+
+  /**
+   * @enum CohesiveLawOption
+   * 
+   * The options for cohesive laws
+  */
+  enum struct CohesiveLawOption : integer
+  {
+    Uncoupled,
+    PPR,
+    NeedlemanXu
   };
 
   /**
@@ -511,19 +524,15 @@ public:
                                 arraySlice1d< real64 > const tA,
                                 arraySlice1d< real64 > const tB );
 
-void needlemanXuCohesiveLaw( int g,
-                             int A,
-                             int B,
-                             real64 mA,
-                             real64 mB,
-                             arraySlice1d< real64 const > const dA,
-                             arraySlice1d< real64 const > const dB,
-                             real64 const (& sA )[3], // rename this to something other than s, to be consistent with other nomenclature
-                             real64 const (& sB )[3], // Particle surface area along surface normal
-                             arraySlice1d< real64 const > const nA,
-                             arraySlice1d< real64 const > const nB, 
-                             arraySlice1d< real64 > const tA,
-                             arraySlice1d< real64 > const tB );
+void uncoupledCohesiveLaw( real64 normalDisplacement,
+                           real64 tangentialDisplacement,
+                           real64 & normalStress,
+                           real64 & shearStress );
+
+void needlemanXuCohesiveLaw( real64 normalDisplacement,
+                             real64 tangentialDisplacement,
+                             real64 & normalStress,
+                             real64 & shearStress );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -717,6 +726,8 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces 
+
   array1d< real64 > m_globalFaceReactions;
 
   array1d< real64 > m_bodyForce;
@@ -742,12 +753,17 @@ protected:
   real64 m_nextReactionWriteTime;
 
   real64 m_explicitSurfaceNormalInfluence;
+  int m_computeSurfaceNormalsOnlyOnInitialization;
 
   // Cohesive law variables
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
-  int m_cohesiveFieldPartitioning;
+  CohesiveLawOption m_cohesiveLaw;
+  // int m_cohesiveFieldPartitioning;
   int m_enableCohesiveFailure;
+  real64 m_normalForceConstant;
+  real64 m_shearForceConstant;
+
   real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
   real64 m_maxCohesiveShearStress;
@@ -759,6 +775,7 @@ protected:
   array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
   array2d< real64 > m_referenceCohesiveGridNodeAreas;
   array2d< real64 > m_referenceCohesiveGridNodePositions;
+  array2d< real64 > m_referenceCohesiveGridNodeDamages;
   array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
   array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
   array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
@@ -914,6 +931,11 @@ ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",
               "NormalForce",
               "SPH" );
+
+ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
+              "Uncoupled",
+              "PPR",
+              "NeedlemanXu" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
