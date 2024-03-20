@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<VTKFile type="Collection" version="0.1">
-	<Collection>
-		<DataSet timestep="0" file="permeableFaultPoro_fractured/000000.vtm" />
-		<DataSet timestep="10000000" file="permeableFaultPoro_fractured/000010.vtm" />
-	</Collection>
-</VTKFile>
