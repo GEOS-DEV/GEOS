@@ -32,12 +32,14 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ConstantPermeabilityUpdate( real64 const pressureDependenceConstant,
+                              real64 const maxPermeability, 
                               arrayView1d< real64 const > const & referencePressure,
                               arrayView3d< real64 > const & permeability,
                               arrayView3d< real64 > const & initialPermeability,
                               arrayView3d< real64 > const & dPerm_dPressure )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_pressureDependenceConstant( pressureDependenceConstant ),
+    m_maxPermeability( maxPermeability ),
     m_referencePressure( referencePressure ),
     m_initialPermeability( initialPermeability )
   {}
@@ -46,6 +48,7 @@ public:
   void compute( real64 const & deltaPressure,
                 real64 const pressureDependenceConstant,
                 real64 const (&initialPermeability)[3],
+                real64 const maxPermeability,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPressure ) const;
 
@@ -68,6 +71,7 @@ public:
     compute( deltaPressure,
              m_pressureDependenceConstant,
              initialPermeability,
+             m_maxPermeability,
              m_permeability[k][0],
              m_dPerm_dPressure[k][0] );
   }
@@ -76,6 +80,8 @@ private:
 
   /// Pressure dependence constant
   real64 m_pressureDependenceConstant;
+
+  real64 m_maxPermeability;
 
   /// Reference pressure
   arrayView1d< real64 const > const m_referencePressure;
@@ -111,6 +117,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_pressureDependenceConstant,
+                          m_maxPermeability,
                           m_referencePressure,
                           m_permeability,
                           m_initialPermeability,
@@ -125,6 +132,7 @@ public:
     static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
+    static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
@@ -141,6 +149,8 @@ private:
 
   real64 m_defaultReferencePressure;
 
+  real64 m_maxPermeability; 
+
   array1d< real64 > m_referencePressure;
 
   array3d< real64 > m_initialPermeability;
@@ -152,6 +162,7 @@ GEOS_FORCE_INLINE
 void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
                                           real64 const pressureDependenceConstant,
                                           real64 const (&initialPermeability)[3],
+                                          real64 const maxPermeability,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
@@ -159,7 +170,7 @@ void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
   {
     real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant * deltaPressure );
 
-    permeability[i] = perm;
+    permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
     dPerm_dPressure[i] = 0;
   }
 }

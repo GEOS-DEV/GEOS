@@ -55,6 +55,11 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Initial permeability" );
+
+  registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max. permeability that can reach." );
 }
 
 std::unique_ptr< ConstitutiveBase >
