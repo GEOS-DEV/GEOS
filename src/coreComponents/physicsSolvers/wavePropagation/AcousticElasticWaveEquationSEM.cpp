@@ -77,6 +77,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
+    arrayView2d< real64 const > const faceCenters          = faceManager.faceCenter().toViewConst();
     ArrayOfArraysView< localIndex const > const faceToNode = faceManager.nodeList().toViewConst();
     arrayView2d< localIndex const > const faceToSubRegion  = faceManager.elementSubRegionList();
     arrayView2d< localIndex const > const faceToRegion     = faceManager.elementRegionList();
@@ -97,6 +98,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       {
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        arrayView2d< real64 const > const elemCenters = elementSubRegion.getElementCenter().toViewConst();
 
         finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
         {
@@ -112,6 +114,8 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
                                                                  faceToElement,
                                                                  faceToNode,
                                                                  faceNormals,
+                                                                 faceCenters,
+                                                                 elemCenters,
                                                                  couplingVectorx,
                                                                  couplingVectory,
                                                                  couplingVectorz );
