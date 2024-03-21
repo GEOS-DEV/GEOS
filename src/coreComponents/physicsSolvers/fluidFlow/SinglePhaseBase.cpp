@@ -479,7 +479,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       initTemp.setValues< parallelDevicePolicy<> >( temp );
 
       updateMass( subRegion );
-      updateEnergy( subRegion );
+      if( m_isThermal )
+        updateEnergy( subRegion );
     } );
   } );
 
