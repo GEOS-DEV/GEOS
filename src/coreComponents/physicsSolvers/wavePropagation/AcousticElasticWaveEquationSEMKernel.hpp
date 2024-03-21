@@ -55,7 +55,7 @@ struct CouplingKernel
           arrayView1d< real32 > const couplingVectory,
           arrayView1d< real32 > const couplingVectorz )
   {
-    forAll< serialPolicy >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       localIndex const e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
       localIndex const er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
@@ -89,7 +89,6 @@ struct CouplingKernel
             (faceCenters( f, 1 ) - elemCenters( e, 1 )) * ny +
             (faceCenters( f, 2 ) - elemCenters( e, 2 )) * nz
             ) < 0 ? 1 : -1;
-          printf( "e=%i f=%i sgn=%i\n", e, f, sgn );
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
