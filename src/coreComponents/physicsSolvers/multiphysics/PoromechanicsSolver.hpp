@@ -109,7 +109,7 @@ public:
         porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );
         GEOS_THROW_IF( porosityModelName.empty(),
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
-                                 this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                                 this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -210,6 +210,18 @@ public:
   void setStressInitialization( integer const performStressInitialization )
   {
     m_performStressInitialization = performStressInitialization;
+  }
+
+  virtual bool updateConfiguration( DomainPartition & domain ) override
+  {
+    if( m_performStressInitialization ) // assume no configuration change during initialization step
+    {
+      return true;
+    }
+    else
+    {
+      return Base::updateConfiguration( domain );
+    }
   }
 
   struct viewKeyStruct : Base::viewKeyStruct

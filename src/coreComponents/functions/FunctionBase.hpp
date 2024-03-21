@@ -61,12 +61,6 @@ public:
   virtual ~FunctionBase() override = default;
 
   /**
-   * @brief Static Factory Catalog Functions
-   * @return the catalog name
-   */
-  static string catalogName() { return "FunctionBase"; }
-
-  /**
    * @brief Function initialization
    */
   virtual void initializeFunction() = 0;

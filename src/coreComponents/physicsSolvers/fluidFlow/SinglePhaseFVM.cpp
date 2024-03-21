@@ -307,12 +307,12 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   } );
 }
 
-template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const dt,
-                                                           DomainPartition const & domain,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs )
+template<>
+void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
+                                          DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -671,8 +671,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )
@@ -705,8 +705,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )
@@ -774,8 +774,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )
@@ -833,12 +833,12 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEO
 }
 
 template<>
-void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
-                                                        real64 const dt,
-                                                        DomainPartition & domain,
-                                                        DofManager const & dofManager,
-                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                        arrayView1d< real64 > const & localRhs ) const
+void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
+                                       real64 const dt,
+                                       DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -904,9 +904,9 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
 namespace
 {
-typedef SinglePhaseFVM< SinglePhaseBase > NoProppant;
-typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
-REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
+typedef SinglePhaseFVM< SinglePhaseProppantBase > SinglePhaseFVMProppant;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVMProppant, string const &, Group * const )
+typedef SinglePhaseFVM<> SinglePhaseFVM;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVM, string const &, Group * const )
 }
 } /* namespace geos */

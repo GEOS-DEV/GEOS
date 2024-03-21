@@ -167,7 +167,7 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
-        string const fluidModelName = castedFluid.catalogName();
+        string const fluidModelName = castedFluid.getCatalogName();
         GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
@@ -450,7 +450,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                    getCatalogName() << " " << getDataContext() <<
                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " " << bc.getDataContext() <<
+                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
@@ -851,8 +851,8 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                 solverName, time_n+dt, FieldSpecificationBase::catalogName(),
-                                 fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                 solverName, time_n+dt, fs.getCatalogName(), fs.getName(),
+                                 setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field
@@ -987,8 +987,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
 
         if( isThermal )
         {
@@ -998,7 +998,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                              "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
                              "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
           GEOS_LOG_RANK_0( GEOS_FMT( msg,
-                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
+                                     getName(), time_n+dt, fs.getCatalogName(), fs.getName() ) );
         }
       }
 
