@@ -519,6 +519,9 @@ public:
    */
   virtual ~VonMisesJ() override;
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -660,7 +663,7 @@ protected:
   /// The velocity gradient for each upper level dimension (i.e. cell) of *this
   array3d< real64 > m_velocityGradient;
 
-  ///
+  /// The plastic strain for each upper level dimension (i.e. cell) of *this
   array3d< real64 > m_plasticStrain;
 
 };
