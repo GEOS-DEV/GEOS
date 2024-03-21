@@ -58,7 +58,7 @@ TEST( testTable, tableClass )
                "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
                );
-  };
+  }
 
   //same but with different values
   {
@@ -194,7 +194,7 @@ TEST( testTable, tableClass )
                "|      val1      |       v  |  [3.045,42.02,89.25]  |  3          |  10       |     3     |\n"
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
                );
-  };
+  }
 
   //test with tiny margin
   {
@@ -225,7 +225,7 @@ TEST( testTable, tableClass )
                "|    val1    |     v|[3.045,42.02,89.25]|3        |10     |   3   |\n"
                "+------------+------+-------------------+---------+-------+-------+\n\n"
                );
-  };
+  }
 
   //test 2D table
   {
