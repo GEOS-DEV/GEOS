@@ -53,7 +53,7 @@ struct CouplingKernel
           arrayView1d< real32 > const couplingVectory,
           arrayView1d< real32 > const couplingVectorz )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< serialPolicy >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
     {
       localIndex e0 = faceToElement( f, 0 ), e1 = faceToElement( f, 1 );
       localIndex er0 = faceToRegion( f, 0 ), er1 = faceToRegion( f, 1 );
@@ -77,6 +77,7 @@ struct CouplingKernel
 
           // determine normal sign for fluid -> solid coupling
           localIndex sgn = er0 == regionIndex ? 1 : (er1 == regionIndex ? -1 : 0);
+          printf("f=%i sgn=%i\n", f, sgn);
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
