@@ -51,7 +51,9 @@ Usage: $0
   --no-run-unit-tests
       Do not run the unit tests (but they will be built).
   --repository /path/to/repository
-      Internal mountpoint where the geos repository will be available. 
+      Internal mountpoint where the geos repository will be available.
+  --run-pygeosx-tests
+      Runs the pygeosx tests.
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
   --sccache-credentials credentials.json
@@ -68,13 +70,14 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-pygeosx-tests,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
 GEOSX_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
+RUN_PYGEOSX_TESTS=false
 RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
@@ -105,6 +108,7 @@ do
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
+    --run-pygeosx-tests)     RUN_PYGEOSX_TESTS=true;     shift;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
@@ -180,6 +184,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
+# Set CMake option for pygeosx
+if [[ "${RUN_PYGEOSX_TESTS}" = true ]]; then
+  PYGEOSX_CMAKE_ARG="-DENABLE_PYGEOSX=ON"
+fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
@@ -212,7 +220,8 @@ or_die python3 scripts/config-build.py \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
-               ${ATS_CMAKE_ARGS}
+               ${ATS_CMAKE_ARGS} \
+               ${PYGEOSX_CMAKE_ARG}
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOSX_BUILD_DIR}
@@ -235,6 +244,12 @@ if [[ "${BUILD_EXE_ONLY}" = true ]]; then
 else
   or_die ninja -j $NPROC
   or_die ninja install
+
+  if [[ "${RUN_PYGEOSX_TESTS}" = true ]]; then
+    or_die ninja pygeosx
+    or_die ninja geosx_python_tools
+    or_die ninja pygeosx_unit_tests
+  fi
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
