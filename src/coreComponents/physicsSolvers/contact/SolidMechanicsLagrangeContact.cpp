@@ -1795,7 +1795,6 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   int hasConfigurationConverged = true;
 
-  GEOS_LOG_RANK("pre forDiscretizationOnMeshTargets");
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1886,14 +1885,10 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       hasConfigurationConverged &= checkActiveSetSub.get();
     } );
   } );
-  GEOS_LOG_RANK("post forDiscretizationOnMeshTargets");
 
-  GEOS_LOG_RANK("pre synchronizeFractureState");
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
-  GEOS_LOG_RANK("post synchronizeFractureState");
 
-  GEOS_LOG_RANK("pre allReduce");
   // Compute if globally the fracture state has changed
   int hasConfigurationConvergedGlobally;
   MpiWrapper::allReduce( &hasConfigurationConverged,
@@ -1901,7 +1896,6 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                          1,
                          MPI_LAND,
                          MPI_COMM_GEOSX );
-  GEOS_LOG_RANK("post allReduce");
 
   return hasConfigurationConvergedGlobally;
 }
