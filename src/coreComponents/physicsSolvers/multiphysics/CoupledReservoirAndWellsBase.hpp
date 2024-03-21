@@ -126,8 +126,8 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    // call base setup for subsolvers
-    Base::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
+    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
     dofManager.setDomain( domain );
 
