@@ -166,7 +166,7 @@ void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
-  for( localIndex i=1; i < permeability.size(); i++ )
+  for( localIndex i=0; i < permeability.size(); i++ )
   {
     real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
 
