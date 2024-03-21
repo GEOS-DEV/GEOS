@@ -1198,7 +1198,7 @@ void SolidMechanicsLagrangeContact::
                   {
                     elemRHS[i] = Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
 
-                    dRdT( i, 0 ) = -Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
+                    dRdT( i, 0 ) = Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
                     dRdT( i, i ) = Ja;
                   }
 
@@ -1238,8 +1238,8 @@ void SolidMechanicsLagrangeContact::
                     {
                       elemRHS[i] = Ja * traction[kfe][i] * ( 1.0 - limitTau / vauxNorm );
 
-                      dRdT( i, 0 ) = -Ja * traction[kfe][i] * dLimitTau_dNormalTraction / vauxNorm;
-                      dRdT( i, i ) = Ja * ( ( 1.0 - limitTau / vauxNorm ) - traction[kfe][i] * limitTau * traction[kfe][i] / vauxNorm );
+                      dRdT( i, 0 ) = Ja * traction[kfe][i] * dLimitTau_dNormalTraction / vauxNorm;
+                      dRdT( i, i ) = Ja;
                     }
                   }
                   else
@@ -1247,11 +1247,9 @@ void SolidMechanicsLagrangeContact::
                     for( localIndex i = 1; i < 3; ++i )
                     {
                       elemRHS[i] = 0.0;
+
+                      dRdT( i, i ) = Ja;
                     }
-//                    for( localIndex i = 1; i < 3; ++i )
-//                    {
-//                      dRdT( i, i ) = Ja;
-//                    }
                   }
                 }
                 break;
