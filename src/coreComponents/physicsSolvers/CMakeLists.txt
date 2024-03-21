@@ -102,6 +102,8 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
+     solidMechanics/MatrixFreeSolidMechanicsFEM.hpp
+     solidMechanics/MatrixFreeSolidMechanicsFEMOperator.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
@@ -119,6 +121,8 @@ set( physicsSolvers_headers
      solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp
      solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+     solidMechanics/kernels/SmallStrainResidual.hpp
+     solidMechanics/kernels/SmallStrainResidual_impl.hpp
      solidMechanics/SolidMechanicsStateReset.hpp
      solidMechanics/SolidMechanicsStatistics.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
@@ -193,6 +197,8 @@ set( physicsSolvers_sources
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
+     solidMechanics/MatrixFreeSolidMechanicsFEM.cpp
+     solidMechanics/MatrixFreeSolidMechanicsFEMOperator.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsMPM.cpp

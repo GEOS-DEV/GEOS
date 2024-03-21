@@ -157,7 +157,7 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
   GEOS_ERROR_IF( err != cudaSuccess, GEOS_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   hipError_t const err = hipGetLastError();
-  GEOS_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
+  GEOS_UNUSED_VAR( msg, file, line ); // on crusher GEOS_ERROR_IF ultimately resolves to an assert, which drops the content on release
                                       // builds
   GEOS_ERROR_IF( err != hipSuccess, GEOS_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else

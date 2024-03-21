@@ -57,6 +57,13 @@ public:
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
   /// Static property kept for consistency with other finite element classes.
   static constexpr localIndex numNodes = MAXCELLNODES;
+
+  /// The number of vertices per element.
+  constexpr static localIndex numVertices = numNodes;
+
+  /// The maximum number of vertices per element.
+  constexpr static localIndex maxVertices = MAXCELLNODES;
+
   /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
@@ -156,6 +163,13 @@ public:
   GEOS_HOST_DEVICE
   inline
   static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    return stack.numSupportPoints;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  static localIndex getNumVertices( StackVariables const & stack )
   {
     return stack.numSupportPoints;
   }

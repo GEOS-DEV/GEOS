@@ -3,6 +3,7 @@ set( linearAlgebra_headers
      DofManager.hpp
      DofManagerHelpers.hpp
      common/LinearOperator.hpp
+     common/LinearOperatorWithBC.hpp
      common/LinearSolverBase.hpp
      common/PreconditionerBase.hpp
      common/common.hpp

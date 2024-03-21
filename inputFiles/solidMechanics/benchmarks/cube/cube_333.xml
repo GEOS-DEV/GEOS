@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1000 }"
+      ny="{ 1000 }"
+      nz="{ 1000 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Included>
+    <File
+      name="./cube_base.xml"/>
+  </Included>
+
+</Problem>

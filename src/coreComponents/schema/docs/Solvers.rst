@@ -19,6 +19,7 @@ EmbeddedSurfaceGenerator                      node                 :ref:`XML_Emb
 FlowProppantTransport                         node                 :ref:`XML_FlowProppantTransport`                         
 Hydrofracture                                 node                 :ref:`XML_Hydrofracture`                                 
 LaplaceFEM                                    node                 :ref:`XML_LaplaceFEM`                                    
+MatrixFreeSolidMechanicsFEM                   node                 :ref:`XML_MatrixFreeSolidMechanicsFEM`                   
 MultiphasePoromechanics                       node                 :ref:`XML_MultiphasePoromechanics`                       
 MultiphasePoromechanicsReservoir              node                 :ref:`XML_MultiphasePoromechanicsReservoir`              
 PhaseFieldDamageFEM                           node                 :ref:`XML_PhaseFieldDamageFEM`                           

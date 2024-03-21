@@ -619,6 +619,13 @@ Element: LinearSolverParameters
 .. include:: ../../coreComponents/schema/docs/LinearSolverParameters.rst
 
 
+.. _XML_MatrixFreeSolidMechanicsFEM:
+
+Element: MatrixFreeSolidMechanicsFEM
+====================================
+.. include:: ../../coreComponents/schema/docs/MatrixFreeSolidMechanicsFEM.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -2035,6 +2042,13 @@ Datastructure: LinearIsotropicDispersion
 Datastructure: LinearSolverParameters
 =====================================
 .. include:: ../../coreComponents/schema/docs/LinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_MatrixFreeSolidMechanicsFEM:
+
+Datastructure: MatrixFreeSolidMechanicsFEM
+==========================================
+.. include:: ../../coreComponents/schema/docs/MatrixFreeSolidMechanicsFEM_other.rst
 
 
 .. _DATASTRUCTURE_Mesh:

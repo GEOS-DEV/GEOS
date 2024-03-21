@@ -60,6 +60,8 @@ struct LinearSolverResult
   /// Solve time (in seconds) exclusive of setup costs
   real64 solveTime = 0.0;
 
+  real64 minIterTime = 1.0e99;
+
   /**
    * @brief Check whether the last solve was successful.
    * @return @p true if last solve was successful, @p false otherwise

@@ -184,5 +184,8 @@
 #define GEOS_USE_DEVICE
 #endif
 
+/* #undef GEOS_TEMP_MINIMUM_ALLOCATION_FLAG */
+
+
 #endif  /* GEOS_CONFIG_HPP */
 
