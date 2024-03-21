@@ -58,7 +58,6 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       m_interfaceNodesSet.insert( val );
   }
   localIndex const numInterfaceNodes = MpiWrapper::sum( m_interfaceNodesSet.size() );
-  // GEOS_LOG_RANK_0( GEOS_FMT( "AcousticElastic solver, {} interface nodes", m_interfaceNodesSet.size() ) );
   GEOS_THROW_IF( numInterfaceNodes == 0, "Failed to compute interface: check xml input (solver order)", std::runtime_error );
 
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
