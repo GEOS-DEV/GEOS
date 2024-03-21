@@ -95,13 +95,13 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
 // but later removed:
 // https://github.com/fmtlib/fmt/commit/466e0650ec2d153d255a40ec230eb77d7f1c3334
 // This workaround bypasse the check for a const formatter whenever the foramt context GEOS_FMT_NS::format_context is used
-#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND // End of the workaround for fmt compilation issues
+#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND 
 template< >
 constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::format_context >( ... ) -> bool
 {
   return true;
 }
-#endif
+#endif // End of the workaround for fmt compilation issues
 
 /**
  * Evaluates at compile time if a fmt::formatter exists for a given type
