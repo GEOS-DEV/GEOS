@@ -4,6 +4,7 @@
 Name                                          Type     Default     Description                                              
 ============================================= ======== =========== ======================================================== 
 gravityVector                                 R1Tensor {0,0,-9.81} Gravity vector used in the physics solvers               
+AcousticElasticSEM                            node                 :ref:`XML_AcousticElasticSEM`                            
 AcousticFirstOrderSEM                         node                 :ref:`XML_AcousticFirstOrderSEM`                         
 AcousticSEM                                   node                 :ref:`XML_AcousticSEM`                                   
 AcousticVTISEM                                node                 :ref:`XML_AcousticVTISEM`                                
@@ -17,7 +18,6 @@ ElasticSEM                                    node                 :ref:`XML_Ela
 EmbeddedSurfaceGenerator                      node                 :ref:`XML_EmbeddedSurfaceGenerator`                      
 FlowProppantTransport                         node                 :ref:`XML_FlowProppantTransport`                         
 Hydrofracture                                 node                 :ref:`XML_Hydrofracture`                                 
-LagrangianContact                             node                 :ref:`XML_LagrangianContact`                             
 LaplaceFEM                                    node                 :ref:`XML_LaplaceFEM`                                    
 MultiphasePoromechanics                       node                 :ref:`XML_MultiphasePoromechanics`                       
 MultiphasePoromechanicsReservoir              node                 :ref:`XML_MultiphasePoromechanicsReservoir`              
@@ -36,6 +36,7 @@ SinglePhaseReservoir                          node                 :ref:`XML_Sin
 SinglePhaseReservoirPoromechanics             node                 :ref:`XML_SinglePhaseReservoirPoromechanics`             
 SinglePhaseWell                               node                 :ref:`XML_SinglePhaseWell`                               
 SolidMechanicsEmbeddedFractures               node                 :ref:`XML_SolidMechanicsEmbeddedFractures`               
+SolidMechanicsLagrangeContact                 node                 :ref:`XML_SolidMechanicsLagrangeContact`                 
 SolidMechanicsLagrangianSSLE                  node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                  
 SolidMechanics_LagrangianFEM                  node                 :ref:`XML_SolidMechanics_LagrangianFEM`                  
 SolidMechanics_MPM                            node                 :ref:`XML_SolidMechanics_MPM`                            

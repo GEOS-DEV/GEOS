@@ -98,6 +98,7 @@ public:
   { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
   integer & isThermal() { return flowSolver()->isThermal(); }
+  integer useSimpleAccumulation() const { return flowSolver()->useSimpleAccumulation(); }
   integer useTotalMassEquation() const { return flowSolver()->useTotalMassEquation(); }
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
@@ -105,7 +106,7 @@ public:
   void enableFixedStressPoromechanicsUpdate()
   { flowSolver()->enableFixedStressPoromechanicsUpdate();  }
 
-  void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final { flowSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

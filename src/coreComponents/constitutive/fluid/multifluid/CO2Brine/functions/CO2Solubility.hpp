@@ -53,14 +53,12 @@ public:
                        integer const phaseLiquidIndex )
     : FlashModelBaseUpdate( componentMolarWeight ),
     m_CO2SolubilityTable( CO2SolubilityTable.createKernelWrapper() ),
-    //m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
+    m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
     m_phaseLiquidIndex( phaseLiquidIndex )
-  {
-    GEOS_UNUSED_VAR( waterVapourisationTable );
-  }
+  {}
 
   template< int USD1 >
   GEOS_HOST_DEVICE
@@ -74,7 +72,7 @@ public:
   {
     FlashModelBaseUpdate::move( space, touch );
     m_CO2SolubilityTable.move( space, touch );
-    //m_WaterVapourisationTable.move( space, touch );
+    m_WaterVapourisationTable.move( space, touch );
   }
 
 protected:
@@ -86,7 +84,7 @@ protected:
   TableFunction::KernelWrapper m_CO2SolubilityTable;
 
   /// Table with water vapourisation as a function (P,T)
-  //TableFunction::KernelWrapper m_WaterVapourisationTable;
+  TableFunction::KernelWrapper m_WaterVapourisationTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -105,7 +103,14 @@ protected:
 class CO2Solubility : public FlashModelBase
 {
 public:
+  enum class SolubilityModel : integer
+  {
+    DuanSun,
+    SpycherPruess,
+    Tables
+  };
 
+public:
   CO2Solubility( string const & name,
                  string_array const & inputParams,
                  string_array const & phaseNames,
@@ -132,7 +137,6 @@ public:
   KernelWrapper createKernelWrapper() const;
 
 private:
-
   /// Table to compute solubility as a function of pressure and temperature
   TableFunction const * m_CO2SolubilityTable;
 
@@ -168,10 +172,10 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   // Solubility of water is read from the tables in the form of moles of water per kg of CO2
   real64 const input[2] = { pressure, temperature };
 
-  real64 co2SolubilityDeriv[2]{};
-  real64 watSolubilityDeriv[2]{0.0, 0.0};
+  real64 co2SolubilityDeriv[2]{ 0.0, 0.0 };
+  real64 watSolubilityDeriv[2]{ 0.0, 0.0 };
   real64 co2Solubility = m_CO2SolubilityTable.compute( input, co2SolubilityDeriv );
-  real64 watSolubility = 0.0; //m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
+  real64 watSolubility = m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
 
   // Convert the solubility to mole/mole
   co2Solubility *= m_componentMolarWeight[m_waterIndex];
@@ -191,7 +195,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
                          GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ) );
 
   real64 invDeterminant = 0.0;
-  real64 invDeterminantDeriv[] = { 0.0, 0.0 };
+  real64 invDeterminantDeriv[2]{ 0.0, 0.0 };
 
   invDeterminant = 1.0 / determinant;
   for( integer const ic : {Deriv::dP, Deriv::dT} )
@@ -333,6 +337,11 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     }
   }
 }
+
+ENUM_STRINGS( CO2Solubility::SolubilityModel,
+              "DuanSun",
+              "SpycherPruess",
+              "Tables" );
 
 } // end namespace PVTProps
 
