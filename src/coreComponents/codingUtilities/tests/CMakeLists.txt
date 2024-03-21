@@ -4,6 +4,7 @@ set( testSources
      testStringUtilities.cpp
      testParsing.cpp
      testTable.cpp )
+     testUtilities.cpp )
 
 set( dependencyList gtest codingUtilities ${parallelDeps} )
 

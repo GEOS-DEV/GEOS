@@ -16,8 +16,6 @@
 #define GEOS_MESH_CELLBLOCK_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/ElementType.hpp"
 
