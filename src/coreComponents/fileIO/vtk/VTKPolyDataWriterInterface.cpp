@@ -92,6 +92,7 @@ toVTKCellType( ElementType const elementType, localIndex const numNodes )
   return VTK_EMPTY_CELL;
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 static int
 toVTKCellType( ParticleType const particleType )
 {
@@ -117,6 +118,7 @@ getVtkToGeosxNodeOrdering( ParticleType const particleType )
   }
   return {};
 }
+#endif
 
 /**
  * @brief Provide the local list of nodes or face streams for the corresponding VTK element
@@ -251,6 +253,7 @@ getVtkPoints( NodeManager const & nodeManager,
   return points;
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 /**
  * @brief Gets the vertex coordinates as a VTK Object for @p particleManager
  * @param[in] particleManager the ParticleManager associated with the domain being written
@@ -274,6 +277,7 @@ getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the sub
   } );
   return points;
 }
+#endif
 
 struct ElementData
 {
@@ -571,6 +575,7 @@ getVtkCells( CellElementRegion const & region,
   return { std::move( cellTypes ), cellsArray, std::move( relevantNodes ) };
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 using ParticleData = std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >;
 /**
  * @brief Gets the cell connectivities as a VTK object for the ParticleRegion @p region
@@ -608,6 +613,7 @@ getVtkCells( ParticleRegion const & region )
   } );
   return std::make_pair( cellType, cellsArray );
 }
+#endif
 
 /**
  * @brief Writes timestamp information required by VisIt
@@ -889,6 +895,7 @@ writeElementField( Group const & subRegions,
   cellData->AddArray( data );
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const & region,
                                                       vtkCellData * cellData ) const
 {
@@ -942,6 +949,7 @@ void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const &
     writeElementField( region.getGroup( ParticleRegionBase::viewKeyStruct::particleSubRegions() ), field, cellData );
   }
 }
+#endif
 
 void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManager,
                                                   arrayView1d< localIndex const > const & nodeIndices,
@@ -1048,6 +1056,7 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
   } );
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
                                                        ParticleManager const & particleManager,
                                                        string const & path ) const
@@ -1068,6 +1077,7 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
     writeUnstructuredGrid( regionDir, ug.GetPointer() );
   } );
 }
+#endif
 
 void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
@@ -1170,8 +1180,9 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
       ParticleManager const & particleManager = meshLevel.getParticleManager();
-
+#endif
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBodyName, meshLevelName );
 
       int const mpiSize = MpiWrapper::commSize();
@@ -1188,6 +1199,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
         }
       };
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
       auto addParticleRegion = [&]( ParticleRegionBase const & region )
       {
         string const & regionName = region.getName();
@@ -1200,6 +1212,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
           vtmWriter.addDataSet( blockPath, dataSetName, dataSetFile );
         }
       };
+#endif
 
       // Output each of the region types
       if( m_outputRegionType == VTKRegionTypes::CELL || m_outputRegionType == VTKRegionTypes::ALL )
@@ -1216,11 +1229,12 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
       {
         elemManager.forElementRegions< SurfaceElementRegion >( addElementRegion );
       }
-
+#if defined(GEOS_USE_PARTICLE_METHOD)
       if( m_outputRegionType == VTKRegionTypes::PARTICLE || m_outputRegionType == VTKRegionTypes::ALL )
       {
         particleManager.forParticleRegions< ParticleRegion >( addParticleRegion );
       }
+#endif
     } );
   } );
 
@@ -1312,7 +1326,9 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
+#if defined(GEOS_USE_PARTICLE_METHOD)
       ParticleManager const & particleManager = meshLevel.getParticleManager();
+#endif
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
       string const & meshBodyName = meshBody.getName();
@@ -1341,10 +1357,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       {
         writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager, meshDir );
       }
+#if defined(GEOS_USE_PARTICLE_METHOD)
       if( m_outputRegionType == VTKRegionTypes::PARTICLE || m_outputRegionType == VTKRegionTypes::ALL )
       {
         writeParticleRegions( time, particleManager, meshDir );
       }
+#endif
     } );
   } );
 

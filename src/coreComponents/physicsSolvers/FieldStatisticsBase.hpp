@@ -24,6 +24,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {

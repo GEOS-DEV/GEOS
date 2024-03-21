@@ -73,6 +73,7 @@ public:
 
   int getColor() override;
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   void repartitionMasterParticles( ParticleSubRegion & subRegion,
                                    MPI_iCommData & commData );
 
@@ -101,6 +102,7 @@ public:
                                 std::vector< int > const & numberOfIncomingParticles,
                                 MPI_iCommData & commData,
                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
+#endif
 
   /**
    * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList

@@ -327,6 +327,7 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion,
                                                    MPI_iCommData & commData )
 {
@@ -1023,7 +1024,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
     // Unpack the buffer to an array of coordinates.
     subRegion.particleUnpack( receiveBuffer[n], newParticleStartingIndices[n], numberOfIncomingParticles[n] );
   }
-
 }
+#endif
 
 }

@@ -152,6 +152,7 @@ private:
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   /**
    * @brief Fill the particleBlockManager object .
    * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
@@ -165,7 +166,7 @@ private:
     GEOS_UNUSED_VAR( partition );
     GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
   }
-
+#endif
 };
 }
 

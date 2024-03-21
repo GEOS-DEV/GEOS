@@ -317,10 +317,11 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
+#if defined(GEOS_USE_PARTICLE_METHOD)
   ParticleManager & particleManager = domain.getMeshBody( 0 ).getBaseDiscretization().getParticleManager(); // TODO is this necessary? SJP
   particleManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( particleManager, schemaRoot, targetChoiceNode, documentationType );
-
+#endif
 
   // Add entries that are only used in the pre-processor
   Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag );
@@ -467,6 +468,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
       }
     }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
     // Parse particle regions
     xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
 
@@ -486,6 +488,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
         newRegion->processInputFileRecursive( xmlDocument, regionNode );
       } );
     }
+#endif
   }
 }
 
@@ -586,6 +589,7 @@ void ProblemManager::generateMesh()
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
@@ -595,6 +599,7 @@ void ProblemManager::generateMesh()
                                junk.toViewConst() );
     }
     else
+#endif
     {
       CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
@@ -668,11 +673,14 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
+#if defined(GEOS_USE_PARTICLE_METHOD)
     if( meshBody.hasGroup( keys::particleManager ) )
     {
       meshBody.deregisterGroup( keys::particleManager );
     }
-    else if( meshBody.hasGroup( keys::cellManager ) )
+    else
+#endif
+    if( meshBody.hasGroup( keys::cellManager ) )
     {
       // meshBody.deregisterGroup( keys::cellManager );
       meshBody.deregisterCellBlockManager();
@@ -843,6 +851,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   elemRegionManager.setMaxGlobalIndex();
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         ParticleBlockManagerABC & particleBlockManager,
                                         arrayView1d< string const > const & )
@@ -866,7 +875,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     particleManager.setMaxGlobalIndex();
   }
 }
-
+#endif
 
 map< std::tuple< string, string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
@@ -900,12 +909,15 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel ) ? baseMeshLevel : targetMeshLevel;
 
         NodeManager & nodeManager = meshLevel.getNodeManager();
+#if defined(GEOS_USE_PARTICLE_METHOD)
         ParticleManager & particleManager = meshLevel.getParticleManager();
+#endif
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
         for( auto const & regionName : regionNames )
         {
           if( particleManager.hasRegion( regionName ) )
@@ -923,6 +935,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
             } );
           }
         }
+#endif
 
         for( auto const & regionName : regionNames )
         {
@@ -1026,6 +1039,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
     if( meshBody.hasParticles() ) // branch due to difference in particle vs cell regions
     {
       ParticleManager & particleManager = meshLevel.getParticleManager();
@@ -1047,6 +1061,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     }
 //    if( meshLevel.isShallowCopy() )
     else
+#endif
     {
       ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
       ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );

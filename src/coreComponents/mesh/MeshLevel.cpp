@@ -32,7 +32,9 @@ MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
   m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString(), this ) ),
+#if defined(GEOS_USE_PARTICLE_METHOD)
   m_particleManager( new ParticleManager( groupStructKeys::particleManagerString(), this ) ),
+#endif
   m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString(), this ) ),
   m_faceManager( new FaceManager( groupStructKeys::faceManagerString(), this ) ),
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
@@ -45,8 +47,9 @@ MeshLevel::MeshLevel( string const & name,
 
   registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   registerGroup( groupStructKeys::particleManagerString(), m_particleManager );
-
+#endif
   registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
 
 
@@ -74,7 +77,9 @@ MeshLevel::MeshLevel( string const & name,
                       MeshLevel & source ):
   Group( name, parent ),
   m_nodeManager( source.m_nodeManager ),
+#if defined(GEOS_USE_PARTICLE_METHOD)
   m_particleManager( source.m_particleManager ),
+#endif
   m_edgeManager( source.m_edgeManager ),
   m_faceManager( source.m_faceManager ),
   m_elementManager( source.m_elementManager ),

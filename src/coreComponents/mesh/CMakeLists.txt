@@ -23,22 +23,12 @@ set( mesh_headers
      MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
-     generators/ParticleBlock.hpp
-     generators/ParticleBlockManager.hpp
-     ParticleManager.hpp
-     ParticleRegion.hpp
-     ParticleRegionBase.hpp
-     ParticleSubRegion.hpp
-     ParticleSubRegionBase.hpp
-     generators/ParticleBlockABC.hpp
-     ParticleType.hpp
      Perforation.hpp
      PerforationData.hpp
      PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
-     ToParticleRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
@@ -56,7 +46,6 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
-     generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
      generators/WellGeneratorABC.hpp
@@ -103,19 +92,11 @@ set( mesh_sources
      MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
-     generators/ParticleBlock.cpp
-     generators/ParticleBlockManager.cpp
-     ParticleManager.cpp
-     ParticleRegion.cpp
-     ParticleRegionBase.cpp
-     ParticleSubRegion.cpp
-     ParticleSubRegionBase.cpp
      Perforation.cpp
      PerforationData.cpp
      SurfaceElementRegion.cpp
      SurfaceElementSubRegion.cpp
      ToElementRelation.cpp
-     ToParticleRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
      generators/CellBlock.cpp
@@ -129,7 +110,6 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
-     generators/ParticleMeshGenerator.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
@@ -149,6 +129,34 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp )
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
+
+if( ENABLE_PARTICLE_METHOD )
+  message( STATUS "Adding particle method" )
+  set( mesh_headers ${mesh_headers}
+       generators/ParticleBlock.hpp
+       generators/ParticleBlockManager.hpp
+       ParticleManager.hpp
+       ParticleRegion.hpp
+       ParticleRegionBase.hpp
+       ParticleSubRegion.hpp
+       ParticleSubRegionBase.hpp
+       generators/ParticleBlockABC.hpp
+       ParticleType.hpp
+       ToParticleRelation.hpp
+       generators/ParticleMeshGenerator.hpp )
+
+  # Specify all sources
+  set( mesh_sources ${mesh_sources}
+       generators/ParticleBlock.cpp
+       generators/ParticleBlockManager.cpp
+       ParticleManager.cpp
+       ParticleRegion.cpp
+       ParticleRegionBase.cpp
+       ParticleSubRegion.cpp
+       ParticleSubRegionBase.cpp
+       ToParticleRelation.cpp
+       generators/ParticleMeshGenerator.cpp )
+endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")

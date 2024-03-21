@@ -763,8 +763,10 @@ protected:
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
+#endif
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -773,8 +775,10 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
+#if defined(GEOS_USE_PARTICLE_METHOD)
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle
                                                                                                                           // overload
+#endif
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -836,7 +840,9 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
+#if defined(GEOS_USE_PARTICLE_METHOD)
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
+#endif
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
@@ -859,6 +865,7 @@ string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
   return validName;
 }
 
+#if defined(GEOS_USE_PARTICLE_METHOD)
 template< typename CONSTITUTIVE_BASE_TYPE >
 string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
 {
@@ -872,6 +879,7 @@ string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion 
   } );
   return validName;
 }
+#endif
 
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )

@@ -19,6 +19,7 @@
 #ifndef GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
 
+
 #include "mesh/generators/MeshGeneratorBase.hpp"
 
 #include "codingUtilities/EnumStrings.hpp"
@@ -27,6 +28,7 @@ namespace geos
 {
 
 class ParticleManager;
+class ParticleBlockManager;
 class SpatialPartition;
 
 /**
@@ -60,6 +62,12 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Fill the particleBlockManager object .
+   * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
+   * @param[in] particleManager The reference to the particle manager
+   * @param[in] partition The reference to spatial partition
+   */
   virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
 
   void importFieldOnArray( Block block,
