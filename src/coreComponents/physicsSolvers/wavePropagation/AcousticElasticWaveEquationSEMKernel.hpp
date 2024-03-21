@@ -64,10 +64,10 @@ struct CouplingKernel
       if( e0 != -1 && e1 != -1 && er0 != er1 )  // an interface is defined as a transition between regions
       {
         // check that one of the region is the fluid subregion for the fluid -> solid coupling term
-        bool const e0_is_fluid = er0 == fluidRegionIndex && esr0 == fluidSubRegionIndex;
-        bool const e1_is_fluid = er1 == fluidRegionIndex && esr1 == fluidSubRegionIndex;
+        bool const e0IsFluid = er0 == fluidRegionIndex && esr0 == fluidSubRegionIndex;
+        bool const e1IsFluid = er1 == fluidRegionIndex && esr1 == fluidSubRegionIndex;
 
-        if( e0_is_fluid != e1_is_fluid )  // xor: a single element must be fluid
+        if( e0IsFluid != e1IsFluid )  // xor: a single element must be fluid
         {
           // only the four corners of the mesh face are needed to compute the Jacobian
           real64 xLocal[ 4 ][ 3 ];
@@ -81,16 +81,15 @@ struct CouplingKernel
           }
 
           real64 const nx = faceNormals( f, 0 ), ny = faceNormals( f, 1 ), nz = faceNormals( f, 2 );
-          // localIndex sgn = er0 == fluidRegionIndex ? 1 : (er1 == fluidRegionIndex ? -1 : 0);
 
           // determine sign to get an outward pointing normal for the fluid -> solid coupling
-          localIndex const e = e0_is_fluid ? e0 : (e1_is_fluid ? e1 : -1);  // fluid element
+          localIndex const e = e0IsFluid ? e0 : (e1IsFluid ? e1 : -1);  // fluid element
           localIndex const sgn = (
             (faceCenters( f, 0 ) - elemCenters( e, 0 )) * nx +
             (faceCenters( f, 1 ) - elemCenters( e, 1 )) * ny +
             (faceCenters( f, 2 ) - elemCenters( e, 2 )) * nz
             ) < 0 ? 1 : -1;
-          printf( "f=%i sgn=%i\n", f, sgn );
+          printf( "e=%i f=%i sgn=%i\n", e, f, sgn );
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
