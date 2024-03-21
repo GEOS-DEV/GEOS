@@ -37,7 +37,7 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
 
   registerWrapper( viewKeyStruct::pressureDependenceConstantString(), &m_pressureDependenceConstant ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( {0.0, 0.0, 0.0} ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Pressure dependence constant for the permeability." );
 

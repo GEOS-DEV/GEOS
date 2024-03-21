@@ -31,7 +31,7 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ConstantPermeabilityUpdate( real64 const pressureDependenceConstant,
+  ConstantPermeabilityUpdate( R1Tensor const pressureDependenceConstant,
                               real64 const maxPermeability, 
                               arrayView1d< real64 const > const & referencePressure,
                               arrayView3d< real64 > const & permeability,
@@ -46,7 +46,7 @@ public:
 
   GEOS_HOST_DEVICE
   void compute( real64 const & deltaPressure,
-                real64 const pressureDependenceConstant,
+                R1Tensor const pressureDependenceConstant,
                 real64 const (&initialPermeability)[3],
                 real64 const maxPermeability,
                 arraySlice1d< real64 > const & permeability,
@@ -79,7 +79,7 @@ public:
 private:
 
   /// Pressure dependence constant
-  real64 m_pressureDependenceConstant;
+  R1Tensor m_pressureDependenceConstant;
 
   real64 m_maxPermeability;
 
@@ -145,7 +145,7 @@ private:
 
   R1Tensor m_permeabilityComponents;
 
-  real64 m_pressureDependenceConstant;
+  R1Tensor m_pressureDependenceConstant;
 
   real64 m_defaultReferencePressure;
 
@@ -160,15 +160,15 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
-                                          real64 const pressureDependenceConstant,
+                                          R1Tensor const pressureDependenceConstant,
                                           real64 const (&initialPermeability)[3],
                                           real64 const maxPermeability,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
-  for( localIndex i=0; i < permeability.size(); i++ )
+  for( localIndex i=1; i < permeability.size(); i++ )
   {
-    real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant * deltaPressure );
+    real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
 
     permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
     dPerm_dPressure[i] = 0;
