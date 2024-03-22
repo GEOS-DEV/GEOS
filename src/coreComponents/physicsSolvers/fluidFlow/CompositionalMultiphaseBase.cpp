@@ -735,13 +735,13 @@ void CompositionalMultiphaseBase::updateEnergy( ElementSubRegionBase & subRegion
   string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
   arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+  arrayView2d< real64 const > rockInternalEnergy = porousMaterial.getInternalEnergy();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac = subRegion.getField< fields::flow::phaseVolumeFraction >();
   string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
   arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens = fluid.phaseDensity();
   arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy = fluid.phaseInternalEnergy();
-  arrayView2d< real64 const > rockInternalEnergy_n = porousMaterial.getInternalEnergy_n();
 
   arrayView1d< real64 > const energy = subRegion.getField< fields::flow::energy >();
 
@@ -749,7 +749,7 @@ void CompositionalMultiphaseBase::updateEnergy( ElementSubRegionBase & subRegion
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
-    energy[ei] = volume[ei] * (1.0 - porosity[ei][0]) * rockInternalEnergy_n[ei][0];
+    energy[ei] = volume[ei] * (1.0 - porosity[ei][0]) * rockInternalEnergy[ei][0];
     for( integer ip = 0; ip < numPhases; ++ip )
     {
       energy[ei] += volume[ei] * porosity[ei][0] * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip] * phaseInternalEnergy[ei][0][ip];
