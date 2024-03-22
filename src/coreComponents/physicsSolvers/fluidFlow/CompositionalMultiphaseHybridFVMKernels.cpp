@@ -671,14 +671,14 @@ AssemblerKernelHelper::
         }
         // no density evaluated at the face center
         real64 faceNormal[3];
-        assert(false);
+        assert( false );
 
         // potential difference
         real64 const phasePotDif = presDif - phaseGravDif;
-        real64 const phaseMobPotDif = LvArray::tensorOps::AiBi<3>(elemPhaseMob[ip],faceNormal) * phasePotDif;
-        real64 const dPhaseMobPotDif_dPres = LvArray::tensorOps::AiBi<3>(dElemPhaseMob[ip][Deriv::dP],faceNormal) * phasePotDif
-                                             + LvArray::tensorOps::AiBi<3>(elemPhaseMob[ip],faceNormal) * (dPresDif_dPres - dPhaseGravDif_dPres);
-        real64 const dPhaseMobPotDif_dFacePres = LvArray::tensorOps::AiBi<3>(elemPhaseMob[ip],faceNormal) * dPresDif_dFacePres;
+        real64 const phaseMobPotDif = LvArray::tensorOps::AiBi< 3 >( elemPhaseMob[ip], faceNormal ) * phasePotDif;
+        real64 const dPhaseMobPotDif_dPres = LvArray::tensorOps::AiBi< 3 >( dElemPhaseMob[ip][Deriv::dP], faceNormal ) * phasePotDif
+                                             + LvArray::tensorOps::AiBi< 3 >( elemPhaseMob[ip], faceNormal ) * (dPresDif_dPres - dPhaseGravDif_dPres);
+        real64 const dPhaseMobPotDif_dFacePres = LvArray::tensorOps::AiBi< 3 >( elemPhaseMob[ip], faceNormal ) * dPresDif_dFacePres;
         for( integer ic = 0; ic < NC; ++ic )
         {
           dPhaseMobPotDif_dCompDens[ic] = dElemPhaseMob[ip][Deriv::dC+ic][0] * phasePotDif
@@ -722,7 +722,7 @@ AssemblerKernelHelper::
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
-                          ElementViewConst< arrayView3d< real64 const, relperm::USD_MOB> > const & phaseMob,
+                          ElementViewConst< arrayView3d< real64 const, relperm::USD_MOB > > const & phaseMob,
                           ElementViewConst< arrayView4d< real64 const, relperm::USD_MOB_DC > > const & dPhaseMob,
                           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,

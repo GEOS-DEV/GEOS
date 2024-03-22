@@ -914,8 +914,8 @@ PerforationKernel::
       // relative permeability
 
       //then for well make is an average of direction as there is no normal avail
-      real64 faceNormal[3] = {.33,.33,.33};
-      real64 const resRelPerm = LvArray::tensorOps::AiBi<3>(resPhaseRelPerm[ip],faceNormal);
+      real64 faceNormal[3] = {.33, .33, .33};
+      real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >( resPhaseRelPerm[ip], faceNormal );
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
@@ -924,7 +924,7 @@ PerforationKernel::
 
       for( integer jp = 0; jp < NP; ++jp )
       {
-        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi<3>(dResPhaseRelPerm_dPhaseVolFrac[ip][jp],faceNormal);
+        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( dResPhaseRelPerm_dPhaseVolFrac[ip][jp], faceNormal );
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < NC; ++jc )
@@ -1012,8 +1012,8 @@ PerforationKernel::
 
       // relative permeability
       //FIXME (jacques) then as no normal avail, make it an average of directions
-      real64 faceNormal[3] = {.33,.33,.33};
-      real64 const resRelPerm = LvArray::tensorOps::AiBi<3>(resPhaseRelPerm[ip],faceNormal);
+      real64 faceNormal[3] = {.33, .33, .33};
+      real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >( resPhaseRelPerm[ip], faceNormal );
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
@@ -1022,7 +1022,7 @@ PerforationKernel::
 
       for( integer jp = 0; jp < NP; ++jp )
       {
-        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi<3>(dResPhaseRelPerm_dPhaseVolFrac[ip][jp],faceNormal);
+        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( dResPhaseRelPerm_dPhaseVolFrac[ip][jp], faceNormal );
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < NC; ++jc )

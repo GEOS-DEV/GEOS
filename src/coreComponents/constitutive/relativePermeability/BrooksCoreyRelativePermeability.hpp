@@ -132,31 +132,32 @@ BrooksCoreyRelativePermeabilityUpdate::
 
   real64 const satScaleInv = 1.0 / m_volFracScale;
 
-    for (int dir = 0; dir < 3; ++dir) {
-
-  for( localIndex ip = 0; ip < numPhases(); ++ip )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
-    real64 const exponent  = m_phaseRelPermExponent[ip][dir];
-    real64 const scale     = m_phaseRelPermMaxValue[ip][dir];
 
-    if( satScaled > 0.0 && satScaled < 1.0 )
+    for( localIndex ip = 0; ip < numPhases(); ++ip )
     {
-      // intermediate value
-      real64 const v = scale * pow( satScaled, exponent - 1.0 );
+      real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
+      real64 const exponent  = m_phaseRelPermExponent[ip][dir];
+      real64 const scale     = m_phaseRelPermMaxValue[ip][dir];
 
-      phaseRelPerm[ip][dir] = v * satScaled;
-      dPhaseRelPerm_dPhaseVolFrac[ip][ip][dir] = v * exponent * satScaleInv;
+      if( satScaled > 0.0 && satScaled < 1.0 )
+      {
+        // intermediate value
+        real64 const v = scale * pow( satScaled, exponent - 1.0 );
+
+        phaseRelPerm[ip][dir] = v * satScaled;
+        dPhaseRelPerm_dPhaseVolFrac[ip][ip][dir] = v * exponent * satScaleInv;
+      }
+      else
+      {
+        phaseRelPerm[ip][dir] = (satScaled <= 0.0) ? 0.0 : scale;
+      }
+
+      phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
+
     }
-    else
-    {
-      phaseRelPerm[ip][dir] = (satScaled <= 0.0) ? 0.0 : scale;
-    }
-
-    phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
-
   }
-    }
 }
 
 } // namespace constitutive
