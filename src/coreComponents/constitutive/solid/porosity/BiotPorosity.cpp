@@ -18,6 +18,7 @@
 
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 
 namespace geos
 {
@@ -31,8 +32,9 @@ namespace constitutive
 BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
-    setInputFlag( InputFlags::REQUIRED ).
+  registerWrapper( viewKeyStruct::defaultGrainBulkModulusString(), &m_defaultGrainBulkModulus ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Grain bulk modulus" );
 
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
@@ -45,9 +47,18 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
+  registerWrapper( viewKeyStruct::defaultBiotCoefficientString(), &m_defaultBiotCoefficient ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Default Biot coefficient. If not specified it will be homogeneous for the material." );
+
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
-  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Biot coefficient" );
+
+  registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Grain Bulk modulus." );
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
@@ -76,8 +87,22 @@ void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
 
+  GEOS_ERROR_IF( (m_defaultBiotCoefficient > -1.0) & (m_defaultGrainBulkModulus > -1.0), 
+                 "Both the defaultBiotCoefficient and the defaultGrainBulkModulus were specified. Only one of them can be specified" ); 
+
+  GEOS_ERROR_IF( (m_defaultBiotCoefficient < 0.0) & (m_defaultGrainBulkModulus < 0.0), 
+                 "It seems that neither the defaultBiotCoefficient and the defaultGrainBulkModulus were not specified. One of them mus be specified" );                  
+
   getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+
+  // set results as array default values
+  getWrapper< array1d< real64 > >( fields::porosity::biotCoefficient::key() ).
+    setApplyDefaultValue( m_defaultBiotCoefficient );
+
+  // set results as array default values
+  getWrapper< array1d< real64 > >( fields::porosity::grainBulkModulus::key() ).
+    setApplyDefaultValue( m_defaultGrainBulkModulus );
 }
 
 void BiotPorosity::initializeState() const
@@ -97,6 +122,28 @@ void BiotPorosity::initializeState() const
       newPorosity[k][q]     = referencePorosity[k];
       porosity_n[k][q]      = referencePorosity[k];
       initialPorosity[k][q] = referencePorosity[k];
+    }
+  } );
+}
+
+void BiotPorosity::initializeBiotCoefficient( arrayView1d< real64 const> const bulkModulus ) const
+{
+  localIndex const numE = numElem();
+
+  arrayView1d< real64 >  biotCoefficient = m_biotCoefficient.toView();
+  arrayView1d< real64 >  grainBulkModulus = m_grainBulkModulus.toView();
+  /// Note: this only works for linearelasticity but since this assumption is made in many other places
+  /// we can do this for now. I will have to be removed / modified so that the biotcoefficient is always computed
+  /// based on the solid model.
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    if ( grainBulkModulus[k] > -1.0 )
+    {
+      biotCoefficient[k] = 1 - bulkModulus[k] / grainBulkModulus[k];
+    }
+    else if ( biotCoefficient[k] > -1.0)
+    {
+      grainBulkModulus[k] = bulkModulus[k] / (1 - grainBulkModulus[k]);
     }
   } );
 }

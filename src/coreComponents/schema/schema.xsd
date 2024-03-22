@@ -3835,12 +3835,14 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
+		<!--defaultBiotCoefficient => Default Biot coefficient. If not specified it will be homogeneous for the material.-->
+		<xsd:attribute name="defaultBiotCoefficient" type="real64" use="required" />
+		<!--defaultGrainBulkModulus => Grain bulk modulus-->
+		<xsd:attribute name="defaultGrainBulkModulus" type="real64" use="required" />
 		<!--defaultPorosityTEC => Default thermal expansion coefficient-->
 		<xsd:attribute name="defaultPorosityTEC" type="real64" default="0" />
 		<!--defaultReferencePorosity => Default value of the reference porosity-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
-		<!--grainBulkModulus => Grain bulk modulus-->
-		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
 		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
 		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

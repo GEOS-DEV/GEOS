@@ -41,7 +41,7 @@
     <!-- SPHINX_POROSITY -->    
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"
       defaultPorosityTEC="3e-7"/>
     <!-- SPHINX_POROSITY_END -->        
