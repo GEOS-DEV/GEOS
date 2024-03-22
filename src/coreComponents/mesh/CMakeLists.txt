@@ -54,6 +54,7 @@ set( mesh_headers
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
+     generators/MeshBlockMappings.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
@@ -127,6 +128,7 @@ set( mesh_sources
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
+     generators/MeshBlockMappings.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
      generators/ParticleMeshGenerator.cpp
