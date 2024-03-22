@@ -1000,5 +1000,5 @@ InternalMeshGenerator::
   }
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshBase, InternalMeshGenerator, string const &, Group * const )
 } /* namespace geos */

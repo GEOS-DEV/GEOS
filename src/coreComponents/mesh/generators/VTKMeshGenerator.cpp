@@ -34,6 +34,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : ExternalMeshGeneratorBase( name, parent )
 {
+  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Path to the mesh file" );
+
   registerWrapper( viewKeyStruct::regionAttributeString(), &m_attributeName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -214,6 +219,6 @@ void VTKMeshGenerator::freeResources()
   m_faceBlockMeshes.clear();
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshBase, VTKMeshGenerator, string const &, Group * const )
 
 } // namespace geos

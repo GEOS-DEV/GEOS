@@ -344,6 +344,6 @@ void ParticleMeshGenerator::importFieldOnArray( Block block,
   GEOS_UNUSED_VAR( wrapper );
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshBase, ParticleMeshGenerator, string const &, Group * const )
 
 } /* namespace geos */

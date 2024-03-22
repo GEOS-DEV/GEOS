@@ -199,7 +199,7 @@ public:
   void clearData();
 
 
-private:
+protected:
 
   /**
    * @brief Check if plotting is enabled for this field
@@ -299,7 +299,7 @@ private:
   void writeUnstructuredGrid( string const & path,
                               vtkUnstructuredGrid * ug ) const;
 
-private:
+protected:
 
   /// Output directory name
   string m_outputDir;

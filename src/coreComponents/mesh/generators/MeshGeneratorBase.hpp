@@ -19,12 +19,9 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+#include "mesh/MeshBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-#include "dataRepository/Group.hpp"
-#include "dataRepository/WrapperBase.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "common/DataTypes.hpp"
 
 
 namespace geos
@@ -41,7 +38,7 @@ class CellBlockManager;
  *  @brief The MeshGeneratorBase class provides an abstract base class implementation for different mesh types.
  *	   The MeshGeneratorBase is the Group specialization for different type of mesh handling.
  */
-class MeshGeneratorBase : public dataRepository::Group
+class MeshGeneratorBase : public MeshBase
 {
 public:
 

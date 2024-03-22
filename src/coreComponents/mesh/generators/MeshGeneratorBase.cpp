@@ -21,7 +21,7 @@ namespace geos
 using namespace dataRepository;
 
 MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent ):
-  Group( name, parent )
+  MeshBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
@@ -94,4 +94,5 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 
   } );
 }
+
 }

@@ -102,6 +102,7 @@ private:
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
+    constexpr static char const * filePathString() { return "file"; }
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
     constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
@@ -120,6 +121,9 @@ private:
   void importSurfacicFieldOnArray( string const & faceBlockName,
                                    string const & meshFieldName,
                                    dataRepository::WrapperBase & wrapper ) const;
+
+  /// Path to the mesh file
+  Path m_filePath;
 
   /**
    * @brief The VTK mesh to be imported into GEOSX.

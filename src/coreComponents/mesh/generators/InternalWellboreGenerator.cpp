@@ -522,5 +522,5 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   }
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshBase, InternalWellboreGenerator, string const &, Group * const )
 } /* namespace geos */

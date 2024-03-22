@@ -30,7 +30,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 /* #undef GEOS_USE_CUDA */
@@ -135,7 +135,7 @@
 /* #undef chai_VERSION */
 
 /// Version information for adiak
-#define adiak_VERSION ..
+/* #undef adiak_VERSION */
 
 /// Version information for caliper
 #define caliper_VERSION 2.10.0
