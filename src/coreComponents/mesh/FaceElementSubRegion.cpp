@@ -385,16 +385,28 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
         continue;
       }
 
+      // Flip the face such that the first (index 0) always comes with a lower index.
+      {
+        localIndex & f0 = elem2dToFaces[e2d][0];
+        localIndex & f1 = elem2dToFaces[e2d][1];
+        bool const flip( f0 > f1 );
+        if( flip )
+        {
+          std::swap( f0, f1 );
+          GEOS_LOG_RANK( "Swapped faces " << f0 << " and " << f1 << " for fracture \"" << fractureName << "\"." );
+        }
+      }
+
       localIndex const f0 = elem2dToFaces[e2d][0];
-      localIndex const er0 = elem2dToElems3d.m_toElementRegion[e2d][0];
-      localIndex const esr0 = elem2dToElems3d.m_toElementSubRegion[e2d][0];
-      localIndex const ei0 = elem2dToElems3d.m_toElementIndex[e2d][0];
+      localIndex & er0 = elem2dToElems3d.m_toElementRegion[e2d][0];
+      localIndex & esr0 = elem2dToElems3d.m_toElementSubRegion[e2d][0];
+      localIndex & ei0 = elem2dToElems3d.m_toElementIndex[e2d][0];
       auto const & faces0 = elem2dToElems3d.getElementRegionManager()->getRegion( er0 ).getSubRegion< CellElementSubRegion >( esr0 ).faceList()[ei0];
 
       localIndex const f1 = elem2dToFaces[e2d][1];
-      localIndex const er1 = elem2dToElems3d.m_toElementRegion[e2d][1];
-      localIndex const esr1 = elem2dToElems3d.m_toElementSubRegion[e2d][1];
-      localIndex const ei1 = elem2dToElems3d.m_toElementIndex[e2d][1];
+      localIndex & er1 = elem2dToElems3d.m_toElementRegion[e2d][1];
+      localIndex & esr1 = elem2dToElems3d.m_toElementSubRegion[e2d][1];
+      localIndex & ei1 = elem2dToElems3d.m_toElementIndex[e2d][1];
       auto const & faces1 = elem2dToElems3d.getElementRegionManager()->getRegion( er1 ).getSubRegion< CellElementSubRegion >( esr1 ).faceList()[ei1];
 
       bool const match00 = std::find( faces0.begin(), faces0.end(), f0 ) != faces0.end();
@@ -407,7 +419,9 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
 
       if( matchCrossed )
       {
-        std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
+        std::swap( er0, er1 );
+        std::swap( esr0, esr1 );
+        std::swap( ei0, ei1 );
       }
       else if( !matchStraight )
       {
