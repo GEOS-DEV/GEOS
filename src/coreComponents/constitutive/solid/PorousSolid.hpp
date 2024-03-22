@@ -358,6 +358,11 @@ public:
   }
 
   /**
+   * @brief initialize the constitutive models fields.
+   */
+  virtual void initializeState() const override final;
+
+  /**
    * @brief Const/non-mutable accessor for density
    * @return Accessor
    */
