@@ -65,12 +65,13 @@ enum class FaceBasedAssemblyKernelFlags
   TotalMassEquation = 1 << 1, // 2
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
-  /// Add more flags like that if needed:
-  // Flag4 = 1 << 3, // 8
-  // Flag5 = 1 << 4, // 16
-  // Flag6 = 1 << 5, // 32
-  // Flag7 = 1 << 6, // 64
-  // Flag8 = 1 << 7  //128
+  /// Flag indicating whether IHU is used or not
+  IHU = 1 << 3 // 8
+        /// Add more flags like that if needed:
+        // Flag5 = 1 << 4, // 16
+        // Flag6 = 1 << 5, // 32
+        // Flag7 = 1 << 6, // 64
+        // Flag8 = 1 << 7  //128
 };
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -575,7 +576,9 @@ public:
             inline
             void computeFlux(localIndex const iconn,
                              StackVariables &stack,
-                             FUNC &&compFluxKernelOp = NoOpFunc{}) const {
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
+  {
+
                 // first, compute the transmissibilities at this face
                 m_stencilWrapper.computeWeights(iconn,
                                                 m_permeability,
@@ -631,6 +634,7 @@ public:
                                          m_gravCoef,
                                          m_phaseMob, m_dPhaseMob,
                                          m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
                                          m_dCompFrac_dCompDens,
                                          m_phaseMassDens, m_dPhaseMassDens,
                                          m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
@@ -638,9 +642,11 @@ public:
                                          potGrad,
                                          phaseFlux,
                                          dPhaseFlux_dP,
-                                         dPhaseFlux_dC);
-                            } else {
-                                isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute<numComp, numFluxSupportPoints>
+                                         dPhaseFlux_dC,
+                            compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );} elseif( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::IHU ) ) {
+                                isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute<numComp, numFluxSupportPoints>
                                         (m_numPhases,
                                          ip,
                                          m_kernelFlags.isSet(FaceBasedAssemblyKernelFlags::CapPressure),
@@ -652,6 +658,7 @@ public:
                                          m_gravCoef,
                                          m_phaseMob, m_dPhaseMob,
                                          m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
                                          m_dCompFrac_dCompDens,
                                          m_phaseMassDens, m_dPhaseMassDens,
                                          m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
@@ -659,18 +666,37 @@ public:
                                          potGrad,
                                          phaseFlux,
                                          dPhaseFlux_dP,
-                                         dPhaseFlux_dC);
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
                             }
-
-                            isothermalCompositionalMultiphaseFVMKernelUtilities::
-                            PhaseComponentFlux::compute<numComp, numFluxSupportPoints>
-                                    (ip,
-                                     k_up,
+          else
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
                                      seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
                                      m_phaseCompFrac, m_dPhaseCompFrac,
                                      m_dCompFrac_dCompDens,
-                                     phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-                                     compFlux, dCompFlux_dP, dCompFlux_dC);
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
 
                             // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
                             // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -680,7 +706,7 @@ public:
 
                         } // loop over phases
 
-                        // populate local flux vector and derivatives
+                        /// populate local flux vector and derivatives
                         for (integer ic = 0; ic < numComp; ++ic) {
                             integer const eqIndex0 = k[0] * numEqn + ic;
                             integer const eqIndex1 = k[1] * numEqn + ic;
@@ -874,6 +900,8 @@ public:
                                                                                                                0)
                                                                                                                kernelFlags.set(
                                                                                                                        FaceBasedAssemblyKernelFlags::C1PPU);
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::IHU );
 
                                                                                                            using kernelType = FaceBasedAssemblyKernel<NUM_COMP, NUM_DOF, STENCILWRAPPER>;
                                                                                                            typename kernelType::CompFlowAccessors compFlowAccessors(
