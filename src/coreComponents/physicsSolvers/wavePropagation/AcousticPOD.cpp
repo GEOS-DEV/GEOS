@@ -1062,7 +1062,9 @@ void AcousticPOD::computeAllSeismoTraces( real64 const time_n,
                                           real64 const dt,
                                           arrayView1d< real32 const > const var_np1,
                                           arrayView1d< real32 const > const var_n,
-                                          arrayView2d< real32 > varAtReceivers )
+                                          arrayView2d< real32 > varAtReceivers,
+					  arrayView1d< real32 > coeffs,
+					  bool add)
 {
 
   /*

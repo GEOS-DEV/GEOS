@@ -264,6 +264,14 @@ DECLARE_FIELD( ForcingRHS,
                WRITE_AND_READ,
                "RHS" );
 
+DECLARE_FIELD( ForcingRHS_fp1,
+               "rhs_fp1",
+               array1d< real32 >,
+	       0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "RHS_fp1" );
+  
 DECLARE_FIELD( AcousticMassVectorFrechet,
                "acousticMassVectorFrechet",
                array1d< real32 >,

@@ -89,8 +89,10 @@ public:
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
+                                       arrayView2d< real32 > varAtReceivers,
+                                       arrayView1d< real32 > coeffs = {},
+                                       bool add = false );
+  
   void computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
 				 arrayView2d< real32 > const massGradientPOD,
 				 arrayView2d< real32 > const dampingPOD,

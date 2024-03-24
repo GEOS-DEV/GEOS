@@ -62,7 +62,6 @@ struct computeMassFrechet
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[ 8 ][ 3 ];
@@ -112,7 +111,6 @@ struct computeStiffnessFrechet
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[ 8 ][ 3 ];
@@ -137,6 +135,65 @@ struct computeStiffnessFrechet
   }
 };
 
+
+struct computeStiffnessFrechetRhs
+{
+
+  /**
+   * @brief Launches the precomputation of the source and receiver terms
+   * @tparam EXEC_POLICY execution policy
+   * @tparam FE_TYPE finite element type
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] numQuadraturePointsPerElem number of quadrature points per element
+   * @param[in] X coordinates of the nodes
+   * @param[in] xLocal coordinates of the nodes
+   * @param[in] stiffnessPOD stiffness POD matrix
+   * @param[in] phi POD basis
+   * @param[in] elemsToNodes map from element to nodes   
+ */
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
+  static void
+  launch( localIndex const size,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+	  arrayView1d< real32 const > const p_n,
+          arrayView1d< real32 > const rhs_fp1,
+	  arrayView1d< real32 > const stiffnessVectorFrechet,
+	  arrayView1d< real32 const > const gradient,
+	  arrayView1d< real32 const > const velocity)
+  {
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      real32 const cst = gradient[k] * pow(velocity[k], 2);
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+      
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
+      {
+	localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+	for( localIndex i = 0; i < 3; ++i )
+        {
+	  xLocal[a][i] = nodeCoords( nodeIndex, i );
+	}
+      }
+
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+	FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
+	{
+	  real32 const localIncrement = val * p_n[elemsToNodes( k, j )];
+	  RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVectorFrechet[elemsToNodes( k, i )], localIncrement );	  
+	  if( cst != 0 )
+	  {
+	    RAJA::atomicAdd< parallelDeviceAtomic >( &rhs_fp1[elemsToNodes( k, i )], localIncrement );
+	    rhs_fp1[elemsToNodes( k, i )] *= -cst;
+	  }
+	} );
+      }
+    } );
+  };
+};
 
 struct PrecomputeSourceAndReceiverKernel
 {
@@ -318,7 +375,6 @@ struct MassMatrixKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( density[e] * pow( velocity[e], 2 ) );
