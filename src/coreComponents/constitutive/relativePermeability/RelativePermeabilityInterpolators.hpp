@@ -59,23 +59,24 @@ struct Baker
            real64 const & goRelPerm,
            real64 const & dGoRelPerm_dOilVolFrac,
            real64 & threePhaseRelPerm,
-           arraySlice1d< real64, relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
+           arraySlice1d< real64, relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
   {
     using PT = RelativePermeabilityBase::PhaseType;
     integer const ipWater = phaseOrder[PT::WATER];
-    integer const ipOil   = phaseOrder[PT::OIL];
-    integer const ipGas   = phaseOrder[PT::GAS];
+    integer const ipOil = phaseOrder[PT::OIL];
+    integer const ipGas = phaseOrder[PT::GAS];
+
 
     // if water phase is immobile, then use the two-phase gas-oil data only
     if( shiftedWaterVolFrac <= 0.0 )
     {
       threePhaseRelPerm = goRelPerm;
-      dThreePhaseRelPerm_dVolFrac[ipOil] = dGoRelPerm_dOilVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipOil]= dGoRelPerm_dOilVolFrac;
     }
     // if gas phase is immobile, then use the two-phase water-oil data only
     else if( gasVolFrac <= 0.0 )
     {
-      threePhaseRelPerm = woRelPerm;
+      threePhaseRelPerm= woRelPerm;
       dThreePhaseRelPerm_dVolFrac[ipOil] = dWoRelPerm_dOilVolFrac;
     }
     // if both the water phase and the gas phase are mobile,
@@ -83,28 +84,28 @@ struct Baker
     else
     {
       real64 const sumRelPerm = (shiftedWaterVolFrac * woRelPerm
-                                 + gasVolFrac   * goRelPerm);
+                                 + gasVolFrac * goRelPerm);
       real64 const dSumRelPerm_dWaterVolFrac = woRelPerm;
-      real64 const dSumRelPerm_dOilVolFrac   = shiftedWaterVolFrac * dWoRelPerm_dOilVolFrac
-                                               + gasVolFrac   * dGoRelPerm_dOilVolFrac;
-      real64 const dSumRelPerm_dGasVolFrac   = goRelPerm;
+      real64 const dSumRelPerm_dOilVolFrac = shiftedWaterVolFrac * dWoRelPerm_dOilVolFrac
+                                             + gasVolFrac * dGoRelPerm_dOilVolFrac;
+      real64 const dSumRelPerm_dGasVolFrac = goRelPerm;
 
 
-      real64 const sumVolFrac    = shiftedWaterVolFrac + gasVolFrac;
-      real64 const sumVolFracInv = 1 / sumVolFrac; // div by 0 handled by the if statement above
+      real64 const sumVolFrac = shiftedWaterVolFrac + gasVolFrac;
+      real64 const sumVolFracInv = 1 / sumVolFrac;                       // div by 0 handled by the if statement above
       real64 const dSumVolFracInv_dWaterVolFrac = -sumVolFracInv * sumVolFracInv;
-      real64 const dSumVolFracInv_dGasVolFrac   = dSumVolFracInv_dWaterVolFrac;
+      real64 const dSumVolFracInv_dGasVolFrac = dSumVolFracInv_dWaterVolFrac;
 
       // three-phase oil rel perm
       threePhaseRelPerm = sumRelPerm * sumVolFracInv;
       // derivative w.r.t. Sw
-      dThreePhaseRelPerm_dVolFrac[ipWater] = dSumRelPerm_dWaterVolFrac * sumVolFracInv
-                                             + sumRelPerm                * dSumVolFracInv_dWaterVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipWater]= dSumRelPerm_dWaterVolFrac * sumVolFracInv
+                                            + sumRelPerm * dSumVolFracInv_dWaterVolFrac;
       // derivative w.r.t. So
-      dThreePhaseRelPerm_dVolFrac[ipOil]   = dSumRelPerm_dOilVolFrac   * sumVolFracInv;
+      dThreePhaseRelPerm_dVolFrac[ipOil]= dSumRelPerm_dOilVolFrac * sumVolFracInv;
       // derivative w.r.t. Sg
-      dThreePhaseRelPerm_dVolFrac[ipGas]   = dSumRelPerm_dGasVolFrac   * sumVolFracInv
-                                             + sumRelPerm                * dSumVolFracInv_dGasVolFrac;
+      dThreePhaseRelPerm_dVolFrac[ipGas]= dSumRelPerm_dGasVolFrac * sumVolFracInv
+                                          + sumRelPerm * dSumVolFracInv_dGasVolFrac;
     }
   }
 
@@ -147,7 +148,7 @@ struct Stone2
                        real64 const & gRelPerm,
                        real64 const & dGRelPerm_dGasVolFrac,
                        real64 & threePhaseRelPerm,
-                       arraySlice1d< real64, relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
+                       arraySlice1d< real64, relperm::USD_RELPERM_DS - 4 > const & dThreePhaseRelPerm_dVolFrac )
   {
 
     using PT = RelativePermeabilityBase::PhaseType;
@@ -191,9 +192,9 @@ struct Stone2
 };
 
 
-} // namespace relpermInterpolators
+}         // namespace relpermInterpolators
 
-} // namespace constitutive
+}     // namespace constitutive
 
 } // namespace geos
 
