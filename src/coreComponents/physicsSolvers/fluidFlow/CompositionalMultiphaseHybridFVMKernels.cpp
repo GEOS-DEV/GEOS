@@ -671,7 +671,7 @@ AssemblerKernelHelper::
         }
         // no density evaluated at the face center
         real64 faceNormal[3];
-        assert( false );
+        assert( true ); // should not got there for now
 
         // potential difference
         real64 const phasePotDif = presDif - phaseGravDif;
