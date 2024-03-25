@@ -82,6 +82,7 @@ public:
                                        real64 ( & dTotalStress_dPressure )[6],
                                        real64 ( & dTotalStress_dTemperature )[6],
                                        DiscretizationOps & stiffness,
+                                       integer const performStressInitialization,
                                        real64 & porosity,
                                        real64 & porosity_n,
                                        real64 & dPorosity_dVolStrain,
@@ -102,19 +103,22 @@ public:
                         stiffness );
 
     // Compute porosity and its derivatives
-    real64 const deltaPressure = pressure - pressure_n;
-    real64 porosityInit;
-    computePorosity( k,
-                     q,
-                     deltaPressure,
-                     deltaTemperatureFromLastStep,
-                     strainIncrement,
-                     porosity,
-                     porosity_n,
-                     porosityInit,
-                     dPorosity_dVolStrain,
-                     dPorosity_dPressure,
-                     dPorosity_dTemperature );
+    if( !performStressInitialization ) // skip update when doing poromechanics initialization
+    {
+      real64 const deltaPressure = pressure - pressure_n;
+      real64 porosityInit;
+      computePorosity( k,
+                       q,
+                       deltaPressure,
+                       deltaTemperatureFromLastStep,
+                       strainIncrement,
+                       porosity,
+                       porosity_n,
+                       porosityInit,
+                       dPorosity_dVolStrain,
+                       dPorosity_dPressure,
+                       dPorosity_dTemperature );
+    }
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
