@@ -19,15 +19,13 @@
 #include "VTKMeshGeneratorTools.hpp"
 
 #include <vtkAppendFilter.h>
-#include <vtkDIYUtilities.h>
 #include <vtkDIYGhostUtilities.h>
+#include <vtkDIYUtilities.h>
 
 // NOTE: do NOT include anything from GEOS here.
 // See full explanation in VTKMeshGeneratorTools.hpp.
 
-namespace geos
-{
-namespace vtk
+namespace geos::vtk
 {
 
 vtkSmartPointer< vtkUnstructuredGrid >
@@ -264,5 +262,4 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   return boxes;
 }
 
-} // namespace vtk
-} // namespace geos
+} // namespace geos::vtk
