@@ -92,6 +92,17 @@ makeSolubilityTables( string const & functionName,
     return { tables[0], tables[1] };
   }
 
+  // If the tables have already been created, then simply retrieve them
+  string const co2TableName = functionName + "_co2Dissolution_table";
+  string const h2oTableName = functionName + "_waterVaporization_table";
+
+  if( functionManager.hasGroup< TableFunction >( co2TableName ) && functionManager.hasGroup< TableFunction >( h2oTableName ))
+  {
+    TableFunction const * co2SolubilityTable = functionManager.getGroupPointer< TableFunction >( co2TableName );
+    TableFunction const * h2oSolubilityTable = functionManager.getGroupPointer< TableFunction >( h2oTableName );
+    return {co2SolubilityTable, h2oSolubilityTable};
+  }
+
   // Initialize the (p,T) coordinates
   constitutive::PVTProps::PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
@@ -178,24 +189,21 @@ makeSolubilityTables( string const & functionName,
       << std::setw( 15 ) << "Pressure (Pa)" << " "
       << std::setw( 15 ) << "Temperature (C)" << " "
       << std::setw( 23 ) << "CO2 solubility (mol/kg)" << " "
-      << std::setw( 15 ) << "H2O solubility (mol/kg)" << " "
-      << "\n";
+      << std::setw( 23 ) << "H2O solubility (mol/kg)" << " ";
     for( integer row = 0; row < LvArray::math::min( maxBad, badCount ); ++row )
     {
       badValueTable
+        << "\n"
         << std::setw( 15 ) << badValues( row, 0 ) << " "
         << std::setw( 15 ) << badValues( row, 1 ) << " "
         << std::setw( 23 ) << badValues( row, 2 ) << " "
-        << std::setw( 15 ) << badValues( row, 3 ) << " "
-        << "\n";
+        << std::setw( 23 ) << badValues( row, 3 ) << " ";
     }
-    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered. These will be truncated to zero.\n Check out report table {} with max {} values",
-                               badCount, badValueTable.str(), maxBad ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: {} negative solubility values encountered. These will be truncated to zero.\nCheck out report table with max {} values.\n{}",
+                               badCount, maxBad, badValueTable.str() ) );
   }
 
-  string const co2TableName = functionName + "_co2Dissolution_table";
   TableFunction const * co2SolubilityTable = makeTable( co2TableName, tableCoords, std::move( co2Solubility ), functionManager );
-  string const h2oTableName = functionName + "_waterVaporization_table";
   TableFunction const * h2oSolubilityTable = makeTable( h2oTableName, tableCoords, std::move( h2oSolubility ), functionManager );
   return {co2SolubilityTable, h2oSolubilityTable};
 }
