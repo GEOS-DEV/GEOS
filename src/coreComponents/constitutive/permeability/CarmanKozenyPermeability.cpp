@@ -16,6 +16,7 @@
  * @file CarmanKozenyPermeability.cpp
  */
 
+#include "PermeabilityFields.hpp"
 #include "CarmanKozenyPermeability.hpp"
 
 namespace geos
@@ -44,7 +45,8 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
     setDefaultValue( m_anisotropy ).
     setDescription( "Anisotropy factors for three permeability components." );
 
-  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
+  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity ).
+  setApplyDefaultValue(0.0);
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -58,7 +60,7 @@ void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group &
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( 0, 1, 3 );
+  m_dPerm_dPorosity.resize( 0, 1, 6 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
