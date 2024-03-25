@@ -297,27 +297,6 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        // acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-
-        // kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        X,
-        //                                                        elemsToNodes,
-        //                                                        velocity,
-        //                                                        density,
-        //                                                        mass );
-
-        // acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-
-        // kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        X,
-        //                                                        elemsToFaces,
-        //                                                        facesToNodes,
-        //                                                        facesDomainBoundaryIndicator,
-        //                                                        freeSurfaceFaceIndicator,
-        //                                                        velocity,
-        //                                                        damping );
-
-
         AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
         kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                           nodeCoords,
