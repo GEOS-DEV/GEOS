@@ -63,7 +63,7 @@ string_view TableCSVFormatter::headerToString() const
   return oss.str();
 }
 
-string_view TableCSVFormatter::dataToString( TableData const & tableData ) const
+string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
   std::vector< std::vector< string > > const rowsValues = tableData.getTableDataRows();
   std::ostringstream oss;
