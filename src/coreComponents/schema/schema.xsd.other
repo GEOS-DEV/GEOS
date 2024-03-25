@@ -1285,6 +1285,7 @@
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
+			<xsd:element name="RegionMultiphaseStatistics" type="RegionMultiphaseStatisticsType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
@@ -1300,6 +1301,7 @@
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="ReactiveFluidDriverType" />
+	<xsd:complexType name="RegionMultiphaseStatisticsType" />
 	<xsd:complexType name="RelpermDriverType" />
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType" />
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType" />

@@ -997,6 +997,13 @@ Element: Rectangle
 .. include:: ../../coreComponents/schema/docs/Rectangle.rst
 
 
+.. _XML_RegionMultiphaseStatistics:
+
+Element: RegionMultiphaseStatistics
+===================================
+.. include:: ../../coreComponents/schema/docs/RegionMultiphaseStatistics.rst
+
+
 .. _XML_RelpermDriver:
 
 Element: RelpermDriver
@@ -2420,6 +2427,13 @@ Datastructure: ReactiveFluidDriver
 Datastructure: Rectangle
 ========================
 .. include:: ../../coreComponents/schema/docs/Rectangle_other.rst
+
+
+.. _DATASTRUCTURE_RegionMultiphaseStatistics:
+
+Datastructure: RegionMultiphaseStatistics
+=========================================
+.. include:: ../../coreComponents/schema/docs/RegionMultiphaseStatistics_other.rst
 
 
 .. _DATASTRUCTURE_RelpermDriver:
