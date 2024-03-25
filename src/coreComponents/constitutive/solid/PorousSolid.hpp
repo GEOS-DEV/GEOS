@@ -119,6 +119,13 @@ public:
                        dPorosity_dPressure,
                        dPorosity_dTemperature );
     }
+    else
+    {
+      porosity = porosity_n;
+      dPorosity_dVolStrain = 0.0;
+      dPorosity_dPressure = 0.0;
+      dPorosity_dTemperature = 0.0;
+    }
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
