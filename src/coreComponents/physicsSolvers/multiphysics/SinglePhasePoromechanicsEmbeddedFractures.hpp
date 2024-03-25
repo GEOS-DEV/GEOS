@@ -21,11 +21,12 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >
 {
 public:
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
@@ -38,6 +39,10 @@ public:
    * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsEmbeddedFractures"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -84,6 +89,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void
@@ -120,15 +126,11 @@ public:
 
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
-    constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
-
     constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
   };
 
 
 protected:
-
-  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -142,11 +144,8 @@ private:
                          arrayView1d< string const > const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs );
-
-  string m_fracturesSolverName;
-
-  SolidMechanicsEmbeddedFractures * m_fracturesSolver;
+                         arrayView1d< real64 > const & localRhs,
+                         real64 const & dt );
 
 };
 
@@ -159,14 +158,15 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                                                   arrayView1d< string const > const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                  arrayView1d< real64 > const & localRhs )
+                                                                  arrayView1d< real64 > const & localRhs,
+                                                                  real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
 
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
-  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( solidMechanicsSolver()->getUniqueFractureRegionName() );
   EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
@@ -182,6 +182,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 flowDofKey,
                                 FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -192,7 +193,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                     CONSTITUTIVE_BASE,
                                     CellElementSubRegion >( mesh,
                                                             regionNames,
-                                                            m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                            solidMechanicsSolver()->getDiscretizationName(),
                                                             materialNamesString,
                                                             kernelWrapper );
 
@@ -203,6 +204,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                          dofManager.rankOffset(),
                                          localMatrix,
                                          localRhs,
+                                         dt,
                                          gravityVectorData,
                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
@@ -211,7 +213,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                   CONSTITUTIVE_BASE,
                                   CellElementSubRegion >( mesh,
                                                           regionNames,
-                                                          m_fracturesSolver->getSolidSolver()->getDiscretizationName(),
+                                                          solidMechanicsSolver()->getDiscretizationName(),
                                                           materialNamesString,
                                                           EFEMkernelWrapper );
 

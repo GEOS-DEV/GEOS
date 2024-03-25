@@ -76,6 +76,7 @@ SiloOutput::SiloOutput( string const & name,
     "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
 
   registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
 
@@ -91,18 +92,23 @@ void SiloOutput::postProcessInput()
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
                  GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                           catalogName(), getDataContext(),
+                           onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless"
+                        " of the `plotLevel` specified by the user. No other field will be output.",
+                        catalogName(), getDataContext(),
+                        std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with "
+                        "`plotLevel` smaller or equal to {}.",
+                        catalogName(), getDataContext(), std::to_string( m_fieldNames.size() ),
+                        fieldNamesString, m_plotLevel ) );
 }
 
 

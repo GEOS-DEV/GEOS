@@ -98,7 +98,7 @@ public:
   arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 
   /// Flag to disable inelasticity
-  const bool & m_disableInelasticity;
+  const bool m_disableInelasticity;
 
   /**
    * @brief Get bulkModulus
@@ -557,11 +557,13 @@ public:
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
                                                                                                                 // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
-                                                                                                                              // thermal
-                                                                                                                              // expansion
-                                                                                                                              // coefficient
-                                                                                                                              // key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
+                                                                                                                   // drained
+                                                                                                                   // linear
+                                                                                                                   // thermal
+                                                                                                                   // expansion
+                                                                                                                   // coefficient
+                                                                                                                   // key
   };
 
   /**
@@ -697,10 +699,6 @@ protected:
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
-
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive

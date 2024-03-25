@@ -21,6 +21,7 @@
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include <vtkDataSet.h>
 
@@ -86,7 +87,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int >  const & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

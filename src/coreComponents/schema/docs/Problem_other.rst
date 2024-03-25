@@ -15,6 +15,7 @@ Mesh                node :ref:`DATASTRUCTURE_Mesh`
 NumericalMethods    node :ref:`DATASTRUCTURE_NumericalMethods`    
 Outputs             node :ref:`DATASTRUCTURE_Outputs`             
 Parameters          node :ref:`DATASTRUCTURE_Parameters`          
+ParticleRegions     node :ref:`DATASTRUCTURE_ParticleRegions`     
 Solvers             node :ref:`DATASTRUCTURE_Solvers`             
 Tasks               node :ref:`DATASTRUCTURE_Tasks`               
 commandLine         node :ref:`DATASTRUCTURE_commandLine`         
