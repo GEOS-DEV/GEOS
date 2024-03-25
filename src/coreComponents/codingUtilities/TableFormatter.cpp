@@ -46,7 +46,7 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout )
   m_tableLayout = tableLayout;
 }
 
-string_view TableCSVFormatter::headerToString() const
+string TableCSVFormatter::headerToString() const
 {
   std::stringstream oss;
   constexpr string_view separator = ",";

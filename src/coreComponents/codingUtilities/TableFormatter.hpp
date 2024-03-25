@@ -78,7 +78,7 @@ public:
   /**
    * @return The string with all column names.
    */
-  string_view headerToString() const;
+  string headerToString() const;
 
 };
 
