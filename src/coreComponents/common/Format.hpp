@@ -95,7 +95,7 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
 // but later removed:
 // https://github.com/fmtlib/fmt/commit/466e0650ec2d153d255a40ec230eb77d7f1c3334
 // This workaround bypasse the check for a const formatter whenever the foramt context GEOS_FMT_NS::format_context is used
-#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND 
+#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
 template< >
 constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::format_context >( ... ) -> bool
 {
@@ -115,6 +115,6 @@ concept has_formatter = requires ( T& v, std::format_context ctx )
 {
   std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
 };
-#endif 
+#endif
 
 #endif //GEOS_COMMON_FORMAT_HPP_
