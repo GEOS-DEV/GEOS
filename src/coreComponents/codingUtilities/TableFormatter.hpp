@@ -73,12 +73,12 @@ public:
    * @param tableData The 1D table data.
    * @return The CSV string representation of the table data.
    */
-  string_view dataToString( TableData const & tableData ) const;
+  string dataToString( TableData const & tableData ) const;
 
   /**
    * @return The string with all column names.
    */
-  string_view headerToString() const;
+  string headerToString() const;
 
 };
 
