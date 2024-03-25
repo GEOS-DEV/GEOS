@@ -26,6 +26,9 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
+#include "ElasticTimeSchemeSEMKernel.hpp"
+#include "ElasticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -276,9 +279,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       using FE_TYPE = TYPEOFREF( finiteElement );
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-      elasticWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute3DSourceAndReceiverConstantsWithDAS
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
         X,
@@ -400,27 +403,27 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToNodes,
-                                                               density,
-                                                               mass );
+        ElasticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                          nodeCoords,
+                                                                          elemsToNodes,
+                                                                          density,
+                                                                          mass );
 
-        elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToFaces,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               faceNormal,
-                                                               density,
-                                                               velocityVp,
-                                                               velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+        ElasticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
+        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeCoords,
+                                                                             elemsToFaces,
+                                                                             facesToNodes,
+                                                                             facesDomainBoundaryIndicator,
+                                                                             freeSurfaceFaceIndicator,
+                                                                             faceNormal,
+                                                                             density,
+                                                                             velocityVp,
+                                                                             velocityVs,
+                                                                             dampingx,
+                                                                             dampingy,
+                                                                             dampingz );
       } );
     } );
   } );
@@ -575,30 +578,11 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
-  real64 const dt2 = pow( dt, 2 );
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-  {
-    localIndex const a = solverTargetNodesSet[n];
-    if( freeSurfaceNodeIndicator[a] != 1 )
-    {
-      ux_np1[a] = ux_n[a];
-      ux_np1[a] *= 2.0*mass[a];
-      ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
-      ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-      ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
-      uy_np1[a] = uy_n[a];
-      uy_np1[a] *= 2.0*mass[a];
-      uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
-      uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-      uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
-      uz_np1[a] = uz_n[a];
-      uz_np1[a] *= 2.0*mass[a];
-      uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
-      uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-      uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
-    }
-  } );
+  ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
+                                  mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
+                                  stiffnessVectorz, rhsx, rhsy, rhsz, freeSurfaceNodeIndicator,
+                                  solverTargetNodesSet );
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
