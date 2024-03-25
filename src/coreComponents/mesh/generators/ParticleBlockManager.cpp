@@ -14,10 +14,6 @@
 
 #include "ParticleBlockManager.hpp"
 
-#include "mesh/generators/CellBlockUtilities.hpp"
-#include "mesh/utilities/MeshMapUtilities.hpp"
-
-#include <algorithm>
 
 namespace geos
 {
