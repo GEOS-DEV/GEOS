@@ -265,9 +265,7 @@ static void addUmpireHighWaterMarks()
   }
 
   // Loop over the allocators.
-  constexpr int MAX_NAME_LENGTH = 100;
-  char allocatorNameBuffer[ MAX_NAME_LENGTH + 1 ];
-  char allocatorNameMinCharsBuffer[ MAX_NAME_LENGTH + 1 ];
+  unsigned MAX_NAME_LENGTH = 100;
 
   TableData tableData;
   for( string const & allocatorName : allocatorNames )
@@ -277,18 +275,16 @@ static void addUmpireHighWaterMarks()
       continue;
 
     GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
-
-    memset( allocatorNameBuffer, '\0', sizeof( allocatorNameBuffer ) );
-    memcpy( allocatorNameBuffer, allocatorName.data(), allocatorName.size() );
-
-    memset( allocatorNameMinCharsBuffer, '\0', sizeof( allocatorNameMinCharsBuffer ) );
+    string allocatorNameFixedSize = allocatorName;
+    allocatorNameFixedSize.resize( MAX_NAME_LENGTH, '\0' );
+    string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
 
     // Make sure that each rank is looking at the same allocator.
-    MpiWrapper::allReduce( allocatorNameBuffer, allocatorNameMinCharsBuffer, MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
-    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameBuffer << "allocatorNameMinCharsBuffer" << allocatorNameMinCharsBuffer << std::endl );
-    if( strcmp( allocatorNameBuffer, allocatorNameMinCharsBuffer ) != 0 )
+    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
+    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameFixedSize << "allocatorNameMinCharsBuffer" << allocatorNameMinChars << std::endl );
+    if( allocatorNameFixedSize != allocatorNameMinChars )
     {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameBuffer << ", cannot compute high water mark." );
+      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
       continue;
     }
 
@@ -296,18 +292,14 @@ static void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
 
-    string minMarkValue = GEOS_FMT( "{} ({}%)",
-                                    LvArray::system::calculateSize( MpiWrapper::min( mark ) ),
-                                    ( MpiWrapper::sum( mark ) / MpiWrapper::min( mark ) ) * 100 );
-    string maxMarkValue = GEOS_FMT( "{} ({}%)",
-                                    LvArray::system::calculateSize( MpiWrapper::max( mark ) ),
-                                    ( MpiWrapper::sum( mark ) / MpiWrapper::max( mark ) )  * 100 );
-    string avgMarkValue = GEOS_FMT( "{} ({}%)",
-                                    LvArray::system::calculateSize( MpiWrapper::max( mark ) ),
-                                    ( MpiWrapper::sum( mark ) / MpiWrapper::commSize() )  * 100 );
-    string sumMarkValue = GEOS_FMT( "{} ({}%)",
-                                    LvArray::system::calculateSize( MpiWrapper::sum( mark ) ),
-                                    ( MpiWrapper::sum( mark ) / MpiWrapper::sum( mark ) ) * 100 );
+    string const minMarkValue = GEOS_FMT( "{} ({}%)",
+                                          LvArray::system::calculateSize( MpiWrapper::min( mark ) ) );
+    string const maxMarkValue = GEOS_FMT( "{} ({}%)",
+                                          LvArray::system::calculateSize( MpiWrapper::max( mark ) ));
+    string const avgMarkValue = GEOS_FMT( "{} ({}%)",
+                                          LvArray::system::calculateSize( MpiWrapper::max( mark ) ) );
+    string const sumMarkValue = GEOS_FMT( "{} ({}%)",
+                                          LvArray::system::calculateSize( MpiWrapper::sum( mark ) ) );
 
     tableData.addRow( allocatorName,
                       minMarkValue,
@@ -319,8 +311,8 @@ static void addUmpireHighWaterMarks()
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
-  TableLayout memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum (GB/%)\nover ranks" } );
-  TableTextFormatter memoryStatLog( memoryStatLayout );
+  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum (GB/%)\nover ranks" } );
+  TableTextFormatter const memoryStatLog( memoryStatLayout );
   GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
 
   // GEOS_LOG_RANK_0( allocatorLog.ToString( tableData )); // prettier-ignore
