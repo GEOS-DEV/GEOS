@@ -307,7 +307,7 @@ static void addUmpireHighWaterMarks()
                       avgMarkValue,
                       sumMarkValue );
 
-    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark ); 
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
