@@ -542,11 +542,11 @@ To do this you can run this command in the build directory:
   make ats_rebaseline_failed
 
 
-Otherwise, you can run the following command, and select whether tests should be rebaselined one at a time via a ``[y/n]`` prompt.
+Otherwise, you can run the following command, and select whether tests should be rebaselined one at a time via a ``[y/n]`` prompt:
 
 .. code-block:: sh
 
-  make ats_rebaseline_failed
+  make ats_rebaseline
 
 
 Make sure to only answer ``y`` to the tests that you actually want to rebaseline, otherwise correct baselines for already passing tests will still be updated and bloat your pull request and repository size.
