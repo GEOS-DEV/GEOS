@@ -203,8 +203,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       }
     } );
     //elemsToFaces.freeOnDevice();
-    //sourceCoordinates.freeOnDevice();
-    //receiverCoordinates.freeOnDevice();
+    m_sourceCoordinates.freeOnDevice();
+    m_receiverCoordinates.freeOnDevice();
   } );
 }
 
@@ -320,7 +320,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         //velocity.freeOnDevice();
         //facesToNodes.freeOnDevice();
       } );
+      //elementSubRegion.getField< acousticfields::AcousticVelocity >().freeOnDevice();
     } );
+    faceManager.getDomainBoundaryIndicator().freeOnDevice();
+    faceManager.getField< acousticfields::AcousticFreeSurfaceFaceIndicator >().freeOnDevice();
+    //faceManager.nodeList().freeOnDevice(); 
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
