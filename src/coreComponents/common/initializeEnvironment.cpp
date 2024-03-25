@@ -292,13 +292,13 @@ static void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
 
-    string const minMarkValue = GEOS_FMT( "{} ({}%)",
+    string const minMarkValue = GEOS_FMT( "{} ",
                                           LvArray::system::calculateSize( MpiWrapper::min( mark ) ) );
-    string const maxMarkValue = GEOS_FMT( "{} ({}%)",
+    string const maxMarkValue = GEOS_FMT( "{} ",
                                           LvArray::system::calculateSize( MpiWrapper::max( mark ) ));
-    string const avgMarkValue = GEOS_FMT( "{} ({}%)",
+    string const avgMarkValue = GEOS_FMT( "{} ",
                                           LvArray::system::calculateSize( MpiWrapper::max( mark ) ) );
-    string const sumMarkValue = GEOS_FMT( "{} ({}%)",
+    string const sumMarkValue = GEOS_FMT( "{} ",
                                           LvArray::system::calculateSize( MpiWrapper::sum( mark ) ) );
 
     tableData.addRow( allocatorName,
@@ -307,12 +307,13 @@ static void addUmpireHighWaterMarks()
                       avgMarkValue,
                       sumMarkValue );
 
-    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark ); 
+    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
-  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum (GB/%)\nover ranks" } );
+  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum(GB/%)\nover ranks" } ); // prettier-ignore
   TableTextFormatter const memoryStatLog( memoryStatLayout );
+
   GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
 
   // GEOS_LOG_RANK_0( allocatorLog.ToString( tableData )); // prettier-ignore
