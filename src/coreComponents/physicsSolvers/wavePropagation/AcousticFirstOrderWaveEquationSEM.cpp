@@ -242,6 +242,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         m_timeSourceDelay,
         m_rickerOrder );
     } );
+    //elemsToFaces.freeOnDevice();
+    m_sourceCoordinates.freeOnDevice();
+    m_receiverCoordinates.freeOnDevice();
   } );
 
 }
