@@ -103,25 +103,24 @@ public:
                         stiffness );
 
     // Compute porosity and its derivatives
-    if( !performStressInitialization ) // skip update when doing poromechanics initialization
+    real64 const deltaPressure = pressure - pressure_n;
+    real64 porosityInit;
+    computePorosity( k,
+                     q,
+                     deltaPressure,
+                     deltaTemperatureFromLastStep,
+                     strainIncrement,
+                     porosity,
+                     porosity_n,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure,
+                     dPorosity_dTemperature );
+
+    // skip porosity update when doing poromechanics initialization
+    if( performStressInitialization )
     {
-      real64 const deltaPressure = pressure - pressure_n;
-      real64 porosityInit;
-      computePorosity( k,
-                       q,
-                       deltaPressure,
-                       deltaTemperatureFromLastStep,
-                       strainIncrement,
-                       porosity,
-                       porosity_n,
-                       porosityInit,
-                       dPorosity_dVolStrain,
-                       dPorosity_dPressure,
-                       dPorosity_dTemperature );
-    }
-    else
-    {
-      porosity = porosity_n;
+      porosity = porosityInit;
       dPorosity_dVolStrain = 0.0;
       dPorosity_dPressure = 0.0;
       dPorosity_dTemperature = 0.0;
