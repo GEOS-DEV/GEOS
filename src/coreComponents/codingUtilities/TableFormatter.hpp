@@ -80,6 +80,13 @@ public:
    */
   string headerToString() const;
 
+  /**
+   * @brief Convert the TableData to a table string.
+   * @param tableData The TableData to convert.
+   * @return The table string representation of the TableData.
+   */
+  string toString( TableData const & tableData ) const;
+
 };
 
 class TableTextFormatter : public TableFormatter

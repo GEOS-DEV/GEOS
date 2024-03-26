@@ -106,7 +106,7 @@ void TableData::addRow( Args const &... args )
     m_cellsValue.push_back( cellValue );
   } (), ...);
 
-  m_rows.push_back( m_cellsValue );
+  addRow( m_cellsValue );
 }
 
 template< typename T >

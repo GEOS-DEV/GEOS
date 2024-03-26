@@ -49,7 +49,7 @@ TableCSVFormatter::TableCSVFormatter( TableLayout const & tableLayout )
 string TableCSVFormatter::headerToString() const
 {
   std::stringstream oss;
-  constexpr string_view separator = ",";
+  static constexpr string_view separator = ",";
 
   for( std::size_t idxColumn = 0; idxColumn < m_tableLayout.getColumns().size(); ++idxColumn )
   {
@@ -81,6 +81,11 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
     oss << "\n";
   }
   return oss.str();
+}
+
+string TableCSVFormatter::toString( TableData const & tableData ) const
+{
+  return headerToString() + dataToString( tableData );
 }
 
 ///////////////////////////////////////////////////////////////////////
