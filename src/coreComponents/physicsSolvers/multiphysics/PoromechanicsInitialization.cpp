@@ -86,11 +86,6 @@ PoromechanicsInitialization( const string & name,
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the poromechanics solver" );
-
-  registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
-    setApplyDefaultValue( true ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -127,18 +122,17 @@ execute( real64 const time_n,
          real64 const eventProgress,
          DomainPartition & domain )
 {
-  if( m_performStressInitialization )
-  {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
-                                        getName(), time_n, m_poromechanicsSolverName ) );
-    m_poromechanicsSolver->setStressInitialization( true );
-  }
-  else
-  {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
-                                        getName(), time_n, m_poromechanicsSolverName ) );
-    m_poromechanicsSolver->setStressInitialization( false );
-  }
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
+                                      getName(), time_n, m_poromechanicsSolverName ) );
+  m_poromechanicsSolver->setStressInitialization( true );
+
+  m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+
+  m_poromechanicsSolver->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
+                                      getName(), time_n, m_poromechanicsSolverName ) );
+  m_poromechanicsSolver->setStressInitialization( false );
 
   m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 

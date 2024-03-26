@@ -80,8 +80,6 @@ private:
   {
     /// String for the poromechanics solver name
     constexpr static char const * poromechanicsSolverNameString() { return "poromechanicsSolverName"; }
-    /// String for the solver configuration
-    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
   };
 
 
@@ -92,9 +90,6 @@ private:
 
   /// Pointer to the multiphase poromechanics solver
   POROMECHANICS_SOLVER * m_poromechanicsSolver;
-
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
 
   SolidMechanicsStateReset m_solidMechanicsStateResetTask;
 
