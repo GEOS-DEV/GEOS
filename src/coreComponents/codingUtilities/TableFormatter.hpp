@@ -73,12 +73,19 @@ public:
    * @param tableData The 1D table data.
    * @return The CSV string representation of the table data.
    */
-  string_view dataToString( TableData const & tableData ) const;
+  string dataToString( TableData const & tableData ) const;
 
   /**
    * @return The string with all column names.
    */
-  string_view headerToString() const;
+  string headerToString() const;
+
+  /**
+   * @brief Convert the TableData to a table string.
+   * @param tableData The TableData to convert.
+   * @return The table string representation of the TableData.
+   */
+  string toString( TableData const & tableData ) const;
 
 };
 
