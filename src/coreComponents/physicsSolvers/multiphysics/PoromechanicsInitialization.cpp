@@ -131,7 +131,7 @@ execute( real64 const time_n,
   m_poromechanicsSolver->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
-                                      getName(), time_n, m_poromechanicsSolverName ) );
+                                      getName(), time_n + dt, m_poromechanicsSolverName ) );
   m_poromechanicsSolver->setStressInitialization( false );
 
   m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
