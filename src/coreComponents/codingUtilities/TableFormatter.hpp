@@ -31,11 +31,6 @@ class TableFormatter
 public:
 
   /**
-   * @brief Constructor by default
-   */
-  TableFormatter() = default;
-
-  /**
    * @brief Construct a new Table Formatter from a tableLayout
    * @param tableLayout Contain all column names and optionnaly the table title
    */
@@ -57,10 +52,6 @@ protected:
 class TableCSVFormatter : public TableFormatter
 {
 public:
-  /**
-   * @brief Constructor by default
-   */
-  TableCSVFormatter() = default;
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
