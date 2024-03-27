@@ -130,6 +130,8 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
 
+  checkSubRegionRegistering( cellBlockManager );
+
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
   // For the moment, those mappings only point to cell block indices.
   // The following makes use of cell block to subregions mappings to finalize the surfaces information.
@@ -151,6 +153,78 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
                                                                            relation );
   } );
 
+}
+void ElementRegionManager::checkSubRegionRegistering( CellBlockManagerABC const & cellBlockManager )
+{
+  Group const & cellBlocks = cellBlockManager.getCellBlocks();
+  //std::map< string, CellElementSubRegion const * > cellBlocksSubRegion;
+
+  // region that contain a cellBlock (name)
+  std::map< string, CellElementRegion const * > cellBlocksRegion;
+
+  // Let's find out which CellElementSubRegion is using each source cellBlock.
+  forElementRegions< CellElementRegion >( [&]( CellElementRegion & region ) {
+    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion ) {
+      string const & subRegionName = subRegion.getName();
+
+      // if no region already referenced the cellBlock
+      if( cellBlocksRegion.find( subRegionName ) == cellBlocksRegion.end() )
+      {
+        cellBlocksRegion[ subRegionName ] = &region;
+      }
+      else
+      {
+        CellElementRegion const & otherRegion = *cellBlocksRegion[ subRegionName ];
+        auto const & a = otherRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() );
+        auto const & w = otherRegion.getWrapperBase( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() );
+        GEOS_LOG( w.getPath() <<" : "<<typeid(w.getDataContext()).name()<<" -> "<<typeid(a).name());
+        // For now, multiple regions per cell is not supported (by ElementRegionManager::getCellBlockToSubRegionMap())
+        // TODO: refactor the CellElementRegion & Mesh classes so regions are mapped to cellblocks IN the mesh (and potencially
+        // to multiple regions per cell). So, for external meshes, the cellblocks would no longer be exposed to the final user.
+        GEOS_THROW( GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}\n- {}",
+                              subRegionName, catalogName(),
+                              otherRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
+                              region.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) ),
+                    InputError );
+      }
+    } );
+  } );
+
+  // checking if cellBlocks has not been referenced, and reporting which are missing.
+  std::vector< string > orphanCellBlocksNames;
+  std::set< string > orphanAttributeValues;
+  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
+  {
+    string const cbName = cellBlock.getName();
+    if( cellBlocksRegion.find( cbName ) == cellBlocksRegion.end() )
+    {
+      orphanCellBlocksNames.push_back( cbName );
+      string cbAttributeValue = CellElementRegion::getCellBlockAttributeValue( cbName );
+      if( !cbAttributeValue.empty() )
+      {
+        orphanAttributeValues.insert( cbAttributeValue );
+      }
+    }
+  } );
+  if( !orphanCellBlocksNames.empty() )
+  {
+    std::ostringstream oss;
+    if( !orphanAttributeValues.empty())
+    {
+      oss << GEOS_FMT( "The {} {{ {} }} has not been referenced in any region.\n",
+                       CellElementRegion::viewKeyStruct::cellBlockAttributeValuesString(),
+                       stringutilities::join( orphanAttributeValues, ", " ));
+    }
+    oss << GEOS_FMT( "The following {} has not been referenced in any region: {{ {} }}.\n",
+                     CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
+                     stringutilities::join( orphanCellBlocksNames, ", " ));
+    oss << GEOS_FMT( "Please add it in an existing {} (through {}, {} or {}), or consider creating a new one to describe your model.",
+                     CellElementRegion::catalogName(),
+                     CellElementRegion::viewKeyStruct::cellBlockAttributeValuesString(),
+                     CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
+                     CellElementRegion::viewKeyStruct::cellBlockMatchPatternsString() );
+    GEOS_THROW( oss.str(), InputError );
+  }
 }
 
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
