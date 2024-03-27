@@ -138,8 +138,11 @@ set( physicsSolvers_headers
      wavePropagation/AcousticMatricesSEMKernel.hpp
      wavePropagation/AcousticPMLSEMKernel.hpp
      wavePropagation/ElasticFields.hpp
+     wavePropagation/ElasticVTIFields.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticVTIWaveEquationSEM.hpp
+     wavePropagation/ElasticVTIWaveEquationSEMKernel.hpp
      wavePropagation/ElasticTimeSchemeSEMKernel.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
@@ -212,6 +215,7 @@ set( physicsSolvers_sources
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
+     wavePropagation/ElasticVTIWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticVTIWaveEquationSEM.cpp
