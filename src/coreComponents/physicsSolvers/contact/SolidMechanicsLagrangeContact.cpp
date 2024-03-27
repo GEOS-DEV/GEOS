@@ -684,7 +684,11 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   string const & dofKey = dofManager.getKey( contact::traction::key() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  real64 contactResidual = 0.0;
+  real64 stickResidual = 0.0;
+  real64 slipResidual = 0.0;
+  real64 slipNormalizer = 0.0;
+  real64 openResidual = 0.0;
+  real64 openNormalizer = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -695,43 +699,77 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
-      RAJA::ReduceSum< parallelHostReduce, real64 > localSum( 0.0 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > slipSum( 0.0 );
+      RAJA::ReduceMax< parallelHostReduce, real64 > slipMax( 0.0 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > openSum( 0.0 );
+      RAJA::ReduceMax< parallelHostReduce, real64 > openMax( 0.0 );
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const k )
       {
         if( ghostRank[k] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
-          for( localIndex dim = 0; dim < 3; ++dim )
+          switch( fractureState[k] )
           {
-            localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+            case contact::FractureState::Stick:
+            {
+              for( localIndex dim = 0; dim < 3; ++dim )
+              {
+                real64 const norm = localRhs[localRow + dim] / area[k];
+                stickSum += norm * norm;
+              }
+              break;
+            }
+            case contact::FractureState::Slip:
+            case contact::FractureState::NewSlip:
+            {
+              for( localIndex dim = 0; dim < 3; ++dim )
+              {
+                slipSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+                slipMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+              }
+              break;
+            }
+            case contact::FractureState::Open:
+            {
+              for( localIndex dim = 0; dim < 3; ++dim )
+              {
+                openSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+                openMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+              }
+              break;
+            }
           }
         }
       } );
-      contactResidual += localSum.get();
+      stickResidual += stickSum.get();
+      slipResidual += slipSum.get();
+      slipNormalizer = LvArray::math::max(slipNormalizer, slipMax.get());
+      openResidual += openSum.get();
+      openNormalizer = LvArray::math::max(openNormalizer, openMax.get());
     } );
   } );
 
-  MpiWrapper::sum( contactResidual );
+  MpiWrapper::sum( stickResidual );
+  stickResidual = sqrt(stickResidual);
 
-  contactResidual = sqrt( contactResidual );
+  MpiWrapper::sum( slipResidual );
+  MpiWrapper::max( slipNormalizer );
+  slipResidual = sqrt( slipResidual ) / ( slipNormalizer + 1.0 );
 
-  if( this->m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    this->m_initialContactResidual = contactResidual;
-    contactResidual = 1.0;
-  }
-  else
-  {
-    contactResidual /= (this->m_initialContactResidual + 1.0);
-  }
+  MpiWrapper::sum( openResidual );
+  MpiWrapper::max( openNormalizer );
+  openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOS_FMT( "        ( Rtraction ) = ( {:15.6e} )", contactResidual );
+    std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
   }
 
-  return contactResidual;
+  return sqrt(stickResidual*stickResidual + slipResidual*slipResidual + openResidual*openResidual);
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )

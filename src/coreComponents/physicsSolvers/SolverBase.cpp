@@ -897,7 +897,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
-        && residualNorm > lastResidual && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
+        && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
+        && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
     {
       bool lineSearchSuccess = false;
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )

@@ -60,6 +60,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Iteration when line search starts." );
 
+  registerWrapper( viewKeysStruct::lineSearchResidualFactorString(), &m_lineSearchResidualFactor ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor to determine residual increase." );
+
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
