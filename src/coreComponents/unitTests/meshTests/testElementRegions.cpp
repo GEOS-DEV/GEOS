@@ -1,3 +1,17 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 // TPL includes
 #include <gtest/gtest.h>
 
@@ -167,31 +181,45 @@ TestCase const vtkImportRegionSyntaxCases[] = {
   { // should not crash
     "regular region list", true, { },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
+      <CellElementRegion name="underburden" materialList="{ }" cellBlockAttributeValues="{ 2, 4 }" />
     )xml"
   },
-  { // mentioning the same region in multiple cellBlocks (1 in overburden & reservoir)
-    "multiple region 1", false, { "1", "overburden", "reservoir" },
+  { // mentioning the same region in multiple cellBlocks (6 in overburden & reservoir)
+    "multiple region 1", false, { "6", "overburden", "reservoir" },
     R"xml(
-      <CellElementRegion name="overburden" materialList="{ }" cellBlocks="{ 3, 5, 1 }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
+      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5, 6 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
+      <CellElementRegion name="underburden" materialList="{ }" cellBlockAttributeValues="{ 2, 4 }" />
     )xml"
   },
   { // should not crash
-    "regular all keyword", true, { },
+    "regular * wildcard", true, { },
     R"xml(
-      <CellElementRegion name="everything" materialList="{ }" cellBlocks="{ all }" />
+      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" />
     )xml"
   },
-  { // mentioning the same regions in multiple cellBlocks (because of "all")
-    "all keywork + region list", false, { "everything" },
+  { // mentioning the same regions in multiple cellBlocks (because of "*")
+    "* wildcard + region list", false, { "everything" },
     R"xml(
-      <CellElementRegion name="everything" materialList="{ }" cellBlocks="{ all }" />
-      <CellElementRegion name="reservoir" materialList="{ }" cellBlocks="{ 1, 6 }" />
-      <CellElementRegion name="underburden" materialList="{ }" cellBlocks="{ 2, 4 }" />
+      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlockAttributeValues="{ 1, 6 }" />
+    )xml"
+  },
+  { // using multiple selection methods on the same region
+    "multiple selection methods", false, { "everything", "cellBlocksMatch", "cellBlockAttributeValues" },
+    R"xml(
+      <CellElementRegion name="everything" materialList="{ }" cellBlocksMatch="{ * }" cellBlockAttributeValues="{ 1, 6 }" />
+    )xml"
+  },
+  { // should not crash
+    "mixing all selection methods", true, { },
+    R"xml(
+      <CellElementRegion name="overburden" materialList="{ }" cellBlockAttributeValues="{ 3, 5 }" />
+      <CellElementRegion name="reservoir" materialList="{ }" cellBlocksMatch="{ 1_*, 6_* }" />
+      <CellElementRegion name="underburden" materialList="{ }"
+                         cellBlocks="{ 2_hexahedra, 2_tetrahedra, 2_pyramids, 4_hexahedra, 4_tetrahedra, 4_pyramids }" />
     )xml"
   }
 };

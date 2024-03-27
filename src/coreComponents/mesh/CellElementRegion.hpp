@@ -113,6 +113,12 @@ public:
     }
   }
 
+  /**
+   * @brief register every entry of m_cellBlockNames that is in the provided list.
+   * After the call, the content of m_cellBlockNames no longer contain duplicates, and takes into account
+   * m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
+   * @param cellBlocks the list of available cellBlocks.
+   */
   virtual void generateMesh( Group const & cellBlocks ) override;
 
   ///@}
@@ -128,12 +134,28 @@ public:
 
     /// @return String key for the cell block names
     static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
+
+    /// @return String key for the cell block names
+    static constexpr char const * cellBlockAttributeValuesString() {return "cellBlockAttributeValues"; }
+
+    /// @return String key for the cell block matches
+    static constexpr char const * cellBlockMatchPatternsString() {return "cellBlocksMatch"; }
   };
 
+  /**
+   * @param cellBlockName the cellBlock name
+   * @return if we are in the form "1_tetrahedra", we return the region attribute value.
+   * Elsewise, we return an empty string.
+   */
+  static string getCellBlockAttributeValue( string_view cellBlockName );
 
 private:
 
-  // Cell block names
+  integer_array m_cellBlockAttributeValues;
+
+  string_array m_cellBlockMatchPatterns;
+
+  // Cell block names.
   string_array m_cellBlockNames;
 
   // Coarsening ratio
@@ -147,7 +169,12 @@ private:
    */
   void registerSubRegion( CellBlockABC const & cellBlock );
 
-  bool isSelectingAllCells();
+  /**
+   * @return all cellBlock names entries from m_cellBlockAttributeValues,
+   * m_cellBlockMatchPatterns and m_cellBlockNames.
+   * @param cellBlocks the input mesh cellBlock list
+   */
+  std::set< string > computeSelectedCellBlocks( Group const & cellBlocks ) const;
 
 };
 
