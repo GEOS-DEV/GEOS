@@ -134,7 +134,7 @@ private:
    * @param marginType The margin value
    */
   void setMargin( MarginValue marginValue );
-  
+
   std::vector< Column > m_columns;
   string m_tableTitle;
   integer m_borderMargin;

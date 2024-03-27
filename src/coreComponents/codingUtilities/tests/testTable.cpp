@@ -195,7 +195,7 @@ TEST( testTable, tableClass )
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
                );
   }
-  
+
   // if setMargin used elsewhere make it public
   //test with tiny margin
   // {
@@ -208,7 +208,7 @@ TEST( testTable, tableClass )
   //     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
   //   }, "InternalWellGenerator well_injector1" );
 
-  //   //tableLayout.setMargin( TableLayout::MarginValue::tiny ); 
+  //   //tableLayout.setMargin( TableLayout::MarginValue::tiny );
 
   //   TableData tableData;
   //   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
