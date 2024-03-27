@@ -125,6 +125,10 @@ It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get conver
 
 ``Using mesh_doctor in paraview``
 """"""""""""""""""""""""""""""""""
+
+Using mesh_doctor as a programmable filter
+____________________________________________
+
 To use ``mesh_doctor`` in Paraview as a python programmable filter, a python package install is required first in Paraview python resolved
 path. Paraview is storing its python ressources under its *lib/pythonX.X* depending on the paraview version, *e.g* Paraview 5.11 is working
 with python 3.9. As a results the following command will install ``mesh_doctor`` package into Paraview resolved path.
@@ -179,3 +183,14 @@ the copy of the inital VTKObject `inputs[0].VTKObject` to ensure consistency wit
 What follows is ``pyvtk`` steps in oder to convert into input struct and extract from the original mesh this list of cells.
 Eventually, the `extracted` selection is shallow-copied to the output and then accessible in ``Paraview``. An helper print
 is left and should be reported in *Output Message* of ``Paraview`` (and in launching terminal if exist).
+
+Using mesh_doctor as a paraview plugins
+____________________________________________
+
+Another way of leveraging ``mesh_doctor`` in ``Paraview`` is to wrap it in a python plugin that would be loadable through the
+``Paraview`` interface under **Tools | Manage Plugins/Extensions** and **Load New** looking for ``mesh_doctor-pvplugin.py``.
+(see `Paraview How To <https://www.paraview.org/Wiki/ParaView/Plugin_HowTo#Using_Plugins>`_  for more details).
+
+The file ``mesh_doctor-pvplugin.py`` is located under the ``geosx_mesh_doctor`` module in GEOS. Once the plugin loaded and a mesh opened,
+it should appear in filter list as *Mesh Doctor(GEOS)*. It displays a parameter value box allowing the user to enter the volume he wants as
+threshold to select cells based on ``element_volumes`` capability. Once applied, it extracts selected set of cells as a new unstructured grid.
