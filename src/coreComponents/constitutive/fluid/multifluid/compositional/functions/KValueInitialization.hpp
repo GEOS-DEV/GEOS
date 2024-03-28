@@ -20,11 +20,15 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_KVALUEINITIALIZATION_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
 
 namespace geos
 {
 
 namespace constitutive
+{
+
+namespace compositional
 {
 
 struct KValueInitialization
@@ -35,9 +39,7 @@ public:
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
-   * @param[in] criticalPressure critical pressures
-   * @param[in] criticalTemperature critical temperatures
-   * @param[in] acentricFactor acentric factors
+   * @param[in] componentProperties The compositional component properties
    * @param[out] kValues the calculated k-values
    **/
   GEOS_HOST_DEVICE
@@ -46,11 +48,12 @@ public:
   computeWilsonGasLiquidKvalue( integer const numComps,
                                 real64 const pressure,
                                 real64 const temperature,
-                                arrayView1d< real64 const > const criticalPressure,
-                                arrayView1d< real64 const > const criticalTemperature,
-                                arrayView1d< real64 const > const acentricFactor,
+                                ComponentProperties::KernelWrapper const & componentProperties,
                                 arraySlice1d< real64 > const kValues )
   {
+    arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
+    arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+    arrayView1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
     for( integer ic = 0; ic < numComps; ++ic )
     {
       real64 const pr = criticalPressure[ic] / pressure;
@@ -75,6 +78,8 @@ public:
   }
 
 };
+
+} // namespace compositional
 
 } // namespace constitutive
 

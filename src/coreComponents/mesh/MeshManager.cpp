@@ -66,12 +66,14 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
-    meshGen.generateMesh( meshBody, partition.getPartitions() );
-    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    meshGen.generateMesh( meshBody, partition );
 
-    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    if( !meshBody.hasParticles() )
+    {
+      CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
-    partition = meshGen.getSpatialPartition();
+      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+    }
   } );
 }
 
@@ -113,7 +115,14 @@ void MeshManager::importFields( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&domain]( MeshGeneratorBase const & generator )
   {
     if( !domain.hasMeshBody( generator.getName() ) )
+    {
       return;
+    }
+    else if( domain.getMeshBody( generator.getName() ).hasParticles() ) // field import is not currently compatible with particle mesh
+                                                                        // bodies
+    {
+      return;
+    }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: importing field data from mesh dataset", generator.getName() ) );
 

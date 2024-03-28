@@ -75,6 +75,7 @@ public:
   using Base::m_pressure_n;
   using Base::m_numComponents;
   using Base::m_numPhases;
+  using Base::m_useTotalMassEquation;
   using Base::m_solidDensity;
   using Base::m_fluidPhaseMassDensity;
   using Base::m_dFluidPhaseMassDensity;
@@ -85,6 +86,7 @@ public:
   using Base::m_fluidPhaseCompFrac;
   using Base::m_dFluidPhaseCompFrac;
   using Base::m_dGlobalCompFraction_dGlobalCompDensity;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -102,10 +104,12 @@ public:
                                   globalIndex const rankOffset,
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
+                                  real64 const inputDt,
                                   real64 const (&gravityVector)[3],
                                   string const inputFlowDofKey,
                                   localIndex const numComponents,
                                   localIndex const numPhases,
+                                  integer const useTotalMassEquation,
                                   string const fluidModelKey );
 
   /**
@@ -331,10 +335,12 @@ using ThermalMultiphasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                integer const,
                                 string const >;
 
 } // namespace thermalporomechanicsKernels

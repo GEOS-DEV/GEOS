@@ -337,15 +337,9 @@ public:
                                      constitutive::CoupledSolidBase const & solid,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
-#if ALLOW_CREATION_MASS
-    , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
-#endif
-  {
-#if !defined(ALLOW_CREATION_MASS)
-    static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-  }
+    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
+  {}
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
@@ -358,20 +352,15 @@ public:
                             Base::StackVariables & stack ) const
   {
     Base::computeAccumulation( ei, stack );
-
-#if ALLOW_CREATION_MASS
     if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
     {
       stack.localResidual[0] += m_creationMass[ei] * 0.25;
     }
-#endif
   }
 
 protected:
 
-#if ALLOW_CREATION_MASS
   arrayView1d< real64 const > const m_creationMass;
-#endif
 
 };
 
@@ -488,7 +477,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 2 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 2 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -500,11 +489,13 @@ public:
                       ElementSubRegionBase const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
                       constitutive::CoupledSolidBase const & solid,
-                      constitutive::SolidInternalEnergy const & solidInternalEnergy )
+                      constitutive::SolidInternalEnergy const & solidInternalEnergy,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
     m_density_n( fluid.density_n() ),
@@ -517,9 +508,9 @@ public:
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
   {
-    massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     energyNormalizer =
-      LvArray::math::max( minNormalizer,
+      LvArray::math::max( m_minNormalizer,
                           LvArray::math::abs( m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei]
                                               + m_fluidInternalEnergy_n[ei][0] * m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] ) );
   }
@@ -608,19 +599,20 @@ public:
   static void
   createAndLaunch( solverBaseKernels::NormType const normType,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
                    constitutive::SolidInternalEnergy const & solidInternalEnergy,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[2],
                    real64 (& residualNormalizer)[2] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, solidInternalEnergy );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, solidInternalEnergy, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
