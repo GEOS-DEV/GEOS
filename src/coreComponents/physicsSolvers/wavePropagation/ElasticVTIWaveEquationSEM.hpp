@@ -50,9 +50,9 @@ public:
   ElasticVTIWaveEquationSEM & operator=( ElasticVTIWaveEquationSEM && ) = delete;
 
   /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "elastic"; }
+  static string coupledSolverAttributePrefix() { return "elasticvti"; }
 
-  static string catalogName() { return "ElasticSEM"; }
+  static string catalogName() { return "ElasticVTISEM"; }
   /**
    * @copydoc SolverBase::getCatalogName()
    */

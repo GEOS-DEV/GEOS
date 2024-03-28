@@ -264,11 +264,11 @@ protected:
   ///The array containing the Thomsen constant gamma
   arrayView1d< real32 const > const m_gamma;
 
-  ///The array containing the Thomsen constant delta
-  arrayView1d< real32 const > const m_delta;
-
   ///The array containing the Thomsen constant epsilon
   arrayView1d< real32 const > const m_epsilon;
+
+  ///The array containing the Thomsen constant delta
+  arrayView1d< real32 const > const m_delta;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
