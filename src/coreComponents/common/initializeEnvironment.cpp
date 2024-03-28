@@ -17,9 +17,18 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-
+#include "codingUtilities/TableLayout.hpp"
+#include "codingUtilities/TableData.hpp"
+#include "codingUtilities/TableFormatter.hpp"
+#include "common/LifoStorageCommon.hpp"
+#include "common/MemoryInfos.hpp"
+#include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
+#include <umpire/Allocator.hpp>
+#include <umpire/strategy/AllocationStrategy.hpp>
+#include "umpire/util/MemoryResourceTraits.hpp"
+#include "umpire/util/Platform.hpp"
 
 #if defined( GEOSX_USE_CALIPER )
 #include <caliper/cali-manager.h>
@@ -46,7 +55,6 @@
 #if defined( GEOS_USE_HIP )
 #include <hip/hip_runtime.h>
 #endif
-
 #include <cfenv>
 
 namespace geos
@@ -248,7 +256,9 @@ void finalizeCaliper()
 static void addUmpireHighWaterMarks()
 {
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
-
+  integer size;
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  size_t nbRank = (std::size_t)size;
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
   std::vector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );
@@ -264,9 +274,9 @@ static void addUmpireHighWaterMarks()
   }
 
   // Loop over the allocators.
-  constexpr int MAX_NAME_LENGTH = 100;
-  char allocatorNameBuffer[ MAX_NAME_LENGTH + 1 ];
-  char allocatorNameMinCharsBuffer[ MAX_NAME_LENGTH + 1 ];
+  unsigned MAX_NAME_LENGTH = 100;
+
+  TableData tableData;
   for( string const & allocatorName : allocatorNames )
   {
     // Skip umpire internal allocators.
@@ -274,33 +284,67 @@ static void addUmpireHighWaterMarks()
       continue;
 
     GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
-
-    memset( allocatorNameBuffer, '\0', sizeof( allocatorNameBuffer ) );
-    memcpy( allocatorNameBuffer, allocatorName.data(), allocatorName.size() );
-
-    memset( allocatorNameMinCharsBuffer, '\0', sizeof( allocatorNameMinCharsBuffer ) );
+    string allocatorNameFixedSize = allocatorName;
+    allocatorNameFixedSize.resize( MAX_NAME_LENGTH, '\0' );
+    string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
 
     // Make sure that each rank is looking at the same allocator.
-    MpiWrapper::allReduce( allocatorNameBuffer, allocatorNameMinCharsBuffer, MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
-    if( strcmp( allocatorNameBuffer, allocatorNameMinCharsBuffer ) != 0 )
+    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
+    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameFixedSize << " allocatorNameMinCharsBuffer " << allocatorNameMinChars << std::endl );
+    if( allocatorNameFixedSize != allocatorNameMinChars )
     {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameBuffer << ", cannot compute high water mark." );
+      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
       continue;
     }
 
+    umpire::Allocator allocator = rm.getAllocator( allocatorName );
+
+    umpire::strategy::AllocationStrategy * allocationStrategy = allocator.getAllocationStrategy();
+    umpire::MemoryResourceTraits traits = allocationStrategy->getTraits();
+    umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
+    MemoryInfos memInf( resourceType );
+
     // Get the total number of bytes allocated with this allocator across ranks.
     // This is a little redundant since
-    std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
-    std::size_t const totalMark = MpiWrapper::sum( mark );
+    std::size_t const mark = allocator.getHighWatermark();
+    std::size_t const minMark = MpiWrapper::min( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
-    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
-                     std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
-    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
-                     std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
+    std::size_t const sumMark = MpiWrapper::sum( mark );
+
+    string percentage;
+    if( memInf.getTotalMemory() == 0 )
+    {
+      percentage = 0.0;
+      GEOS_WARNING( "umpire memory percentage could not bemsdgjsdkjfgh" );
+    }
+    else
+    {
+      percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInf.getTotalMemory() );
+    }
+
+    string const minMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( minMark ), percentage );
+    string const maxMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( maxMark ), percentage );
+    string const avgMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( sumMark / nbRank ), percentage );
+    string const sumMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( sumMark ), percentage );
+
+    tableData.addRow( allocatorName,
+                      minMarkValue,
+                      maxMarkValue,
+                      avgMarkValue,
+                      sumMarkValue );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
+
+  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum(GB/%)\nover ranks" } );
+  TableTextFormatter const memoryStatLog( memoryStatLayout );
+
+  GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
 }
 
 
@@ -323,6 +367,5 @@ void cleanupEnvironment()
   finalizeCaliper();
   finalizeMPI();
 }
-
 
 } // namespace geos
