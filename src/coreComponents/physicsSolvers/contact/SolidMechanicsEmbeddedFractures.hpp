@@ -115,6 +115,10 @@ protected:
 
   virtual void postProcessInput() override final;
 
+  real64 calculateFractureResidualNorm( DomainPartition const & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localRhs ) const;
+
 private:
 
   void updateJump( DofManager const & dofManager,
