@@ -656,7 +656,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ.toView(), true );
   }
 
-  incrementIndexSeismoTrace( time_n );
+  incrementIndexSeismoTrace( time_n, dt );
 }
 
 void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
