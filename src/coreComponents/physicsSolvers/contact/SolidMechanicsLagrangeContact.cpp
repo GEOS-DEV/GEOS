@@ -715,46 +715,46 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
           switch( fractureState[k] )
           {
             case contact::FractureState::Stick:
-            {
-              for( localIndex dim = 0; dim < 3; ++dim )
               {
-                real64 const norm = localRhs[localRow + dim] / area[k];
-                stickSum += norm * norm;
+                for( localIndex dim = 0; dim < 3; ++dim )
+                {
+                  real64 const norm = localRhs[localRow + dim] / area[k];
+                  stickSum += norm * norm;
+                }
+                break;
               }
-              break;
-            }
             case contact::FractureState::Slip:
             case contact::FractureState::NewSlip:
-            {
-              for( localIndex dim = 0; dim < 3; ++dim )
               {
-                slipSum += localRhs[localRow + dim] * localRhs[localRow + dim];
-                slipMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+                for( localIndex dim = 0; dim < 3; ++dim )
+                {
+                  slipSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+                  slipMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+                }
+                break;
               }
-              break;
-            }
             case contact::FractureState::Open:
-            {
-              for( localIndex dim = 0; dim < 3; ++dim )
               {
-                openSum += localRhs[localRow + dim] * localRhs[localRow + dim];
-                openMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+                for( localIndex dim = 0; dim < 3; ++dim )
+                {
+                  openSum += localRhs[localRow + dim] * localRhs[localRow + dim];
+                  openMax.max( LvArray::math::abs( localRhs[localRow + dim] ) );
+                }
+                break;
               }
-              break;
-            }
           }
         }
       } );
       stickResidual += stickSum.get();
       slipResidual += slipSum.get();
-      slipNormalizer = LvArray::math::max(slipNormalizer, slipMax.get());
+      slipNormalizer = LvArray::math::max( slipNormalizer, slipMax.get());
       openResidual += openSum.get();
-      openNormalizer = LvArray::math::max(openNormalizer, openMax.get());
+      openNormalizer = LvArray::math::max( openNormalizer, openMax.get());
     } );
   } );
 
   MpiWrapper::sum( stickResidual );
-  stickResidual = sqrt(stickResidual);
+  stickResidual = sqrt( stickResidual );
 
   MpiWrapper::sum( slipResidual );
   MpiWrapper::max( slipNormalizer );
@@ -769,7 +769,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
   }
 
-  return sqrt(stickResidual*stickResidual + slipResidual*slipResidual + openResidual*openResidual);
+  return sqrt( stickResidual*stickResidual + slipResidual*slipResidual + openResidual*openResidual );
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
