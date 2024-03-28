@@ -37,7 +37,7 @@ using namespace dataRepository;
 using namespace fields;
 
 ElasticVTIWaveEquationSEM::ElasticVTIWaveEquationSEM( const std::string & name,
-                                                Group * const parent ):
+                                                      Group * const parent ):
 
   WaveSolverBase( name,
                   parent )
@@ -157,9 +157,9 @@ void ElasticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
-      subRegion.registerField< elasticvtifields::Gamma > ( getName() );
-      subRegion.registerField< elasticvtifields::Epsilon > ( getName() );
-      subRegion.registerField< elasticvtifields::Delta> ( getName() );
+      subRegion.registerField< elasticvtifields::Gamma >( getName() );
+      subRegion.registerField< elasticvtifields::Epsilon >( getName() );
+      subRegion.registerField< elasticvtifields::Delta >( getName() );
     } );
 
   } );
@@ -319,9 +319,9 @@ void ElasticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mes
 }
 
 void ElasticVTIWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
-                                                       arrayView1d< real32 > const rhsx,
-                                                       arrayView1d< real32 > const rhsy,
-                                                       arrayView1d< real32 > const rhsz )
+                                                          arrayView1d< real32 > const rhsx,
+                                                          arrayView1d< real32 > const rhsy,
+                                                          arrayView1d< real32 > const rhsz )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstantsx   = m_sourceConstantsx.toViewConst();
@@ -511,10 +511,10 @@ void ElasticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPar
 
 
 real64 ElasticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer cycleNumber,
-                                                    DomainPartition & domain,
-                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                       real64 const & dt,
+                                                       integer cycleNumber,
+                                                       DomainPartition & domain,
+                                                       bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -523,10 +523,10 @@ real64 ElasticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 
 real64 ElasticVTIWaveEquationSEM::explicitStepBackward( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer cycleNumber,
-                                                     DomainPartition & domain,
-                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                        real64 const & dt,
+                                                        integer cycleNumber,
+                                                        DomainPartition & domain,
+                                                        bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
@@ -534,11 +534,11 @@ real64 ElasticVTIWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 }
 
 void ElasticVTIWaveEquationSEM::computeUnknowns( real64 const &,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                                 real64 const & dt,
+                                                 integer const cycleNumber,
+                                                 DomainPartition &,
+                                                 MeshLevel & mesh,
+                                                 arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -589,11 +589,11 @@ void ElasticVTIWaveEquationSEM::computeUnknowns( real64 const &,
 }
 
 void ElasticVTIWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  integer const,
-                                                  DomainPartition & domain,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+                                                     real64 const & dt,
+                                                     integer const,
+                                                     DomainPartition & domain,
+                                                     MeshLevel & mesh,
+                                                     arrayView1d< string const > const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -687,9 +687,9 @@ void ElasticVTIWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 }
 
 real64 ElasticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer const cycleNumber,
-                                                     DomainPartition & domain )
+                                                        real64 const & dt,
+                                                        integer const cycleNumber,
+                                                        DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -708,10 +708,10 @@ real64 ElasticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 }
 
 void ElasticVTIWaveEquationSEM::cleanup( real64 const time_n,
-                                      integer const cycleNumber,
-                                      integer const eventCounter,
-                                      real64 const eventProgress,
-                                      DomainPartition & domain )
+                                         integer const cycleNumber,
+                                         integer const eventCounter,
+                                         real64 const eventProgress,
+                                         DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );

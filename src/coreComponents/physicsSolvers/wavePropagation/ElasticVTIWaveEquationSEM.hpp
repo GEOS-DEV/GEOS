@@ -38,7 +38,7 @@ public:
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
   ElasticVTIWaveEquationSEM( const std::string & name,
-                          Group * const parent );
+                             Group * const parent );
 
   virtual ~ElasticVTIWaveEquationSEM() override;
 

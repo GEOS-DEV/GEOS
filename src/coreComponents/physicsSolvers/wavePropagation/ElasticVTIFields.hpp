@@ -31,7 +31,7 @@ namespace fields
 
 namespace elasticvtifields
 {
-  DECLARE_FIELD( Delta,
+DECLARE_FIELD( Delta,
                "delta",
                array1d< real32 >,
                0,
@@ -39,7 +39,7 @@ namespace elasticvtifields
                WRITE_AND_READ,
                "Delta thomsen anisotropy parameter" );
 
-  DECLARE_FIELD( Epsilon,
+DECLARE_FIELD( Epsilon,
                "epsilon",
                array1d< real32 >,
                0,
@@ -47,7 +47,7 @@ namespace elasticvtifields
                WRITE_AND_READ,
                "Epsilon thomsen anisotropy parameter" );
 
-  DECLARE_FIELD( Gamma,
+DECLARE_FIELD( Gamma,
                "gamma",
                array1d< real32 >,
                0,
