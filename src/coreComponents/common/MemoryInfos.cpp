@@ -21,37 +21,24 @@ MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceTy
   switch( resourceType )
   {
     case umpire::MemoryResourceTraits::resource_type::host:
-      GEOS_LOG_RANK_0( "host" );
+    case umpire::MemoryResourceTraits::resource_type::pinned:
       #if defined( _SC_PHYS_PAGES ) && defined( _SC_PAGESIZE )
       m_totalMemory = sysconf( _SC_PHYS_PAGES ) * sysconf( _SC_PAGESIZE );
       m_availableMemory = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
       #else
-      GEOS_ERROR( "Unsupported resource type : host" );
+      GEOS_ERROR( "Unknown device physical memory size getter for this compiler." );
       #endif
       break;
     case umpire::MemoryResourceTraits::resource_type::device:
-      GEOS_LOG_RANK_0( "device" );
+    case umpire::MemoryResourceTraits::resource_type::device_const:
       #if defined( GEOS_USE_CUDA )
       cudaMemGetInfo( &m_availableMemory, &m_totalMemory );
       #else
-      GEOS_ERROR( "Unsupported resource type : device" );
+      GEOS_ERROR( "Unknown device physical memory size getter for this compiler." );
       #endif
       break;
-    case umpire::MemoryResourceTraits::resource_type::device_const:
-      GEOS_LOG_RANK_0( "device_const" );
-      m_totalMemory = 0;
-      m_availableMemory = 0;
-      //to implement
-      break;
-    case umpire::MemoryResourceTraits::resource_type::pinned:
-      GEOS_LOG_RANK_0( "pinned" );
-      m_totalMemory = 0;
-      m_availableMemory = 0;
-      //regarder a chaque appel de la pinned memory, maintenir un compteur
-      break;
     default:
-      GEOS_LOG_RANK_0( "unknown" );
-      GEOS_ERROR( "Unsupported resource type : device" );
+      GEOS_ERROR( "Unknown device physical memory" );
       break;
   }
 }

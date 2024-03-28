@@ -307,24 +307,19 @@ static void addUmpireHighWaterMarks()
     // Get the total number of bytes allocated with this allocator across ranks.
     // This is a little redundant since
     std::size_t const mark = allocator.getHighWatermark();
-
     std::size_t const minMark = MpiWrapper::min( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
     std::size_t const sumMark = MpiWrapper::sum( mark );
 
     string percentage;
-
     if( memInf.getTotalMemory() == 0 )
     {
-      percentage = "/";
+      percentage = 0.0;
+      GEOS_WARNING( "umpire memory percentage could not bemsdgjsdkjfgh" );
     }
     else
     {
-      std::cout <<mark<< std::endl;
-      std::cout << memInf.getTotalMemory()<< std::endl;
-      std::cout << (mark / memInf.getTotalMemory())<< std::endl;
-      size_t const per = ((memInf.getTotalMemory() - mark) / memInf.getTotalMemory())  * 100;
-      percentage = std::to_string( per );
+      percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInf.getTotalMemory() );
     }
 
     string const minMarkValue = GEOS_FMT( "{} {}%",
@@ -340,20 +335,16 @@ static void addUmpireHighWaterMarks()
                       minMarkValue,
                       maxMarkValue,
                       avgMarkValue,
-
                       sumMarkValue );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
-  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum(GB/%)\nover ranks" } ); // prettier-ignore
+  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum(GB/%)\nover ranks" } );
   TableTextFormatter const memoryStatLog( memoryStatLayout );
 
   GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
-
-  // GEOS_LOG_RANK_0( allocatorLog.ToString( tableData )); // prettier-ignore
-
 }
 
 
