@@ -66,17 +66,18 @@ class TableData2D
 public:
 
   /**
-   * @brief Add a cell to the table.
-   * Construct a map of pair<x,y> and cell value
-   * @param T The value passed to addCell (can be any type).
+   * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
+   * @tparam T The value passed to addCell (can be any type).
    * @param value Cell value to be added.
+   * @param rowValue The value of the row containing the cell.
+   * @param columnValue The value of the column containing the cell.
    */
   template< typename T >
   void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @brief Construct a TableData from a Table2D
-   * @return A TableData
+   * @brief Construct a TableData from the provided cells.
+   * @return A TableData with all cell values within increasing row & column. The row & columns names
    */
   TableData buildTableData() const;
 
