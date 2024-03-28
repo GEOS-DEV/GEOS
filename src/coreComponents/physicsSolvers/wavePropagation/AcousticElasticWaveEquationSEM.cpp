@@ -18,6 +18,7 @@
 
 #include "AcousticElasticWaveEquationSEM.hpp"
 #include "AcousticElasticWaveEquationSEMKernel.hpp"
+#include "AcoustoElasticTimeSchemeSEMKernel.hpp"
 #include "dataRepository/Group.hpp"
 #include <typeinfo>
 #include <limits>
@@ -159,25 +160,10 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
-    real32 const dt2 = pow( dt, 2 );
-
     elasSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
-    {
-      localIndex const a = interfaceNodesSet[n];
-      if( elasticFSNodeIndicator[a] == 1 )
-        return;
-
-      real32 const aux = -p_n[a] / elasticMass[a];
-      real32 const localIncrementx = dt2 * atoex[a] * aux;
-      real32 const localIncrementy = dt2 * atoey[a] * aux;
-      real32 const localIncrementz = dt2 * atoez[a] * aux;
-
-      RAJA::atomicAdd< ATOMIC_POLICY >( &ux_np1[a], localIncrementx );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uy_np1[a], localIncrementy );
-      RAJA::atomicAdd< ATOMIC_POLICY >( &uz_np1[a], localIncrementz );
-    } );
+    AcoustoElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, uy_np1, uz_np1, p_n, elasticMass, atoex, atoey, atoez,
+                                           elasticFSNodeIndicator, interfaceNodesSet );
 
     elasSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_elasRegions );
 
