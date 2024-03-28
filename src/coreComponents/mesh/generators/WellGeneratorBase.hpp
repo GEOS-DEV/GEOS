@@ -301,7 +301,8 @@ protected:
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void debugWellGeometry() const;
+  void logInternalWell() const;
+  void logPerforationTable() const;
   /// @endcond
 
   /// Global number of perforations
