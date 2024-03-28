@@ -20,8 +20,15 @@
 #include "codingUtilities/TableLayout.hpp"
 #include "codingUtilities/TableData.hpp"
 #include "codingUtilities/TableFormatter.hpp"
+#include "common/LifoStorageCommon.hpp"
+#include "common/MemoryInfos.hpp"
+#include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
+#include <umpire/Allocator.hpp>
+#include <umpire/strategy/AllocationStrategy.hpp>
+#include "umpire/util/MemoryResourceTraits.hpp"
+#include "umpire/util/Platform.hpp"
 
 #if defined( GEOSX_USE_CALIPER )
 #include <caliper/cali-manager.h>
@@ -249,7 +256,9 @@ void finalizeCaliper()
 static void addUmpireHighWaterMarks()
 {
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
-
+  integer size;
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  size_t nbRank = (std::size_t)size;
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
   std::vector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );
@@ -281,30 +290,57 @@ static void addUmpireHighWaterMarks()
 
     // Make sure that each rank is looking at the same allocator.
     MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
-    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameFixedSize << "allocatorNameMinCharsBuffer" << allocatorNameMinChars << std::endl );
+    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameFixedSize << " allocatorNameMinCharsBuffer " << allocatorNameMinChars << std::endl );
     if( allocatorNameFixedSize != allocatorNameMinChars )
     {
       GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
       continue;
     }
 
+    umpire::Allocator allocator = rm.getAllocator( allocatorName );
+
+    umpire::strategy::AllocationStrategy * allocationStrategy = allocator.getAllocationStrategy();
+    umpire::MemoryResourceTraits traits = allocationStrategy->getTraits();
+    umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
+    MemoryInfos memInf( resourceType );
+
     // Get the total number of bytes allocated with this allocator across ranks.
     // This is a little redundant since
-    std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
+    std::size_t const mark = allocator.getHighWatermark();
 
-    string const minMarkValue = GEOS_FMT( "{} ",
-                                          LvArray::system::calculateSize( MpiWrapper::min( mark ) ) );
-    string const maxMarkValue = GEOS_FMT( "{} ",
-                                          LvArray::system::calculateSize( MpiWrapper::max( mark ) ));
-    string const avgMarkValue = GEOS_FMT( "{} ",
-                                          LvArray::system::calculateSize( MpiWrapper::max( mark ) ) );
-    string const sumMarkValue = GEOS_FMT( "{} ",
-                                          LvArray::system::calculateSize( MpiWrapper::sum( mark ) ) );
+    std::size_t const minMark = MpiWrapper::min( mark );
+    std::size_t const maxMark = MpiWrapper::max( mark );
+    std::size_t const sumMark = MpiWrapper::sum( mark );
+
+    string percentage;
+
+    if( memInf.getTotalMemory() == 0 )
+    {
+      percentage = "/";
+    }
+    else
+    {
+      std::cout <<mark<< std::endl;
+      std::cout << memInf.getTotalMemory()<< std::endl;
+      std::cout << (mark / memInf.getTotalMemory())<< std::endl;
+      size_t const per = ((memInf.getTotalMemory() - mark) / memInf.getTotalMemory())  * 100;
+      percentage = std::to_string( per );
+    }
+
+    string const minMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( minMark ), percentage );
+    string const maxMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( maxMark ), percentage );
+    string const avgMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( sumMark / nbRank ), percentage );
+    string const sumMarkValue = GEOS_FMT( "{} {}%",
+                                          LvArray::system::calculateSize( sumMark ), percentage );
 
     tableData.addRow( allocatorName,
                       minMarkValue,
                       maxMarkValue,
                       avgMarkValue,
+
                       sumMarkValue );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
@@ -340,6 +376,5 @@ void cleanupEnvironment()
   finalizeCaliper();
   finalizeMPI();
 }
-
 
 } // namespace geos
