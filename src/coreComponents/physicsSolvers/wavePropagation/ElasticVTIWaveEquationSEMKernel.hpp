@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ElasticWaveEquationSEMKernel.hpp
+ * @file ElasticVTIWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
@@ -27,16 +27,16 @@ namespace geos
 {
 using namespace fields;
 /// Namespace to contain the elastic wave kernels.
-namespace elasticWaveEquationSEMKernels
+namespace ElasticVTIWaveEquationSEMKernels
 {
 
 /**
  * @brief Implements kernels for solving the elastic wave equations
- *   explicit central FD method and SEM
+ *   explicit central FD method and SEM in the Vertical Transverse Isotropic (VTI) case
  * @copydoc geos::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### ElasticWaveEquationSEMKernel Description
+ * ### ElasticVTIWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
  * the acoustic wave equations using the
  * "finite element kernel application" functions such as
@@ -50,11 +50,11 @@ namespace elasticWaveEquationSEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                             CONSTITUTIVE_TYPE,
-                                                             FE_TYPE,
-                                                             1,
-                                                             1 >
+class ExplicitElasticVTISEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                CONSTITUTIVE_TYPE,
+                                                                FE_TYPE,
+                                                                1,
+                                                                1 >
 {
 public:
 
@@ -86,14 +86,14 @@ public:
    * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param dt The time interval for the step.
    */
-  ExplicitElasticSEM( NodeManager & nodeManager,
-                      EdgeManager const & edgeManager,
-                      FaceManager const & faceManager,
-                      localIndex const targetRegionIndex,
-                      SUBREGION_TYPE const & elementSubRegion,
-                      FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE & inputConstitutiveType,
-                      real64 const dt ):
+  ExplicitElasticVTISEM( NodeManager & nodeManager,
+                         EdgeManager const & edgeManager,
+                         FaceManager const & faceManager,
+                         localIndex const targetRegionIndex,
+                         SUBREGION_TYPE const & elementSubRegion,
+                         FE_TYPE const & finiteElementSpace,
+                         CONSTITUTIVE_TYPE & inputConstitutiveType,
+                         real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -107,6 +107,9 @@ public:
     m_density( elementSubRegion.template getField< elasticfields::ElasticDensity >() ),
     m_velocityVp( elementSubRegion.template getField< elasticfields::ElasticVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getField< elasticfields::ElasticVelocityVs >() ),
+    m_gamma( elementSubRegion.template getField< elasticvtifields::Gamma >()),
+    m_epsilon( elementSubRegion.template getField< elasticvtifields::Epsilon >()),
+    m_delta( elementSubRegion.template getField< elasticvtifields::Delta >()),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -120,7 +123,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitElasticSEM Description
+   * ### ExplicitElasticVTISEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -138,8 +141,8 @@ public:
     real32 stiffnessVectorxLocal[ numNodesPerElem ];
     real32 stiffnessVectoryLocal[ numNodesPerElem ];
     real32 stiffnessVectorzLocal[ numNodesPerElem ];
-    real32 mu=0;
-    real32 lambda=0;
+    real32 Cvti[6];
+
   };
   //***************************************************************************
 
@@ -162,8 +165,17 @@ public:
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
-    stack.mu = m_density[k] * pow( m_velocityVs[k], 2 );
-    stack.lambda = m_density[k] * pow( m_velocityVp[k], 2 ) - 2.0 * stack.mu;
+
+    stack.Cvti[0] = m_density[k] * pow( m_velocityVp[k], 2 ) * (1.0 + 2.0*m_epsilon[k]);
+    stack.Cvti[1] = m_density[k] * pow( m_velocityVp[k], 2 );
+    stack.Cvti[2] = m_density[k] *
+                    sqrt((pow( m_velocityVp[k],
+                               2 ) - pow( m_velocityVs[k], 2 )) + 2.0 * pow( m_velocityVp[k], 2 ) * m_delta[k] * (pow( m_velocityVp[k], 2 ) - pow( m_velocityVs[k], 2 )) ) - m_density[k] * pow(
+      m_velocityVs[k], 2 );
+    stack.Cvti[3] = m_density[k] * pow( m_velocityVs[k], 2 );
+    stack.Cvti[4] = m_density[k] * pow( m_velocityVs[k], 2 )*(1.0 + 2.0 * m_gamma[k]);
+    stack.Cvti[5] = stack.Cvti[0] - 2.0 * stack.Cvti[4];
+
   }
 
   /**
@@ -187,7 +199,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitElasticSEM Description
+   * ### ExplicitElasticVTISEM Description
    * Calculates stiffness vector
    *
    */
@@ -200,15 +212,15 @@ public:
 
     m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
-      real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
-      real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));
-      real32 const Rzz_ij = val*((stack.lambda+2.0*stack.mu)*J[p][2]*J[r][2]+stack.mu*(J[p][0]*J[r][0]+J[p][1]*J[r][1]));
-      real32 const Rxy_ij = val*(stack.lambda*J[p][0]*J[r][1]+stack.mu*J[p][1]*J[r][0]);
-      real32 const Ryx_ij = val*(stack.mu*J[p][0]*J[r][1]+stack.lambda*J[p][1]*J[r][0]);
-      real32 const Rxz_ij = val*(stack.lambda*J[p][0]*J[r][2]+stack.mu*J[p][2]*J[r][0]);
-      real32 const Rzx_ij = val*(stack.mu*J[p][0]*J[r][2]+stack.lambda*J[p][2]*J[r][0]);
-      real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
-      real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
+      real32 const Rxx_ij = val*(stack.Cvti[0]*J[p][0]*J[r][0]+stack.Cvti[4]*(J[p][1]*J[r][1])+stack.Cvti[3]*(J[p][2]*J[r][2]));
+      real32 const Ryy_ij = val*(stack.Cvti[0]*J[p][1]*J[r][1]+stack.Cvti[4]*(J[p][0]*J[r][0])+stack.Cvti[3]*(J[p][2]*J[r][2]));
+      real32 const Rzz_ij = val*(stack.Cvti[1]*J[p][2]*J[r][2]+stack.Cvti[3]*(J[p][0]*J[r][0]+J[p][1]*J[r][1]));
+      real32 const Rxy_ij = val*(stack.Cvti[5]*J[p][0]*J[r][1]+stack.Cvti[4]*J[p][1]*J[r][0]);
+      real32 const Ryx_ij = val*(stack.Cvti[4]*J[p][0]*J[r][1]+stack.Cvti[5]*J[p][1]*J[r][0]);
+      real32 const Rxz_ij = val*(stack.Cvti[2]*J[p][0]*J[r][2]+stack.Cvti[3]*J[p][2]*J[r][0]);
+      real32 const Rzx_ij = val*(stack.Cvti[3]*J[p][0]*J[r][2]+stack.Cvti[2]*J[p][2]*J[r][0]);
+      real32 const Ryz_ij = val*(stack.Cvti[2]*J[p][1]*J[r][2]+stack.Cvti[3]*J[p][2]*J[r][1]);
+      real32 const Rzy_ij = val*(stack.Cvti[3]*J[p][1]*J[r][2]+stack.Cvti[2]*J[p][2]*J[r][1]);
 
       real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rxy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rxz_ij*m_uz_n[m_elemsToNodes( k, j )]);
       real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
@@ -252,6 +264,15 @@ protected:
   /// The array containing the S-wavespeed
   arrayView1d< real32 const > const m_velocityVs;
 
+  ///The array containing the Thomsen constant gamma
+  arrayView1d< real32 const > const m_gamma;
+
+  ///The array containing the Thomsen constant epsilon
+  arrayView1d< real32 const > const m_epsilon;
+
+  ///The array containing the Thomsen constant delta
+  arrayView1d< real32 const > const m_delta;
+
   /// The time increment for this time integration step.
   real64 const m_dt;
 
@@ -260,11 +281,11 @@ protected:
 
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
-using ExplicitElasticSEMFactory = finiteElement::KernelFactory< ExplicitElasticSEM,
-                                                                real64 >;
+using ExplicitElasticVTISEMFactory = finiteElement::KernelFactory< ExplicitElasticVTISEM,
+                                                                   real64 >;
 
-} // namespace ElasticWaveEquationSEMKernels
+} // namespace ElasticVTIWaveEquationSEMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_

@@ -130,20 +130,30 @@ set( physicsSolvers_headers
      surfaceGeneration/kernels/surfaceGenerationKernelsHelpers.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/WaveSolverUtils.hpp
+     wavePropagation/PrecomputeSourcesAndReceiversKernel.hpp
      wavePropagation/AcousticFields.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticTimeSchemeSEMKernel.hpp
+     wavePropagation/AcousticMatricesSEMKernel.hpp
+     wavePropagation/AcousticPMLSEMKernel.hpp
      wavePropagation/ElasticFields.hpp
+     wavePropagation/ElasticVTIFields.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticVTIWaveEquationSEM.hpp
+     wavePropagation/ElasticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticTimeSchemeSEMKernel.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticMatricesSEMKernel.hpp
      wavePropagation/AcousticVTIFields.hpp
      wavePropagation/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
      wavePropagation/AcoustoElasticFields.hpp
+     wavePropagation/AcoustoElasticTimeSchemeSEMKernel.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp )
 
@@ -205,6 +215,7 @@ set( physicsSolvers_sources
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      wavePropagation/ElasticWaveEquationSEM.cpp
+     wavePropagation/ElasticVTIWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticVTIWaveEquationSEM.cpp

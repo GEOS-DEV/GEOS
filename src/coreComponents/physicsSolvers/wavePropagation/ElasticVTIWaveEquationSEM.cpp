@@ -14,11 +14,11 @@
 
 
 /**
- * @file ElasticWaveEquationSEM.cpp
+ * @file ElasticVTIWaveEquationSEM.cpp
  */
 
-#include "ElasticWaveEquationSEM.hpp"
-#include "ElasticWaveEquationSEMKernel.hpp"
+#include "ElasticVTIWaveEquationSEM.hpp"
+#include "ElasticVTIWaveEquationSEMKernel.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -36,8 +36,8 @@ namespace geos
 using namespace dataRepository;
 using namespace fields;
 
-ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
-                                                Group * const parent ):
+ElasticVTIWaveEquationSEM::ElasticVTIWaveEquationSEM( const std::string & name,
+                                                      Group * const parent ):
 
   WaveSolverBase( name,
                   parent )
@@ -92,12 +92,12 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
                     "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
 }
 
-ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
+ElasticVTIWaveEquationSEM::~ElasticVTIWaveEquationSEM()
 {
   // TODO Auto-generated destructor stub
 }
 
-void ElasticWaveEquationSEM::initializePreSubGroups()
+void ElasticVTIWaveEquationSEM::initializePreSubGroups()
 {
 
   WaveSolverBase::initializePreSubGroups();
@@ -116,7 +116,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 }
 
 
-void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
+void ElasticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
@@ -157,6 +157,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
+      subRegion.registerField< elasticvtifields::Gamma >( getName() );
+      subRegion.registerField< elasticvtifields::Epsilon >( getName() );
+      subRegion.registerField< elasticvtifields::Delta >( getName() );
     } );
 
   } );
@@ -164,7 +167,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 
 
-void ElasticWaveEquationSEM::postProcessInput()
+void ElasticVTIWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
 
@@ -215,7 +218,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
+void ElasticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -315,10 +318,10 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   } );
 }
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
-                                                       arrayView1d< real32 > const rhsx,
-                                                       arrayView1d< real32 > const rhsy,
-                                                       arrayView1d< real32 > const rhsz )
+void ElasticVTIWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber,
+                                                          arrayView1d< real32 > const rhsx,
+                                                          arrayView1d< real32 > const rhsy,
+                                                          arrayView1d< real32 > const rhsz )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstantsx   = m_sourceConstantsx.toViewConst();
@@ -346,7 +349,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   } );
 }
 
-void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
+void ElasticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -433,7 +436,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 }
 
 
-void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+void ElasticVTIWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -507,11 +510,11 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
 
 
-real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    integer cycleNumber,
-                                                    DomainPartition & domain,
-                                                    bool GEOS_UNUSED_PARAM( computeGradient ) )
+real64 ElasticVTIWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer cycleNumber,
+                                                       DomainPartition & domain,
+                                                       bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
@@ -519,23 +522,23 @@ real64 ElasticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
 
 
-real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer cycleNumber,
-                                                     DomainPartition & domain,
-                                                     bool GEOS_UNUSED_PARAM( computeGradient ) )
+real64 ElasticVTIWaveEquationSEM::explicitStepBackward( real64 const & time_n,
+                                                        real64 const & dt,
+                                                        integer cycleNumber,
+                                                        DomainPartition & domain,
+                                                        bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
 
-void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition &,
-                                              MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+void ElasticVTIWaveEquationSEM::computeUnknowns( real64 const &,
+                                                 real64 const & dt,
+                                                 integer const cycleNumber,
+                                                 DomainPartition &,
+                                                 MeshLevel & mesh,
+                                                 arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -564,7 +567,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
-  auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+  auto kernelFactory = ElasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -585,12 +588,12 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                   solverTargetNodesSet );
 }
 
-void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  integer const,
-                                                  DomainPartition & domain,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+void ElasticVTIWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     integer const,
+                                                     DomainPartition & domain,
+                                                     MeshLevel & mesh,
+                                                     arrayView1d< string const > const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -643,7 +646,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   incrementIndexSeismoTrace( time_n );
 }
 
-void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
+void ElasticVTIWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -683,10 +686,10 @@ void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 
 }
 
-real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     integer const cycleNumber,
-                                                     DomainPartition & domain )
+real64 ElasticVTIWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                        real64 const & dt,
+                                                        integer const cycleNumber,
+                                                        DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -704,11 +707,11 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
   return dt;
 }
 
-void ElasticWaveEquationSEM::cleanup( real64 const time_n,
-                                      integer const cycleNumber,
-                                      integer const eventCounter,
-                                      real64 const eventProgress,
-                                      DomainPartition & domain )
+void ElasticVTIWaveEquationSEM::cleanup( real64 const time_n,
+                                         integer const cycleNumber,
+                                         integer const eventCounter,
+                                         real64 const eventProgress,
+                                         DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
@@ -755,16 +758,16 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
   } );
 }
 
-void ElasticWaveEquationSEM::initializePML()
+void ElasticVTIWaveEquationSEM::initializePML()
 {
   GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
 }
 
-void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
+void ElasticVTIWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
   GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ElasticVTIWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geos */
