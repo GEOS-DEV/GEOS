@@ -87,8 +87,6 @@ public:
 
   TableTextFormatter( TableLayout const & tableLayout );
 
-  TableTextFormatter( std::vector< string > const & columnNames );
-
   /**
    * @brief Convert the TableData to a table string.
    * @param tableData The TableData to convert.

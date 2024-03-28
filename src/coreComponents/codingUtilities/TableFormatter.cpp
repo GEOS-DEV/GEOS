@@ -115,10 +115,6 @@ TableTextFormatter::TableTextFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
 
-TableTextFormatter::TableTextFormatter( std::vector< string > const & columnNames )
-  : TableFormatter( TableLayout( columnNames ))
-{}
-
 string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
