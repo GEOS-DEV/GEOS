@@ -141,7 +141,7 @@ public:
     real32 stiffnessVectorxLocal[ numNodesPerElem ];
     real32 stiffnessVectoryLocal[ numNodesPerElem ];
     real32 stiffnessVectorzLocal[ numNodesPerElem ];
-    real32 Cvti[5];
+    real32 Cvti[6];
 
   };
   //***************************************************************************
