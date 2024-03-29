@@ -1,0 +1,4 @@
+---
+baselines:
+  bucket: geos-dev
+  latest: integrated_test_baseline_0000000000.tar.gz
