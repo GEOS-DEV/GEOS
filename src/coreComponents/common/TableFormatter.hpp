@@ -19,8 +19,8 @@
 #ifndef GEOS_COMMON_TABLEFORMATTER_HPP
 #define GEOS_COMMON_TABLEFORMATTER_HPP
 
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableLayout.hpp"
 
 namespace geos
 {

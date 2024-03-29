@@ -114,7 +114,7 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
-  std::pair< real64, real64 > const id = std::pair< real64, real64 >( rowValue, columnValue );
+  std::pair< real64, real64 > const id = std::make_pair( rowValue, columnValue );
   m_data[id] = GEOS_FMT( "{}", value );
   m_columns.insert( columnValue );
   m_rows.insert( rowValue );

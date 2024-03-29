@@ -16,7 +16,7 @@
  * @file TableFormatter.cpp
  */
 
-#include "codingUtilities/TableFormatter.hpp"
+#include "common/TableFormatter.hpp"
 namespace geos
 {
 

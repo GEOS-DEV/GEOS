@@ -16,7 +16,7 @@
  * @file TableData.hpp
  */
 
-#include "codingUtilities/TableLayout.hpp"
+#include "common/TableLayout.hpp"
 
 namespace geos
 {

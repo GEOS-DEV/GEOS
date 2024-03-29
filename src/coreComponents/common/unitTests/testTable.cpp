@@ -13,9 +13,9 @@
  */
 
 // Source includes
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
-#include "codingUtilities/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableFormatter.hpp"
+#include "common/TableLayout.hpp"
 #include "dataRepository/Group.hpp"
 // TPL includes
 #include <gtest/gtest.h>

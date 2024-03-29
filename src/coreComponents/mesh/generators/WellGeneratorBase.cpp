@@ -17,9 +17,9 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "codingUtilities/TableLayout.hpp"
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
+#include "common/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableFormatter.hpp"
 #include "common/Format.hpp"
 namespace geos
 {
