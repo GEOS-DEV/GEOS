@@ -13,21 +13,13 @@
   6400x1600x4800m domain
   NOTES:
     nx="{ 320 }"
-    ny="{ 240 }"
-    nz="{ 120, 120 }
-    => local threshold for local builds 3D Q1 Δt=1e-4 (18e6 elems, 10Gb per 1 GPU)
-    -> Q4 180 procs / GPU 16h
-    -> Q1 180 procs / GPU 1h40min
-    -> Q3 gar6more results
-    nx="{ 160 }"
     ny="{ 120 }"
-    nz="{ 60, 60 }
-    => local threshold for local builds 3D Q2 Δt=1e-4 (2e6 elems, 4Gb per 1 GPU)
-    -> Q3 swaps
-    nx="{ 80 }"
-    ny="{ 60 }"
-    nz="{ 30, 30 }
-    => coarse 10 min frontal run 3D Q5 Δt=1e-3 (288e3 elems, 8Gb per 6 GPU)
+    nz="{ 120, 120 }"
+    => Q3 24 procs / GPUs -> 10min run on P3 (validation run)
+    nx="{ 320 }"
+    ny="{ 80 }"
+    nz="{ 120, 120 }"
+    => Q2 18 procs / GPUs -> 5min run on P3 (debug run)
 
 # Validation againt [gar6more3d](https://gitlab.inria.fr/jdiaz/gar6more3d)
 
@@ -37,7 +29,7 @@
   0 first layer : acoustic (0) elastodynamic (1), poroelastic (2)
   4 Source derivative (Hermite functions derivative, i.e. 2 for a ricker source)
   10. Central frequency of the source 
-  1020. Amplitude of the source (× ρᶠ ?)
+  2.295e9 Amplitude of the source (≡ λᶠ)
   0.115 Delay of the source
   500. Height of the source
   533.3333 Height of the line of receivers (relative to interface)
@@ -47,10 +39,10 @@
   0. Ordinate of the last receiver
   1 Numbers of receivers
   0. Start time
-  3. Stop time
+  1.85 Stop time
   1e-3 Time step (of the seismo samples)
-  1000 Number of intervals for the numerical computation of the convolution
-  1000 Number of intervals for the numerical computation of the space integration
+  100 Number of intervals for the numerical computation of the convolution
+  100 Number of intervals for the numerical computation of the space integration
   2.295e9 1020. λᶠ and ρᶠ
   1 second layer : acoustic (0) elastodynamic (1), poroelastic (2)
   9.6334225e9 9.633155e9 2500. μˢ, λˢ and ρˢ
@@ -60,9 +52,9 @@
   ```
   4 infinite medium (1), free surface (2), wall boundary (3) or bilayered medium(4)
   0 first layer : acoustic (0) elastodynamic (1), poroelastic (2)
-  4 Source derivative (Hermite functions derivative, i.e. 2 for a ricker source)
+  3 Source derivative (Hermite functions derivative, i.e. 2 for a ricker source)
   10. Central frequency of the source 
-  1020. Amplitude of the source (× ρᶠ ?)
+  2.295e9 Amplitude of the source (≡ λᶠ)
   0.115 Delay of the source
   500. Height of the source
   -533.3333 Height of the line of receivers (relative to interface)
@@ -72,10 +64,10 @@
   0. Ordinate of the last receiver
   1 Numbers of receivers
   0. Start time
-  3. Stop time
+  1.85 Stop time
   1e-3 Time step (of the seismo samples)
-  500 Number of intervals for the numerical computation of the convolution
-  500 Number of intervals for the numerical computation of the space integration
+  100 Number of intervals for the numerical computation of the convolution
+  100 Number of intervals for the numerical computation of the space integration
   2.295e9 1020. λᶠ and ρᶠ
   1 second layer : acoustic (0) elastodynamic (1), poroelastic (2)
   9.6334225e9 9.633155e9 2500. μˢ, λˢ and ρˢ
@@ -83,37 +75,6 @@
 -->
 
 <Problem>
-  <Solvers>
-    <!-- define the solver, source coordinates, time source frequency, receiver coordinates -->
-    <AcousticSEM
-      name="acousticSolver"
-      discretization="FE1"
-      targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1575, 2400, 2900 } }"
-      timeSourceFrequency="10"
-      timeSourceDelay="0.115"
-      rickerOrder="3"
-      outputSeismoTrace="1"
-      dtSeismoTrace="1e-3"
-      receiverCoordinates="{ { 3752.2936, 2400, 2933.3333 } }"/>
-    <ElasticSEM
-      name="elasticSolver"
-      discretization="FE1"
-      targetRegions="{ Solid }"
-      outputSeismoTrace="1"
-      dtSeismoTrace="1e-3"
-      receiverCoordinates="{ { 3752.2936, 2400, 1866.6667 } }"/>
-    <!-- NOTES:
-      - coupled solver must be declared at the end (for interface computations)
-      - discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers
-    -->
-    <AcousticElasticSEM
-      name="acousticelasticSolver"
-      discretization="FE1"
-      targetRegions="{ Solid, Fluid }"
-      acousticSolverName="acousticSolver"
-      elasticSolverName="elasticSolver"/>
-  </Solvers>
 
   <Mesh>
     <InternalMesh
@@ -123,7 +84,7 @@
       yCoords="{ 0, 4800.0001 }"
       zCoords="{ 0, 2400, 4800 }"
       nx="{ 320 }"
-      ny="{ 240 }"
+      ny="{ 120 }"
       nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
@@ -137,22 +98,21 @@
     </FiniteElements>
   </NumericalMethods>
 
-  <Events
-    maxTime="3">
+  <Events maxTime="1.85">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
-      forceDt="1e-4"
+      forceDt="1e-3"
       target="/Solvers/acousticelasticSolver"/>
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="1e-4"
+      forceDt="1e-3"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="1e-4"
+      forceDt="1e-3"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>
@@ -169,8 +129,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <NullModel
-      name="nullModel"/>
+    <NullModel name="nullModel"/>
   </Constitutive>
 
   <FieldSpecifications>
