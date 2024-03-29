@@ -232,6 +232,11 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
+
+message(WARNING "Temporarily changing the geosPythonBranch to main")
+set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/baselineStorage" CACHE STRING "" FORCE)
+
+
 if ( Python3_EXECUTABLE )
     message(STATUS "Found python version ${Python3_VERSION}")
     if (${Python3_VERSION} VERSION_LESS "3.6.0")

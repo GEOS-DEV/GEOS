@@ -76,6 +76,7 @@ GEOSX_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
+UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
@@ -106,6 +107,7 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
+    --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -265,6 +267,11 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
+  
+  # Temporary command to upload baselines
+  integratedTests/geos_ats.sh -a upload_baselines
+  exit 1
+
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
@@ -285,7 +292,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 
   # want to clean the integrated tests folder to avoid polluting the next build.
-  or_die integratedTests/geos_ats.sh -a clean
+  or_die integratedTests/geos_ats.sh -a veryclean
 fi
 
 # Cleaning the build directory.
