@@ -32,7 +32,6 @@
 #include "AcousticPMLSEMKernel.hpp"
 #include "PrecomputeSourcesAndReceiversKernel.hpp"
 
-
 namespace geos
 {
 
