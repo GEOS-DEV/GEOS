@@ -172,7 +172,7 @@ private:
    * @param nbRows Indicates the number of lines in a section
    * @param section The section to be built
    */
-  void buildSectionRows( std::vector< TableLayout::Column > & columns,
+  void buildSectionRows( std::vector< TableLayout::Column > const & columns,
                          string_view sectionSeparator,
                          std::ostringstream & rows,
                          integer const nbRows,

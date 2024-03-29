@@ -27,9 +27,9 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
 void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                                std::vector< std::vector< string > > const & rows ) const
 {
-  for( size_t idxRow = 0; idxRow < rows.size(); idxRow++ )
+  for( size_t idxRow = 0; idxRow < rows.size(); ++idxRow )
   {
-    for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
+    for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
     {
       columns[idxColumn].columnValues.push_back( rows[idxRow][idxColumn] );
     }
@@ -195,7 +195,7 @@ void TableTextFormatter::adjustHeaderSizesAndStore( std::vector< TableLayout::Co
                                                     size_t const & largestHeaderVectorSize,
                                                     std::vector< std::vector< string > > & splitHeader ) const
 {
-  for( size_t columnParamIdx = 0; columnParamIdx < columns.size(); columnParamIdx++ )
+  for( size_t columnParamIdx = 0; columnParamIdx < columns.size(); ++columnParamIdx )
   {
     if( splitHeader[columnParamIdx].size() < largestHeaderVectorSize )
     {
@@ -219,7 +219,7 @@ void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Colu
     } );
 
     maxStringSize = *it;
-    for( size_t idxRow = 0; idxRow <  nbRows; idxRow++ )
+    for( size_t idxRow = 0; idxRow <  nbRows; ++idxRow )
     {
       string cell = column.columnValues[idxRow];
 
@@ -332,7 +332,7 @@ void TableTextFormatter::buildTitleRow( string & titleRows,
   titleRows += GEOS_FMT( "{}\n", "|" );
 }
 
-void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & columns,
+void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > const & columns,
                                            string_view sectionSeparator,
                                            std::ostringstream & tableRows,
                                            integer const nbRows,
@@ -341,7 +341,7 @@ void TableTextFormatter::buildSectionRows( std::vector< TableLayout::Column > & 
   integer const columnMargin = m_tableLayout.getColumnMargin();
   integer const borderMargin = m_tableLayout.getBorderMargin();
 
-  for( integer idxRow = 0; idxRow< nbRows; idxRow++ )
+  for( integer idxRow = 0; idxRow< nbRows; ++idxRow )
   {
     tableRows << GEOS_FMT( "{:<{}}", "|", 1 +  borderMargin );
     for( std::size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
