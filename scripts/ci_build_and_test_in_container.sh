@@ -269,7 +269,28 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die ninja ats_environment
   
   # Temporary command to upload baselines
+  echo "Temporary code to allow for initial baseline upload"
+
+  if [ -d ../integratedTests ]; then
+    echo "Old integrated test dir exists"
+    mv ../integratedTests ../integratedTests_old
+  fi
+
+  git clone --depth 1 --branch develop --single-branch https://github.com/GEOS-DEV/integratedTests.git ../integratedTests
+  cd ../integratedTests
+  git lfs install
+  git pull
+  rm -rf .git
+  cd -
+
   integratedTests/geos_ats.sh -a upload_baselines
+
+  if [ -d ../integratedTests_old ]; then
+    echo "Old integrated test dir exists"
+    rm -rf ../integratedTests
+    mv ../integratedTests_old ../integratedTests
+  fi
+
   exit 1
 
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
