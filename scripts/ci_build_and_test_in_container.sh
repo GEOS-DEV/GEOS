@@ -268,22 +268,23 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
   
-  # Temporary command to upload baselines
-  echo "Temporary code to allow for initial baseline upload"
+  # Temporary command to pack baselines
+  echo "Temporary code to allow for initial baseline packing"
 
   if [ -d ${GEOS_SRC_DIR}/integratedTests ]; then
     echo "Old integrated test dir exists"
     mv ${GEOS_SRC_DIR}/integratedTests ${GEOS_SRC_DIR}/integratedTests_old
   fi
 
+  or_die apt-get install -y virtualenv
   git clone --depth 1 --branch develop --single-branch https://github.com/GEOS-DEV/integratedTests.git ${GEOS_SRC_DIR}/integratedTests
   cd ${GEOS_SRC_DIR}/integratedTests
-  git install lfs
+  git lfs install
   git pull
   rm -rf .git
   cd -
 
-  integratedTests/geos_ats.sh -a upload_baselines
+  integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz
 
   if [ -d ${GEOS_SRC_DIR}/integratedTests_old ]; then
     echo "Old integrated test dir exists"
