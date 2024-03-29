@@ -138,8 +138,8 @@ BrooksCoreyRelativePermeabilityUpdate::
     for( localIndex ip = 0; ip < numPhases(); ++ip )
     {
       real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
-      real64 const exponent  = m_phaseRelPermExponent[ip][dir];
-      real64 const scale     = m_phaseRelPermMaxValue[ip][dir];
+      real64 const exponent  = m_phaseRelPermExponent[dir][ip];
+      real64 const scale     = m_phaseRelPermMaxValue[dir][ip];
 
       if( satScaled > 0.0 && satScaled < 1.0 )
       {
