@@ -287,6 +287,7 @@ public:
     static constexpr char const * referenceMaterialVolumeString() { return "referenceMaterialVolume"; }
 
     static constexpr char const * surfaceMassString() { return "surfaceMass"; }
+    static constexpr char const * surfaceFieldMassString() { return "surfaceFieldMass"; }
     static constexpr char const * explicitSurfaceNormalString() { return "explicitSurfaceNormal"; }
     static constexpr char const * maxMappedParticleIDString() { return "maxMappedParticleIDS"; }
     static constexpr char const * principalExplicitSurfaceNormalString() { return "principalExplicitSurfaceNormal"; }
@@ -389,6 +390,7 @@ public:
                                   real64 & frictionCoefficient );
 
   void computePairwiseNodalContactForce( int const & separable,
+                                         int useCohesiveTangentialForces,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
                                          real64 const & mA,
@@ -726,6 +728,7 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  int m_enablePrescribedBoundaryTransverseVelocities;
   array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces 
 
   array1d< real64 > m_globalFaceReactions;
@@ -761,6 +764,7 @@ protected:
   CohesiveLawOption m_cohesiveLaw;
   // int m_cohesiveFieldPartitioning;
   int m_enableCohesiveFailure;
+  int m_preventCZInterpentration;
   real64 m_normalForceConstant;
   real64 m_shearForceConstant;
 
