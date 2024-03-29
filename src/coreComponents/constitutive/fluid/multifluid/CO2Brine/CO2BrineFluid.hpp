@@ -199,7 +199,6 @@ private:
 
   // Flash model
   std::unique_ptr< FLASH > m_flash;
-
 };
 
 // these aliases are useful in constitutive dispatch

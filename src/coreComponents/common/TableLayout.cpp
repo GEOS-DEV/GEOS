@@ -16,7 +16,7 @@
  * @file TableData.hpp
  */
 
-#include "codingUtilities/TableLayout.hpp"
+#include "common/TableLayout.hpp"
 
 namespace geos
 {
@@ -27,7 +27,7 @@ TableLayout::TableLayout( std::vector< string > const & headers, string const & 
   setMargin( MarginValue::medium );
   for( size_t idx = 0; idx< headers.size(); idx++ )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::center, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::right, true}, {}, ""} );
   }
 }
 
@@ -50,6 +50,11 @@ void TableLayout::setMargin( MarginValue marginValue )
 {
   m_borderMargin = marginValue;
   m_columnMargin = integer( marginValue ) * 2 + 1;
+}
+
+std::vector< TableLayout::Column > const & TableLayout::getColumns() const
+{
+  return m_columns;
 }
 
 string_view TableLayout::getTitle() const

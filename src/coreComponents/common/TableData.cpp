@@ -16,12 +16,12 @@
  * @file TableData.cpp
  */
 
-#include "codingUtilities/TableData.hpp"
+#include "common/TableData.hpp"
 
 namespace geos
 {
 
-void TableData::addRow( std::vector< string > row )
+void TableData::addRow( std::vector< string > const & row )
 {
   m_rows.push_back( row );
 }
@@ -31,7 +31,7 @@ void TableData::clear()
   m_rows.clear();
 }
 
-std::vector< std::vector< string > > & TableData::getTableDataRows()
+std::vector< std::vector< string > > const & TableData::getTableDataRows() const
 {
   return m_rows;
 }
@@ -54,7 +54,7 @@ TableData TableData2D::buildTableData() const
     values.push_back( GEOS_FMT( "{}", rowValue ) );
     for( real64 const & columnValue : m_columns )
     {
-      std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
+      std::pair< real64, real64 > id = std::make_pair( rowValue, columnValue );
       auto const dataIt = m_data.find( id );
 
       if( dataIt != m_data.end())

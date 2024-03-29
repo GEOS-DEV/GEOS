@@ -89,8 +89,6 @@ public:
     string m_maxStringSize;
   };
 
-  TableLayout() = default;
-
   /**
    * @brief Construct a new Table object, all values in the table are centered by default
    * @param columnNames The names of the columns
@@ -105,34 +103,39 @@ public:
   TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title = "" );
 
   /**
+   * @return The columns vector
+   */
+  std::vector< Column > const & getColumns() const;
+
+  /**
+   * @return The table name
+   */
+  string_view getTitle() const;
+
+  /**
+   * @return The border margin
+   */
+  integer const & getBorderMargin() const;
+
+  /**
+   * @return The column margin
+   */
+  integer const & getColumnMargin() const;
+
+  /**
+   * @return The margin title
+   */
+  integer const & getMarginTitle() const;
+
+private:
+
+  /**
    * @brief Set the minimal margin width between row content and borders.
    * @param marginType The margin value
    */
   void setMargin( MarginValue marginValue );
 
-  /**
-   * @return return the table name
-   */
-  string_view getTitle() const;
-
-  /**
-   * @return return the border margin
-   */
-  integer const & getBorderMargin() const;
-
-  /**
-   * @return return the column margin
-   */
-  integer const & getColumnMargin() const;
-
-  /**
-   * @return return the margin title
-   */
-  integer const & getMarginTitle() const;
-
   std::vector< Column > m_columns;
-
-private:
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;

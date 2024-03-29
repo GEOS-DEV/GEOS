@@ -13,9 +13,9 @@
  */
 
 // Source includes
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
-#include "codingUtilities/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableFormatter.hpp"
+#include "common/TableLayout.hpp"
 #include "dataRepository/Group.hpp"
 // TPL includes
 #include <gtest/gtest.h>
@@ -28,13 +28,13 @@ TEST( testTable, tableClass )
 
   //table with empty row
   {
-    TableLayout tableLayout( {"Well\nelement no.\nPV weighted\nbar",
-                              "CordX",
-                              "CoordZ",
-                              "Prev\nelement",
-                              "Next\nelement"},
-                             "InternalWellGenerator well_injector1"
-                             );
+    TableLayout const tableLayout( {"Well\nelement no.\nPV weighted\nbar",
+                                    "CordX",
+                                    "CoordZ",
+                                    "Prev\nelement",
+                                    "Next\nelement"},
+                                   "InternalWellGenerator well_injector1"
+                                   );
 
     TableData tableData;
     tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
@@ -42,55 +42,55 @@ TEST( testTable, tableClass )
     tableData.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante", "[30.21543]", "30.45465142",
                       787442, 10 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString(
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString(
                  tableData ),
                "\n+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
                "|                                                                                InternalWellGenerator well_injector1                                                                                 |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                                                     Well                                                                     |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
-               "|                                                                 element no.                                                                  |              |               |  element  |  element  |\n"
-               "|                                                                 PV weighted                                                                  |              |               |           |           |\n"
-               "|                                                                     bar                                                                      |              |               |           |           |\n"
+               "|                                                                                                                                        Well  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
+               "|                                                                                                                                 element no.  |              |               |  element  |  element  |\n"
+               "|                                                                                                                                 PV weighted  |              |               |           |           |\n"
+               "|                                                                                                                                         bar  |              |               |           |           |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                                                    value1                                                                    |  [30.21543]  |      3.0      |    54     |     0     |\n"
+               "|                                                                                                                                      value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
                "|                                                                                                                                              |              |               |           |           |\n"
-               "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
+               "|  Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
                "+----------------------------------------------------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
                );
-  };
+  }
 
   //same but with different values
   {
-    TableLayout tableLayout( {"Duis fringilla, ligula sed porta fringilla,\nligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante",
-                              "CordX",
-                              "CoordZ",
-                              "Prev\nelement",
-                              "Next\nelement"}, "InternalWellGenerator well_injector1" );
+    TableLayout const tableLayout( {"Duis fringilla, ligula sed porta fringilla,\nligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante",
+                                    "CordX",
+                                    "CoordZ",
+                                    "Prev\nelement",
+                                    "Next\nelement"}, "InternalWellGenerator well_injector1" );
 
     TableData tableData;
     tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
     tableData.addRow( "", "", "", "", "" );
     tableData.addRow( "value23", "[30.21543]", "30.45465142", 787442, 10 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+---------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
                "|                                                          InternalWellGenerator well_injector1                                                           |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                           Duis fringilla, ligula sed porta fringilla,                            |    CordX     |    CoordZ     |   Prev    |   Next    |\n"
+               "|                                                     Duis fringilla, ligula sed porta fringilla,  |       CordX  |       CoordZ  |     Prev  |     Next  |\n"
                "|  ligula wisi commodo felis,ut adipiscing felis dui in enim. Suspendisse malesuada ultrices ante  |              |               |  element  |  element  |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n"
-               "|                                              value1                                              |  [30.21543]  |      3.0      |    54     |     0     |\n"
+               "|                                                                                          value1  |  [30.21543]  |          3.0  |       54  |        0  |\n"
                "|                                                                                                  |              |               |           |           |\n"
-               "|                                             value23                                              |  [30.21543]  |  30.45465142  |  787442   |    10     |\n"
+               "|                                                                                         value23  |  [30.21543]  |  30.45465142  |   787442  |       10  |\n"
                "+--------------------------------------------------------------------------------------------------+--------------+---------------+-----------+-----------+\n\n"
                );
   }
 
   //table with TableLayout::ColumnParam
   {
-    TableLayout tableLayout( {
+    TableLayout const tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::left},
@@ -103,8 +103,8 @@ TEST( testTable, tableClass )
     tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+-----------------------------------------------------------------------------------------+\n"
                "|                          InternalWellGenerator well_injector1                           |\n"
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
@@ -119,7 +119,7 @@ TEST( testTable, tableClass )
 
   //test with hidden column
   {
-    TableLayout tableLayout( {
+    TableLayout const tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
       TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
@@ -132,8 +132,8 @@ TEST( testTable, tableClass )
     tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+------------------------------------------------------------------------------------------------------------------+\n"
                "|    Cras egestas ipsum a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis     |\n"
                "+---------------------------+---------------------+----------------------------------+-----------------------------+\n"
@@ -144,10 +144,10 @@ TEST( testTable, tableClass )
                "+---------------------------+---------------------+----------------------------------+-----------------------------+\n\n"
                );
   }
-  
+
   //test with 1 column
   {
-    TableLayout tableLayout( {
+    TableLayout const tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
     }, "Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis" );
 
@@ -155,8 +155,8 @@ TEST( testTable, tableClass )
     tableData.addRow( "value1" );
     tableData.addRow( "val1" );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString( tableData ),
                "\n+-------------------------------------------------------------------------------------------------------------------+\n"
                "|     Cras egestas ipsu a nisl. Vivamus variu dolor utsisicdis parturient montes, nascetur ridiculus mus. Duis      |\n"
                "+-------------------------------------------------------------------------------------------------------------------+\n"
@@ -170,7 +170,7 @@ TEST( testTable, tableClass )
 
   //test without title
   {
-    TableLayout tableLayout( {
+    TableLayout const tableLayout( {
       TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
       TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
       TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
@@ -178,14 +178,14 @@ TEST( testTable, tableClass )
       TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
       TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
     }
-                             );
+                                   );
 
     TableData tableData;
     tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
     tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
+    TableTextFormatter const tableText( tableLayout );
+    EXPECT_EQ( tableText.toString( tableData ),
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
                "|  Cras egestas  |  CoordX  |           C           |  CoordZ     |  Prev     |   Next    |\n"
                "|                |          |                       |             |  element  |  element  |\n"
@@ -194,42 +194,43 @@ TEST( testTable, tableClass )
                "|      val1      |       v  |  [3.045,42.02,89.25]  |  3          |  10       |     3     |\n"
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
                );
-  };
+  }
 
+  // if setMargin used elsewhere make it public
   //test with tiny margin
-  {
-    TableLayout tableLayout( {
-      TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-      TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-      TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
-      TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
-      TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
-      TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
-    }, "InternalWellGenerator well_injector1" );
+  // {
+  //   TableLayout tableLayout( {
+  //     TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
+  //     TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
+  //     TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
+  //     TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
+  //     TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
+  //     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
+  //   }, "InternalWellGenerator well_injector1" );
 
-    tableLayout.setMargin( TableLayout::MarginValue::tiny );
+  //   //tableLayout.setMargin( TableLayout::MarginValue::tiny );
 
-    TableData tableData;
-    tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-    tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  //   TableData tableData;
+  //   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
+  //   tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
 
-    TableTextFormatter tableText( tableLayout );
-    EXPECT_EQ( tableText.ToString( tableData ),
-               "\n+-----------------------------------------------------------------+\n"
-               "|              InternalWellGenerator well_injector1               |\n"
-               "+------------+------+-------------------+---------+-------+-------+\n"
-               "|Cras egestas|CoordX|         C         |CoordZ   |Prev   | Next  |\n"
-               "|            |      |                   |         |element|element|\n"
-               "+------------+------+-------------------+---------+-------+-------+\n"
-               "|   value1   |      |        3.0        |3.0129877|2      |   1   |\n"
-               "|    val1    |     v|[3.045,42.02,89.25]|3        |10     |   3   |\n"
-               "+------------+------+-------------------+---------+-------+-------+\n\n"
-               );
-  };
+  //   TableTextFormatter const tableText( tableLayout );
+  //   EXPECT_EQ( tableText.toString( tableData ),
+  //              "\n+-----------------------------------------------------------------+\n"
+  //              "|              InternalWellGenerator well_injector1               |\n"
+  //              "+------------+------+-------------------+---------+-------+-------+\n"
+  //              "|Cras egestas|CoordX|         C         |CoordZ   |Prev   | Next  |\n"
+  //              "|            |      |                   |         |element|element|\n"
+  //              "+------------+------+-------------------+---------+-------+-------+\n"
+  //              "|   value1   |      |        3.0        |3.0129877|2      |   1   |\n"
+  //              "|    val1    |     v|[3.045,42.02,89.25]|3        |10     |   3   |\n"
+  //              "+------------+------+-------------------+---------+-------+-------+\n\n"
+  //              );
+  // }
 
   //test 2D table
   {
-    TableLayout tableLayout( {"FakePressure", "Value1", "Value2"} );
+    TableLayout const tableLayout( {"FakePressure", "Value1", "Value2"} );
     TableData2D tableData;
 
     for( real64 p = 10000; p<20000; p+=5000 )
@@ -241,14 +242,14 @@ TEST( testTable, tableClass )
       }
     }
 
-    TableTextFormatter tableLog( tableLayout );
-    EXPECT_EQ( tableLog.ToString( tableData.buildTableData()),
+    TableTextFormatter const tableLog( tableLayout );
+    EXPECT_EQ( tableLog.toString( tableData.buildTableData()),
                "+----------------+----------+------------------------+\n"
-               "|  FakePressure  |  Value1  |         Value2         |\n"
+               "|  FakePressure  |  Value1  |                Value2  |\n"
                "+----------------+----------+------------------------+\n"
-               "|      300       |   0.03   |          0.02          |\n"
-               "|      350       |  0.035   |  0.023333333333333334  |\n"
-               "|      400       |   0.04   |  0.02666666666666667   |\n"
+               "|           300  |    0.03  |                  0.02  |\n"
+               "|           350  |   0.035  |  0.023333333333333334  |\n"
+               "|           400  |    0.04  |   0.02666666666666667  |\n"
                "+----------------+----------+------------------------+\n\n"
                );
 

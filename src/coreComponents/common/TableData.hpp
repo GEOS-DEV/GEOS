@@ -20,20 +20,10 @@
 #define GEOS_COMMON_TableData_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/Format.hpp"
 
 namespace geos
 {
-
-#if __cplusplus < 202002L
-template< class T >
-static constexpr bool has_formatter = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
-#else
-template< typename T >
-concept has_formatter = requires ( T& v, std::format_context ctx )
-{
-  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
-};
-#endif
 
 // Class for managing table data
 class TableData
@@ -52,7 +42,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string who contains cell Values
    */
-  void addRow( std::vector< string > row );
+  void addRow( std::vector< string > const & row );
 
   /**
    * @brief Reset data in the table
@@ -62,7 +52,7 @@ public:
   /**
    * @return The rows of the table
    */
-  std::vector< std::vector< string > > & getTableDataRows();
+  std::vector< std::vector< string > > const & getTableDataRows() const;
 
 private:
 
@@ -76,17 +66,18 @@ class TableData2D
 public:
 
   /**
-   * @brief Add a cell to the table.
-   * Construct a map of pair<x,y> and cell value
-   * @param T The value passed to addCell (can be any type).
+   * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
+   * @tparam T The value passed to addCell (can be any type).
    * @param value Cell value to be added.
+   * @param rowValue The value of the row containing the cell.
+   * @param columnValue The value of the column containing the cell.
    */
   template< typename T >
-  void addCell( real64 rowValue, real64 columnValue, T value );
+  void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @brief Construct a TableData from a Table2D
-   * @return A TableData
+   * @brief Construct a TableData from the provided cells.
+   * @return A TableData with all cell values within increasing row & column. The row & columns names
    */
   TableData buildTableData() const;
 
@@ -112,18 +103,18 @@ void TableData::addRow( Args const &... args )
   std::vector< string > m_cellsValue;
   ( [&] {
     static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
-    string cellValue = GEOS_FMT( "{}", args );
+    string const cellValue = GEOS_FMT( "{}", args );
     m_cellsValue.push_back( cellValue );
   } (), ...);
 
-  m_rows.push_back( m_cellsValue );
+  addRow( m_cellsValue );
 }
 
 template< typename T >
-void TableData2D::addCell( real64 rowValue, real64 columnValue, T value )
+void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
-  std::pair< real64, real64 > id = std::pair< real64, real64 >( rowValue, columnValue );
+  std::pair< real64, real64 > const id = std::make_pair( rowValue, columnValue );
   m_data[id] = GEOS_FMT( "{}", value );
   m_columns.insert( columnValue );
   m_rows.insert( rowValue );
