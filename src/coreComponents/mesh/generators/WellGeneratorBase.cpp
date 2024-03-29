@@ -529,27 +529,6 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
 void WellGeneratorBase::logInternalWell() const
 {
   TableData tableWellData;
-
-  Section wellGeneratorSection;
-  wellGeneratorSection.setName("Well generator");
-  wellGeneratorSection.begin();
-
-  Table table = Table( {
-      Table::ColumnParam{{"Element no."}, Table::Alignment::right},
-      Table::ColumnParam{{"CoordX"}, Table::Alignment::middle},
-      Table::ColumnParam{{"CoordY"}, Table::Alignment::middle},
-      Table::ColumnParam{{"CoordZ"}, Table::Alignment::middle},
-      Table::ColumnParam{{"Prev\nElement"}, Table::Alignment::right},
-      Table::ColumnParam{{"Next\nElement"}, Table::Alignment::right},
-    }
-                       );
-
-  string titleName = "InternalWellGenerator " + getName();
-  table.setTitle( titleName );
-
-void WellGeneratorBase::logInternalWell() const
-{
-  TableData tableWellData;
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     std::optional< globalIndex > nextElement;

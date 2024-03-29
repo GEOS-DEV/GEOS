@@ -44,8 +44,8 @@ void Section::setMinWidth( integer const & minWidth )
 void Section::computeMaxRowSize( string const & title,
                                  std::vector< string > const & rowsDescription )
 {
-  integer marginBorder = 2;
-  integer nbSpecialChar = 2;
+  static constexpr integer marginBorder = 2;
+  static constexpr integer nbSpecialChar = 2;
   integer maxDescriptionLength = 0;
   integer titleLength = title.length() + marginBorder * 2 + nbSpecialChar * 2;
 

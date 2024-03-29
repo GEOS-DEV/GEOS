@@ -176,11 +176,14 @@ bool EventManager::run( DomainPartition & domain )
     string cycleDescription = "- Cycle: " +   std::to_string( m_cycle );
 
     Section section;
-    section.setName( "TIMESTEP START" );
-    section.addDescription( timeDescription );
-    section.addDescription( deltaDescription );
-    section.addDescription( cycleDescription );
-    section.setMinWidth(100);
+    section.setName( "section name" );
+    section.addDescription( "description name 1" );
+    section.addDescription( "description name 2" );
+    section.setMinWidth( 100 );
+    // section.addDescription( deltaDescription );
+    // section.addDescription( cycleDescription );
+ 
+    //  section.setMinWidth(100);
     // The formating here is a work in progress.
     section.begin();
 
