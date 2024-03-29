@@ -48,6 +48,14 @@ DECLARE_FIELD( particleCrystalHealFlag,
                WRITE_AND_READ,
                "An array that remembers particles that are undergoing crystal healing for the mpm event." );
 
+DECLARE_FIELD( particleMaterialType,
+               "particleMaterialType",
+               array1d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores index of particle material type (assumes single material for each particle region)." );
+
 DECLARE_FIELD( particleMass,
                "particleMass",
                array1d< real64 >,
