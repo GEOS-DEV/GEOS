@@ -271,24 +271,24 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Temporary command to upload baselines
   echo "Temporary code to allow for initial baseline upload"
 
-  if [ -d ../integratedTests ]; then
+  if [ -d ${GEOS_SRC_DIR}/integratedTests ]; then
     echo "Old integrated test dir exists"
-    mv ../integratedTests ../integratedTests_old
+    mv ${GEOS_SRC_DIR}/integratedTests ${GEOS_SRC_DIR}/integratedTests_old
   fi
 
-  git clone --depth 1 --branch develop --single-branch https://github.com/GEOS-DEV/integratedTests.git ../integratedTests
-  cd ../integratedTests
-  git lfs install
+  git clone --depth 1 --branch develop --single-branch https://github.com/GEOS-DEV/integratedTests.git ${GEOS_SRC_DIR}/integratedTests
+  cd ${GEOS_SRC_DIR}/integratedTests
+  git install lfs
   git pull
   rm -rf .git
   cd -
 
   integratedTests/geos_ats.sh -a upload_baselines
 
-  if [ -d ../integratedTests_old ]; then
+  if [ -d ${GEOS_SRC_DIR}/integratedTests_old ]; then
     echo "Old integrated test dir exists"
-    rm -rf ../integratedTests
-    mv ../integratedTests_old ../integratedTests
+    rm -rf ${GEOS_SRC_DIR}/integratedTests
+    mv ${GEOS_SRC_DIR}/integratedTests_old ${GEOS_SRC_DIR}/integratedTests
   fi
 
   exit 1
