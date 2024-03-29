@@ -16,9 +16,7 @@
 #define GEOSX_WELLBLOCKABC_HPP
 
 #include "dataRepository/Group.hpp"
-#include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/Group.hpp"
 
 #include <vector>
 

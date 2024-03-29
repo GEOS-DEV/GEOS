@@ -17,7 +17,9 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "codingUtilities/Table.hpp"
+#include "common/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableFormatter.hpp"
 #include "codingUtilities/Section.hpp"
 #include "common/Format.hpp"
 namespace geos
@@ -143,9 +145,10 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 )
+  if( getLogLevel() >= 1 && MpiWrapper::commRank() == 0 )
   {
-    debugWellGeometry();
+    logInternalWell();
+    logPerforationTable();
   }
 
 }
@@ -523,15 +526,9 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
   }
 }
 
-void WellGeneratorBase::debugWellGeometry() const
+void WellGeneratorBase::logInternalWell() const
 {
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0 )
-  {
-    return;
-  }
-
-  std::vector< string > row;
-  std::ostringstream oss;
+  TableData tableWellData;
 
   Section wellGeneratorSection;
   wellGeneratorSection.setName("Well generator");
@@ -550,6 +547,9 @@ void WellGeneratorBase::debugWellGeometry() const
   string titleName = "InternalWellGenerator " + getName();
   table.setTitle( titleName );
 
+void WellGeneratorBase::logInternalWell() const
+{
+  TableData tableWellData;
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     std::optional< globalIndex > nextElement;
@@ -565,33 +565,40 @@ void WellGeneratorBase::debugWellGeometry() const
       prevElement =  m_prevElemId[iwelem][0];
     }
 
-    for( globalIndex inode = 0; inode < m_numNodesPerElem; ++inode )
-    {
-      if( inode == 0 )
-      {
-        //std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-      else
-      {
-        //std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
-      }
-    }
-    table.addRow( iwelem, m_elemCenterCoords[iwelem][0], m_elemCenterCoords[iwelem][1], m_elemCenterCoords[iwelem][2], prevElement, nextElement );
-
+    tableWellData.addRow( iwelem,
+                          m_elemCenterCoords[iwelem][0],
+                          m_elemCenterCoords[iwelem][1],
+                          m_elemCenterCoords[iwelem][2],
+                          prevElement,
+                          nextElement );
   }
-  table.draw();
 
-  Table tablePerforation = Table( {"Perforation no.", "Coordinates\nlong string", "connected to" } );
-  string titlePerfo = "Peforation table";
-  tablePerforation.setTitle( titlePerfo );
+  string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
+  TableLayout const tableWellLayout = TableLayout( {
+      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
+    }, wellTitle );
 
+  TableTextFormatter const tableFormatter( tableWellLayout );
+  GEOS_LOG_RANK_0( tableFormatter.toString( tableWellData ));
+}
+
+void WellGeneratorBase::logPerforationTable() const
+{
+  TableData tablePerfoData;
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    tablePerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
+    tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  tablePerforation.draw();
-  wellGeneratorSection.end();
+  TableLayout const tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to"},
+                                       GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
+  TableTextFormatter const tablePerfoLog( tableLayoutPerfo );
+  GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
 }
 
 }
