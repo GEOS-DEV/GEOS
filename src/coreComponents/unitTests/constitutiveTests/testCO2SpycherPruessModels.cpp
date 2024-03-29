@@ -87,6 +87,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
                                             phaseNames,
                                             componentNames,
                                             componentMolarWeight,
+                                            false,
                                             false );
 }
 

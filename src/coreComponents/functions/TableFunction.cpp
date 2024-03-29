@@ -20,9 +20,9 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "codingUtilities/TableLayout.hpp"
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
+#include "common/TableLayout.hpp"
+#include "common/TableData.hpp"
+#include "common/TableFormatter.hpp"
 
 
 #include <algorithm>
@@ -254,7 +254,7 @@ void TableFunction::printInCSV( string const & filename ) const
       string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
       columnNames.push_back( description );
     }
-    TableLayout tableLayout( columnNames );
+    TableLayout const tableLayout( columnNames );
 
     TableCSVFormatter csvFormat( tableLayout );
     os << csvFormat.headerToString();
@@ -283,13 +283,13 @@ void TableFunction::printInLog( string const & filename ) const
       tableData.addRow( coords[idx], m_values[idx] );
     }
 
-    TableLayout tableLayout( {
+    TableLayout const tableLayout( {
         string( units::getDescription( getDimUnit( 0 ))),
         string( units::getDescription( m_valueUnit ))
       }, filename );
 
-    TableTextFormatter logTable( tableLayout );
-    GEOS_LOG_RANK_0( logTable.ToString( tableData ));
+    TableTextFormatter const logTable( tableLayout );
+    GEOS_LOG_RANK_0( logTable.toString( tableData ));
   }
   else if( numDimensions == 2 )
   {
@@ -321,20 +321,20 @@ void TableFunction::printInLog( string const & filename ) const
         string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
         vecDescription.push_back( description );
       }
-      TableLayout tableLayout( vecDescription, filename );
+      TableLayout const tableLayout( vecDescription, filename );
 
       //3. log
-      TableTextFormatter table2DLog( tableLayout );
-      GEOS_LOG_RANK_0( table2DLog.ToString( tableData2D.buildTableData() ));
+      TableTextFormatter const table2DLog( tableLayout );
+      GEOS_LOG_RANK_0( table2DLog.toString( tableData2D.buildTableData() ));
     }
     else
     {
       //2. format
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
-      TableLayout tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
+      TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
 
       //3. log
-      TableTextFormatter tableLog( tableLayoutInfos );
+      TableTextFormatter const tableLog( tableLayoutInfos );
       GEOS_LOG_RANK_0( tableLog.layoutToString() );
     }
   }
