@@ -977,7 +977,7 @@ private:
   unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
+    if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
       return unpackHostImpl( buffer, withMetadata, events, op );
     }

@@ -279,7 +279,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-  // virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override {}
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;

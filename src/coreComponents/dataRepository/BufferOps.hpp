@@ -40,13 +40,13 @@ struct is_host_packable_helper;
 
 template< typename T >
 constexpr bool is_host_packable_scalar_v = std::is_trivial< T >::value ||
-                                         std::is_arithmetic< T >::value;
+                                           std::is_arithmetic< T >::value;
 
 /// Whether an object of type T is itself packable
 template< typename T >
 constexpr bool is_host_packable_object_v = is_host_packable_scalar_v< T > ||
-                                         traits::is_tensorT< T > ||
-                                         traits::is_string< T >;
+                                           traits::is_tensorT< T > ||
+                                           traits::is_string< T >;
 
 template< typename T >
 constexpr bool is_container_v = !is_host_packable_object_v< T >;
@@ -83,7 +83,7 @@ constexpr bool is_host_packable_map_v = false;
 
 template< typename T_KEY, typename T_VAL, typename SORTED >
 constexpr bool is_host_packable_map_v< mapBase< T_KEY, T_VAL, SORTED > > = is_host_packable_helper< T_KEY >::value &&
-                                                                         is_host_packable_helper< T_VAL >::value;
+                                                                           is_host_packable_helper< T_VAL >::value;
 
 
 template< typename T >
