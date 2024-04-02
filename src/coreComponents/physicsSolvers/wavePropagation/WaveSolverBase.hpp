@@ -109,7 +109,11 @@ public:
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
 
     static constexpr char const * useDASString() { return "useDAS"; }
+    static constexpr char const * linearDASSamplesString() { return "linearDASSamples"; }
     static constexpr char const * linearDASGeometryString() { return "linearDASGeometry"; }
+    static constexpr char const * linearDASVectorXString() { return "linearDASVectorX"; }
+    static constexpr char const * linearDASVectorYString() { return "linearDASVectorY"; }
+    static constexpr char const * linearDASVectorZString() { return "linearDASVectorZ"; }
 
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
@@ -123,6 +127,12 @@ public:
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */
   void reinit() override final;
+
+  SortedArray< localIndex > const & getSolverNodesSet() { return m_solverTargetNodesSet; }
+
+  void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                             localIndex const subRegionSize,
+                             localIndex const numQuadraturePointsPerElem );
 
 protected:
 
@@ -142,10 +152,6 @@ protected:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
 
-  /**
-   * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
-   */
-  virtual void initializeDAS();
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -161,12 +167,16 @@ protected:
    * @param var_np1 the field values at time_n + dt
    * @param var_n the field values at time_n
    * @param varAtreceivers the array holding the trace values, where the output is written
+   * @param coeffs a vector of receiver-dependent coefficients to be applied. Taken to be 1 by default
+   * @param add true if new values are added to the array, false if they overwrite current data
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
+                                       arrayView2d< real32 > varAtReceivers,
+                                       arrayView1d< real32 > coeffs = {},
+                                       bool add = false );
   /**
    * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
    * @param time_n the time corresponding to the field values pressure_n
@@ -260,11 +270,23 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Flag to indicate if DAS type of data will be modeled
-  integer m_useDAS;
+  /// Flag to indicate which DAS type  will be modeled
+  WaveSolverUtils::DASType m_useDAS;
+
+  /// Number of points used for strain integration for dipole DAS
+  integer m_linearDASSamples;
 
   /// Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)
   array2d< real64 > m_linearDASGeometry;
+
+  /// X component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorX;
+
+  /// Y component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorY;
+
+  /// Z component of the linear DAS direction vector
+  array1d< real32 > m_linearDASVectorZ;
 
   /// Indicate if we want to compute forward ou backward
   localIndex m_forward;
@@ -316,6 +338,9 @@ protected:
 
   /// LIFO to store p_dt2
   std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
+
+  /// A set of target nodes IDs that will be handled by the current solver
+  SortedArray< localIndex > m_solverTargetNodesSet;
 
   struct parametersPML
   {

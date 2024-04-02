@@ -24,7 +24,6 @@ set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC              /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
-set(GEOSX_ENABLE_FPE OFF CACHE BOOL "" FORCE)
 set(GEOSX_TPL_DIR "/global/project/projectdirs/m1411/GEOSX/tpls/install-cori-gcc\@8.1.0-release-24-07-20" CACHE PATH "" )
 
 

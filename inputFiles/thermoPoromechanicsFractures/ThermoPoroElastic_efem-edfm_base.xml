@@ -12,10 +12,9 @@
       name="poroSolver"
       targetRegions="{ RockMatrix, Fracture }"
       initialDt="1e-3"
-      fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
-      logLevel="3"
+      solidSolverName="fractureMechSolver"
+      logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
         logLevel="3"
@@ -31,15 +30,8 @@
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ RockMatrix, Fracture }"
-      solidSolverName="matrixMechSolver"
-      fractureRegionName="Fracture"
-      contactRelationName="fractureContact"/>
-
-    <SolidMechanicsLagrangianSSLE
-      name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      targetRegions="{ RockMatrix }"/>
+      discretization="FE1"/>
 
     <SinglePhaseFVM
       name="flowSolver"

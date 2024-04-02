@@ -644,6 +644,10 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
   } );
 }
 
+void PhaseFieldDamageFEM::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+{
+  // nothing to save yet
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )

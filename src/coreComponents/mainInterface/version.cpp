@@ -122,11 +122,11 @@ void outputVersionInfo()
 #endif
 
 #if defined(metis_VERSION)
-  GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( METIS_VERSION ) );
+  GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( metis_VERSION ) );
 #endif
 
 #if defined(parmetis_VERSION)
-  GEOS_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
+  GEOS_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( parmetis_VERSION ) );
 #endif
 
 #if defined(scotch_VERSION)
@@ -159,6 +159,19 @@ void outputVersionInfo()
 
 #if defined(CUDAToolkit_VERSION)
   GEOS_LOG_RANK_0( "  - CUDAToolkit version: " << STRINGIZE( CUDAToolkit_VERSION ) );
+#endif
+
+#if \
+  defined(GEOS_USE_DEVICE) && \
+  defined(GEOSX_USE_HYPRE) && \
+  ( GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU )
+  GEOS_LOG_RANK_0( "" );
+  GEOS_LOG_RANK_0( "**************************************************" );
+  GEOS_LOG_RANK_0( "*                   WARNING!!!                   *" );
+  GEOS_LOG_RANK_0( "*                                                *" );
+  GEOS_LOG_RANK_0( "*  GEOS has GPU support enabled, but not HYPRE!  *" );
+  GEOS_LOG_RANK_0( "**************************************************" );
+  GEOS_LOG_RANK_0( "" );
 #endif
 
 }
