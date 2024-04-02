@@ -79,7 +79,8 @@ public:
    * @brief Construct a TableData from the provided cells.
    * @return A TableData with all cell values within increasing row & column. The row & columns names
    */
-  TableData buildTableData() const;
+  TableData buildTableData( std::vector< string > & columnNames,
+                            string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
 
   /**
    * @return return all columns values for 2D table
@@ -92,9 +93,11 @@ public:
   std::set< real64 > const & getRows() const;
 
 private:
-  std::map< std::pair< real64, real64 >, string > m_data;
-  std::set< real64 > m_columns;
-  std::set< real64 > m_rows;
+  using RowType = real64;
+  using ColumnType = real64;
+
+  /// @brief all cell values by their [ row, column ]
+  std::map< std::pair< RowType, ColumnType >, string > m_data;
 };
 
 template< typename ... Args >
@@ -102,10 +105,10 @@ void TableData::addRow( Args const &... args )
 {
   std::vector< string > m_cellsValue;
   ( [&] {
-    static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
-    string const cellValue = GEOS_FMT( "{}", args );
-    m_cellsValue.push_back( cellValue );
-  } (), ...);
+      static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
+      string const cellValue = GEOS_FMT( "{}", args );
+      m_cellsValue.push_back( cellValue );
+    } (), ...);
 
   addRow( m_cellsValue );
 }
@@ -114,10 +117,7 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
-  std::pair< real64, real64 > const id = std::make_pair( rowValue, columnValue );
-  m_data[id] = GEOS_FMT( "{}", value );
-  m_columns.insert( columnValue );
-  m_rows.insert( rowValue );
+  m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
 
 }

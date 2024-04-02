@@ -237,23 +237,20 @@ void TableFunction::printInCSV( string const & filename ) const
     arraySlice1d< real64 const > const coordsY = m_coordinates[1];
     integer const nX = coordsX.size();
     integer const nY = coordsY.size();
-    std::vector< string > columnNames;
 
     TableData2D tableData2D;
     for( integer i = 0; i < nX; i++ )
     {
       for( integer y = 0; y < nY; y++ )
       {
-        tableData2D.addCell( coordsX[i], y, m_values[ y*nX + i ] );
+        tableData2D.addCell( coordsX[i], coordsY[y], m_values[ y*nX + i ] );
       }
     }
 
-    columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
-    for( integer idxY = 0; idxY < nY; idxY++ )
-    {
-      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-      columnNames.push_back( description );
-    }
+    std::set< string > columnNames;
+    string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
+    string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
+    TableData tableData = tableData2D.buildTableData( columnNames, rowFmt, columnFmt );
     TableLayout const tableLayout( columnNames );
 
     TableCSVFormatter csvFormat( tableLayout );

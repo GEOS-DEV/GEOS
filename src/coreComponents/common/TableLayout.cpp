@@ -21,22 +21,22 @@
 namespace geos
 {
 
-TableLayout::TableLayout( std::vector< string > const & headers, string const & title ):
+TableLayout::TableLayout( std::initializer_list< string > const & headers, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  for( size_t idx = 0; idx< headers.size(); idx++ )
+  for( size_t idx = 0; idx< headers.size(); idx++ ) // foreach!
   {
     m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::right, true}, {}, ""} );
   }
 }
 
-TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title ):
+TableLayout::TableLayout( std::initializer_list< ColumnParam > const & columnParameter, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
 
-  for( size_t idx = 0; idx< columnParameter.size(); idx++ )
+  for( size_t idx = 0; idx< columnParameter.size(); idx++ ) // foreach!
   {
     if( columnParameter[idx].enabled )
     {

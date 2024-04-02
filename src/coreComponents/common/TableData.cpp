@@ -45,26 +45,40 @@ std::set< real64 > const & TableData2D::getRows() const
   return m_rows;
 }
 
-TableData TableData2D::buildTableData() const
+TableData TableData2D::buildTableData( std::vector< string > & columnNames,
+                                       string_view rowFmt, string_view columnFmt ) const
 {
   TableData tableDataToBeBuilt;
-  for( real64 const & rowValue : m_rows )
-  {
-    std::vector< string > values;
-    values.push_back( GEOS_FMT( "{}", rowValue ) );
-    for( real64 const & columnValue : m_columns )
+  std::set< real64 > columnValues;
+
+  { // insert row value and row cell values
+    std::vector< string > currentRowValues;
+    RowType currentRow = m_data.begin()->first.first;
+    currentRowValues.push_back( GEOS_FMT( rowFmt, currentRow ) );
+    for( auto const & [rowColumnPair, cellValue] : m_data )
     {
-      std::pair< real64, real64 > id = std::make_pair( rowValue, columnValue );
-      auto const dataIt = m_data.find( id );
-
-      if( dataIt != m_data.end())
+      if( rowColumnPair.first == currentRow )
       {
-        values.push_back( GEOS_FMT( "{}", dataIt->second ));
+        currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
+        columnValues.insert( rowColumnPair.second );
       }
-
+      else // we are changing line
+      {
+        tableDataToBeBuilt.addRow( currentRowValues );
+        currentRowValues.clear();
+        currentRowValues.push_back( GEOS_FMT( rowFmt, currentRow ) );
+        firstRow = false;
+      }
     }
-    tableDataToBeBuilt.addRow( values );
   }
+
+  // fill columnNames
+  std::transform( columnValues.begin(), columnValues.end(),
+                  std::back_inserter( columnValues, columnValues.begin() ),
+                  [&] ( real64 const columnValue ) {
+      return GEOS_FMT( columnFmt, columnValue );
+    } );
+
   return tableDataToBeBuilt;
 }
 
