@@ -21,7 +21,6 @@
 
 #include "mesh/generators/VTKUtilities.hpp"
 #include <vtkPolyData.h>
-#include <vtkFieldData.h>
 #include <vtkCellData.h>
 #include <vtkPolyLine.h>
 #include <vtkCellArrayIterator.h>
