@@ -63,7 +63,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::lineSearchResidualFactorString(), &m_lineSearchResidualFactor ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor to determine residual increase." );
+    setDescription( "Factor to determine residual increase (recommended values: 1.1 (conservative), 2.0 (relaxed), 10.0 (aggressive))." );
 
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
@@ -165,7 +165,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
-  this->registerWrapper( viewKeysStruct::nonlinearAccelerationTypeString(), &m_nonlinearAccelerationType ).
+  registerWrapper( viewKeysStruct::nonlinearAccelerationTypeString(), &m_nonlinearAccelerationType ).
     setApplyDefaultValue( NonlinearAccelerationType::None ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
@@ -178,6 +178,9 @@ void NonlinearSolverParameters::postProcessInput()
                         getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
                         ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
 
+  GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
+                        getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
+  
   if( getLogLevel() > 0 )
   {
     GEOS_LOG_RANK_0( "Nonlinear solver parameters:" );
@@ -187,6 +190,8 @@ void NonlinearSolverParameters::postProcessInput()
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search interpolation type = {}", EnumStrings< LineSearchInterpolationType >::toString( m_lineSearchInterpType ) ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search maximum number of cuts = {}", m_lineSearchMaxCuts ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search cut factor = {}", m_lineSearchCutFactor ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line starting iteration = {}", m_lineSearchStartingIteration ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line residual increase factor = {}", m_lineSearchResidualFactor ) );
     }
     GEOS_LOG_RANK_0( GEOS_FMT( "  Norm type (flow solver) = {}", EnumStrings< solverBaseKernels::NormType >::toString( m_normType ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "  Minimum residual normalizer = {}", m_minNormalizer ) );
