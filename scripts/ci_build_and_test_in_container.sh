@@ -284,6 +284,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   rm -rf .git
   cd -
 
+  echo "Packing baseline to ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz
 
   if [ -d ${GEOS_SRC_DIR}/integratedTests_old ]; then
@@ -292,6 +293,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     mv ${GEOS_SRC_DIR}/integratedTests_old ${GEOS_SRC_DIR}/integratedTests
   fi
 
+  echo "Temporarily exiting before running tests"
   exit 1
 
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
