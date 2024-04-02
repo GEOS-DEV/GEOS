@@ -187,6 +187,7 @@ jobs:
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           echo "Temporay baseline upload code"
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
+            echo "Exchange:"
             ls -lah ${DATA_EXCHANGE_DIR}
             CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
