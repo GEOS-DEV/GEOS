@@ -238,11 +238,11 @@ else
   or_die ninja -j $NPROC
   or_die ninja install
 
-  if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
-    # Here we pack the installation.
-    # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
-    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
-  fi
+  # if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
+  #   # Here we pack the installation.
+  #   # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
+  #   or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
+  # fi
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
@@ -268,41 +268,21 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
   
-  # Temporary command to pack baselines
-  echo "Temporary code to allow for initial baseline packing"
-
-  if [ -d ${GEOS_SRC_DIR}/integratedTests ]; then
-    echo "Old integrated test dir exists"
-    mv ${GEOS_SRC_DIR}/integratedTests ${GEOS_SRC_DIR}/integratedTests_old
-  fi
-
-  or_die apt-get install -y virtualenv
-  git clone --depth 1 --branch develop --single-branch https://github.com/GEOS-DEV/integratedTests.git ${GEOS_SRC_DIR}/integratedTests
-  cd ${GEOS_SRC_DIR}/integratedTests
-  git lfs install
-  git pull
-  rm -rf .git
-  cd -
-
-  echo "Packing baseline to ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
-  integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
-  echo "Done!"
-
-  if [ -d ${GEOS_SRC_DIR}/integratedTests_old ]; then
-    echo "Old integrated test dir exists"
-    rm -rf ${GEOS_SRC_DIR}/integratedTests
-    mv ${GEOS_SRC_DIR}/integratedTests_old ${GEOS_SRC_DIR}/integratedTests
-  fi
-
-  echo "Temporarily exiting before running tests"
-  exit 1
-
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
   # Therefore, `ats` will exit with error code 0, even if some tests fail.
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
   integratedTests/geos_ats.sh
+  
+  # Rebaseline and pack into an archive
+  # Note: Keep a copy of the run logs, so that the correct version will be packed
+  mv integratedTests/TestResults integratedTests/TestResults_backup
+  integratedTests/geos_ats.sh -a rebaselinefailed
+  mv integratedTests/TestResults integratedTests/TestResults_rebaseline
+  mv integratedTests/TestResults_backup integratedTests/TestResults 
+  integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+
   # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.
   INTEGRATED_TEST_EXIT_STATUS=$?
@@ -312,9 +292,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # They are not in the same folder, so we do it in 2 steps.
   # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
   # in two different folder with meaningful names when unpacking. 
-  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
-  or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
-  or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
+  # or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
+  # or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
+  # or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 
   # want to clean the integrated tests folder to avoid polluting the next build.
   or_die integratedTests/geos_ats.sh -a veryclean
