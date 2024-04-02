@@ -34,9 +34,12 @@ public:
   size_t getTotalMemory() const;
   size_t getAvailableMemory() const;
 
+  bool isPhysicalMemoryHandled() const;
 private:
   size_t m_totalMemory;
   size_t m_availableMemory;
+
+  bool m_physicalMemoryHandled;
 };
 
 }

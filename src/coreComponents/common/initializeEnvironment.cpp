@@ -302,7 +302,12 @@ static void addUmpireHighWaterMarks()
     umpire::strategy::AllocationStrategy * allocationStrategy = allocator.getAllocationStrategy();
     umpire::MemoryResourceTraits traits = allocationStrategy->getTraits();
     umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
-    MemoryInfos memInf( resourceType );
+    MemoryInfos memInfos( resourceType );
+
+    if( !memInfos.isPhysicalMemoryHandled() )
+    {
+      continue;
+    }
 
     // Get the total number of bytes allocated with this allocator across ranks.
     // This is a little redundant since
@@ -312,14 +317,14 @@ static void addUmpireHighWaterMarks()
     std::size_t const sumMark = MpiWrapper::sum( mark );
 
     string percentage;
-    if( memInf.getTotalMemory() == 0 )
+    if( memInfos.getTotalMemory() == 0 )
     {
       percentage = 0.0;
       GEOS_WARNING( "umpire memory percentage could not bemsdgjsdkjfgh" );
     }
     else
     {
-      percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInf.getTotalMemory() );
+      percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
     }
 
     string const minMarkValue = GEOS_FMT( "{} {}%",

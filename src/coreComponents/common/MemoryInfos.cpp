@@ -16,7 +16,10 @@
 
 namespace geos
 {
-MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceType )
+MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceType ):
+  m_totalMemory( 0 ),
+  m_availableMemory( 0 ),
+  m_physicalMemoryHandled( 1 )
 {
   switch( resourceType )
   {
@@ -26,19 +29,23 @@ MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceTy
       m_totalMemory = sysconf( _SC_PHYS_PAGES ) * sysconf( _SC_PAGESIZE );
       m_availableMemory = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
       #else
-      GEOS_ERROR( "Unknown device physical memory size getter for this compiler." );
+      GEOS_WARNING( "Unknown device physical memory size getter for this compiler." );
+      m_physicalMemoryHandled = 0;
       #endif
       break;
     case umpire::MemoryResourceTraits::resource_type::device:
     case umpire::MemoryResourceTraits::resource_type::device_const:
+    case umpire::MemoryResourceTraits::resource_type::um:
       #if defined( GEOS_USE_CUDA )
       cudaMemGetInfo( &m_availableMemory, &m_totalMemory );
       #else
-      GEOS_ERROR( "Unknown device physical memory size getter for this compiler." );
+      GEOS_WARNING( "Unknown device physical memory size getter for this compiler." );
+      m_physicalMemoryHandled = 0;
       #endif
       break;
     default:
-      GEOS_ERROR( "Unknown device physical memory" );
+      GEOS_WARNING( "Physical memory lookup not implemented" );
+      m_physicalMemoryHandled = 0;
       break;
   }
 }
@@ -51,6 +58,11 @@ size_t MemoryInfos::getTotalMemory() const
 size_t MemoryInfos::getAvailableMemory() const
 {
   return m_availableMemory;
+}
+
+bool MemoryInfos::isPhysicalMemoryHandled() const
+{
+  return m_physicalMemoryHandled;
 }
 
 }
