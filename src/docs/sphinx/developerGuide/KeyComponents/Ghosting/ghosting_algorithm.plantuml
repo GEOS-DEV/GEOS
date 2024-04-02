@@ -1,0 +1,40 @@
+@startuml
+
+<style>
+.invisible {
+  arrow {
+    LineColor white
+    LineThickness 0
+  }
+}
+</style>
+
+participant "Rank k" as rk
+
+activate rk #WhiteSmoke
+
+rk -> rk++ #orange: Assemble paralllel sparse\nadjacency matrix A
+
+[<--> rk: Parallel matrix\nassembly (mpi)
+
+rk -> rk--++ #orange: Define rhs graph nodes support arrays\n(under the form of a parallel matrix)
+
+deactivate rk
+
+rk -\ rk-- <<invisible>>
+
+loop halo size
+rk -> rk++ #tomato: Compute ancestors using parallel\nmatrix-matrix multiplication
+[<--> rk: matrix-matrix\nparallel multiplication (mpi)
+rk -> rk--++ #tomato: Compute descendants using parallel\nmatrix-matrix multiplication
+[<--> rk: matrix-matrix\nparallel multiplication (mpi)
+|||
+rk -\ rk-- <<invisible>>
+end
+
+rk -> rk++ #tomato: Update (add and remove)\nneighbor ranks
+rk -> rk--++ #LimeGreen: Compute mappings\n(including ghosted information)
+|||
+|||
+
+@enduml

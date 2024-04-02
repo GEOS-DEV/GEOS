@@ -1,0 +1,90 @@
+@startuml
+skinparam BoxPadding 10
+participant "Rank 0" as r0
+participant "..." as rtmp0
+box neighborhood of rank k #AliceBlue
+participant "Rank k-1" as rkm1
+participant "Rank k" as rk
+participant "Rank k+1" as rkp1
+end box
+participant "..." as rtmpn
+participant "Rank n" as rn
+
+==global numbering==
+
+activate r0 #WhiteSmoke
+activate rtmp0 #WhiteSmoke
+activate rkm1 #WhiteSmoke
+activate rk #WhiteSmoke
+activate rkp1 #WhiteSmoke
+activate rtmpn #WhiteSmoke
+activate rn #WhiteSmoke
+
+group Exchange meshes information <color:red>■</color> & \ncompute intersections <color:LimeGreen>■</color> [mpi send/recv]
+
+!pragma teoz true
+
+r0 -[#tomato]->(90) rkm1++ #LimeGreen
+& rkm1 -[#tomato]->(50) r0
+& r0 -[#tomato]->(80) rtmpn++ #LimeGreen
+& rtmpn -[#tomato]->(100) r0++ #LimeGreen
+& rtmpn -[#tomato]->(120) rn++ #LimeGreen
+& rtmp0 -[#tomato]->(10) rkm1
+& rkm1 -[#tomato]->(40) rtmp0++ #LimeGreen
+& rn -[#tomato]->(50) rtmpn
+& rk -[#tomato]>(50) rkm1
+& rk -[#red]>(10) rkp1
+& rkm1 -[#red]>(40) rk
+& rkm1 -[#red]>(50) rkp1++ #LimeGreen
+& rkp1 -[#red]>(80) rk++ #LimeGreen
+& rkp1 -[#red]>(70) rkm1glob
+
+
+end group
+
+group Compute and exchange offsets <color:red>■</color>, and number <color:DeepSkyBlue>■</color> [mpi scan]
+
+deactivate rtmp0
+
+deactivate r0
+r0 -> r0++ #tomato
+deactivate rkm1
+activate rtmp0 #tomato
+r0 -[#red]>> rtmp0-- #tomato
+
+r0 -> r0++ #DeepSkyBlue
+
+
+deactivate rn
+deactivate rk
+
+activate rkm1 #tomato
+rtmp0 -[#red]>> rkm1-- #tomato
+deactivate rkp1
+rtmp0 -> rtmp0++ #DeepSkyBlue
+
+
+activate rk #tomato
+rkm1 -[#red]>> rk-- #tomato
+rkm1 -> rkm1++ #DeepSkyBlue
+
+deactivate rtmpn
+
+activate rkp1 #tomato
+rk -[#red]>> rkp1-- #tomato
+rk -> rk++ #DeepSkyBlue
+
+activate rtmpn #tomato
+rkp1 -[#red]>> rtmpn-- #tomato
+rkp1 -> rkp1++ #DeepSkyBlue
+
+activate rn #tomato
+rtmpn -[#red]>> rn-- #tomato
+rtmpn -> rtmpn++ #DeepSkyBlue
+
+deactivate rn
+rn -> rn++ #DeepSkyBlue
+
+end group
+
+@enduml
