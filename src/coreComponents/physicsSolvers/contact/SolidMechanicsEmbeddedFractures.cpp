@@ -576,7 +576,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
         if( ghostRank[k] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
-          for( localIndex i = 0; i < 3; ++i )
+          for( int i = 0; i < 3; ++i )
           {
             localSum += localRhs[localRow + i] * localRhs[localRow + i];
           }
