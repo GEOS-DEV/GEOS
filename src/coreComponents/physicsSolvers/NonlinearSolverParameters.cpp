@@ -180,7 +180,7 @@ void NonlinearSolverParameters::postProcessInput()
 
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
                         getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
-  
+
   if( getLogLevel() > 0 )
   {
     GEOS_LOG_RANK_0( "Nonlinear solver parameters:" );
