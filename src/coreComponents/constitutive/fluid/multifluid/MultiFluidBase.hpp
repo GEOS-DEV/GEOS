@@ -1047,6 +1047,7 @@ MultiFluidBase::KernelWrapper::
 {
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
+  integer const numDOF = numComp + 2; 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
 
@@ -1059,7 +1060,7 @@ MultiFluidBase::KernelWrapper::
     real64 const densInv = 1.0 / phaseMassDens.value[ip];
     real64 const densInvSquared = densInv * densInv;
     phaseInternalEnergy.value[ip] = phaseEnthalpy.value[ip] - pressure * densInv;
-    for( integer idof = 0; idof < numComp; ++idof )
+    for( integer idof = 0; idof < numDOF; ++idof )
     {
       phaseInternalEnergy.derivs[ip][idof] = phaseEnthalpy.derivs[ip][idof] + pressure * phaseMassDens.derivs[ip][idof] * densInvSquared;
     }
