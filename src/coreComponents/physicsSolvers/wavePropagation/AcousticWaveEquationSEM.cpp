@@ -28,6 +28,8 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 #include "AcousticTimeSchemeSEMKernel.hpp"
+#include "AcousticMatricesSEMKernel.hpp"
+#include "AcousticPMLSEMKernel.hpp"
 
 namespace geos
 {
@@ -295,24 +297,51 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               density,
-                                                               mass );
+        // acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        // kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+        //                                                        nodeCoords,
+        //                                                        elemsToNodes,
+        //                                                        velocity,
+        //                                                        density,
+        //                                                        mass );
 
-        acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToFaces,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               density,
-                                                               damping );
+        AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                          nodeCoords,
+                                                                          elemsToNodes,
+                                                                          velocity,
+                                                                          density,
+                                                                          mass );
+
+        AcousticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
+        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeCoords,
+                                                                             elemsToFaces,
+                                                                             facesToNodes,
+                                                                             facesDomainBoundaryIndicator,
+                                                                             freeSurfaceFaceIndicator,
+                                                                             velocity,
+                                                                             density,
+                                                                             damping );
+
+        //AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
+        //                                                                             elementSubRegion.size(),
+        //
+        //
+        //
+        //
+        //
+        //
+        //                                                                                                                      nodeCoords,
+        //                                                                             elemsToFaces,
+        //                                                                             facesToNodes,
+        //                                                                             facesDomainBoundaryIndicator,
+        //                                                                             freeSurfaceFaceIndicator,
+        //                                                                             velocity,
+        //                                                                             density,
+        //damping );
+
+
 
       } );
     } );
@@ -566,7 +595,7 @@ void AcousticWaveEquationSEM::initializePML()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::
+        AcousticPMLSEM::
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -714,7 +743,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         /// apply the PML kernel
-        acousticWaveEquationSEMKernels::
+        AcousticPMLSEM::
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
@@ -1005,7 +1034,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
           xLocal[i] = nodeCoords32[a][i];
         }
 
-        acousticWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
+        AcousticPMLSEM::ComputeDamping::computeDampingProfile(
           xLocal,
           xMin,
           xMax,
