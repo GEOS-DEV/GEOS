@@ -27,6 +27,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
 #include "ElasticTimeSchemeSEMKernel.hpp"
+#include "ElasticMatricesSEMKernel.hpp"
 
 namespace geos
 {
@@ -401,27 +402,27 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToNodes,
-                                                               density,
-                                                               mass );
+        ElasticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                          nodeCoords,
+                                                                          elemsToNodes,
+                                                                          density,
+                                                                          mass );
 
-        elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               nodeCoords,
-                                                               elemsToFaces,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               faceNormal,
-                                                               density,
-                                                               velocityVp,
-                                                               velocityVs,
-                                                               dampingx,
-                                                               dampingy,
-                                                               dampingz );
+        ElasticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
+        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeCoords,
+                                                                             elemsToFaces,
+                                                                             facesToNodes,
+                                                                             facesDomainBoundaryIndicator,
+                                                                             freeSurfaceFaceIndicator,
+                                                                             faceNormal,
+                                                                             density,
+                                                                             velocityVp,
+                                                                             velocityVs,
+                                                                             dampingx,
+                                                                             dampingy,
+                                                                             dampingz );
       } );
     } );
   } );
