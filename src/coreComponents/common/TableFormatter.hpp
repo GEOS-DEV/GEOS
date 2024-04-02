@@ -96,6 +96,7 @@ public:
 
   /**
    * @brief Converts a TableLayout into a formatted string representation.
+   * Allows to print only the header of the Table.
    * @return string
    */
   string layoutToString() const;

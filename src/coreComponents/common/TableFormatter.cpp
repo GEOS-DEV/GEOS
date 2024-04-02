@@ -27,8 +27,11 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
 void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                                std::vector< std::vector< string > > const & rows ) const
 {
+  //TODO : reserve
   for( size_t idxRow = 0; idxRow < rows.size(); idxRow++ )
   {
+    //TODO : reserve
+    //TODO : if rows[idxRow].size()!=columns.size() ERROR/THROW/WARNING/ignore
     for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
       columns[idxColumn].columnValues.push_back( rows[idxRow][idxColumn] );
@@ -70,6 +73,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
 
   for( const auto & row : rowsValues )
   {
+    //TODO : if row.size()!=tableLayout.columnsCount ERROR/THROW/WARNING/ignore
     for( size_t idxColumn = 0; idxColumn < row.size(); ++idxColumn )
     {
       oss << row[idxColumn];

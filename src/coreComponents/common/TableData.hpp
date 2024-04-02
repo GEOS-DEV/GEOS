@@ -96,8 +96,8 @@ private:
   using RowType = real64;
   using ColumnType = real64;
 
-  /// @brief all cell values by their [ row, column ]
-  std::map< std::pair< RowType, ColumnType >, string > m_data;
+  /// @brief all cell values by their [ row ][ column ]
+  std::map< RowType, std::map< ColumnType, string > > m_data;
 };
 
 template< typename ... Args >
