@@ -1,4 +1,4 @@
 ---
 baselines:
   bucket: geos-dev
-  baseline: integrated_test_baseline_0000000000.tar.gz
+  baseline: baseline_integratedTests-pr3044-4256-0514e51
