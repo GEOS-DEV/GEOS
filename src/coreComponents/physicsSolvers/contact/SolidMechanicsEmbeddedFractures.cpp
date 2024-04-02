@@ -559,7 +559,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
 
   // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
   // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
-  real64 globalResidualNorm[2] = {0, 0};
+  real64 globalResidualNorm[2] = {0.0, 0.0};
 
   // Fracture residual
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion const & fractureRegion )
