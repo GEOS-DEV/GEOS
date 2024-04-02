@@ -212,18 +212,6 @@ public:
     m_performStressInitialization = performStressInitialization;
   }
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override
-  {
-    if( m_performStressInitialization ) // assume no configuration change during initialization step
-    {
-      return true;
-    }
-    else
-    {
-      return Base::updateConfiguration( domain );
-    }
-  }
-
   struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials
