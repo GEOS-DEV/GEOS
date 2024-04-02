@@ -285,7 +285,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   cd -
 
   echo "Packing baseline to ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
-  integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz
+  integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
 
   if [ -d ${GEOS_SRC_DIR}/integratedTests_old ]; then
     echo "Old integrated test dir exists"
