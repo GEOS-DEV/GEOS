@@ -1276,7 +1276,7 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   waitAllDeviceEvents( packEvents );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, packEvents );
   parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, unpackEvents, op ); // needs an extra argument to
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, unpackEvents, op );
   // indicate unpack operation
 
   // (4) Swap send and receive indices back so we can sync from master to ghost

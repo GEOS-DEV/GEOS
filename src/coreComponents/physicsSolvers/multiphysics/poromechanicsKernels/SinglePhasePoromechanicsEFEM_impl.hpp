@@ -27,13 +27,6 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 
-
-#define GEOS_DLOG_RANK_IF( EXP, msg, ... ) \
-  if ( EXP ) \
-  { \
-    printf( msg, __VA_ARGS__ ); \
-  }
-
 namespace geos
 {
 
@@ -115,50 +108,32 @@ SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
-  using debug_policy = POLICY;
-  // using debug_policy = serialPolicy;
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( numElems );
 
   // Define a RAJA reduction variable to get the maximum residual contribution.
-  RAJA::ReduceMax< ReducePolicy< debug_policy >, real64 > maxResidual( 0 );
+  RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-  GEOS_LOG_RANK( "SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch::preForAll" );
-  // GEOS_LOG_RANK( GEOS_FMT( "kernelComponent.m_fracturedElems.size() == {}", kernelComponent.m_fracturedElems.size() ) );
-  // GEOS_LOG_RANK( kernelComponent.m_fracturedElems );
-  // kernelComponent.m_fracturedElems.move( parallelDeviceMemorySpace );
-
-
-  // GEOS_LOG_RANK( kernelComponent.m_cellsToEmbeddedSurfaces );
-  kernelComponent.m_cellsToEmbeddedSurfaces.move( parallelDeviceMemorySpace );
-
-  forAll< debug_policy >( kernelComponent.m_fracturedElems.size(),
+  forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
                     [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
-    GEOS_DLOG_RANK_IF( true, "%d: pre kernel\n", i );
-
     localIndex k = kernelComponent.m_fracturedElems[i];
-    GEOS_DLOG_RANK_IF( true, "%d: pre kernel elem idx\n", k );
 
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    // for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-    // {
-      // kernelComponent.quadraturePointKernel( k, q, stack );
-    // }
-    // maxResidual.max( kernelComponent.complete( k, stack ) );
+    for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+    {
+      kernelComponent.quadraturePointKernel( k, q, stack );
+    }
+    maxResidual.max( kernelComponent.complete( k, stack ) );
 
-    GEOS_DLOG_RANK_IF( true, "%d: post kernel\n", i );
   } );
 
-  GEOS_LOG_RANK( "SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch::postForAll" );
   return maxResidual.get();
 }
 //END_kernelLauncher
-
-#include <cstdlib>
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -169,41 +144,36 @@ void SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >:
 setup( localIndex const k,
        StackVariables & stack ) const
 {
-  // GEOS_DLOG_RANK_IF( true, "%d: pre setup\n", k );
-
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
-  GEOS_DLOG_RANK_IF( true, "%d, %d: setup\n", k, embSurfIndex );
 
-  // stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
+  stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
 
-  // for( localIndex a=0; a<numNodesPerElem; ++a )
-  // {
-  //   localIndex const localNodeIndex = m_elemsToNodes( k, a );
+  for( localIndex a=0; a<numNodesPerElem; ++a )
+  {
+    localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-  //   for( int i=0; i<3; ++i )
-  //   {
-  //     stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
-  //     stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
-  //     stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-  //     stack.dispLocal[ a*3 + i ] = m_disp[ localNodeIndex ][ i ];
-  //     stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[ localNodeIndex ][ i ];
-  //   }
-  // }
+    for( int i=0; i<3; ++i )
+    {
+      stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
+      stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
+      stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      stack.dispLocal[ a*3 + i ] = m_disp[ localNodeIndex ][ i ];
+      stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[ localNodeIndex ][ i ];
+    }
+  }
 
-  // for( int i=0; i<3; ++i )
-  // {
-  //   // need to grab the index.
-  //   stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
-  //   stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
-  //   stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
-  //   stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
-  //   for( int ii=0; ii < 3; ++ii )
-  //   {
-  //     stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
-  //   }
-  // }
-
-  // GEOS_DLOG_RANK_IF( true, "%d: post setup\n", k );
+  for( int i=0; i<3; ++i )
+  {
+    // need to grab the index.
+    stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
+    stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
+    stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
+    stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
+    for( int ii=0; ii < 3; ++ii )
+    {
+      stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+    }
+  }
 }
 
 template< typename SUBREGION_TYPE,
@@ -218,8 +188,6 @@ quadraturePointKernel( localIndex const k,
                        StackVariables & stack,
                        FUNC && kernelOp ) const
 {
-  // GEOS_DLOG_RANK_IF( true, "%d,%d: pre quadrature\n", k, q );
-
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
   // Get displacement: (i) basis functions (N), (ii) basis function
@@ -299,7 +267,6 @@ quadraturePointKernel( localIndex const k,
   LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
 
   kernelOp( eqMatrix, detJ );
-  // GEOS_DLOG_RANK_IF( true, "%d,%d: post quadrature\n", k, q );
 
 }
 
@@ -312,8 +279,6 @@ real64 SinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 complete( localIndex const k,
           StackVariables & stack ) const
 {
-  // GEOS_DLOG_RANK_IF( true, "%d: pre complete\n", k );
-
   real64 maxForce = 0;
   constexpr int nUdof = numNodesPerElem*3;
 
@@ -412,7 +377,6 @@ complete( localIndex const k,
     RAJA::atomicAdd< serialAtomic >( &m_rhs[ fracturePressureDof ], localFlowResidual );
   }
 
-  // GEOS_DLOG_RANK_IF( true, "%d: post complete\n", k );
   return maxForce;
 }
 

@@ -393,8 +393,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
   //updateState( domain );
 
-  GEOS_LOG_RANK( "SinglePhasePoromechanicsEmbeddedFractures::assembleSystem" );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -402,7 +400,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
   {
     if( m_isThermal )
     {
-      GEOS_LOG_RANK( "SinglePhasePoromechanicsEmbeddedFractures::assembleSystem::preAssemblyLaunch" );
       solidMechanicsSolver()->getMaxForce() =
         assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                         thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
@@ -413,7 +410,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                                                             localMatrix,
                                                                                                             localRhs,
                                                                                                             dt );
-      GEOS_LOG_RANK( "SinglePhasePoromechanicsEmbeddedFractures::assembleSystem::postAssemblyLaunch" );
     }
     else
     {
@@ -429,7 +425,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                               dt );
     }
 
-    GEOS_LOG_RANK( "SinglePhasePoromechanicsEmbeddedFractures::assembleSystem::preassembleEDFMFLuxTerms" );
     // 3. Assemble poroelastic fluxes and all derivatives
     string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
     flowSolver()->assembleEDFMFluxTerms( time_n, dt,
@@ -438,7 +433,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                          localMatrix,
                                          localRhs,
                                          jumpDofKey );
-    GEOS_LOG_RANK( "SinglePhasePoromechanicsEmbeddedFractures::assembleSystem::postassembleEDFMFLuxTerms" );
   } );
 
 }

@@ -903,12 +903,10 @@ private:
       //  so it should always have previousSpace == host and checkTouch == true, and we can then host-pack it if possible (should always be
       // possible)
       // if the value *is* device-packable, but we have modified it on host, we have to host-pack
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_host_packable_v: {}", LvArray::system::demangleType< U >(), m_name, bufferOps::is_host_packable_v< U > ) );
       return bufferOps::is_host_packable_v< U >;
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable_v< decltype( referenceAsView() ) > ) );
       return bufferOps::is_device_packable_v< decltype( referenceAsView() ) >;
     }
   }
@@ -918,7 +916,6 @@ private:
   isPackableImpl( ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_host_packable_v: {}", LvArray::system::demangleType< U >(), m_name, bufferOps::is_host_packable_v< U > ) );
     return bufferOps::is_host_packable_v< U >;
   }
 
@@ -929,12 +926,10 @@ private:
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_host_packable_by_index_v: {}", LvArray::system::demangleType< U >(), m_name, bufferOps::is_host_packable_by_index_v< U > ) );
       return bufferOps::is_host_packable_by_index_v< U >;
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable_by_index: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable_by_index_v< decltype( referenceAsView() ) > ) );
       return bufferOps::is_device_packable_by_index_v< decltype( referenceAsView() ) >;
     }
   }
@@ -944,7 +939,6 @@ private:
   isPackableByIndexImpl( ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_host_packable_by_index_v: {}", LvArray::system::demangleType< U >(), m_name, bufferOps::is_host_packable_by_index_v< U > ) );
     return bufferOps::is_host_packable_by_index_v< U >;
   }
 
@@ -985,12 +979,10 @@ private:
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if ( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackHost", LvArray::system::demangleType< U >(), m_name  ) );
       return unpackHostImpl( buffer, withMetadata, events, op );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackDevice", LvArray::system::demangleType< U >(), m_name  ) );
       return unpackDeviceImpl( buffer, withMetadata, events, op );
     }
   }
@@ -1000,7 +992,6 @@ private:
   unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackHost", LvArray::system::demangleType< U >(), m_name  ) );
     return unpackHostImpl( buffer, withMetadata, events, op );
   }
 
@@ -1041,12 +1032,10 @@ private:
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackByIndexHost", LvArray::system::demangleType< U >(), m_name  ) );
       return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events, op );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackByIndexDevice", LvArray::system::demangleType< U >(), m_name  ) );
       return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events, op );
     }
   }
@@ -1056,7 +1045,6 @@ private:
   unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, unpackByIndexHost", LvArray::system::demangleType< U >(), m_name  ) );
     return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events, op );
   }
 
@@ -1109,12 +1097,10 @@ private:
   {
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packHost", LvArray::system::demangleType< U >(), m_name  ) );
       return packHostImpl< DO_PACKING >( buffer, withMetadata, events );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packDevice", LvArray::system::demangleType< U >(), m_name  ) );
       return packDeviceImpl< DO_PACKING >( buffer, withMetadata, events );
     }
   }
@@ -1125,7 +1111,6 @@ private:
             bool withMetadata,
             parallelDeviceEvents & events ) const
   {
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packHost", LvArray::system::demangleType< U >(), m_name  ) );
     return packHostImpl< DO_PACKING >( buffer, withMetadata, events );
   }
 
@@ -1192,12 +1177,10 @@ private:
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packByIndexHost", LvArray::system::demangleType< U >(), m_name  ) );
       return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packByIndexDevice", LvArray::system::demangleType< U >(), m_name  ) );
       return packByIndexDeviceImpl< DO_PACKING >( buffer, packList, withMetadata, events );
     }
   }
@@ -1210,7 +1193,6 @@ private:
                    parallelDeviceEvents & events ) const
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, packByIndexHost", LvArray::system::demangleType< U >(), m_name  ) );
     return packByIndexHostImpl< DO_PACKING >( buffer, packList, withMetadata, events );
   }
 

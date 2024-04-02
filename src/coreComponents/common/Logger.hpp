@@ -529,7 +529,6 @@ namespace internal
 {
 
 extern int rank;
-static GEOS_DEVICE int drank;
 
 extern std::string rankString;
 
