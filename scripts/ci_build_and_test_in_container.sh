@@ -238,11 +238,11 @@ else
   or_die ninja -j $NPROC
   or_die ninja install
 
-  # if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
-  #   # Here we pack the installation.
-  #   # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
-  #   or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
-  # fi
+  if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
+    # Here we pack the installation.
+    # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
+  fi
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
