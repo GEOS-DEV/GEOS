@@ -31,10 +31,11 @@ namespace geos
 namespace bufferOps
 {
 
+namespace internal
+{
 // Forward decl so we can use this for contained types
 template< typename T >
 struct is_device_packable_helper;
-
 
 /// Whether an object of type T is itself packable on device
 template< typename T >
@@ -47,8 +48,7 @@ template< typename >
 constexpr bool is_device_packable_array = false;
 
 template< typename T, int NDIM, int USD >
-constexpr bool is_device_packable_array< ArrayView< T, NDIM, USD > > = is_device_packable_helper< T >::value;
-
+constexpr bool is_device_packable_array< ArrayView< T, NDIM, USD > > = is_device_packable_helper< typename std::remove_const< T >::type >::value;
 
 template< typename T >
 struct is_device_packable_helper
@@ -56,13 +56,15 @@ struct is_device_packable_helper
   static constexpr bool value = is_device_packable_object< T > || is_device_packable_array< T >;
 };
 
+}
+
 /// Whether an object is device packable
 template< typename T >
-constexpr bool is_device_packable = is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >::value;
+constexpr bool is_device_packable_v = internal::is_device_packable_helper< std::remove_const_t< std::remove_pointer_t< T > > >::value;
 
 /// Whether an object can be indexed to pack a subset of the contained values on device
 template< typename T >
-constexpr bool is_device_packable_by_index = is_device_packable_array< T >;
+constexpr bool is_device_packable_by_index_v = internal::is_device_packable_array< typename std::decay< T >::type >;
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
@@ -83,7 +85,7 @@ UnpackPointerDevice( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_v< T >, localIndex >::type
 PackDevice( buffer_unit_type * & buffer,
             ArrayView< T const, NDIM, USD > const & var,
             parallelDeviceEvents & events );
@@ -102,7 +104,7 @@ PackDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_by_index_v< ArrayView< T const, NDIM, USD > const & >, localIndex >::type
 PackByIndexDevice( buffer_unit_type * & buffer,
                    ArrayView< T const, NDIM, USD > const & var,
                    T_INDICES const & indices,
@@ -122,7 +124,7 @@ PackByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_v< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
               ArrayView< T, NDIM, USD > const & var,
               parallelDeviceEvents & events,
@@ -142,7 +144,7 @@ UnpackDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_by_index_v< ArrayView< T, NDIM, USD > const & >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
@@ -184,7 +186,7 @@ UnpackDataPointerDevice( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_v< T >, localIndex >::type
 PackDataDevice( buffer_unit_type * & buffer,
                 ArrayView< T const, NDIM, USD > const & var,
                 parallelDeviceEvents & events );
@@ -203,7 +205,7 @@ PackDataDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_by_index_v< ArrayView< T const, NDIM, USD > const & >, localIndex >::type
 PackDataByIndexDevice ( buffer_unit_type * & buffer,
                         ArrayView< T const, NDIM, USD > const & var,
                         T_INDICES const & indices,
@@ -223,7 +225,7 @@ PackDataByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_v< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
                   parallelDeviceEvents & events,
@@ -243,7 +245,7 @@ UnpackDataDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
 
 //------------------------------------------------------------------------------
 template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< is_device_packable< T >, localIndex >::type
+typename std::enable_if< is_device_packable_by_index_v< ArrayView< T, NDIM, USD > const & >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,

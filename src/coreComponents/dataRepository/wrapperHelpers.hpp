@@ -287,7 +287,7 @@ move( T & GEOS_UNUSED_PARAM( value ),
 
 // This is for an object that needs to be packed.
 template< typename T >
-std::enable_if_t< !bufferOps::is_device_packable< typename traits::Pointer< T > > >
+std::enable_if_t< !bufferOps::is_device_packable_v< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
   internal::logOutputType( LvArray::system::demangleType( var ), "Packing for output: " );
@@ -309,7 +309,7 @@ pushDataToConduitNode( T const & var, conduit::Node & node )
 
 // This is for an object that needs to be packed.
 template< typename T >
-std::enable_if_t< !bufferOps::is_device_packable< typename traits::Pointer< T > > >
+std::enable_if_t< !bufferOps::is_device_packable_v< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
@@ -347,7 +347,7 @@ pushDataToConduitNode( Path const & var, conduit::Node & node )
 
 // This is for an object that doesn't need to be packed but isn't an LvArray.
 template< typename T >
-std::enable_if_t< bufferOps::is_device_packable< typename traits::Pointer< T > > >
+std::enable_if_t< bufferOps::is_device_packable_v< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
   internal::logOutputType( LvArray::system::demangleType( var ), "Output via external pointer: " );
@@ -363,7 +363,7 @@ pushDataToConduitNode( T const & var, conduit::Node & node )
 
 // This is for an object that doesn't need to be packed but isn't an LvArray or a SortedArray.
 template< typename T >
-std::enable_if_t< bufferOps::is_device_packable< typename traits::Pointer< T > > >
+std::enable_if_t< bufferOps::is_device_packable_v< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
@@ -378,7 +378,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
 
 // This is for a SortedArray that doesn't need to be packed.
 template< typename T >
-std::enable_if_t< bufferOps::is_device_packable< T > >
+std::enable_if_t< bufferOps::is_device_packable_v< T > >
 pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
@@ -393,7 +393,7 @@ pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 
 // This is an LvArray that doesn't need to be packed.
 template< typename T, int NDIM, typename PERMUTATION >
-std::enable_if_t< bufferOps::is_device_packable< T > >
+std::enable_if_t< bufferOps::is_device_packable_v< T > >
 pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
                        conduit::Node & node )
 {
@@ -443,7 +443,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
 
 // This is an LvArray that doesn't need to be packed.
 template< typename T, int NDIM, typename PERMUTATION >
-std::enable_if_t< bufferOps::is_device_packable< T > >
+std::enable_if_t< bufferOps::is_device_packable_v< T > >
 pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
                          conduit::Node const & node )
 {
@@ -741,13 +741,13 @@ PackDataByIndex( buffer_unit_type * &, T &, IDX & )
 
 
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< bufferOps::is_container_v< T > || bufferOps::is_device_packable< T >, localIndex >
+inline std::enable_if_t< bufferOps::is_container_v< T > || bufferOps::is_device_packable_v< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T const & var, parallelDeviceEvents & events )
 { return bufferOps::PackDevice< DO_PACKING >( buffer, var, events ); }
 
 
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< !bufferOps::is_container_v< T > && !bufferOps::is_device_packable< T >, localIndex >
+inline std::enable_if_t< !bufferOps::is_container_v< T > && !bufferOps::is_device_packable_v< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
   GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );

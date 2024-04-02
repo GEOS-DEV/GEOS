@@ -908,8 +908,8 @@ private:
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable< decltype( referenceAsView() ) > ) );
-      return bufferOps::is_device_packable< decltype( referenceAsView() ) >;
+      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable_v< decltype( referenceAsView() ) > ) );
+      return bufferOps::is_device_packable_v< decltype( referenceAsView() ) >;
     }
   }
 
@@ -934,8 +934,8 @@ private:
     }
     else
     {
-      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable< decltype( referenceAsView() ) > ) );
-      return bufferOps::is_device_packable_by_index< decltype( referenceAsView() ) >;
+      GEOS_LOG_RANK( GEOS_FMT( "Wrapper<{}> name: {}, is_device_packable_by_index: {}", LvArray::system::demangleType< decltype( referenceAsView() ) >(), m_name, bufferOps::is_device_packable_by_index_v< decltype( referenceAsView() ) > ) );
+      return bufferOps::is_device_packable_by_index_v< decltype( referenceAsView() ) >;
     }
   }
 
