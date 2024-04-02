@@ -327,13 +327,13 @@ static void addUmpireHighWaterMarks()
       percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
     }
 
-    string const minMarkValue = GEOS_FMT( "{} {}%",
+    string const minMarkValue = GEOS_FMT( "{} ({}%)",
                                           LvArray::system::calculateSize( minMark ), percentage );
-    string const maxMarkValue = GEOS_FMT( "{} {}%",
+    string const maxMarkValue = GEOS_FMT( "{} ({}%)",
                                           LvArray::system::calculateSize( maxMark ), percentage );
-    string const avgMarkValue = GEOS_FMT( "{} {}%",
+    string const avgMarkValue = GEOS_FMT( "{} ({}%)",
                                           LvArray::system::calculateSize( sumMark / nbRank ), percentage );
-    string const sumMarkValue = GEOS_FMT( "{} {}%",
+    string const sumMarkValue = GEOS_FMT( "{} ({}%)",
                                           LvArray::system::calculateSize( sumMark ), percentage );
 
     tableData.addRow( allocatorName,
@@ -346,7 +346,11 @@ static void addUmpireHighWaterMarks()
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
   }
 
-  TableLayout const memoryStatLayout ( {"Umpire Pool", "Min (GB/%)\nover ranks", "Max (GB/%)\nover ranks", "Avg (GB/%)\nover ranks", "Sum(GB/%)\nover ranks" } );
+  TableLayout const memoryStatLayout ( {"Umpire Memory Pool\n(reserved / % over total)",
+                                        "Min over ranks",
+                                        "Max  over ranks",
+                                        "Avg  over ranks",
+                                        "Sum over ranks" } );
   TableTextFormatter const memoryStatLog( memoryStatLayout );
 
   GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
