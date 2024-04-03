@@ -25,27 +25,45 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
+  std::vector< string > elementNames;
+  for( int i = 0; i < numElementTypes(); ++i )
+  {
+    if( getElementDim( (ElementType)i ) == 3 )
+    {
+      elementNames.push_back( getElementTypeName( (ElementType)i ) );
+    }
+  }
+
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL );
-  // TODO Documentation
-  // .setDescription( GEOS_FMT( "The list of cell-blocks this {} contains.\n"
-  //                           "If the source mesh has a data array named as the VTKMesh::regionAttribute value, the list can contain:\n"
-  //                           "  - a list of sub-region(s) (= cell-blocks), each refered as \"regionAttribute_elementType\" (ie:
-  // \"1_tetrahedra\"),\n"
-  //                           "  - a list of region(s), each refered as \"regionAttribute\",\n"
-  //                           "  - all ellement of the mesh at once, refered with \"all\".\n"
-  //                           "If the source mesh has no \"regionAttribute\" data array, the list can contain:\n"
-  //                           "  - a list of sub-region(s) (= cell-blocks), each refered as \"elementType\" (ie: \"tetrahedra\"),\n"
-  //                           "  - all ellement of the mesh at once, refered with \"all\".\n",
-  //                           catalogName() ) );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( GEOS_FMT( "List of the desired cell-blocks from the mesh to contain in this {}.\n"
+                              "The form of this attribute is of \"regionAttribute_elementType\", so \"1_tetrahedra\" select the "
+                              "cellBlock that contains the tetrahedric elements for which the regionAttribute is 1.\n"
+                              "The element types are: {}.\n"
+                              "This setting cannot be used simultaneously with {} nor {}.",
+                              catalogName(), stringutilities::join( elementNames, ", " ),
+                              viewKeyStruct::cellBlockAttributeValuesString(),
+                              viewKeyStruct::cellBlockMatchPatternsString() ) );
+
   registerWrapper( viewKeyStruct::cellBlockAttributeValuesString(), &m_cellBlockAttributeValues ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( GEOS_FMT( "List of regionAttribute values for which we want to add the cells in this {}.\n"
+                              "I.e. {{ 1 }} selects the {{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }} cellBlocks.\n"
+                              "This setting cannot be used simultaneously with {} nor {}.",
+                              catalogName(),
+                              viewKeyStruct::sourceCellBlockNamesString(),
+                              viewKeyStruct::cellBlockMatchPatternsString() ) );
 
   registerWrapper( viewKeyStruct::cellBlockMatchPatternsString(), &m_cellBlockMatchPatterns ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( GEOS_FMT( "List of fnmatch pattern to match cellBlock names to add them in this {}.\n"
+                              "I.e. {{ 1_* }} selects the {{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }} cellBlocks.\n"
+                              "This setting cannot be used simultaneously with {} nor {}.",
+                              catalogName(),
+                              viewKeyStruct::sourceCellBlockNamesString(),
+                              viewKeyStruct::cellBlockAttributeValuesString() ) );
 
-  //TODO: add documentation ?
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.0 );
@@ -58,7 +76,7 @@ CellElementRegion::~CellElementRegion()
 void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-  // For now, subRegion name must be the same as the cellBlock.
+  // For now, subRegion name must be the same as the cellBlock (so we can match them and reference them in errors).
   CellElementSubRegion & subRegion =
     elementSubRegions.registerGroup< CellElementSubRegion >( cellBlock.getName() );
 

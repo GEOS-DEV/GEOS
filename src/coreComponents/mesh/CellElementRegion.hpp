@@ -151,14 +151,17 @@ public:
 
 private:
 
+  /// @brief List of regionAttribute values for which we want to add the cells
   integer_array m_cellBlockAttributeValues;
 
+  /// @brief List of fnmatch patterns to match cellBlocks names.
   string_array m_cellBlockMatchPatterns;
 
-  // Cell block names.
+  /// @brief List of the desired cell-blocks from the mesh to contain. When generateMesh() is called, this list is filled
+  /// with the matched cellBlocks by m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
   string_array m_cellBlockNames;
 
-  // Coarsening ratio
+  /// @brief Coarsening ratio
   real64 m_coarseningRatio;
 
 

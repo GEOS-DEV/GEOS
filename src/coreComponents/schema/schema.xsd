@@ -5302,16 +5302,19 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	</xsd:complexType>
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--cellBlocks => The list of cell-blocks this CellElementRegion contains.
-If the source mesh has a data array named as the VTKMesh::regionAttribute value, the list can contain:
-  - a list of sub-region(s) (= cell-blocks), each refered as "regionAttribute_elementType" (ie: "1_tetrahedra"),
-  - a list of region(s), each refered as "regionAttribute",
-  - all ellement of the mesh at once, refered with "all".
-If the source mesh has no "regionAttribute" data array, the list can contain:
-  - a list of sub-region(s) (= cell-blocks), each refered as "elementType" (ie: "tetrahedra"),
-  - all ellement of the mesh at once, refered with "all".
--->
-		<xsd:attribute name="cellBlocks" type="groupNameRef_array" use="required" />
+		<!--cellBlockAttributeValues => List of regionAttribute values for which we want to add the cells in this CellElementRegion.
+I.e. { 1 } selects the { 1_tetrahedra, 1_pyramid, 1_hexahedra... } cellBlocks.
+This setting cannot be used simultaneously with cellBlocks nor cellBlocksMatch.-->
+		<xsd:attribute name="cellBlockAttributeValues" type="integer_array" default="{0}" />
+		<!--cellBlocks => List of the desired cell-blocks from the mesh to contain in this CellElementRegion.
+The form of this attribute is of "regionAttribute_elementType", so "1_tetrahedra" select the cellBlock that contains the tetrahedric elements for which the regionAttribute is 1.
+The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms, nonagonalPrisms, decagonalPrisms, hendecagonalPrisms, polyhedra.
+This setting cannot be used simultaneously with cellBlockAttributeValues nor cellBlocksMatch.-->
+		<xsd:attribute name="cellBlocks" type="groupNameRef_array" default="{}" />
+		<!--cellBlocksMatch => List of fnmatch pattern to match cellBlock names to add them in this CellElementRegion.
+I.e. { 1_* } selects the { 1_tetrahedra, 1_pyramid, 1_hexahedra... } cellBlocks.
+This setting cannot be used simultaneously with cellBlocks nor cellBlockAttributeValues.-->
+		<xsd:attribute name="cellBlocksMatch" type="string_array" default="{}" />
 		<!--coarseningRatio => (no description available)-->
 		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
