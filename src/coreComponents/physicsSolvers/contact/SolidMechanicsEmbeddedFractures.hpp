@@ -77,6 +77,10 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  real64 calculateFractureResidualNorm( DomainPartition const & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localRhs ) const;
+
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -114,10 +118,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   virtual void postProcessInput() override final;
-
-  real64 calculateFractureResidualNorm( DomainPartition const & domain,
-                                        DofManager const & dofManager,
-                                        arrayView1d< real64 const > const & localRhs ) const;
 
 private:
 
