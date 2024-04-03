@@ -6,8 +6,9 @@ version: 2
 build:
   os: "ubuntu-22.04"
   apt_packages:
+  - curl
   - npm
-  - plantuml
+  - openjdk-21-jre-headless
   - texlive
   tools:
     nodejs: "16"
@@ -16,6 +17,8 @@ build:
     post_install:
     - npm install -g npm@9.8.1
     - npm install -g @mermaid-js/mermaid-cli@10.3.1
+    # If you change the `/tmp/plantuml.jar` path, be sure to also update where this path is used as well (e.g. in `conf.py`).
+    - curl -fsSL https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-gplv2-1.2024.3.jar -o /tmp/plantuml.jar
 
 # Set requirements to build the docs
 python:
