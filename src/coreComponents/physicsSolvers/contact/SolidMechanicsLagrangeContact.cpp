@@ -1244,7 +1244,7 @@ void SolidMechanicsLagrangeContact::
                   }
                   else
                   {
-                    for( localIndex i = 1; i < 3; ++i )
+                    for( int i = 1; i < 3; ++i )
                     {
                       elemRHS[i] = 0.0;
 
