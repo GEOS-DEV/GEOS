@@ -7,6 +7,7 @@ build:
   os: "ubuntu-22.04"
   apt_packages:
   - curl
+  - graphviz
   - npm
   - openjdk-21-jre-headless
   - texlive
