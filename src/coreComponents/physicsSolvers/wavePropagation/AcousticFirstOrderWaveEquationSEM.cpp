@@ -26,6 +26,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "events/EventManager.hpp"
 #include "AcousticMatricesSEMKernel.hpp"
 
 namespace geos

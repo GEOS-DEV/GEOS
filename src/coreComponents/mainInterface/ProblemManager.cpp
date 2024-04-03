@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  registerGroup< TasksManager >( groupKeys.tasksManager );
+  m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries

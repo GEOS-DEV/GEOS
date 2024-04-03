@@ -20,6 +20,7 @@
 #include "AcousticElasticWaveEquationSEMKernel.hpp"
 #include "AcoustoElasticTimeSchemeSEMKernel.hpp"
 #include "dataRepository/Group.hpp"
+#include "events/EventManager.hpp"
 #include <typeinfo>
 #include <limits>
 

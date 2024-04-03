@@ -117,7 +117,8 @@
     <SinglePhasePoromechanicsInitialization 
       logLevel="1"      
       name="singlePhasePoroelasticityEquilibrationStep"
-      poromechanicsSolverName="singlePhasePoroelasticity"/>
+      poromechanicsSolverName="singlePhasePoroelasticity"
+      solidMechanicsStatisticsName="linearElasticityStatistics"/>
   </Tasks>
   
   <Outputs>

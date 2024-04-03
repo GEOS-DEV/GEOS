@@ -144,7 +144,8 @@
     <MultiphasePoromechanicsInitialization 
       logLevel="1"      
       name="multiphasePoroelasticityEquilibrationStep"
-      poromechanicsSolverName="multiphasePoroelasticity"/>
+      poromechanicsSolverName="multiphasePoroelasticity"
+      solidMechanicsStatisticsName="linearElasticityStatistics"/>
     
   </Tasks>
   

@@ -151,7 +151,8 @@
     <CompositionalMultiphaseReservoirPoromechanicsInitialization
       logLevel="1"      
       name="multiphasePoroelasticityEquilibrationStep"
-      poromechanicsSolverName="reservoirSystem"/>
+      poromechanicsSolverName="reservoirSystem"
+      solidMechanicsStatisticsName="linearElasticityStatistics"/>
     
   </Tasks>
   
