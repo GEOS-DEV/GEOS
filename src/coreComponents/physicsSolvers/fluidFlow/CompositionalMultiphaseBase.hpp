@@ -153,7 +153,7 @@ public:
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override final;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -423,8 +423,6 @@ protected:
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
 
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const override final;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -489,6 +487,7 @@ protected:
   string m_referenceFluidModelName;
 
   /// maximum (absolute) component density change in a sequential iteration
+  real64 m_sequentialCompDensChange;
   real64 m_maxSequentialCompDensChange;
 
   /// the targeted CFL for timestep
