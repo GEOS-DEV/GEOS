@@ -13,6 +13,7 @@ else()
   list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
+set( dependencyList testingUtilities )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests

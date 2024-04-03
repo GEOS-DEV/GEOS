@@ -13,6 +13,7 @@
  */
 
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "unitTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/SourceFluxStatistics.hpp"
@@ -141,49 +142,6 @@ struct TestSet
     }
   }
 };
-
-
-/**
- * @brief This Task allows to extract and check each timestep stats during the simulation.
- */
-class TimeStepChecker : public TaskBase
-{
-public:
-  TimeStepChecker( string const & name, Group * const parent ):
-    TaskBase( name, parent )
-  {}
-
-  void postProcessInput() override
-  {}
-
-  void setCheckTimeStepFunction( std::function< void(real64) > func )
-  { m_checkTimeStepFunction = std::function< void(real64) >( func ); }
-
-  integer getTestedTimeStepCount() const
-  { return m_timestepId; }
-
-  static string catalogName() { return "TimeStepChecker"; }
-
-  virtual bool execute( real64 const time_n,
-                        real64 const GEOS_UNUSED_PARAM( dt ),
-                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOS_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
-  {
-    EXPECT_TRUE( m_checkTimeStepFunction );
-    m_checkTimeStepFunction( time_n );
-
-    ++m_timestepId;
-    return false;
-  }
-
-
-private:
-  std::function< void(real64) > m_checkTimeStepFunction;
-  int m_timestepId = 0;
-};
-REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, Group * const )
 
 
 class FlowStatisticsTest : public ::testing::Test
@@ -596,7 +554,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   real64 firstMass;
 
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
-  timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
+  timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
@@ -885,7 +843,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
-  timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
+  timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
@@ -1163,7 +1121,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
-  timeStepChecker.setCheckTimeStepFunction( [&]( real64 const time_n )
+  timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
