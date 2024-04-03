@@ -246,23 +246,23 @@ void TableFunction::printInCSV( string const & filename ) const
         tableData2D.addCell( coordsX[i], coordsY[y], m_values[ y*nX + i ] );
       }
     }
-
-    std::set< string > columnNames;
     string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
     string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
-    TableData tableData = tableData2D.buildTableData( columnNames, rowFmt, columnFmt );
-    TableLayout const tableLayout( columnNames );
+    TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
+                                                                                 rowFmt,
+                                                                                 columnFmt );
 
+    TableLayout const tableLayout( tableConverted.headerNames );
     TableCSVFormatter csvFormat( tableLayout );
+
     os << csvFormat.headerToString();
-    os << csvFormat.dataToString( tableData2D.buildTableData() );
+    os << csvFormat.dataToString( tableConverted.tableData );
   }
   os.close();
 }
 
 void TableFunction::printInLog( string const & filename ) const
 {
-
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 
   std::cout << GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
@@ -304,7 +304,7 @@ void TableFunction::printInLog( string const & filename ) const
     {
       for( integer j = 0; j < nY; j++ )
       {
-        tableData2D.addCell( coordsX[i], j, m_values[ j*nX + i ] );
+        tableData2D.addCell( coordsX[i], coordsY[j], m_values[ j*nX + i ] );
       }
       nbRows++;
     }
@@ -312,17 +312,16 @@ void TableFunction::printInLog( string const & filename ) const
     if( nbRows <= 500 )
     {
       //2. format
-      vecDescription.push_back( string( units::getDescription( getDimUnit( 0 ))));
-      for( integer idxY = 0; idxY < nY; idxY++ )
-      {
-        string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-        vecDescription.push_back( description );
-      }
-      TableLayout const tableLayout( vecDescription, filename );
+      string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
+      string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
+      TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
+                                                                                   rowFmt,
+                                                                                   columnFmt );
+      TableLayout const tableLayout( tableConverted.headerNames, filename );
 
       //3. log
       TableTextFormatter const table2DLog( tableLayout );
-      GEOS_LOG_RANK_0( table2DLog.toString( tableData2D.buildTableData() ));
+      GEOS_LOG_RANK_0( table2DLog.toString( tableConverted.tableData ));
     }
     else
     {

@@ -65,6 +65,12 @@ class TableData2D
 {
 public:
 
+  struct Conversion1D
+  {
+    std::vector< string > headerNames;
+    TableData tableData;
+  };
+
   /**
    * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
    * @tparam T The value passed to addCell (can be any type).
@@ -77,20 +83,14 @@ public:
 
   /**
    * @brief Construct a TableData from the provided cells.
-   * @return A TableData with all cell values within increasing row & column. The row & columns names
+   * @param targetUnit The table unit
+   * @param rowFmt The y axis units of the table.
+   * @param columnFmt  The x axis units of the table.
+   * The axis units can be customize, I.E with targetUnits = pressure [K]:
+   * GEOS_FMT( "{} = {{}}", targetUnits) => "pressure [K] = {}"
+   * @return A struct containing The columnNames and the TableData
    */
-  TableData buildTableData( std::vector< string > & columnNames,
-                            string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
-
-  /**
-   * @return return all columns values for 2D table
-   */
-  std::set< real64 > const & getColumns() const;
-
-  /**
-   * @return return all rows values for 2D table
-   */
-  std::set< real64 > const & getRows() const;
+  Conversion1D buildTableData( string_view targetUnit, string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
 
 private:
   using RowType = real64;
@@ -105,10 +105,10 @@ void TableData::addRow( Args const &... args )
 {
   std::vector< string > m_cellsValue;
   ( [&] {
-      static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
-      string const cellValue = GEOS_FMT( "{}", args );
-      m_cellsValue.push_back( cellValue );
-    } (), ...);
+    static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
+    string const cellValue = GEOS_FMT( "{}", args );
+    m_cellsValue.push_back( cellValue );
+  } (), ...);
 
   addRow( m_cellsValue );
 }

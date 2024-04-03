@@ -93,14 +93,14 @@ public:
    * @brief Construct a new Table object, all values in the table are centered by default
    * @param columnNames The names of the columns
    */
-  TableLayout( std::initializer_list< string > const & columnNames, string const & title = "" );
+  TableLayout( std::vector< string > const & columnNames, string const & title = "" );
 
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
    * @param columnParameter List of structures to set up each colum parameters.
    */
-  TableLayout( std::initializer_list< ColumnParam > const & columnParameter, string const & title = "" );
+  TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title = "" );
 
   /**
    * @return The columns vector

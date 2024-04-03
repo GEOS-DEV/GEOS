@@ -21,28 +21,26 @@
 namespace geos
 {
 
-TableLayout::TableLayout( std::initializer_list< string > const & headers, string const & title ):
+TableLayout::TableLayout( std::vector< string > const & headers, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  for( size_t idx = 0; idx< headers.size(); idx++ ) // foreach!
+  for( auto const & columnHeader : headers )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::right, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{columnHeader}, Alignment::right, true}, {}, ""} );
   }
 }
 
-TableLayout::TableLayout( std::initializer_list< ColumnParam > const & columnParameter, string const & title ):
+TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-
-  for( size_t idx = 0; idx< columnParameter.size(); idx++ ) // foreach!
+  for( auto const & columnParameter : columnParameters )
   {
-    if( columnParameter[idx].enabled )
+    if( columnParameter.enabled )
     {
-      m_columns.push_back( {columnParameter[idx], {}, ""} );
+      m_columns.push_back( {columnParameter, {}, ""} );
     }
-
   }
 }
 
