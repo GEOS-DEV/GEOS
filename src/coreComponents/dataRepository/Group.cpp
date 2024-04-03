@@ -644,12 +644,12 @@ void Group::postRestartInitializationRecursive()
 
 void Group::enableLogLevelInput()
 {
-  string const logLevelString = "logLevel";
-
-  registerWrapper( logLevelString, &m_logLevel ).
+  // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
+  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Log level" );
+    setDescription( "Sets the level of information to write in the standard output (the console typically).\n"
+                    "A level of 0 outputs minimal information, higher levels require more." );
 }
 
 Group const & Group::getBaseGroupByPath( string const & path ) const
