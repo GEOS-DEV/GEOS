@@ -6,11 +6,6 @@ Ghosting setup
 This describes the setup of the ghosting.
 
 
-.. _plantuml_test:
-.. uml:: /coreComponents/mesh/docs/Ghosting/test.plantuml
-   :caption: Some test
-
-
 .. _global_ghosting_setup:
 .. uml:: /coreComponents/mesh/docs/Ghosting/global_ghosting_setup.plantuml
    :caption: The global parallel algorithm

@@ -10,8 +10,6 @@ end box
 participant "..." as rtmpn
 participant "Rank n" as rn
 
-==global numbering==
-
 activate r0 #WhiteSmoke
 activate rtmp0 #WhiteSmoke
 activate rkm1 #WhiteSmoke
@@ -37,7 +35,7 @@ r0 -[#tomato]->(90) rkm1++ #LimeGreen
 & rkm1 -[#red]>(40) rk
 & rkm1 -[#red]>(50) rkp1++ #LimeGreen
 & rkp1 -[#red]>(80) rk++ #LimeGreen
-& rkp1 -[#red]>(70) rkm1glob
+& rkp1 -[#red]>(70) rkm1
 
 
 end group
