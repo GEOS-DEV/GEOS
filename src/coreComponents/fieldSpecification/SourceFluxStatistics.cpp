@@ -33,8 +33,7 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
   getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
     appendDescription( GEOS_FMT( "\n- Log Level 1 outputs the sum of all {0}(s) produced rate & mass,\n"
                                  "- Log Level 2 details values for each {0},\n"
-                                 "- Log Level 3 details values for each region,\n"
-                                 "- Log Level 4 details values for each sub-region.",
+                                 "- Log Level 3 details values for each region.",
                                  SourceFluxBoundaryCondition::catalogName() ) );
 
   registerWrapper( viewKeyStruct::fluxNamesString().data(), &m_fluxNames ).
@@ -204,12 +203,10 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         regionStats.stats() = StatData();
 
         forAllSubRegionStatsWrappers( region, regionStats.getFluxName(),
-                                      [&] ( ElementSubRegionBase & subRegion, WrappedStats & subRegionStats )
+                                      [&] ( ElementSubRegionBase &, WrappedStats & subRegionStats )
         {
           subRegionStats.finalizePeriod();
-
           regionStats.stats().combine( subRegionStats.stats() );
-          writeStatsToLog( 4, subRegion.getName(), subRegionStats );
         } );
 
         fluxStats.stats().combine( regionStats.stats() );
