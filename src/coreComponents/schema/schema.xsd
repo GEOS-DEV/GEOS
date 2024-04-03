@@ -3738,8 +3738,7 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 		<!--logLevel => Log level
 - Log Level 1 outputs the sum of all SourceFlux(s) produced rate & mass,
 - Log Level 2 details values for each SourceFlux,
-- Log Level 3 details values for each region,
-- Log Level 4 details values for each sub-region.-->
+- Log Level 3 details values for each region.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => Write statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
