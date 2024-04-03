@@ -42,13 +42,7 @@ public:
    * @param name name in xsd
    * @param parent parent group in hierarchy
    */
-  TimeStepChecker( string const & name, Group * const parent ):
-    TaskBase( name, parent )
-  {}
-
-  //TODO : remove ?
-  void postProcessInput() override
-  {}
+  TimeStepChecker( string const & name, Group * const parent );
 
   /**
    * @brief Set the functor that must be called each time this Task is executed.
@@ -63,22 +57,15 @@ public:
   integer getTestedTimeStepCount() const
   { return m_timestepId; }
 
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string catalogName() { return "TimeStepChecker"; }
 
-  virtual bool execute( real64 const time_n,
-                        real64 const GEOS_UNUSED_PARAM( dt ),
-                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOS_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & GEOS_UNUSED_PARAM( domain ) )
-  {
-    EXPECT_TRUE( m_checkTimeStepFunction );
-    m_checkTimeStepFunction( time_n );
-
-    ++m_timestepId;
-    return false;
-  }
-
+  virtual bool execute( real64 time_n, real64 dt, integer cycleNumber,
+                        integer eventCounter, real64 eventProgress,
+                        DomainPartition & domain );
 
 private:
   std::function< void(real64) > m_checkTimeStepFunction;

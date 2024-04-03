@@ -24,6 +24,24 @@ namespace testing
 {
 
 
+TimeStepChecker::TimeStepChecker( string const & name, Group * const parent ):
+  TaskBase( name, parent )
+{}
+
+bool TimeStepChecker::execute( real64 const time_n,
+                               real64 const GEOS_UNUSED_PARAM( dt ),
+                               integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                               integer const GEOS_UNUSED_PARAM( eventCounter ),
+                               real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                               DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+{
+  EXPECT_TRUE( m_checkTimeStepFunction );
+  m_checkTimeStepFunction( time_n );
+
+  ++m_timestepId;
+  return false;
+}
+
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, geos::dataRepository::Group * const )
 
 
