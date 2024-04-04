@@ -145,7 +145,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition cons
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time,
                                                              real64 const dt,
                                                              DomainPartition & domain,
                                                              DofManager const & dofManager,
@@ -153,6 +153,46 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  assembleElementBasedTerms( time,
+                             dt,
+                             domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
+
+  // step 3: compute the fluxes (face-based contributions)
+
+  if( m_stabilizationType == StabilizationType::Global ||
+      m_stabilizationType == StabilizationType::Local )
+  {
+    updateStabilizationParameters( domain );
+    this->flowSolver()->assembleStabilizedFluxTerms( dt,
+                                                     domain,
+                                                     dofManager,
+                                                     localMatrix,
+                                                     localRhs );
+  }
+  else
+  {
+    this->flowSolver()->assembleFluxTerms( dt,
+                                           domain,
+                                           dofManager,
+                                           localMatrix,
+                                           localRhs );
+  }
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 const time_n,
+                                                                        real64 const dt,
+                                                                        DomainPartition & domain,
+                                                                        DofManager const & dofManager,
+                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                        arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
@@ -245,32 +285,13 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 
 
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-
-  // step 3: compute the fluxes (face-based contributions)
-
-  if( m_stabilizationType == StabilizationType::Global ||
-      m_stabilizationType == StabilizationType::Local )
-  {
-    updateStabilizationParameters( domain );
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
 }
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   real64 maxDeltaPhaseVolFrac = 0.0;
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
@@ -289,6 +310,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
       }
     } );
   } );
+
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}",
                                       this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
@@ -320,12 +343,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
                              getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
                    InputError );
   }
-
-  integer & isFlowThermal = this->flowSolver()->isThermal();
-  GEOS_WARNING_IF( this->m_isThermal && !isFlowThermal,
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                             getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ) );
-  isFlowThermal = this->m_isThermal;
 
   if( this->m_isThermal )
   {

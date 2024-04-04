@@ -92,9 +92,14 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
   registerWrapper( viewKeyStruct::flashModelParaFileString(), &m_flashModelParaFile ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Name of the file defining the parameters of the flash model" );
+
+  registerWrapper( viewKeyStruct::solubilityTablesString(), &m_solubilityTables ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Names of solubility tables for each phase" );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -208,6 +213,15 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
 
+  // Make sure one (and only one) of m_flashModelParaFile or m_solubilityTables is provided
+  bool const hasParamFile = !m_flashModelParaFile.empty();
+  bool const hasTables = !m_solubilityTables.empty();
+  GEOS_THROW_IF( hasParamFile == hasTables,
+                 GEOS_FMT( "{}: One and only one of {} or {} should be specified", getFullName(),
+                           viewKeyStruct::flashModelParaFileString(),
+                           viewKeyStruct::solubilityTablesString() ),
+                 InputError );
+
   // NOTE: for now, the names of the phases are still hardcoded here
   // Later, we could read them from the XML file and we would then have a general class here
 
@@ -319,12 +333,13 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                          getLogLevel() > 0 && logger::internal::rank==0 );
 
   // 2) Create the flash model
+  if( !m_flashModelParaFile.empty())
   {
     std::ifstream is( m_flashModelParaFile );
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
       if( !strs.empty() )
       {
@@ -351,6 +366,38 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       }
     }
     is.close();
+  }
+  else
+  {
+    // The user must provide 1 or 2 tables.
+    GEOS_THROW_IF( m_solubilityTables.size() != 1 && m_solubilityTables.size() != 2,
+                   GEOS_FMT( "{}: The number of table names in {} must be 1 or 2", getFullName(), viewKeyStruct::solubilityTablesString() ),
+                   InputError );
+
+    // If 1 table is provided, it is the CO2 solubility table and water vapourisation is zero
+    // If 2 tables are provided, they are the CO2 solubility and water vapourisation tables depending
+    // on how phaseNames is arranged
+    string const solubilityModel = EnumStrings< CO2Solubility::SolubilityModel >::toString( CO2Solubility::SolubilityModel::Tables );
+    string_array strs;
+    strs.emplace_back( "FlashModel" );
+    strs.emplace_back( solubilityModel );   // Marker to indicate that tables are provided
+    strs.emplace_back( "" );   // 2 empty strings for the 2 phase tables gas first, then water
+    strs.emplace_back( "" );
+    if( m_solubilityTables.size() == 2 )
+    {
+      strs[2] = m_solubilityTables[m_p2Index];
+      strs[3] = m_solubilityTables[m_p1Index];
+    }
+    else
+    {
+      strs[2] = m_solubilityTables[0];
+    }
+    m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
+                                         strs,
+                                         m_phaseNames,
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         getLogLevel() > 0 && logger::internal::rank==0 );
   }
 
   GEOS_THROW_IF( m_flash == nullptr,

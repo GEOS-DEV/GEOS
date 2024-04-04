@@ -155,6 +155,7 @@ jobs:
   #           HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
   #           GCP_BUCKET: geosx/Pecan-CPU
 
+
   #         - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
   #           CMAKE_BUILD_TYPE: Release
   #           DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
@@ -248,8 +249,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             RUNS_ON: self-hosted
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia --gpus all"
-
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all"
 
           # - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
           #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -264,6 +264,7 @@ jobs:
           #   DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
           #   HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
           #   RUNS_ON: Runner_4core_16GB
+
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
@@ -274,6 +275,7 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
