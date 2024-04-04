@@ -227,7 +227,7 @@ struct LinearSolverParameters
       rigidBodyModes      ///< Rigid body modes
     };
 
-#if defined(GEOSX_USE_HYPRE_CUDA) || defined(GEOSX_USE_HYPRE_HIP)
+#if defined(GEOS_USE_HYPRE_CUDA) || defined(GEOS_USE_HYPRE_HIP)
     CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm
     SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type
 #else
