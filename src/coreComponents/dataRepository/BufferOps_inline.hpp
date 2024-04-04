@@ -441,9 +441,40 @@ template< typename T >
 typename std::enable_if< is_host_packable_scalar_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         T & var,
-        MPI_Op )
+        MPI_Op op )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
+  T const castValue = *reinterpret_cast< T const * > ( buffer );
+  if ( op == MPI_REPLACE )
+  {
+    var = castValue;
+  }
+  else if ( op == MPI_SUM )
+  {
+    if constexpr( traits::has_plus_equal_v< T > )
+    {
+      var += castValue;
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported unpack operator+= for type {}!", typeid(T).name() ) );
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    if constexpr( traits::has_less_than_v< T > ) // && traits::has_equality_v< T >
+    {
+      var = std::max( var, castValue );
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported unpack operator< for type {}!", typeid(T).name() ) );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
+  }
   memcpy( &var, buffer, sizeOfUnpackedChars );
   buffer += sizeOfUnpackedChars;
   return sizeOfUnpackedChars;
@@ -453,12 +484,25 @@ inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         string & var,
-        MPI_Op )
+        MPI_Op op )
 {
   string::size_type stringsize = 0;
   localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize, MPI_REPLACE );
   var.resize( stringsize );
-  memcpy( &var[0], buffer, stringsize );
+  string castValue( stringsize, ' ' );
+  memcpy( &castValue[0], buffer, stringsize );
+  if ( op == MPI_REPLACE )
+  {
+    var = castValue;
+  }
+  else if ( op == MPI_SUM )
+  {
+    var += castValue;
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM and MPI_REPLACE are supported." );
+  }
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
   return sizeOfUnpackedChars;
@@ -479,7 +523,7 @@ template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         SortedArray< T > & var,
-        MPI_Op )
+        MPI_Op op )
 {
   var.clear();
   localIndex set_length;
@@ -487,7 +531,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<set_length; ++a )
   {
     T temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp, MPI_REPLACE );
+    sizeOfUnpackedChars += Unpack( buffer, temp, op );
     var.insert( temp );
   }
   return sizeOfUnpackedChars;
@@ -616,11 +660,36 @@ UnpackPointer( buffer_unit_type const * & buffer,
                MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
   GEOS_DEBUG_VAR( expectedLength );
-  memcpy( var, buffer, length * sizeof(T) );
+  T const * castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( var[ii], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
+  }
   sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
   return sizeOfUnpackedChars;
@@ -634,7 +703,7 @@ UnpackPointer( buffer_unit_type const * & buffer,
                MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_ASSERT_EQ( length, expectedLength );
   GEOS_DEBUG_VAR( expectedLength );
   for( INDEX_TYPE a=0; a<length; ++a )
@@ -653,14 +722,35 @@ UnpackArray( buffer_unit_type const * & buffer,
              MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
-  for( INDEX_TYPE i = 0; i < length; ++i )
+  T const * castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
   {
-    var[ i ] = buffer_T[ i ];
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( var[ii], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
   }
 
   buffer += length * sizeof(T);
@@ -676,7 +766,7 @@ UnpackArray( buffer_unit_type const * & buffer,
              MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
@@ -699,7 +789,7 @@ UnpackByIndex( buffer_unit_type const * & buffer,
                MPI_Op op )
 {
   localIndex strides[NDIM];
-  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM, op );
+  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM, MPI_REPLACE );
 
   for( localIndex a=0; a<indices.size(); ++a )
   {
@@ -707,8 +797,7 @@ UnpackByIndex( buffer_unit_type const * & buffer,
                                [&sizeOfUnpackedChars, &buffer, &op] ( T & value )
     {
       sizeOfUnpackedChars += Unpack( buffer, value, op );
-    }
-                               );
+    } );
   }
   return sizeOfUnpackedChars;
 }
@@ -722,12 +811,12 @@ UnpackByIndex( buffer_unit_type const * & buffer,
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex numUnpackedIndices = 0;
-  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices, op );
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
   GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
   for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex sizeOfSubArray;
-    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray, op );
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray, MPI_REPLACE );
     var.resizeArray( indices[a], sizeOfSubArray );
     sizeOfUnpackedChars += UnpackArray( buffer, var[indices[a]], sizeOfSubArray, op );
   }
@@ -743,12 +832,12 @@ UnpackByIndex( buffer_unit_type const * & buffer,
 {
   map.clear();
   typename MAP_TYPE::size_type map_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length, MPI_REPLACE );
   for( typename MAP_TYPE::size_type a = 0; a < map_length; ++a )
   {
     typename MAP_TYPE::key_type key;
     typename MAP_TYPE::mapped_type value;
-    sizeOfUnpackedChars += Unpack( buffer, key, op );
+    sizeOfUnpackedChars += Unpack( buffer, key, MPI_REPLACE );
     sizeOfUnpackedChars += UnpackByIndex( buffer, value, unpackIndices, op );
     map[key] = std::move( value );
   }
@@ -778,7 +867,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    INDEX_TYPE & length,
                    MPI_Op op )
 {
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
@@ -814,14 +903,35 @@ Unpack( buffer_unit_type const * & buffer,
         MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
-  for( INDEX_TYPE i = 0; i < length; ++i )
+  T const * const GEOS_RESTRICT castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
   {
-    var[ i ] = buffer_T[ i ];
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( bar[ ii ], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
   }
 
   buffer += length * sizeof(T);
@@ -838,7 +948,7 @@ Unpack( buffer_unit_type const * & buffer,
         MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length, op );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
@@ -880,7 +990,7 @@ Unpack( buffer_unit_type const * & buffer,
 {
   localIndex sizeOfUnpackedChars = 0;
 
-  sizeOfUnpackedChars += Unpack( buffer, length, op );
+  sizeOfUnpackedChars += Unpack( buffer, length, MPI_REPLACE );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {

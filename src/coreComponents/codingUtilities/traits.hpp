@@ -160,6 +160,92 @@ HAS_ALIAS( value_type );
 
 namespace internal
 {
+
+/**
+ * @brief Trait to check if `operator+=` is defined between two types.
+ *
+ * This struct is a type trait that determines if the `operator+=` is defined between two types, T and U.
+ * It inherits from `std::false_type` by default, indicating that the operator is not defined.
+ * A specialized version inherits from `std::true_type` if the operator is indeed defined.
+ *
+ * @tparam T The left-hand side type for the `operator+=`.
+ * @tparam U The right-hand side type for the `operator+=`, defaults to the same as T.
+ * @tparam Void Helper type for SFINAE.
+ */
+template< typename T, typename U, typename = void >
+struct has_plus_equal : std::false_type {};
+
+/**
+ * @brief Specialization of has_plus_equal when `operator+=` is defined.
+ *
+ * This specialization of has_plus_equal uses SFINAE to detect if `T& operator+=(U)` exists.
+ * If the operator is found, this struct inherits from `std::true_type`.
+ *
+ * @tparam T The left-hand side type for the `operator+=`.
+ * @tparam U The right-hand side type for the `operator+=`.
+ */
+template< typename T, typename U >
+struct has_plus_equal< T, U, std::void_t< decltype(std::declval< T & >() += std::declval< U >()) > > : std::true_type {};
+
+} // namespace internal
+
+/**
+ * @brief Helper variable template to simplify usage of has_plus_equal trait.
+ *
+ * This variable template provides a more convenient way to use the has_plus_equal trait.
+ * It evaluates to `true` if `T` supports `operator+=` with `U`, and `false` otherwise.
+ *
+ * @tparam T The left-hand side type for the `operator+=`.
+ * @tparam U The right-hand side type for the `operator+=`, defaults to the same as T.
+ */
+template< typename T, typename U=T >
+constexpr bool has_plus_equal_v = internal::has_plus_equal< T, U >::value;
+
+namespace internal
+{
+
+/**
+ * @brief Trait to check if `operator<` is defined between two types.
+ *
+ * This struct is a type trait that determines if the `operator<` is defined between two types, T and U.
+ * It inherits from `std::false_type` by default, indicating that the operator is not defined.
+ * A specialized version inherits from `std::true_type` if the operator is indeed defined.
+ *
+ * @tparam T The left-hand side type for the `operator<`.
+ * @tparam U The right-hand side type for the `operator<`, defaults to the same as T.
+ * @tparam Void Helper type for SFINAE.
+ */
+template< typename T, typename U, typename = void >
+struct has_less_than : std::false_type {};
+
+/**
+ * @brief Specialization of has_less_than when `operator<` is defined.
+ *
+ * This specialization of has_less_than uses SFINAE to detect if `T& operator<(U)` exists.
+ * If the operator is found, this struct inherits from `std::true_type`.
+ *
+ * @tparam T The left-hand side type for the `operator<`.
+ * @tparam U The right-hand side type for the `operator<`.
+ */
+template< typename T, typename U >
+struct has_less_than<T, U, std::void_t<decltype(std::declval< T & >() < std::declval< U >())>> : std::true_type {};
+
+} // namespace internal
+
+/**
+ * @brief Helper variable template to simplify usage of has_less_than trait.
+ *
+ * This variable template provides a more convenient way to use the has_less_than trait.
+ * It evaluates to `true` if `T` supports `operator<` with `U`, and `false` otherwise.
+ *
+ * @tparam T The left-hand side type for the `operator<`.
+ * @tparam U The right-hand side type for the `operator<`, defaults to the same as T.
+ */
+template< typename T, typename U=T >
+constexpr bool has_less_than_v = internal::has_less_than< T, U >::value;
+
+namespace internal
+{
 template< class T,
           bool HAS_DATA_METHOD = HasMemberFunction_data< T > >
 struct GetPointerType

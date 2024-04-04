@@ -1246,12 +1246,12 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
                                         MeshLevel & mesh,
                                         MPI_Op op )
 {
-  // (0) Bring grid fields to host
-  for( auto const & name : fieldNames )
-  {
-    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( LvArray::MemorySpace::host, true );
-  }
+  // // (0) Bring grid fields to host
+  // for( auto const & name : fieldNames )
+  // {
+  //   WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+  //   wrapper.move( LvArray::MemorySpace::host, true );
+  // }
 
   // (1) Initialize
   FieldIdentifiers fieldsToBeSynced;

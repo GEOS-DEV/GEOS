@@ -33,14 +33,8 @@ class InterObjectRelation;
 namespace bufferOps
 {
 
-// Forward decl so we can use this for contained types
 template< typename T >
-struct is_host_packable_helper;
-
-
-template< typename T >
-constexpr bool is_host_packable_scalar_v = std::is_trivial< T >::value ||
-                                           std::is_arithmetic< T >::value;
+constexpr bool is_host_packable_scalar_v = std::is_trivial< T >::value || std::is_arithmetic< T >::value;
 
 /// Whether an object of type T is itself packable
 template< typename T >
@@ -51,22 +45,30 @@ constexpr bool is_host_packable_object_v = is_host_packable_scalar_v< T > ||
 template< typename T >
 constexpr bool is_container_v = !is_host_packable_object_v< T >;
 
+namespace internal
+{
+
+// Forward decl so we can use this for contained types
+template< typename T >
+struct is_host_packable_helper;
+
+}
 
 /// Whether an object is an lvarray array/arrayview/arrayslice/arrayofarrays which ultimately contains packable objects when fully indexed
 template< typename >
 constexpr bool is_host_packable_array_v = false;
 
 template< typename T, int NDIM, typename PERMUTATION >
-constexpr bool is_host_packable_array_v< Array< T, NDIM, PERMUTATION > > = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_array_v< Array< T, NDIM, PERMUTATION > > = internal::is_host_packable_helper< T >::value;
 
 template< typename T, int NDIM, int USD >
-constexpr bool is_host_packable_array_v< ArrayView< T, NDIM, USD > > = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_array_v< ArrayView< T, NDIM, USD > > = internal::is_host_packable_helper< T >::value;
 
 template< typename T, int NDIM, int USD >
-constexpr bool is_host_packable_array_v< ArraySlice< T, NDIM, USD > > = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_array_v< ArraySlice< T, NDIM, USD > > = internal::is_host_packable_helper< T >::value;
 
 template< typename T >
-constexpr bool is_host_packable_array_v< ArrayOfArrays< T > > = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_array_v< ArrayOfArrays< T > > = internal::is_host_packable_helper< T >::value;
 
 
 /// Whether an object is an lvarray sortedarray which contains packable objects
@@ -74,7 +76,7 @@ template< typename >
 constexpr bool is_host_packable_set_v = false;
 
 template< typename T >
-constexpr bool is_host_packable_set_v< SortedArray< T > > = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_set_v< SortedArray< T > > = internal::is_host_packable_helper< T >::value;
 
 
 /// Whether an object is a map for which the keys and values are packable objects
@@ -82,9 +84,11 @@ template< typename >
 constexpr bool is_host_packable_map_v = false;
 
 template< typename T_KEY, typename T_VAL, typename SORTED >
-constexpr bool is_host_packable_map_v< mapBase< T_KEY, T_VAL, SORTED > > = is_host_packable_helper< T_KEY >::value &&
-                                                                           is_host_packable_helper< T_VAL >::value;
+constexpr bool is_host_packable_map_v< mapBase< T_KEY, T_VAL, SORTED > > = internal::is_host_packable_helper< T_KEY >::value &&
+                                                                           internal::is_host_packable_helper< T_VAL >::value;
 
+namespace internal
+{
 
 template< typename T >
 struct is_host_packable_helper
@@ -95,9 +99,11 @@ struct is_host_packable_helper
                                 is_host_packable_set_v< T >;
 };
 
+}
+
 /// Whether the object is itself host packable
 template< typename T >
-constexpr bool is_host_packable_v = is_host_packable_helper< T >::value;
+constexpr bool is_host_packable_v = internal::is_host_packable_helper< T >::value;
 
 
 /// Whether the object can be indexed to pack subsets of the object
