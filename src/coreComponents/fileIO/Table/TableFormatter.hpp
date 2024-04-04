@@ -36,6 +36,10 @@ public:
    */
   TableFormatter( TableLayout const & tableLayout );
 
+protected:
+
+  TableLayout m_tableLayout;
+
   /**
    * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout, storing all values in an unsorted order.
    * @param columns Vector of columns to be filled.
@@ -43,10 +47,6 @@ public:
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData ) const;
-
-protected:
-
-  TableLayout m_tableLayout;
 };
 
 class TableCSVFormatter : public TableFormatter

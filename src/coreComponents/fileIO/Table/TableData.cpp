@@ -41,27 +41,39 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
                                                        string_view columnFmt ) const
 {
   TableData2D::Conversion1D tableData1D;
+  std::vector< real64 > headerValues;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
   // looping over first line to fill columnNames
   for( auto const & [ columnValue, cellValue] : m_data.begin()->second )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
+    headerValues.push_back( columnValue );
   }
 
   // insert row value and row cell values
+  bool flag = 1;
   for( auto const & [rowValue, rowMap] : m_data )
   {
+    integer i = 0;
     std::vector< string > currentRowValues;
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
-    integer idxColumn = 0;
     for( auto const & [columnValue, cellValue] : rowMap )
     {
+      if( std::abs( columnValue - headerValues[i] ) < 0.01 )
+      {
+        flag = 0;
+      }
+
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
-      ++idxColumn;
+      ++i;
     }
-    idxColumn = 0;
     tableData1D.tableData.addRow( currentRowValues );
+  }
+
+  if( !flag )
+  {
+    GEOS_WARNING( "Mismatch between columnValue and headerValue" );
   }
 
   return tableData1D;

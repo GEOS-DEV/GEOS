@@ -94,4 +94,9 @@ blt_add_library( NAME       fileIO
 
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( Table/unitTests )
+endif()
+
+
 

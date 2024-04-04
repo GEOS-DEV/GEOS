@@ -262,6 +262,23 @@ TEST( testTable, tableClass )
                "+---------------------+--------------------+------------------------+\n\n"
                );
   }
+
+  //test 2D table
+  {
+    //collect
+    // TableData2D tableData;
+
+    // tableData.addCell( 300, 10000, 0.03 );
+    // tableData.addCell( 300, 15000, 0.02 );
+    // tableData.addCell( 350, 10000, 0.035 );
+    // tableData.addCell( 400, 10000, 0.04 );
+    // tableData.addCell( 400, 15000, 0.02666666666666667 );
+
+    // //convert
+    // string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+    // string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+    // EXPECT_ANY_THROW( tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt ));
+  }
 }
 
 int main( int argc, char * * argv )

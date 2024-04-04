@@ -82,16 +82,15 @@ public:
   void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @brief Convert and return a struct containing a 1D Table and the column vector from a TableData2D
-   * @param targetUnit The table unit
+   * @return Convert and return a struct containing a 1D Table and the column names list from a TableData2D
+   * @param dataDescription The table dataDescription shown at the top left side
    * @param rowFmt The y axis units of the table.
    * @param columnFmt  The x axis units of the table.
-   * The axis units can be customize, by default display the axis unit. I.E with yaxis = pressure [K]:
-   * GEOS_FMT( "{} = {{}}", yaxis) => "pressure [K] = {}"
-   * @return A struct containing The columnNames and the TableData
+   * @note The rows and columns FMT can be customized. The bracket "{}" will be replaced by the axis value.
+   * By default it displays the axis value.
+   * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  Conversion1D buildTableData( string_view targetUnit, string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
-
+  Conversion1D buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   using RowType = real64;
