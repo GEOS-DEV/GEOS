@@ -85,6 +85,10 @@ class TableTextFormatter : public TableFormatter
 
 public:
 
+  /**
+   * @brief Construct a new TableFormatter from a tableLayout
+   * @param tableLayout Contain all column names and optionnaly the table title
+   */
   TableTextFormatter( TableLayout const & tableLayout );
 
   /**

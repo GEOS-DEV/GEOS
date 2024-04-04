@@ -48,7 +48,6 @@ public:
    */
   struct ColumnParam
   {
-
     string columnName;
     // Alignment for a column. By default aligned to the right side
     Alignment alignment = Alignment::right;
