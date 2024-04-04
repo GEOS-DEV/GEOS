@@ -32,7 +32,6 @@
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
-#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geos
 {
