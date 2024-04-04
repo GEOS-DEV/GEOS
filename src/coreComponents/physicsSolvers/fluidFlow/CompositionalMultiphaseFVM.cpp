@@ -18,9 +18,7 @@
 
 #include "CompositionalMultiphaseFVM.hpp"
 
-#include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"

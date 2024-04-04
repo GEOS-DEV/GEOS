@@ -21,6 +21,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {

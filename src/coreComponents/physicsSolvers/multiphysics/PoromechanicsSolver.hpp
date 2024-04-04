@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 

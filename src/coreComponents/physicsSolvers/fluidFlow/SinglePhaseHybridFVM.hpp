@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 namespace geos
 {
