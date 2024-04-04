@@ -6,6 +6,9 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     Table/TableLayout.hpp
+     Table/TableFormatter.hpp
+     Table/TableData.hpp
      Outputs/TimeHistoryOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
@@ -22,6 +25,9 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     Table/TableLayout.cpp
+     Table/TableFormatter.cpp
+     Table/TableData.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
