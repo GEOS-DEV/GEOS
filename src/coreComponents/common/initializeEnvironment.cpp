@@ -299,10 +299,10 @@ static void addUmpireHighWaterMarks()
 
     umpire::Allocator allocator = rm.getAllocator( allocatorName );
 
-    umpire::strategy::AllocationStrategy * allocationStrategy = allocator.getAllocationStrategy();
-    umpire::MemoryResourceTraits traits = allocationStrategy->getTraits();
+    umpire::strategy::AllocationStrategy const * allocationStrategy = allocator.getAllocationStrategy();
+    umpire::MemoryResourceTraits const traits = allocationStrategy->getTraits();
     umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
-    MemoryInfos memInfos( resourceType );
+    MemoryInfos const memInfos( resourceType );
 
     if( !memInfos.isPhysicalMemoryHandled() )
     {
@@ -320,20 +320,20 @@ static void addUmpireHighWaterMarks()
     if( memInfos.getTotalMemory() == 0 )
     {
       percentage = 0.0;
-      GEOS_WARNING( "umpire memory percentage could not bemsdgjsdkjfgh" );
+      GEOS_WARNING( "umpire memory percentage could not be resolved" );
     }
     else
     {
-      percentage = GEOS_FMT( "{:.1f}", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
+      percentage = GEOS_FMT( "({:.1f}%)", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
     }
 
-    string const minMarkValue = GEOS_FMT( "{} ({}%)",
+    string const minMarkValue = GEOS_FMT( "{} {:>8}",
                                           LvArray::system::calculateSize( minMark ), percentage );
-    string const maxMarkValue = GEOS_FMT( "{} ({}%)",
+    string const maxMarkValue = GEOS_FMT( "{} {:>8}",
                                           LvArray::system::calculateSize( maxMark ), percentage );
-    string const avgMarkValue = GEOS_FMT( "{} ({}%)",
+    string const avgMarkValue = GEOS_FMT( "{} {:>8}",
                                           LvArray::system::calculateSize( sumMark / nbRank ), percentage );
-    string const sumMarkValue = GEOS_FMT( "{} ({}%)",
+    string const sumMarkValue = GEOS_FMT( "{} {:>8}",
                                           LvArray::system::calculateSize( sumMark ), percentage );
 
     tableData.addRow( allocatorName,
