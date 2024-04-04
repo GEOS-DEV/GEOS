@@ -30,6 +30,7 @@
 #include "AcousticTimeSchemeSEMKernel.hpp"
 #include "AcousticMatricesSEMKernel.hpp"
 #include "AcousticPMLSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -178,9 +179,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
       {
         GEOS_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
-        acousticWaveEquationSEMKernels::
-          PrecomputeSourceAndReceiverKernel::
-          launch< EXEC_POLICY, FE_TYPE >
+        PreComputeSourcesAndReceivers::
+          Compute1DSourceAndReceiverConstants
+        < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
           numFacesPerElem,
           nodeCoords32,
