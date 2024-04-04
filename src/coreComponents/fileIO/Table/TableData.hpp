@@ -40,7 +40,7 @@ public:
 
   /**
    * @brief Add a row to the table
-   * @param row A vector of string who contains cell Values
+   * @param row A vector of string representing a row
    */
   void addRow( std::vector< string > const & row );
 
@@ -82,12 +82,12 @@ public:
   void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @brief Construct a TableData from the provided cells.
+   * @brief Convert and return a struct containing a 1D Table and the column vector from a TableData2D
    * @param targetUnit The table unit
    * @param rowFmt The y axis units of the table.
    * @param columnFmt  The x axis units of the table.
-   * The axis units can be customize, I.E with targetUnits = pressure [K]:
-   * GEOS_FMT( "{} = {{}}", targetUnits) => "pressure [K] = {}"
+   * The axis units can be customize, by default display the axis unit. I.E with yaxis = pressure [K]:
+   * GEOS_FMT( "{} = {{}}", yaxis) => "pressure [K] = {}"
    * @return A struct containing The columnNames and the TableData
    */
   Conversion1D buildTableData( string_view targetUnit, string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;

@@ -39,7 +39,7 @@ public:
   /**
    * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout, storing all values in an unsorted order.
    * @param columns Vector of columns to be filled.
-   * @param tableData Vector of table data.
+   * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData ) const;
