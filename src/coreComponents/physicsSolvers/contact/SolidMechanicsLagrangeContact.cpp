@@ -613,10 +613,15 @@ void SolidMechanicsLagrangeContact::
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
-  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
 
@@ -645,9 +650,9 @@ void SolidMechanicsLagrangeContact::
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      globalIndex rowDOF[12];
-      real64 nodeRHS[12];
-      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+      globalIndex rowDOF[3 * m_maxFaceNodes];
+      real64 nodeRHS[3 * m_maxFaceNodes];
+      stackArray1d< real64, 3 * m_maxFaceNodes > dRdP( 3*m_maxFaceNodes );
 
       for( localIndex kf=0; kf<2; ++kf )
       {
@@ -657,7 +662,15 @@ void SolidMechanicsLagrangeContact::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          computeFaceNodalArea( elemsToFaces[kfe][kf],
+                                        nodePosition,
+                                        faceToNodeMap,
+                                        faceToEdgeMap,
+                                        edgeToNodeMap,
+                                        faceCenters,
+                                        faceNormal,
+                                        faceAreas,
+                                        nodalArea );
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );

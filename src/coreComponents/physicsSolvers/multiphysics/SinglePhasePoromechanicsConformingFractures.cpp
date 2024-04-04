@@ -35,6 +35,7 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
+const localIndex geos::SinglePhasePoromechanicsConformingFractures::m_maxFaceNodes = 11;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                           Group * const parent )
@@ -495,9 +496,9 @@ void SinglePhasePoromechanicsConformingFractures::
       Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
-      globalIndex rowDOF[3 * 11]; // this needs to be changed when dealing with arbitrary element types
-      real64 nodeRHS[3 * 11];
-      stackArray1d< real64, 3 * 11 > dRdP( 3*11 );
+      globalIndex rowDOF[3 * m_maxFaceNodes]; // this needs to be changed when dealing with arbitrary element types
+      real64 nodeRHS[3 * m_maxFaceNodes];
+      stackArray1d< real64, 3 * m_maxFaceNodes > dRdP( 3*m_maxFaceNodes );
       globalIndex colDOF[1];
       colDOF[0] = presDofNumber[kfe];
 
@@ -606,7 +607,7 @@ void SinglePhasePoromechanicsConformingFractures::
     {
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      globalIndex nodeDOF[24];
+      globalIndex nodeDOF[2*3*m_maxFaceNodes];
       globalIndex elemDOF[1];
       elemDOF[0] = presDofNumber[kfe];
 
@@ -616,7 +617,7 @@ void SinglePhasePoromechanicsConformingFractures::
       Nbar[ 2 ] = faceNormal[kf0][2] - faceNormal[kf1][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
+      stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
 
       bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
 
@@ -684,7 +685,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
         for( localIndex kf=0; kf<2; ++kf )
         {
-          // Compute local area contribution for each node
+          //TODO: We should avoid allocating LvArrays inside kernel
           array1d< real64 > nodalArea;
           solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
                                                         nodePosition,
