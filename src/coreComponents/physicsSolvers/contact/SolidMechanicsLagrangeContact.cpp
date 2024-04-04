@@ -663,14 +663,14 @@ void SolidMechanicsLagrangeContact::
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                        nodePosition,
-                                        faceToNodeMap,
-                                        faceToEdgeMap,
-                                        edgeToNodeMap,
-                                        faceCenters,
-                                        faceNormal,
-                                        faceAreas,
-                                        nodalArea );
+                                nodePosition,
+                                faceToNodeMap,
+                                faceToEdgeMap,
+                                edgeToNodeMap,
+                                faceCenters,
+                                faceNormal,
+                                faceAreas,
+                                nodalArea );
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );
