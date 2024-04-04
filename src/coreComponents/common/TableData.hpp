@@ -65,6 +65,12 @@ class TableData2D
 {
 public:
 
+  struct Conversion1D
+  {
+    std::vector< string > headerNames;
+    TableData tableData;
+  };
+
   /**
    * @brief Add a cell to the table. If necessary, create automatically the containing column & row.
    * @tparam T The value passed to addCell (can be any type).
@@ -77,24 +83,22 @@ public:
 
   /**
    * @brief Construct a TableData from the provided cells.
-   * @return A TableData with all cell values within increasing row & column. The row & columns names
+   * @param targetUnit The table unit
+   * @param rowFmt The y axis units of the table.
+   * @param columnFmt  The x axis units of the table.
+   * The axis units can be customize, I.E with targetUnits = pressure [K]:
+   * GEOS_FMT( "{} = {{}}", targetUnits) => "pressure [K] = {}"
+   * @return A struct containing The columnNames and the TableData
    */
-  TableData buildTableData() const;
+  Conversion1D buildTableData( string_view targetUnit, string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
 
-  /**
-   * @return return all columns values for 2D table
-   */
-  std::set< real64 > const & getColumns() const;
-
-  /**
-   * @return return all rows values for 2D table
-   */
-  std::set< real64 > const & getRows() const;
 
 private:
-  std::map< std::pair< real64, real64 >, string > m_data;
-  std::set< real64 > m_columns;
-  std::set< real64 > m_rows;
+  using RowType = real64;
+  using ColumnType = real64;
+
+  /// @brief all cell values by their [ row ][ column ]
+  std::map< RowType, std::map< ColumnType, string > > m_data;
 };
 
 template< typename ... Args >
@@ -114,11 +118,9 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
-  std::pair< real64, real64 > const id = std::make_pair( rowValue, columnValue );
-  m_data[id] = GEOS_FMT( "{}", value );
-  m_columns.insert( columnValue );
-  m_rows.insert( rowValue );
+  m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
+
 
 }
 

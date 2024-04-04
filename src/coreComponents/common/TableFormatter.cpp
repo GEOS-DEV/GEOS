@@ -27,9 +27,17 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
 void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                                std::vector< std::vector< string > > const & rows ) const
 {
-  for( size_t idxRow = 0; idxRow < rows.size(); ++idxRow )
+  for( size_t idxRow = 0; idxRow < rows.size(); idxRow++ )
   {
-    for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+    if( rows[idxRow].size()!=columns.size())
+    {
+
+      GEOS_WARNING( GEOS_FMT( "{}{}{}", "The number of columns in row ",
+                              idxRow,
+                              " that has been collected is not equal to the columns expected when TableLayout was initialized" ));
+    }
+    columns[idxRow].columnValues.reserve( rows[idxRow].size() );
+    for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
       columns[idxColumn].columnValues.push_back( rows[idxRow][idxColumn] );
     }

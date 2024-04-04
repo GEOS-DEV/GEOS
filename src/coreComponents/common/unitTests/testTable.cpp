@@ -230,7 +230,7 @@ TEST( testTable, tableClass )
 
   //test 2D table
   {
-    TableLayout const tableLayout( {"FakePressure", "Value1", "Value2"} );
+    //collect
     TableData2D tableData;
 
     for( real64 p = 10000; p<20000; p+=5000 )
@@ -242,17 +242,25 @@ TEST( testTable, tableClass )
       }
     }
 
-    TableTextFormatter const tableLog( tableLayout );
-    EXPECT_EQ( tableLog.toString( tableData.buildTableData()),
-               "+----------------+----------+------------------------+\n"
-               "|  FakePressure  |  Value1  |                Value2  |\n"
-               "+----------------+----------+------------------------+\n"
-               "|           300  |    0.03  |                  0.02  |\n"
-               "|           350  |   0.035  |  0.023333333333333334  |\n"
-               "|           400  |    0.04  |   0.02666666666666667  |\n"
-               "+----------------+----------+------------------------+\n\n"
-               );
+    //convert
+    string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+    string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+    TableData2D::Conversion1D tableconverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
 
+    //format
+    TableLayout const tableLayout( tableconverted.headerNames );
+
+    //log
+    TableTextFormatter const tableLog( tableLayout );
+    EXPECT_EQ( tableLog.toString( tableconverted.tableData ),
+               "+---------------------+--------------------+------------------------+\n"
+               "|     Viscosity kg*s  |  Pression = 10000  |      Pression = 15000  |\n"
+               "+---------------------+--------------------+------------------------+\n"
+               "|  Temperature = 300  |              0.03  |                  0.02  |\n"
+               "|  Temperature = 350  |             0.035  |  0.023333333333333334  |\n"
+               "|  Temperature = 400  |              0.04  |   0.02666666666666667  |\n"
+               "+---------------------+--------------------+------------------------+\n\n"
+               );
   }
 }
 
