@@ -290,7 +290,6 @@ static void addUmpireHighWaterMarks()
 
     // Make sure that each rank is looking at the same allocator.
     MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
-    GEOS_LOG_RANK_0( " allocatorNameBuffer " <<  allocatorNameFixedSize << " allocatorNameMinCharsBuffer " << allocatorNameMinChars << std::endl );
     if( allocatorNameFixedSize != allocatorNameMinChars )
     {
       GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
