@@ -876,9 +876,9 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-      arrayView2d< real64 > const & unitNormal   = subRegion.getNormalVector();
-      arrayView2d< real64 > const & unitTangent1 = subRegion.getTangentVector1();
-      arrayView2d< real64 > const & unitTangent2 = subRegion.getTangentVector2(); 
+      arrayView2d< real64 > const unitNormal   = subRegion.getNormalVector();
+      arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
+      arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {

@@ -73,13 +73,20 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
   registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
-    setDescription( "Unit normal vector to the embedded surface." );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Unit normal vector to the surface." ).
+    reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
-    setDescription( "Unit vector in the first tangent direction to the embedded surface." );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Unit vector in the first tangent direction to the surface." ).
+    reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
-    setDescription( "Unit vector in the second tangent direction to the embedded surface." );  
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Unit vector in the second tangent direction to the surface." ).
+    reference().resizeDimension< 1 >( 3 );
+  
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),

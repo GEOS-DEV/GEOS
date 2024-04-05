@@ -50,7 +50,7 @@ struct FractureState
 };
 
 DECLARE_FIELD( dispJump,
-               "displacementJumpLocalRef",
+               "displacementJump",
                array2d< real64 >,
                0,
                NOPLOT,
