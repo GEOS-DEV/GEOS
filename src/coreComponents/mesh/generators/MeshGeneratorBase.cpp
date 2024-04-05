@@ -14,7 +14,6 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/particleGenerators/ParticleBlockManager.hpp"
 
 namespace geos
 {
@@ -50,24 +49,9 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
 
 void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
 {
-  MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
-  if( meshBody.hasParticles() )
-  {
-    ParticleBlockManager & particleBlockManager = parent.registerGroup< ParticleBlockManager >( keys::particleManager );
-
-    MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
-    ParticleManager & particleManager = meshLevel0.getParticleManager();
-
-    fillParticleBlockManager( particleBlockManager, particleManager, partition );
-  }
-  else
-  {
-    CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
-
-    fillCellBlockManager( cellBlockManager, partition );
-
-    this->attachWellInfo( cellBlockManager );
-  }
+  CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+  fillCellBlockManager( cellBlockManager, partition );
+  this->attachWellInfo( cellBlockManager );
 }
 
 void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
