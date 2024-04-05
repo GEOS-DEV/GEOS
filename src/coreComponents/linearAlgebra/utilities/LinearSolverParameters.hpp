@@ -116,7 +116,11 @@ struct LinearSolverParameters
   {
     real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
+#if defined(GEOS_USE_HYPRE_CUDA) || defined(GEOS_USE_HYPRE_HIP)
+    integer maxRestart = 50;          ///< Max number of vectors in Krylov basis before restarting
+#else
     integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
+#endif
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
     real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
   }
@@ -246,6 +250,7 @@ struct LinearSolverParameters
     integer aggressiveNumPaths = 1;                                 ///< Number of paths agg. coarsening.
     integer aggressiveNumLevels = 0;                                ///< Number of levels for aggressive coarsening.
     AggInterpType aggressiveInterpType = AggInterpType::multipass;  ///< Interp. type for agg. coarsening.
+    integer aggressiveInterpMaxNonZeros = 16;                       ///< Aggressive Interpolation - Max. nonzeros/row.
     PreOrPost preOrPostSmoothing = PreOrPost::both;                 ///< Pre and/or post smoothing
     real64 threshold = 0.0;                                         ///< Threshold for "strong connections" (for classical
                                                                     ///< and smoothed-aggregation AMG)
