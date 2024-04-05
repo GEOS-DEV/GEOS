@@ -202,15 +202,15 @@ public:
   arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
 
   /**
-  * @brief Const accessor to the normal vectors.
-  * @return a const view to the array of normal vectors.
-  */
+   * @brief Const accessor to the normal vectors.
+   * @return a const view to the array of normal vectors.
+   */
   arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
 
   /**
-  * @brief Non const accessor to the normal vectors.
-  * @return a non const view to the array of normal vectors.
-  */
+   * @brief Non const accessor to the normal vectors.
+   * @return a non const view to the array of normal vectors.
+   */
   arrayView2d< real64 > getNormalVector() { return m_normalVector; }
 
   /**
@@ -245,7 +245,7 @@ public:
    */
   arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2.toViewConst(); }
 
-   /**
+  /**
    * @brief Get an array of the first tangent vector of the surface elements.
    * @return a non const view to the array of the second tangent vector of the surface elements
    */

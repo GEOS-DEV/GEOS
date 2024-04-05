@@ -864,9 +864,15 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
                                                                 arrayView1d< string const > const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
+    arrayView2d< localIndex const > const & faceToElementRegionIndex = faceManager.elementRegionList();
+    arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const & faceToElementIndex = faceManager.elementList();
+
     ElementRegionManager & elemManager = mesh.getElemManager();
+    auto elemCenter = elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
     arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
@@ -889,23 +895,53 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
 
         stackArray1d< real64, 3 > Nbar( 3 );
         localIndex const & f0 = elemsToFaces[kfe][0], f1 = elemsToFaces[kfe][1];
-        Nbar[ 0 ] = faceNormal[f0][0] - faceNormal[f1][0];
-        Nbar[ 1 ] = faceNormal[f0][1] - faceNormal[f1][1];
-        Nbar[ 2 ] = faceNormal[f0][2] - faceNormal[f1][2];
+        real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
+        real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
+
+        /// Note: I am assuming that the 0 element is the elementSubregion one for faces
+        /// touching both a 3D and a 2D cell. TODO: verify this hypothesis!
+        localIndex const er0  = faceToElementRegionIndex[f0][0];
+        localIndex const esr0 = faceToElementSubRegionIndex[f0][0];
+        localIndex const ek0  = faceToElementIndex[f0][0];
+
+        localIndex const er1  = faceToElementRegionIndex[f1][0];
+        localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
+        localIndex const ek1  = faceToElementIndex[f1][0];
+
+        LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
+        LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
+
+        // If the vector connecting the face center and the elem center is in the same
+        // direction as the unit normal, we flip the normal coz it should be pointing outward
+        // (i.e., towards the fracture element).
+        real64 normalf0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[f0] );
+        real64 normalf1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[f1] );
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) > 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( normalf0, -1.0 );
+        }
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) > 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( normalf1, -1.0 );
+        }
+
+        Nbar[ 0 ] = normalf0[0] - normalf1[0];
+        Nbar[ 1 ] = normalf0[1] - normalf1[1];
+        Nbar[ 2 ] = normalf0[2] - normalf1[2];
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
-        real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ], 
-                                          rotationMatrix[kfe][ 1 ][ 1 ], 
+        real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ],
+                                          rotationMatrix[kfe][ 1 ][ 1 ],
                                           rotationMatrix[kfe][ 2 ][ 1 ] };
 
-        real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ], 
-                                          rotationMatrix[kfe][ 1 ][ 2 ], 
-                                          rotationMatrix[kfe][ 2 ][ 2 ] };                                  
-        
-        LvArray::tensorOps::copy<3>( unitNormal[kfe], Nbar );
-        LvArray::tensorOps::copy<3>( unitTangent1[kfe], columnVector1);
-        LvArray::tensorOps::copy<3>( unitTangent2[kfe], columnVector2);
+        real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ],
+                                          rotationMatrix[kfe][ 1 ][ 2 ],
+                                          rotationMatrix[kfe][ 2 ][ 2 ] };
+
+        LvArray::tensorOps::copy< 3 >( unitNormal[kfe], Nbar );
+        LvArray::tensorOps::copy< 3 >( unitTangent1[kfe], columnVector1 );
+        LvArray::tensorOps::copy< 3 >( unitTangent2[kfe], columnVector2 );
       } );
     } );
   } );
@@ -1825,7 +1861,7 @@ void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
   computeFaceDisplacementJump( domain );
-  updateGlobalCoordinatesQuantities( domain ); 
+  updateGlobalCoordinatesQuantities( domain );
 }
 
 bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition & domain ) const

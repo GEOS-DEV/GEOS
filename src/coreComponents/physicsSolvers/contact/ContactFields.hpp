@@ -71,7 +71,7 @@ DECLARE_FIELD( slipVector,
                0,
                LEVEL_0,
                NO_WRITE,
-               "Slip vector in the global reference system." );                                 
+               "Slip vector in the global reference system." );
 
 DECLARE_FIELD( deltaDispJump,
                "deltaDisplacementJump",
@@ -95,7 +95,7 @@ DECLARE_FIELD( traction,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Fracture traction vector in the local reference system." );              
+               "Fracture traction vector in the local reference system." );
 
 DECLARE_FIELD( shearTraction,
                "shearTraction",
@@ -111,7 +111,7 @@ DECLARE_FIELD( normalTraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Normal traction vector in the global reference system." );                                  
+               "Normal traction vector in the global reference system." );
 
 DECLARE_FIELD( deltaTraction,
                "deltaTraction",

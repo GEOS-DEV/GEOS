@@ -86,7 +86,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setApplyDefaultValue( 0.0 ).
     setDescription( "Unit vector in the second tangent direction to the surface." ).
     reference().resizeDimension< 1 >( 3 );
-  
+
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),
