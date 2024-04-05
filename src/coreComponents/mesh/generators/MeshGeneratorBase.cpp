@@ -14,7 +14,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/generators/ParticleBlockManager.hpp"
+#include "mesh/particleGenerators/ParticleBlockManager.hpp"
 
 namespace geos
 {

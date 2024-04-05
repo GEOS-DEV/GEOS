@@ -19,8 +19,8 @@
 #ifndef GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
 #define GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
 
-#include "mesh/generators/ParticleBlock.hpp"
-#include "mesh/generators/ParticleBlockManagerABC.hpp"
+#include "ParticleBlock.hpp"
+#include "ParticleBlockManagerABC.hpp"
 
 namespace geos
 {

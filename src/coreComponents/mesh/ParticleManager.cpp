@@ -12,7 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <map>
 #include <vector>
 
 #include "ParticleManager.hpp"
@@ -20,8 +19,7 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "generators/ParticleBlockManager.hpp"
-#include "mesh/MeshManager.hpp"
+#include "particleGenerators/ParticleBlockManager.hpp"
 #include "schema/schemaUtilities.hpp"
 
 namespace geos
