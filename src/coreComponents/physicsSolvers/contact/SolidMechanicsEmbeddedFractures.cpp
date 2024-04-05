@@ -739,6 +739,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       } );
     } );
   } );
+  updateGlobalCoordinatesQuantities( domain );
 }
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )

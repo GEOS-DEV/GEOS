@@ -453,7 +453,6 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
-        arrayView2d< real64 > const & dispJumpGlobalRef = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -484,7 +483,6 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
           real64 dispJumpTemp[ 3 ];
           LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
           LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
-          LvArray::tensorOps::copy< 3 >( dispJumpGlobalRef[ kfe ], globalJumpTemp );
         } );
       }
     } );
@@ -1827,6 +1825,7 @@ void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
 
   computeFaceDisplacementJump( domain );
+  updateGlobalCoordinatesQuantities( domain ); 
 }
 
 bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition & domain ) const
