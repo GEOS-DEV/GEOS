@@ -58,7 +58,7 @@ class MeshGraph:
     edges: Collection[Edge]
 
 
-def build_edges(mesh: vtkUnstructuredGrid, points_gids) -> Collection[Edge]:
+def build_edges(mesh: vtkUnstructuredGrid) -> Collection[Edge]:
     tmp: set[Edge] = set()
     for c in range(mesh.GetNumberOfCells()):
         cell: vtkCell = mesh.GetCell(c)
@@ -75,7 +75,7 @@ def compute_graph(mesh: vtkUnstructuredGrid) -> MeshGraph:
     nodes = []
     for l, g in enumerate(points_gids):
         nodes.append(Node(l, g))
-    edges: Collection[Edge] = build_edges(mesh, points_gids)
+    edges: Collection[Edge] = build_edges(mesh)
     graph: MeshGraph = MeshGraph(tuple(nodes), edges)
     return graph
 
@@ -87,7 +87,7 @@ def mpi_scan(rank_to_intersections: Iterable[Mapping[tuple[int, ...], frozenset[
         for ranks, edges in intersections.items():
             # I want the current rank to have its own information for easy access to the offset,
             # so there's no special case between what the local information and the information from the other ranks.
-            # Hence the `+ 1` so it's included in the `range`
+            # Hence, the `+ 1` so it's included in the `range`
             if set(range(rank + 1)) & set(ranks):
                 scan[ranks] = len(edges)
         scans.append(scan)
@@ -105,7 +105,7 @@ def mpi_scan(rank_to_intersections: Iterable[Mapping[tuple[int, ...], frozenset[
     return offset_scans
 
 
-def find_overlapping_edges(graphs: Collection[MeshGraph], neighbors: Sequence[Collection[int]]):
+def find_overlapping_edges(graphs: Collection[MeshGraph], neighbors: Sequence[Iterable[int]]):
     # [rank] -> [edge sorted global nodes]
     tmp: dict[int, set[tuple[int, int]]] = dict()
     for rank, graph in enumerate(graphs):
@@ -178,7 +178,7 @@ def validation(numberings: Iterable[Mapping[tuple[int, int], int]]) -> int:
     return 0
 
 
-def build_neighborhood(meshes: Collection[vtkUnstructuredGrid]) -> Collection[Collection[int]]:
+def build_neighborhood(meshes: Collection[vtkUnstructuredGrid]) -> Sequence[Sequence[int]]:
     bounding_boxes: list[vtkBoundingBox] = []
     for mesh in meshes:
         bb = vtkBoundingBox()
@@ -208,7 +208,7 @@ def main() -> int:
             meshes.append(m)
 
     # For each rank, contains the neighbor rank (candidates).
-    neighbors: Collection[Collection[int]] = build_neighborhood(meshes)
+    neighbors: Sequence[Sequence[int]] = build_neighborhood(meshes)
 
     # For each rank, contains the graph built upon the vtk mesh.
     graphs = []
@@ -217,7 +217,7 @@ def main() -> int:
 
     # Perform the core computation of the intersection.
     # `intersections` will contain the intersection for each rank,
-    # while `offset_scans` will contains the offset for the global numbering,
+    # while `offset_scans` will contain the offset for the global numbering,
     # as it would be done in during the `MPI_scan`.
     intersections: Collection[Mapping[tuple[int, ...], frozenset[tuple[int, int]]]] = find_overlapping_edges(graphs, neighbors)
     offset_scans: Collection[Mapping[tuple[int, ...], int]] = mpi_scan(intersections)
