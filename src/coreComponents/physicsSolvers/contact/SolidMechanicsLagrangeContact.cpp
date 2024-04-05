@@ -897,7 +897,6 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
-        LvArray::tensorOps::copy<3>( unitNormal, Nbar );
         real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ], 
                                           rotationMatrix[kfe][ 1 ][ 1 ], 
                                           rotationMatrix[kfe][ 2 ][ 1 ] };
@@ -905,9 +904,10 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
         real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ], 
                                           rotationMatrix[kfe][ 1 ][ 2 ], 
                                           rotationMatrix[kfe][ 2 ][ 2 ] };                                  
-
-        LvArray::tensorOps::copy<3>( unitTangent1, columnVector1);
-        LvArray::tensorOps::copy<3>( unitTangent2, columnVector2);
+        
+        LvArray::tensorOps::copy<3>( unitNormal[kfe], Nbar );
+        LvArray::tensorOps::copy<3>( unitTangent1[kfe], columnVector1);
+        LvArray::tensorOps::copy<3>( unitTangent2[kfe], columnVector2);
       } );
     } );
   } );
