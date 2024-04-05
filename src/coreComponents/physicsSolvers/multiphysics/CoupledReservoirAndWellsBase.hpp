@@ -26,6 +26,7 @@
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "mesh/PerforationFields.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 

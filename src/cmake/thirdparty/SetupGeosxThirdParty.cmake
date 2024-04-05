@@ -24,23 +24,23 @@ macro(find_and_register)
                           "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT DEFINED arg_NAME)
-        message(FATAL_ERROR "The find_and_register required parameter NAME specifies the name of the library to register.")
+        message(FATAL_ERROR "The find_and_import required parameter NAME specifies the name of the library to import.")
     endif()
 
     if(NOT DEFINED arg_INCLUDE_DIRECTORIES)
-        message(FATAL_ERROR "The find_and_register required parameter INCLUDE_DIRECTORIES specifies the directories to search for the given header.")
+        message(FATAL_ERROR "The find_and_import required parameter INCLUDE_DIRECTORIES specifies the directories to search for the given header.")
     endif()
 
     if(NOT DEFINED arg_LIBRARY_DIRECTORIES)
-        message(FATAL_ERROR "The find_and_register required parameter LIBRARY_DIRECTORIES specifies the directories to search for the given libraries.")
+        message(FATAL_ERROR "The find_and_import required parameter LIBRARY_DIRECTORIES specifies the directories to search for the given libraries.")
     endif()
 
     if(NOT DEFINED arg_HEADER)
-        message(FATAL_ERROR "The find_and_register required parameter HEADER specifies the header to search for.")
+        message(FATAL_ERROR "The find_and_import required parameter HEADER specifies the header to search for.")
     endif()
 
     if(NOT DEFINED arg_LIBRARIES)
-        message(FATAL_ERROR "The find_and_register required parameter LIBRARIES specifies the libraries to search for.")
+        message(FATAL_ERROR "The find_and_import required parameter LIBRARIES specifies the libraries to search for.")
     endif()
 
     find_path(${arg_NAME}_INCLUDE_DIR ${arg_HEADER}
@@ -60,13 +60,13 @@ macro(find_and_register)
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
-    blt_register_library(NAME ${arg_NAME}
+    blt_import_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
                          LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
                          DEPENDS_ON ${arg_DEPENDS})
 
-endmacro(find_and_register)
+endmacro(find_and_import)
 
 
 macro(extract_version_from_header)
@@ -247,7 +247,7 @@ endif()
 if(DEFINED SILO_DIR AND ENABLE_SILO)
     message(STATUS "SILO_DIR = ${SILO_DIR}")
 
-    find_and_register(NAME silo
+    find_and_import(NAME silo
                       INCLUDE_DIRECTORIES ${SILO_DIR}/include
                       LIBRARY_DIRECTORIES ${SILO_DIR}/lib
                       HEADER silo.h
@@ -267,14 +267,20 @@ endif()
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
+    set(ENABLE_PUGIXML ON CACHE BOOL "")
+
     find_package(pugixml REQUIRED
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
 
     message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
 
-    set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml )
+    if(TARGET pugixml::pugixml)
+      set(thirdPartyLibs ${thirdPartyLibs} pugixml::pugixml)
+    endif()
+    if(TARGET pugixml)
+      set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+    endif()
 else()
     mandatory_tpl_doesnt_exist("pugixml" PUGIXML_DIR)
 endif()
@@ -445,7 +451,7 @@ endif()
 if(DEFINED MATHPRESSO_DIR)
     message(STATUS "MATHPRESSO_DIR = ${MATHPRESSO_DIR}")
 
-    find_and_register(NAME mathpresso
+    find_and_import(NAME mathpresso
                       INCLUDE_DIRECTORIES ${MATHPRESSO_DIR}/include
                       LIBRARY_DIRECTORIES ${MATHPRESSO_DIR}/lib
                       HEADER mathpresso/mathpresso.h
@@ -468,7 +474,7 @@ endif()
 if(DEFINED METIS_DIR)
     message(STATUS "METIS_DIR = ${METIS_DIR}")
 
-    find_and_register(NAME metis
+    find_and_import(NAME metis
                       INCLUDE_DIRECTORIES ${METIS_DIR}/include
                       LIBRARY_DIRECTORIES ${METIS_DIR}/lib
                       HEADER metis.h
@@ -498,7 +504,7 @@ endif()
 if(DEFINED PARMETIS_DIR)
     message(STATUS "PARMETIS_DIR = ${PARMETIS_DIR}")
 
-    find_and_register(NAME parmetis
+    find_and_import(NAME parmetis
                       INCLUDE_DIRECTORIES ${PARMETIS_DIR}/include
                       LIBRARY_DIRECTORIES ${PARMETIS_DIR}/lib
                       HEADER parmetis.h
@@ -528,13 +534,13 @@ endif()
 if(DEFINED SCOTCH_DIR)
     message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
 
-    find_and_register(NAME scotch
+    find_and_import(NAME scotch
                       INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
                       LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
                       HEADER scotch.h
                       LIBRARIES scotch scotcherr )
 
-    find_and_register(NAME ptscotch
+    find_and_import(NAME ptscotch
                       INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
                       LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
                       DEPENDS scotch
@@ -564,7 +570,7 @@ endif()
 if(DEFINED SUPERLU_DIST_DIR)
     message(STATUS "SUPERLU_DIST_DIR = ${SUPERLU_DIST_DIR}")
 
-    find_and_register(NAME superlu_dist
+    find_and_import(NAME superlu_dist
                       INCLUDE_DIRECTORIES ${SUPERLU_DIST_DIR}/include
                       LIBRARY_DIRECTORIES ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
                       HEADER superlu_defs.h
@@ -595,7 +601,7 @@ endif()
 if(DEFINED SUITESPARSE_DIR)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
-    find_and_register(NAME suitesparse
+    find_and_import(NAME suitesparse
                       INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
                       LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
                       HEADER umfpack.h
@@ -639,7 +645,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         set( HYPRE_DEPENDS ${HYPRE_DEPENDS} roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
     endif( )
 
-    find_and_register(NAME hypre
+    find_and_import(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
                       LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
                       HEADER HYPRE.h
@@ -734,7 +740,7 @@ if(DEFINED PETSC_DIR AND ENABLE_PETSC)
         set( PETSC_DEPENDS ${PETSC_DEPENDS} superlu_dist )
     endif()
 
-    find_and_register(NAME petsc
+    find_and_import(NAME petsc
                       INCLUDE_DIRECTORIES ${PETSC_DIR}/include
                       LIBRARY_DIRECTORIES ${PETSC_DIR}/lib
                       HEADER petscvec.h
@@ -858,7 +864,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.7.0...3.11.2 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...3.12.2 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)
@@ -900,7 +906,7 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 # if(DEFINED FESAPI_DIR)
 #     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
 
-#     find_and_register(NAME FesapiCpp
+#     find_and_import(NAME FesapiCpp
 #                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
 #                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
 #                  HEADER fesapi/nsDefinitions.h

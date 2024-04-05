@@ -25,20 +25,19 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER,
-                                                  SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER,
-                              SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -75,6 +74,16 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
+  virtual void initializePostInitialConditionsPreSubGroups() override
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
+                             this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
+                   InputError );
+  }
+
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
@@ -86,7 +95,7 @@ public:
                                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                          [&]( localIndex const,
                                                                               ElementSubRegionBase & subRegion )
       {
@@ -95,6 +104,13 @@ public:
         GEOS_THROW_IF( porousName.empty(),
                        GEOS_FMT( "{} {} : Solid model not found on subregion {}",
                                  this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                       InputError );
+
+        string & porosityModelName = subRegion.getReference< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
+        porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );
+        GEOS_THROW_IF( porosityModelName.empty(),
+                       GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
+                                 this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -125,11 +141,17 @@ public:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
+          setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 );
+
+        // This is needed by the way the surface generator currently does things.
+        subRegion.registerWrapper< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
           setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
           setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
           setSizedFromParent( 0 );
@@ -168,7 +190,7 @@ public:
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  MECHANICS_SOLVER * solidMechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
   }
@@ -331,9 +353,6 @@ protected:
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {
-      // save pressure and temperature at the end of this iteration
-      flowSolver()->saveIterationState( domain );
-
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
                                                                                   arrayView1d< string const > const & regionNames )
@@ -367,6 +386,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }

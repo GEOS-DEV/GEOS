@@ -14,6 +14,11 @@
 
 #include "CollocatedNodes.hpp"
 
+#include "common/MpiWrapper.hpp"
+
+
+#include <vtkPointData.h>
+
 namespace geos::vtk
 {
 
