@@ -60,7 +60,7 @@ void ParticleMeshGeneratorBase::generateMesh( Group & parent, SpatialPartition &
   }
   else
   {
-    GEOS_ERROR( "Internal error." );
+    GEOS_ERROR( "Internal error. MeshBody " << meshBody.getName() << " should have particles." );
   }
 }
 

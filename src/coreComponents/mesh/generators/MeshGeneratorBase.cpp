@@ -75,7 +75,6 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
     lb.setWellControlsName( wellGen.getWellControlsName() );
     lb.setWellGeneratorName( wellGen.getName() );
-
   } );
 }
 }
