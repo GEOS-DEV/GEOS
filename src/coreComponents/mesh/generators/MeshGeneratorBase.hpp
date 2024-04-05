@@ -60,7 +60,7 @@ public:
   static string catalogName() { return "MeshGeneratorBase"; }
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void expandObjectCatalogs() override;
+  void expandObjectCatalogs() override;
 
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
@@ -71,7 +71,7 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Accessor for the singleton Catalog object
@@ -143,29 +143,9 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The reference to spatial partition
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
-  {
-    GEOS_UNUSED_VAR( cellBlockManager );
-    GEOS_UNUSED_VAR( partition );
-    GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
-  }
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
-
-  /**
-   * @brief Fill the particleBlockManager object .
-   * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
-   * @param[in] particleManager The reference to the particle manager
-   * @param[in] partition The reference to spatial partition
-   */
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
-  {
-    GEOS_UNUSED_VAR( particleBlockManager );
-    GEOS_UNUSED_VAR( particleManager );
-    GEOS_UNUSED_VAR( partition );
-    GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
-  }
-
 };
 }
 

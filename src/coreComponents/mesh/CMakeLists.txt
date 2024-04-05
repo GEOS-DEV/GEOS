@@ -68,6 +68,7 @@ set( mesh_headers
      particleGenerators/ParticleBlockABC.hpp
      particleGenerators/ParticleBlockManager.hpp
      particleGenerators/ParticleMeshGenerator.hpp
+     particleGenerators/ParticleMeshGeneratorBase.hpp
      simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/CustomPolarObject.hpp
      simpleGeometricObjects/Cylinder.hpp
@@ -137,6 +138,7 @@ set( mesh_sources
      particleGenerators/ParticleBlock.cpp
      particleGenerators/ParticleBlockManager.cpp
      particleGenerators/ParticleMeshGenerator.cpp
+     particleGenerators/ParticleMeshGeneratorBase.cpp
      simpleGeometricObjects/Box.cpp
      simpleGeometricObjects/CustomPolarObject.cpp
      simpleGeometricObjects/Cylinder.cpp
