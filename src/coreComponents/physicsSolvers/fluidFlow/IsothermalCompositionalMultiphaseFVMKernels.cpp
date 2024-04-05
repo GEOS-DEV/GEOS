@@ -276,13 +276,15 @@ CFLKernel::
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
                    real64 & phaseCFLNumber )
 {
-  // first, check which phases are mobile in the cell
-  real64 mob[NP]{};
-  localIndex mobilePhases[NP]{};
-  localIndex numMobilePhases = 0;
+    // then, depending on the regime, apply the appropriate CFL formula
+    phaseCFLNumber = 0;
 
   for( int dir = 0; dir < 3; ++dir )
   {
+      // first, check which phases are mobile in the cell
+      real64 mob[NP]{};
+      localIndex mobilePhases[NP]{};
+      localIndex numMobilePhases{};
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -297,13 +299,12 @@ CFLKernel::
       }
     }
 
-    // then, depending on the regime, apply the appropriate CFL formula
-    phaseCFLNumber = 0;
+
 
     // single-phase flow regime
     if( numMobilePhases == 1 )
     {
-      phaseCFLNumber = phaseOutflux[mobilePhases[0]] / poreVol;
+      phaseCFLNumber = LvArray::math::max(phaseCFLNumber, phaseOutflux[mobilePhases[0]] / poreVol);
     }
     // two-phase flow regime
     else if( numMobilePhases == 2 )
@@ -318,7 +319,7 @@ CFLKernel::
       real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
       real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
 
-      phaseCFLNumber = LvArray::math::abs( coef0 * phaseOutflux[ip0] + coef1 * phaseOutflux[ip1] );
+      phaseCFLNumber = LvArray::math::max( phaseCFLNumber,  LvArray::math::abs( coef0 * phaseOutflux[ip0] + coef1 * phaseOutflux[ip1] ));
     }
     // three-phase flow regime
     else if( numMobilePhases == 3 )
@@ -346,10 +347,10 @@ CFLKernel::
           f[i][j] *= sum;
         }
       }
-      phaseCFLNumber = f[0][0] + f[1][1];
-      phaseCFLNumber += sqrt(
-        phaseCFLNumber * phaseCFLNumber - 4 * (f[0][0] * f[1][1] - f[1][0] * f[0][1]));
-      phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
+      auto tmp = f[0][0] + f[1][1];
+      tmp += sqrt(
+        tmp * tmp - 4 * (f[0][0] * f[1][1] - f[1][0] * f[0][1]));
+      phaseCFLNumber = LvArray::math::max(phaseCFLNumber, 0.5 * LvArray::math::abs( tmp ) / poreVol);
     }
   }
 }

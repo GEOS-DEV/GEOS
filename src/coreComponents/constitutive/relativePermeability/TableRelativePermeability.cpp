@@ -33,7 +33,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
   : RelativePermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingRelPermTableNamesString(), &m_wettingNonWettingRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupOfGroupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"

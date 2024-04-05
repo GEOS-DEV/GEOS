@@ -2038,8 +2038,7 @@ struct StatisticsKernel
       subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
       subRegionMaxTemp.max( temp[ei] );
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
-      for( int dir = 0; dir < 3; ++dir )
-      {
+
 
 
         for( integer ip = 0; ip < numPhases; ++ip )
@@ -2052,16 +2051,19 @@ struct StatisticsKernel
           RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
+            for( int dir = 0; dir < 3; ++dir )
+            {
           if( phaseRelperm[ei][0][ip][dir] < relpermThreshold )
           {
             RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], elemPhaseMass );
           }
+            }
           for( integer ic = 0; ic < numComps; ++ic )
           {
             // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
             RAJA::atomicAdd( parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic],
                              phaseCompFraction[ei][0][ip][ic] * elemPhaseMass );
-          }
+
         }
       }
 
