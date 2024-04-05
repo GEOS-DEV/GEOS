@@ -42,8 +42,10 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
 {
   TableData2D::Conversion1D tableData1D;
   std::vector< real64 > headerValues;
+  std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
+
   // looping over first line to fill columnNames
   for( auto const & [ columnValue, cellValue] : m_data.begin()->second )
   {
@@ -51,8 +53,10 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     headerValues.push_back( columnValue );
   }
 
+  rowsLength.reserve( headerValues.size());
+
   // insert row value and row cell values
-  bool flag = 1;
+  bool flag = true;
   for( auto const & [rowValue, rowMap] : m_data )
   {
     integer i = 0;
@@ -60,20 +64,27 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      if( std::abs( columnValue - headerValues[i] ) < 0.01 )
+      if( std::abs( columnValue - headerValues[i] ) > 0.01 )
       {
-        flag = 0;
+        flag = false;
       }
-
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
       ++i;
     }
     tableData1D.tableData.addRow( currentRowValues );
+    rowsLength.push_back( currentRowValues.size());
+  }
+
+  if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
+  {
+    flag = false;
+    GEOS_WARNING( "Cell(s) are missing in row" );
   }
 
   if( !flag )
   {
-    GEOS_WARNING( "Mismatch between columnValue and headerValue" );
+    tableData1D.isConsistent = flag;
+    GEOS_WARNING( "Table isn't consistent" );
   }
 
   return tableData1D;

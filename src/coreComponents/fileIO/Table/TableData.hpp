@@ -69,6 +69,7 @@ public:
   {
     std::vector< string > headerNames;
     TableData tableData;
+    bool isConsistent = true;
   };
 
   /**

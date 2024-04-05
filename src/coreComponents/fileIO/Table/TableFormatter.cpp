@@ -27,12 +27,10 @@ TableFormatter::TableFormatter( TableLayout const & tableLayout ):
 void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                                std::vector< std::vector< string > > const & rows ) const
 {
-  bool flag = 1;
+  bool isConsistent = true;
   for( size_t idxRow = 0; idxRow < rows.size(); idxRow++ )
   {
-
-
-    //   columns[idxRow].columnValues.reserve( rows[idxRow].size() );
+    columns[idxRow].columnValues.reserve( rows[idxRow].size() );
     for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
       columns[idxColumn].columnValues.push_back( rows[idxRow][idxColumn] );
@@ -40,10 +38,10 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
 
     if( rows[idxRow].size()!=columns.size())
     {
-      flag = 0;
+      isConsistent = false;
     }
   }
-  if( !flag )
+  if( !isConsistent )
   {
     GEOS_WARNING( "The number of columns in rows that has been collected is not equal to the columns expected when TableLayout was initialized" );
   }
