@@ -11,26 +11,23 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
+     MeshFields.hpp
      MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
      MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
-     generators/ParticleBlock.hpp
-     generators/ParticleBlockManager.hpp
      ParticleManager.hpp
      ParticleRegion.hpp
      ParticleRegionBase.hpp
      ParticleSubRegion.hpp
      ParticleSubRegionBase.hpp
-     generators/ParticleBlockABC.hpp
      ParticleType.hpp
      Perforation.hpp
      PerforationData.hpp
@@ -46,17 +43,16 @@ set( mesh_headers
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
-     generators/LineBlock.hpp
-     generators/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
+     generators/LineBlock.hpp
+     generators/LineBlockABC.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
-     generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
      generators/WellGeneratorABC.hpp
@@ -68,14 +64,18 @@ set( mesh_headers
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
-     simpleGeometricObjects/Rectangle.hpp
-     simpleGeometricObjects/Disc.hpp
-     simpleGeometricObjects/CustomPolarObject.hpp
+     particleGenerators/ParticleBlock.hpp
+     particleGenerators/ParticleBlockABC.hpp
+     particleGenerators/ParticleBlockManager.hpp
+     particleGenerators/ParticleMeshGenerator.hpp
      simpleGeometricObjects/Box.hpp
+     simpleGeometricObjects/CustomPolarObject.hpp
      simpleGeometricObjects/Cylinder.hpp
+     simpleGeometricObjects/Disc.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
-     simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/PlanarGeometricObject.hpp
+     simpleGeometricObjects/Rectangle.hpp
+     simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/ThickPlane.hpp
      utilities/AverageOverQuadraturePointsKernel.hpp     
      utilities/CIcomputationKernel.hpp
@@ -103,8 +103,6 @@ set( mesh_sources
      MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
-     generators/ParticleBlock.cpp
-     generators/ParticleBlockManager.cpp
      ParticleManager.cpp
      ParticleRegion.cpp
      ParticleRegionBase.cpp
@@ -121,15 +119,14 @@ set( mesh_sources
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
-     generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
      generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
+     generators/LineBlock.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
-     generators/ParticleMeshGenerator.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
@@ -137,14 +134,17 @@ set( mesh_sources
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
-     simpleGeometricObjects/Rectangle.cpp
-     simpleGeometricObjects/Disc.cpp
-     simpleGeometricObjects/CustomPolarObject.cpp
+     particleGenerators/ParticleBlock.cpp
+     particleGenerators/ParticleBlockManager.cpp
+     particleGenerators/ParticleMeshGenerator.cpp
      simpleGeometricObjects/Box.cpp
+     simpleGeometricObjects/CustomPolarObject.cpp
      simpleGeometricObjects/Cylinder.cpp
+     simpleGeometricObjects/Disc.cpp
      simpleGeometricObjects/GeometricObjectManager.cpp
-     simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/PlanarGeometricObject.cpp
+     simpleGeometricObjects/Rectangle.cpp
+     simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp )
 
