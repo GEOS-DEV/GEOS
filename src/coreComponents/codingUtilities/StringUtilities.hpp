@@ -180,8 +180,8 @@ string_view trimSpaces( string_view str );
  * @param[in] strToRemove the string to search for in the line
  * @return the new (truncated) string
  */
-string removeStringAndFollowingContent( string const & str,
-                                        string const & strToRemove );
+string_view removeStringAndFollowingContent( string_view str,
+                                             string_view strToRemove );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

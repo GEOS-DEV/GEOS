@@ -166,18 +166,11 @@ void ElementRegionManager::checkSubRegionRegistering( CellBlockManagerABC const 
   forElementRegions< CellElementRegion >( [&]( CellElementRegion & region ) {
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion ) {
       string const & subRegionName = subRegion.getName();
-
-      // if no region already referenced the cellBlock
-      if( cellBlocksRegion.find( subRegionName ) == cellBlocksRegion.end() )
+      const auto [regionIterator, isNewRegion] = cellBlocksRegion.emplace( subRegionName, &region );
+      // if a region already referenced the cellBlock
+      if( !isNewRegion )
       {
-        cellBlocksRegion[ subRegionName ] = &region;
-      }
-      else
-      {
-        CellElementRegion const & otherRegion = *cellBlocksRegion[ subRegionName ];
-        auto const & a = otherRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() );
-        auto const & w = otherRegion.getWrapperBase( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() );
-        GEOS_LOG( w.getPath() <<" : "<<typeid(w.getDataContext()).name()<<" -> "<<typeid(a).name());
+        CellElementRegion const & otherRegion = *regionIterator->second;
         // For now, multiple regions per cell is not supported (by ElementRegionManager::getCellBlockToSubRegionMap())
         // TODO: refactor the CellElementRegion & Mesh classes so regions are mapped to cellblocks IN the mesh (and potencially
         // to multiple regions per cell). So, for external meshes, the cellblocks would no longer be exposed to the final user.

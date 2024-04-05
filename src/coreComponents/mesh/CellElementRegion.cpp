@@ -85,8 +85,7 @@ void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
 
 string CellElementRegion::getCellBlockAttributeValue( string_view cellBlockName )
 {
-  size_t const sep = cellBlockName.find( '_' );
-  return sep != string::npos ? string( cellBlockName.substr( 0, sep ) ) : string( "" );
+  return string( stringutilities::removeStringAndFollowingContent( cellBlockName, "_" ) );
 }
 
 std::set< string > getAvailableAttributeValues( Group const & cellBlocks )
@@ -157,24 +156,30 @@ std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & c
         }
       } );
 
-      // a) check for the case where the user is requesting attribute values
-      if( !m_cellBlockAttributeValues.empty() && !matching )
+      if( !matching )
       {
-        auto const attributeValueLength = matchPattern.size() - attributeValuePatternSuffix.size();
-        auto const attributeValue = matchPattern.substr( 0, attributeValueLength );
-        GEOS_THROW( GEOS_FMT( "{}: Attribute value '{}' not found.\nAvailable attribute list: {{ {} }}",
-                              getWrapperDataContext( viewKeyStruct::cellBlockAttributeValuesString() ),
-                              attributeValue,
-                              stringutilities::join( getAvailableAttributeValues( cellBlocks ), ", " ) ),
-                    InputError );
+        // a) check for the case where the user is requesting attribute values
+        if( !m_cellBlockAttributeValues.empty() )
+        {
+          auto const attributeValueLength = matchPattern.size() - attributeValuePatternSuffix.size();
+          auto const attributeValue = matchPattern.substr( 0, attributeValueLength );
+          GEOS_THROW( GEOS_FMT( "{}: Attribute value '{}' not found.\nAvailable attribute list: {{ {} }}",
+                                getWrapperDataContext( viewKeyStruct::cellBlockAttributeValuesString() ),
+                                attributeValue,
+                                stringutilities::join( getAvailableAttributeValues( cellBlocks ), ", " ) ),
+                      InputError );
+        }
+        // b) check for the case where the user is requesting match pattern
+        GEOS_THROW_IF( !m_cellBlockMatchPatterns.empty(),
+                       GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
+                                 getWrapperDataContext( viewKeyStruct::cellBlockMatchPatternsString() ),
+                                 matchPattern,
+                                 stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ),
+                       InputError );
+        // this error exists just in case, we should not fall there.
+        GEOS_ERROR( GEOS_FMT( "{}: Unknown error, no cellBlock matching the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
+                              matchPattern, stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ) );
       }
-      // b) check for the case where the user is requesting match pattern
-      GEOS_THROW_IF( !m_cellBlockMatchPatterns.empty() && !matching,
-                     GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
-                               getWrapperDataContext( viewKeyStruct::cellBlockMatchPatternsString() ),
-                               matchPattern,
-                               stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ),
-                     InputError );
     }
   }
 
