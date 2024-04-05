@@ -32,7 +32,7 @@ namespace geos
  * @class SurfaceElementSubRegion
  *
  * The SurfaceElementSubRegion class contains the functionality to support the concept of a
- * surface element that can be either and embedded surface element or a face element.
+ * surface element that can be either and surface element or a face element.
  */
 class SurfaceElementSubRegion : public ElementSubRegionBase
 {
@@ -201,14 +201,81 @@ public:
    */
   arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
 
+  /**
+  * @brief Const accessor to the normal vectors.
+  * @return a const view to the array of normal vectors.
+  */
+  arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
+
+  /**
+  * @brief Non const accessor to the normal vectors.
+  * @return a non const view to the array of normal vectors.
+  */
+  arrayView2d< real64 > getNormalVector() { return m_normalVector; }
+
+  /**
+   * @brief Get normal vector of a specific surface element.
+   * @param k index of the surface element
+   * @return the normal vector of a specific surface element
+   */
+  arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
+
+  /**
+   * @brief Get an array of the first tangent vector of the surface elements.
+   * @return an array of the first tangent vector of the surface elements
+   */
+  arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
+
+  /**
+   * @brief Get an array of the first tangent vector of the surface elements.
+   * @return a non const view to the array of the first tangent vector of the surface elements
+   */
+  arrayView2d< real64 > getTangentVector1() { return m_tangentVector1; }
+
+  /**
+   * @brief Get the first tangent vector of a specific surface element.
+   * @param k index of the surface element
+   * @return the first tangent vector of a specific surface element
+   */
+  arraySlice1d< real64 const > getTangentVector1( localIndex const k ) const { return m_tangentVector1[k]; }
+
+  /**
+   * @brief Get an array of the second tangent vector of the surface elements.
+   * @return aconst view to the array of the second tangent vector of the surface elements
+   */
+  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2.toViewConst(); }
+
+   /**
+   * @brief Get an array of the first tangent vector of the surface elements.
+   * @return a non const view to the array of the second tangent vector of the surface elements
+   */
+  arrayView2d< real64 > getTangentVector2() { return m_tangentVector2; }
+
+  /**
+   * @brief Get the second tangent vector of a specific surface element.
+   * @param k index of the surface element
+   * @return the second tangent vector of a specific surface element
+   */
+  arraySlice1d< real64 const > getTangentVector2( localIndex const k ) const { return m_tangentVector2[k];}
+
+
   ///@}
 
   /**
-   * @brief Struct containing the keys to all embedded surface element views.
+   * @brief Struct containing the keys to all surface element views.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
+    /// @return surface element normal vector string
+    static constexpr char const * normalVectorString()      { return "normalVector"; }
+
+    /// @return Tangent vector 1 string
+    static constexpr char const * t1VectorString()          { return "tangentVector1"; }
+
+    /// @return Tangent vector 2 string
+    static constexpr char const * t2VectorString()          { return "tangentVector2"; }
+
     /// @return Face element to cell regions map string.
     static constexpr char const * surfaceElementsToCellRegionsString() { return "fractureElementsToCellRegions"; }
 
@@ -218,17 +285,16 @@ public:
     /// @return Face element to cell indices map string.
     static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
 
-
-    /// @return Embedded surface element aperture string
+    /// @return surface element aperture string
     static constexpr char const * elementApertureString() { return "elementAperture"; }
 
-    /// @return Embedded surface element surface are string
+    /// @return surface element surface are string
     static constexpr char const * elementAreaString() { return "elementArea"; }
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
 
-    /// @return embedded surface element to parent plane string.
+    /// @return surface element to parent plane string.
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 
@@ -251,6 +317,15 @@ protected:
 
   /// Member level field for the element center
   array1d< real64 > m_elementArea;
+
+  /// normal vector to the surface element
+  array2d< real64 > m_normalVector;
+
+  // tangential direction 1
+  array2d< real64 > m_tangentVector1;
+
+  // tangential direction 2
+  array2d< real64 > m_tangentVector2;
 
 };
 

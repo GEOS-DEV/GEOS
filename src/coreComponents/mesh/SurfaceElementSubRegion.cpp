@@ -34,7 +34,10 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
-  m_elementArea()
+  m_elementArea(),
+  m_normalVector(),
+  m_tangentVector1(),
+  m_tangentVector2()
 {
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation ).
     setDescription( "Map to the nodes attached to each SurfaceElement." );
@@ -68,6 +71,15 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
+
+  registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
+    setDescription( "Unit normal vector to the embedded surface." );
+
+  registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
+    setDescription( "Unit vector in the first tangent direction to the embedded surface." );
+
+  registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
+    setDescription( "Unit vector in the second tangent direction to the embedded surface." );  
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),

@@ -453,6 +453,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
+        arrayView2d< real64 > const & dispJumpGlobalRef = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -483,6 +484,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
           real64 dispJumpTemp[ 3 ];
           LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
           LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
+          LvArray::tensorOps::copy< 3 >( dispJumpGlobalRef[ kfe ], globalJumpTemp );
         } );
       }
     } );
@@ -876,6 +878,9 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+      arrayView2d< real64 > const & unitNormal   = subRegion.getNormalVector();
+      arrayView2d< real64 > const & unitTangent1 = subRegion.getTangentVector1();
+      arrayView2d< real64 > const & unitTangent2 = subRegion.getTangentVector2(); 
 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
@@ -892,6 +897,17 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
+        LvArray::tensorOps::copy<3>( unitNormal, Nbar );
+        real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ], 
+                                          rotationMatrix[kfe][ 1 ][ 1 ], 
+                                          rotationMatrix[kfe][ 2 ][ 1 ] };
+
+        real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ], 
+                                          rotationMatrix[kfe][ 1 ][ 2 ], 
+                                          rotationMatrix[kfe][ 2 ][ 2 ] };                                  
+
+        LvArray::tensorOps::copy<3>( unitTangent1, columnVector1);
+        LvArray::tensorOps::copy<3>( unitTangent2, columnVector2);
       } );
     } );
   } );

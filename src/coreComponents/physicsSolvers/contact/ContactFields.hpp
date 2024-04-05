@@ -50,12 +50,28 @@ struct FractureState
 };
 
 DECLARE_FIELD( dispJump,
-               "displacementJump",
+               "displacementJumpLocalRef",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Displacement jump vector in the local reference system" );
+
+DECLARE_FIELD( dispJumpGlobalRef,
+               "displacementJumpGlobalRef",
                array2d< real64 >,
                0,
                LEVEL_0,
-               WRITE_AND_READ,
-               "Displacement jump vector" );
+               NO_WRITE,
+               "Displacement jump vector in the global reference system." );
+
+DECLARE_FIELD( slipVector,
+               "slipVector",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Slip vector in the global reference system." );                                 
 
 DECLARE_FIELD( deltaDispJump,
                "deltaDisplacementJump",
@@ -77,9 +93,25 @@ DECLARE_FIELD( traction,
                "traction",
                array2d< real64 >,
                0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Fracture traction vector in the local reference system." );              
+
+DECLARE_FIELD( shearTraction,
+               "shearTraction",
+               array2d< real64 >,
+               0,
                LEVEL_0,
-               NO_WRITE,
-               "Fracture traction vector" );
+               WRITE_AND_READ,
+               "Shear traction vector in the global reference system." );
+
+DECLARE_FIELD( normalTraction,
+               "normalTraction",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Normal traction vector in the global reference system." );                                  
 
 DECLARE_FIELD( deltaTraction,
                "deltaTraction",

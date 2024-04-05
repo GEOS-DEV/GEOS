@@ -178,15 +178,6 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// @return Embedded surface element normal vector string
-    static constexpr char const * normalVectorString()      { return "normalVector"; }
-
-    /// @return Tangent vector 1 string
-    static constexpr char const * t1VectorString()          { return "tangentVector1"; }
-
-    /// @return Tangent vector 2 string
-    static constexpr char const * t2VectorString()          { return "tangentVector2"; }
-
     /// @return Connectivity index string
     static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
@@ -217,50 +208,11 @@ public:
   localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
   /**
-   * @brief Get normal vectors.
-   * @return an array of normal vectors.
-   */
-  arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
-
-  /**
-   * @brief Get normal vector of a specific embedded surface element.
-   * @param k index of the embedded surface element
-   * @return the normal vector of a specific embedded surface element
-   */
-  arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
-
-  /**
    * @brief Get the name of the bounding plate that was used to generate fracture element k.
    * @param k the index of the embedded surface element
    * @return the name of the bounded plane, the element was generated from
    */
   string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
-
-  /**
-   * @brief Get an array of the first tangent vector of the embedded surface elements.
-   * @return an array of the first tangent vector of the embedded surface elements
-   */
-  arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
-
-  /**
-   * @brief Get the first tangent vector of a specific embedded surface element.
-   * @param k index of the embedded surface element
-   * @return the first tangent vector of a specific embedded surface element
-   */
-  arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
-
-  /**
-   * @brief Get an array of the second tangent vector of the embedded surface elements.
-   * @return an array of the second tangent vector of the embedded surface elements
-   */
-  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2.toViewConst(); }
-
-  /**
-   * @brief Get the second tangent vector of a specific embedded surface element.
-   * @param k index of the embedded surface element
-   * @return the second tangent vector of a specific embedded surface element
-   */
-  arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
   /**
    * @brief Get the connectivity index of the  embedded surface element.
@@ -293,15 +245,6 @@ private:
   template< bool DO_PACKING >
   localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
                                  arrayView1d< localIndex const > const & packList ) const;
-
-  /// normal vector to the embedded surface element
-  array2d< real64 > m_normalVector;
-
-  // tangential direction 1
-  array2d< real64 > m_tangentVector1;
-
-  // tangential direction 2
-  array2d< real64 > m_tangentVector2;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;
