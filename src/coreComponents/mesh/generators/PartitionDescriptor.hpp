@@ -12,8 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_PARTITIONDESCRIPTOR_H_
-#define GEOSX_MESH_PARTITIONDESCRIPTOR_H_
+#ifndef GEOS_MESH_PARTITIONDESCRIPTOR_H_
+#define GEOS_MESH_PARTITIONDESCRIPTOR_H_
+
+#include "PartitionDescriptorABC.hpp"
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
@@ -30,7 +32,7 @@ namespace geos
  * @class PartitionDescriptor
  * @brief Simple utility to retrieve partition information in case of Metis or Spatial partition.
  */
-class PartitionDescriptor
+class PartitionDescriptor: public PartitionDescriptorABC
 {
 public:
   PartitionDescriptor();
@@ -39,7 +41,7 @@ public:
    * @brief Gets a reference to the list of metis neighbor list.
    * @return A reference to the Metis neighbor list.
    */
-  std::set< int > const & getMetisNeighborList() const { return m_metisNeighborList; }
+  [[nodiscard]] std::set< int > const & getMetisNeighborList() const override { return m_metisNeighborList; }
 
   /**
    * @brief Sets the list of metis neighbor list.
@@ -57,17 +59,17 @@ public:
                       unsigned int y,
                       unsigned int z );
 
-  [[nodiscard]] array1d< int > getPartitions() const
+  [[nodiscard]] array1d< int > getPartitions() const override
   {
     return m_partitions;
   }
 
-  [[nodiscard]] array1d< int > getPeriodic() const
+  [[nodiscard]] array1d< int > getPeriodic() const override
   {
     return m_periodic;
   }
 
-  [[nodiscard]] array1d< int > getCoords() const
+  [[nodiscard]] array1d< int > getCoords() const override
   {
     return m_coords;
   }
@@ -147,4 +149,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_PARTITIONDESCRIPTOR_H_ */
+#endif // Include guard
