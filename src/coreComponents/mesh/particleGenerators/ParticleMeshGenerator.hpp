@@ -74,12 +74,6 @@ private:
 
   void postProcessInput() override;
 
-  /// Minimum extent of particle coordinates
-  real64 m_min[3];
-
-  /// Maximum extent of particle coordinates
-  real64 m_max[3];
-
   /// Path to the particle file
   Path m_particleFilePath;
 
