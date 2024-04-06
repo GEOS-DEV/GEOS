@@ -22,7 +22,6 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
