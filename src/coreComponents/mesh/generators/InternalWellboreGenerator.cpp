@@ -18,7 +18,7 @@
 
 #include "InternalWellboreGenerator.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {

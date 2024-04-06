@@ -19,14 +19,16 @@
 #ifndef GEOS_MESH_GENERATORS_VTKWELLGENERATOR_HPP
 #define GEOS_MESH_GENERATORS_VTKWELLGENERATOR_HPP
 
-#include "mesh/generators/WellGeneratorBase.hpp"
+#include "WellGeneratorBase.hpp"
+
+#include "VTKUtilities.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
-#include "mesh/generators/VTKUtilities.hpp"
-
 #include <vtkDataSet.h>
+
 
 namespace geos
 {

@@ -20,7 +20,8 @@
 #ifndef GEOS_MESH_GENERATORS_WELLGENERATORBASE_HPP_
 #define GEOS_MESH_GENERATORS_WELLGENERATORBASE_HPP_
 
-#include "mesh/generators/WellGeneratorABC.hpp"
+#include "WellGeneratorABC.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"

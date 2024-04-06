@@ -21,7 +21,6 @@
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include <vtkDataSet.h>
 

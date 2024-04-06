@@ -13,9 +13,11 @@
  */
 
 #include "WellGeneratorBase.hpp"
+#include "LineBlockABC.hpp"
+
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/Perforation.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+
 #include "LvArray/src/genericTensorOps.hpp"
 
 namespace geos

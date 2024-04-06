@@ -19,7 +19,7 @@
 
 #include "VTKWellGenerator.hpp"
 
-#include "mesh/generators/VTKUtilities.hpp"
+#include "VTKUtilities.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
 
