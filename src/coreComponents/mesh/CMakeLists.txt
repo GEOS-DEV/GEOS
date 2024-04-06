@@ -54,6 +54,7 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/PartitionDescriptor.hpp
+     generators/PartitionDescriptorABC.hpp
      generators/PrismUtilities.hpp
      generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp

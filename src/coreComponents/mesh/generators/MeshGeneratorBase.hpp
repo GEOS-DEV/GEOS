@@ -20,6 +20,7 @@
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "PartitionDescriptor.hpp"
+#include "PartitionDescriptorABC.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -130,7 +131,7 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
-  PartitionDescriptor const & getPartitionDescriptor() const
+  PartitionDescriptorABC const & getPartitionDescriptor() const
   {
     return m_partition;
   }

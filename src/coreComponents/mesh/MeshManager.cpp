@@ -68,12 +68,12 @@ Group * MeshManager::createChild( string const & childKey,
 void MeshManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase...
-  for( auto & catalogIter: MeshGeneratorBase::getCatalog())
+  for( auto & catalogIter: MeshGeneratorBase::getCatalog() )
   {
     createChild( catalogIter.first, catalogIter.first );
   }
   // ... and ParticleMeshGeneratorBase.
-  for( auto & catalogIter: ParticleMeshGeneratorBase::getCatalog())
+  for( auto & catalogIter: ParticleMeshGeneratorBase::getCatalog() )
   {
     createChild( catalogIter.first, catalogIter.first );
   }
@@ -93,7 +93,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
     meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
 
-    PartitionDescriptor const & pd = meshGen.getPartitionDescriptor();
+    PartitionDescriptorABC const & pd = meshGen.getPartitionDescriptor();
     partition.setMetisNeighborList( pd.getMetisNeighborList() );
     partition.m_coords = pd.getCoords();
     partition.m_Periodic = pd.getPeriodic();
