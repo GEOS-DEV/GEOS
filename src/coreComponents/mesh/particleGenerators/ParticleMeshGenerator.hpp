@@ -74,9 +74,6 @@ private:
 
   void postProcessInput() override;
 
-  /// Mesh number of dimension
-  int m_dim;
-
   /// Minimum extent of particle coordinates
   real64 m_min[3];
 
