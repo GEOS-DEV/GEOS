@@ -123,8 +123,8 @@ bool PartitionDescriptor::isCoordInPartition( const real64 & coord,
 }
 
 void PartitionDescriptor::addNeighbors( const unsigned int idim,
-                                     MPI_Comm & cartcomm,
-                                     int * ncoords )
+                                        MPI_Comm & cartcomm,
+                                        int * ncoords )
 {
 
   if( idim == 3 )
@@ -171,8 +171,8 @@ void PartitionDescriptor::addNeighbors( const unsigned int idim,
   }
 }
 
-void PartitionDescriptor::setSizes( real64 const ( & min )[3],
-                                    real64 const ( & max )[3] )
+void PartitionDescriptor::setSizes( real64 const ( &min )[3],
+                                    real64 const ( &max )[3] )
 {
 
   {
