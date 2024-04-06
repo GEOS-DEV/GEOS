@@ -32,7 +32,6 @@ using namespace dataRepository;
 
 ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const parent ):
   ParticleMeshGeneratorBase( name, parent ),
-  m_dim( 3 ),
   m_min(),
   m_max()
 {
