@@ -813,7 +813,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    auto const periodic = m_partition.getPeriodic() ;
+    auto const periodic = m_partition.getPeriodic();
     if( std::any_of( periodic.begin(), periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )

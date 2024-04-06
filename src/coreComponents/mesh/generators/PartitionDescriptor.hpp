@@ -32,7 +32,7 @@ namespace geos
  * @class PartitionDescriptor
  * @brief Simple utility to retrieve partition information in case of Metis or Spatial partition.
  */
-class PartitionDescriptor: public PartitionDescriptorABC
+class PartitionDescriptor : public PartitionDescriptorABC
 {
 public:
   PartitionDescriptor();
@@ -81,8 +81,8 @@ public:
 
   [[nodiscard]] bool isCoordInPartition( const real64 & coord, const int dir ) const;
 
-  void setSizes( real64 const ( & min )[3],
-                 real64 const ( & max )[3] );
+  void setSizes( real64 const ( &min )[3],
+                 real64 const ( &max )[3] );
 
 private:
 
