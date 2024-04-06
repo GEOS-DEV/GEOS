@@ -51,11 +51,10 @@ public:
 
 protected:
 
-  void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+  void reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
                                           integer ( &numNodes )[3] ) override final;
 
-  void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                               int ( & index )[3] ) override final;
+  void setNodeGlobalIndicesOnPeriodicBoundary( int ( & index )[3] ) override final;
 
   void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
                                              integer const ( &numNodesInDir )[3],
