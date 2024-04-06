@@ -31,9 +31,7 @@ namespace geos
 using namespace dataRepository;
 
 ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const parent ):
-  ParticleMeshGeneratorBase( name, parent ),
-  m_min(),
-  m_max()
+  ParticleMeshGeneratorBase( name, parent )
 {
   registerWrapper( viewKeyStruct::particleFilePathString(), &m_particleFilePath ).
     setInputFlag( InputFlags::REQUIRED ).
