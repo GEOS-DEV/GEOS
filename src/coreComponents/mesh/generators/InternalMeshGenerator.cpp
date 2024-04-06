@@ -12,14 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file InternalMeshGenerator.cpp
- */
-
 #include "InternalMeshGenerator.hpp"
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
+
+#include "LvArray/src/tensorOps.hpp"
 
 #include <cmath>
 

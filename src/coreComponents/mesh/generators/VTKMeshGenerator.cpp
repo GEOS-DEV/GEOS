@@ -18,9 +18,10 @@
 
 #include "VTKMeshGenerator.hpp"
 
-#include "mesh/generators/VTKFaceBlockUtilities.hpp"
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"
-#include "mesh/generators/CellBlockManager.hpp"
+#include "VTKFaceBlockUtilities.hpp"
+#include "VTKMeshGeneratorTools.hpp"
+#include "CellBlockManager.hpp"
+
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 

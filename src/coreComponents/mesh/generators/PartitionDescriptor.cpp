@@ -256,7 +256,7 @@ void PartitionDescriptor::setSizes( real64 const ( & min )[3],
     }
     else
     {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+      GEOS_ERROR( "PartitionDescriptor::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }
