@@ -54,6 +54,7 @@
     <Outputs>
         <VTK name="vtkOutput" plotLevel="2" format="ascii" outputRegionType="cell"/>
         <Restart name="restartOutput"/>
+        
     </Outputs>
 
 </Problem>

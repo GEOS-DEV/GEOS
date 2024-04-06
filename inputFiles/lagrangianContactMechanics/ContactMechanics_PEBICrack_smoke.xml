@@ -45,6 +45,10 @@
 
         <PeriodicEvent name="solverApplications" target="/Solvers/lagrangiancontact" beginTime="0" endTime="10" forceDt="1.0"/>
         <PeriodicEvent name="outputs" timeFrequency="1" targetExactTimestep="0" target="/Outputs/vtkOutput"/>
-
+         <PeriodicEvent
+          name="restarts"
+          timeFrequency="5.0"
+          targetExactTimestep="0"
+          target="/Outputs/restartOutput"/>
     </Events>
 </Problem>
