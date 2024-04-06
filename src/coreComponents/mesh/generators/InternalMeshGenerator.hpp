@@ -78,25 +78,21 @@ public:
    * @param partition The partitioning object
    * @param numNodes The number of nodes in each coordinate direction.
    */
-  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+  virtual void reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
                                                   integer (& numNodes) [3] )
   {
     GEOS_UNUSED_VAR( partition, numNodes );
   };
 
   /**
-   * @brief Alter the directional indices for when the ending index should be
-   *   set to the beginning of the index as is the case with periodic
-   *   boundaries.
-   * @param partition The partitioning object
-   * @param index The indices to be evaluated for periodic indexing.
-   *   merging.
+   * @brief Alter the directional indices for when the ending index should be set
+   * to the beginning of the index as is the case with periodic boundaries.
+   * @param index The indices to be evaluated for periodic indexing merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                          int (& index)[3] )
+  setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3] )
   {
-    GEOS_UNUSED_VAR( partition, index );
+    GEOS_UNUSED_VAR( index );
   }
 
   /**
@@ -261,9 +257,7 @@ private:
   /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
-
-
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.
@@ -382,10 +376,6 @@ private:
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
   }
-
-public:
-
-
 };
 
 } /* namespace geos */

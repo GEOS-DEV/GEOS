@@ -47,7 +47,7 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
+void MeshGeneratorBase::generateMesh( Group & parent, array1d< int > const & partition )
 {
   CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
   fillCellBlockManager( cellBlockManager, partition );

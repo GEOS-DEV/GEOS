@@ -82,20 +82,30 @@ void MeshManager::expandObjectCatalogs()
 
 void MeshManager::generateMeshes( DomainPartition & domain )
 {
-  forSubGroups< MeshGeneratorBase, ParticleMeshGeneratorBase >( [&]( auto & meshGen )
+  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
+  {
+    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    meshBody.createMeshLevel( 0 );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
+    meshGen.generateMesh( meshBody, partition.getPartitions() );
+
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+
+    PartitionDescriptor const & pd = meshGen.getPartitionDescriptor();
+    partition.setMetisNeighborList( pd.getMetisNeighborList() );
+    partition.m_coords = pd.getCoords();
+    partition.m_Periodic = pd.getPeriodic();
+  } );
+
+  forSubGroups< ParticleMeshGeneratorBase >( [&]( ParticleMeshGeneratorBase & meshGen )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
     meshGen.generateMesh( meshBody, partition );
-
-    if( !meshBody.hasParticles() )
-    {
-      CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
-
-      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
-    }
   } );
 }
 

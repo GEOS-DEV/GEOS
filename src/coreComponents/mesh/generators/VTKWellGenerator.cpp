@@ -20,6 +20,9 @@
 #include "VTKWellGenerator.hpp"
 
 #include "mesh/generators/VTKUtilities.hpp"
+
+#include "LvArray/src/tensorOps.hpp"
+
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
 #include <vtkPolyLine.h>
