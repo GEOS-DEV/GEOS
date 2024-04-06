@@ -15,6 +15,7 @@
 #include "ParticleMeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/particleGenerators/ParticleBlockManager.hpp"
+#include "common/GeosxMacros.hpp"
 
 namespace geos
 {
@@ -26,7 +27,8 @@ ParticleMeshGeneratorBase::ParticleMeshGeneratorBase( string const & name, Group
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
-Group * ParticleMeshGeneratorBase::createChild( string const & childKey, string const & childName )
+Group * ParticleMeshGeneratorBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                                string const & GEOS_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
