@@ -128,6 +128,7 @@ set( mesh_sources
      generators/LineBlock.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
+     generators/PartitionDescriptor.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp

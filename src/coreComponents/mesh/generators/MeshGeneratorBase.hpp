@@ -19,7 +19,7 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "PartitionDescriptor.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -84,7 +84,7 @@ public:
    * @param parent The parent group of the CellBlockManager.
    * @param[in] partition The reference to spatial partition
    */
-  void generateMesh( Group & parent, SpatialPartition & partition );
+  void generateMesh( Group & parent, array1d< int > const & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -130,6 +130,11 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
+  PartitionDescriptor const & getPartitionDescriptor() const
+  {
+    return m_partition;
+  }
+
 protected:
   /// Mapping from volumic field source to GEOSX field.
   std::map< string, string > m_volumicFields;
@@ -137,13 +142,16 @@ protected:
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
 
+  /// The partition information
+  PartitionDescriptor m_partition;
+
 private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
-   * @param[in] partition The reference to spatial partition
+   * @param[in] partition The (x, y , y) MPI split (in case we need it)
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 };

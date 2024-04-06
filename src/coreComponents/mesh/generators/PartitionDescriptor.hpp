@@ -12,16 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file PartitionDescriptor.hpp
- */
-
 #ifndef GEOSX_MESH_PARTITIONDESCRIPTOR_H_
 #define GEOSX_MESH_PARTITIONDESCRIPTOR_H_
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+
+#include "common/DataTypes.hpp"
 
 #include <set>
+#include <vector>
 
 
 namespace geos
@@ -34,17 +33,7 @@ namespace geos
 class PartitionDescriptor
 {
 public:
-  /**
-   * @brief indicate if the partition is described using a Metis Neighbor list.
-   * @return A boolean indicating if the partition is described usins a Metis neighbor list.
-   */
-  bool hasMetisNeighborList() const { return m_hasMetisNeighborList; }
-
-  /**
-   * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
-   * @param hasMetisNeighborList A boolean indicating if the partition is described usins a Metis neighbor list.
-   */
-  void setHasMetisNeighborList( bool hasMetisNeighborList ) { m_hasMetisNeighborList = hasMetisNeighborList; }
+  PartitionDescriptor();
 
   /**
    * @brief Gets a reference to the list of metis neighbor list.
@@ -62,35 +51,99 @@ public:
     m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
 
-  /**
-   * @brief indicate if the partition is described using a spatial partition.
-   * @return A boolean indicating if the parition is described using a spatial partition.
-   */
-  bool hasSpatialPartition() const { return !m_hasMetisNeighborList; }
+  void setPartitions( array1d< int > const & partition );
 
-  /**
-   * @brief Sets the boolean that indicates if the partition is described using a Metis Neighbor list.
-   * @param hasSpatialPartition a boolean indicating if the parition is described using a spatial partition.
-   */
-  void setHasSpatialPartition( bool hasSpatialPartition ) { m_hasMetisNeighborList = !hasSpatialPartition; }
+  void setPartitions( unsigned int x,
+                      unsigned int y,
+                      unsigned int z );
 
-  /**
-   * @brief Returns a reference to the spatialPartition
-   * @return The spatial partiton.
-   */
-  SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
+  [[nodiscard]] array1d< int > getPartitions() const
+  {
+    return m_partitions;
+  }
 
-  /**
-   * @brief Sets the spatialPartition
-   * @param spatialPartition The spatial partiton.
-   */
-  void setSpatialPartition( SpatialPartition const & spatialPartition ) { m_spatialPartition = spatialPartition; }
+  [[nodiscard]] array1d< int > getPeriodic() const
+  {
+    return m_periodic;
+  }
+
+  [[nodiscard]] array1d< int > getCoords() const
+  {
+    return m_coords;
+  }
+
+  void setPeriodic( int i, int value )
+  {
+    m_periodic[i] = value;
+  }
+
+  [[nodiscard]] bool isCoordInPartition( const real64 & coord, const int dir ) const;
+
+  void setSizes( real64 const ( & min )[3],
+                 real64 const ( & max )[3] );
 
 private:
 
-  bool m_hasMetisNeighborList;         //< Indicate if we use metis neighbor list or spatial partition to describe the partition
-  std::set< int > m_metisNeighborList;   //< The list of neighbors computed wwith metis
-  SpatialPartition m_spatialPartition; //< The spatial partition
+  /**
+   * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
+   * @param bufferSize The distance.
+   */
+  void setContactGhostRange( const real64 bufferSize );
+
+  /**
+   * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
+   * @param idim Dimension index in the cartesian.
+   * @param cartcomm Communicator with cartesian structure.
+   * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
+   * @note Rough copy/paste of DomainPartition::AddNeighbors
+   */
+  void addNeighbors( const unsigned int idim,
+                     MPI_Comm & cartcomm,
+                     int * ncoords );
+
+  /// Size of the group associated with the MPI communicator
+  int m_size;
+
+  /// MPI rank of the current partition
+  int m_rank;
+
+  /// Ghost position (min).
+  real64 m_contactGhostMin[3];
+  /// Ghost position (max).
+  real64 m_contactGhostMax[3];
+
+  /// Minimum extent of partition dimensions (excluding ghost objects)
+  real64 m_min[3];
+  /// Maximum extent of partition dimensions (excluding ghost objects)
+  real64 m_max[3];
+
+  /// Locations of partition boundaries
+  array1d< real64 > m_partitionLocations[3];
+
+  /// Length of partition dimensions (excluding ghost objects).
+  real64 m_blockSize[3];
+
+  /// ijk partition indexes
+  array1d< int > m_coords;
+
+  /// Total length of problem dimensions (excluding ghost objects).
+  real64 m_gridSize[3];
+  /// Minimum extent of problem dimensions (excluding ghost objects).
+  real64 m_gridMin[3];
+  /// Maximum extent of problem dimensions (excluding ghost objects).
+  real64 m_gridMax[3];
+
+  /// Array of neighbor communicators.
+  std::vector< NeighborCommunicator > m_neighbors;
+
+  /// The list of neighbors computed with metis
+  std::set< int > m_metisNeighborList;
+
+  /// The (x, y , y) MPI split (in case we need it)
+  array1d< int > m_partitions;
+
+  /// Boolean like array of length 3 (space dimensions). 1 means periodic.
+  array1d< int > m_periodic;
 };
 
 }
