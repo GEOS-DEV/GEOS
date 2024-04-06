@@ -93,13 +93,13 @@ def mpi_scan(rank_to_intersections: Iterable[Mapping[tuple[int, ...], frozenset[
         scans.append(scan)
 
     offset_scans: list[Mapping[tuple[int, ...], int]] = []
-    for rank, scan in enumerate(scans):
+    for scan in scans:
         offset_scan: dict[tuple[int, ...], int] = dict()
         intersect: int = 0
         for ranks in sorted(scan.keys()):
-            if max(ranks) >= rank:  # Remove the entries that cannot play any more role.
-                offset_scan[ranks] = intersect
-            intersect += scan.get(ranks)
+            n: int = scan.get(ranks)
+            offset_scan[ranks] = intersect
+            intersect += n
         offset_scans.append(offset_scan)
 
     return offset_scans
