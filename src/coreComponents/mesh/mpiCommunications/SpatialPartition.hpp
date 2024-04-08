@@ -19,7 +19,7 @@
 #include "PartitionBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-
+#include <array>
 #include <map>
 
 constexpr int nsdof = 3;
@@ -127,6 +127,21 @@ public:
   array1d< int > const & getPartitions() const
   {
     return m_Partitions;
+  }
+
+  void setGrid( std::array< real64, 9 > const & grid )
+  {
+    m_gridSize[0] = grid[0];
+    m_gridSize[1] = grid[1];
+    m_gridSize[2] = grid[2];
+
+    m_gridMin[0] = grid[3];
+    m_gridMin[1] = grid[4];
+    m_gridMin[2] = grid[5];
+
+    m_gridMax[0] = grid[6];
+    m_gridMax[1] = grid[7];
+    m_gridMax[2] = grid[8];
   }
 
   /**
