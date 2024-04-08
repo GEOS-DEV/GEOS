@@ -37,6 +37,12 @@ PartitionDescriptor::PartitionDescriptor():
   setPartitions( 1, 1, 1 );
 }
 
+std::array< real64, 9 > PartitionDescriptor::getGrid() const
+{
+  return { m_gridSize[0], m_gridSize[1], m_gridSize[2], m_gridMin[0], m_gridMin[1], m_gridMin[2], m_gridMax[0], m_gridMax[1], m_gridMax[2] };
+}
+
+
 void PartitionDescriptor::setContactGhostRange( const real64 bufferSize )
 {
   LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );

@@ -74,6 +74,8 @@ public:
     return m_coords;
   }
 
+  [[nodiscard]] std::array< real64, 9 > getGrid() const override;
+
   void setPeriodic( int i, int value )
   {
     m_periodic[i] = value;

@@ -16,6 +16,7 @@
 #define GEOS_MESH_PARTITIONDESCRIPTORABC_HPP
 
 #include <set>
+#include <array>
 
 #include "common/DataTypes.hpp"
 
@@ -39,6 +40,8 @@ public:
   [[nodiscard]] virtual array1d< int > getPeriodic() const = 0;
 
   [[nodiscard]] virtual array1d< int > getCoords() const = 0;
+
+  [[nodiscard]] virtual std::array< real64, 9 > getGrid() const = 0;
 };
 
 } // end of namespace

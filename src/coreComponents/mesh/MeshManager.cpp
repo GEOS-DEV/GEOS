@@ -97,6 +97,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     partition.setMetisNeighborList( pd.getMetisNeighborList() );
     partition.m_coords = pd.getCoords();
     partition.m_Periodic = pd.getPeriodic();
+    partition.setGrid( pd.getGrid() );
   } );
 
   forSubGroups< ParticleMeshGeneratorBase >( [&]( ParticleMeshGeneratorBase & meshGen )
