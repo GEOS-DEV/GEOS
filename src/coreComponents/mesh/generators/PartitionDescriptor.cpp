@@ -42,6 +42,15 @@ std::array< real64, 9 > PartitionDescriptor::getGrid() const
   return { m_gridSize[0], m_gridSize[1], m_gridSize[2], m_gridMin[0], m_gridMin[1], m_gridMin[2], m_gridMax[0], m_gridMax[1], m_gridMax[2] };
 }
 
+std::array< real64, 3 > PartitionDescriptor::getBlockSize() const
+{
+  return { m_blockSize[0], m_blockSize[1], m_blockSize[2] };
+}
+
+std::array< real64, 6 > PartitionDescriptor::getBoundingBox() const
+{
+  return { m_min[0], m_min[1], m_min[2], m_max[0], m_max[1], m_max[2] };
+}
 
 void PartitionDescriptor::setContactGhostRange( const real64 bufferSize )
 {

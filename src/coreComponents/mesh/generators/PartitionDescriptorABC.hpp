@@ -42,6 +42,11 @@ public:
   [[nodiscard]] virtual array1d< int > getCoords() const = 0;
 
   [[nodiscard]] virtual std::array< real64, 9 > getGrid() const = 0;
+
+  [[nodiscard]] virtual std::array< real64, 3 > getBlockSize() const = 0;
+
+  [[nodiscard]] virtual std::array< real64, 6 > getBoundingBox() const = 0;
+
 };
 
 } // end of namespace

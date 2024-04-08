@@ -144,6 +144,29 @@ public:
     m_gridMax[2] = grid[8];
   }
 
+  void setBlockSize( std::array< real64, 3 > const & blockSize )
+  {
+    m_blockSize[0] = blockSize[0];
+    m_blockSize[1] = blockSize[1];
+    m_blockSize[2] = blockSize[2];
+  }
+
+  void setBoundingBox( std::array< real64, 6 > const & bb )
+  {
+//    real64 const min[3]{ bb[0], bb[1], bb[2] };
+//    real64 const max[3]{ bb[3], bb[4], bb[5] };
+
+//    setSizes( min, max );
+
+    m_min[0] = bb[0];
+    m_min[1] = bb[1];
+    m_min[2] = bb[2];
+
+    m_max[0] = bb[3];
+    m_max[1] = bb[4];
+    m_max[2] = bb[5];
+  }
+
   /**
    * @brief Boolean like array of length 3 (space dimensions).
    *

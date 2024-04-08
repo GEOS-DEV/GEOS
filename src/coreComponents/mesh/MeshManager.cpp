@@ -98,6 +98,8 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     partition.m_coords = pd.getCoords();
     partition.m_Periodic = pd.getPeriodic();
     partition.setGrid( pd.getGrid() );
+    partition.setBlockSize( pd.getBlockSize() );
+    partition.setBoundingBox( pd.getBoundingBox() );
   } );
 
   forSubGroups< ParticleMeshGeneratorBase >( [&]( ParticleMeshGeneratorBase & meshGen )

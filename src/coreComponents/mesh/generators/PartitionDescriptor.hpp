@@ -76,6 +76,10 @@ public:
 
   [[nodiscard]] std::array< real64, 9 > getGrid() const override;
 
+  [[nodiscard]] std::array< real64, 3 > getBlockSize() const override;
+
+  [[nodiscard]] std::array< real64, 6 > getBoundingBox() const override;
+
   void setPeriodic( int i, int value )
   {
     m_periodic[i] = value;
