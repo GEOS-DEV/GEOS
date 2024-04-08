@@ -200,8 +200,9 @@ TEST( testTable, tableClass )
                "+----------------+----------+-----------------------+-------------+-----------+-----------+\n\n"
                );
   }
-
-  // if setMargin used elsewhere make it public
+  ////////////
+  //////// If setMargin used elsewhere make it public and remove comments for this test
+  ////////////
   //test with tiny margin
   // {
   //   TableLayout tableLayout( {
