@@ -318,13 +318,13 @@ protected:
   /// Member level field for the element center
   array1d< real64 > m_elementArea;
 
-  /// normal vector to the surface element
+  /// Normal vector to the surface element
   array2d< real64 > m_normalVector;
 
-  // tangential direction 1
+  /// Unit vector indicating the first tangential direction 
   array2d< real64 > m_tangentVector1;
 
-  // tangential direction 2
+  /// Unit vector indicating the second tangential direction 
   array2d< real64 > m_tangentVector2;
 
 };

@@ -74,16 +74,19 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
     setApplyDefaultValue( 0.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Unit normal vector to the surface." ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
     setApplyDefaultValue( 0.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Unit vector in the first tangent direction to the surface." ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
     setApplyDefaultValue( 0.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 ).
     setDescription( "Unit vector in the second tangent direction to the surface." ).
     reference().resizeDimension< 1 >( 3 );
 

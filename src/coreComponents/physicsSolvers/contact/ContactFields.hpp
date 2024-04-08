@@ -121,7 +121,6 @@ DECLARE_FIELD( deltaTraction,
                NO_WRITE,
                "An array that holds the traction increments on the fracture." );
 
-
 DECLARE_FIELD( dTraction_dJump,
                "dTraction_dJump",
                array3d< real64 >,
