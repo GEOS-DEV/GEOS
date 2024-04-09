@@ -27,6 +27,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "events/EventManager.hpp"
 #include "ElasticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -264,9 +265,9 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      elasticFirstOrderWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,

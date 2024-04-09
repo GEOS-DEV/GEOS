@@ -29,6 +29,7 @@
 #include "WaveSolverUtils.hpp"
 #include "ElasticTimeSchemeSEMKernel.hpp"
 #include "ElasticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -279,9 +280,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       using FE_TYPE = TYPEOFREF( finiteElement );
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-      elasticWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute3DSourceAndReceiverConstantsWithDAS
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
         X,
