@@ -32,7 +32,7 @@ public:
 
   /**
    * @brief Add a row to the table.
-   * @param Args The values passed to addRow (can be any type).
+   * The values passed to addRow (can be any type).
    * @param args Cell values to be added to the row.
    */
   template< typename ... Args >
