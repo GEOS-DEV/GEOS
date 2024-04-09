@@ -11,7 +11,7 @@
 # Helper macros & functions
 ################################
 
-macro(find_and_register)
+macro(find_and_import)
     set(singleValueArgs NAME HEADER)
     set(multiValueArgs INCLUDE_DIRECTORIES
                        LIBRARY_DIRECTORIES
