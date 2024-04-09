@@ -192,7 +192,7 @@ TEST( LifoStorageTest, LifoStorageAsyncBufferOnCUDA )
   testLifoStorageAsync< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
 
-#else 
+#else
 // running tests on CPUs
 TEST( LifoStorageTest, LifoStorageBufferOnHost )
 {
