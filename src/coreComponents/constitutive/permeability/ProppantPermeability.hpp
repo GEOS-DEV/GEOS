@@ -50,29 +50,21 @@ public:
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 arraySlice1d< real64 > const & permeabilityMultiplier ) const
   {
+    GEOS_UNUSED_VAR( oldHydraulicAperture );
 
-    // permeability
-    real64 const perm = ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
-                          oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
-                          oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
-                          newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 48.0;
-
-    real64 const dPerm  = ( oldHydraulicAperture*oldHydraulicAperture +
-                            2.0*oldHydraulicAperture*newHydraulicAperture +
-                            3.0*newHydraulicAperture*newHydraulicAperture ) / 48.0;
-
-    real64 const squaredHydraulicAperture = newHydraulicAperture * newHydraulicAperture;
+    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
+    real64 const dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
 
     // horizontal multiplier
-    permeabilityMultiplier[0] = ( 1.0 - proppantPackVolumeFraction ) + 12.0 * proppantPackVolumeFraction * m_proppantPackPermeability / squaredHydraulicAperture;
+    permeabilityMultiplier[0] = ( 1.0 - proppantPackVolumeFraction ) + 12.0 * proppantPackVolumeFraction * m_proppantPackPermeability / perm;
 
     // vertical multiplier
-    permeabilityMultiplier[1] = 1.0 / (1.0 - proppantPackVolumeFraction + proppantPackVolumeFraction * squaredHydraulicAperture / ( 12.0 * m_proppantPackPermeability ) );
+    permeabilityMultiplier[1] = 1.0 / (1.0 - proppantPackVolumeFraction + proppantPackVolumeFraction * perm / ( 12.0 * m_proppantPackPermeability ) );
 
     for( int dim=0; dim < 3; dim++ )
     {
       permeability[dim]        = perm;
-      dPerm_dDispJump[dim][0]  = dPerm;
+      dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture;
       dPerm_dDispJump[dim][1]  = 0.0;
       dPerm_dDispJump[dim][2]  = 0.0;
 

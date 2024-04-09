@@ -934,7 +934,9 @@ FluxKernel::
 
     for( localIndex k = 0; k < 3; ++k )
     {
+      std::cout << "before adding flux: " << cellBasedFlux[ei][k] << std::endl;
       RAJA::atomicAdd( parallelDeviceAtomic{}, &cellBasedFlux[ei][k], -edgeToFaceFlux * cellCenterToEdgeCenters[i][k] );
+      std::cout << "after adding flux: " << ei << " " << k << " " << -edgeToFaceFlux * cellCenterToEdgeCenters[i][k] << std::endl;
     }
   }
 }

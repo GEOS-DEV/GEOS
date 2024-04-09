@@ -20,11 +20,13 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 
 namespace geos
 {
 
 class ProppantTransport;
+class FieldSpecificationBase;
 
 template <typename FlowSolver>
 class FlowProppantTransportSolver : public CoupledSolver< ProppantTransport,

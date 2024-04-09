@@ -49,6 +49,7 @@ void FaceElementFluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  std::cout << "singlePhaseFLux kernnel " << std::endl;
   constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
   constexpr localIndex maxStencilSize  = SurfaceElementStencilWrapper::maxStencilSize;
   constexpr localIndex maxNumConnections  = SurfaceElementStencilWrapper::maxNumConnections;
@@ -136,7 +137,7 @@ void FaceElementFluxKernel::
       }
     }
   } );
-
+  std::cout << "proppant flux kernel\n";
 }
 
 

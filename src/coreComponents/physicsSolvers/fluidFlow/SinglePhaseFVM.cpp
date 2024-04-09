@@ -593,6 +593,63 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
 
 }
+#if 0
+template<>
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
+                                                                   real64 const dt,
+                                                                   DomainPartition const & domain,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs,
+                                                                   CRSMatrixView< real64, localIndex const > const & GEOS_UNUSED_PARAM ( dR_dAper ) )
+{
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      typename FaceBasedAssemblyKernelBase::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
+      typename FaceBasedAssemblyKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
+      typename FaceBasedAssemblyKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
+
+      singlePhaseProppantFluxKernels::FaceElementFluxKernel::launch( stencilWrapper,
+                                                                     dt,
+                                                                     dofManager.rankOffset(),
+                                                                     elemDofNumber.toNestedViewConst(),
+                                                                     flowAccessors.get< fields::ghostRank >(),
+                                                                     flowAccessors.get< fields::flow::pressure >(),
+                                                                     flowAccessors.get< fields::flow::gravityCoefficient >(),
+                                                                     fluidAccessors.get< fields::singlefluid::density >(),
+                                                                     fluidAccessors.get< fields::singlefluid::dDensity_dPressure >(),
+                                                                     flowAccessors.get< fields::flow::mobility >(),
+                                                                     flowAccessors.get< fields::flow::dMobility_dPressure >(),
+                                                                     permAccessors.get< fields::permeability::permeability >(),
+                                                                     permAccessors.get< fields::permeability::dPerm_dPressure >(),
+                                                                     permAccessors.get< fields::permeability::dPerm_dDispJump >(),
+                                                                     permAccessors.get< fields::permeability::permeabilityMultiplier >(),
+                                                                     this->gravityVector(),
+                                                                     localMatrix,
+                                                                     localRhs );
+    } );
+  } );
+}
+#endif
 
 template< typename BASE >
 void

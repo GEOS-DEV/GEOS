@@ -62,6 +62,34 @@ public:
     m_permUpdate.updateFromApertureAndProppantVolumeFraction( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, proppantPackVolumeFraction );
   }
 
+  GEOS_HOST_DEVICE
+  void updateStateFromPressureAndAperture( localIndex const k,
+                                           localIndex const q,
+                                           real64 const & pressure,
+                                           real64 const & oldHydraulicAperture,
+                                           real64 const & newHydraulicAperture ) const
+  {
+    m_porosityUpdate.updateFromProppantVolumeFraction( k, q, 0);
+    real64 const dHydraulicAperture_dNormalJump = 1.0;
+    m_permUpdate.updateFromApertureAndProppantVolumeFraction( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, 0 );
+  }
+
+  GEOS_HOST_DEVICE
+  void updateStateFromPressureApertureJumpAndTraction( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & pressure,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const & dHydraulicAperture_dNormalJump,
+                                                       real64 const ( &dispJump )[3],
+                                                       real64 const ( &traction )[3] ) const
+  {
+    //TO DO: pass true packVolumeFraction here
+    GEOS_UNUSED_VAR(dispJump, traction, pressure);
+    m_porosityUpdate.updateFromProppantVolumeFraction( k, q, 0);
+    m_permUpdate.updateFromApertureAndProppantVolumeFraction( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, 0);
+  }
+  
 private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_solidUpdate;
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityUpdate;

@@ -297,7 +297,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
-                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 ProppantSolid< ProppantPorosity, ProppantPermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -310,7 +311,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
-                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 ProppantSolid< ProppantPorosity, ProppantPermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }

@@ -23,6 +23,7 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 
 namespace geos
 {
@@ -155,6 +156,14 @@ public:
     constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
 #endif
   };
+
+  const SurfaceGenerator* get_surfaceGenerator() const {
+    return m_surfaceGenerator;
+  }
+
+  const int get_numResolves() const {
+    return m_maxNumResolves;
+  }
 
 protected:
 

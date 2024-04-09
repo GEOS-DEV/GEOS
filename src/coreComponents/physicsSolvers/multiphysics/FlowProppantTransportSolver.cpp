@@ -22,7 +22,9 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransport.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
@@ -32,28 +34,17 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-template<typename FlowSolver> 
-struct FlowProppantTransportCatalogName
-{};
-
-template<> struct FlowProppantTransportCatalogName< HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > >
+// provide a definition for catalogName()
+template<>
+string FlowProppantTransportSolver< FlowSolverBase >::catalogName()
 {
-  public:
-    static string name() {return "HydroFractureProppantTransport";}
-};
+  return "FlowProppantTransport";
+}
 
-template<> struct FlowProppantTransportCatalogName<FlowSolverBase>
+template<>
+string FlowProppantTransportSolver< HydrofractureSolver<  SinglePhasePoromechanics< SinglePhaseBase > > >::catalogName()
 {
-  public:
-    static string name() {return "FlowProppantTransport";}
-};
-
-template<typename FlowSolver>
-string 
-FlowProppantTransportSolver< FlowSolver >::
-catalogName()
-{
-  return FlowProppantTransportCatalogName< FlowSolver >().name();
+  return "HydrofractureProppantTransportSolver";
 }
 
 template<typename FlowSolver>
@@ -163,6 +154,158 @@ real64 FlowProppantTransportSolver<FlowSolver>::sequentiallyCoupledSolverStep( r
     }
 
     ++iter;
+  }
+
+  postStepUpdate( time_n, dtReturn, domain );
+
+  return dtReturn;
+}
+
+template<>
+real64 FlowProppantTransportSolver< HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > >::sequentiallyCoupledSolverStep( real64 const & time_n,
+                                                                   real64 const & dt,
+                                                                   int const cycleNumber,
+                                                                   DomainPartition & domain )
+{
+  real64 dtReturn = dt;
+  real64 dtReturnTemporary;
+  if( cycleNumber == 0 && time_n <= 0 )
+    {
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                    MeshLevel & mesh,
+                                                                    arrayView1d< string const > const & )
+      {
+        fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                                mesh,
+                                                fields::flow::pressure::key(),
+                                                [&]( FieldSpecificationBase const & fs,
+                                                      string const & setName,
+                                                      SortedArrayView< localIndex const > const & lset,
+                                                      ElementSubRegionBase & subRegion,
+                                                      string const & )
+        {
+          GEOS_UNUSED_VAR( setName );
+
+          // Specify the bc value of the field
+          fs.applyFieldValue< FieldSpecificationEqual,
+                              parallelDevicePolicy<> >( lset,
+                                                        time_n + dt,
+                                                        subRegion,
+                                                        fields::flow::pressure::key() );
+        } );
+      } );
+
+      flowSolver()->flowSolver()->initializePostInitialConditionsPreSubGroups();
+    }
+  preStepUpdate( time_n, dt, domain );
+
+  // reset the states of all sub-solvers if any of them has been reset
+  this->resetStateToBeginningOfStep( domain );
+
+  //TO DO: use hydraulic fracture propagation max iteration
+  int maxHydroResolveIter = dynamic_cast<HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >* > (flowSolver())->get_numResolves(); 
+  for ( int hydroResolveIter = 0; hydroResolveIter < maxHydroResolveIter; ++hydroResolveIter )
+  {
+    int locallyFractured = 0;
+    int globallyFractured = 0;
+
+    Timestamp const meshModificationTimestamp = flowSolver()->getMeshModificationTimestamp( domain );
+
+    // Only build the sparsity pattern if the mesh has changed
+    if( meshModificationTimestamp > flowSolver()->getSystemSetupTimestamp() )
+    {
+      flowSolver()->setupSystem( domain,
+                                  flowSolver()->getDofManager(),
+                                  flowSolver()->getLocalMatrix(),
+                                  flowSolver()->getSystemRhs(),
+                                  flowSolver()->getSystemSolution() );
+
+      proppantTransportSolver()->setupSystem( domain,
+                                              proppantTransportSolver()->getDofManager(),
+                                              proppantTransportSolver()->getLocalMatrix(),
+                                              proppantTransportSolver()->getSystemRhs(),
+                                              proppantTransportSolver()->getSystemSolution() );
+
+      flowSolver()->setSystemSetupTimestamp( meshModificationTimestamp );
+    }
+
+    int seqIter = 0;
+    auto maxOuterLoop = this->m_nonlinearSolverParameters.m_maxIterNewton;
+    //sequential iterative between flow and transport
+    while( seqIter < maxOuterLoop)
+    {
+
+      GEOS_LOG_LEVEL_RANK_0( 1, "  Iteration: " << seqIter+1  << ", FlowSolver: " );
+
+      dtReturnTemporary = flowSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
+      flowSolver()->updateState( domain );
+
+      if( dtReturnTemporary < dtReturn )
+      {
+        seqIter = 0;
+        dtReturn = dtReturnTemporary;
+        continue;
+      }
+
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration: {}, Proppant Solver: ", seqIter+1 ) );
+
+      dtReturnTemporary = proppantTransportSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
+      proppantTransportSolver()->updateState( domain );
+
+      ++seqIter;
+    }
+    this->m_solverStatistics.logNonlinearIteration();
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iterations *****", seqIter ) );
+    // post processing of HF
+    // TO DO: replace the actual surface gen name
+    const auto surfaceGenerator = &flowSolver()->getParent().template getGroup< SurfaceGenerator >( "SurfaceGen" );
+    if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    {
+      locallyFractured = 1;
+    }
+    MpiWrapper::allReduce( &locallyFractured,
+                          &globallyFractured,
+                          1,
+                          MPI_MAX,
+                          MPI_COMM_GEOSX );
+
+    if( globallyFractured == 0 )
+    {
+      break;
+    }
+    else
+    {
+      FieldIdentifiers fieldsToBeSync;
+
+      fieldsToBeSync.addElementFields( { fields::flow::pressure::key(),
+                                        fields::flow::pressure_n::key(),
+                                        SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                      { surfaceGenerator->getFractureRegionName() } );
+
+      fieldsToBeSync.addFields( FieldLocation::Node,
+                                { fields::solidMechanics::incrementalDisplacement::key(),
+                                  fields::solidMechanics::totalDisplacement::key() } );
+
+
+      fieldsToBeSync.addElementFields({ fields::proppant::proppantConcentration::key()
+                                        ,fields::proppant::proppantConcentration_n::key()
+                                        ,SurfaceElementSubRegion::viewKeyStruct::elementApertureString() }
+                                    ,{ surfaceGenerator->getFractureRegionName() } );
+
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                          domain.getMeshBody( 0 ).getBaseDiscretization(),
+                                                          domain.getNeighbors(),
+                                                          false );
+
+      flowSolver()->updateState( domain );
+      proppantTransportSolver()->updateState( domain );
+      if( flowSolver()->getLogLevel() >= 1 )
+      {
+        GEOS_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
+      }
+    }
   }
 
   postStepUpdate( time_n, dtReturn, domain );
