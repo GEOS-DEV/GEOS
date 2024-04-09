@@ -70,15 +70,14 @@ public:
     virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemToNodes() const = 0;
     
     /**
-    * @brief Get the indices of the parent 3d elements of each embedded surface element (1 or more)
+    * @brief Get the indices of the parent 3d element of each embedded surface element (1 elem)
     * @return The mapping of first dimension @p numEmbeddedSurfElem.
-    * Second dimension 1 to number of 3d elements, and depends on how many 3d elements does the embedded surface element
-    * intersect.
+    * Second dimension 1 to 1 3d element that it intersects.
     *
-    * @details each embedded surface element intersects 1 or more 3d elements. Indices of these 3d elements
-    * are returned for each embedded surface element
+    * @details each embedded surface element intersects 1 3d element only. Index of this 3d element
+    * is returned for each embedded surface element.
     */
-    virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfElemTo3dElem() const = 0;
+    virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemTo3dElem() const = 0;
 
 
     /**
@@ -88,6 +87,33 @@ public:
     * Second dimension is 3, and represents the x, y and z.
     */
     virtual ArrayOfArrays<real64> getEmbeddedSurfElemNodes() const = 0;
+
+    /**
+    * @brief Get all the normal vectors for all the embedded surface elements. 
+    * @return An array of x, y, z coordinates of all the embedded surface elements normals.
+    * first dimension is @p numEmbeddedSurfaceElements.
+    * Second dimension is 3, and represents the x, y and z coordinates of the normal vector.
+    */
+    virtual ArrayOfArrays<real64> getEmbeddedSurfElemNormalVectors() const = 0;
+    
+    
+    /**
+    * @brief Get all the tangential length vectors for all the embedded surface elements. 
+    * @return An array of x, y, z coordinates of all the embedded surface elements tangential length vectors
+    * in the orthonormal basis with the normal vectors. For 2.5D case, this is along the horizontal direction.
+    * first dimension is @p numEmbeddedSurfaceElements.
+    * Second dimension is 3, and represents the x, y and z coordinates of the length vector.
+    */
+    virtual ArrayOfArrays<real64> getEmbeddedSurfElemTangentialLengthVectors() const = 0;
+
+    /**
+    * @brief Get all the tangential width vectors for all the embedded surface elements. 
+    * @return An array of x, y, z coordinates of all the embedded surface elements tangential width vectors
+    * in the orthonormal basis with the normal vectors. For 2.5D case, this is along vertical direction.
+    * first dimension is @p numEmbeddedSurfaceElements.
+    * Second dimension is 3, and represents the x, y and z coordinates of the width vector.
+    */
+    virtual ArrayOfArrays<real64> getEmbeddedSurfElemTangentialWidthVectors() const = 0;
 };
     
 }

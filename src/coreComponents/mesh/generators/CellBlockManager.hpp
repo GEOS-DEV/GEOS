@@ -82,7 +82,7 @@ public:
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
-  ToCellRelation< ArrayOfArrays< localIndex > > getEmbeddedSurfaceToElements() const override;
+  ToCellRelation< localIndex > getEmbeddedSurfaceToElements() const override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -170,7 +170,7 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & const getEmbeddedSurfaceBlocks() const override;
+  Group const & getEmbeddedSurfaceBlocks() const override;
 
   Group & getEmbeddedSurfaceBlocks() override;
 
@@ -297,7 +297,7 @@ private:
   ArrayOfArrays< localIndex > m_faceToEdges;
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
-  ToCellRelation< ArrayOfArrays< localIndex > > m_embeddedSurfToCells;
+  ToCellRelation< localIndex > m_embeddedSurfToCells;
 
   array1d< globalIndex > m_nodeLocalToGlobal;
 
@@ -310,7 +310,7 @@ private:
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
-  localIndex m_numEmbeddedSurfaces;
+  localIndex m_numEmbeddedSurfElem;
 };
 
 }

@@ -120,7 +120,6 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-
 void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockManager )
 {
   { // cellBlocks loading
@@ -139,7 +138,16 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
 
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+    // testing only
+    //
+    CellBlockManagerABC & cellBlockManagerNoConst = const_cast<CellBlockManagerABC &>(cellBlockManager);
+    CellBlockManager & cellBlockManagerConcrete = dynamic_cast<CellBlockManager &>(cellBlockManagerNoConst);
+    string name = "EmbeddedSurface";
+    createDummyEmbeddedSurfaceBlock(name, cellBlockManagerConcrete);
+    
+    //elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+     
+    elemRegion.generateMesh( cellBlockManager.getEmbeddedSurfaceBlocks() );
   } );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
