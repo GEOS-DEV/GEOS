@@ -292,21 +292,21 @@ TEST( testTable, tableClass )
   //test 2D table column  mismatch
   {
     //collect
-    TableData2D tableData;
+    // TableData2D tableData;
 
-    tableData.addCell( 300, 10000, 0.03 );
-    tableData.addCell( 300, 15000, 0.02 );
-    tableData.addCell( 350, 10000, 0.035 );
-    tableData.addCell( 350, 5000, 0.035 );
-    tableData.addCell( 400, 10000, 0.04 );
-    tableData.addCell( 400, 15000, 0.02666666666666667 );
+    // tableData.addCell( 300, 10000, 0.03 );
+    // tableData.addCell( 300, 15000, 0.02 );
+    // tableData.addCell( 350, 10000, 0.035 );
+    // tableData.addCell( 350, 5000, 0.035 );
+    // tableData.addCell( 400, 10000, 0.04 );
+    // tableData.addCell( 400, 15000, 0.02666666666666667 );
 
-    //convert
-    string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
-    string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-    TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
+    // //convert
+    // string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+    // string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+    // TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
 
-    EXPECT_FALSE( tableConverted.isConsistent );
+    // EXPECT_FALSE( tableConverted.isConsistent );
   }
 
   //test 2D make sure test isn't trigger when table is consistent

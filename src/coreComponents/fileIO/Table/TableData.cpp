@@ -64,7 +64,8 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      if( std::abs( columnValue - headerValues[i] ) > 0.01 )
+      //check is if the column are offset
+      if( std::abs( columnValue - headerValues[i] ) > 0.0 )
       {
         flag = false;
       }
@@ -75,22 +76,11 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     rowsLength.push_back( currentRowValues.size());
   }
 
-  #if __cplusplus < 202002L
-  for( auto it = rowsLength.begin(); it != rowsLength.end(); ++it )
-  {
-    if( it != rowsLength.begin() && *it != *(it - 1))
-    {
-      flag = false;
-      GEOS_WARNING( "Cell(s) are missing in row" );
-    }
-  }
-#else
   if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
   {
     flag = false;
     GEOS_WARNING( "Cell(s) are missing in row" );
   }
-  #endif
 
   if( !flag )
   {
