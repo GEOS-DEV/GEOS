@@ -25,6 +25,7 @@
 #include "EdgeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/generators/EmbeddedSurfaceBlockABC.hpp"
 //Do we really need this include Rectangle?
 #include "simpleGeometricObjects/Rectangle.hpp"
 
@@ -144,6 +145,12 @@ public:
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               PlanarGeometricObject const * fracture );
+
+  /**
+   * @brief Fill @p EmbeddedSurfaceSubRegion  by copying the data from the source embedded surface block
+   *
+   * **/
+  bool copyFromCellBlock(EmbeddedSurfaceBlockABC const & embeddedSurfaceBlock);
 
   /**
    * @brief inherit ghost rank from cell elements.

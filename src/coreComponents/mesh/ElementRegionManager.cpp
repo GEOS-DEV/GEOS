@@ -27,6 +27,7 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 namespace geos
 {
@@ -119,6 +120,86 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
+
+EmbeddedSurfaceBlockABC & createDummyEmbeddedSurfaceBlock(string embeddedSurfFace, CellBlockManager & cellBlockManager){
+
+
+  EmbeddedSurfaceBlock & elem = cellBlockManager.registerEmbeddedSurfaceBlock( embeddedSurfFace );
+  elem.setNumEmbeddedSurfElem(1);
+    
+    
+  ArrayOfArrays< localIndex > elem2dToNodes( 2 );
+  elem2dToNodes.emplaceBack( 0, 0 );
+  elem2dToNodes.emplaceBack( 0, 1 );
+  elem2dToNodes.emplaceBack( 0, 2 );
+  elem2dToNodes.emplaceBack( 0, 3 );
+  elem2dToNodes.emplaceBack( 1, 1 );
+  elem2dToNodes.emplaceBack( 1, 4 );
+  elem2dToNodes.emplaceBack( 1, 5 );
+  elem2dToNodes.emplaceBack( 1, 2 );
+    
+  elem.setEmbeddedSurfElemToNodes(std::move(elem2dToNodes));
+ 
+  ArrayOfArrays< localIndex > elem2dTo3d( 4);
+  elem2dTo3d.emplaceBack( 0, 0 );
+  elem2dTo3d.emplaceBack( 0, 0 );
+  elem2dTo3d.emplaceBack( 1, 1 );
+  elem2dTo3d.emplaceBack( 1, 1 );
+
+  elem.setEmbeddedSurfElemTo3dElem(std::move(elem2dTo3d));
+
+  ArrayOfArrays< real64 > elem2dNodes( 6 );
+  elem2dNodes.emplaceBack( 0, 0.05 );
+  elem2dNodes.emplaceBack( 0, 0.05 );
+  elem2dNodes.emplaceBack( 0, 0.1 );
+  elem2dNodes.emplaceBack( 1, 0.1 );
+  elem2dNodes.emplaceBack( 1, 0.05 );
+  elem2dNodes.emplaceBack( 1, 0.1 );
+  elem2dNodes.emplaceBack( 2, 0.1 );
+  elem2dNodes.emplaceBack( 2, 0.05 );
+  elem2dNodes.emplaceBack( 2, 0 );
+  elem2dNodes.emplaceBack( 3, 0.05 );
+  elem2dNodes.emplaceBack( 3, 0.05 );
+  elem2dNodes.emplaceBack( 3, 0 );
+  elem2dNodes.emplaceBack( 4, 0.15 );
+  elem2dNodes.emplaceBack( 4, 0.05 );
+  elem2dNodes.emplaceBack( 4, 0.1 );
+  elem2dNodes.emplaceBack( 5, 0.15 );
+  elem2dNodes.emplaceBack( 5, 0.05 );
+  elem2dNodes.emplaceBack( 5, 0 );
+
+  elem.setEmbeddedSurfElemNodes(std::move(elem2dNodes));
+
+  ArrayOfArrays< real64 > elemNormals( 2 );
+  elemNormals.emplaceBack( 0, 0 );
+  elemNormals.emplaceBack( 0, 1 );
+  elemNormals.emplaceBack( 0, 0 );
+  elemNormals.emplaceBack( 1, 0 );
+  elemNormals.emplaceBack( 1, 1 );
+  elemNormals.emplaceBack( 1, 0 );
+  elem.setEmbeddedSurfElemNormalVectors(std::move(elemNormals));
+
+  ArrayOfArrays< real64 > elemLengthVect( 2 );
+  elemLengthVect.emplaceBack( 0, 1 );
+  elemLengthVect.emplaceBack( 0, 0 );
+  elemLengthVect.emplaceBack( 0, 0 );
+  elemLengthVect.emplaceBack( 1, 1 );
+  elemLengthVect.emplaceBack( 1, 0 );
+  elemLengthVect.emplaceBack( 1, 0 );
+  elem.setEmbeddedSurfElemTangentialLengthVectors(std::move(elemLengthVect));
+
+  ArrayOfArrays< real64 > elemWidthVect( 2 );
+  elemWidthVect.emplaceBack( 0, 0 );
+  elemWidthVect.emplaceBack( 0, 0 );
+  elemWidthVect.emplaceBack( 0, 1 );
+  elemWidthVect.emplaceBack( 1, 0 );
+  elemWidthVect.emplaceBack( 1, 0 );
+  elemWidthVect.emplaceBack( 1, 1 );
+  elem.setEmbeddedSurfElemTangentialWidthVectors(std::move(elemWidthVect));
+
+  return elem;
+}
+
 void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
@@ -127,7 +208,16 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   } );
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+    // testing only
+    //
+    CellBlockManagerABC & cellBlockManagerNoConst = const_cast<CellBlockManagerABC &>(cellBlockManager);
+    CellBlockManager & cellBlockManagerConcrete = dynamic_cast<CellBlockManager &>(cellBlockManagerNoConst);
+    string name = "EmbeddedSurface";
+    createDummyEmbeddedSurfaceBlock(name, cellBlockManagerConcrete);
+    
+    //elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+     
+    elemRegion.generateMesh( cellBlockManager.getEmbeddedSurfaceBlocks() );
   } );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.

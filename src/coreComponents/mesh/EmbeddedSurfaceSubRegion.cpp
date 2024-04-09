@@ -136,6 +136,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
    * - Volume:
    */
 
+  return false;
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
@@ -271,6 +272,51 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
     this->calculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
   }
   return addEmbeddedElem;
+}
+
+
+bool EmbeddedSurfaceSubRegion::copyFromCellBlock(EmbeddedSurfaceBlockABC const & embeddedSurfaceBlock){
+  
+  localIndex const numElems= embeddedSurfaceBlock.numEmbeddedSurfElem(); 
+
+  resize( embeddedSurfaceBlock.numEmbeddedSurfElem() );
+  
+  ArrayOfArrays< localIndex > elemTo3dElem = embeddedSurfaceBlock.getEmbeddedSurfElemTo3dElem();
+  ArrayOfArrays< localIndex > elemToNodes = embeddedSurfaceBlock.getEmbeddedSurfElemToNodes();
+  ArrayOfArrays<real64> elemNodesLocations = embeddedSurfaceBlock.getEmbeddedSurfElemNodes();
+  ArrayOfArrays<real64> elemNormalVectors = embeddedSurfaceBlock.getEmbeddedSurfElemNormalVectors();
+  ArrayOfArrays<real64> elemTangentialVectors1 = embeddedSurfaceBlock.getEmbeddedSurfElemTangentialWidthVectors();
+  ArrayOfArrays<real64> elemTangentialVectors2 = embeddedSurfaceBlock.getEmbeddedSurfElemTangentialLengthVectors();
+  
+  
+  
+  
+  for(auto i = 0; i<numElems; ++i)
+  {
+    m_toNodesRelation.resizeArray( i, 4 );
+    localIndex elemIndex = elemTo3dElem[i][0];
+    localIndex elem3dIndex = elemTo3dElem[i][1];
+    // region and subregion will be filled later.
+    m_2dElemToElems.m_toElementIndex.emplaceBack( elemIndex, elem3dIndex );
+    m_2dElemToElems.m_toElementSubRegion.emplaceBack( elemIndex, 0);
+    m_2dElemToElems.m_toElementRegion.emplaceBack( elemIndex, 0 );
+    
+    // we only accept quads
+    array2d<real64>  elemNodeCoords(4,3);
+    for( localIndex inode = 0; inode < 4; inode++ )
+    {
+      auto nodeGlobalIndex = elemToNodes[elemIndex][ inode ];
+      m_toNodesRelation( elemIndex, inode ) = nodeGlobalIndex;
+      LvArray::tensorOps::copy<3>(elemNodeCoords[inode], elemNodesLocations[nodeGlobalIndex]);
+    }
+    
+    m_parentPlaneName[elemIndex] = "elem_" + std::to_string(elemIndex);
+    LvArray::tensorOps::copy<3>(m_normalVector[elemIndex], elemNormalVectors[elemIndex]);
+    LvArray::tensorOps::copy<3>(m_tangentVector1[elemIndex], elemTangentialVectors1[elemIndex]);
+    LvArray::tensorOps::copy<3>(m_tangentVector2[elemIndex], elemTangentialVectors2[elemIndex]);
+    this->calculateElementGeometricQuantities(elemNodeCoords.toViewConst(), elemIndex);
+  }
+  return true;
 }
 
 void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank )

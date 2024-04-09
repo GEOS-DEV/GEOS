@@ -81,7 +81,7 @@ public:
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
-  ToCellRelation< ArrayOfArrays< localIndex > > getEmbeddedSurfaceToElements() const override;
+  ToCellRelation< localIndex > getEmbeddedSurfaceToElements() const override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
@@ -166,7 +166,7 @@ public:
 
   Group & getFaceBlocks() override;
 
-  Group & const getEmbeddedSurfaceBlocks() const override;
+  Group const & getEmbeddedSurfaceBlocks() const override;
 
   Group & getEmbeddedSurfaceBlocks() override;
 
@@ -285,7 +285,7 @@ private:
   ArrayOfArrays< localIndex > m_faceToEdges;
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
-  ToCellRelation< ArrayOfArrays< localIndex > > m_embeddedSurfToCells;
+  ToCellRelation< localIndex > m_embeddedSurfToCells;
 
   array1d< globalIndex > m_nodeLocalToGlobal;
 
@@ -297,27 +297,6 @@ private:
   localIndex m_numFaces;
   localIndex m_numEdges;
   localIndex m_numEmbeddedSurfElem;
-
-# Please enter the commit message for your changes. Lines starting
-# with '#' will be ignored, and an empty message aborts the commit.
-#
-# interactive rebase in progress; onto 39e75de52
-# Last commands done (5 commands done):
-#    pick d4b40b79b add the cpp
-#    pick 57c1281e7 add embedded surfaces to CellBlockManager
-# Next commands to do (3 remaining commands):
-#    pick 7f3eb8c5b this should not be commited
-#    pick 17291925b upate cellBlock Manger and embedded Ruface block
-# You are currently rebasing branch 'feature/ouassim/edfm_simple_loader' on '39e75de52'.
-#
-# Changes to be committed:
-#	modified:   src/coreComponents/mesh/generators/CellBlockManager.cpp
-#	modified:   src/coreComponents/mesh/generators/CellBlockManager.hpp
-#	modified:   src/coreComponents/mesh/generators/CellBlockManagerABC.hpp
-#
-# Changes not staged for commit:
-#	modified:   src/coreComponents/LvArray (new commits)
-#)
 };
 
 }

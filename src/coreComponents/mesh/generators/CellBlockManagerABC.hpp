@@ -101,6 +101,14 @@ public:
   virtual Group & getFaceBlocks() = 0;
 
   /**
+   * @brief Returns a group containing the embedded surface block as @p EmbeddedSurfaceBlockABC instances.
+   * @return Mutable reference to the embedded surface blocks group.
+   *
+   * @note It should probably be better not to expose a non-const accessor here.
+   */
+  virtual Group & getEmbeddedSurfaceBlocks() = 0;
+
+  /**
    * @brief Returns LineBlockABC corresponding to the given identifier
    * @param name the name of the required LineBlockABC
    * @return The LineBlockABC associated with the given name
@@ -209,11 +217,10 @@ public:
 
   /**
    * @brief Returns the embedded surface to elements mapping.
-   * @return A 1 to many relationship. The result is jagged array mapping each embedded element
-   * To the elements it intersect.
+   * @return A 1 to 1 relationship. The result is mapping from 1 fracture element to its parent matrix element.
    *
    */
-  virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfaceToElements() const = 0;
+  virtual ToCellRelation< localIndex > getEmbeddedSurfaceToElements() const = 0;
   /**
    * @brief The node to global mapping for nodes.
    * @return The mapping as an array of size numNodes.

@@ -51,6 +51,8 @@ set( mesh_headers
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
+     generators/EmbeddedSurfaceBlock.hpp
+     generators/EmbeddedSurfaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -124,6 +126,7 @@ set( mesh_sources
      generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
      generators/FaceBlock.cpp
+     generators/EmbeddedSurfaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp

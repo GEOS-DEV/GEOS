@@ -41,18 +41,18 @@
   <Events
     maxTime="2e3"
     logLevel="3">
-    <SoloEvent
+    <!-- <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
+      target="/Solvers/SurfaceGenerator"/> -->
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="1e3"
       target="/Solvers/SinglePhaseFlow"/>
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="outputs"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput"/> -->
 
     <PeriodicEvent
       name="restarts"

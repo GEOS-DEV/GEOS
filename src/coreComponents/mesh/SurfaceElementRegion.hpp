@@ -223,6 +223,7 @@ ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
               "faceElement",
               "embeddedElement" );
 
+EmbeddedSurfaceBlockABC & createDummyEmbeddedSurfaceBlock(string embeddedSurfFace);
 } /* namespace geos */
 
 #endif /* CORECOMPONENTS_MESH_SurfaceElementRegion_HPP_ */

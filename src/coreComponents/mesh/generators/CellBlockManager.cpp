@@ -669,7 +669,7 @@ void CellBlockManager::buildMaps()
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges.toViewConst(), this->getCellBlocks() );
   
-  buildEmbeddedSurfaceMaps();
+  //buildEmbeddedSurfaceMaps();
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
@@ -689,7 +689,7 @@ ToCellRelation< array2d< localIndex > > CellBlockManager::getFaceToElements() co
   return m_faceToCells;
 }
 
-ToCellRelation< ArrayOfArrays< localIndex > > getEmbeddedSurfaceToElements() const {
+ToCellRelation< localIndex > CellBlockManager::getEmbeddedSurfaceToElements() const {
 
   return m_embeddedSurfToCells;
 }
@@ -714,6 +714,15 @@ Group & CellBlockManager::getFaceBlocks()
   return this->getGroup( viewKeyStruct::faceBlocks() );
 }
 
+Group const & CellBlockManager::getEmbeddedSurfaceBlocks() const
+{
+  return this->getGroup( viewKeyStruct::embeddedSurfaceBlocks() );
+}
+
+Group & CellBlockManager::getEmbeddedSurfaceBlocks()
+{
+  return this->getGroup( viewKeyStruct::embeddedSurfaceBlocks() );
+}
 Group & CellBlockManager::getLineBlocks()
 {
   return this->getGroup( viewKeyStruct::lineBlocks() );
@@ -746,7 +755,7 @@ localIndex CellBlockManager::numFaces() const
 
 localIndex CellBlockManager::numEmbeddedSurfaces() const
 {
-  return m_numEmbeddedSurfaces;
+  return m_numEmbeddedSurfElem;
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getEdgeToFaces() const
@@ -793,7 +802,7 @@ LineBlock & CellBlockManager::registerLineBlock( string const & name )
 
 EmbeddedSurfaceBlock & CellBlockManager::registerEmbeddedSurfaceBlock( string const & name ){
   
-  return this->getLineBlocks().registerGroup< EmbeddedSurfaceBlock >( name );
+  return this->getEmbeddedSurfaceBlocks().registerGroup< EmbeddedSurfaceBlock >( name );
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodePositions() const
