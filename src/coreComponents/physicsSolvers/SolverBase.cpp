@@ -16,7 +16,6 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"

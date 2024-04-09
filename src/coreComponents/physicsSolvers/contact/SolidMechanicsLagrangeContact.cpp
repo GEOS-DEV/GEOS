@@ -1282,7 +1282,7 @@ void SolidMechanicsLagrangeContact::
                   }
                   else
                   {
-                    for( localIndex i = 1; i < 3; ++i )
+                    for( int i = 1; i < 3; ++i )
                     {
                       elemRHS[i] = 0.0;
 
@@ -1294,7 +1294,7 @@ void SolidMechanicsLagrangeContact::
               }
             case contact::FractureState::Open:
               {
-                for( localIndex i = 0; i < 3; ++i )
+                for( int i = 0; i < 3; ++i )
                 {
                   elemRHS[i] = Ja * traction[kfe][i];
 
