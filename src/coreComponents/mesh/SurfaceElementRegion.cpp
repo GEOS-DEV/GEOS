@@ -76,7 +76,7 @@ void SurfaceElementRegion::initializePreSubGroups()
 {
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
-    subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::elementApertureString() ).
+    subRegion.getWrapper< array1d< real64 > >( fields::elementAperture::key() ).
       setApplyDefaultValue( m_defaultAperture );
   } );
 }

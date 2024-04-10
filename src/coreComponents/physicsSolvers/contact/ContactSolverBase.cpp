@@ -95,8 +95,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
       subRegion.registerField< fields::contact::oldFractureState >( getName() );
 
-      subRegion.registerField< fields::contact::slipVector >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< fields::contact::slip >( getName() );
 
       subRegion.registerField< fields::contact::shearTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
@@ -252,40 +251,6 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
     GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
                                                           getDataContext(), subRegion.getDataContext() ) );
   }
-}
-
-void ContactSolverBase::updateGlobalCoordinatesQuantities( DomainPartition & domain ) const
-{
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const & dispJump  = subRegion.getField< fields::contact::dispJump >();
-      arrayView2d< real64 const > const & traction  = subRegion.getField< fields::contact::traction >();
-
-      arrayView2d< real64 const > const & unitNormal   = subRegion.getNormalVector();
-      arrayView2d< real64 const > const & unitTangent1 = subRegion.getTangentVector1();
-      arrayView2d< real64 const > const & unitTangent2 = subRegion.getTangentVector2();
-
-      arrayView2d< real64 > const & slipVector        = subRegion.getField< fields::contact::slipVector >();
-      arrayView2d< real64 > const & shearTraction     = subRegion.getField< fields::contact::shearTraction >();
-      arrayView2d< real64 > const & normalTraction    = subRegion.getField< fields::contact::normalTraction >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
-      {
-        for( int i = 0; i < 3; i++ )
-        {
-          slipVector( kfe, i ) =  dispJump( kfe, 1 ) * unitTangent1( kfe, i ) +
-                                 dispJump( kfe, 2 ) * unitTangent2( kfe, i );
-
-          shearTraction( kfe, i ) =  traction( kfe, 1 ) * unitTangent1( kfe, i ) +
-                                    traction( kfe, 2 )  * unitTangent2( kfe, i );
-
-          normalTraction( kfe, i ) =  traction( kfe, 0 ) * unitNormal( kfe, i );
-        }
-      } );
-    } );
-  } );
 }
 
 } /* namespace geos */

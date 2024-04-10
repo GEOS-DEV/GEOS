@@ -723,6 +723,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
       arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
 
+      arrayView1d< real64 > const & slip = subRegion.getField< fields::contact::slip >();
+
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
@@ -735,11 +737,11 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
                                             jump,
                                             fractureTraction,
                                             dFractureTraction_dJump,
-                                            fractureState );
+                                            fractureState,
+                                            slip );
       } );
     } );
   } );
-  updateGlobalCoordinatesQuantities( domain );
 }
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )

@@ -452,8 +452,11 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         arrayView3d< real64 > const &
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
-        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+
+        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
+        arrayView1d< real64 > const & slip = subRegion.getField< fields::contact::slip >();
+        arrayView1d< real64 > const & aperture = subRegion.getField< fields::elementAperture >();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
@@ -483,6 +486,10 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
           real64 dispJumpTemp[ 3 ];
           LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
           LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
+
+          slip[ kfe ] = LvArray::math::sqrt( LvArray::math::square( dispJump( kfe, 1 ) ) +
+                                             LvArray::math::square( dispJump( kfe, 2 ) ) );
+          aperture[ kfe ] = dispJump[ kfe ][ 0 ];
         } );
       }
     } );
@@ -868,8 +875,8 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
     arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
 
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
+                                                                        [&]( localIndex const,
+                                                                             FaceElementSubRegion & subRegion )
     {
       ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
@@ -1824,9 +1831,7 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   computeFaceDisplacementJump( domain );
-  updateGlobalCoordinatesQuantities( domain );
 }
 
 bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition & domain ) const

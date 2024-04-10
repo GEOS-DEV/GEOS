@@ -60,8 +60,6 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 
-  void updateGlobalCoordinatesQuantities( DomainPartition & domain ) const;
-
   void computeFractureStateStatistics( MeshLevel const & mesh,
                                        globalIndex & numStick,
                                        globalIndex & numSlip,

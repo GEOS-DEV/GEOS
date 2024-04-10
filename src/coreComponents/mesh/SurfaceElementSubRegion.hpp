@@ -267,15 +267,6 @@ public:
    */
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    /// @return surface element normal vector string
-    static constexpr char const * normalVectorString()      { return "normalVector"; }
-
-    /// @return Tangent vector 1 string
-    static constexpr char const * t1VectorString()          { return "tangentVector1"; }
-
-    /// @return Tangent vector 2 string
-    static constexpr char const * t2VectorString()          { return "tangentVector2"; }
-
     /// @return Face element to cell regions map string.
     static constexpr char const * surfaceElementsToCellRegionsString() { return "fractureElementsToCellRegions"; }
 
@@ -284,12 +275,6 @@ public:
 
     /// @return Face element to cell indices map string.
     static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
-
-    /// @return surface element aperture string
-    static constexpr char const * elementApertureString() { return "elementAperture"; }
-
-    /// @return surface element surface are string
-    static constexpr char const * elementAreaString() { return "elementArea"; }
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }

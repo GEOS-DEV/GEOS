@@ -57,13 +57,13 @@ DECLARE_FIELD( dispJump,
                WRITE_AND_READ,
                "Displacement jump vector in the local reference system" );
 
-DECLARE_FIELD( slipVector,
-               "slipVector",
-               array2d< real64 >,
+DECLARE_FIELD( slip,
+               "slip",
+               array1d< real64 >,
                0,
                LEVEL_0,
                NO_WRITE,
-               "Slip vector in the global reference system." );
+               "Slip." );
 
 DECLARE_FIELD( deltaDispJump,
                "deltaDisplacementJump",
