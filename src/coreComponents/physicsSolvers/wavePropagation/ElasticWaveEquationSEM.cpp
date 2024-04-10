@@ -557,9 +557,6 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
-  /// get array of indicators: 1 if node on free surface; 0 otherwise
-  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< elasticfields::ElasticFreeSurfaceNodeIndicator >();
-
   arrayView1d< real32 > const rhsx = nodeManager.getField< elasticfields::ForcingRHSx >();
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
@@ -581,8 +578,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
                                   mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
-                                  stiffnessVectorz, rhsx, rhsy, rhsz, freeSurfaceNodeIndicator,
-                                  solverTargetNodesSet );
+                                  stiffnessVectorz, rhsx, rhsy, rhsz, solverTargetNodesSet );
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
