@@ -182,6 +182,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
+  echo "Setting up a temporary directory to hold tests and baselines: $tempdir"
   trap "rm -rf $tempdir" EXIT
 
   ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
