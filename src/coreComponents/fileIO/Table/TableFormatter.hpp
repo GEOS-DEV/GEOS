@@ -25,10 +25,15 @@
 namespace geos
 {
 
-// Class for formatting table data
+/**
+ * @brief abstract class for formatting table data
+ */
 class TableFormatter
 {
-public:
+
+protected:
+
+  TableLayout m_tableLayout;
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
@@ -36,19 +41,24 @@ public:
    */
   TableFormatter( TableLayout const & tableLayout );
 
-protected:
-
-  TableLayout m_tableLayout;
+  /**
+   * @brief Destroy the Table Formatter object
+   */
+  virtual ~TableFormatter() = default; 
 
   /**
-   * @brief Fill the vector (m_column) in tableData with values from m_rows in tableLayout, storing all values in an unsorted order.
+   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableLayout.
    * @param columns Vector of columns to be filled.
    * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData ) const;
+                                 
 };
 
+/**
+ * @brief 
+ */
 class TableCSVFormatter : public TableFormatter
 {
 public:
@@ -58,6 +68,11 @@ public:
    * @param tableLayout Contain all column names and optionnaly the table title
    */
   TableCSVFormatter( TableLayout const & tableLayout );
+
+  /**
+   * @brief Destroy the TableCSVFormatter object
+   */
+  virtual ~TableCSVFormatter() = default; 
 
   /**
    * @brief Convert the table data to a CSV string.
@@ -90,6 +105,11 @@ public:
    * @param tableLayout Contain all column names and optionnaly the table title
    */
   TableTextFormatter( TableLayout const & tableLayout );
+
+  /**
+   * @brief Destroy the Table Text Formatter object
+   */
+  virtual ~TableTextFormatter() = default; 
 
   /**
    * @brief Convert the TableData to a table string.

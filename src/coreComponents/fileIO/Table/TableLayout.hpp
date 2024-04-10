@@ -24,6 +24,9 @@
 namespace geos
 {
 
+/**
+ * @brief 
+ */
 class TableLayout
 {
 
@@ -81,10 +84,11 @@ public:
    */
   struct Column
   {
-    ColumnParam parameter;
-    // A vector containing all column values
-    std::vector< string > columnValues;
-    // The largest string in the column
+    /// Structure who contains parameters for a column
+    ColumnParam m_parameter;
+    /// A vector containing all column values
+    std::vector< string > m_columnValues;
+    /// The largest string in the column
     string m_maxStringSize;
   };
 
