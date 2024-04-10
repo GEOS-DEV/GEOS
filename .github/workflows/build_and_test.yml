@@ -43,6 +43,10 @@ on:
       RUNS_ON:
         required: true
         type: string
+      UPLOAD_BASELINES:
+        required: false
+        type: boolean
+        default: false
       USE_SCCACHE:
         required: false
         type: boolean
@@ -191,10 +195,15 @@ jobs:
               echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
             fi
 
-            if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ]; then
-              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-              echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
-              echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
+            echo "Baseline upload option: ${{ inputs.UPLOAD_BASELINES }}"
+            if [${{ inputs.UPLOAD_BASELINES }}];then
+              if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
+                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+                echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
+                echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
+              else
+                echo "Could not find requested baseline to upload: ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              fi
             fi
           fi
         fi

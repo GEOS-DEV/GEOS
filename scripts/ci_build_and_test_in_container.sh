@@ -282,15 +282,21 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
   # Therefore, `ats` will exit with error code 0, even if some tests fail.
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
+  echo "Running integrated tests..."
   integratedTests/geos_ats.sh
-  
-  # Rebaseline and pack into an archive
   # Note: Keep a copy of the run logs, so that the correct version will be packed
-  mv integratedTests/TestResults integratedTests/TestResults_backup
+  cp -r integratedTests/TestResults integratedTests/TestResults_backup
+
+  # Rebaseline and pack into an archive
+  echo "  rebaselining"
   integratedTests/geos_ats.sh -a rebaselinefailed
-  mv integratedTests/TestResults integratedTests/TestResults_rebaseline
-  mv integratedTests/TestResults_backup integratedTests/TestResults 
+  rm -rf integratedTests/TestResults
+  mv integratedTests/TestResults_backup integratedTests/TestResults
+
+  echo "  packing"
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+
+  echo "Done!"
 
   # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.

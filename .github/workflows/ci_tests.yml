@@ -205,6 +205,7 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
+      UPLOAD_BASELINES: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: upload test baselines') }}"
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: self-hosted
       DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
