@@ -25,10 +25,10 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "WaveSolverUtils.hpp"
-#include "ElasticTimeSchemeSEMKernel.hpp"
-#include "ElasticMatricesSEMKernel.hpp"
-#include "PrecomputeSourcesAndReceiversKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsSolvers/wavePropagation/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/elastic/shared/ElasticMatricesSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {

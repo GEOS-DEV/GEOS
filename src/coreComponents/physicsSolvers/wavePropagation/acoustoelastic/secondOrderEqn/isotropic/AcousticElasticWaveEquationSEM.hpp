@@ -20,8 +20,8 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICELASTICWAVEEQUATIONSEM_HPP_
 
-#include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
-#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "AcoustoElasticFields.hpp"
 #include <tuple>

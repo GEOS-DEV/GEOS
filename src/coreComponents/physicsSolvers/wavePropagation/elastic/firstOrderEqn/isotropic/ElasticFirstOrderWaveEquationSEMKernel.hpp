@@ -20,7 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverUtils.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 
 
 namespace geos

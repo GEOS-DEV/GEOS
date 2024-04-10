@@ -20,8 +20,8 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverUtils.hpp"
-#include "ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsSolvers/wavePropagation/elastic/shared/ElasticFields.hpp"
 
 namespace geos
 {

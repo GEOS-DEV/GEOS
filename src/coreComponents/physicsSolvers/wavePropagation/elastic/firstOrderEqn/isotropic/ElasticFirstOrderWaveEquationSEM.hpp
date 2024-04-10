@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2019-     GEOS Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -14,43 +14,33 @@
 
 
 /**
- * @file AcousticWaveEquationSEM.hpp
+ * @file ElasticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
-#include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/elastic/shared/ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+
 
 namespace geos
 {
 
-class AcousticWaveEquationSEM : public WaveSolverBase
+class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy<  >;
-  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  AcousticWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+  ElasticFirstOrderWaveEquationSEM( const std::string & name,
+                                    Group * const parent );
 
-  virtual ~AcousticWaveEquationSEM() override;
+  virtual ~ElasticFirstOrderWaveEquationSEM() override;
 
-  AcousticWaveEquationSEM() = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM && ) = default;
-
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "acoustic"; }
-
-  static string catalogName() { return "AcousticSEM"; }
+  static string catalogName() { return "ElasticFirstOrderSEM"; }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -79,15 +69,6 @@ public:
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
 
-  /**@}*/
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -100,12 +81,24 @@ public:
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
-  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
+    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
+    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
+    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
+
+    static constexpr char const * sigmaxxNp1AtReceiversString() { return "sigmaxxNp1AtReceivers"; }
+    static constexpr char const * sigmayyNp1AtReceiversString() { return "sigmayyNp1AtReceivers"; }
+    static constexpr char const * sigmazzNp1AtReceiversString() { return "sigmazzNp1AtReceivers"; }
+    static constexpr char const * sigmaxyNp1AtReceiversString() { return "sigmaxyNp1AtReceivers"; }
+    static constexpr char const * sigmaxzNp1AtReceiversString() { return "sigmaxzNp1AtReceivers"; }
+    static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
+
+    static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
 
   } waveEquationViewKeys;
-
 
   /** internal function to the class to compute explicitStep either for backward or forward.
    * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
@@ -120,22 +113,6 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
-  void computeUnknowns( real64 const & time_n,
-                        real64 const & dt,
-                        integer const cycleNumber,
-                        DomainPartition & domain,
-                        MeshLevel & mesh,
-                        arrayView1d< string const > const & regionNames );
-
-  void synchronizeUnknowns( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain,
-                            MeshLevel & mesh,
-                            arrayView1d< string const > const & regionNames );
-
-  void prepareNextTimestep( MeshLevel & mesh );
-
 protected:
 
   virtual void postProcessInput() override final;
@@ -148,6 +125,7 @@ private:
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
+   * @param regionNames name of the region you are currently on
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
@@ -165,11 +143,41 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  /// Pressure_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_pressureNp1AtReceivers;
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_displacementxNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_displacementyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_displacementzNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxxNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmayyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmazzNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxyNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmaxzNp1AtReceivers;
+
+  /// Displacement_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_sigmayzNp1AtReceivers;
+
+  /// Array containing the elements which contain a source
+  array1d< localIndex > m_sourceElem;
+
+  /// Array containing the elements which contain the region which the source belongs
+  array1d< localIndex > m_sourceRegion;
 
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */
