@@ -21,8 +21,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsSolvers/wavePropagation/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
