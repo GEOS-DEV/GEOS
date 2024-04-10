@@ -33,6 +33,7 @@ class TableFormatter
 
 protected:
 
+  /// Layout for a table
   TableLayout m_tableLayout;
 
   /**

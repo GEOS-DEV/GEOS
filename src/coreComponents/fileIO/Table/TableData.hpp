@@ -69,6 +69,7 @@ class TableData2D
 {
 public:
 
+  /// Struct containing conversion informations
   struct Conversion1D
   {
     /// Vector containing all columns names

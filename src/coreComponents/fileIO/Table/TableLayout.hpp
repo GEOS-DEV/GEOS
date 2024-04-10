@@ -31,8 +31,11 @@ class TableLayout
 {
 
 public:
+
+  /// Type of aligment for a column
   enum Alignment { right, left, center };
 
+  /// Space to apply between all data and border
   enum MarginValue : integer
   {
     tiny = 0,
