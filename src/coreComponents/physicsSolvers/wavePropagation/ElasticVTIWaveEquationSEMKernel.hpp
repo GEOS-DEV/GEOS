@@ -168,10 +168,10 @@ public:
 
     stack.Cvti[0] = m_density[k] * pow( m_velocityVp[k], 2 ) * (1.0 + 2.0*m_epsilon[k]);
     stack.Cvti[1] = m_density[k] * pow( m_velocityVp[k], 2 );
-    stack.Cvti[2] = m_density[k] *
-                    sqrt((pow( m_velocityVp[k],
-                               2 ) - pow( m_velocityVs[k], 2 )) + 2.0 * pow( m_velocityVp[k], 2 ) * m_delta[k] * (pow( m_velocityVp[k], 2 ) - pow( m_velocityVs[k], 2 )) ) - m_density[k] * pow(
-      m_velocityVs[k], 2 );
+    stack.Cvti[2] = m_density[k] *                                              
+                     sqrt(pow((pow( m_velocityVp[k],                             
+                                2 ) - pow( m_velocityVs[k], 2 )),2) + 2.0 * pow( m_velocityVp[k], 2 ) * m_delta[k] * (pow( m_velocityVp[k], 2 ) - pow( m_velocityVs[k], 2 )) ) - m_density[k] * pow(
+                      m_velocityVs[k], 2 );
     stack.Cvti[3] = m_density[k] * pow( m_velocityVs[k], 2 );
     stack.Cvti[4] = m_density[k] * pow( m_velocityVs[k], 2 )*(1.0 + 2.0 * m_gamma[k]);
     stack.Cvti[5] = stack.Cvti[0] - 2.0 * stack.Cvti[4];
