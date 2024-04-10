@@ -684,12 +684,75 @@ void ProblemManager::generateMesh()
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
 
-      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
+      // We need to do 2 things now:
+      
+      // 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
       // because the ghosting ensures that the neighbor cells of the fracture elements are available.
       // These neighbor cells are providing the node information to the fracture elements.
+
+      // 2. We flip the face normals of faces adiajent to the faceElements if they are not pointing in the 
+      // direction of the fracture.
+      auto elemCenter = meshLevel.getElemManager().constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
       meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        // 1. 
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+        
+        // 2.
+        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+        arrayView2d< localIndex const > const & faceToElementRegionIndex = faceManager.elementRegionList();
+        arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+        arrayView2d< localIndex const > const & faceToElementIndex = faceManager.elementList();
+
+        arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
+        FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+        
+        // We nee to modify the normals and the nodes ordering to be consistent.
+        arrayView2d< real64 > const faceNormal = faceManager.faceNormal();
+        forAll< parallelHostPolicy >( subRegion.size(), [=,&faceToNodes]( localIndex const kfe )
+        {
+          if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+          {
+            return;
+          }
+
+          localIndex const f0 = elemsToFaces[kfe][0];
+          localIndex const f1 = elemsToFaces[kfe][1];
+
+          /// Note: I am assuming that the 0 element is the elementSubregion one for faces
+          /// touching both a 3D and a 2D cell.
+          localIndex const er0  = faceToElementRegionIndex[f0][0];
+          localIndex const esr0 = faceToElementSubRegionIndex[f0][0];
+          localIndex const ek0  = faceToElementIndex[f0][0];
+
+          localIndex const er1  = faceToElementRegionIndex[f1][0];
+          localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
+          localIndex const ek1  = faceToElementIndex[f1][0];
+
+          real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
+          real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
+
+          LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
+          LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
+
+          // If the vector connecting the face center and the elem center is in the same
+          // direction as the unit normal, we flip the normal coz it should be pointing outward
+          // (i.e., towards the fracture element).
+          if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+          {
+            GEOS_WARNING( GEOS_FMT("For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0) );
+            LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
+            std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+          }
+          if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
+          {
+            GEOS_WARNING( GEOS_FMT("For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1) );
+            LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
+            std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
+          }
+        } );
+
       } );
 
       faceManager.setIsExternal();

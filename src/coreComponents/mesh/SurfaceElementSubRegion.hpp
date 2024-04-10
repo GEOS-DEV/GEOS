@@ -321,10 +321,10 @@ protected:
   /// Normal vector to the surface element
   array2d< real64 > m_normalVector;
 
-  /// Unit vector indicating the first tangential direction 
+  /// Unit vector indicating the first tangential direction
   array2d< real64 > m_tangentVector1;
 
-  /// Unit vector indicating the second tangential direction 
+  /// Unit vector indicating the second tangential direction
   array2d< real64 > m_tangentVector2;
 
 };

@@ -46,9 +46,9 @@
       elementTypes="{ C3D8 }"
       xCoords="{ -1000, -100, 100, 1000 }"
       yCoords="{ -1000, -100, 100, 1000 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 5, 52, 5 }"
-      ny="{ 5, 52, 5 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 10, 20, 10 }"
+      ny="{ 10, 20, 10 }"
       nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>

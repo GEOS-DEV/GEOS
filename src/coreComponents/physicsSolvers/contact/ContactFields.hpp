@@ -53,17 +53,9 @@ DECLARE_FIELD( dispJump,
                "displacementJump",
                array2d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Displacement jump vector in the local reference system" );
-
-DECLARE_FIELD( dispJumpGlobalRef,
-               "displacementJumpGlobalRef",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               NO_WRITE,
-               "Displacement jump vector in the global reference system." );
 
 DECLARE_FIELD( slipVector,
                "slipVector",
@@ -93,7 +85,7 @@ DECLARE_FIELD( traction,
                "traction",
                array2d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Fracture traction vector in the local reference system." );
 
