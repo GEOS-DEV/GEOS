@@ -179,7 +179,15 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
   export ATS_FILTER="np<=2"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+
+  # Setup a temporary directory to hold tests
+  tempdir=$(mktemp -d)
+  trap "rm -rf $tempdir" EXIT
+
+  ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
+  ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
+
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
 fi
 
 
@@ -293,11 +301,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
   # in two different folder with meaningful names when unpacking. 
   # or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
-  # or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
+  # or_die tasr rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   # or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 
   # want to clean the integrated tests folder to avoid polluting the next build.
-  or_die integratedTests/geos_ats.sh -a veryclean
+  # This is now unnecessary since we are working in temporary directories
+  # or_die integratedTests/geos_ats.sh -a veryclean
 fi
 
 # Cleaning the build directory.
