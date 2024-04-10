@@ -44,7 +44,7 @@ protected:
   /**
    * @brief Destroy the Table Formatter object
    */
-  virtual ~TableFormatter() = default; 
+  virtual ~TableFormatter() = default;
 
   /**
    * @brief Fill the vector (m_column) in tableData with values from rows stored in tableLayout.
@@ -53,11 +53,11 @@ protected:
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData ) const;
-                                 
+
 };
 
 /**
- * @brief 
+ * @brief class for CSV formatting
  */
 class TableCSVFormatter : public TableFormatter
 {
@@ -72,7 +72,7 @@ public:
   /**
    * @brief Destroy the TableCSVFormatter object
    */
-  virtual ~TableCSVFormatter() = default; 
+  virtual ~TableCSVFormatter() = default;
 
   /**
    * @brief Convert the table data to a CSV string.
@@ -95,6 +95,9 @@ public:
 
 };
 
+/**
+ * @brief class for log formatting
+ */
 class TableTextFormatter : public TableFormatter
 {
 
@@ -109,7 +112,7 @@ public:
   /**
    * @brief Destroy the Table Text Formatter object
    */
-  virtual ~TableTextFormatter() = default; 
+  virtual ~TableTextFormatter() = default;
 
   /**
    * @brief Convert the TableData to a table string.

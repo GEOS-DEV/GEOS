@@ -53,8 +53,6 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     headerValues.push_back( columnValue );
   }
 
-  rowsLength.reserve( headerValues.size());
-
   // insert row value and row cell values
   bool flag = true;
   for( auto const & [rowValue, rowMap] : m_data )

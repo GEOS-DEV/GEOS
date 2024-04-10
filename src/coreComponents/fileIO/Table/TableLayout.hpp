@@ -25,7 +25,7 @@ namespace geos
 {
 
 /**
- * @brief 
+ * @brief Class for setup the table layout
  */
 class TableLayout
 {
@@ -51,12 +51,13 @@ public:
    */
   struct ColumnParam
   {
+    /// Name for a column
     string columnName;
-    // Alignment for a column. By default aligned to the right side
+    /// Alignment for a column. By default aligned to the right side
     Alignment alignment = Alignment::right;
-    // A boolean to display a colummn
+    /// A boolean to display a colummn
     bool enabled = true;
-    // Vector containing substring column name delimited by "\n"
+    /// Vector containing substring column name delimited by "\n"
     std::vector< string > splitColumnName;
 
     /**

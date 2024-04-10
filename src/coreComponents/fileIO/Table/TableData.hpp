@@ -25,7 +25,9 @@
 namespace geos
 {
 
-// Class for managing table data
+/**
+ * @brief Class for managing table data
+ */
 class TableData
 {
 public:
@@ -60,15 +62,20 @@ private:
 
 };
 
-// Class for managing 2D table m_data
+/**
+ * @brief Class for managing 2D table m_data
+ */
 class TableData2D
 {
 public:
 
   struct Conversion1D
   {
+    /// Vector containing all columns names
     std::vector< string > headerNames;
+    /// TableData to be built
     TableData tableData;
+    /// Indicate if there are any inconsistencies when TableDate2d is converted
     bool isConsistent = true;
   };
 

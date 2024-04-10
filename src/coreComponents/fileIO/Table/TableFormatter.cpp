@@ -30,17 +30,21 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
   bool isConsistent = true;
   for( size_t idxRow = 0; idxRow < rows.size(); idxRow++ )
   {
-    columns[idxRow].m_columnValues.reserve( rows[idxRow].size() );
     for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
-      columns[idxColumn].m_columnValues.push_back( rows[idxRow][idxColumn] );
+      // Case of a disabled column when we initialized
+      if( m_tableLayout.getColumns()[idxColumn].m_parameter.enabled )
+      {
+        columns[idxColumn].m_columnValues.push_back( rows[idxRow][idxColumn] );
+      }
     }
 
-    if( rows[idxRow].size()!=columns.size())
+    if( rows[idxRow].size()!=columns.size() )
     {
       isConsistent = false;
     }
   }
+
   if( !isConsistent )
   {
     GEOS_WARNING( "The number of columns in rows that has been collected is not equal to the columns expected when TableLayout was initialized" );
@@ -122,6 +126,28 @@ string buildValueCell( TableLayout::Alignment const alignment, string_view value
   }
 }
 
+/**
+ * @brief Detect columns not displayed from TableLayout and therefore modify columns / tableDataRows vectors
+ * @param columns Vector built in TableLayout containing all columns with their parameters
+ * @param tableDataRows Vector built in TableData containing all rows values
+ */
+void formatColumnsFromLayout( std::vector< TableLayout::Column > & columns, std::vector< std::vector< string > > & tableDataRows )
+{
+  integer idxColumn = 0;
+  for( auto & column : columns )
+  {
+    if( !column.m_parameter.enabled )
+    {
+      columns.erase( columns.begin() + idxColumn );
+      for( auto & row : tableDataRows )
+      {
+        row.erase( row.begin() + idxColumn );
+      }
+    }
+    ++idxColumn;
+  }
+}
+
 TableTextFormatter::TableTextFormatter( TableLayout const & tableLayout ):
   TableFormatter( tableLayout )
 {}
@@ -131,9 +157,11 @@ string TableTextFormatter::toString( TableData const & tableData ) const
   std::ostringstream tableOutput;
   string sectionSeparator;
   std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
-  integer const nbRows = tableData.getTableDataRows().size();
+  std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
+  integer const nbRows = tableDataRows.size();
 
-  fillTableColumnsFromRows( columns, tableData.getTableDataRows() );
+  formatColumnsFromLayout( columns, tableDataRows );
+  fillTableColumnsFromRows( columns, tableDataRows );
 
   layoutToString( tableOutput, columns, nbRows, sectionSeparator );
   buildSectionRows( columns, sectionSeparator, tableOutput, nbRows, TableLayout::Section::values );
