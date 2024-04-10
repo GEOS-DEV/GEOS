@@ -152,10 +152,30 @@ set( mesh_sources
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
+include( FetchContent )
+
+FetchContent_Declare(
+  NamedType
+  GIT_REPOSITORY https://github.com/joboccara/NamedType.git
+  GIT_TAG master
+)
+
+FetchContent_GetProperties( NamedType )
+#FetchContent_MakeAvailable( namedtype )
+if( NOT namedtype_POPULATED )
+  message( STATUS "Fetching NamedType..." )
+  FetchContent_Populate( NamedType )
+  add_subdirectory( ${namedtype_SOURCE_DIR} ${namedtype_BINARY_DIR} )
+endif()
+
+list( APPEND dependencyList NamedType )
+
+
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
+         generators/NewGhosting.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
@@ -164,6 +184,7 @@ if( ENABLE_VTK )
          )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
+         generators/NewGhosting.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp

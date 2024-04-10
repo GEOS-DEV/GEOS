@@ -21,6 +21,7 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/generators/NewGhosting.hpp"
 #include "common/DataTypes.hpp"
 
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -74,6 +75,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise."
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
+
+  registerWrapper( viewKeyStruct::useNewGhostingString(), &m_useNewGhosting ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Controls the use of the new ghosting implementation." );
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
@@ -102,6 +108,11 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   }
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
 
+  if( m_useNewGhosting )
+  {
+    GEOS_LOG_RANK( "Here we go, new ghosting!" );
+    ghosting::doTheNewGhosting( m_vtkMesh, partition.getMetisNeighborList() );
+  }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );

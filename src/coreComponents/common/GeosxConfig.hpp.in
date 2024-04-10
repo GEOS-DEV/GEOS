@@ -165,7 +165,7 @@
 #cmakedefine petsc_VERSION @petsc_VERSION@
 
 /// Version information for VTK
-#cmakedefine VTK_VERSION @VTK_VERSION@
+// #cmakedefine VTK_VERSION @VTK_VERSION@
 
 /// Version information for fmt
 #cmakedefine fmt_VERSION @fmt_VERSION@

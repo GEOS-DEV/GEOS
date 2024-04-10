@@ -200,9 +200,9 @@ def build_neighborhood(meshes: Collection[vtkUnstructuredGrid]) -> Sequence[Sequ
 def main() -> int:
     # For each rank, contains the raw vtk mesh.
     meshes: list[vtkUnstructuredGrid] = []
-    # pattern: str = "/Users/j0436735/Downloads/meshes-cube/main-*.vtu"
-    pattern: str = "/Users/j0436735/Downloads/meshes-cube-25/main-*.vtu"
-    for file_name in glob(pattern):
+    pattern: str = "/Users/j0436735/Downloads/meshes-cube/main-*.vtu"
+    # pattern: str = "/Users/j0436735/Downloads/meshes-cube-25/main-*.vtu"
+    for file_name in sorted(glob(pattern)):
         m = __read_vtu(file_name)
         if m:
             meshes.append(m)
