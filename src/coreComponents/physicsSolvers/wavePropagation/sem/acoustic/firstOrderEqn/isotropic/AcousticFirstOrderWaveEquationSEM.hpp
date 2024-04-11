@@ -14,43 +14,32 @@
 
 
 /**
- * @file AcousticWaveEquationSEM.hpp
+ * @file AcousticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 
 namespace geos
 {
 
-class AcousticWaveEquationSEM : public WaveSolverBase
+class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy<  >;
-  using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  AcousticWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+  AcousticFirstOrderWaveEquationSEM( const std::string & name,
+                                     Group * const parent );
 
-  virtual ~AcousticWaveEquationSEM() override;
+  virtual ~AcousticFirstOrderWaveEquationSEM() override;
 
-  AcousticWaveEquationSEM() = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM( AcousticWaveEquationSEM && ) = default;
-
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
-  AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "acoustic"; }
-
-  static string catalogName() { return "AcousticSEM"; }
+  static string catalogName() { return "AcousticFirstOrderSEM"; }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -79,16 +68,6 @@ public:
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
 
-  /**@}*/
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
-
-
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
@@ -100,12 +79,20 @@ public:
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
+
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
+
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
-  } waveEquationViewKeys;
+    static constexpr char const * uxNp1AtReceiversString() { return "uxNp1AtReceivers"; }
+    static constexpr char const * uyNp1AtReceiversString() { return "uyNp1AtReceivers"; }
+    static constexpr char const * uzNp1AtReceiversString() { return "uzNp1AtReceivers"; }
 
+    static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
+
+  } waveEquationViewKeys;
 
   /** internal function to the class to compute explicitStep either for backward or forward.
    * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
@@ -119,22 +106,6 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
-
-  void computeUnknowns( real64 const & time_n,
-                        real64 const & dt,
-                        integer const cycleNumber,
-                        DomainPartition & domain,
-                        MeshLevel & mesh,
-                        arrayView1d< string const > const & regionNames );
-
-  void synchronizeUnknowns( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain,
-                            MeshLevel & mesh,
-                            arrayView1d< string const > const & regionNames );
-
-  void prepareNextTimestep( MeshLevel & mesh );
 
 protected:
 
@@ -168,8 +139,23 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uxNp1AtReceivers;
+
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uyNp1AtReceivers;
+
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uzNp1AtReceivers;
+
+  /// Array containing the elements which contain a source
+  array1d< localIndex > m_sourceElem;
+
+  /// Array containing the elements which contain the region which the source belongs
+  array1d< localIndex > m_sourceRegion;
 };
+
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */

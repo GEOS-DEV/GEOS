@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 

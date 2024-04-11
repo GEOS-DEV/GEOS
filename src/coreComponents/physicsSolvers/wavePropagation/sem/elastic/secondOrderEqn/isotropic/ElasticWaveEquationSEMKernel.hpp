@@ -21,7 +21,7 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
-#include "physicsSolvers/wavePropagation/elastic/shared/ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 
 namespace geos
 {

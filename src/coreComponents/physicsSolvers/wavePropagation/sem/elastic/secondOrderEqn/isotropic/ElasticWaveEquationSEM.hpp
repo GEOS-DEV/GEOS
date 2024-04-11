@@ -23,7 +23,7 @@
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/elastic/shared/ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 
 namespace geos
 {

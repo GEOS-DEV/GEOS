@@ -20,9 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-/// #include "WaveSolverUtils.hpp"
-
-
 
 namespace geos
 {

@@ -24,7 +24,7 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
-#include "physicsSolvers/wavePropagation/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 
 namespace geos
 {
