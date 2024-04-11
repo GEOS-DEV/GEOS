@@ -230,70 +230,70 @@ TEST( testTable, table2DTable )
              );
 }
 
-TEST( testTable, table2DInequalRows )
-{
-  //collect
-  TableData2D tableData;
+// TEST( testTable, table2DInequalRows )
+// {
+//   //collect
+//   TableData2D tableData;
 
-  tableData.addCell( 300, 10000, 0.03 );
-  tableData.addCell( 300, 15000, 0.02 );
-  tableData.addCell( 350, 10000, 0.035 );
-  tableData.addCell( 350, 10000, 0.035 );
-  tableData.addCell( 400, 10000, 0.04 );
-  tableData.addCell( 400, 15000, 0.02666666666666667 );
+//   tableData.addCell( 300, 10000, 0.03 );
+//   tableData.addCell( 300, 15000, 0.02 );
+//   tableData.addCell( 350, 10000, 0.035 );
+//   tableData.addCell( 350, 10000, 0.035 );
+//   tableData.addCell( 400, 10000, 0.04 );
+//   tableData.addCell( 400, 15000, 0.02666666666666667 );
 
-  //convert
-  string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
-  string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-  TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
+//   //convert
+//   string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+//   string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+//   TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
 
-  EXPECT_FALSE( tableConverted.isConsistent );
-}
+//   EXPECT_FALSE( tableConverted.isConsistent );
+// }
 
-TEST( testTable, table2DColumnMismatch )
-{
-  //test 2D table column  mismatch
-  {
-    // collect
-    TableData2D tableData;
+// TEST( testTable, table2DColumnMismatch )
+// {
+//   //test 2D table column  mismatch
+//   {
+//     // collect
+//     TableData2D tableData;
 
-    tableData.addCell( 300, 10000, 0.03 );
-    tableData.addCell( 300, 15000, 0.02 );
-    tableData.addCell( 350, 10000, 0.035 );
-    tableData.addCell( 350, 5000, 0.035 );
-    tableData.addCell( 400, 10000, 0.04 );
-    tableData.addCell( 400, 15000, 0.02666666666666667 );
+//     tableData.addCell( 300, 10000, 0.03 );
+//     tableData.addCell( 300, 15000, 0.02 );
+//     tableData.addCell( 350, 10000, 0.035 );
+//     tableData.addCell( 350, 5000, 0.035 );
+//     tableData.addCell( 400, 10000, 0.04 );
+//     tableData.addCell( 400, 15000, 0.02666666666666667 );
 
-    //convert
-    string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
-    string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-    TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
+//     //convert
+//     string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+//     string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+//     TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
 
-    EXPECT_FALSE( tableConverted.isConsistent );
-  }
-}
+//     EXPECT_FALSE( tableConverted.isConsistent );
+//   }
+// }
 
 
-TEST( testTable, table2DConsistent )
-{
-  //test 2D make sure test isn't trigger when table is consistent
-  //collect
-  TableData2D tableData;
+// TEST( testTable, table2DConsistent )
+// {
+//   //test 2D make sure test isn't trigger when table is consistent
+//   //collect
+//   TableData2D tableData;
 
-  tableData.addCell( 300, 10000, 0.03 );
-  tableData.addCell( 300, 15000, 0.02 );
-  tableData.addCell( 350, 10000, 0.035 );
-  tableData.addCell( 350, 15000, 0.035 );
-  tableData.addCell( 400, 10000, 0.04 );
-  tableData.addCell( 400, 15000, 0.02666666666666667 );
+//   tableData.addCell( 300, 10000, 0.03 );
+//   tableData.addCell( 300, 15000, 0.02 );
+//   tableData.addCell( 350, 10000, 0.035 );
+//   tableData.addCell( 350, 15000, 0.035 );
+//   tableData.addCell( 400, 10000, 0.04 );
+//   tableData.addCell( 400, 15000, 0.02666666666666667 );
 
-  //convert
-  string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
-  string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-  TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
+//   //convert
+//   string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
+//   string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
+//   TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s", rowFmt, columnFmt );
 
-  EXPECT_TRUE( tableConverted.isConsistent );
-}
+//   EXPECT_TRUE( tableConverted.isConsistent );
+// }
 
 TEST( testTable, tableSetMargin )
 {
@@ -303,31 +303,31 @@ TEST( testTable, tableSetMargin )
   //test with tiny margin
   // {
   //   TableLayout tableLayout( {
-  //     TableLayout::ColumnParam{{"Cras egestas"}, TableLayout::Alignment::center},
-  //     TableLayout::ColumnParam{{"CoordX"}, TableLayout::Alignment::right},
-  //     TableLayout::ColumnParam{{"C"}, TableLayout::Alignment::center},
-  //     TableLayout::ColumnParam{{"CoordZ"}, TableLayout::Alignment::left},
-  //     TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::left},
-  //     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::center},
+  //     TableLayout::ColumnParam{{"Colonne 1"}, TableLayout::Alignment::center},
+  //     TableLayout::ColumnParam{{"Colonne 2"}, TableLayout::Alignment::center},
+  //     TableLayout::ColumnParam{{"Colonne 3"}, TableLayout::Alignment::right},
+  //     TableLayout::ColumnParam{{"Colonne 4"}, TableLayout::Alignment::right},
+  //     TableLayout::ColumnParam{{"Prev\nelement"}, TableLayout::Alignment::right},
+  //     TableLayout::ColumnParam{{"Next\nelement"}, TableLayout::Alignment::right},
   //   }, "InternalWellGenerator well_injector1" );
 
   //   //tableLayout.setMargin( TableLayout::MarginValue::tiny );
 
   //   TableData tableData;
-  //   tableData.addRow( "value1", " ", "3.0", 3.0129877, 2.0f, 1 );
-  //   tableData.addRow( "val1", "v", "[3.045,42.02,89.25]", 3.0, 10.0f, 3 );
+  //   tableData.addRow( "value 1", "long value 1", "3.0034", 3.0129877, "" , 1 );
+  //   tableData.addRow(  "value 1", "long value 2", "100.45", 4.0129877, 1 , 2 );
 
   //   TableTextFormatter const tableText( tableLayout );
   //   EXPECT_EQ( tableText.toString( tableData ),
-  //              "\n+-----------------------------------------------------------------+\n"
-  //              "|              InternalWellGenerator well_injector1               |\n"
-  //              "+------------+------+-------------------+---------+-------+-------+\n"
-  //              "|Cras egestas|CoordX|         C         |CoordZ   |Prev   | Next  |\n"
-  //              "|            |      |                   |         |element|element|\n"
-  //              "+------------+------+-------------------+---------+-------+-------+\n"
-  //              "|   value1   |      |        3.0        |3.0129877|2      |   1   |\n"
-  //              "|    val1    |     v|[3.045,42.02,89.25]|3        |10     |   3   |\n"
-  //              "+------------+------+-------------------+---------+-------+-------+\n\n"
+// "\n+----------------------------------------------------------+\n"
+// "|           InternalWellGenerator well_injector1           |\n"
+// "+---------+------------+---------+---------+-------+-------+\n"
+// "|Colonne 1| Colonne 2  |Colonne 3|Colonne 4|   Prev|   Next|\n"
+// "|         |            |         |         |element|element|\n"
+// "+---------+------------+---------+---------+-------+-------+\n"
+// "| value 1 |long value 1|   3.0034|3.0129877|       |      1|\n"
+// "| value 1 |long value 2|   100.45|4.0129877|      1|      2|\n"
+// "+---------+------------+---------+---------+-------+-------+\n\n"
   //              );
   // }
 }

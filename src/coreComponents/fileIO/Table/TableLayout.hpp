@@ -136,13 +136,15 @@ public:
    */
   integer const & getMarginTitle() const;
 
-private:
-
-  /**
+    /**
    * @brief Set the minimal margin width between row content and borders.
    * @param marginType The margin value
    */
   void setMargin( MarginValue marginValue );
+
+private:
+
+
 
   std::vector< Column > m_columns;
   string m_tableTitle;

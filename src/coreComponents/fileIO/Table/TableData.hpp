@@ -56,9 +56,24 @@ public:
    */
   std::vector< std::vector< string > > const & getTableDataRows() const;
 
-private:
+  /**
+   * @brief Get the Error Msg Conversion string
+   * @return The error msg conversion
+   */
+  string const & getErrorMsgConversion() const;
 
+  /**
+   * @brief Set the Error Msg Conversion object
+   * @param msg The error msg to set
+   */
+  void setErrorMsgConversion( string const & msg );
+
+protected:
+  /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
+
+  /// store error if there are any inconsistencies when we convert TableData2D => TableData
+  string errorMsgConversion;
 
 };
 
@@ -76,8 +91,6 @@ public:
     std::vector< string > headerNames;
     /// TableData to be built
     TableData tableData;
-    /// Indicate if there are any inconsistencies when TableDate2d is converted
-    bool isConsistent = true;
   };
 
   /**

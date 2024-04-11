@@ -53,7 +53,8 @@ protected:
    * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > const & tableData ) const;
+                                 std::vector< std::vector< string > > const & tableData,
+                                 string & msgTableError ) const;
 
 };
 
@@ -76,16 +77,16 @@ public:
   virtual ~TableCSVFormatter() = default;
 
   /**
+   * @return The string with all column names.
+   */
+  string headerToString() const;
+
+  /**
    * @brief Convert the table data to a CSV string.
    * @param tableData The 1D table data.
    * @return The CSV string representation of the table data.
    */
   string dataToString( TableData const & tableData ) const;
-
-  /**
-   * @return The string with all column names.
-   */
-  string headerToString() const;
 
   /**
    * @brief Convert the TableData to a table string.
@@ -122,12 +123,6 @@ public:
    */
   string toString( TableData const & tableData ) const;
 
-  /**
-   * @brief Converts a TableLayout into a formatted string representation.
-   * @return string
-   */
-  string layoutToString() const;
-
 private:
 
   /**
@@ -140,7 +135,8 @@ private:
   void layoutToString( std::ostringstream & tableOutput,
                        std::vector< TableLayout::Column > & columns,
                        integer const nbRows,
-                       string & sectionSeparator ) const;
+                       string & sectionSeparator,
+                       string & msgTableError ) const;
 
   /**
    * @brief Split all header names by detecting the newline \\n character.
@@ -183,15 +179,17 @@ private:
    */
   void computeAndBuildSeparator( std::vector< TableLayout::Column > & columns,
                                  string & topSeparator,
-                                 string & sectionSeparator ) const;
+                                 string & sectionSeparator,
+                                 string & msgTableError ) const;
 
   /**
-   * @brief Build the table title section
-   * @param titleRows Rows containing the title section.
+   * @brief Build a row at the top of the table
+   * @param topRow A row being built at the top of the table.
+   * @param msg A message to be display.
    * @param topSeparator The top line separator
    * @param sectionSeparator The section line separator
    */
-  void buildTitleRow( string & titleRows, string_view topSeparator, string_view sectionSeparator ) const;
+  void buildTopRow( string & topRow, string & msg, string_view topSeparator, string_view sectionSeparator ) const;
 
   /**
    * @brief Build a section by specifying it's type ( header or section )

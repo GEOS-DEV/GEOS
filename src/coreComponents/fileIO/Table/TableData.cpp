@@ -36,6 +36,21 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
   return m_rows;
 }
 
+string const & TableData::getErrorMsgConversion() const
+{
+  return errorMsgConversion;
+}
+
+void TableData::setErrorMsgConversion( string const & msg )
+{
+  if( msg.empty() )
+  {
+    errorMsgConversion =+"\n" + msg;
+    return;
+  }
+  errorMsgConversion = msg;
+}
+
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
                                                        string_view rowFmt,
                                                        string_view columnFmt ) const
@@ -74,18 +89,22 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     rowsLength.push_back( currentRowValues.size());
   }
 
-  if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
-  {
-    flag = false;
-    GEOS_WARNING( "Cell(s) are missing in row" );
-  }
-
   if( !flag )
   {
-    tableData1D.isConsistent = flag;
-    GEOS_WARNING( "Table isn't consistent" );
+    tableData1D.tableData.setErrorMsgConversion( "Table isn't consistent, One or more cells are not in the right place" );
   }
 
+  if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
+  {
+    if( !flag )
+    {
+      tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
+    }
+    else
+    {
+      tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
+    }
+  }
   return tableData1D;
 }
 }
