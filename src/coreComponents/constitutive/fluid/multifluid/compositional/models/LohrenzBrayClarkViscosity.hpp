@@ -83,7 +83,37 @@ private:
                                                     ComponentProperties::KernelWrapper const & componentProperties,
                                                     real64 const temperature,
                                                     arraySlice1d< real64 > const componentDiluteViscosity,
-                                                    arraySlice1d< real64 > const dComponentDiluteViscosity_dTemperature ) const;
+                                                    arraySlice1d< real64 > const dComponentDiluteViscosity_dTemperature ) const
+  {
+    for( integer ic = 0; ic < numComponents; ++ic )
+    {
+      real64 const criticalPressure = componentProperties.m_componentCriticalPressure[ic];
+      real64 const criticalTemperature = componentProperties.m_componentCriticalTemperature[ic];
+      real64 const molarWeight = componentProperties.m_componentMolarWeight[ic];
+
+      real64 reducedTemperature = temperature / criticalTemperature;
+      real64 inverseComponentChi = 0.0;
+      real64 discardDerivative = 0.0;
+      inverseChiParameter( criticalPressure, criticalTemperature, molarWeight, inverseComponentChi,
+                           discardDerivative, discardDerivative, discardDerivative );
+
+      if( molarWeight < 2.1e-3 ) // hydrogen correlation, Stiel & Thodos, 1961, Eq. 12
+      {
+        componentDiluteViscosity[ic] = 90.71e-5 * pow( 0.1375*temperature - 1.67, 0.625 );
+        dComponentDiluteViscosity_dTemperature[ic] = 90.71e-5 * 0.625 * 0.1375 * pow( 0.1375*temperature - 1.67, -0.375 );
+      }
+      else if( reducedTemperature <= 1.5 ) // nonpolar gas correlation at low temp, Eq. 9
+      {
+        componentDiluteViscosity[ic] = 34e-5 * pow( reducedTemperature, 0.94 ) * inverseComponentChi;
+        dComponentDiluteViscosity_dTemperature[ic] = 34e-5 * 0.94 * pow( reducedTemperature, -0.06 ) * inverseComponentChi / criticalTemperature;
+      }
+      else // nonpolar gas correlation at high temp, Eq. 10
+      {
+        componentDiluteViscosity[ic] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) * inverseComponentChi;
+        dComponentDiluteViscosity_dTemperature[ic] = 17.78e-5 * 4.58 * 0.625 * pow( 4.58*reducedTemperature-1.67, -0.375 ) * inverseComponentChi / criticalTemperature;
+      }
+    }
+  }
 
   /**
    * @brief Estimate phase viscosity at dilute-gas conditions using Herning and Zipperer [1936]
@@ -202,7 +232,23 @@ private:
                             real64 & value,
                             real64 & derivP,
                             real64 & derivT,
-                            real64 & derivM ) const;
+                            real64 & derivM ) const
+  {
+    real64 T  = pow( criticalTemperature, 1.0/6.0 );
+    real64 dT = (1.0/6.0) * pow( criticalTemperature, -5.0/6.0 );
+
+    real64 constexpr sqrt1000 = 31.6227766017; // note: kg/mol to atomic mass units
+    real64 M  = sqrt1000 * sqrt( molarWeight );
+    real64 dM = 0.5 * sqrt1000 / sqrt( molarWeight );
+
+    real64 P  = pow( criticalPressure / PA_TO_ATM, 2.0/3.0 ); // note: pascal to atm conversion
+    real64 dP = pow( PA_TO_ATM, -2.0/3.0 ) * pow( criticalPressure, -1.0/3.0 ) * 2.0/3.0;
+
+    value  = M*P/T;
+    derivP = M*dP/T;
+    derivT = -M*P*dT/(T*T);
+    derivM = dM*P/T;
+  }
 
 private:
   MixingType m_mixing_type;
