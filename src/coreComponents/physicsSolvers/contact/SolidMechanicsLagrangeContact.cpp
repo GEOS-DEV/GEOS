@@ -1850,7 +1850,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   using namespace fields::contact;
 
-  int hasConfigurationConverged = true;
+  int numStateChanges = 0;
+  int numContactElements = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1874,10 +1875,12 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       arrayView1d< real64 const > const & normalDisplacementTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
 
-      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+      RAJA::ReduceSum< parallelHostReduce, integer > changed( 0 );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
+        numContactElements+=subRegion.size();
+
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
@@ -1934,26 +1937,23 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                 fractureState[kfe] = contact::FractureState::Stick;
               }
             }
-            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+            changed += !compareFractureStates( originalFractureState, fractureState[kfe] );
           }
         } );
       } );
 
-      hasConfigurationConverged &= checkActiveSetSub.get();
+      numStateChanges += changed.get();
     } );
   } );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 
-  // Compute if globally the fracture state has changed
-  int hasConfigurationConvergedGlobally;
-  MpiWrapper::allReduce( &hasConfigurationConverged,
-                         &hasConfigurationConvergedGlobally,
-                         1,
-                         MPI_LAND,
-                         MPI_COMM_GEOSX );
+  // Compute global number of fracture state changes
+  MpiWrapper::sum( numStateChanges );
+  // And total number of fracture elements
+  MpiWrapper::sum( numContactElements );
 
-  return hasConfigurationConvergedGlobally;
+  return numStateChanges > m_nonlinearSolverParameters.m_configurationTolerance * numContactElements;
 }
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const

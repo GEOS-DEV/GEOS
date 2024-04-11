@@ -142,6 +142,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Max number of times that the configuration can be changed" );
 
+  registerWrapper( viewKeysStruct::configurationToleranceString(), &m_configurationTolerance ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Configuration tolerance" );
+
   /// GEOS mainly uses FIM coupling so let's define FIM as the default.
   registerWrapper( viewKeysStruct::couplingTypeString(), &m_couplingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
