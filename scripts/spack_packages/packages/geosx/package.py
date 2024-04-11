@@ -156,7 +156,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on("hypre +superlu-dist+mixedint+mpi", when='+hypre~cuda')
 
-    depends_on("hypre +cuda+superlu-dist+mixedint+mpi+umpire+unified-memory cxxflags='-fPIC'", when='+hypre+cuda')
+    depends_on("hypre +cuda+superlu-dist+mixedint+mpi+umpire+unified-memory cflags='-fPIC' cxxflags='-fPIC'", when='+hypre+cuda')
     depends_on("hypre~openmp", when="~openmp")
     depends_on("hypre+openmp", when="+openmp")
     with when('+cuda'):
