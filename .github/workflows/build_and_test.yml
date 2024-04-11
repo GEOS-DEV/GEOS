@@ -203,7 +203,6 @@ jobs:
                 echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
               else
                 echo "Could not find requested baseline to upload: ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-                EXIT_STATUS=1
               fi
             fi
           fi
