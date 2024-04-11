@@ -753,15 +753,15 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     } );
   } );
 
-  MpiWrapper::sum( stickResidual );
+  stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  MpiWrapper::sum( slipResidual );
-  MpiWrapper::max( slipNormalizer );
+  slipResidual = MpiWrapper::sum( slipResidual );
+  slipNormalizer = MpiWrapper::max( slipNormalizer );
   slipResidual = sqrt( slipResidual ) / ( slipNormalizer + 1.0 );
 
-  MpiWrapper::sum( openResidual );
-  MpiWrapper::max( openNormalizer );
+  openResidual = MpiWrapper::sum( openResidual );
+  openNormalizer = MpiWrapper::max( openNormalizer );
   openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
