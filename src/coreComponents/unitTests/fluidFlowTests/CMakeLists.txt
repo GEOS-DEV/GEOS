@@ -1,8 +1,10 @@
 # Specify list of tests
-set( gtest_geosx_tests
-     testSinglePhaseBaseKernels.cpp
-     testThermalCompMultiphaseFlow.cpp
-     testThermalSinglePhaseFlow.cpp )
+
+set(gtest_geosx_tests
+        testSinglePhaseBaseKernels.cpp
+        testThermalCompMultiphaseFlow.cpp
+        testThermalSinglePhaseFlow.cpp
+        )
 
 set( dependencyList ${parallelDeps} gtest )
 
@@ -20,6 +22,22 @@ if( ENABLE_PVTPackage )
           testReactiveCompositionalMultiphaseOBL.cpp )
 
     list( APPEND dependencyList PVTPackage )
+endif()
+
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
+
+if (TARGET fmt::fmt)
+  list( APPEND dependencyList fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
 endif()
 
 # Add gtest C++ based tests

@@ -65,12 +65,13 @@ enum class FaceBasedAssemblyKernelFlags
   TotalMassEquation = 1 << 1, // 2
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
-  /// Add more flags like that if needed:
-  // Flag4 = 1 << 3, // 8
-  // Flag5 = 1 << 4, // 16
-  // Flag6 = 1 << 5, // 32
-  // Flag7 = 1 << 6, // 64
-  // Flag8 = 1 << 7  //128
+  /// Flag indicating whether IHU is used or not
+  IHU = 1 << 3 // 8
+        /// Add more flags like that if needed:
+        // Flag5 = 1 << 4, // 16
+        // Flag6 = 1 << 5, // 32
+        // Flag7 = 1 << 6, // 64
+        // Flag8 = 1 << 7  //128
 };
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -529,8 +530,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  localIndex stencilSize( localIndex const iconn ) const
-  { return m_sei[iconn].size(); }
+  localIndex stencilSize( localIndex const iconn ) const { return m_sei[iconn].size(); }
 
   /**
    * @brief Getter for the number of elements at this connection
@@ -539,8 +539,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  localIndex numPointsInFlux( localIndex const iconn ) const
-  { return m_stencilWrapper.numPointsInFlux( iconn ); }
+  localIndex numPointsInFlux( localIndex const iconn ) const { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
 
   /**
@@ -579,6 +578,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
+
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
                                      decltype(m_stencilWrapper)::avgWeights,
@@ -622,7 +622,7 @@ public:
 
           localIndex k_up = -1;
 
-          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::C1PPU ))
+          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::C1PPU ) )
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
@@ -635,6 +635,7 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
@@ -642,7 +643,36 @@ public:
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC );
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
+          }
+          else if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::IHU ) )
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::IHUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
           }
           else
           {
@@ -657,6 +687,7 @@ public:
               m_gravCoef,
               m_phaseMob, m_dPhaseMob,
               m_dPhaseVolFrac,
+              m_phaseCompFrac, m_dPhaseCompFrac,
               m_dCompFrac_dCompDens,
               m_phaseMassDens, m_dPhaseMassDens,
               m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
@@ -664,18 +695,11 @@ public:
               potGrad,
               phaseFlux,
               dPhaseFlux_dP,
-              dPhaseFlux_dC );
+              dPhaseFlux_dC,
+              compFlux,
+              dCompFlux_dP,
+              dCompFlux_dC );
           }
-
-          isothermalCompositionalMultiphaseFVMKernelUtilities::
-            PhaseComponentFlux::compute< numComp, numFluxSupportPoints >
-            ( ip,
-            k_up,
-            seri, sesri, sei,
-            m_phaseCompFrac, m_dPhaseCompFrac,
-            m_dCompFrac_dCompDens,
-            phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
-            compFlux, dCompFlux_dP, dCompFlux_dC );
 
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
@@ -683,9 +707,9 @@ public:
                             k_up, seri[k_up], sesri[k_up], sei[k_up], potGrad,
                             phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-        } // loop over phases
+        }                                 // loop over phases
 
-        // populate local flux vector and derivatives
+        /// populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
         {
           integer const eqIndex0 = k[0] * numEqn + ic;
@@ -752,7 +776,8 @@ public:
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numEqn + ic] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic],
+                           stack.localFlux[i * numEqn + ic] );
           m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
@@ -876,6 +901,9 @@ public:
       if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
           isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
+      else if( upwindingParams.upwindingScheme == UpwindingScheme::IHU )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::IHU );
+
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -1743,8 +1771,7 @@ public:
      */
     GEOS_HOST_DEVICE
     StackVariables( localIndex const GEOS_UNUSED_PARAM( size ),
-                    localIndex GEOS_UNUSED_PARAM( numElems ) )
-    {}
+                    localIndex GEOS_UNUSED_PARAM( numElems )) {}
 
     // Transmissibility
     real64 transmissibility = 0.0;

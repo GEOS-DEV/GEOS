@@ -25,12 +25,12 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = PoromechanicsSolver< FLOW_SOLVER >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -59,24 +59,6 @@ public:
   string getCatalogName() const override { return catalogName(); }
 
   /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
-   */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
-  {
-    return std::get< toUnderlying( Base::SolverType::SolidMechanics ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
-   */
-  FLOW_SOLVER * flowSolver() const
-  {
-    return std::get< toUnderlying( Base::SolverType::Flow ) >( m_solvers );
-  }
-
-  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
@@ -85,17 +67,8 @@ public:
 
   virtual void postProcessInput() override;
 
-  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
-
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
-
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
-
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain ) override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -111,61 +84,25 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void updateState( DomainPartition & domain ) override;
-
-  /*
-   * @brief Utility function to set the stress initialization flag
-   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
-   */
-  void setStressInitialization( integer const performStressInitialization )
-  { m_performStressInitialization = performStressInitialization; }
-
-  /**@}*/
-
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
-
-  struct viewKeyStruct : Base::viewKeyStruct
-  {
-    /// Names of the porous materials
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-
-    /// Flag to indicate that the simulation is thermal
-    constexpr static char const * isThermalString() { return "isThermal"; }
-
-    /// Flag to indicate that the solver is going to perform stress initialization
-    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
-  };
-
-protected:
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  virtual void initializePreSubGroups() override;
-
   void assembleElementBasedTerms( real64 const time_n,
                                   real64 const dt,
                                   DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs );
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
-private:
+  virtual void updateState( DomainPartition & domain ) override;
 
-  /**
-   * @brief Helper function to recompute the bulk density
-   * @param[in] subRegion the element subRegion
-   */
-  void updateBulkDensity( ElementSubRegionBase & subRegion );
+  /**@}*/
 
-  /**
-   * @brief Helper function to average the mean stress increment
-   * @param[in] domain the domain partition
-   */
-  void averageMeanTotalStressIncrement( DomainPartition & domain );
+  struct viewKeyStruct : Base::viewKeyStruct
+  {
+    // nothing yet here
+  };
 
-  void createPreconditioner();
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
@@ -179,22 +116,30 @@ private:
                          real64 const dt,
                          PARAMS && ... params );
 
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
+private:
+
+  /**
+   * @brief Helper function to recompute the bulk density
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
+
+  void createPreconditioner();
+
 };
 
-template< typename FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
-                                                                DofManager const & dofManager,
-                                                                arrayView1d< string const > const & regionNames,
-                                                                string const & materialNamesString,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs,
-                                                                real64 const dt,
-                                                                PARAMS && ... params )
+real64 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+                                                                                  DofManager const & dofManager,
+                                                                                  arrayView1d< string const > const & regionNames,
+                                                                                  string const & materialNamesString,
+                                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                  arrayView1d< real64 > const & localRhs,
+                                                                                  real64 const dt,
+                                                                                  PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 
@@ -218,7 +163,7 @@ real64 SinglePhasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,
-                                                                 solidMechanicsSolver()->getDiscretizationName(),
+                                                                 this->solidMechanicsSolver()->getDiscretizationName(),
                                                                  materialNamesString,
                                                                  kernelWrapper );
 }

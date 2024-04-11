@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 namespace geos
 {
@@ -175,13 +174,6 @@ public:
                         arrayView1d< real64 > const & localRhs );
 
   /**@}*/
-
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-    // primary face-based field
-    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-  };
 
   virtual void initializePreSubGroups() override;
 

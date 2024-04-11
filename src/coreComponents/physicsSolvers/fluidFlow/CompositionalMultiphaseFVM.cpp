@@ -18,9 +18,7 @@
 
 #include "CompositionalMultiphaseFVM.hpp"
 
-#include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -128,8 +126,8 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                        getMeshTargets() );
 
   // this call with instruct GEOS to reorder the dof numbers
-  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
-  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
+  dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+                                     DofManager::LocalReorderingType::ReverseCutHillMcKee );
 
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
@@ -972,6 +970,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_isThermal )
       {
+        //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
         thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,

@@ -59,6 +59,7 @@ set( mesh_headers
      generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
@@ -150,19 +151,23 @@ set( mesh_sources
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
-    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
-         generators/VTKUtilities.hpp )
+         generators/VTKWellGenerator.hpp
+         generators/VTKUtilities.hpp
+         )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
-         generators/VTKUtilities.cpp )
+         generators/VTKWellGenerator.cpp
+         generators/VTKUtilities.cpp
+         )    
     list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )
@@ -192,4 +197,3 @@ if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
-geosx_add_code_checks( PREFIX mesh )
