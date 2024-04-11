@@ -712,8 +712,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     } );
   } );
 
-  MpiWrapper::sum( contactResidual );
-
+  contactResidual = MpiWrapper::sum( contactResidual );
   contactResidual = sqrt( contactResidual );
 
   if( this->m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
