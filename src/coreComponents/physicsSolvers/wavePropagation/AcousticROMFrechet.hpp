@@ -103,6 +103,7 @@ public:
   {
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
     static constexpr char const * orderFrechetString() { return "orderFrechet"; }
+    static constexpr char const * orderGSString() { return "orderGS"; }
     static constexpr char const * epsilonGSString() { return "epsilonGS"; }
     static constexpr char const * count_qString() { return "count_q"; }
     static constexpr char const * totcount_qString() { return "totcount_q"; }
@@ -197,6 +198,7 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
   localIndex m_orderFrechet;
+  localIndex m_orderGS;
   real32 m_epsilonGS;
   array1d< int > m_count_q;
   localIndex m_totcount_q;

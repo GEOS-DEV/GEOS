@@ -275,16 +275,16 @@ struct MassMatrixKernel
         forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
        		    
-	  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 	  constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 	  
 	  real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
-	  real64 xLocal[ numNodesPerElem ][ 3 ];
-	  for( localIndex a = 0; a < numNodesPerElem; ++a )
+	  real64 xLocal[ 8 ][ 3 ];
+	  for( localIndex a = 0; a < 8; ++a )
 	  {
 	    for( localIndex i = 0; i < 3; ++i )
             {
-	      xLocal[a][i] = X( elemsToNodes( k, a ), i );
+	      localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+	      xLocal[a][i] = X( nodeIndex, i );
 	    }
 	  }
 
@@ -330,8 +330,6 @@ struct MassMatrixKernel
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-
-          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );

@@ -47,9 +47,14 @@ AcousticROMFrechet::AcousticROMFrechet( const std::string & name,
 
   registerWrapper( viewKeyStruct::orderFrechetString(), &m_orderFrechet ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( 0 ).
     setDescription( "Frechet derivative order computation" );
 
+  registerWrapper( viewKeyStruct::orderGSString(), &m_orderGS ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Gram-Schmidt order computation" );
+  
   registerWrapper( viewKeyStruct::epsilonGSString(), &m_epsilonGS ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1e-1 ).
@@ -110,15 +115,19 @@ void AcousticROMFrechet::registerDataOnMesh( Group & meshBodies )
                                fields::StiffnessVector,
                                fields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
+    /*
     if( m_orderFrechet>0 )
     {
       nodeManager.registerField< fields::AcousticMassVectorFrechet>( getName() );
     }
+    */
+    
     integer size = nodeManager.size();
-    nodeManager.getField< fields::PressureFrechet_nm1 >().resizeDimension< 1 >(m_orderFrechet+1);
-    nodeManager.getField< fields::PressureFrechet_n >().resizeDimension< 1 >(m_orderFrechet+1);
-    nodeManager.getField< fields::PressureFrechet_np1 >().resizeDimension< 1 >(m_orderFrechet+1);
-   
+    nodeManager.getField< fields::PressureFrechet_nm1 >().resizeDimension< 1 >(m_orderFrechet);
+    nodeManager.getField< fields::PressureFrechet_n >().resizeDimension< 1 >(m_orderFrechet);
+    nodeManager.getField< fields::PressureFrechet_np1 >().resizeDimension< 1 >(m_orderFrechet);
+    
+    
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
     {
@@ -1029,19 +1038,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const rhs_fp1 = nodeManager.getField< fields::ForcingRHS_fp1 >();
   
   localIndex const ordF = m_orderFrechet;
-  /*
-  auto kernelFactory = acousticROMFrechetKernels::ExplicitAcousticSEMFactory( dt );
-  
-  finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
-  */
-
+  localIndex const ordGS = m_orderGS;
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
     nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -1092,11 +1089,8 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     } );
 
     
-    if( ordF >= 0)
+    if( ordGS >= 0)
     {
-      //arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-      //nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
       {
@@ -1105,8 +1099,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 
     	arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     	arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
-	
-    	if( m_cycleOrder[0][m_count_q[0]] + 10 <= cycleForSource )
+    	if( m_cycleOrder[0][m_count_q[0]] + 20 <= cycleForSource )
     	{
     	  bool success = gramSchmidtROMStiffness(fe,
     						 stiffnessVector,
@@ -1125,31 +1118,11 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
 	  }
 	}
 	
-    	if( cycleForSource == 0 and ordF > 0 )
-    	{
-    	  arrayView1d< real32 > const massFrechet = nodeManager.getField< fields::AcousticMassVectorFrechet >();
-    	  massFrechet.zero();
-    	  arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::AcousticVelocity >();
-    	  arrayView1d< real32 const > const grad = elementSubRegion.getField< fields::PartialGradient >();
-    	  finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-    	  {
-    	    using FE_TYPE = TYPEOFREF( finiteElement );
-	    
-    	    acousticROMFrechetKernels::computeMassFrechet< FE_TYPE > kernelM( finiteElement );
-    	    kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-    								   nodeCoords32,
-    								   elemsToNodes,
-    								   velocity,
-    								   grad,
-    								   massFrechet);
-    	  } );
-    	} 
       } );
  
       for( localIndex f=0; f<ordF; ++f )
       {
-    	arrayView1d< real32 > const massFrechet = nodeManager.getField< fields::AcousticMassVectorFrechet >();
-    	arrayView2d< real32 > const pf_nm1 = nodeManager.getField< fields::PressureFrechet_nm1 >();
+        arrayView2d< real32 > const pf_nm1 = nodeManager.getField< fields::PressureFrechet_nm1 >();
     	arrayView2d< real32 > const pf_n = nodeManager.getField< fields::PressureFrechet_n >();
     	arrayView2d< real32 > const pf_np1 = nodeManager.getField< fields::PressureFrechet_np1 >();
 	
@@ -1161,7 +1134,6 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     	  localIndex const a = solverTargetNodesSet[n];
     	  pfV[a] = pf_n[a][f];
 	  
-    	  //rhs[a] -= stiffnessVector[a];
     	  stiffnessVector[a] = 0.0;
     	  rhs[a] = rhs_fp1[a];
 	  rhs_fp1[a] *= f+1;
@@ -1181,12 +1153,6 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     	  finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
     	  {
     	    using FE_TYPE = TYPEOFREF( finiteElement );
-    	    /*acousticROMFrechetKernels::computeStiffnessFrechet::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
-    													       nodeCoords32,
-    													       elemsToNodes,
-    													       pfV,
-    													       stiffnessVector);
-    	    */
     	    acousticROMFrechetKernels::computeStiffnessFrechetRhs::launch< EXEC_POLICY, ATOMIC_POLICY, FE_TYPE >( elementSubRegion.size(),
                                                                                                                   nodeCoords32,
                                                                                                                   elemsToNodes,
@@ -1200,20 +1166,6 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     	  {
 	    
     	    localIndex const a = solverTargetNodesSet[n];
-
-    	    //rhs[a] *= massFrechet[a];
-    	    //rhs[a] /= mass[a];
-    	    /*
-    	    if( f==0 )
-    	    {
-    	      rhs[a] = (-p_np1[a] + 2.0*p_n[a] - p_nm1[a]) * massFrechet[a];
-    	    }
-    	    else
-            {
-    	      real32 cst = f+1;
-    	      rhs[a] = cst * (-pf_np1[a][f-1] + 2.0*pf_n[a][f-1] - pf_nm1[a][f-1]) * massFrechet[a];
-    	    }
-    	    */
     	    if( freeSurfaceNodeIndicator[a] != 1 )
     	    {
     	      pf_np1[a][f] = pf_n[a][f];
@@ -1221,31 +1173,33 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
     	      pf_np1[a][f] -= (mass[a] - 0.5 * dt * damping[a]) * pf_nm1[a][f];
     	      pf_np1[a][f] += dt2*(rhs[a] - stiffnessVector[a]);
     	      pf_np1[a][f] /= mass[a] + 0.5 * dt * damping[a];
-    	    }
-    	    //rhs[a] *= -(f+1);
-	    
+    	    }	    
     	  } );
-	  
-    	  if(m_cycleOrder[f+1][m_count_q[f+1]] + 10 <= cycleForSource)
-    	  {
-    	    bool success = gramSchmidtROMStiffness(fe,
-    						   stiffnessVector,
-    						   pfV,
-    						   nodeGhostRank,
-    						   elementSubRegion.size(),
-    						   elemsToNodes,
-    						   nodeCoords32,
-    						   f+1);
-    	    if( success )
-    	    {
-    	      localIndex nq = m_totcount_q - 1;
-    	      m_selectionOrder[0][nq] = f+1;
-    	      m_selectionOrder[1][nq] = m_count_q[f+1];
-    	      m_cycleOrder[f+1][m_count_q[f+1]] = cycleForSource;
-    	    }
-    	    }
+
+	  if( ordGS >= f+1 )
+	  {
+	    if( m_cycleOrder[f+1][m_count_q[f+1]] + 20 <= cycleForSource )
+	    {
+	      bool success = gramSchmidtROMStiffness(fe,
+						     stiffnessVector,
+						     pfV,
+						     nodeGhostRank,
+						     elementSubRegion.size(),
+						     elemsToNodes,
+						     nodeCoords32,
+						     f+1);
+	      if( success )
+    	      {
+		localIndex nq = m_totcount_q - 1;
+		m_selectionOrder[0][nq] = f+1;
+		m_selectionOrder[1][nq] = m_count_q[f+1];
+		m_cycleOrder[f+1][m_count_q[f+1]] = cycleForSource;
+	      }
+	    }
+	  }
     	} );
       }
+      
       real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
       if( cycleNumber == round(maxTime / dt) - 1 )
       {
@@ -1264,6 +1218,7 @@ void AcousticROMFrechet::computeUnknowns( real64 const & time_n,
       				       nodeCoords32);
       	} );
       }
+      
     }
   }
   else
@@ -1502,7 +1457,7 @@ bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBas
   {
     if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
-      std::cout<<"Order = "<<ordF<<",  Vector = "<<m_count_q[ordF]<<",  Val = "<<val_all<<std::endl;
+      std::cout<<"Order = "<<ordF<<",  Vector = "<<m_totcount_q<<",  Val = "<<val_all<<std::endl;
     }
     
     finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -1527,7 +1482,10 @@ bool AcousticROMFrechet::gramSchmidtROMStiffness(finiteElement::FiniteElementBas
     {
       q_newV[a] /= sqrt(normK);
     } );
-    
+    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+    {
+      std::cout<<"norm = "<<sqrt(normK)<<std::endl;
+    }
     GEOS_MARK_SCOPE ( DirectWrite );
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     q_newV.move( MemorySpace::host, false );
@@ -1727,7 +1685,7 @@ void AcousticROMFrechet::gramSchmidtROMStiffnessFinal(finiteElement::FiniteEleme
       }
       
     }
-    //remove( fileName1.c_str() );
+    remove( fileName1.c_str() );
   }
   //int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   //string directory = GEOS_FMT( "phi/shot_{:05}/rank_{:05}", shotIndex, rank);
