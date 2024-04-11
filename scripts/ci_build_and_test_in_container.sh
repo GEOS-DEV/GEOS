@@ -288,12 +288,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   cp -r integratedTests/TestResults integratedTests/TestResults_backup
 
   # Rebaseline and pack into an archive
-  echo "  rebaselining"
+  echo "Rebaselining..."
   integratedTests/geos_ats.sh -a rebaselinefailed
   rm -rf integratedTests/TestResults
   mv integratedTests/TestResults_backup integratedTests/TestResults
 
-  echo "  packing"
+  echo "Packing baselines..."
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
 
   echo "Done!"
