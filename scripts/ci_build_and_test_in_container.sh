@@ -296,11 +296,21 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Packing baselines..."
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
 
+  echo "Checking results..."
+  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini &> $tempdir/log_check.txt
+  cat $tempdir/log_check.txt
+
+  if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
+    INTEGRATED_TEST_EXIT_STATUS=0
+  else
+    INTEGRATED_TEST_EXIT_STATUS=1
+  fi
+
   echo "Done!"
 
   # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.
-  INTEGRATED_TEST_EXIT_STATUS=$?
+  # INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 
   # Whatever the result of the integrated tests, we want to pack both the logs and the computed results.
