@@ -1964,7 +1964,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
 		<!--upwindingScheme => Type of upwinding scheme. Valid options:
 * PPU
-* C1PPU-->
+* C1PPU
+* IHU-->
 		<xsd:attribute name="upwindingScheme" type="geos_UpwindingScheme" default="PPU" />
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
@@ -1973,7 +1974,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geos_UpwindingScheme">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU" />
+			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU|IHU" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="OutputsType">
@@ -2809,6 +2810,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
@@ -2820,6 +2823,11 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -3845,6 +3853,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
+		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
+		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

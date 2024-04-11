@@ -162,7 +162,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[m_p1Index], m_phasePVTParaFiles[m_p1Index] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -173,7 +174,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[m_p2Index], m_phasePVTParaFiles[m_p2Index] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -182,7 +184,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for flash phase (in table from \"{}\").\n",
+                                      m_flashModelParaFile );
     throw SimulationError( ex, errorMsg );
   }
 }
@@ -377,9 +380,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     // If 1 table is provided, it is the CO2 solubility table and water vapourisation is zero
     // If 2 tables are provided, they are the CO2 solubility and water vapourisation tables depending
     // on how phaseNames is arranged
+    string const solubilityModel = EnumStrings< CO2Solubility::SolubilityModel >::toString( CO2Solubility::SolubilityModel::Tables );
     string_array strs;
     strs.emplace_back( "FlashModel" );
-    strs.emplace_back( "Tables" );   // Marker to indicate that tables are provided
+    strs.emplace_back( solubilityModel );   // Marker to indicate that tables are provided
     strs.emplace_back( "" );   // 2 empty strings for the 2 phase tables gas first, then water
     strs.emplace_back( "" );
     if( m_solubilityTables.size() == 2 )

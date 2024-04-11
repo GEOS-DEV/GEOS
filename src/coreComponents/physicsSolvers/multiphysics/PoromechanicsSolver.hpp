@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
@@ -94,7 +95,7 @@ public:
                                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                          [&]( localIndex const,
                                                                               ElementSubRegionBase & subRegion )
       {
@@ -111,8 +112,6 @@ public:
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
-
-
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
@@ -142,7 +141,7 @@ public:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
@@ -387,6 +386,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
