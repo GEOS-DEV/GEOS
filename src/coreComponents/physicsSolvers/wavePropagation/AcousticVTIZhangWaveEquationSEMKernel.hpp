@@ -518,11 +518,11 @@ public:
                               StackVariables & stack ) const
   {
     // Make sure delta < epsilon (for stability)
-    real32 epsi = abs( m_vti_epsilon[k] );
-    real32 delt = abs( m_vti_delta[k] );
-    if( abs( epsi ) < 1e-5 )
+    real32 epsi = std::fabs( m_vti_epsilon[k] );
+    real32 delt = std::fabs( m_vti_delta[k] );
+    if( std::fabs( epsi ) < 1e-5 )
       epsi = 0;
-    if( abs( delt ) < 1e-5 )
+    if( std::fabs( delt ) < 1e-5 )
       delt = 0;
     if( delt > epsi )
       delt = epsi;
