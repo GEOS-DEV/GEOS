@@ -1879,7 +1879,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
-        numContactElements+=subRegion.size();
+        numContactElements += subRegion.size();
 
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
@@ -1953,7 +1953,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // And total number of fracture elements
   MpiWrapper::sum( numContactElements );
 
-  return numStateChanges > m_nonlinearSolverParameters.m_configurationTolerance * numContactElements;
+  // Assume converged if number of changes below certain fraction of total number of elements
+  return numStateChanges <= m_nonlinearSolverParameters.m_configurationTolerance * numContactElements;
 }
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const
