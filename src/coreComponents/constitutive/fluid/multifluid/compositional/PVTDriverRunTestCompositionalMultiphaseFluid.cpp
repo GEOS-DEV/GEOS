@@ -16,7 +16,6 @@
  * PVTDriverRunTestCompositionalMultiphaseFluid.cpp
  */
 
-#ifdef GEOSX_USE_PVTPackage
 #include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
 
@@ -24,5 +23,3 @@ namespace geos
 {
 template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidPVTPackage >( constitutive::CompositionalMultiphaseFluidPVTPackage &, arrayView2d< real64 > const & );
 }
-
-#endif
