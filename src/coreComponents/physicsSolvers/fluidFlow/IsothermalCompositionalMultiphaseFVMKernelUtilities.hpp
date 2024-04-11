@@ -354,8 +354,9 @@ struct PPUPhaseFlux
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up = sei[k_up];
 
+    auto const correction_term = LvArray::math::abs(faceNormal[0] + faceNormal[1] + faceNormal[2] + 1e-25);
     real64 const mobility = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( phaseMob[er_up][esr_up][ei_up][ip], faceNormal ) )
-            /LvArray::math::abs(faceNormal[0] + faceNormal[1] + faceNormal[2] + 1e-25);
+            /correction_term;
 
 //      GEOS_LOG_RANK_0(GEOS_FMT("-----\n faceNormal: {}",faceNormal));
 //      GEOS_LOG_RANK_0(GEOS_FMT("phaseMob check [ip-tmob-pmob]: {} - {} - {}", ip, phaseMob[er_up][esr_up][ei_up][ip], mobility));
@@ -374,14 +375,14 @@ struct PPUPhaseFlux
     // compute phase flux using upwind mobility.
     phaseFlux = mobility * potGrad;
 
-    real64 const dMob_dP = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP], faceNormal ) );
+    real64 const dMob_dP = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( dPhaseMob[er_up][esr_up][ei_up][ip][Deriv::dP], faceNormal ) ) /  correction_term;
     arraySlice2d< real64 const, constitutive::relperm::USD_MOB_DC - 2 > dPhaseMobSub = dPhaseMob[er_up][esr_up][ei_up][ip];
 
     // add contribution from upstream cell mobility derivatives
     dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      dPhaseFlux_dC[k_up][jc] += LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal ) ) * potGrad;
+      dPhaseFlux_dC[k_up][jc] += LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( dPhaseMobSub[Deriv::dC + jc], faceNormal ) ) * potGrad / correction_term;
     }
 
     //distribute on phaseComponentFlux here
