@@ -1,3 +1,9 @@
+###
+# LC requirement for Gitlab 17.0
+include:
+  - project: 'lc-templates/id_tokens'
+    file: 'id_tokens.yml'
+
 variables:
   PROJECT_ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
   BUILD_ROOT: ${CI_PROJECT_DIR}
@@ -140,6 +146,8 @@ stages:
   variables:
     ALLOC_COMMAND: "lalloc 1"
     INTEGRATED_ALLOC_COMMAND: "lalloc 10"
+  before_script:
+    - module load cuda/11.8.0
   tags:
     - shell
     - lassen
