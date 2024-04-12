@@ -6,6 +6,7 @@ import logging
 import sys
 from typing import (
     Collection,
+    Generator,
     Iterable,
     Mapping,
     Optional,
@@ -14,16 +15,22 @@ from typing import (
 from copy import deepcopy
 
 from vtkmodules.vtkCommonDataModel import (
-    vtkUnstructuredGrid
+    vtkBoundingBox,
+    vtkCell,
+    vtkPolyData,
+    vtkUnstructuredGrid,
 )
 from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,
 )
+from vtkmodules.vtkFiltersGeometry import (
+    vtkDataSetSurfaceFilter,
+)
 from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
-from vtk import (vtkCell,
-                 vtkBoundingBox)
+# from vtk import (vtkCell,
+#                  vtkBoundingBox)
 
 logger = logging.getLogger("ghosting")
 
@@ -58,9 +65,11 @@ class MeshGraph:
     edges: Collection[Edge]
 
 
-def build_edges(mesh: vtkUnstructuredGrid) -> Collection[Edge]:
+def build_edges(mesh: vtkUnstructuredGrid, cells: Generator[int, None, None] | None) -> Collection[Edge]:
+    if cells is None:
+        cells = range(mesh.GetNumberOfCells())
     tmp: set[Edge] = set()
-    for c in range(mesh.GetNumberOfCells()):
+    for c in cells:
         cell: vtkCell = mesh.GetCell(c)
         for e in range(cell.GetNumberOfEdges()):
             edge: vtkCell = cell.GetEdge(e)
@@ -70,14 +79,30 @@ def build_edges(mesh: vtkUnstructuredGrid) -> Collection[Edge]:
     return tuple(tmp)
 
 
-def compute_graph(mesh: vtkUnstructuredGrid) -> MeshGraph:
+def compute_graph(mesh: vtkUnstructuredGrid, cells=None) -> MeshGraph:
     points_gids = vtk_to_numpy(mesh.GetPointData().GetGlobalIds())
     nodes = []
     for l, g in enumerate(points_gids):
         nodes.append(Node(l, g))
-    edges: Collection[Edge] = build_edges(mesh)
+    edges: Collection[Edge] = build_edges(mesh, cells)
     graph: MeshGraph = MeshGraph(tuple(nodes), edges)
     return graph
+
+
+def compute_hollow_graph(mesh: vtkUnstructuredGrid) -> MeshGraph:
+    f = vtkDataSetSurfaceFilter()
+    f.PassThroughCellIdsOn()
+    f.PassThroughPointIdsOff()
+    f.FastModeOff()
+
+    # Note that we do not need the original points, but we could keep them as well if needed
+    original_cells_key = "ORIGINAL_CELLS"
+    f.SetOriginalCellIdsName(original_cells_key)
+
+    boundary_mesh = vtkPolyData()
+    f.UnstructuredGridExecute(mesh, boundary_mesh)
+    original_cells = vtk_to_numpy(boundary_mesh.GetCellData().GetArray(original_cells_key))
+    return compute_graph(mesh, set(original_cells))
 
 
 def mpi_scan(rank_to_intersections: Iterable[Mapping[tuple[int, ...], frozenset[tuple[int, int]]]]) -> Sequence[Mapping[tuple[int, ...], int]]:
@@ -105,8 +130,10 @@ def mpi_scan(rank_to_intersections: Iterable[Mapping[tuple[int, ...], frozenset[
     return offset_scans
 
 
-def find_overlapping_edges(graphs: Collection[MeshGraph], neighbors: Sequence[Iterable[int]]):
-    # [rank] -> [edge sorted global nodes]
+def build_rank_to_edges(graphs: Iterable[MeshGraph]) -> dict[int, set[tuple[int, int]]]:
+    """
+    Builds the mapping from ranks to the edges (as pairs of global node indices)
+    """
     tmp: dict[int, set[tuple[int, int]]] = dict()
     for rank, graph in enumerate(graphs):
         # d: dict[tuple[int, int], int] = {}
@@ -117,23 +144,31 @@ def find_overlapping_edges(graphs: Collection[MeshGraph], neighbors: Sequence[It
             gns: tuple[int, int] = tuple(sorted((gn0, gn1)))
             d.add(gns)
         tmp[rank] = d
+    return tmp
 
-    # "Allocate"...
+
+def find_overlapping_edges(graphs: Collection[MeshGraph],
+                           hollow_graphs: Collection[MeshGraph],
+                           neighbors: Sequence[Iterable[int]]):
+    # [rank] -> [edge sorted global nodes]
+    tmp_g: Mapping[int, set[tuple[int, int]]] = build_rank_to_edges(graphs)
+    tmp_hg: Mapping[int, set[tuple[int, int]]] = build_rank_to_edges(hollow_graphs)
+
+    # "Instanciate"...
     rank_to_intersections: list[dict[tuple[int, ...], set[tuple[int, int]]]] = []
     for intersect in range(len(graphs)):
         rank_to_intersections.append(defaultdict(set))
 
-    # .... fill.
+    # ... fill.
     for current_rank, intersection in enumerate(rank_to_intersections):
         count: dict[tuple[int, int], set[int]] = defaultdict(set)
-        other_ranks = neighbors[current_rank]
-        # for current_rank, other_ranks in enumerate(neighbors):
-        all_ranks_in_the_neighborhood = chain((current_rank,), other_ranks)
-        for rank in all_ranks_in_the_neighborhood:
-            for edge in tmp[rank]:
+        for edge in tmp_g[current_rank]:
+            count[edge].add(current_rank)
+        for rank in neighbors[current_rank]:
+            for edge in tmp_hg[rank]:
                 count[edge].add(rank)
         for edge, ranks in count.items():
-            if len(ranks) > 0 and current_rank in ranks:
+            if current_rank in ranks:
                 intersection[tuple(sorted(ranks))].add(edge)
 
     # For information, check if neighborhood is too wide...
@@ -200,8 +235,8 @@ def build_neighborhood(meshes: Collection[vtkUnstructuredGrid]) -> Sequence[Sequ
 def main() -> int:
     # For each rank, contains the raw vtk mesh.
     meshes: list[vtkUnstructuredGrid] = []
-    pattern: str = "/Users/j0436735/Downloads/meshes-cube/main-*.vtu"
-    # pattern: str = "/Users/j0436735/Downloads/meshes-cube-25/main-*.vtu"
+    # pattern: str = "/Users/j0436735/Downloads/meshes-cube/main-*.vtu"
+    pattern: str = "/Users/j0436735/Downloads/meshes-cube-25/main-*.vtu"
     for file_name in sorted(glob(pattern)):
         m = __read_vtu(file_name)
         if m:
@@ -211,15 +246,17 @@ def main() -> int:
     neighbors: Sequence[Sequence[int]] = build_neighborhood(meshes)
 
     # For each rank, contains the graph built upon the vtk mesh.
-    graphs = []
+    graphs: list[MeshGraph] = []
+    hollow_graphs: list[MeshGraph] = []
     for m in meshes:
         graphs.append(compute_graph(m))
+        hollow_graphs.append(compute_hollow_graph(m))
 
     # Perform the core computation of the intersection.
     # `intersections` will contain the intersection for each rank,
     # while `offset_scans` will contain the offset for the global numbering,
     # as it would be done in during the `MPI_scan`.
-    intersections: Collection[Mapping[tuple[int, ...], frozenset[tuple[int, int]]]] = find_overlapping_edges(graphs, neighbors)
+    intersections: Collection[Mapping[tuple[int, ...], frozenset[tuple[int, int]]]] = find_overlapping_edges(graphs, hollow_graphs, neighbors)
     offset_scans: Collection[Mapping[tuple[int, ...], int]] = mpi_scan(intersections)
 
     # Finish by doing the global numbering for real.
