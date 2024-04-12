@@ -96,21 +96,21 @@ public:
     densityKernelWrapper.compute( componentProperties,
                                   pressure,
                                   temperature,
-                                  phaseComposition,
+                                  phaseComposition.toSliceConst(),
                                   molarDensity,
-                                  tempDerivs,
+                                  tempDerivs.toSlice(),
                                   massDensity,
-                                  tempDerivs,
+                                  tempDerivs.toSlice(),
                                   false );
 
     viscosityKernelWrapper.compute( componentProperties,
                                     pressure,
                                     temperature,
-                                    phaseComposition,
+                                    phaseComposition.toSliceConst(),
                                     massDensity,
-                                    tempDerivs,
+                                    tempDerivs.toSliceConst(),
                                     viscosity,
-                                    tempDerivs,
+                                    tempDerivs.toSlice(),
                                     false );
 
     checkRelativeError( viscosity, expectedViscosity, relTol, absTol );
@@ -140,21 +140,21 @@ public:
     densityKernelWrapper.compute( componentProperties,
                                   pressure,
                                   temperature,
-                                  phaseComposition,
+                                  phaseComposition.toSliceConst(),
                                   molarDensity,
-                                  molarDensityDerivs,
+                                  molarDensityDerivs.toSlice(),
                                   massDensity,
-                                  massDensityDerivs,
+                                  massDensityDerivs.toSlice(),
                                   false );
 
     viscosityKernelWrapper.compute( componentProperties,
                                     pressure,
                                     temperature,
-                                    phaseComposition,
+                                    phaseComposition.toSliceConst(),
                                     massDensity,
-                                    massDensityDerivs,
+                                    massDensityDerivs.toSliceConst(),
                                     viscosity,
-                                    viscosityDerivs,
+                                    viscosityDerivs.toSlice(),
                                     false );
 
     auto calculateViscosity = [&]( real64 const p, real64 const t, auto const & zmf ) -> real64 {
@@ -162,10 +162,10 @@ public:
       real64 densityMass = 0.0;
       real64 phaseViscosity = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      densityKernelWrapper.compute( componentProperties, p, t, zmf,
-                                    densityMolar, tempDerivs, densityMass, tempDerivs, false );
-      viscosityKernelWrapper.compute( componentProperties, p, t, zmf,
-                                      densityMass, tempDerivs, phaseViscosity, tempDerivs, false );
+      densityKernelWrapper.compute( componentProperties, p, t, zmf.toSliceConst(),
+                                    densityMolar, tempDerivs.toSlice(), densityMass, tempDerivs.toSlice(), false );
+      viscosityKernelWrapper.compute( componentProperties, p, t, zmf.toSliceConst(),
+                                      densityMass, tempDerivs.toSliceConst(), phaseViscosity, tempDerivs.toSlice(), false );
       return phaseViscosity;
     };
 

@@ -101,12 +101,12 @@ public:
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
-      kValues,
+      kValues.toSlice(),
       vapourFraction,
-      liquidComposition,
-      vapourComposition );
+      liquidComposition.toSlice(),
+      vapourComposition.toSlice() );
 
     // Check the flash success result
     ASSERT_EQ( expectedStatus, status );
@@ -184,12 +184,12 @@ public:
         numComps,
         p,
         t,
-        zmf,
+        zmf.toSliceConst(),
         componentProperties,
-        kValues,
+        kValues.toSlice(),
         values[0],
-        displacedLiquidComposition,
-        displacedVapourComposition );
+        displacedLiquidComposition.toSlice(),
+        displacedVapourComposition.toSlice() );
       for( integer ic = 0; ic < numComps; ++ic )
       {
         values[1+ic] = displacedLiquidComposition[ic];
@@ -201,25 +201,25 @@ public:
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
-      kValues,
+      kValues.toSlice(),
       vapourFraction,
-      liquidComposition,
-      vapourComposition );
+      liquidComposition.toSlice(),
+      vapourComposition.toSlice() );
 
     NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE, EOS_TYPE >(
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
       vapourFraction,
-      liquidComposition,
-      vapourComposition,
-      vapourFractionDerivs,
-      liquidCompositionDerivs,
-      vapourCompositionDerivs );
+      liquidComposition.toSliceConst(),
+      vapourComposition.toSliceConst(),
+      vapourFractionDerivs.toSlice(),
+      liquidCompositionDerivs.toSlice(),
+      vapourCompositionDerivs.toSlice() );
 
     // Test against numerically calculated values
     // --- Pressure derivatives ---
@@ -462,13 +462,13 @@ INSTANTIATE_TEST_SUITE_P(
                     { 0.59975210, 0.00000000, 0.00078842, 0.39945949 } ),
     FlashData< 4 >( 1.000000e+07, 4.731500e+02, { 0.01000000, 0.00000000, 0.00000000, 0.99000000 }, true, 0.01121076, { 0.00102378, 0.00000000, 0.00000000, 0.99897622 },
                     { 0.80170284, 0.00000000, 0.00000000, 0.19829716 } ),
-    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 }, false, 0.00000000, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 },
+    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 }, true, 0.00000000, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 },
                     { 0.72438623, 0.02564505, 0.01665696, 0.23331176 } ),
-    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.15695100, 0.10481800, 0.10482200, 0.63340900 }, false, 0.00000000, { 0.15695100, 0.10481800, 0.10482200, 0.63340900 },
+    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.15695100, 0.10481800, 0.10482200, 0.63340900 }, true, 0.00000000, { 0.15695100, 0.10481800, 0.10482200, 0.63340900 },
                     { 0.73612750, 0.02738195, 0.01777184, 0.21871871 } ),
     FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.00000000, 0.10481800, 0.10482200, 0.79036000 }, true, 0.72801768, { 0.00000000, 0.38538472, 0.38540005, 0.22921523 },
                     { 0.00000000, 0.00000023, 0.00000000, 0.99999977 } ),
-    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.10481800, 0.00000000, 0.10482200, 0.79036000 }, false, 0.00000000, { 0.10481800, 0.00000000, 0.10482200, 0.79036000 },
+    FlashData< 4 >( 1.000000e+08, 4.731500e+02, { 0.10481800, 0.00000000, 0.10482200, 0.79036000 }, true, 0.00000000, { 0.10481800, 0.00000000, 0.10482200, 0.79036000 },
                     { 0.74504275, 0.00000000, 0.01613702, 0.23882023 } )
     )
   );

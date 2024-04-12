@@ -79,12 +79,12 @@ public:
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
-      kValues,
+      kValues.toSlice(),
       vapourFraction,
-      liquidComposition,
-      vapourComposition );
+      liquidComposition.toSlice(),
+      vapourComposition.toSlice() );
 
     // Check the flash success result
     ASSERT_EQ( expectedStatus, status );

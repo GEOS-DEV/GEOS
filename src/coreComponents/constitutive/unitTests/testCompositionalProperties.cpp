@@ -67,7 +67,7 @@ public:
 
     real64 const molarDensity = computeMolarDensity( pressure,
                                                      temperature,
-                                                     composition );
+                                                     composition.toSliceConst() );
     checkRelativeError( molarDensity, expectedMolarDensity, internal::relTol, internal::absTol );
   }
 
@@ -78,13 +78,13 @@ public:
     const auto [pressure, temperature, composition] = getInputData( data );
 
     real64 molarDensity = 0.0;
-    array1d< real64 > molarDensityDerivs( numDof );
+    stackArray1d< real64, numDof > molarDensityDerivs( numDof );
 
     computeMolarDensity( pressure,
                          temperature,
-                         composition,
+                         composition.toSliceConst(),
                          molarDensity,
-                         molarDensityDerivs );
+                         molarDensityDerivs.toSlice() );
 
     // Compare against numerical derivatives
     // -- Pressure derivative
@@ -190,16 +190,16 @@ private:
   }
 
   real64 computeMolarDensity( real64 const pressure, real64 const temperature,
-                              arrayView1d< real64 const > const & composition ) const
+                              arraySlice1d< real64 const > const & composition ) const
   {
     real64 molarDensity = 0.0;
-    array1d< real64 > molarDensityDerivs( numDof );
-    computeMolarDensity( pressure, temperature, composition, molarDensity, molarDensityDerivs );
+    stackArray1d< real64, numDof > molarDensityDerivs( numDof );
+    computeMolarDensity( pressure, temperature, composition, molarDensity, molarDensityDerivs.toSlice() );
     return molarDensity;
   }
 
   void computeMolarDensity( real64 const pressure, real64 const temperature,
-                            arrayView1d< real64 const > const & composition,
+                            arraySlice1d< real64 const > const & composition,
                             real64 & molarDensity,
                             arraySlice1d< real64 > const molarDensityDerivs ) const
   {
@@ -208,8 +208,8 @@ private:
     auto const volumeShift = componentProperties.m_componentVolumeShift;
 
     real64 compressibilityFactor = 0.0;
-    array1d< real64 > aPureCoefficient( numComps );
-    array1d< real64 > bPureCoefficient( numComps );
+    stackArray1d< real64, numComps > aPureCoefficient( numComps );
+    stackArray1d< real64, numComps > bPureCoefficient( numComps );
     real64 aMixtureCoefficient = 0.0;
     real64 bMixtureCoefficient = 0.0;
 
@@ -219,13 +219,13 @@ private:
                                 temperature,
                                 composition,
                                 componentProperties,
-                                aPureCoefficient,
-                                bPureCoefficient,
+                                aPureCoefficient.toSlice(),
+                                bPureCoefficient.toSlice(),
                                 aMixtureCoefficient,
                                 bMixtureCoefficient );
 
-    array1d< real64 > aMixtureCoefficientDerivs( numDof );
-    array1d< real64 > bMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > aMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > bMixtureCoefficientDerivs( numDof );
 
     CubicEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
@@ -233,33 +233,33 @@ private:
                                 temperature,
                                 composition,
                                 componentProperties,
-                                aPureCoefficient,
-                                bPureCoefficient,
+                                aPureCoefficient.toSliceConst(),
+                                bPureCoefficient.toSliceConst(),
                                 aMixtureCoefficient,
                                 bMixtureCoefficient,
-                                aMixtureCoefficientDerivs,
-                                bMixtureCoefficientDerivs );
+                                aMixtureCoefficientDerivs.toSlice(),
+                                bMixtureCoefficientDerivs.toSlice() );
 
     CubicEOSPhaseModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   composition,
                                   binaryInteractionCoefficients,
-                                  aPureCoefficient,
-                                  bPureCoefficient,
+                                  aPureCoefficient.toSliceConst(),
+                                  bPureCoefficient.toSliceConst(),
                                   aMixtureCoefficient,
                                   bMixtureCoefficient,
                                   compressibilityFactor );
 
-    array1d< real64 > compressibilityFactorDerivs( numDof );
+    stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
     CubicEOSPhaseModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   aMixtureCoefficient,
                                   bMixtureCoefficient,
                                   compressibilityFactor,
-                                  aMixtureCoefficientDerivs,
-                                  bMixtureCoefficientDerivs,
-                                  compressibilityFactorDerivs );
+                                  aMixtureCoefficientDerivs.toSliceConst(),
+                                  bMixtureCoefficientDerivs.toSliceConst(),
+                                  compressibilityFactorDerivs.toSlice() );
 
     CompositionalProperties::
       computeMolarDensity( numComps,
@@ -268,22 +268,22 @@ private:
                            composition,
                            volumeShift,
                            compressibilityFactor,
-                           compressibilityFactorDerivs,
+                           compressibilityFactorDerivs.toSliceConst(),
                            molarDensity,
                            molarDensityDerivs );
   }
 
   real64 computeMassDensity( real64 const pressure, real64 const temperature,
-                             arrayView1d< real64 const > const & composition ) const
+                             arraySlice1d< real64 const > const & composition ) const
   {
     real64 massDensity = 0.0;
-    array1d< real64 > massDensityDerivs( numDof );
-    computeMassDensity( pressure, temperature, composition, massDensity, massDensityDerivs );
+    stackArray1d< real64, numDof > massDensityDerivs( numDof );
+    computeMassDensity( pressure, temperature, composition, massDensity, massDensityDerivs.toSlice() );
     return massDensity;
   }
 
   void computeMassDensity( real64 const pressure, real64 const temperature,
-                           arrayView1d< real64 const > const & composition,
+                           arraySlice1d< real64 const > const & composition,
                            real64 & massDensity,
                            arraySlice1d< real64 > const massDensityDerivs ) const
   {
@@ -291,19 +291,19 @@ private:
     auto const molecularWeight = componentProperties.m_componentMolarWeight;
 
     real64 molarDensity = 0.0;
-    array1d< real64 > molarDensityDerivs( numDof );
+    stackArray1d< real64, numDof > molarDensityDerivs( numDof );
 
     computeMolarDensity( pressure, temperature,
                          composition,
                          molarDensity,
-                         molarDensityDerivs );
+                         molarDensityDerivs.toSlice() );
 
     CompositionalProperties::
       computeMassDensity( numComps,
                           composition,
                           molecularWeight,
                           molarDensity,
-                          molarDensityDerivs,
+                          molarDensityDerivs.toSliceConst(),
                           massDensity,
                           massDensityDerivs );
   }

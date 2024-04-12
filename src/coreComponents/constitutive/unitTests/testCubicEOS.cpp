@@ -53,9 +53,9 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -72,9 +72,9 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -91,9 +91,9 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -110,9 +110,9 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -149,9 +149,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -174,9 +174,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -199,9 +199,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -240,9 +240,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -265,9 +265,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -290,9 +290,9 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
   computeLogFugacityCoefficients( numComps,
-                                  pressure, temperature, composition,
+                                  pressure, temperature, composition.toSliceConst(),
                                   componentProperties,
-                                  logFugacityCoefficients );
+                                  logFugacityCoefficients.toSlice() );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -393,13 +393,13 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
-    array1d< real64 > aPureCoefficient( numComps );
-    array1d< real64 > bPureCoefficient( numComps );
+    stackArray1d< real64, numComps > aPureCoefficient( numComps );
+    stackArray1d< real64, numComps > bPureCoefficient( numComps );
 
-    array1d< real64 > aMixtureCoefficientDerivs( numDof );
-    array1d< real64 > bMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > aMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > bMixtureCoefficientDerivs( numDof );
 
-    array1d< real64 > composition;
+    stackArray1d< real64, numComps > composition;
     real64 const pressure = std::get< 0 >( testData );
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
@@ -409,10 +409,10 @@ public:
       real64 b = 0.0;
       CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
         numComps,
-        p, t, zmf,
+        p, t, zmf.toSliceConst(),
         componentProperties,
-        aPureCoefficient,
-        bPureCoefficient,
+        aPureCoefficient.toSlice(),
+        bPureCoefficient.toSlice(),
         a, b
         );
       return {a, b};
@@ -426,14 +426,14 @@ public:
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
-      aPureCoefficient,
-      bPureCoefficient,
+      aPureCoefficient.toSlice(),
+      bPureCoefficient.toSlice(),
       aMixtureCoefficient,
       bMixtureCoefficient,
-      aMixtureCoefficientDerivs,
-      bMixtureCoefficientDerivs );
+      aMixtureCoefficientDerivs.toSlice(),
+      bMixtureCoefficientDerivs.toSlice() );
 
     // Compare against numerical derivatives
     // -- Pressure derivative
@@ -547,16 +547,16 @@ public:
     auto const componentProperties = this->m_fluid->createKernelWrapper();
     auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
-    array1d< real64 > aPureCoefficient( numComps );
-    array1d< real64 > bPureCoefficient( numComps );
+    stackArray1d< real64, numComps > aPureCoefficient( numComps );
+    stackArray1d< real64, numComps > bPureCoefficient( numComps );
     real64 aMixtureCoefficient = 0.0;
     real64 bMixtureCoefficient = 0.0;
-    array1d< real64 > aMixtureCoefficientDerivs( numDof );
-    array1d< real64 > bMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > aMixtureCoefficientDerivs( numDof );
+    stackArray1d< real64, numDof > bMixtureCoefficientDerivs( numDof );
 
-    array1d< real64 > compressibilityFactorDerivs( numDof );
+    stackArray1d< real64, numDof > compressibilityFactorDerivs( numDof );
 
-    array1d< real64 > composition;
+    stackArray1d< real64, numComps > composition;
     real64 const pressure = std::get< 0 >( testData );
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
@@ -565,18 +565,18 @@ public:
       real64 z = 0.0;
       CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
         numComps,
-        p, t, zmf,
+        p, t, zmf.toSliceConst(),
         componentProperties,
-        aPureCoefficient,
-        bPureCoefficient,
+        aPureCoefficient.toSlice(),
+        bPureCoefficient.toSlice(),
         aMixtureCoefficient, bMixtureCoefficient
         );
       CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
         numComps,
-        zmf,
+        zmf.toSliceConst(),
         binaryInteractionCoefficients,
-        aPureCoefficient,
-        bPureCoefficient,
+        aPureCoefficient.toSliceConst(),
+        bPureCoefficient.toSliceConst(),
         aMixtureCoefficient,
         bMixtureCoefficient,
         z );
@@ -591,22 +591,22 @@ public:
       numComps,
       pressure,
       temperature,
-      composition,
+      composition.toSliceConst(),
       componentProperties,
-      aPureCoefficient,
-      bPureCoefficient,
+      aPureCoefficient.toSliceConst(),
+      bPureCoefficient.toSliceConst(),
       aMixtureCoefficient,
       bMixtureCoefficient,
-      aMixtureCoefficientDerivs,
-      bMixtureCoefficientDerivs );
+      aMixtureCoefficientDerivs.toSlice(),
+      bMixtureCoefficientDerivs.toSlice() );
     CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
       numComps,
       aMixtureCoefficient,
       bMixtureCoefficient,
       compressibilityFactor,
-      aMixtureCoefficientDerivs,
-      bMixtureCoefficientDerivs,
-      compressibilityFactorDerivs );
+      aMixtureCoefficientDerivs.toSliceConst(),
+      bMixtureCoefficientDerivs.toSliceConst(),
+      compressibilityFactorDerivs.toSlice() );
 
     // Compare against numerical derivatives
     // -- Pressure derivative
@@ -700,10 +700,10 @@ public:
   {
     auto const componentProperties = this->m_fluid->createKernelWrapper();
 
-    array1d< real64 > logFugacityCoefficients( numComps );
-    array2d< real64 > logFugacityCoefficientDerivs( numComps, numDof );
+    stackArray1d< real64, numComps > logFugacityCoefficients( numComps );
+    stackArray2d< real64, numComps *numDof > logFugacityCoefficientDerivs( numComps, numDof );
 
-    array1d< real64 > composition;
+    stackArray1d< real64, numComps > composition;
     real64 const pressure = std::get< 0 >( testData );
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
@@ -713,9 +713,9 @@ public:
       CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
                                                                  p,
                                                                  t,
-                                                                 zmf,
+                                                                 zmf.toSliceConst(),
                                                                  componentProperties,
-                                                                 displacedLogFugacityCoefficients );
+                                                                 displacedLogFugacityCoefficients.toSlice() );
       return displacedLogFugacityCoefficients[ic];
     };
 
@@ -723,18 +723,18 @@ public:
     CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
                                                                pressure,
                                                                temperature,
-                                                               composition,
+                                                               composition.toSliceConst(),
                                                                componentProperties,
-                                                               logFugacityCoefficients );
+                                                               logFugacityCoefficients.toSlice() );
 
     // Calculate derivatives
     CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
                                                                pressure,
                                                                temperature,
-                                                               composition,
+                                                               composition.toSliceConst(),
                                                                componentProperties,
-                                                               logFugacityCoefficients,
-                                                               logFugacityCoefficientDerivs );
+                                                               logFugacityCoefficients.toSliceConst(),
+                                                               logFugacityCoefficientDerivs.toSlice() );
 
     // Compare against numerical derivatives
     // -- Pressure derivative

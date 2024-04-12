@@ -90,11 +90,11 @@ public:
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
-                           phaseComposition,
+                           phaseComposition.toSliceConst(),
                            molarDensity,
-                           tempDerivs,
+                           tempDerivs.toSlice(),
                            massDensity,
-                           tempDerivs,
+                           tempDerivs.toSlice(),
                            false );
 
     checkRelativeError( molarDensity, expectedMolarDensity, relTol, absTol );
@@ -119,11 +119,11 @@ public:
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
-                           phaseComposition,
+                           phaseComposition.toSliceConst(),
                            molarDensity,
-                           molarDensityDerivs,
+                           molarDensityDerivs.toSlice(),
                            massDensity,
-                           massDensityDerivs,
+                           massDensityDerivs.toSlice(),
                            false );
 
     auto calculateDensity = [&]( real64 const p, real64 const t, auto const & zmf ) -> std::pair< real64, real64 > {
@@ -131,8 +131,12 @@ public:
       real64 densityMass = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
       kernelWrapper.compute( componentProperties, p, t,
-                             zmf,
-                             densityMolar, tempDerivs, densityMass, tempDerivs, false );
+                             zmf.toSliceConst(),
+                             densityMolar,
+                             tempDerivs.toSlice(),
+                             densityMass,
+                             tempDerivs.toSlice(),
+                             false );
       return {densityMolar, densityMass};
     };
 

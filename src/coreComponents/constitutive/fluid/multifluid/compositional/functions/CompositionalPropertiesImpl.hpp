@@ -37,7 +37,7 @@ namespace compositional
  *   Peneloux, A et al. 1982. Fluid phase equilibria, 8(1):7–23.
  *   https://doi.org/10.1016/0378-3812(82)80002-2
  */
-template <integer USD1, integer USD2>
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 const pressure,
@@ -88,7 +88,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
   }
 }
 
-template <integer USD1, integer USD2>
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void CompositionalProperties::computeMassDensity( integer const numComps,
                                                   arraySlice1d< real64 const, USD1 > const & composition,
@@ -134,4 +134,3 @@ void CompositionalProperties::computeMassDensity( integer const numComps,
 } // namespace geos
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_COMPOSITIONALPROPERTIESIMPL_HPP_
-

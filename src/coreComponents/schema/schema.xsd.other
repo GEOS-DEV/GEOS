@@ -1931,7 +1931,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1979,7 +1979,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongLBCType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
