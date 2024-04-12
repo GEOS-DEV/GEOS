@@ -283,7 +283,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Therefore, `ats` will exit with error code 0, even if some tests fail.
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
   echo "Running integrated tests..."
-  integratedTests/geos_ats.sh
+  integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
   # Note: Keep a copy of the run logs, so that the correct version will be packed
   cp -r integratedTests/TestResults integratedTests/TestResults_backup
 
