@@ -196,6 +196,20 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+  registerWrapper( viewKeyStruct::slsReferenceFrequenciesString(), &m_slsReferenceFrequencies ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( { } ).
+    setDescription( "Reference frequencies for the standard-linear-solid (SLS) anelasticity."
+                    "The default value is { }, corresponding to no attenuation. An array with the corresponding anelasticity coefficients must be provided." );
+
+  registerWrapper( viewKeyStruct::slsAnelasticityCoefficientsString(), &m_slsAnelasticityCoefficients ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( { } ).
+    setDescription( "Anelasticity coefficients for the standard-linear-solid (SLS) anelasticity."
+                    "The default value is { }, corresponding to no attenuation. An array with the corresponding reference frequencies must be provided." );
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -315,6 +329,11 @@ void WaveSolverBase::postProcessInput()
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers",
+                 InputError );
+
+  
+  GEOS_THROW_IF( m_slsReferenceFrequencies.size( 0 ) != m_slsAnelasticityCoefficients.size( 0 ),
+                 "The number of attenuation anelasticity coefficients must be equal to the bumber of reference frequencies",
                  InputError );
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );

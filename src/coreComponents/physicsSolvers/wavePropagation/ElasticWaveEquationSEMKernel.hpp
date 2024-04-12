@@ -49,7 +49,8 @@ namespace elasticWaveEquationSEMKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename SX = elasticfields::StiffnessVectorx, typename SY = elasticfields::StiffnessVectory, typename SZ = elasticfields::StiffnessVectorz >
 class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                              CONSTITUTIVE_TYPE,
                                                              FE_TYPE,
@@ -101,9 +102,9 @@ public:
     m_ux_n( nodeManager.getField< elasticfields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< elasticfields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< elasticfields::Displacementz_n >() ),
-    m_stiffnessVectorx( nodeManager.getField< elasticfields::StiffnessVectorx >() ),
-    m_stiffnessVectory( nodeManager.getField< elasticfields::StiffnessVectory >() ),
-    m_stiffnessVectorz( nodeManager.getField< elasticfields::StiffnessVectorz >() ),
+    m_stiffnessVectorx( nodeManager.getField< SX >() ),
+    m_stiffnessVectory( nodeManager.getField< SY >() ),
+    m_stiffnessVectorz( nodeManager.getField< SZ >() ),
     m_density( elementSubRegion.template getField< elasticfields::ElasticDensity >() ),
     m_velocityVp( elementSubRegion.template getField< elasticfields::ElasticVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getField< elasticfields::ElasticVelocityVs >() ),
@@ -113,7 +114,6 @@ public:
     GEOS_UNUSED_VAR( faceManager );
     GEOS_UNUSED_VAR( targetRegionIndex );
   }
-
 
 
   //*****************************************************************************

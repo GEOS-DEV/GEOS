@@ -19,6 +19,7 @@
 
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
+#include "ElasticWaveEquationSEMAttenuationKernel.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -147,6 +148,20 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                elasticfields::StiffnessVectorz,
                                elasticfields::ElasticFreeSurfaceNodeIndicator >( getName() );
 
+    integer l = m_slsReferenceFrequencies.size( 0 );
+    if( l > 0 )
+    {
+      nodeManager.registerField< elasticfields::DivPsix,
+                                 elasticfields::DivPsiy,
+                                 elasticfields::DivPsiz,
+                                 elasticfields::StiffnessVectorAx,
+                                 elasticfields::StiffnessVectorAy,
+                                 elasticfields::StiffnessVectorAz >( getName() );
+      nodeManager.getField< elasticfields::DivPsix >().resizeDimension< 1 > ( l );
+      nodeManager.getField< elasticfields::DivPsiy >().resizeDimension< 1 > ( l );
+      nodeManager.getField< elasticfields::DivPsiz >().resizeDimension< 1 > ( l );
+    }
+
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< elasticfields::ElasticFreeSurfaceFaceIndicator >( getName() );
 
@@ -157,6 +172,11 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
+      if( l > 0 )
+      {
+        subRegion.registerField< elasticfields::ElasticQualityFactorP >( getName() );
+        subRegion.registerField< elasticfields::ElasticQualityFactorS >( getName() );
+      }
     } );
 
   } );
@@ -564,25 +584,59 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
-  auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
-
-  finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
-
+  if( m_slsReferenceFrequencies.size( 0 ) == 0 )
+  {
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt ); 
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
+  }
+  else
+  {
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMAttenuationFactory( dt ); 
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "", 
+                                                            kernelFactory );
+  }
 
   addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
-  ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
-                                  mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
-                                  stiffnessVectorz, rhsx, rhsy, rhsz, freeSurfaceNodeIndicator,
-                                  solverTargetNodesSet );
+  integer l = m_slsReferenceFrequencies.size( 0 );
+  if( l > 0 )
+  {
+    arrayView1d< real32 > const stiffnessVectorAx = nodeManager.getField< elasticfields::StiffnessVectorAx >();
+    arrayView1d< real32 > const stiffnessVectorAy = nodeManager.getField< elasticfields::StiffnessVectorAy >();
+    arrayView1d< real32 > const stiffnessVectorAz = nodeManager.getField< elasticfields::StiffnessVectorAz >();
+    arrayView2d< real32 > const divpsix = nodeManager.getField< elasticfields::DivPsix >();
+    arrayView2d< real32 > const divpsiy = nodeManager.getField< elasticfields::DivPsiy >();
+    arrayView2d< real32 > const divpsiz = nodeManager.getField< elasticfields::DivPsiz >();
+    arrayView1d< real32 > const referenceFrequencies = m_slsReferenceFrequencies.toView();
+    arrayView1d< real32 > const anelasticityCoefficients = m_slsAnelasticityCoefficients.toView();
+    ElasticTimeSchemeSEM::AttenuationLeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
+                                               divpsix, divpsiy, divpsiz,
+                                               mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
+                                               stiffnessVectorz, stiffnessVectorAx, stiffnessVectorAy, stiffnessVectorAz,
+                                               rhsx, rhsy, rhsz, freeSurfaceNodeIndicator, solverTargetNodesSet,
+                                               referenceFrequencies, anelasticityCoefficients );
+  }
+  else
+  {
+    ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
+                                    mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
+                                    stiffnessVectorz, rhsx, rhsy, rhsz, freeSurfaceNodeIndicator,
+                                    solverTargetNodesSet );
+  }
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
@@ -615,6 +669,11 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   /// synchronize displacement fields
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addFields( FieldLocation::Node, { elasticfields::Displacementx_np1::key(), elasticfields::Displacementy_np1::key(), elasticfields::Displacementz_np1::key() } );
+
+  if( m_slsReferenceFrequencies.size( 0 ) > 0 )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { elasticfields::DivPsix::key(), elasticfields::DivPsiy::key(), elasticfields::DivPsiz::key() } );
+  }
 
   CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldsToBeSync,
@@ -680,6 +739,17 @@ void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
     stiffnessVectorx[a] = stiffnessVectory[a] = stiffnessVectorz[a] = 0.0;
     rhsx[a] = rhsy[a] = rhsz[a] = 0.0;
   } );
+  if( m_slsReferenceFrequencies.size( 0 ) > 0 )
+  {
+    arrayView1d< real32 > const stiffnessVectorAx = nodeManager.getField< elasticfields::StiffnessVectorAx >();
+    arrayView1d< real32 > const stiffnessVectorAy = nodeManager.getField< elasticfields::StiffnessVectorAy >();
+    arrayView1d< real32 > const stiffnessVectorAz = nodeManager.getField< elasticfields::StiffnessVectorAz >();
+    forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    {
+      localIndex const a = solverTargetNodesSet[n];
+      stiffnessVectorAx[a] = stiffnessVectorAy[a] = stiffnessVectorAz[a] = 0.0;
+    } );
+  }
 
 }
 

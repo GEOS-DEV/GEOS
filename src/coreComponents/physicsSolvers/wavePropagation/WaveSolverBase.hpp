@@ -121,8 +121,11 @@ public:
     static constexpr char const * receiverElemString() { return "rcvElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
-  };
 
+    static constexpr char const * slsReferenceFrequenciesString() { return "attenuationReferenceFrequencies"; }
+    static constexpr char const * slsAnelasticityCoefficientsString() { return "attenuationAnelasticityCoefficients"; }
+  };
+ 
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */
@@ -287,6 +290,12 @@ protected:
 
   /// Z component of the linear DAS direction vector
   array1d< real32 > m_linearDASVectorZ;
+
+  /// Vector containing the reference frequencies for the standard-linear-solid (SLS) anelasticity model.
+  array1d< real32 > m_slsReferenceFrequencies;
+
+  /// Vector containing the anelasticity coefficients for the standard-linear-solid (SLS) anelasticity model.
+  array1d< real32 > m_slsAnelasticityCoefficients;
 
   /// Indicate if we want to compute forward ou backward
   localIndex m_forward;
