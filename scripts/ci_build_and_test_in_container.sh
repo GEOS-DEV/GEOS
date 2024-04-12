@@ -180,6 +180,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die virtualenv ${ATS_PYTHON_HOME}
   export ATS_FILTER="np<=2"
 
+  python3 -m pip cache purge
+
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
   echo "Setting up a temporary directory to hold tests and baselines: $tempdir"
