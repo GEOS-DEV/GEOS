@@ -23,7 +23,10 @@
 
 #include <NamedType/named_type.hpp>
 
+#include <vtkCellData.h>
 #include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkDataSetSurfaceFilter.h>
 
 #include <algorithm>
 #include <utility>
@@ -76,7 +79,30 @@ Pack( buffer_unit_type *& buffer,
 }
 
 
-Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
+std::set< vtkIdType > extractBoundaryCells( vtkSmartPointer< vtkDataSet > mesh )
+{
+  auto f = vtkDataSetSurfaceFilter::New();
+  f->PassThroughCellIdsOn();
+  f->PassThroughPointIdsOff();
+  f->FastModeOff();
+
+  string const originalCellsKey = "ORIGINAL_CELLS";
+  f->SetOriginalCellIdsName( originalCellsKey.c_str() );
+  auto boundaryMesh = vtkPolyData::New();
+  f->UnstructuredGridExecute( mesh, boundaryMesh );
+  vtkIdTypeArray const * originalCells = vtkIdTypeArray::FastDownCast( boundaryMesh->GetCellData()->GetArray( originalCellsKey.c_str() ) );
+
+  std::set< vtkIdType > boundaryCellIdxs;
+  for( auto i = 0; i < originalCells->GetNumberOfTuples(); ++i )
+  {
+    boundaryCellIdxs.insert( originalCells->GetValue( i ) );
+  }
+
+  return boundaryCellIdxs;
+}
+
+
+Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh, std::set< vtkIdType > const & cellIds )
 {
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
 
@@ -87,7 +113,7 @@ Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
   {
     std::size_t numEdges = 0;
     std::size_t numFaces = 0;
-    for( auto c = 0; c < mesh->GetNumberOfCells(); ++c )
+    for( vtkIdType const & c : cellIds )
     {
       vtkCell * cell = mesh->GetCell( c );
       numEdges += cell->GetNumberOfEdges();
@@ -134,6 +160,7 @@ Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
   return { std::move( edges ), std::move( faces ) };
 }
 
+
 array1d< globalIndex > convertExchange( Exchange const & exchange )
 {
   array1d< globalIndex > result;
@@ -145,6 +172,24 @@ array1d< globalIndex > convertExchange( Exchange const & exchange )
   }
 
   return result;
+}
+
+
+Exchange buildFullData( vtkSmartPointer< vtkDataSet > mesh )
+{
+  std::set< vtkIdType > cellIds;
+  for( vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i )
+  {
+    cellIds.insert( cellIds.end(), i );
+  }
+
+  return buildSpecificData( mesh, cellIds );
+}
+
+
+Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
+{
+  return buildSpecificData( mesh, extractBoundaryCells( mesh ) );
 }
 
 Exchange convertExchange( array1d< globalIndex > const & input )
@@ -222,7 +267,7 @@ std::map< std::set< MpiRank >, std::set< Edge > > findOverlappingEdges( std::map
 // TODO Duplicated
 std::map< MpiRank, Exchange > exchange( int commId,
                                         std::vector< NeighborCommunicator > & neighbors,
-                                        Exchange && data )
+                                        Exchange const & data )
 {
   MPI_iCommData commData( commId );
   integer const numNeighbors = LvArray::integerConversion< integer >( neighbors.size() );
@@ -243,13 +288,13 @@ std::map< MpiRank, Exchange > exchange( int commId,
   MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
   MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
 
-  array1d< array1d< globalIndex > > tmpOutput( neighbors.size() );
+  array1d< array1d< globalIndex > > rawExchanged( neighbors.size() );
 
   for( integer i = 0; i < numNeighbors; ++i )
   {
     neighbors[i].mpiISendReceiveData( cv,
                                       commData.mpiSendBufferRequest( i ),
-                                      tmpOutput[i],
+                                      rawExchanged[i],
                                       commData.mpiRecvBufferRequest( i ),
                                       commId,
                                       MPI_COMM_GEOSX );
@@ -260,36 +305,43 @@ std::map< MpiRank, Exchange > exchange( int commId,
   std::map< MpiRank, Exchange > output;
   for( auto i = 0; i < numNeighbors; ++i )
   {
-    output[MpiRank{ neighbors[i].neighborRank() }] = convertExchange( tmpOutput[i] );
+    output[MpiRank{ neighbors[i].neighborRank() }] = convertExchange( rawExchanged[i] );
   }
-  output[MpiRank{ MpiWrapper::commRank() }] = std::move( data );
   return output;
 }
 
 using ScannedOffsets = std::map< std::set< MpiRank >, integer >;
 
+
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                       std::set< int > const & neighbors )
+                       std::set< MpiRank > const & neighbors )
 {
   // Now we exchange the data with our neighbors.
   MpiRank const curRank{ MpiWrapper::commRank() };
 
   std::vector< NeighborCommunicator > ncs;
-  for( int const & rank: neighbors )
+  for( MpiRank const & rank: neighbors )
   {
-    ncs.emplace_back( rank );
+    ncs.emplace_back( rank.get() );
   }
 
+  CommID const commId = CommunicationTools::getInstance().getCommID();
+  std::map< MpiRank, Exchange > exchanged = exchange( int( commId ), ncs, buildExchangeData( mesh ) );
+  exchanged[MpiRank{ MpiWrapper::commRank() }] = buildFullData( mesh );
+
+  std::map< std::set< MpiRank >, std::set< Edge > > const overlappingEdges = findOverlappingEdges( exchanged, curRank, neighbors );
+}
+
+void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                       std::set< int > const & neighbors )
+{
   std::set< MpiRank > neighbors_;
   for( int const & rank: neighbors )
   {
     neighbors_.insert( MpiRank{ rank } );
   }
 
-  CommID const commId = CommunicationTools::getInstance().getCommID();
-  std::map< MpiRank, Exchange > const exchanged = exchange( int( commId ), ncs, buildExchangeData( mesh ) );
-
-  std::map< std::set< MpiRank >, std::set< Edge > > const overlappingEdges = findOverlappingEdges( exchanged, curRank, neighbors_ );
+  return doTheNewGhosting(mesh, neighbors_);
 }
 
 }  // end of namespace geos::ghosting
