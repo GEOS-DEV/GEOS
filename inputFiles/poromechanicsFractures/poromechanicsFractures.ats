@@ -87,7 +87,7 @@ decks = [
         name="PoroElastic_dfm_PEBICrack_smoke",
         description='Plane strain poro-elastic problems with conforming vertical fracture (unstructured PEBI grid)',
         partitions=((1, 1, 1), (3, 1, 1)),
-        restart_step=0,
+        restart_step=5,
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
