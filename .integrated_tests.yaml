@@ -1,4 +1,4 @@
 ---
 baselines:
-  bucket: geos-dev
-  baseline: baseline_integratedTests-pr3044-4373-452925a
+  bucket: geosx
+  baseline: integratedTests/baseline_integratedTests-pr3044-4373-452925a
