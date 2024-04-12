@@ -54,48 +54,84 @@ using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, f
 //};
 
 using Edge = std::pair< NodeGlbIdx, NodeGlbIdx >;
-using Face = std::vector< NodeGlbIdx >;
+using Face = std::set< NodeGlbIdx >;
 
 struct Exchange
 {
   std::set< Edge > edges;
-//  std::set< Face > faces;
+  std::set< Face > faces;
+//  SortedArray< Edge > edges;
+//  SortedArray< Face > faces;
 };
+
+template< bool DO_PACKING >
+localIndex
+Pack( buffer_unit_type *& buffer,
+      Exchange const & exchange )
+{
+  localIndex sizeOfPackedChars = 0;
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, exchange.edges );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, exchange.faces );
+  return sizeOfPackedChars;
+}
+
 
 Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
 {
   vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
 
-  std::vector< Edge > tmp;
+  std::vector< Edge > tmpEdges;
+  std::vector< Face > tmpFaces;
 
-  // Pre-allocation of the temporary.
+  // Pre-allocation of the temporary vectors.
   {
     std::size_t numEdges = 0;
+    std::size_t numFaces = 0;
     for( auto c = 0; c < mesh->GetNumberOfCells(); ++c )
     {
       vtkCell * cell = mesh->GetCell( c );
       numEdges += cell->GetNumberOfEdges();
+      numFaces += cell->GetNumberOfFaces();
     }
-    tmp.reserve( numEdges );
+    tmpEdges.reserve( numEdges );
+    tmpFaces.reserve( numFaces );
   }
 
   // Filling the temporary.
   for( auto c = 0; c < mesh->GetNumberOfCells(); ++c )
   {
     vtkCell * cell = mesh->GetCell( c );
+
     for( auto e = 0; e < cell->GetNumberOfEdges(); ++e )
     {
       vtkCell * edge = cell->GetEdge( e );
-      vtkIdType const ln0 = edge->GetPointId( 0 ), ln1 = edge->GetPointId( 1 );
-      vtkIdType const gn0 = globalPtIds->GetValue( ln0 ), gn1 = globalPtIds->GetValue( ln1 );
-      tmp.emplace_back( std::minmax( { gn0, gn1 } ) );
+      vtkIdType const ln0 = edge->GetPointId( 0 );
+      vtkIdType const ln1 = edge->GetPointId( 1 );
+      vtkIdType const gn0 = globalPtIds->GetValue( ln0 );
+      vtkIdType const gn1 = globalPtIds->GetValue( ln1 );
+      tmpEdges.emplace_back( std::minmax( { gn0, gn1 } ) );
+    }
+
+    for( auto f = 0; f < cell->GetNumberOfFaces(); ++f )
+    {
+      vtkCell * face = cell->GetFace( f );
+      vtkIdList * pids = face->GetPointIds();
+      Face ff;
+      for( auto i = 0; i < pids->GetNumberOfIds(); ++i )
+      {
+        vtkIdType const lni = face->GetPointId( i );
+        vtkIdType const gni = globalPtIds->GetValue( lni );
+        ff.insert( NodeGlbIdx{ gni } );
+      }
+      tmpFaces.emplace_back( ff );
     }
   }
 
   // Removing the duplicates by copying into a `std::set`.
-  std::set< Edge > const edges{ tmp.cbegin(), tmp.cend() };
+  std::set< Edge > edges{ tmpEdges.cbegin(), tmpEdges.cend() };  // SortedArray requires the input to be sorted already.
+  std::set< Face > faces{ tmpFaces.cbegin(), tmpFaces.cend() };
 
-  return { edges };
+  return { std::move( edges ), std::move( faces ) };
 }
 
 array1d< globalIndex > convertExchange( Exchange const & exchange )
@@ -127,21 +163,33 @@ Exchange convertExchange( array1d< globalIndex > const & input )
 /**
  * @brief
  * @param exchanged
- * @param neighborhood including current rank
+ * @param neighbors excluding current rank
  */
 std::map< std::set< MpiRank >, std::set< Edge > > findOverlappingEdges( std::map< MpiRank, Exchange > const & exchanged,
                                                                         MpiRank curRank,
-                                                                        std::set< MpiRank > const & neighborhood )
+                                                                        std::set< MpiRank > const & neighbors )
 {
   GEOS_LOG_RANK( "Starting findOverlappingEdges" );
   GEOS_LOG_RANK( "exchanged.size() = " << exchanged.size() );
 
   std::map< Edge, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms?
-  for( MpiRank const & rank: neighborhood )
+  // We "register" all the edges of the current rank: they are the only one we're interested in.
+  for( Edge const & edge: exchanged.at( curRank ).edges )
   {
-    for( Edge const & edge: exchanged.at( rank ).edges )
+    counts.emplace_hint( counts.end(), edge, std::set< MpiRank >{ curRank } );
+  }
+
+  // We now loop on the neighbor edges.
+  // If a neighbor has an edge in common with the current rank, they we store it.
+  for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
+  {
+    for( Edge const & edge: exchanged.at( neighborRank ).edges )
     {
-      counts[edge].insert( rank );
+      auto it = counts.find( edge );
+      if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
+      {
+        it->second.insert( neighborRank );
+      }
     }
   }
 
@@ -154,7 +202,7 @@ std::map< std::set< MpiRank >, std::set< Edge > > findOverlappingEdges( std::map
     }
   }
 
-  // Checking if neighborhood is too wide...  // TODO do we care?
+  // Checking if neighbors is too wide...  // TODO do we care?
   std::set< MpiRank > usefulNeighbors;
   for( auto const & [ranks, edges]: ranksToIntersections )
   {
@@ -164,7 +212,7 @@ std::map< std::set< MpiRank >, std::set< Edge > > findOverlappingEdges( std::map
     }
   }
   std::vector< MpiRank > uselessNeighbors;
-  std::set_difference( neighborhood.cbegin(), neighborhood.cend(), usefulNeighbors.cbegin(), usefulNeighbors.cend(), std::back_inserter( uselessNeighbors ) );
+  std::set_difference( neighbors.cbegin(), neighbors.cend(), usefulNeighbors.cbegin(), usefulNeighbors.cend(), std::back_inserter( uselessNeighbors ) );
   // TODO... Remove the neighbors?
   GEOS_LOG_RANK( "Ending findOverlappingEdges" );
 
@@ -218,6 +266,7 @@ std::map< MpiRank, Exchange > exchange( int commId,
   return output;
 }
 
+using ScannedOffsets = std::map< std::set< MpiRank >, integer >;
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                        std::set< int > const & neighbors )
@@ -231,17 +280,16 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
     ncs.emplace_back( rank );
   }
 
-  std::set< MpiRank > neighborhood;
+  std::set< MpiRank > neighbors_;
   for( int const & rank: neighbors )
   {
-    neighborhood.insert( MpiRank{ rank } );
+    neighbors_.insert( MpiRank{ rank } );
   }
-  neighborhood.insert( curRank );
 
   CommID const commId = CommunicationTools::getInstance().getCommID();
   std::map< MpiRank, Exchange > const exchanged = exchange( int( commId ), ncs, buildExchangeData( mesh ) );
 
-  std::map< std::set< MpiRank >, std::set< Edge > > const overlappingEdges = findOverlappingEdges( exchanged, curRank, neighborhood );
+  std::map< std::set< MpiRank >, std::set< Edge > > const overlappingEdges = findOverlappingEdges( exchanged, curRank, neighbors_ );
 }
 
 }  // end of namespace geos::ghosting
