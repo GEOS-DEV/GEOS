@@ -136,9 +136,9 @@ public:
    */
   integer const & getMarginTitle() const;
 
-    /**
+  /**
    * @brief Set the minimal margin width between row content and borders.
-   * @param marginType The margin value
+   * @param marginValue The margin value
    */
   void setMargin( MarginValue marginValue );
 

@@ -328,8 +328,8 @@ TEST( testTable, tableSetMargin )
 // "| value 1 |long value 1|   3.0034|3.0129877|       |      1|\n"
 // "| value 1 |long value 2|   100.45|4.0129877|      1|      2|\n"
 // "+---------+------------+---------+---------+-------+-------+\n\n"
-  //              );
-  // }
+//              );
+// }
 }
 
 int main( int argc, char * * argv )

@@ -37,7 +37,7 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameter, st
   setMargin( MarginValue::medium );
   for( size_t idx = 0; idx< columnParameter.size(); ++idx )
   {
-      m_columns.push_back( {columnParameter[idx], {}, ""} );
+    m_columns.push_back( {columnParameter[idx], {}, ""} );
   }
 }
 
