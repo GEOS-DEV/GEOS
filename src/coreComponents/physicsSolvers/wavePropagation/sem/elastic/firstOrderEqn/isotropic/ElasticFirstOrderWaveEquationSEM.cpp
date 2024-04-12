@@ -184,7 +184,7 @@ void ElasticFirstOrderWaveEquationSEM::postProcessInput()
   m_sourceRegion.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_rcvElem.resize( numReceiversGlobal );
+  m_receiverElem.resize( numReceiversGlobal );
   m_receiverRegion.resize( numReceiversGlobal );
 
   m_displacementxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
@@ -223,7 +223,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
+  arrayView1d< localIndex > const receiverElem = m_receiverElem.toView();
   arrayView1d< localIndex > const receiverRegion = m_receiverRegion.toView();
 
   receiverNodeIds.setValues< serialPolicy >( -1 );
@@ -285,7 +285,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         sourceRegion,
         receiverCoordinates,
         receiverIsLocal,
-        rcvElem,
+        receiverElem,
         receiverNodeIds,
         receiverConstants,
         receiverRegion,

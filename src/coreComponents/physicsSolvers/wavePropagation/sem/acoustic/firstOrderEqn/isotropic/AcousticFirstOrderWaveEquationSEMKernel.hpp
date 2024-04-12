@@ -44,6 +44,7 @@ struct VelocityComputation
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] p_np1 pressure array (only used here)
+   * @param[in] density cell-wise density
    * @param[in] dt time-step
    * @param[out] velocity_x velocity array in the x direction (updated here)
    * @param[out] velocity_y velocity array in the y direction (updated here)

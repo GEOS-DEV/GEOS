@@ -38,7 +38,7 @@ struct StressComputation
     : m_finiteElement( finiteElement )
   {}
 
-   /**
+  /**
    * @brief Launches the computation of the strain tensor for one iteration
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
@@ -52,7 +52,7 @@ struct StressComputation
    * @param[in] velocityVp P-wavespeed array
    * @param[in] velocityVs S-wavespeed array
    * @param[in] lambda lambda (Lamé parameter) array
-   * @param[in] mu mu (Lamé parameter) array 
+   * @param[in] mu mu (Lamé parameter) array
    * @param[in] sourceConstants constant part of the source terms
    * @param[in] sourceIsLocal flag indicating whether the source is accessible or not
    * @param[in] sourceElem element where a source is located
@@ -240,7 +240,7 @@ struct VelocityComputation
     : m_finiteElement( finiteElement )
   {}
 
-   /**
+  /**
    * @brief Launches the computation of the displacement for one iteration
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy

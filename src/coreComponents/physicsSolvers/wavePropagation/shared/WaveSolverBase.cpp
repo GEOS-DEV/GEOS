@@ -192,7 +192,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Region containing the receivers" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_receiverElem ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
@@ -489,7 +489,7 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_rcvElem,
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_receiverElem,
                                                    m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }
