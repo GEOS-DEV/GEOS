@@ -76,6 +76,7 @@
       fieldName="acousticDelta"
       scale="0.1"
       setNames="{ all }"/>
+  </FieldSpecifications>
   <Solvers>
     <!-- define the solver -->
     <!-- define the source coordinates -->
