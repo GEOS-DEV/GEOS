@@ -185,7 +185,7 @@ TEST( testTable, tableEmptyTitle )
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
-             "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
+             "\n+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
              "|  Cras egestas  |  CoordX  |           C           |  CoordZ     |  Prev     |   Next    |\n"
              "|                |          |                       |             |  element  |  element  |\n"
              "+----------------+----------+-----------------------+-------------+-----------+-----------+\n"
@@ -220,7 +220,7 @@ TEST( testTable, table2DTable )
   //log
   TableTextFormatter const tableLog( tableLayout );
   EXPECT_EQ( tableLog.toString( tableconverted.tableData ),
-             "+---------------------+--------------------+------------------------+\n"
+             "\n+---------------------+--------------------+------------------------+\n"
              "|     Viscosity kg*s  |  Pression = 10000  |      Pression = 15000  |\n"
              "+---------------------+--------------------+------------------------+\n"
              "|  Temperature = 300  |              0.03  |                  0.02  |\n"

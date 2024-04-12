@@ -36,19 +36,14 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
   return m_rows;
 }
 
-string const & TableData::getErrorMsgConversion() const
+std::vector< string > const & TableData::getErrorMsgConversion() const
 {
   return errorMsgConversion;
 }
 
 void TableData::setErrorMsgConversion( string const & msg )
 {
-  if( msg.empty() )
-  {
-    errorMsgConversion =+"\n" + msg;
-    return;
-  }
-  errorMsgConversion = msg;
+  errorMsgConversion.push_back( msg );
 }
 
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
@@ -96,14 +91,7 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
 
   if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
   {
-    if( !flag )
-    {
-      tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
-    }
-    else
-    {
-      tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
-    }
+    tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
   }
   return tableData1D;
 }

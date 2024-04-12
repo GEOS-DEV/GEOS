@@ -60,7 +60,7 @@ public:
    * @brief Get the Error Msg Conversion string
    * @return The error msg conversion
    */
-  string const & getErrorMsgConversion() const;
+  std::vector< string > const & getErrorMsgConversion() const;
 
   /**
    * @brief Set the Error Msg Conversion object
@@ -72,8 +72,8 @@ protected:
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
 
-  /// store error if there are any inconsistencies when we convert TableData2D => TableData
-  string errorMsgConversion;
+  /// store error if there are any inconsistencies related to the table, i e : when we convert TableData2D => TableData
+  std::vector< string > errorMsgConversion;
 
 };
 

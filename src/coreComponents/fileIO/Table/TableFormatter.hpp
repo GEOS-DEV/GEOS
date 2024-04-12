@@ -54,7 +54,7 @@ protected:
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
                                  std::vector< std::vector< string > > const & tableData,
-                                 string & msgTableError ) const;
+                                 std::vector< string > & msgTableError ) const;
 
 };
 
@@ -128,15 +128,14 @@ private:
   /**
    * @brief Converts a TableLayout into a formatted representation.
    * @param tableOutput The output stream
-   * @param columns The vectors of table columns
-   * @param nbRows Number of rows in the table
+   * @param columns The vector containing all table columns
+   * @param msgTableError A vector containg all error related to the table
    * @param sectionSeparator An empty string for building the section separator
    */
   void layoutToString( std::ostringstream & tableOutput,
                        std::vector< TableLayout::Column > & columns,
-                       integer const nbRows,
-                       string & sectionSeparator,
-                       string & msgTableError ) const;
+                       std::vector< string > & msgTableError,
+                       string & sectionSeparator ) const;
 
   /**
    * @brief Split all header names by detecting the newline \\n character.
@@ -159,37 +158,68 @@ private:
 
   /**
    * @brief For each column find and set the column's longest string
+   * @param columns The vector containg all columns
    */
-  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns, size_t const & nbRows ) const;
+  void findAndSetMaxStringSize( std::vector< TableLayout::Column > & columns ) const;
 
   /**
-   * @brief Compute the largest string size in the table. If the table title is the largest string size in the table, recalculate for all
-   * columns the \p m_maxStringSize value by adding extra characters
-   * @param sectionlineLength The length of a section line
-   * @param titleLineLength The length of a title line
+   * @brief recalculate the largest string size for each columns
+   * @param extraLines Extra characters to be added to \p m_maxStringSize of each columns
    */
-  void computeAndSetMaxStringSize( std::vector< TableLayout::Column > & columns,
-                                   string::size_type const sectionlineLength,
-                                   string::size_type const titleLineLength ) const;
+  void recalculateMaxStringSize( std::vector< TableLayout::Column > & columns, integer const extraLines ) const;
 
   /**
-   * @brief Compute and build the top and the section line separator
-   * @param topSeparator An empty string to be built
-   * @param sectionSeparator An empty string to be built
+   * @brief Compute the max table line length
+   * @param columns Vector of column containing containing the largest string for each column
+   * @param msgTableError Vector containing all error messages
    */
-  void computeAndBuildSeparator( std::vector< TableLayout::Column > & columns,
-                                 string & topSeparator,
-                                 string & sectionSeparator,
-                                 string & msgTableError ) const;
+  void computeTableMaxLineLength( std::vector< TableLayout::Column > & columns,
+                                  std::vector< string > & msgTableError ) const;
+
+  /**
+   * @brief Build all separator needed from length information contained in columns vector
+   * @param topSeparator Top separator to be built
+   * @param sectionSeparator section separator to be built
+   */
+  void buildTableSeparators( std::vector< TableLayout::Column > & columns,
+                             string & topSeparator,
+                             string & sectionSeparator ) const;
+
+  /**
+   * @brief add a row on top of the table
+   * @param tableOutput The output stream
+   * @param msg Vector of string to display
+   * @param topSeparator The top table separator
+   * @param sectionSeparator The section table separator
+   */
+  void addTopRow( std::ostringstream & tableOutput,
+                  std::vector< string > const & msg,
+                  string_view topSeparator,
+                  string_view sectionSeparator ) const;
+
+  /**
+   * @brief Add a row on top of the table
+   * @param tableOutput The output stream
+   * @param msg The string to display
+   * @param topSeparator The top table separator
+   * @param sectionSeparator The section table separator
+   */
+  void addTopRow( std::ostringstream & tableOutput,
+                  string const & msg,
+                  string_view topSeparator,
+                  string_view sectionSeparator ) const;
 
   /**
    * @brief Build a row at the top of the table
-   * @param topRow A row being built at the top of the table.
-   * @param msg A message to be display.
-   * @param topSeparator The top line separator
-   * @param sectionSeparator The section line separator
+   * @param tableOutput The output stream
+   * @param msg The string to display.
+   * @param topSeparator The top table separator
+   * @param sectionSeparator The section table separator
    */
-  void buildTopRow( string & topRow, string & msg, string_view topSeparator, string_view sectionSeparator ) const;
+  void buildTopRow( std::ostringstream & tableOutput,
+                    string const & msg,
+                    string_view topSeparator,
+                    string_view sectionSeparator ) const;
 
   /**
    * @brief Build a section by specifying it's type ( header or section )
