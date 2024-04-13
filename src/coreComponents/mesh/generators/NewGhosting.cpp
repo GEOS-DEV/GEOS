@@ -367,30 +367,29 @@ std::map< MpiRank, Exchange > exchange( int commId,
   return output;
 }
 
-using ScannedOffsets = std::map< std::set< MpiRank >, integer >;
+
+struct ScannedOffsets
+{
+  std::map< std::set< MpiRank >, EdgeGlbIdx > edgeOffsets;
+  std::map< std::set< MpiRank >, FaceGlbIdx > faceOffsets;
+  EdgeGlbIdx edgeRestart;
+  FaceGlbIdx faceRestart;
+};
 
 
 std::size_t buildMaxBufferSize( Buckets const & buckets )
 {
-  std::size_t edgeSize = std::size( buckets.edges );
-  for( auto const & [ranks, edges]: buckets.edges )
+  auto const f = []( auto const & bucket ) -> std::size_t
   {
-    edgeSize += std::size( ranks ) + 1;
-    edgeSize += 2 * std::size( edges ) + 1;
-  }
-
-  std::size_t faceSize = std::size( buckets.faces );
-  for( auto const & [ranks, faces]: buckets.faces )
-  {
-    faceSize += std::size( ranks ) + 1;
-    for( Face const & face: faces )
+    std::size_t size = std::size( bucket );
+    for( auto const & [ranks, _]: bucket )
     {
-      faceSize = std::size( face ) + 1;
+      size += std::size( ranks ) + 1 + 1;  // One `+1` for the size of the ranks set, the other one for the offset
     }
-  }
+    return size;
+  };
 
-  std::size_t const total = edgeSize + faceSize;
-  return MpiWrapper::sum( total );
+  return MpiWrapper::sum( f( buckets.edges ) + f( buckets.faces ) );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
