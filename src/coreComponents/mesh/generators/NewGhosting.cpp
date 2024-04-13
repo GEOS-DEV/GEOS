@@ -389,7 +389,7 @@ std::size_t buildMaxBufferSize( Buckets const & buckets )
     return size;
   };
 
-  return MpiWrapper::sum( f( buckets.edges ) + f( buckets.faces ) );
+  return MpiWrapper::sum( f( buckets.edges ) + f( buckets.faces ) );  // Add the ScannedOffsets::{edge, face}Restart
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
