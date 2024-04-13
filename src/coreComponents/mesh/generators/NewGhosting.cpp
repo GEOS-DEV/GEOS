@@ -370,6 +370,29 @@ std::map< MpiRank, Exchange > exchange( int commId,
 using ScannedOffsets = std::map< std::set< MpiRank >, integer >;
 
 
+std::size_t buildMaxBufferSize( Buckets const & buckets )
+{
+  std::size_t edgeSize = std::size( buckets.edges );
+  for( auto const & [ranks, edges]: buckets.edges )
+  {
+    edgeSize += std::size( ranks ) + 1;
+    edgeSize += 2 * std::size( edges ) + 1;
+  }
+
+  std::size_t faceSize = std::size( buckets.faces );
+  for( auto const & [ranks, faces]: buckets.faces )
+  {
+    faceSize += std::size( ranks ) + 1;
+    for( Face const & face: faces )
+    {
+      faceSize = std::size( face ) + 1;
+    }
+  }
+
+  std::size_t const total = edgeSize + faceSize;
+  return MpiWrapper::sum( total );
+}
+
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                        std::set< MpiRank > const & neighbors )
 {
@@ -388,6 +411,8 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   exchanged[MpiRank{ MpiWrapper::commRank() }] = buildFullData( mesh );
 
   Buckets const buckets = buildIntersectionBuckets( exchanged, curRank, neighbors );
+
+  std::size_t const maxBufferSize = buildMaxBufferSize( buckets );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
