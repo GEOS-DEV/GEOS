@@ -260,7 +260,7 @@ std::unique_ptr< TestFluid< numComps > > NegativeTwoPhaseFlashTest9CompFixture< 
         1.0000e-02, 0.0000e+00, 2.8000e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00,
         1.0000e-02, 0.0000e+00, 4.5320e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00
       } );
-  return std::move( fluid );
+  return fluid;
 }
 
 using NegativeTwoPhaseFlash9CompPR = NegativeTwoPhaseFlashTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
