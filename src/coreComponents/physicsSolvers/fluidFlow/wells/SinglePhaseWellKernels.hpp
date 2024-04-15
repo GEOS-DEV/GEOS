@@ -35,6 +35,26 @@ namespace geos
 namespace singlePhaseWellKernels
 {
 
+
+template< integer IS_THERMAL >
+struct ColOffset_WellJac {};
+
+
+template<>
+struct ColOffset_WellJac< 0 >
+{
+  static constexpr integer dP = 0;
+  static constexpr integer dQ = 1;
+};
+template<>
+struct ColOffset_WellJac< 1 >
+{
+  static constexpr integer dP = 0;
+  static constexpr integer dQ = 1;
+  static constexpr integer dT = 2;
+};
+
+
 // tag to access well and reservoir elements in perforation rates computation
 struct SubRegionTag
 {
@@ -500,6 +520,284 @@ struct SolutionCheckKernel
   }
 };
 
+/******************************** ElementBasedAssemblyKernel ********************************/
+
+/**
+ * @class ElementBasedAssemblyKernel
+ * @tparam NUM_DOF number of degrees of freedom
+ * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
+ */
+template< integer NUM_DOF >
+class ElementBasedAssemblyKernel
+{
+public:
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+
+  /// Compute time value for the number of degrees of freedom
+  static constexpr integer numDof = NUM_DOF;
+
+  /// Compute time value for the number of equations
+  static constexpr integer numEqn = NUM_DOF;
+
+  /**
+   * @brief Constructor
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  ElementBasedAssemblyKernel( globalIndex const rankOffset,
+                              string const dofKey,
+                              ElementSubRegionBase const & subRegion,
+                              constitutive::SingleFluidBase const & fluid,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
+    :
+    m_rankOffset( rankOffset ),
+    m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
+    m_elemGhostRank( subRegion.ghostRank() ),
+    m_wellElemVolume( subRegion.getElementVolume() ),
+    m_wellElemDensity( fluid.density() ),
+    m_wellElemDensity_n( fluid.density_n() ),
+
+    m_dWellElemDensity_dPressure( fluid.dDensity_dPressure()  ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    //  volume information (used by both accumulation and volume balance)
+    real64 volume = 0.0;
+    real64 density = 0.0;
+    real64 density_n = 0.0;
+    real64 dDensity_dPres = 0.0;
+
+
+    // Residual information
+
+    /// Index of the local row corresponding to this element
+    localIndex localRow = -1;
+
+    /// Indices of the matrix rows/columns corresponding to the dofs in this element
+    globalIndex dofIndices[numDof]{};
+    globalIndex eqnRowIndices[numDof]{};
+    globalIndex dofColIndices[numDof]{};
+
+    /// C-array storage for the element local residual vector (all equations )
+    real64 localResidual[numDof]{};
+
+    /// C-array storage for the element local Jacobian matrix (all equations  , all dofs)
+    real64 localJacobian[numDof][numDof]{};
+
+  };
+  /**
+   * @brief Getter for the ghost rank of an element
+   * @param[in] ei the element index
+   * @return the ghost rank of the element
+   */
+  GEOS_HOST_DEVICE
+  integer elemGhostRank( localIndex const ei ) const
+  { return m_elemGhostRank( ei ); }
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] ei the element index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    // initialize the volume
+    stack.volume = m_wellElemVolume[ei];
+    stack.density = m_wellElemDensity[ei][0];
+    stack.density_n = m_wellElemDensity_n[ei][0];
+    stack.dDensity_dPres = m_dWellElemDensity_dPressure[ei][0];
+
+    // set row index and degrees of freedom indices for this element (mass + vol bal)
+    for( integer ic = 0; ic < numDof; ++ic )
+    {
+      stack.eqnRowIndices[ic] = m_wellElemDofNumber[ei] +  ic - m_rankOffset;
+    }
+
+    // set DOF col indices for this block ( mass + vol bal)
+    for( integer idof = 0; idof < numDof; ++idof )
+    {
+      stack.dofColIndices[idof] = m_wellElemDofNumber[ei]   + idof;
+    }
+
+    for( integer jc = 0; jc < numDof; ++jc )
+    {
+      stack.localResidual[jc] = 0.0;
+      for( integer ic = 0; ic < numDof; ++ic )
+      {
+        stack.localJacobian[jc][ic] = 0.0;
+      }
+
+    }
+
+  }
+
+
+  /**
+   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   * @param[in] phaseAmountKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void computeAccumulation( localIndex const iwelem,
+                            StackVariables & stack,
+                            FUNC && KernelOp = NoOpFunc{} ) const
+  {
+
+    localIndex const eqnRowIndex = m_wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - m_rankOffset;
+    globalIndex const presDofColIndex = m_wellElemDofNumber[iwelem] + COFFSET::DPRES;
+
+    stack.localResidual[0] = stack.volume * ( stack.density - stack.density_n );
+    stack.localJacobian[0][1] = stack.volume * stack.dDensity_dPres;
+
+    KernelOp();
+    // check zero diagonal (works only in debug)
+    /*
+       for( integer ic = 0; ic < numComp; ++ic )
+       {
+       GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
+                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
+       }
+     */
+  }
+
+
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
+                 StackVariables & stack ) const
+  {
+
+    // add contribution to residual and jacobian into:
+    // - mass bal
+    // - pressure eqn
+    // - energy if thermal
+    // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
+
+    for( integer i = 0; i < NUM_DOF; ++i )
+    {
+      m_localRhs[stack.eqnRowIndices[i]]  += stack.localResidual[i];
+      m_localMatrix.template addToRow< serialAtomic >( stack.eqnRowIndices[i],
+                                                       stack.dofColIndices,
+                                                       stack.localJacobian[i],
+                                                       numDof );
+    }
+
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( kernelComponent.elemGhostRank( iwelem ) >= 0 )
+      {
+        return;
+      }
+      typename KERNEL_TYPE::StackVariables stack;
+      kernelComponent.setup( iwelem, stack );
+      kernelComponent.computeAccumulation( iwelem, stack );
+      kernelComponent.complete( iwelem, stack );
+
+    } );
+  }
+
+protected:
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
+
+  /// View on the dof numbers
+  arrayView1d< globalIndex const > const m_wellElemDofNumber;
+
+  /// View on the ghost ranks
+  arrayView1d< integer const > const m_elemGhostRank;
+
+  /// View on the element volumes
+  arrayView1d< real64 const > const m_wellElemVolume;
+
+  /// Views on the densities
+  arrayView2d< real64 const > const m_wellElemDensity;
+  arrayView2d< real64 const > const m_wellElemDensity_n;
+  arrayView2d< real64 const > const m_dWellElemDensity_dPressure;
+
+  /// View on the local CRS matrix
+  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  /// View on the local RHS
+  arrayView1d< real64 > const m_localRhs;
+
+
+};
+
+
+/**
+ * @class ElementBasedAssemblyKernelFactory
+ */
+class ElementBasedAssemblyKernelFactory
+{
+public:
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const dofKey,
+                   ElementSubRegionBase const & subRegion,
+                   constitutive::SingleFluidBase const & fluid,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    integer constexpr NUM_DOF = 2;
+    ElementBasedAssemblyKernel< NUM_DOF >
+    kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
+    ElementBasedAssemblyKernel< NUM_DOF >::template
+    launch< POLICY, ElementBasedAssemblyKernel< NUM_DOF > >( subRegion.size(), kernel );
+
+  }
+};
 } // end namespace singlePhaseWellKernels
 
 } // end namespace geos

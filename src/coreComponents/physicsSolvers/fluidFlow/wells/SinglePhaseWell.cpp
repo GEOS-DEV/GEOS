@@ -21,9 +21,11 @@
 #include "common/DataTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/KernelLaunchSelectors.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -33,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/ThermalSinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geos
@@ -48,6 +51,8 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 {
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;
+m_numPhases = 1;
+  m_numComponents = 1;
 }
 
 void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
@@ -66,6 +71,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
+
       subRegion.registerField< fields::well::pressure_n >( getName() );
       subRegion.registerField< fields::well::pressure >( getName() ).
         setRestartFlags( RestartFlags::WRITE_AND_READ );
@@ -83,9 +89,17 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
+wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
+        setSizedFromParent( 0 ).
+        reference().resizeDimension< 0 >( 2 );     // dP, dT
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentBHP_dPresString() );
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
+wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
+        setSizedFromParent( 0 ).
+        reference().resizeDimension< 0 >( 3 );    // dP, dT,  dQ
+
+
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
 
@@ -184,7 +198,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
   arrayView2d< real64 const > const & dens = fluid.density();
   arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
-
+arrayView2d< real64 const > const & dDens_dTemp = fluid.dDensity_dTemperature();
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
@@ -194,23 +208,39 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
   real64 & currentBHP =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+arrayView1d< real64 > const & dCurrentBHP =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
+
   real64 & dCurrentBHP_dPres =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
 
   // bring everything back to host, capture the scalars by reference
-  forAll< serialPolicy >( 1, [pres,
+  geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL ) {
+    integer constexpr IS_THERMAL = ISTHERMAL();
+    //using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+    using Deriv = multifluid::DerivativeOffset;
+    forAll< serialPolicy >( 1, [ pres,
                               dens,
                               dDens_dPres,
+dDens_dTemp,
                               wellElemGravCoef,
                               &currentBHP,
+&dCurrentBHP,
                               &dCurrentBHP_dPres,
                               &iwelemRef,
                               &refGravCoef] ( localIndex const )
   {
-    currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
-    dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
-  } );
+    real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+      currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
+      dCurrentBHP[Deriv::dP] = 1.0 + dDens_dPres[iwelemRef][0] * diffGravCoef;
+    dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * diffGravCoef;
 
+      if constexpr ( IS_THERMAL )
+      {
+        dCurrentBHP[Deriv::dT] = 1.0 + dDens_dTemp[iwelemRef][0] * diffGravCoef;
+      }
+    } );
+  } );
   if( logLevel >= 2 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "{}: The BHP (at the specified reference elevation) is {} Pa",
@@ -244,7 +274,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
   arrayView2d< real64 const > const & dens = fluid.density();
   arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
-
+arrayView2d< real64 const > const & dDens_dTemp = fluid.dDensity_dTemperature();
   // control data
 
   WellControls & wellControls = getWellControls( subRegion );
@@ -255,6 +285,9 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
   real64 & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+arrayView1d< real64 > const & dCurrentVolRate =
+    wellControls.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentVolRateString() );
+
   real64 & dCurrentVolRate_dPres =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dPresString() );
   real64 & dCurrentVolRate_dRate =
@@ -263,16 +296,20 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
+geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL ) {
+      integer constexpr IS_THERMAL = ISTHERMAL();
+      using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
     // bring everything back to host, capture the scalars by reference
     forAll< serialPolicy >( 1, [fluidWrapper,
                                 pres,
                                 connRate,
                                 dens,
                                 dDens_dPres,
+dDens_dTemp,
                                 &useSurfaceConditions,
                                 &surfacePres,
                                 &currentVolRate,
+&dCurrentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
                                 &iwelemRef,
@@ -305,7 +342,13 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       real64 const densInv = 1.0 / dens[iwelemRef][0];
       currentVolRate = connRate[iwelemRef] * densInv;
       dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
+dCurrentVolRate[COFFSET_WJ::dP] = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
+dCurrentVolRate[COFFSET_WJ::dQ] = densInv;
+        if constexpr ( IS_THERMAL )
+        {
+          dCurrentVolRate[COFFSET_WJ::dT] = -( useSurfaceConditions ==  0 ) * dDens_dTemp[iwelemRef][0] * currentVolRate * densInv;
+        }
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
@@ -316,6 +359,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
       }
     } );
   } );
+} );
 }
 
 void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
@@ -569,6 +613,53 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
+if( 1 )
+  {
+    string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel const & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
+    {
+
+      ElementRegionManager const & elemManager = mesh.getElemManager();
+
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion const & subRegion )
+      {
+
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
+        SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+        if( isThermal() )
+        {
+
+          thermalSinglePhaseWellKernels::
+            ElementBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                       wellElemDofKey,
+                                                       subRegion,
+                                                       fluid,
+                                                       localMatrix,
+                                                       localRhs );
+
+        }
+        else
+        {
+          singlePhaseWellKernels::
+            ElementBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >(
+            dofManager.rankOffset(),
+            wellElemDofKey,
+            subRegion,
+            fluid,
+            localMatrix,
+            localRhs );
+        }
+      } );
+    } );
+  }
+  else
+  {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -607,7 +698,7 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
 
     } );
   } );
-
+}
 }
 
 void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_UNUSED_PARAM( domain ),

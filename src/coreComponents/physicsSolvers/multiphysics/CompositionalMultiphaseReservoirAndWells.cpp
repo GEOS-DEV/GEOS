@@ -30,6 +30,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 
 namespace geos
 {
@@ -179,7 +180,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-    integer constexpr maxNumDof  = maxNumComp + 1;
+    integer constexpr maxNumDof  = maxNumComp + 2;
 
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
     string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
@@ -293,7 +294,7 @@ assembleCouplingTerms( real64 const time_n,
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;
-    integer constexpr MAX_NUM_DOF = MAX_NUM_COMP + 1;
+    integer constexpr MAX_NUM_DOF = MAX_NUM_COMP + 2;
 
     integer const numComps = Base::wellSolver()->numFluidComponents();
     integer const resNumDofs = Base::wellSolver()->numDofPerResElement();
@@ -308,6 +309,8 @@ assembleCouplingTerms( real64 const time_n,
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
+string const & fluidName = this->flowSolver()->template getConstitutiveName< MultiFluidBase >( subRegion );
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
       // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
       // therefore, we do not want to compute perforation rates and we simply assume they are zero
@@ -321,12 +324,19 @@ assembleCouplingTerms( real64 const time_n,
         return;
       }
 
-      areWellsShut = 0;
-
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       // get the degrees of freedom
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
+areWellsShut = 0;
+
+      if( 1 )
+      {
+
+
+
+        RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
+
       arrayView1d< globalIndex const > const & wellElemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -337,7 +347,8 @@ assembleCouplingTerms( real64 const time_n,
         perforationData->getField< fields::well::dCompPerforationRate_dPres >();
       arrayView4d< real64 const > const & dCompPerfRate_dComp =
         perforationData->getField< fields::well::dCompPerforationRate_dComp >();
-
+arrayView4d< real64 const > const & dCompPerfRate =
+          perforationData->getField< fields::well::dCompPerforationRate >();
       arrayView1d< localIndex const > const & perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
 
@@ -349,10 +360,9 @@ assembleCouplingTerms( real64 const time_n,
       arrayView1d< localIndex const > const & resElementIndex =
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
-      bool const useTotalMassEquation = this->flowSolver()->useTotalMassEquation() > 0;
+      integer const useTotalMassEquation = this->flowSolver()->useTotalMassEquation();
 
-      RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
-
+      
       // loop over the perforations and add the rates to the residual and jacobian
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
@@ -401,12 +411,14 @@ assembleCouplingTerms( real64 const time_n,
           for( integer ke = 0; ke < 2; ++ke )
           {
             localIndex const localDofIndexPres = ke * resNumDofs;
+
             localPerfJacobian[TAG::RES * numComps + ic][localDofIndexPres] = dt * dCompPerfRate_dPres[iperf][ke][ic];
             localPerfJacobian[TAG::WELL * numComps + ic][localDofIndexPres] = -dt * dCompPerfRate_dPres[iperf][ke][ic];
 
             for( integer jc = 0; jc < numComps; ++jc )
             {
               localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+//assert( fabs( dCompPerfRate_dComp[iperf][ke][ic][jc] -dCompPerfRate[iperf][ke][ic][jc] ) < FLT_EPSILON );
               localPerfJacobian[TAG::RES * numComps + ic][localDofIndexComp] = dt * dCompPerfRate_dComp[iperf][ke][ic][jc];
               localPerfJacobian[TAG::WELL * numComps + ic][localDofIndexComp] = -dt * dCompPerfRate_dComp[iperf][ke][ic][jc];
             }
@@ -429,13 +441,15 @@ assembleCouplingTerms( real64 const time_n,
                                                                               dofColIndices.data(),
                                                                               localPerfJacobian[i].dataIfContiguous(),
                                                                               2 * resNumDofs );
+std::cout << " coupled R&W perf " << i << " " << eqnRowIndices[i] << " " << localPerf[i] << " " << localRhs[eqnRowIndices[i]] << std::endl;
             RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );
 
 
-      if( detectCrossflow ) // check to avoid communications if not needed
+      
+        if( detectCrossflow )   // check to avoid communications if not needed
       {
         globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations.get() );
         if( totalNumCrossflowPerforations > 0 )
@@ -446,12 +460,66 @@ assembleCouplingTerms( real64 const time_n,
                                               WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
         }
       }
-    } );
+    
+      }
+      else
+      {
+        integer useTotalMassEquation1=1;
+        integer numCrossflowPerforations=0;
+        if( isThermal ( ) )
+        {
+          coupledReservoirAndWellKernels::
+            ThermalCompositionalMultiPhaseFluxKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                       dt,
+                                                       rankOffset,
+                                                       wellDofKey,
+                                                       subRegion,
+                                                       resDofNumber,
+                                                       perforationData,
+                                                       fluid,
+                                                       useTotalMassEquation1,
+                                                       detectCrossflow,
+                                                       numCrossflowPerforations,
+                                                       localRhs,
+                                                       localMatrix );
+        }
+        else
+        {
+          coupledReservoirAndWellKernels::
+            IsothermalCompositionalMultiPhaseFluxKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                       dt,
+                                                       rankOffset,
+                                                       wellDofKey,
+                                                       subRegion,
+                                                       resDofNumber,
+                                                       perforationData,
+                                                       fluid,
+                                                       useTotalMassEquation1,
+                                                       detectCrossflow,
+                                                       numCrossflowPerforations,
+                                                       localRhs,
+                                                       localMatrix );
+        }
+
+        if( detectCrossflow )                                                       // check to avoid communications if not needed
+        {
+          globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations );
+          if( totalNumCrossflowPerforations > 0 )
+          {
+            GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                                "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                                this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                                WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
+          }
+        }
+      }
 
     // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
     areWellsShut = MpiWrapper::min( areWellsShut );
     m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
-
+} );
   } );
 }
 

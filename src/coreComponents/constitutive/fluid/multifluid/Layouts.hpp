@@ -29,6 +29,18 @@ namespace geos
 {
 namespace constitutive
 {
+
+namespace singlefluid
+{
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of derivative wrt temperature
+  static integer constexpr dT = 1;
+
+};
+}
 namespace multifluid
 {
 
@@ -45,11 +57,11 @@ struct DerivativeOffset
 };
 
 /// indices of pressure, temperature, and composition derivatives
-template < integer NC , integer IS_THERMAL>
-struct DerivativeOffsetC{};
+template< integer NC, integer IS_THERMAL >
+struct DerivativeOffsetC {};
  
-template < integer NC >
-struct DerivativeOffsetC <NC,1>
+template< integer NC >
+struct DerivativeOffsetC< NC, 1 >
 {
   /// index of derivative wrt pressure
   static integer constexpr dP = 0;
@@ -60,8 +72,8 @@ struct DerivativeOffsetC <NC,1>
   /// number of derivatives
   static integer constexpr nDer =  NC + 2;
 };
-template < integer NC >
-struct DerivativeOffsetC <NC,0>
+template< integer NC >
+struct DerivativeOffsetC< NC, 0 >
 {
   /// index of derivative wrt pressure
   static integer constexpr dP = 0;

@@ -93,6 +93,14 @@ public:
 
 
   virtual real64
+  calculateResidualNorm1( real64 const & time_n,
+                          real64 const & dt,
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          arrayView1d< real64 const > const & localRhs );
+
+
+  virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
                          DomainPartition const & domain,
@@ -192,6 +200,12 @@ public:
 
   virtual localIndex numFluidPhases() const override { return m_numPhases; }
 
+virtual void assembleSystem1( real64 const time,
+                                real64 const dt,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs );
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value
@@ -377,12 +391,8 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  /// the max number of fluid phases
-  integer m_numPhases;
-
-  /// the number of fluid components
-  integer m_numComponents;
-
+  
+  
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
@@ -410,8 +420,7 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
-  /// name of the fluid constitutive model used as a reference for component/phase description
-  string m_referenceFluidModelName;
+  
 
 };
 

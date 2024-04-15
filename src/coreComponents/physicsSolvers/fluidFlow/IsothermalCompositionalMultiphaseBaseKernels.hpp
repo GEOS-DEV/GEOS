@@ -23,6 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/KernelLaunchSelectors.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -36,6 +37,7 @@
 
 namespace geos
 {
+
 
 namespace isothermalCompositionalMultiphaseBaseKernels
 {
@@ -114,51 +116,7 @@ public:
 namespace internal
 {
 
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompThermSwitch( T value , bool const isThermal , LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
-  
-  //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
-  if ( isThermal )
-  {
-    switch( value )
-    {
-      case 1:
-      { 
-        lambda( std::integral_constant< T, 1 >() , std::integral_constant< T, 1 >() ); return; }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >() , std::integral_constant< T, 1 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >() ,std::integral_constant< T, 1 >()); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
-    }
-  }
-  else
-  {
-    switch( value )
-    {
-      case 1:
-      { 
-        lambda( std::integral_constant< T, 1 >() , std::integral_constant< T, 0 >() ); return; }
-      case 2:
-      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 0 >() ); return; }
-      case 3:
-      { lambda( std::integral_constant< T, 3 >() , std::integral_constant< T, 0 >() ); return; }
-      case 4:
-      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 0 >() ); return; }
-      case 5:
-      { lambda( std::integral_constant< T, 5 >() ,std::integral_constant< T, 0 >() ); return; }
-      default:
-      { GEOS_ERROR( "Unsupported number of components: " << value ); }
-    }
-  }
-}
+
 
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
@@ -2465,9 +2423,9 @@ struct HydrostaticPressureKernel
 
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelectorCompTherm( integer const numComp, bool const isThermal , ARGS && ... args )
+void KernelLaunchSelectorCompTherm( integer const numComp, bool const isThermal, ARGS && ... args )
 {
-  internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal , [&] ( auto NC , auto ISTHERMAL )
+  geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
   {
     KERNELWRAPPER::template launch< NC(), ISTHERMAL() >( std::forward< ARGS >( args )... );
   } );
@@ -2507,10 +2465,10 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numPhase ,integer const isThermal, ARGS && ... args )
+void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numPhase, integer const isThermal, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
-  if ( isThermal )
+  if( isThermal )
   {
   if( numPhase == 2 )
   {

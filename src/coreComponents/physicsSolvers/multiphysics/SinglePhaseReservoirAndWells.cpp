@@ -20,6 +20,7 @@
 #include "SinglePhaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "common/KernelLaunchSelectors.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
@@ -162,14 +163,15 @@ addCouplingSparsityPattern( DomainPartition const & domain,
 
     string const resDofKey  = dofManager.getKey( Base::wellSolver()->resElementDofName() );
     string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
-
+integer isThermal = Base::wellSolver()->isThermal();
     integer const wellNDOF = Base::wellSolver()->numDofPerWellElement();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
 
     globalIndex const rankOffset = dofManager.rankOffset();
-
+geos::internal::kernelLaunchSelectorThermalSwitch( isThermal, [&] ( auto ISTHERMAL ) {
+      integer constexpr IS_THERMAL = ISTHERMAL();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
@@ -204,9 +206,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
         globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
         globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
 
-        // working arrays
-        stackArray1d< globalIndex, 2 > eqnRowIndicesWell( wellNDOF );
-        stackArray1d< globalIndex, 2 > dofColIndicesWell( wellNDOF );
+        // working arrays - tjb previously dim was 2
+        stackArray1d< globalIndex, 2+IS_THERMAL > eqnRowIndicesWell( wellNDOF );
+        stackArray1d< globalIndex, 2+IS_THERMAL > dofColIndicesWell( wellNDOF );
 
         for( integer idof = 0; idof < wellNDOF; ++idof )
         {
@@ -232,6 +234,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
       } );
     } );
   } );
+} );
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >

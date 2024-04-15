@@ -22,6 +22,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/KernelLaunchSelectors.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
@@ -38,6 +39,7 @@
 
 namespace geos
 {
+
 
 namespace compositionalMultiphaseWellKernels
 {
@@ -67,13 +69,28 @@ struct ColOffset
   static constexpr integer DCOMP = 1;
 };
 
-template < integer NC >
-struct ColOffset_WellJac
+template< integer NC, integer IS_THERMAL >
+struct ColOffset_WellJac;
+
+template< integer NC >
+struct ColOffset_WellJac< NC, 0 >
+{
+  static constexpr integer dP = 0;
+  static constexpr integer dC = 1;
+  static constexpr integer dQ = dC + NC;
+  static integer constexpr nDer =  dQ + 1;
+
+};
+
+template< integer NC >
+struct ColOffset_WellJac< NC, 1 >
 {
   static constexpr integer dP = 0;
   static constexpr integer dC = 1;
   static constexpr integer dQ = dC + NC;
   static constexpr integer dT = dQ+1;
+/// number of derivatives
+  static integer constexpr nDer =  dT + 1;
 };
 
 // define the row offset of the residual equations
@@ -83,13 +100,27 @@ struct RowOffset
   static constexpr integer MASSBAL = 1;
 };
 
-template < integer NC >
-struct RowOffset_WellJac
+template< integer NC, integer IS_THERMAL >
+struct RowOffset_WellJac;
+
+template< integer NC >
+struct RowOffset_WellJac< NC, 0 >
+{
+  static constexpr integer CONTROL   = 0;
+  static constexpr integer MASSBAL   = 1;
+  static constexpr integer VOLBAL    = MASSBAL + NC;
+  static constexpr integer nEqn      = VOLBAL+1;
+};
+
+template< integer NC >
+struct RowOffset_WellJac< NC, 1 >
 {
   static constexpr integer CONTROL   = 0;
   static constexpr integer MASSBAL   = 1;
   static constexpr integer VOLBAL    = MASSBAL + NC;
   static constexpr integer ENERGYBAL = VOLBAL+1;
+static constexpr integer nEqn      = ENERGYBAL+1;
+
 };
 /******************************** ControlEquationHelper ********************************/
 struct ControlEquationHelper
@@ -113,7 +144,7 @@ struct ControlEquationHelper
                  real64 const & currentTotalVolRate,
                  WellControls::Control & newControl );
 
-  template< integer NC , integer IS_THERMAL >
+  template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
   inline
   static void
@@ -206,7 +237,7 @@ struct PressureRelationKernel
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  template< integer NC ,integer IS_THERMAL >
+  template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
   inline
   static void
@@ -225,7 +256,7 @@ struct PressureRelationKernel
              real64 & localPresRel,
              real64 ( &localPresRelJacobian )[2*(NC+1+IS_THERMAL)] );
 
-  template< integer NC , integer IS_THERMAL >
+  template< integer NC, integer IS_THERMAL >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
@@ -288,7 +319,7 @@ struct PerforationKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
 
-  template< integer NC, integer NP , integer IS_THERMAL>
+  template< integer NC, integer NP, integer IS_THERMAL >
   GEOS_HOST_DEVICE
   inline
   static void
@@ -358,6 +389,7 @@ struct PerforationKernel
           arrayView4d< real64 > const & dCompPerfRate_dComp );
 
 };
+
 
 /******************************** AccumulationKernel ********************************/
 
@@ -808,7 +840,7 @@ public:
         normalizer = LvArray::math::max( normalizer, m_volume[iwelem] * m_totalDens_n[iwelem][0] );
       }
       // Step 3: compute a normalizer for the volume balance equations
-      else
+      else if( idof == ROFFSET::MASSBAL + m_numComp )
       {
         if( m_isProducer ) // only PHASEVOLRATE is supported for now
         {
@@ -828,13 +860,15 @@ public:
 
         }
 
+}
+
         // to make sure that everything still works well if the rate is zero, we add this check
         normalizer = LvArray::math::max( normalizer, m_volume[iwelem] );
-      }
-      normalizer = LvArray::math::max( m_minNormalizer, normalizer );
-
+      
       // Step 4: compute the contribution to the residual
+std::cout << "bNormalize " << idof << " " << stack.localRow + idof << " " << m_localResidual[stack.localRow + idof] << " " << normalizer << std::endl;
       real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+std::cout << "Normalizer "   << val << " " <<  stack.localValue[0] << std::endl;
       if( val > stack.localValue[0] )
       {
         stack.localValue[0] = val;
@@ -1038,23 +1072,30 @@ public:
 /**
  * @class ElementBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
- * @tparam NUM_DOF number of degrees of freedom
+ * @tparam IS_THERMAL thermal switch
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
-template< integer NUM_COMP, integer NUM_DOF >
+template< integer NUM_COMP, integer IS_THERMAL >
 class ElementBasedAssemblyKernel
 {
 public:
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+
+  // Well jacobian column and row indicies
+  // tjb  - change NUM_DOF to IS_THERMAL
+  using FLUID_PROP_COFFSET = multifluid::DerivativeOffsetC< NUM_COMP, IS_THERMAL >;
+  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NUM_COMP, IS_THERMAL >;
+  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NUM_COMP, IS_THERMAL >;
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
 
-  /// Compute time value for the number of degrees of freedom
-  static constexpr integer numDof = NUM_DOF;
+  /// Number of Dof's set in this kernal
+  static constexpr integer numDof = NUM_COMP + 1 + IS_THERMAL;
 
   /// Compute time value for the number of equations
-  static constexpr integer numEqn = NUM_DOF;
+  static constexpr integer numEqn = NUM_COMP + 1 + IS_THERMAL;
+
 
   /**
    * @brief Constructor
@@ -1114,14 +1155,14 @@ public:
     localIndex localRow = -1;
 
     /// Indices of the matrix rows/columns corresponding to the dofs in this element
-     globalIndex dofIndices[numDof]{};
-    globalIndex eqnRowIndices[numComp+1]{};
-    globalIndex dofColIndices[numComp+1]{};
+     globalIndex dofIndices[numDof]{};  // NC compdens + P + thermal
+    globalIndex eqnRowIndices[numDof]{};
+    globalIndex dofColIndices[numDof]{};
 
-    /// C-array storage for the element local residual vector (all equations except volume balance)
+    /// C-array storage for the element local residual vector (all equations except constraint and momentum)
     real64 localResidual[numEqn]{};
 
-    /// C-array storage for the element local Jacobian matrix (all equations except volume balance, all dofs)
+    /// C-array storage for the element local Jacobian matrix (all equations except constraint and momentum)
     real64 localJacobian[numEqn][numDof]{};
 
   };
@@ -1147,22 +1188,37 @@ public:
   {
     // initialize the volume
     stack.volume = m_volume[ei];
-    // set row index and degrees of freedom indices for this element (mass + vol bal)
-    for( integer ic = 0; ic < numComp+1; ++ic )
-    {
-      stack.eqnRowIndices[ic] = m_dofNumber[ei] + ROFFSET::MASSBAL + ic - m_rankOffset;
-    }
+    
+    // Note row/col indices needed to be consistent with layout of stack.localJacobian
+    // Setup row  equation indices for this element ( mass + vol + thermal if valid)
 
-    // set DOF col indices for this block ( mass + vol bal)
-    for( integer idof = 0; idof < numComp+1; ++idof )
+    // 1)  Mass Balance
+    for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.dofColIndices[idof] = m_dofNumber[ei] + COFFSET::DPRES + idof;
+      stack.eqnRowIndices[ic] = m_dofNumber[ei] + WJ_ROFFSET::MASSBAL + ic - m_rankOffset;
     }
-    if ( 0)
-    for ( integer jc = 0; jc < numEqn; ++jc )
+// 2) Volume Balance
+    stack.eqnRowIndices[numComp] = m_dofNumber[ei] + WJ_ROFFSET::VOLBAL   - m_rankOffset;
+    // 3) Energy Balance
+    if constexpr ( IS_THERMAL )
+    {
+      stack.eqnRowIndices[numComp+1]  = m_dofNumber[ei] + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
+    }
+    // Setup equation column indices for this element ( P + COMPDENS + THERMAL if valid)
+    stack.dofColIndices[0] = m_dofNumber[ei] + WJ_COFFSET::dP;
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      stack.dofColIndices[ic+1] = m_dofNumber[ei] + WJ_COFFSET::dC+ic;
+    }
+    if constexpr ( IS_THERMAL )
+    {
+      stack.dofColIndices[numComp+1]  = m_dofNumber[ei] + WJ_COFFSET::dT;
+    }
+    if( 0 )
+    for( integer jc = 0; jc < numEqn; ++jc )
     {
        stack.localResidual[jc] = 0.0;
-       for ( integer ic = 0; ic < numDof; ++ic )
+       for( integer ic = 0; ic < numDof; ++ic )
        {
         stack.localJacobian[jc][ic] = 0.0;
        }
@@ -1203,6 +1259,7 @@ public:
     arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
 
     // temporary work arrays
+real64 dPhaseAmount[FLUID_PROP_COFFSET::nDer]{};
     real64 dPhaseAmount_dC[numComp]{};
     real64 dPhaseCompFrac_dC[numComp]{};
 
@@ -1210,20 +1267,33 @@ public:
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       real64 const phaseAmount = stack.volume * phaseVolFrac[ip] * phaseDens[ip];
+std::cout << " phaseAmount " << ip << " " << phaseVolFrac[ip] << " " << phaseDens[ip] << std::endl;
       real64 const phaseAmount_n = stack.volume * phaseVolFrac_n[ip] * phaseDens_n[ip];
-
+std::cout << " phaseAmount_n " << ip << " " << phaseVolFrac[ip] << " " << phaseDens[ip] << std::endl;
+      //remove tjb
       real64 const dPhaseAmount_dP = stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
                                                       + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
+dPhaseAmount[FLUID_PROP_COFFSET::dP]=stack.volume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
+                                                            + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
       // assemble density dependence
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dPhaseAmount_dC, Deriv::dC );
+applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], &dPhaseAmount[FLUID_PROP_COFFSET::dC], Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
                               + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
         dPhaseAmount_dC[jc] *= stack.volume;
+dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] = dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] * phaseVolFrac[ip]
+                                                  + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
+        dPhaseAmount[FLUID_PROP_COFFSET::dC+jc] *= stack.volume;
       }
+// tjb- remove when safe
+      for( integer ic = 0; ic < numComp; ic++ )
+      {
+        assert( fabs( dPhaseAmount[FLUID_PROP_COFFSET::dC+ic] -dPhaseAmount_dC[ic] ) < FLT_EPSILON );
 
+}
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
       for( integer ic = 0; ic < numComp; ++ic )
@@ -1245,15 +1315,24 @@ public:
         for( integer jc = 0; jc < numComp; ++jc )
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
-                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+                                             + phaseCompFrac[ip][ic] * dPhaseAmount[FLUID_PROP_COFFSET::dC+jc];
 
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
       }
-
+if constexpr ( IS_THERMAL )
+      {
+        dPhaseAmount[FLUID_PROP_COFFSET::dT] = stack.volume * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          // assemble the derivatives of the component mass balance equations with respect to temperature
+          stack.localJacobian[ic][numComp+1] += dPhaseAmount[FLUID_PROP_COFFSET::dT] * phaseCompFrac[ip][ic]
+                                                + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
+        }
+      }
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+      // possible use: assemble  accumulation term of the energy equation for this phase
+      phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount );
 
     }
 
@@ -1275,11 +1354,10 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] phaseVolFractionSumKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = NoOpFunc >
+  
   GEOS_HOST_DEVICE
   void computeVolumeBalance( localIndex const ei,
-                             StackVariables & stack,
-                             FUNC && phaseVolFractionSumKernelOp = NoOpFunc{} ) const
+                             StackVariables & stack ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -1289,6 +1367,8 @@ public:
     real64 oneMinusPhaseVolFracSum = 1.0;
 
     // sum contributions to component accumulation from each phase
+// Note localJacobian stores equation balances in order of component/vol/enerqy
+    // These are mapped to solver orderings with indicies setup in stack variables
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       oneMinusPhaseVolFracSum -= phaseVolFrac[ip];
@@ -1298,16 +1378,17 @@ public:
       {
         stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac[ip][Deriv::dC+jc];
       }
+    
+      if constexpr ( IS_THERMAL)
+      {
+        stack.localJacobian[numComp][numComp+1] -= dPhaseVolFrac[ip][Deriv::dT];
+      }
+
     }
-
-    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolume depends on temperature
-    // tjb revisit
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
-
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
     stack.localResidual[numComp] = stack.volume * oneMinusPhaseVolFracSum;
-    for( integer idof = 0; idof < numComp+1; ++idof )
+    std::cout << "vol bal res " << stack.localResidual[numComp] << std::endl;
+    for( integer idof = 0; idof < numComp+1+IS_THERMAL; ++idof )
     {
       stack.localJacobian[numComp][idof] *= stack.volume;
     }
@@ -1329,23 +1410,29 @@ public:
     if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
-      real64 work[numComp + 1]{};
-      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp+1, stack.localJacobian, work );
+      real64 work[numComp + 1 + IS_THERMAL]{};
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp+1+ IS_THERMAL, stack.localJacobian, work );
+for( integer i=0; i<numComp+1; ++i )
+        std::cout << i << " " << stack.localResidual[i] << std::endl;
+
       shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
+for( integer i=0; i<numComp+1; ++i )
+        std::cout << i << " " << stack.localResidual[i] << std::endl;
     }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    integer const numRows = numComp+1;
+    integer const numRows = numComp+1+ IS_THERMAL;
     for( integer i = 0; i < numRows; ++i )
     {
+std::cout <<  "accum+vb resd " << m_localRhs[stack.eqnRowIndices[i]]  << " " << stack.eqnRowIndices[i] << " " << stack.localResidual[i] << std::endl;
       m_localRhs[stack.eqnRowIndices[i]]  += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.eqnRowIndices[i],
                                               stack.dofColIndices,
                                               stack.localJacobian[i],
-                                              numComp+1 );
+                                              numComp+1+ IS_THERMAL );
     }
 
   }
@@ -1463,20 +1550,20 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    geos::internal::kernelLaunchSelectorCompThermSwitch( numComps, 0, [&]( auto NC, auto IS_THERMAL )
     {
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
+integer constexpr istherm = IS_THERMAL();
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
 
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+      ElementBasedAssemblyKernel< NUM_COMP, istherm >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
+      ElementBasedAssemblyKernel< NUM_COMP, istherm >::template
+      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, istherm > >( subRegion.size(), kernel );
     } );
   }
 };
@@ -1487,7 +1574,7 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NC, integer NUM_DOF >
-class FaceBasedAssemblyKernel
+class FaceBasedAssemblyKernel_ORG
 {
 public:
 
@@ -1505,6 +1592,7 @@ public:
 
   /**
    * @brief Constructor for the kernel interface
+* @param[in] dt time step size
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
@@ -1517,7 +1605,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  FaceBasedAssemblyKernel( real64 const dt,
+  FaceBasedAssemblyKernel_ORG( real64 const dt,
                            globalIndex const rankOffset,
                            string const wellDofKey,
                            WellControls const & wellControls,
@@ -1619,7 +1707,7 @@ public:
   void computeFlux( localIndex const iwelem,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-
+GEOS_UNUSED_VAR( compFluxKernelOp );
     using namespace compositionalMultiphaseUtilities;
 
     // create local work arrays
@@ -1829,6 +1917,7 @@ public:
         }
       }
     }
+//compFluxKernelOp(iwelemNext,iwelemUp,currentConnRate, offsetUp, offsetCurrent);
   }
 
 
@@ -1869,6 +1958,676 @@ protected:
 
   /// Connection rate
   arrayView1d< real64 const > const m_connRate;
+
+
+  /// Element component fraction
+  arrayView2d< real64 const, compflow::USD_COMP > const m_wellElemCompFrac;
+  /// Element component fraction derivatives
+  arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dWellElemCompFrac_dCompDens;
+
+  /// View on the local CRS matrix
+  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  /// View on the local RHS
+  arrayView1d< real64 > const m_localRhs;
+
+  /// Kernel option flag
+  integer const m_useTotalMassEquation;
+
+  /// Well type
+  bool const m_isProducer;
+
+  /// Injection stream composition
+  arrayView1d< real64 const > const m_injection;
+
+
+};
+
+template< integer NC, integer IS_THERMAL >
+class FaceBasedAssemblyKernel
+{
+public:
+
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+
+  using FLUID_PROP_COFFSET = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+  using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
+
+  using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+  /// Compile time value for the number of components
+  static constexpr integer numComp = NC;
+
+  /// Number of Dof's set in this kernal
+  static constexpr integer numDof = WJ_COFFSET::nDer;
+
+  /// Compile time value for the number of equations except rate, momentum, energy
+  static constexpr integer numEqn = NC;
+
+  static constexpr integer maxNumElems = 2;
+  static constexpr integer maxStencilSize = 2;
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] stencilWrapper reference to the stencil wrapper
+   * @param[in] dofNumberAccessor
+   * @param[in] compFlowAccessors
+   * @param[in] multiFluidAccessors
+   * @param[in] capPressureAccessors
+   * @param[in] permeabilityAccessors
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   * @param[in] kernelFlags flags packed together
+   */
+  FaceBasedAssemblyKernel( real64 const dt,
+                           globalIndex const rankOffset,
+                           string const wellDofKey,
+                           WellControls const & wellControls,
+                           ElementSubRegionBase const & subRegion,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs,
+                           BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
+    :
+    m_dt( dt ),
+    m_rankOffset( rankOffset ),
+    m_wellElemDofNumber ( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
+    m_nextWellElemIndex ( subRegion.getReference< array1d< localIndex > >( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString()) ),
+    m_connRate ( subRegion.getField< fields::well::mixtureConnectionRate >() ),
+    m_wellElemCompFrac ( subRegion.getField< fields::well::globalCompFraction >() ),
+    m_dWellElemCompFrac_dCompDens ( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_localMatrix( localMatrix ),
+    m_localRhs ( localRhs ),
+    m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation ) ),
+    m_isProducer ( wellControls.isProducer() ),
+    m_injection ( wellControls.getInjectionStream() )
+  { }
+
+  struct StackVariables
+  {
+public:
+
+    /**
+     * @brief Constructor for the stack variables
+     * @param[in] size size of the stencil for this connection
+     * @param[in] numElems number of elements for this connection
+     */
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const size )
+      : stencilSize( size ),
+      numConnectedElems( 2 ),
+      dofColIndices( size * numDof )
+    {}
+
+    // Stencil information
+    localIndex const stencilSize;
+    /// Number of elements connected at a given connection
+    localIndex numConnectedElems;
+
+
+    // edge indexes
+    globalIndex offsetUp;
+    globalIndex offsetCurrent;
+    globalIndex offsetNext;
+    // Local degrees of freedom and local residual/jacobian
+
+    /// Indices of the matrix rows/columns corresponding to the dofs in this face
+    stackArray1d< globalIndex, maxNumElems * numDof > dofColIndices;
+
+    /// Storage for the face local residual vector (all mass bal equations)
+    stackArray1d< real64, maxNumElems * numEqn > localFlux;
+    /// Storage for the face local Jacobian matrix dC dP dT
+    stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * CP_Deriv::nDer > localFluxJacobian;
+    /// Storage for the face local Jacobian matrix dQ only
+    stackArray2d< real64, maxNumElems * numEqn * maxStencilSize > localFluxJacobian_dQ;
+  };
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void setup( localIndex const iconn,
+              StackVariables & stack ) const
+  {
+    stack.numConnectedElems=2;
+    if( m_nextWellElemIndex[iconn] <0 )
+    {
+      stack.numConnectedElems = 1;
+    }
+    stack.localFlux.resize( stack.numConnectedElems*numEqn );
+    stack.localFluxJacobian.resize( stack.numConnectedElems * numEqn, stack.stencilSize * numDof );
+    stack.localFluxJacobian_dQ.resize( stack.numConnectedElems * numEqn, 1 );
+
+  }
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] iconn the connection index
+   * @param[in] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void complete( localIndex const iconn,
+                 StackVariables & stack ) const
+  {
+    using namespace compositionalMultiphaseUtilities;
+    if( stack.numConnectedElems ==1 )
+    {
+      // Setup Jacobian global row indicies
+      // equations for COMPONENT  + ENERGY balances
+      globalIndex oneSidedEqnRowIndices[numEqn]{};
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        oneSidedEqnRowIndices[ic] = stack.offsetUp + WJ_ROFFSET::MASSBAL + ic - m_rankOffset;
+      }
+
+      // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
+      globalIndex oneSidedDofColIndices_dPresCompTempUp[CP_Deriv::nDer]{};
+      globalIndex oneSidedDofColIndices_dRate =   stack.offsetCurrent + WJ_COFFSET::dQ;
+      // Note localFluxJacobian cols are stored using CP_Deriv order (dP dC or dP dT dC)
+      int ioff=0;
+      oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dP;
+
+      if constexpr ( IS_THERMAL )
+      {
+        oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dT;
+      }
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
+      }
+      if( m_useTotalMassEquation > 0 )
+      {
+        // Apply equation/variable change transformation(s)
+        real64 work[CP_Deriv::nDer]{};
+        shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numEqn, 1, stack.localFluxJacobian_dQ, work );
+        shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numEqn, CP_Deriv::nDer, stack.localFluxJacobian, work );
+        for( integer ic=0; ic<numEqn; ic++ )
+        {
+          std::cout << ic << " " << stack.localFlux[ic] << std::endl;
+        }
+        shiftElementsAheadByOneAndReplaceFirstElementWithSum( numEqn, stack.localFlux );
+        for( integer ic=0; ic<numEqn; ic++ )
+        {
+          std::cout << ic << " " << stack.localFlux[ic] << std::endl;
+        }
+      }
+      for( integer i = 0; i < numEqn; ++i )
+      {
+        if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
+                                                          &oneSidedDofColIndices_dRate,
+                                                          stack.localFluxJacobian_dQ[i],
+                                                          1 );
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
+                                                                              oneSidedDofColIndices_dPresCompTempUp,
+                                                                              stack.localFluxJacobian[i],
+                                                                              CP_Deriv::nDer );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[oneSidedEqnRowIndices[i]], stack.localFlux[i] );
+          std::cout << " aa " << i << " " << oneSidedEqnRowIndices[i] << " " << m_localRhs[oneSidedEqnRowIndices[i]] << std::endl;
+        }
+      }
+    }
+    else
+    {
+      // Setup Jacobian global row indicies
+      // equations for COMPONENT  + ENERGY balances
+      globalIndex eqnRowIndices[2*numEqn]{};
+
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        // mass balance equations for all components
+        eqnRowIndices[TAG::NEXT *numEqn+ic]    = stack.offsetNext + WJ_ROFFSET::MASSBAL + ic - m_rankOffset;
+        eqnRowIndices[TAG::CURRENT *numEqn+ic] = stack.offsetCurrent + WJ_ROFFSET::MASSBAL + ic - m_rankOffset;
+      }
+
+      // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
+      globalIndex dofColIndices_dPresCompUp[CP_Deriv::nDer]{};
+      globalIndex dofColIndices_dRate = stack.offsetCurrent   + WJ_COFFSET::dQ;
+
+      int ioff=0;
+      // Indice storage order reflects local jac col storage order
+      dofColIndices_dPresCompUp[ioff++] = stack.offsetUp + WJ_COFFSET::dP;
+
+      if constexpr ( IS_THERMAL )
+      {
+        dofColIndices_dPresCompUp[ioff++] = stack.offsetUp + WJ_COFFSET::dT;
+      }
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        dofColIndices_dPresCompUp[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
+      }
+
+
+      if( m_useTotalMassEquation > 0 )
+      {
+        // Apply equation/variable change transformation(s)
+        real64 work[CP_Deriv::nDer]{};
+        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numEqn, numEqn, 1, 2, stack.localFluxJacobian_dQ, work );
+        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numEqn, numEqn, CP_Deriv::nDer, 2, stack.localFluxJacobian, work );
+        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numEqn, numEqn, 2, stack.localFlux );
+      }
+      // Note this updates diag and offdiag
+      for( integer i = 0; i < 2*NC; ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                          &dofColIndices_dRate,
+                                                          stack.localFluxJacobian_dQ[i],
+                                                          1 );
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                              dofColIndices_dPresCompUp,
+                                                                              stack.localFluxJacobian[i],
+                                                                              CP_Deriv::nDer );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], stack.localFlux[i] );
+        }
+      }
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void
+  computeExit( real64 const & dt,
+               real64 const ( &compFlux )[NC ],
+               real64 const ( &dCompFlux_dRate )[NC ],
+               real64 const ( &dCompFlux_dPresUp )[NC ],
+               real64 const ( &dCompFlux_dCompDensUp )[NC ][NC],
+               real64 ( & oneSidedFlux )[NC],
+               real64 ( & oneSidedFluxJacobian_dRate )[NC][1],
+               real64 ( & oneSidedFluxJacobian_dPresCompUp )[NC][NC + 1],
+               StackVariables & stack,
+               real64 ( & dCompFlux)[NC][numDof] ) const
+  {
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      oneSidedFlux[ic] = -dt * compFlux[ic];
+      stack.localFlux[ic] =  -dt * compFlux[ic];
+      std::cout << "ce wellflux " << dt << " ic " << ic << " " << stack.localFlux[ic] << std::endl;
+      // derivative with respect to rate
+      oneSidedFluxJacobian_dRate[ic][0] = -dt * dCompFlux_dRate[ic];
+      stack.localFluxJacobian_dQ[ic][0]  = -dt * dCompFlux[ic][WJ_COFFSET::dQ];
+      assert( fabs( dCompFlux[ic][WJ_COFFSET::dQ]- dCompFlux_dRate[ic] ) < FLT_EPSILON );
+      // derivative with respect to upstream pressure
+      oneSidedFluxJacobian_dPresCompUp[ic][0] = -dt * dCompFlux_dPresUp[ic];
+      stack.localFluxJacobian[ic][CP_Deriv::dP]  = -dt * dCompFlux[ic][WJ_COFFSET::dP];
+      assert( fabs( dCompFlux_dPresUp[ic]- dCompFlux[ic][WJ_COFFSET::dP] ) < FLT_EPSILON );
+      // derivatives with respect to upstream component densities
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        oneSidedFluxJacobian_dPresCompUp[ic][jdof+1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
+        stack.localFluxJacobian[ic][CP_Deriv::dC+jdof]  = -dt * dCompFlux[ic][WJ_COFFSET::dC+jdof];
+        assert( fabs( dCompFlux[ic][WJ_COFFSET::dC+jdof]- dCompFlux_dCompDensUp[ic][jdof] ) < FLT_EPSILON );
+      }
+      if constexpr ( IS_THERMAL )
+      {
+        stack.localFluxJacobian[ic][CP_Deriv::dT]  = -dt * dCompFlux[ic][WJ_COFFSET::dT];
+      }
+    }
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      assert( fabs( stack.localFluxJacobian_dQ[ic][0]-oneSidedFluxJacobian_dRate[ic][0] ) < FLT_EPSILON );
+      assert( fabs( stack.localFluxJacobian[ic][CP_Deriv::dP]-oneSidedFluxJacobian_dPresCompUp[ic][0] ) < FLT_EPSILON );
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        assert( fabs( stack.localFluxJacobian[ic][CP_Deriv::dC+jdof]-oneSidedFluxJacobian_dPresCompUp[ic][jdof+1] ) < FLT_EPSILON );
+      }
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void
+  compute( real64 const & dt,
+           real64 const ( &compFlux )[NC ],
+           real64 const ( &dCompFlux_dRate )[NC ],
+           real64 const ( &dCompFlux_dPresUp )[NC ],
+           real64 const ( &dCompFlux_dCompDensUp )[NC ][NC],
+           real64 ( & localFlux )[2*NC],
+           real64 ( & localFluxJacobian_dRate )[2*NC][1],
+           real64 ( & localFluxJacobian_dPresCompUp )[2*NC][NC + 1],
+           StackVariables & stack,
+           real64 ( & dCompFlux)[(NC )][numDof] ) const
+  {
+    // flux terms
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      localFlux[TAG::NEXT *NC+ic]    = dt * compFlux[ic];
+      localFlux[TAG::CURRENT *NC+ic] = -dt * compFlux[ic];
+      stack.localFlux[TAG::NEXT * NC +ic]    = dt * compFlux[ic];
+      stack.localFlux[TAG::CURRENT * NC +ic] = -dt * compFlux[ic];
+      // derivative with respect to rate
+      localFluxJacobian_dRate[TAG::NEXT * NC + ic][0]    = dt * dCompFlux_dRate[ic];
+      localFluxJacobian_dRate[TAG::CURRENT * NC +ic][0] = -dt * dCompFlux_dRate[ic];
+      stack.localFluxJacobian_dQ[TAG::NEXT * NC+  ic][0] =  dt * dCompFlux[ic][WJ_COFFSET::dQ];
+      stack.localFluxJacobian_dQ[TAG::CURRENT *  NC + +ic][0] = -dt * dCompFlux[ic][WJ_COFFSET::dQ];
+
+
+      // derivative with respect to upstream pressure
+      localFluxJacobian_dPresCompUp[TAG::NEXT * NC +ic][0]    = dt * dCompFlux_dPresUp[ic];
+      localFluxJacobian_dPresCompUp[TAG::CURRENT * NC+  ic][0] = -dt * dCompFlux_dPresUp[ic];
+
+      stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dP] =  dt * dCompFlux[ic][WJ_COFFSET::dP];
+      stack.localFluxJacobian[TAG::CURRENT * NC+ ic][CP_Deriv::dP] = -dt * dCompFlux[ic][WJ_COFFSET::dP];
+
+      if   constexpr ( IS_THERMAL )
+      {
+        stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dT] =  dt * dCompFlux[ic][WJ_COFFSET::dT];
+        stack.localFluxJacobian[TAG::CURRENT * NC +ic][CP_Deriv::dT] = -dt * dCompFlux[ic][WJ_COFFSET::dT];
+      }
+
+      // derivatives with respect to upstream component densities
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        localFluxJacobian_dPresCompUp[TAG::NEXT * NC +ic][jdof+1]    =  dt * dCompFlux_dCompDensUp[ic][jdof];
+        localFluxJacobian_dPresCompUp[TAG::CURRENT * NC +ic][jdof+1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
+        stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dC+jdof]    =   dt * dCompFlux[ic][WJ_COFFSET::dC+jdof];
+        stack.localFluxJacobian[TAG::CURRENT * NC +ic][CP_Deriv::dC+jdof] = -dt * dCompFlux[ic][WJ_COFFSET::dC+jdof];
+      }
+    }
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      assert( fabs( stack.localFluxJacobian_dQ[TAG::NEXT * NC +ic][0]-localFluxJacobian_dRate[TAG::NEXT * NC +ic][0] ) < FLT_EPSILON );
+      assert( fabs( stack.localFluxJacobian_dQ[TAG::CURRENT * NC +ic][0]-localFluxJacobian_dRate[TAG::CURRENT * NC +ic][0] ) < FLT_EPSILON );
+      assert( fabs( stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dP]-localFluxJacobian_dPresCompUp[TAG::NEXT * NC +ic][0] ) < FLT_EPSILON );
+      assert( fabs( stack.localFluxJacobian[TAG::CURRENT * NC +ic][CP_Deriv::dP]-localFluxJacobian_dPresCompUp[TAG::CURRENT * NC +ic][0] ) < FLT_EPSILON );
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        assert( fabs( stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dC+jdof]-localFluxJacobian_dPresCompUp[TAG::NEXT * NC +ic][jdof+1] ) < FLT_EPSILON );
+        assert( fabs( stack.localFluxJacobian[TAG::CURRENT * NC +ic][CP_Deriv::dC+jdof]-localFluxJacobian_dPresCompUp[TAG::CURRENT * NC +ic][jdof+1] ) < FLT_EPSILON );
+      }
+    }
+  }
+
+  /**
+   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] ie the element index
+   * @param[inout] stack the stack variables
+   * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
+  void computeFlux( localIndex const iwelem,
+                    StackVariables & stack,
+                    FUNC && compFluxKernelOp = NoOpFunc{} ) const
+  {
+
+    using namespace compositionalMultiphaseUtilities;
+
+    // create local work arrays
+    real64 compFracUp[NC]{};
+    real64 dCompFrac_dCompDensUp[NC][NC]{};
+
+    real64 compFlux[NC]{};
+    real64 dCompFlux_dRate[NC]{};
+    real64 dCompFlux_dPresUp[NC]{};
+    real64 dCompFlux_dCompDensUp[NC][NC]{};
+
+    real64 dCompFlux[NC][numDof]{};
+    // Step 1) decide the upwind well element
+
+    /*  currentConnRate < 0 flow from iwelem to iwelemNext
+     *  currentConnRate > 0 flow from iwelemNext to iwelem
+     *  With this convention, currentConnRate < 0 at the last connection for a producer
+     *                        currentConnRate > 0 at the last connection for a injector
+     */
+
+    localIndex const iwelemNext = m_nextWellElemIndex[iwelem];
+    real64 const currentConnRate = m_connRate[iwelem];
+    localIndex iwelemUp = -1;
+
+    if( iwelemNext < 0 && !m_isProducer )  // exit connection, injector
+    {
+      // we still need to define iwelemUp for Jacobian assembly
+      iwelemUp = iwelem;
+
+      // just copy the injection stream into compFrac
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        compFracUp[ic] = m_injection[ic];
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          dCompFrac_dCompDensUp[ic][jc] = 0.0;
+          dCompFlux[ic][WJ_COFFSET::dC+jc] = 0.0;
+        }
+      }
+    }
+    else
+    {
+      // first set iwelemUp to the upstream cell
+      if( ( iwelemNext < 0 && m_isProducer )  // exit connection, producer
+          || currentConnRate < 0 ) // not an exit connection, iwelem is upstream
+      {
+        iwelemUp = iwelem;
+      }
+      else // not an exit connection, iwelemNext is upstream
+      {
+        iwelemUp = iwelemNext;
+      }
+
+      // copy the vars of iwelemUp into compFrac
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        compFracUp[ic] = m_wellElemCompFrac[iwelemUp][ic];
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          dCompFlux[ic][WJ_COFFSET::dC+jc] = m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
+          dCompFrac_dCompDensUp[ic][jc] = m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
+        }
+      }
+    }
+
+    // Step 2) compute upstream transport coefficient
+
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      compFlux[ic]          = compFracUp[ic] * currentConnRate;
+      dCompFlux_dRate[ic]   = compFracUp[ic];
+      dCompFlux[ic][WJ_COFFSET::dQ] = compFracUp[ic];
+      dCompFlux_dPresUp[ic] = 0.0; // none of these quantities depend on pressure
+      dCompFlux[ic][WJ_COFFSET::dP] = 0.0;
+      if constexpr ( IS_THERMAL )
+      {
+        dCompFlux[ic][WJ_COFFSET::dT] = 0.0;
+      }
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dCompFlux[ic][WJ_COFFSET::dC+jc] = dCompFlux[ic][WJ_COFFSET::dC+jc] * currentConnRate;
+        dCompFlux_dCompDensUp[ic][jc] = dCompFrac_dCompDensUp[ic][jc] * currentConnRate;
+      }
+    }
+
+    stack.offsetUp = m_wellElemDofNumber[iwelemUp];
+    stack.offsetCurrent = m_wellElemDofNumber[iwelem];
+
+    if( iwelemNext < 0 )  // exit connection
+    {
+      // for this case, we only need NC mass conservation equations
+      // so we do not use the arrays initialized before the loop
+      real64 oneSidedFlux[NC]{};
+      real64 oneSidedFluxJacobian_dRate[NC][1]{};
+      real64 oneSidedFluxJacobian_dPresCompUp[NC][NC+1]{};
+
+      computeExit ( m_dt,
+                    compFlux,
+                    dCompFlux_dRate,
+                    dCompFlux_dPresUp,
+                    dCompFlux_dCompDensUp,
+                    oneSidedFlux,
+                    oneSidedFluxJacobian_dRate,
+                    oneSidedFluxJacobian_dPresCompUp,
+                    stack,
+                    dCompFlux );
+
+      /*
+         globalIndex oneSidedEqnRowIndices[NC]{};
+         globalIndex oneSidedDofColIndices_dPresCompUp[NC+1]{};
+         globalIndex oneSidedDofColIndices_dRate = 0;
+
+         // jacobian indices
+         for( integer ic = 0; ic < NC; ++ic )
+         {
+         // mass balance equations for all components
+         oneSidedEqnRowIndices[ic] = stack.offsetUp + ROFFSET::MASSBAL + ic - m_rankOffset;
+         }
+
+         // in the dof ordering used in this class, there are 1 pressure dofs
+         // and NC compDens dofs before the rate dof in this block
+         localIndex const dRateColOffset = COFFSET::DCOMP + NC;
+         oneSidedDofColIndices_dRate = stack.offsetCurrent + dRateColOffset;
+
+         for( integer jdof = 0; jdof < NC+1; ++jdof )
+         {
+         // dofs are the **upstream** pressure and component densities
+         oneSidedDofColIndices_dPresCompUp[jdof] = stack.offsetUp + COFFSET::DPRES + jdof;
+         }
+
+         if( m_useTotalMassEquation > 0 )
+         {
+         // Apply equation/variable change transformation(s)
+         real64 work[NC + 1]{};
+         shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, oneSidedFluxJacobian_dRate, work );
+         shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, oneSidedFluxJacobian_dPresCompUp, work );
+         shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, oneSidedFlux );
+         }
+
+         for( integer i = 0; i < NC; ++i )
+         {
+         if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < m_localMatrix.numRows() )
+         {
+          m_localMatrix.addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
+                                                          &oneSidedDofColIndices_dRate,
+                                                          oneSidedFluxJacobian_dRate[i],
+                                                          1 );
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
+                                                                              oneSidedDofColIndices_dPresCompUp,
+                                                                              oneSidedFluxJacobian_dPresCompUp[i],
+                                                                              NC+1 );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[oneSidedEqnRowIndices[i]], oneSidedFlux[i] );
+         }
+         }
+       */
+    }
+    else // not an exit connection
+    {
+      real64 localFlux[2*(NC)]{};
+      real64 localFluxJacobian_dRate[2*NC][1]{};
+      real64 localFluxJacobian_dPresCompUp[2*NC][NC+1]{};
+
+      compute( m_dt,
+               compFlux,
+               dCompFlux_dRate,
+               dCompFlux_dPresUp,
+               dCompFlux_dCompDensUp,
+               localFlux,
+               localFluxJacobian_dRate,
+               localFluxJacobian_dPresCompUp,
+               stack,
+               dCompFlux
+               );
+
+      /*
+         globalIndex eqnRowIndices[2*NC]{};
+         globalIndex dofColIndices_dPresCompUp[NC+1]{};
+         globalIndex dofColIndices_dRate = 0;
+
+         stack.offsetNext = m_wellElemDofNumber[iwelemNext];
+
+         // jacobian indices
+         for( integer ic = 0; ic < NC; ++ic )
+         {
+         // mass balance equations for all components
+         eqnRowIndices[TAG::NEXT *NC+ic]    = stack.offsetNext + ROFFSET::MASSBAL + ic - m_rankOffset;
+         eqnRowIndices[TAG::CURRENT *NC+ic] = stack.offsetCurrent + ROFFSET::MASSBAL + ic - m_rankOffset;
+         }
+
+         // in the dof ordering used in this class, there are 1 pressure dofs
+         // and NC compDens dofs before the rate dof in this block
+         localIndex const dRateColOffset = COFFSET::DCOMP + NC;
+         dofColIndices_dRate = stack.offsetCurrent + dRateColOffset;
+
+         for( integer jdof = 0; jdof < NC+1; ++jdof )
+         {
+         // dofs are the **upstream** pressure and component densities
+         dofColIndices_dPresCompUp[jdof] = stack.offsetUp + COFFSET::DPRES + jdof;
+         }
+
+         if( m_useTotalMassEquation > 0 )
+         {
+         // Apply equation/variable change transformation(s)
+         real64 work[NC + 1]{};
+         shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
+         shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+         shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
+         }
+
+         for( integer i = 0; i < 2*NC; ++i )
+         {
+         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+         {
+          m_localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                          &dofColIndices_dRate,
+                                                          localFluxJacobian_dRate[i],
+                                                          1 );
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                              dofColIndices_dPresCompUp,
+                                                                              localFluxJacobian_dPresCompUp[i],
+                                                                              NC+1 );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localFlux[i] );
+         }
+         }
+       */
+    }
+
+    compFluxKernelOp( iwelemNext, iwelemUp, currentConnRate );
+  }
+
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElements the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElements,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+    {
+      typename KERNEL_TYPE::StackVariables stack( 1 );
+
+      kernelComponent.setup( ie, stack );
+      kernelComponent.computeFlux( ie, stack );
+      kernelComponent.complete( ie, stack );
+    } );
+  }
+
+protected:
+  /// Time step size
+  real64 const m_dt;
+  /// Rank offset for calculating row/col Jacobian indices
+  integer const m_rankOffset;
+
+  /// Reference to the degree-of-freedom numbers
+  arrayView1d< globalIndex const > const m_wellElemDofNumber;
+  /// Next element index, needed since iterating over element nodes, not edges
+  arrayView1d< localIndex const > const m_nextWellElemIndex;
+
+  /// Connection rate
+  arrayView1d< real64 const > const m_connRate;
+
 
   /// Element component fraction
   arrayView2d< real64 const, compflow::USD_COMP > const m_wellElemCompFrac;
@@ -1927,14 +2686,14 @@ public:
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC() + 2;
+      
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
 
 
-      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF >;
+      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, 0 >;
 
 
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, localMatrix, localRhs, kernelFlags );

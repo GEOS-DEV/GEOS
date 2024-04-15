@@ -38,12 +38,22 @@ using namespace constitutive;
 WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
+m_numPhases( 0 ),
+  m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
   m_isThermal( false ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ))
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString()).setInputFlag( InputFlags::FALSE );
+
+  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
+
+
+
 }
 
 Group *WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -72,6 +82,11 @@ void WellSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
 
+  // 1. Set key dimensions of the problem
+  m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
+  m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
+
+
   // create dir for rates output
   if( getLogLevel() > 0 )
   {
@@ -87,6 +102,11 @@ void WellSolverBase::postProcessInput()
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
+
+  //this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+  //setApplyDefaultValue( 0 ).
+  //setInputFlag( InputFlags::OPTIONAL ).
+  //  setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
 
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
                                                    MeshLevel & meshLevel,
@@ -243,11 +263,11 @@ void WellSolverBase::assembleSystem( real64 const time,
     assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 
   }
-  else if( 1 )
+  else if( 0 )
   {
     integer const useTotalMassEquation = 1;
     string const wellDofKey = dofManager.getKey( wellElementDofName());
-    if ( 1 )
+    if( 1 )
     {
     
 
@@ -265,7 +285,7 @@ void WellSolverBase::assembleSystem( real64 const time,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         int numPhases = fluid.numFluidPhases();
         int numComponents = fluid.numFluidComponents();
-        if ( m_isThermal )
+        if( m_isThermal )
         {
 
         thermalCompositionalMultiphaseWellKernels::
@@ -313,7 +333,7 @@ void WellSolverBase::assembleSystem( real64 const time,
 
     // then assemble the flux terms in the mass balance equations
     // get a reference to the degree-of-freedom numbers
-    if ( 0 )
+    if( 0 )
     {
           // then assemble the flux terms in the mass balance equations
     assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );

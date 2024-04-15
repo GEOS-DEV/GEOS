@@ -101,7 +101,7 @@ public:
    * @brief getter for iso/thermal switch
    * @return True if thermal
    */
-  localIndex isThermal() const { return m_isThermal; }
+  integer isThermal() const { return m_isThermal; }
 
   /**
    * @brief get the name of DOF defined on well elements
@@ -279,6 +279,8 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
+static constexpr char const * isThermalString() { return "isThermal"; }
+
   };
 
 private:
@@ -311,6 +313,12 @@ protected:
   /// name of the flow solver
   string m_flowSolverName;
 
+  /// the max number of fluid phases
+  integer m_numPhases;
+
+  /// the number of fluid components
+  integer m_numComponents;
+
   /// the number of Degrees of Freedom per well element
   integer m_numDofPerWellElement;
 
@@ -322,6 +330,8 @@ protected:
 
   string const m_ratesOutputDir;
 
+/// name of the fluid constitutive model used as a reference for component/phase description
+  string m_referenceFluidModelName;
 };
 
 }

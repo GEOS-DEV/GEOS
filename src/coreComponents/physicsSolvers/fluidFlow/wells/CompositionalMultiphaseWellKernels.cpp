@@ -119,7 +119,7 @@ ControlEquationHelper::
   }
 }
 
-template< integer NC , integer IS_THERMAL >
+template< integer NC, integer IS_THERMAL >
 GEOS_HOST_DEVICE
 inline
 void
@@ -152,7 +152,7 @@ ControlEquationHelper::
 {
 
   //using ROFFSETC = compositionalMultiphaseWellKernels::RowOffsetComplete<NC>;
-  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac<NC>;
+  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using Deriv = multifluid::DerivativeOffset;
   //using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   //using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
@@ -265,10 +265,10 @@ ControlEquationHelper::
                                                             dControlEqn_dComp,
                                                             NC );
   // tjb- remove when safe and modify local matrix updates
-  assert(fabs( dControlEqn[COFFSET_WJ::dP] -dControlEqn_dPres) < FLT_EPSILON);
-  assert(fabs( dControlEqn[COFFSET_WJ::dQ] - dControlEqn_dRate ) < FLT_EPSILON);
-  for( integer ic=0; ic<NC;++ic)
-    assert(fabs( dControlEqn[COFFSET_WJ::dC+ic] - dControlEqn_dComp[ic] ) < FLT_EPSILON);
+  assert( fabs( dControlEqn[COFFSET_WJ::dP] -dControlEqn_dPres ) < FLT_EPSILON );
+  assert( fabs( dControlEqn[COFFSET_WJ::dQ] - dControlEqn_dRate ) < FLT_EPSILON );
+  for( integer ic=0; ic<NC; ++ic )
+    assert( fabs( dControlEqn[COFFSET_WJ::dC+ic] - dControlEqn_dComp[ic] ) < FLT_EPSILON );
 
 }
 
@@ -384,6 +384,7 @@ FluxKernel::
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
     real64 const currentConnRate = connRate[iwelem];
+std::cout << " connRate " << iwelem << " " << currentConnRate << std::endl;
     localIndex iwelemUp = -1;
 
     if( iwelemNext < 0 && !isProducer ) // exit connection, injector
@@ -599,7 +600,7 @@ INST_FluxKernel( 5 );
 
 /******************************** PressureRelationKernel ********************************/
 
-template< integer NC , integer IS_THERMAL >
+template< integer NC, integer IS_THERMAL >
 GEOS_HOST_DEVICE
 void
 PressureRelationKernel::
@@ -618,6 +619,12 @@ PressureRelationKernel::
            real64 & localPresRel,
            real64 ( & localPresRelJacobian )[2*(NC+1 + IS_THERMAL)] )
 {
+GEOS_UNUSED_VAR( dTotalMassDens_dPres );
+
+  GEOS_UNUSED_VAR( dTotalMassDens_dCompDens );
+  GEOS_UNUSED_VAR( dTotalMassDens_dPresNext );
+  GEOS_UNUSED_VAR( dTotalMassDens_dCompDensNext );
+
   // local working variables and arrays
   real64 dAvgMassDens_dCompCurrent[NC]{};
   real64 dAvgMassDens_dCompNext[NC]{};
@@ -660,10 +667,10 @@ PressureRelationKernel::
   }
 }
 
-template< integer NC , integer IS_THERMAL >
+template< integer NC, integer IS_THERMAL >
 void
 PressureRelationKernel::
-  launch(  localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -683,7 +690,8 @@ PressureRelationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac<NC>;
+  GEOS_UNUSED_VAR( isThermal );
+  using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
@@ -788,7 +796,7 @@ PressureRelationKernel::
       real64 localPresRel = 0;
       real64 localPresRelJacobian[2*(NC+1+IS_THERMAL)]{};
 
-      compute< NC , IS_THERMAL >( 
+      compute< NC, IS_THERMAL >( 
                      wellElemGravCoef[iwelem],
                      wellElemGravCoef[iwelemNext],
                      wellElemPressure[iwelem],
@@ -835,10 +843,10 @@ PressureRelationKernel::
   controlHasSwitched = ( switchControl.get() == 1 );
 }
 
-#define INST_PressureRelationKernel( NC , IS_THERMAL  ) \
+#define INST_PressureRelationKernel( NC, IS_THERMAL ) \
   template \
   void PressureRelationKernel:: \
-    launch< NC , IS_THERMAL >( localIndex const size, \
+    launch< NC, IS_THERMAL >( localIndex const size, \
                   globalIndex const rankOffset, \
                   bool const isLocallyOwned, \
                   localIndex const iwelemControl, \
@@ -858,16 +866,16 @@ PressureRelationKernel::
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
-INST_PressureRelationKernel( 1, 0);
-INST_PressureRelationKernel( 1, 1);
-INST_PressureRelationKernel( 2, 0);
-INST_PressureRelationKernel( 2, 1);
-INST_PressureRelationKernel( 3, 0);
-INST_PressureRelationKernel( 3, 1);
-INST_PressureRelationKernel( 4, 0);
-INST_PressureRelationKernel( 4 ,1);
-INST_PressureRelationKernel( 5, 0);
-INST_PressureRelationKernel( 5 ,1);
+INST_PressureRelationKernel( 1, 0 );
+INST_PressureRelationKernel( 1, 1 );
+INST_PressureRelationKernel( 2, 0 );
+INST_PressureRelationKernel( 2, 1 );
+INST_PressureRelationKernel( 3, 0 );
+INST_PressureRelationKernel( 3, 1 );
+INST_PressureRelationKernel( 4, 0 );
+INST_PressureRelationKernel( 4, 1 );
+INST_PressureRelationKernel( 5, 0 );
+INST_PressureRelationKernel( 5, 1 );
 
 
 /******************************** PerforationKernel ********************************/
@@ -906,7 +914,7 @@ PerforationKernel::
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
   using Deriv = multifluid::DerivativeOffset;
-  using CP_Deriv = multifluid::DerivativeOffsetC<NC,IS_THERMAL>;
+  using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
   GEOS_UNUSED_VAR( dCompPerfRate );
   // local working variables and arrays
   real64 pres[2]{};
@@ -1015,7 +1023,7 @@ PerforationKernel::
       dPotDiff_dC[i][ic] += multiplier[i] * trans * dPres_dC[i][ic];
     }
     // LHS & RHS both use CP_Deriv
-    for ( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
+    for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
     {
        dPotDiff[i][ic] += multiplier[i] * trans * dPres[i][ic];
     }
@@ -1117,7 +1125,7 @@ PerforationKernel::
                       + resPhaseMob * (dDens_dC[jc] / resDens - dVisc_dC[jc] / resVisc);
       }
       // Handles all dependencies 
-      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc)
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
         dMob[jc] = dRelPerm[jc] * resDens / resVisc
                       + resPhaseMob * (dDens[jc] / resDens - dVisc[jc] / resVisc);
@@ -1134,7 +1142,7 @@ PerforationKernel::
         dFlux_dC[TAG::WELL][ic] = resPhaseMob * dPotDiff_dC[TAG::WELL][ic];
       }
       // Handles all dependencies 
-      for ( integer jc = 0;  jc < CP_Deriv::nDer; ++jc)
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
         dFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMob * dPotDiff[TAG::RES][jc];
         dFlux[TAG::WELL][jc] = resPhaseMob * dPotDiff[TAG::WELL][jc];
@@ -1178,7 +1186,7 @@ PerforationKernel::
                         &dCompFrac[CP_Deriv::dC],
                         Deriv::dC );
 
-        for ( integer jc = 0;  jc < CP_Deriv::nDer; ++jc)
+        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
           dCompPerfRate[TAG::RES][ic][jc]  += dFlux[TAG::RES][jc] * resPhaseCompFrac[ip][ic];
           dCompPerfRate[TAG::RES][ic][jc]  += flux * dCompFrac[jc];
@@ -1188,14 +1196,14 @@ PerforationKernel::
     }
 
     // tjb- remove when safe  
-    for ( integer ic = 0; ic < NC; ic ++ )
+    for( integer ic = 0; ic < NC; ic++ )
     {
-        assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) < FLT_EPSILON);
-        assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic]) < FLT_EPSILON);
-        for ( integer jc = 0;  jc < NC; ++jc)
+        assert( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic] ) < FLT_EPSILON );
+        assert( fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic] ) < FLT_EPSILON );
+        for( integer jc = 0; jc < NC; ++jc )
         {
-          assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc]) < FLT_EPSILON); 
-          assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc]) < FLT_EPSILON);          
+          assert( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc] ) < FLT_EPSILON ); 
+          assert( fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc] ) < FLT_EPSILON );          
         }
     }
   }
@@ -1280,7 +1288,7 @@ PerforationKernel::
                                / ( resVisc * resVisc );
       }
             // Handles all dependencies 
-      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc)
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
         dMob[jc] += (dRelPerm[jc] *resVisc -  resRelPerm * dVisc[jc] )
                       / ( resVisc * resVisc);
@@ -1304,11 +1312,11 @@ PerforationKernel::
     {
       dMult[TAG::WELL][CP_Deriv::dT] = 0.0;
     }
-    for ( integer ic = 0; ic < NC; ++ic )
+    for( integer ic = 0; ic < NC; ++ic )
     {
       dMult[TAG::WELL][CP_Deriv::dC+ic] = resTotalMob;
     }
-    for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+    for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
     {
       dMult[TAG::RES][jc] = wellElemTotalDens * dMob[jc];
     }
@@ -1325,7 +1333,7 @@ PerforationKernel::
       dFlux_dC[TAG::WELL][ic] = dMult_dC[TAG::WELL][ic] * potDiff + mult * dPotDiff_dC[TAG::WELL][ic];
     }
     
-    for ( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
+    for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
     {
       dFlux[TAG::RES][ic]  = dMult[TAG::RES][ic] * potDiff + mult * dPotDiff[TAG::RES][ic];
       dFlux[TAG::WELL][ic] = dMult[TAG::WELL][ic] * potDiff + mult * dPotDiff[TAG::WELL][ic]; 
@@ -1348,7 +1356,7 @@ PerforationKernel::
     {
       // Note this needs to be include below when this code above is removed 
       //compPerfRate[ic] += wellElemCompFrac[ic] * flux;
-      for ( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+      for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
         dCompPerfRate[TAG::RES][ic][jc]  = wellElemCompFrac[ic] * dFlux[TAG::RES][jc];
       }
@@ -1367,24 +1375,24 @@ PerforationKernel::
       }
     }
         // tjb- remove when safe  
-    for ( integer ic = 0; ic < NC; ic ++ )
+    for( integer ic = 0; ic < NC; ic++ )
     {
-        if (fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) > FLT_EPSILON)
+        if( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic] ) > FLT_EPSILON )
         {
           std::cout << ic << " " << dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] << " " << dCompPerfRate_dPres[TAG::RES][ic] << std::endl;
         }
-        assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic]) < FLT_EPSILON);
-        assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic]) < FLT_EPSILON);
-        for ( integer jc = 0;  jc < NC; ++jc)
+        assert( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic] ) < FLT_EPSILON );
+        assert( fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic] ) < FLT_EPSILON );
+        for( integer jc = 0; jc < NC; ++jc )
         {
-          assert(fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc]) < FLT_EPSILON); 
-          assert(fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc]) < FLT_EPSILON);          
+          assert( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::RES][ic][jc] ) < FLT_EPSILON ); 
+          assert( fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dC+jc]  -dCompPerfRate_dComp[TAG::WELL][ic][jc] ) < FLT_EPSILON );          
         }
     }
   }
 }
 
-template< integer NC, integer NP , integer IS_THERMAL>
+template< integer NC, integer NP, integer IS_THERMAL >
 void
 PerforationKernel::
   launch( localIndex const size,
@@ -1503,26 +1511,26 @@ PerforationKernel::
                       arrayView3d< real64 > const & dCompPerfRate_dPres, \
                       arrayView4d< real64 > const & dCompPerfRate_dComp )
 
-INST_PerforationKernel( 1, 2 , 0 );
-INST_PerforationKernel( 2, 2 , 0 );
-INST_PerforationKernel( 3, 2 , 0 );
-INST_PerforationKernel( 4, 2 , 0 );
-INST_PerforationKernel( 5, 2 , 0 );
-INST_PerforationKernel( 1, 3 , 0 );
-INST_PerforationKernel( 2, 3 , 0 );
-INST_PerforationKernel( 3, 3 , 0 );
-INST_PerforationKernel( 4, 3 , 0 );
-INST_PerforationKernel( 5, 3 , 0 );
-INST_PerforationKernel( 1, 2 , 1 );
-INST_PerforationKernel( 2, 2 , 1 );
-INST_PerforationKernel( 3, 2 , 1 );
-INST_PerforationKernel( 4, 2 , 1 );
-INST_PerforationKernel( 5, 2 , 1 );
-INST_PerforationKernel( 1, 3 , 1 );
-INST_PerforationKernel( 2, 3 , 1 );
-INST_PerforationKernel( 3, 3 , 1 );
-INST_PerforationKernel( 4, 3 , 1 );
-INST_PerforationKernel( 5, 3 , 1 );
+INST_PerforationKernel( 1, 2, 0 );
+INST_PerforationKernel( 2, 2, 0 );
+INST_PerforationKernel( 3, 2, 0 );
+INST_PerforationKernel( 4, 2, 0 );
+INST_PerforationKernel( 5, 2, 0 );
+INST_PerforationKernel( 1, 3, 0 );
+INST_PerforationKernel( 2, 3, 0 );
+INST_PerforationKernel( 3, 3, 0 );
+INST_PerforationKernel( 4, 3, 0 );
+INST_PerforationKernel( 5, 3, 0 );
+INST_PerforationKernel( 1, 2, 1 );
+INST_PerforationKernel( 2, 2, 1 );
+INST_PerforationKernel( 3, 2, 1 );
+INST_PerforationKernel( 4, 2, 1 );
+INST_PerforationKernel( 5, 2, 1 );
+INST_PerforationKernel( 1, 3, 1 );
+INST_PerforationKernel( 2, 3, 1 );
+INST_PerforationKernel( 3, 3, 1 );
+INST_PerforationKernel( 4, 3, 1 );
+INST_PerforationKernel( 5, 3, 1 );
 /******************************** AccumulationKernel ********************************/
 
 template< integer NC >
