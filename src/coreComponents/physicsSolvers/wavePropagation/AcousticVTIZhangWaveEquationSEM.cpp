@@ -68,21 +68,21 @@ void AcousticVTIZhangWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::acousticvtifields::Pressure_q_nm1,
                                fields::acousticvtifields::Pressure_q_n,
                                fields::acousticvtifields::Pressure_q_np1,
-                               fields::acousticvtifields::ForcingRHS,
-                               fields::acousticvtifields::AcousticMassVector,
-                               fields::acousticvtifields::DampingVector_p,
+                               fields::acousticfields::ForcingRHS,
+                               fields::acousticfields::AcousticMassVector,
+                               fields::acousticvtifields::DampingVector_pp,
                                fields::acousticvtifields::DampingVector_pq,
-                               fields::acousticvtifields::DampingVector_q,
+                               fields::acousticvtifields::DampingVector_qq,
                                fields::acousticvtifields::DampingVector_qp,
                                fields::acousticvtifields::StiffnessVector_p,
                                fields::acousticvtifields::StiffnessVector_q,
-                               fields::acousticvtifields::AcousticFreeSurfaceNodeIndicator,
+                               fields::acousticfields::AcousticFreeSurfaceNodeIndicator,
                                fields::acousticvtifields::AcousticLateralSurfaceNodeIndicator,
                                fields::acousticvtifields::AcousticBottomSurfaceNodeIndicator >( getName() );
 
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::acousticvtifields::AcousticFreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
     faceManager.registerField< fields::acousticvtifields::AcousticLateralSurfaceFaceIndicator >( getName() );
     faceManager.registerField< fields::acousticvtifields::AcousticBottomSurfaceFaceIndicator >( getName() );
 
@@ -92,8 +92,8 @@ void AcousticVTIZhangWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< fields::acousticvtifields::AcousticDelta >( getName() );
       subRegion.registerField< fields::acousticvtifields::AcousticEpsilon >( getName() );
-      subRegion.registerField< fields::acousticvtifields::AcousticVelocity >( getName() );
-      subRegion.registerField< fields::acousticvtifields::AcousticDensity >( getName() );
+      subRegion.registerField< fields::acousticfields::AcousticVelocity >( getName() );
+      subRegion.registerField< fields::acousticfields::AcousticDensity >( getName() );
     } );
   } );
 }
@@ -248,20 +248,20 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::acousticvtifields::AcousticMassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::acousticfields::AcousticMassVector >();
     mass.zero();
     /// damping matrices to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping_p  = nodeManager.getField< fields::acousticvtifields::DampingVector_p >();
+    arrayView1d< real32 > const damping_pp  = nodeManager.getField< fields::acousticvtifields::DampingVector_pp >();
     arrayView1d< real32 > const damping_pq = nodeManager.getField< fields::acousticvtifields::DampingVector_pq >();
-    arrayView1d< real32 > const damping_q  = nodeManager.getField< fields::acousticvtifields::DampingVector_q >();
+    arrayView1d< real32 > const damping_qq  = nodeManager.getField< fields::acousticvtifields::DampingVector_qq >();
     arrayView1d< real32 > const damping_qp = nodeManager.getField< fields::acousticvtifields::DampingVector_qp >();
-    damping_p.zero();
+    damping_pp.zero();
     damping_pq.zero();
-    damping_q.zero();
+    damping_qq.zero();
     damping_qp.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticvtifields::AcousticFreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticfields::AcousticFreeSurfaceFaceIndicator >();
     arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< fields::acousticvtifields::AcousticLateralSurfaceFaceIndicator >();
     arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< fields::acousticvtifields::AcousticBottomSurfaceFaceIndicator >();
 
@@ -271,8 +271,8 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::acousticvtifields::AcousticVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::acousticvtifields::AcousticDensity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::acousticfields::AcousticVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::acousticfields::AcousticDensity >();
       arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::acousticvtifields::AcousticEpsilon >();
       arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::acousticvtifields::AcousticDelta >();
 
@@ -305,8 +305,8 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
                                                                density,
                                                                vti_epsilon,
                                                                vti_delta,
-                                                               damping_p,
-                                                               damping_q,
+                                                               damping_pp,
+                                                               damping_qq,
                                                                damping_pq,
                                                                damping_qp );
       } );
@@ -423,10 +423,10 @@ void AcousticVTIZhangWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPar
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticvtifields::AcousticFreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::acousticfields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticvtifields::AcousticFreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticfields::AcousticFreeSurfaceNodeIndicator >();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -552,9 +552,9 @@ real64 AcousticVTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::acousticvtifields::AcousticMassVector >();
-    arrayView1d< real32 const > const damping_p = nodeManager.getField< fields::acousticvtifields::DampingVector_p >();
-    arrayView1d< real32 const > const damping_q = nodeManager.getField< fields::acousticvtifields::DampingVector_q >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::acousticfields::AcousticMassVector >();
+    arrayView1d< real32 const > const damping_pp = nodeManager.getField< fields::acousticvtifields::DampingVector_pp >();
+    arrayView1d< real32 const > const damping_qq = nodeManager.getField< fields::acousticvtifields::DampingVector_qq >();
     arrayView1d< real32 const > const damping_pq = nodeManager.getField< fields::acousticvtifields::DampingVector_pq >();
     arrayView1d< real32 const > const damping_qp = nodeManager.getField< fields::acousticvtifields::DampingVector_qp >();
 
@@ -566,12 +566,12 @@ real64 AcousticVTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
     arrayView1d< real32 > const q_n = nodeManager.getField< fields::acousticvtifields::Pressure_q_n >();
     arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::acousticvtifields::Pressure_q_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticvtifields::AcousticFreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::acousticfields::AcousticFreeSurfaceNodeIndicator >();
     arrayView1d< localIndex const > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::acousticvtifields::AcousticLateralSurfaceNodeIndicator >();
     arrayView1d< localIndex const > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::acousticvtifields::AcousticBottomSurfaceNodeIndicator >();
     arrayView1d< real32 > const stiffnessVector_p = nodeManager.getField< fields::acousticvtifields::StiffnessVector_p >();
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::acousticvtifields::StiffnessVector_q >();
-    arrayView1d< real32 > const rhs = nodeManager.getField< fields::acousticvtifields::ForcingRHS >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< fields::acousticfields::ForcingRHS >();
 
     auto kernelFactory = acousticVTIZhangWaveEquationSEMKernels::ExplicitAcousticVTIZhangSEMFactory( dt );
 
@@ -585,15 +585,55 @@ real64 AcousticVTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
                                                             kernelFactory );
 
     addSourceToRightHandSide( cycleNumber, rhs );
-
+    real64 const dt2 = dt*dt;
     /// calculate your time integrators
 
     GEOS_MARK_SCOPE ( updateP );
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      if( freeSurfaceNodeIndicator[a] != 1 )
+      {
+        p_np1[a] = 2.0*mass[a]*p_n[a]/dt2;
+        p_np1[a] -= mass[a]*p_nm1[a]/dt2;
+        p_np1[a] += stiffnessVector_p[a];
+        p_np1[a] += rhs[a];
 
-    AcousticTimeSchemeSEM::LeapFrogforVTI( nodeManager.size(), dt, p_np1, p_n, p_nm1, q_np1, q_n, q_nm1, mass, stiffnessVector_p,
-                                           stiffnessVector_q, damping_p, damping_pq, damping_q, damping_qp,
-                                           rhs, freeSurfaceNodeIndicator, lateralSurfaceNodeIndicator,
-                                           bottomSurfaceNodeIndicator );
+        q_np1[a] = 2.0*mass[a]*q_n[a]/dt2;
+        q_np1[a] -= mass[a]*q_nm1[a]/dt2;
+        q_np1[a] += stiffnessVector_q[a];
+        q_np1[a] += rhs[a];
+
+        if( lateralSurfaceNodeIndicator[a] != 1 && bottomSurfaceNodeIndicator[a] != 1 )
+        {
+          // Interior node, no boundary terms
+          p_np1[a] /= mass[a]/dt2;
+          q_np1[a] /= mass[a]/dt2;
+        }
+        else
+        {
+          // Boundary node
+          p_np1[a] += damping_pp[a]*p_nm1[a]/dt/2;
+          p_np1[a] += damping_pq[a]*q_nm1[a]/dt/2;
+
+          q_np1[a] += damping_qq[a]*q_nm1[a]/dt/2;
+          q_np1[a] += damping_qp[a]*p_nm1[a]/dt/2;
+          // Hand-made Inversion of 2x2 matrix
+          real32 coef_pp = mass[a]/dt2;
+          coef_pp += damping_pp[a]/dt/2;
+          real32 coef_pq = damping_pq[a]/dt/2;
+
+          real32 coef_qq = mass[a]/dt2;
+          coef_qq += damping_qq[a]/2/dt;
+          real32 coef_qp = damping_qp[a]/dt/2;
+
+          real32 det_pq = 1/(coef_pp * coef_qq - coef_pq*coef_qp);
+
+          real32 aux_p_np1 = p_np1[a];
+          p_np1[a] = det_pq*(coef_qq*p_np1[a] - coef_pq*q_np1[a]);
+          q_np1[a] = det_pq*(coef_pp*q_np1[a] - coef_qp*aux_p_np1);
+        }
+      }
+    } );
 
     /// synchronize pressure fields
     FieldIdentifiers fieldsToBeSync;

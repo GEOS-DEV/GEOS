@@ -449,7 +449,7 @@ public:
     m_q_n( nodeManager.getField< fields::acousticvtifields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::acousticvtifields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::acousticvtifields::StiffnessVector_q >() ),
-    m_density( elementSubRegion.template getField< fields::acousticvtifields::AcousticDensity >() ),
+    m_density( elementSubRegion.template getField< fields::acousticfields::AcousticDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< fields::acousticvtifields::AcousticEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< fields::acousticvtifields::AcousticDelta >() ),
     m_vti_sigma( elementSubRegion.template getField< fields::acousticvtifields::AcousticSigma >() ),

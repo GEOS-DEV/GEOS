@@ -23,7 +23,6 @@
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-
 namespace geos
 {
 
@@ -32,22 +31,6 @@ namespace fields
 
 namespace acousticvtifields
 {
-
-DECLARE_FIELD( AcousticVelocity,
-               "acousticVelocity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium velocity of the cell" );
-
-DECLARE_FIELD( AcousticDensity,
-               "acousticDensity",
-               array1d< real32 >,
-               1,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium density of the cell" );
 
 DECLARE_FIELD( AcousticDelta,
                "acousticDelta",
@@ -73,21 +56,13 @@ DECLARE_FIELD( AcousticSigma,
                WRITE_AND_READ,
                "Sigma quantity in VTI/TTI Fletcher's equations" );
 
-DECLARE_FIELD( AcousticMassVector,
-               "acousticMassVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Mass Matrix." );
-
 DECLARE_FIELD( StiffnessVector_p,
                "stiffnessVector_p",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Stiffness vector contains R_h*Pressure_n." );
+               "Stiffness vector contains R_h*Pressure_p_n." );
 
 DECLARE_FIELD( StiffnessVector_q,
                "stiffnessVector_q",
@@ -95,7 +70,7 @@ DECLARE_FIELD( StiffnessVector_q,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Stiffness vector contains R_h*Pressure_n." );
+               "Stiffness vector contains R_h*Pressure_q_n." );
 
 DECLARE_FIELD( Pressure_p_nm1,
                "pressure_p_nm1",
@@ -103,7 +78,7 @@ DECLARE_FIELD( Pressure_p_nm1,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Scalar pressure at time n-1." );
+               "Scalar pressure p at time n-1." );
 
 DECLARE_FIELD( Pressure_p_n,
                "pressure_p_n",
@@ -111,7 +86,7 @@ DECLARE_FIELD( Pressure_p_n,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Scalar pressure at time n." );
+               "Scalar pressure p at time n." );
 
 DECLARE_FIELD( Pressure_p_np1,
                "pressure_p_np1",
@@ -119,7 +94,7 @@ DECLARE_FIELD( Pressure_p_np1,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Scalar pressure at time n+1." );
+               "Scalar pressure p at time n+1." );
 
 DECLARE_FIELD( Pressure_q_nm1,
                "pressure_q_nm1",
@@ -145,13 +120,13 @@ DECLARE_FIELD( Pressure_q_np1,
                WRITE_AND_READ,
                "Scalar auxiliary pressure q at time n+1." );
 
-DECLARE_FIELD( DampingVector_p,
+DECLARE_FIELD( DampingVector_pp,
                "dampingVector_p",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for p terms in p equation." );
+               "Diagonal block D_{p,p} of the Damping Matrix for p terms in p equation." );
 
 DECLARE_FIELD( DampingVector_pq,
                "dampingVector_pq",
@@ -159,15 +134,7 @@ DECLARE_FIELD( DampingVector_pq,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for q terms in p equation." );
-
-DECLARE_FIELD( DampingVector_q,
-               "dampingVector_q",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for q terms in q equation." );
+               "Off-Diagonal block D_{p,q} of the Damping Matrix for q terms in p equation." );
 
 DECLARE_FIELD( DampingVector_qp,
                "dampingVector_qp",
@@ -175,23 +142,15 @@ DECLARE_FIELD( DampingVector_qp,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Diagonal of the Damping Matrix for p terms in q equation." );
+               "Off-Diagonal block D_{q,q} of the Damping Matrix for p terms in q equation." );
 
-DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
-               "acousticFreeSurfaceFaceIndicator",
-               array1d< localIndex >,
+DECLARE_FIELD( DampingVector_qq,
+               "dampingVector_q",
+               array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
-
-DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
-               "acousticFreeSurfaceNodeIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
+               "Diagonal block D_{q,q} of the Damping Matrix for q terms in q equation." );
 
 DECLARE_FIELD( AcousticLateralSurfaceFaceIndicator,
                "lateralSurfaceFaceIndicator",
@@ -225,13 +184,6 @@ DECLARE_FIELD( AcousticBottomSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
 
-DECLARE_FIELD( ForcingRHS,
-               "rhs",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS" );
 }
 
 }

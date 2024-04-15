@@ -268,8 +268,8 @@ struct DampingMatrixKernel
    * @param[in] density cell-wise density
    * @param[in] vti_epsilon cell-wise Thomsen epsilon parameter
    * @param[in] vti_delta cell-wise Thomsen delta parameter
-   * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
-   * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
+   * @param[out] damping_pp diagonal of the damping matrix for quantities in p in p-equation
+   * @param[out] damping_qq diagonal of the damping matrix for quantities in q in q-equation
    * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
    * @param[out] damping_qp diagonal of the damping matrix for quantities in p in q-equation
    */
@@ -287,8 +287,8 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const density,
           arrayView1d< real32 const > const vti_epsilon,
           arrayView1d< real32 const > const vti_delta,
-          arrayView1d< real32 > const damping_p,
-          arrayView1d< real32 > const damping_q,
+          arrayView1d< real32 > const damping_pp,
+          arrayView1d< real32 > const damping_qq,
           arrayView1d< real32 > const damping_pq,
           arrayView1d< real32 > const damping_qp )
   {
@@ -323,7 +323,7 @@ struct DampingMatrixKernel
             {
               real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
               real32 const localIncrement_p = alpha* vti_p_xy  * aux;
-              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pp[facesToNodes( f, q )], localIncrement_p );
 
               real32 const localIncrement_qp = alpha * vti_qp_xy * aux;
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
@@ -344,7 +344,7 @@ struct DampingMatrixKernel
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
 
               real32 const localIncrement_q = alpha * vti_q_z * aux;
-              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qq[facesToNodes( f, q )], localIncrement_q );
             }
           }
         }
@@ -433,7 +433,7 @@ public:
     m_q_n( nodeManager.getField< fields::acousticvtifields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::acousticvtifields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::acousticvtifields::StiffnessVector_q >() ),
-    m_density( elementSubRegion.template getField< fields::acousticvtifields::AcousticDensity >() ),
+    m_density( elementSubRegion.template getField< fields::acousticfields::AcousticDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< fields::acousticvtifields::AcousticEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< fields::acousticvtifields::AcousticDelta >() ),
     m_dt( dt )
