@@ -44,7 +44,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/pangea4-base.cmake)
 #  - explicit optimization flags even when using cray wrappers
 
 if( NOT DEFINED ENV{GCC_PATH} )
-    message( FATAL_ERROR "GCC_PATH is not defined. Please load the PrgEnv-gnu/8.4.0 module." )
+    message( FATAL_ERROR "GCC is not loaded. Please load the PrgEnv-gnu/8.4.0 module." )
 endif()
 
 set( CMAKE_C_COMPILER       "cc"  CACHE PATH "" )
@@ -71,7 +71,7 @@ set( CMAKE_Fortran_FLAGS_RELEASE ${RELEASE_FLAGS} CACHE PATH "" )
 set( ENABLE_MPI ON CACHE BOOL "" )
 
 if( NOT DEFINED ENV{HPCX_MPI_DIR} )
-    message( FATAL_ERROR "HPCX_MPI_DIR is not defined. Please load the hpcx-ompi module." )
+    message( FATAL_ERROR "HPC-X OpenMPI is not defined. Please load the hpcx-ompi module." )
 endif()
 
 #######################################                                                                                                                                           
@@ -84,12 +84,12 @@ endif()
 set( ENABLE_MKL ON CACHE BOOL "" FORCE )
 
 if( NOT DEFINED ENV{MKLROOT} )
-    message( FATAL_ERROR "MKLROOT is not defined. Please load the intel-oneapi-mkl/2023.2.0 module." )
+    message( FATAL_ERROR "MKL is not loaded. Please load the intel-oneapi-mkl/2023.2.0 module." )
 endif()
 
 set( MKL_INCLUDE_DIRS $ENV{MKLROOT}/include CACHE STRING "" )
-set( MKL_LIBRARIES    $ENV{MKLROOT}/lib/intel64/libmkl_gf_lp64.so
-                      $ENV{MKLROOT}/lib/intel64/libmkl_gnu_thread.so
-                      $ENV{MKLROOT}/lib/intel64/libmkl_core.so
+set( MKL_LIBRARIES    $ENV{MKLROOT}/lib/intel64/libmkl_rt.so
                       $ENV{GCC_PATH}/lib/gcc/x86_64-redhat-linux/12/libgomp.so
                       CACHE STRING "" )
+
+include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )
