@@ -144,8 +144,6 @@ public:
 
 private:
 
-
-
   std::vector< Column > m_columns;
   string m_tableTitle;
   integer m_borderMargin;

@@ -48,13 +48,12 @@ protected:
   virtual ~TableFormatter() = default;
 
   /**
-   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableLayout.
+   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
    * @param columns Vector of columns to be filled.
    * @param tableData Vector containing all rows filled with values
    */
   void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > const & tableData,
-                                 std::vector< string > & msgTableError ) const;
+                                 std::vector< std::vector< string > > & tableData ) const;
 
 };
 
@@ -134,13 +133,14 @@ private:
    */
   void layoutToString( std::ostringstream & tableOutput,
                        std::vector< TableLayout::Column > & columns,
-                       std::vector< string > & msgTableError,
+                       std::set< string > & msgTableError,
                        string & sectionSeparator ) const;
 
   /**
    * @brief Split all header names by detecting the newline \\n character.
-   * @param splitHeader A empty vector who will contain all split header names
+   * @param columns The vector containg all columns
    * @param largestHeaderVectorSize The largest split header vector size
+   * @param splitHeader A empty vector who will contain all split header names
    */
   void parseAndStoreHeaderSections( std::vector< TableLayout::Column > const & columns,
                                     size_t & largestHeaderVectorSize,
@@ -175,7 +175,7 @@ private:
    * @param msgTableError Vector containing all error messages
    */
   void computeTableMaxLineLength( std::vector< TableLayout::Column > & columns,
-                                  std::vector< string > & msgTableError ) const;
+                                  std::set< string > & msgTableError ) const;
 
   /**
    * @brief Build all separator needed from length information contained in columns vector
@@ -193,11 +193,13 @@ private:
    * @param msg Vector of string(s) to display
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
+   * @param alignment The aligment for a row
    */
   void addTopRow( std::ostringstream & tableOutput,
-                  std::vector< string > const & msg,
+                  std::set< string > const & msg,
                   string_view topSeparator,
-                  string_view sectionSeparator ) const;
+                  string_view sectionSeparator,
+                  TableLayout::Alignment alignment ) const;
 
   /**
    * @brief Add a row on top of the table
@@ -205,11 +207,13 @@ private:
    * @param msg The message to display
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
+   * @param alignment The aligment for a row
    */
   void addTopRow( std::ostringstream & tableOutput,
                   string const & msg,
                   string_view topSeparator,
-                  string_view sectionSeparator ) const;
+                  string_view sectionSeparator,
+                  TableLayout::Alignment alignment ) const;
 
   /**
    * @brief Build a row at the top of the table
@@ -217,11 +221,13 @@ private:
    * @param msg The converted string to display.
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
+   * @param alignment The aligment for a row
    */
   void buildTopRow( std::ostringstream & tableOutput,
                     string const & msg,
                     string_view topSeparator,
-                    string_view sectionSeparator ) const;
+                    string_view sectionSeparator,
+                    TableLayout::Alignment alignment ) const;
 
   /**
    * @brief Build a section by specifying it's type ( header or section )

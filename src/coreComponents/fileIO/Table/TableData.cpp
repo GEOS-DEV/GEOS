@@ -23,6 +23,10 @@ namespace geos
 
 void TableData::addRow( std::vector< string > const & row )
 {
+  if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size()  )
+  {
+    errorsMsg.insert( "Number of row cells ins't consistent with the number of columns." );
+  }
   m_rows.push_back( row );
 }
 
@@ -36,14 +40,14 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
   return m_rows;
 }
 
-std::vector< string > const & TableData::getErrorMsgConversion() const
+std::set< string > const & TableData::getErrorMsgs() const
 {
   return errorsMsg;
 }
 
-void TableData::setErrorMsgConversion( string const & msg )
+void TableData::setErrorMsgs( string const & msg )
 {
-  errorsMsg.push_back( msg );
+  errorsMsg.insert( msg );
 }
 
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
@@ -86,12 +90,12 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
 
   if( !flag )
   {
-    tableData1D.tableData.setErrorMsgConversion( "Table isn't consistent, One or more cells are not in the right place" );
+    tableData1D.tableData.setErrorMsgs( "Table isn't consistent, One or more cells are not in the right place" );
   }
 
   if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
   {
-    tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
+    tableData1D.tableData.setErrorMsgs( "Cell(s) are missing in row" );
   }
 
   return tableData1D;

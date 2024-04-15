@@ -57,23 +57,23 @@ public:
   std::vector< std::vector< string > > const & getTableDataRows() const;
 
   /**
-   * @brief Get the Error Msg Conversion string
-   * @return The error msg conversion
+   * @brief Get all error messages
+   * @return The set of error messages
    */
-  std::vector< string > const & getErrorMsgConversion() const;
+  std::set< string > const & getErrorMsgs() const;
 
   /**
-   * @brief Set the Error Msg Conversion object
+   * @brief Set an error message
    * @param msg The error msg to set
    */
-  void setErrorMsgConversion( string const & msg );
+  void setErrorMsgs( string const & msg );
 
 protected:
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
 
   /// store error if there are any inconsistencies related to the table
-  std::vector< string > errorsMsg;
+  std::set< string > errorsMsg;
 
 };
 
