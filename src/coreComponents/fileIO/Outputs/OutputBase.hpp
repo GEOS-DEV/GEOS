@@ -40,12 +40,6 @@ public:
   virtual ~OutputBase() override;
 
   /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
-  static string catalogName() { return "OutputBase"; }
-
-  /**
    * @brief Setter for the output directory
    * @param  outputDir The output directory
    **/

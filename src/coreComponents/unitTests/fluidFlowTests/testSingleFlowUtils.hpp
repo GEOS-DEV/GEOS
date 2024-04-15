@@ -111,7 +111,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   problemManager.applyInitialConditions();
 }
 
-void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solver,
+void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
                                        DomainPartition & domain,
                                        bool const isThermal,
                                        real64 const perturbParameter,

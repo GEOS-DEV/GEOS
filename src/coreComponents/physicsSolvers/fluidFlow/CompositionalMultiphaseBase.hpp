@@ -520,8 +520,8 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                 fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field

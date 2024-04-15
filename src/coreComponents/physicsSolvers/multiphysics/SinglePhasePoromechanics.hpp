@@ -20,12 +20,13 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
 {
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER = SinglePhaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
@@ -52,7 +53,21 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  template< typename _FLOW_SOLVER=FLOW_SOLVER >
+  static
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseBase >::value, string >::type
+  catalogName()
+  {
+    return "SinglePhasePoromechanics";
+  }
+  template< typename _FLOW_SOLVER=FLOW_SOLVER >
+  static
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseReservoirAndWells<> >::value, string >::type
+  catalogName()
+  {
+    return SinglePhaseReservoirAndWells<>::catalogName() + "Poromechanics";
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */

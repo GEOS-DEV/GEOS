@@ -53,12 +53,6 @@ public:
   explicit MeshGeneratorBase( string const & name,
                               Group * const parent );
 
-  /**
-   * @brief Return the name of the MeshGenerator in object catalog.
-   * @return string that contains the catalog name of the MeshGenerator
-   */
-  static string catalogName() { return "MeshGeneratorBase"; }
-
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
