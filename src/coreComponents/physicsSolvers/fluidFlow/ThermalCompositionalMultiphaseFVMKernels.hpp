@@ -284,7 +284,7 @@ public:
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
     using Base::StackVariables::transmissibility;
-    using Base::StackVariables::dTrans_dPres;
+    using Base::StackVariables::dTrans;
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
@@ -509,7 +509,7 @@ public:
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans[Deriv::dP] );           // again, we have to pass something here, but this is unused for now
 
 
 

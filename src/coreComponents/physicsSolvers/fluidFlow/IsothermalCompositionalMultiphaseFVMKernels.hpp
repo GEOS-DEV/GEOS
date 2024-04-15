@@ -260,8 +260,8 @@ public:
   {
     if( numPhase == 2 )
     {
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-      {
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp,
+                                                                                              [&]( auto NC ) {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
         PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
@@ -404,6 +404,7 @@ class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
 
+
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
 
@@ -509,7 +510,7 @@ public:
     /// Transmissibility
     real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans_dPres[maxNumConns][numFluxSupportPoints]{};
+    real64 dTrans[numComp + 2][maxNumConns][numFluxSupportPoints]{};
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -578,13 +579,14 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
+      using Deriv = multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,
-                                     stack.dTrans_dPres );
+                                     stack.dTrans[Deriv::dP] );
 
 
     localIndex k[numFluxSupportPoints];
@@ -606,8 +608,8 @@ public:
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
 
-        real64 const dTrans_dPres[numFluxSupportPoints] = { stack.dTrans_dPres[connectionIndex][0],
-                                                            stack.dTrans_dPres[connectionIndex][1] };
+        real64 const dTrans_dPres[numFluxSupportPoints] = { stack.dTrans[Deriv::dP][connectionIndex][0],
+                                                            stack.dTrans[Deriv::dP][connectionIndex][1]};
 
         //***** calculation of flux *****
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux

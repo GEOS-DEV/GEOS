@@ -164,7 +164,7 @@ public:
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
     using Base::StackVariables::transmissibility;
-    using Base::StackVariables::dTrans_dPres;
+    using Base::StackVariables::dTrans;
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
