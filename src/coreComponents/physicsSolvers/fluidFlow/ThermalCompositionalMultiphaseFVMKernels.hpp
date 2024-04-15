@@ -288,7 +288,7 @@ public:
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
     using Base::StackVariables::transmissibility;
-    using Base::StackVariables::dTrans_dPres;
+    using Base::StackVariables::dTrans;
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
@@ -339,7 +339,10 @@ public:
       real64 dDensMean_dT[numFluxSupportPoints]{};
 
       real64 const trans[numFluxSupportPoints] = {stack.transmissibility[connectionIndex][0],
-                                                  stack.transmissibility[connectionIndex][1]};
+                                                  stack.transmissibility[connectionIndex][1] };
+
+//      real64 const dTrans[numFluxSupportPoints][numComp + 2] = {stack.dTrans[connectionIndex][0],
+//                                                                 stack.dTrans[connectionIndex][1]};
 
       real64 convectiveEnergyFlux = 0.0;
       real64 dConvectiveEnergyFlux_dP[numFluxSupportPoints]{};
@@ -524,7 +527,7 @@ public:
                                      m_thermalConductivity,            // we have to pass something here, so we just use thermal
                                                                        // conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres );           // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans[Deriv::dP] );           // again, we have to pass something here, but this is unused for now
 
 
 
