@@ -88,8 +88,8 @@ if( NOT DEFINED ENV{MKLROOT} )
 endif()
 
 set( MKL_INCLUDE_DIRS $ENV{MKLROOT}/include CACHE STRING "" )
-set( MKL_LIBRARIES    $ENV{MKLROOT}/lib/intel64/libmkl_gf_lp64.so
-                      $ENV{MKLROOT}/lib/intel64/libmkl_gnu_thread.so
-                      $ENV{MKLROOT}/lib/intel64/libmkl_core.so
+set( MKL_LIBRARIES    $ENV{MKLROOT}/lib/intel64/libmkl_rt.so
                       $ENV{GCC_PATH}/lib/gcc/x86_64-redhat-linux/12/libgomp.so
                       CACHE STRING "" )
+
+include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )

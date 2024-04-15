@@ -6,6 +6,7 @@
 #   - CHAI   CPU
 #   - CUDA   OFF
 #   - OPENMP OFF
+#   - HYPRE ON
 #
 #######################################
 
@@ -13,21 +14,19 @@
 # SCIENTIFIC LIBRARIES
 #######################################
 
-# build all TPLs scientifc libs and let GEOS build choose which one to use
-
-set( ENABLE_FESAPI      ON CACHE BOOL "" FORCE )
-set( ENABLE_HYPRE       ON CACHE BOOL "" FORCE )
-set( ENABLE_MATHPRESSO  ON CACHE BOOL "" FORCE )
-set( ENABLE_PAMELA      ON CACHE BOOL "" FORCE )
-set( ENABLE_PETSC       ON CACHE BOOL "" FORCE )
-set( ENABLE_PVTPackage  ON CACHE BOOL "" FORCE )
-set( ENABLE_SCOTCH      ON CACHE BOOL "" FORCE )
-set( ENABLE_SUITESPARSE ON CACHE BOOL "" FORCE )
-set( ENABLE_TRILINOS    ON CACHE BOOL "" FORCE )
-set( ENABLE_VTK         ON CACHE BOOL "" FORCE )
+set( ENABLE_FESAPI      ON  CACHE BOOL "" FORCE )
+set( ENABLE_HYPRE       ON  CACHE BOOL "" FORCE )
+set( ENABLE_MATHPRESSO  ON  CACHE BOOL "" FORCE )
+set( ENABLE_PAMELA      ON  CACHE BOOL "" FORCE )
+set( ENABLE_PETSC       OFF CACHE BOOL "" FORCE )
+set( ENABLE_PVTPackage  ON  CACHE BOOL "" FORCE )
+set( ENABLE_SCOTCH      ON  CACHE BOOL "" FORCE )
+set( ENABLE_SUITESPARSE ON  CACHE BOOL "" FORCE )
+set( ENABLE_TRILINOS    OFF CACHE BOOL "" FORCE )
+set( ENABLE_VTK         ON  CACHE BOOL "" FORCE )
 
 #######################################
-# DEVLOPMENT TOOLS
+# DEVELOPMENT TOOLS
 #######################################
 
 set( ENABLE_DOXYGEN           ON CACHE BOOL "" FORCE )
