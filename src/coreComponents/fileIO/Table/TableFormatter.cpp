@@ -49,10 +49,7 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
 
   if( !isConsistent )
   {
-    if( msgTableError.size() == 0 )
-    {
-      msgTableError.push_back( "The number of columns displayed on the table does not match to the columns that have been initialized in TableLayout" );
-    }
+    msgTableError.push_back( "The number of columns displayed on the table does not match to the columns that have been initialized in TableLayout" );
   }
 }
 

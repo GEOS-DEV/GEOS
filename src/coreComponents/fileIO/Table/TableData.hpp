@@ -72,8 +72,8 @@ protected:
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
 
-  /// store error if there are any inconsistencies related to the table, i e : when we convert TableData2D => TableData
-  std::vector< string > errorMsgConversion;
+  /// store error if there are any inconsistencies related to the table
+  std::vector< string > errorsMsg;
 
 };
 
@@ -104,7 +104,7 @@ public:
   void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @return Convert and return a struct containing a 1D Table and the column names list from a TableData2D
+   * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
    * @param dataDescription The table dataDescription shown at the top left side
    * @param rowFmt The y axis units of the table.
    * @param columnFmt  The x axis units of the table.

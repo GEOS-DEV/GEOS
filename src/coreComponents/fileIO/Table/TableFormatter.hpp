@@ -164,6 +164,7 @@ private:
 
   /**
    * @brief recalculate the largest string size for each columns
+   * @param columns Vector containing all table columns
    * @param extraLines Extra characters to be added to \p m_maxStringSize of each columns
    */
   void recalculateMaxStringSize( std::vector< TableLayout::Column > & columns, integer const extraLines ) const;
@@ -178,6 +179,7 @@ private:
 
   /**
    * @brief Build all separator needed from length information contained in columns vector
+   * @param columns Vector containing all table columns
    * @param topSeparator Top separator to be built
    * @param sectionSeparator section separator to be built
    */
@@ -186,9 +188,9 @@ private:
                              string & sectionSeparator ) const;
 
   /**
-   * @brief add a row on top of the table
+   * @brief Add a row on top of the table
    * @param tableOutput The output stream
-   * @param msg Vector of string to display
+   * @param msg Vector of string(s) to display
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
    */
@@ -200,7 +202,7 @@ private:
   /**
    * @brief Add a row on top of the table
    * @param tableOutput The output stream
-   * @param msg The string to display
+   * @param msg The message to display
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
    */
@@ -212,7 +214,7 @@ private:
   /**
    * @brief Build a row at the top of the table
    * @param tableOutput The output stream
-   * @param msg The string to display.
+   * @param msg The converted string to display.
    * @param topSeparator The top table separator
    * @param sectionSeparator The section table separator
    */
@@ -223,6 +225,7 @@ private:
 
   /**
    * @brief Build a section by specifying it's type ( header or section )
+   * @param columns Vector containing all table columns
    * @param sectionSeparator Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section

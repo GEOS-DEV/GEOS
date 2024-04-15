@@ -38,12 +38,12 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
 
 std::vector< string > const & TableData::getErrorMsgConversion() const
 {
-  return errorMsgConversion;
+  return errorsMsg;
 }
 
 void TableData::setErrorMsgConversion( string const & msg )
 {
-  errorMsgConversion.push_back( msg );
+  errorsMsg.push_back( msg );
 }
 
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
@@ -93,6 +93,7 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
   {
     tableData1D.tableData.setErrorMsgConversion( "Cell(s) are missing in row" );
   }
+
   return tableData1D;
 }
 }
