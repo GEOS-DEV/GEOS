@@ -299,7 +299,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
 
   echo "Checking results..."
-  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini &> $tempdir/log_check.txt
+  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   cat $tempdir/log_check.txt
 
   if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
