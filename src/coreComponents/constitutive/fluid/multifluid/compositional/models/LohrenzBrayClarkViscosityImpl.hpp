@@ -29,8 +29,6 @@ namespace geos
 namespace constitutive
 {
 
-using Deriv = multifluid::DerivativeOffset;
-
 namespace compositional
 {
 

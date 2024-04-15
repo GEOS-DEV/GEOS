@@ -65,6 +65,8 @@ public:
     m_mixing_type = mixing_type;
   }
 
+  using Deriv = multifluid::DerivativeOffset;
+
 private:
   /**
    * @brief Estimate pure component properties at dilute-gas conditions
