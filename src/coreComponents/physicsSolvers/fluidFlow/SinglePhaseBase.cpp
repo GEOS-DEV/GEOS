@@ -230,15 +230,15 @@ void SinglePhaseBase::initializePreSubGroups()
   initializeAquiferBC();
 }
 
-void SinglePhaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
+void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
 
   SingleFluidBase & fluid =
-    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+    getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
@@ -328,7 +328,7 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.update( porosity );
 }
 
-void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
+void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 {
   updateFluidModel( subRegion );
   updateMass( subRegion );
