@@ -36,7 +36,7 @@ public:
   EmbeddedSurfaceBlock( string const & name,
              Group * const parent )
     :
-    EmbeddedSurfaceBlock( name, parent )
+    EmbeddedSurfaceBlockABC( name, parent )
   { }
 
     localIndex numEmbeddedSurfElem() const override;
