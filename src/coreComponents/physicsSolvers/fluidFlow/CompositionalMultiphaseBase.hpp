@@ -121,9 +121,9 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param subRegion the subregion storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateFluidModel( ElementSubRegionBase & subRegion ) const;
+  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
@@ -161,7 +161,7 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
+  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
