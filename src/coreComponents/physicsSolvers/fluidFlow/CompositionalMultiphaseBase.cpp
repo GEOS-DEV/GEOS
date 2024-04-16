@@ -775,7 +775,7 @@ void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerB
                                       temp );
 }
 
-real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
+real64 CompositionalMultiphaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -829,9 +829,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
     } );
-
-    updateCompAmount( subRegion );
-
   } );
 
   // with initial component densities defined - check if they need to be corrected to avoid zero diags etc
@@ -859,6 +856,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     porousSolid.scaleReferencePorosity( netToGross );
     saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
     updatePorosityAndPermeability( subRegion );
+    updateCompAmount( subRegion );
     updatePhaseVolumeFraction( subRegion );
 
     // Now, we initialize and update each constitutive model one by one
