@@ -631,7 +631,7 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
   return maxDeltaPhaseVolFrac;
 }
 
-void CompositionalMultiphaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
+void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
