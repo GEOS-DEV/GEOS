@@ -87,6 +87,8 @@ public:
                         DomainPartition & domain ) override
   {
     solverStep( time_n, dt, cycleNumber, domain );
+    // call to apply initial conditions for newly created elements
+    geos::getGlobalState().applyInitialConditions();
     return false;
   }
 
