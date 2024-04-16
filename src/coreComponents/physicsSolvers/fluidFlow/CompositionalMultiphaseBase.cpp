@@ -635,13 +635,13 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-    subRegion.getField< fields::flow::globalCompFraction >();
+    dataGroup.getField< fields::flow::globalCompFraction >();
 
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
+  MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
@@ -651,7 +651,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 
     thermalCompositionalMultiphaseBaseKernels::
       FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
+      launch< ExecPolicy >( dataGroup.size(),
                             fluidWrapper,
                             pres,
                             temp,
