@@ -272,18 +272,18 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param ElementSubRegionBase subregion that contains the fields
+   * @param dataGroup group that contains the fields
    */
   void
-  updateFluidState( ElementSubRegionBase & subRegion ) const;
+  updateFluidState( ObjectManagerBase & subRegion ) const;
 
 
   /**
    * @brief Function to update all constitutive models
-   * @param subRegion subregion that contains the fields
+   * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( ElementSubRegionBase & subRegion ) const;
+  updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Function to update fluid mass
