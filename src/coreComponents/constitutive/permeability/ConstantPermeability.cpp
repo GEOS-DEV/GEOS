@@ -56,9 +56,13 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Initial permeability" );
 
-  registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
+  registerWrapper( viewKeyStruct::defaultMaxPermeabilityString(), &m_defaultMaxPermeability ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default max. permeability that can reach." );
+
+  registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Max. permeability that can reach." );
 }
 
@@ -127,6 +131,9 @@ void ConstantPermeability::postProcessInput()
   // set results as array default values
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
     setApplyDefaultValue( m_defaultReferencePressure );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::maxPermeabilityString() ).
+    setApplyDefaultValue( m_defaultMaxPermeability );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantPermeability, string const &, Group * const )

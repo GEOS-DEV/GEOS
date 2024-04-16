@@ -32,7 +32,7 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   ConstantPermeabilityUpdate( R1Tensor const pressureDependenceConstant,
-                              real64 const maxPermeability, 
+                              arrayView1d< real64 const > const & maxPermeability, 
                               arrayView1d< real64 const > const & referencePressure,
                               arrayView3d< real64 > const & permeability,
                               arrayView3d< real64 > const & initialPermeability,
@@ -58,9 +58,9 @@ public:
                                    real64 const & pressure_n,
                                    real64 const & pressure ) const override
   {
-    GEOS_UNUSED_VAR( q, pressure );
+    GEOS_UNUSED_VAR( q, pressure_n );
 
-    real64 const deltaPressure = pressure_n - m_referencePressure[k];
+    real64 const deltaPressure = pressure - m_referencePressure[k];
 
     real64 initialPermeability[3];
 
@@ -71,7 +71,7 @@ public:
     compute( deltaPressure,
              m_pressureDependenceConstant,
              initialPermeability,
-             m_maxPermeability,
+             m_maxPermeability[k],
              m_permeability[k][0],
              m_dPerm_dPressure[k][0] );
   }
@@ -81,7 +81,7 @@ private:
   /// Pressure dependence constant
   R1Tensor m_pressureDependenceConstant;
 
-  real64 m_maxPermeability;
+  arrayView1d< real64 const > const m_maxPermeability;
 
   /// Reference pressure
   arrayView1d< real64 const > const m_referencePressure;
@@ -132,6 +132,7 @@ public:
     static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
+    static constexpr char const * defaultMaxPermeabilityString() { return "defaultMaxPermeability"; }
     static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
   } viewKeys;
 
@@ -149,7 +150,9 @@ private:
 
   real64 m_defaultReferencePressure;
 
-  real64 m_maxPermeability; 
+  real64 m_defaultMaxPermeability;
+
+  array1d< real64 > m_maxPermeability; 
 
   array1d< real64 > m_referencePressure;
 
@@ -166,12 +169,16 @@ void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
+  GEOS_UNUSED_VAR( maxPermeability );
+  
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
 
-    permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
-    dPerm_dPressure[i] = 0;
+    // permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
+    // dPerm_dPressure[i] = 0;
+    permeability[i] = perm;
+    dPerm_dPressure[i] = perm * pressureDependenceConstant[i];
   }
 }
 
