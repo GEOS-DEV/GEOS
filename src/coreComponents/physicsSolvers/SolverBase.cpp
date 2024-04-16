@@ -872,6 +872,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+      if( getLogLevel() > 1 && newtonIter == 0 )
+        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -1177,6 +1180,15 @@ SolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
   GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
   return 0;
 }
+
+void
+SolverBase::updateResidualField( const geos::real64 & time_n, const geos::real64 & dt, geos::DomainPartition & domain,
+                                 const geos::DofManager & dofManager, const arrayView1d< const geos::real64 > & localRhs )
+{
+//                                    GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
+// for PoC comment then implement it for all solvers
+}
+
 
 void SolverBase::solveLinearSystem( DofManager const & dofManager,
                                     ParallelMatrix & matrix,

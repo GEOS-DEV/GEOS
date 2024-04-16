@@ -103,6 +103,13 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  virtual void
+  updateResidualField( real64 const & time_n,
+                       real64 const & dt,
+                       DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localRhs ) override;
+
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,

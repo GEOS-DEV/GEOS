@@ -460,6 +460,53 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
   return residualNorm;
 }
 
+void CompositionalMultiphaseFVM::updateResidualField( const real64 & GEOS_UNUSED_PARAM( time_n ),
+                                                      const real64 & GEOS_UNUSED_PARAM( dt ),
+                                                      DomainPartition & domain,
+                                                      const DofManager & dofManager,
+                                                      const arrayView1d< const geos::real64 > & localRhs )
+{
+
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > globalResidualAccessor =
+      mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
+                                                   arrayView2d< real64, compflow::USD_COMP > >( fields::flow::globalResidual::key() );
+
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+
+      //do something
+      if( m_isThermal )
+      {
+        //add energy residual maps tho not sized enough right now
+      }
+      else
+      {
+        isothermalCompositionalMultiphaseBaseKernels::
+          ResidualMapKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( numFluidComponents(),
+                                                     rankOffset,
+                                                     dofKey,
+                                                     localRhs,
+                                                     subRegion );
+
+        GEOS_LOG_RANK_0( GEOS_FMT( "Logging Residual max/min report {}",
+                                   subRegion.getField< fields::flow::globalResidual >()));
+
+      }
+    } );
+  } );
+}
+
 real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & domain,
                                                              DofManager const & dofManager,
                                                              arrayView1d< real64 const > const & localSolution )

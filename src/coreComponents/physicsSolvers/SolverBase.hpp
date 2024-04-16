@@ -418,6 +418,14 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
+  virtual void
+  updateResidualField( real64 const & time_n,
+                       real64 const & dt,
+                       DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localRhs );
+
+
   /**
    * @brief function to apply a linear system solver to the assembled system.
    * @param dofManager degree-of-freedom manager associated with the linear system

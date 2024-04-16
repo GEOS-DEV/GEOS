@@ -1799,17 +1799,17 @@ public:
             ghostRank,
             minNormalizer ),
     m_numComponents( numComponents ),
-    m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_totalDens_n( fluid.totalDensity_n() )
-  {}
+    m_volume( subRegion.getElementVolume()),
+    m_porosity_n( solid.getPorosity_n()),
+    m_totalDens_n( fluid.totalDensity_n()) {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
     // this should never be zero if the simulation is set up correctly, but we never know
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer,
+                                                      m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const volumeNormalizer = LvArray::math::max( m_minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
@@ -1838,7 +1838,8 @@ public:
   {
     // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
 
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer,
+                                                      m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
 
@@ -1850,11 +1851,13 @@ public:
 
     // step 2: volume residual
 
-    real64 const val = m_localResidual[stack.localRow + m_numComponents] * m_totalDens_n[ei][0]; // we need a mass here, hence the
-                                                                                                 // multiplication
+    real64 const val = m_localResidual[stack.localRow + m_numComponents] *
+                       m_totalDens_n[ei][0];     // we need a mass here, hence the
+    // multiplication
     stack.localValue[0] += val * val;
     stack.localNormalizer[0] += massNormalizer;
   }
+
 
 
 protected:
@@ -1920,6 +1923,86 @@ public:
     {
       ResidualNormKernel::launchL2< POLICY >( subRegion.size(), kernel, residualNorm, residualNormalizer );
     }
+  }
+
+};
+
+///// ResidualMap Kernel ////////////////////////////////////////////////
+
+class ResidualMapKernel
+{
+
+public:
+
+  ResidualMapKernel( globalIndex const rankOffset,
+                     arrayView1d< real64 const > const & localResidual,
+                     arrayView1d< globalIndex const > const & dofNumber,
+                     arrayView1d< localIndex const > const & ghostRank,
+                     integer const numComponents )
+    :   m_rankOffset( rankOffset ),
+    m_localResidual( localResidual ),
+    m_dofNumber( dofNumber ),
+    m_ghostRank( ghostRank ),
+    m_numComponents( numComponents ){};
+
+  template< typename POLICY >
+  void
+  launch( localIndex const size, arrayView2d< real64 > & globalResidual ) const
+  {
+
+
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i ) {
+      auto localRow = m_dofNumber[i] - m_rankOffset;
+
+      // step 1: mass residuals
+      for( integer idof = 0; idof < m_numComponents; ++idof )
+      {
+        globalResidual[i][idof] = m_localResidual[localRow + idof] * m_localResidual[localRow + idof];
+      }
+
+    } );
+    // step 2: volume residual
+  }
+
+private:
+
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
+
+  /// View on the local residual
+  arrayView1d< real64 const > const m_localResidual;
+
+  /// View on the dof numbers
+  arrayView1d< globalIndex const > const m_dofNumber;
+
+  /// View on the ghost ranks
+  arrayView1d< integer const > const m_ghostRank;
+
+  /// Number of fluid coponents
+  integer const m_numComponents;
+
+//    arrayView2d< real64, compflow::USD_COMP >  m_globalResidual;
+};
+
+
+class ResidualMapKernelFactory
+{
+public:
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComps,
+                   globalIndex const rankOffset,
+                   string const dofKey,
+                   arrayView1d< real64 const > const & localResidual,
+                   ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+    ResidualMapKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps );
+    kernel.launch< POLICY >( subRegion.size(), subRegion.getField< fields::flow::globalResidual >());
+
   }
 
 };

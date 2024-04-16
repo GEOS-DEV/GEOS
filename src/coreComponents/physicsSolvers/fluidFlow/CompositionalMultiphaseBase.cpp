@@ -319,6 +319,11 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       }
 
+      if( getLogLevel() > 0 )
+        subRegion.registerField< fields::flow::globalResidual >( getName() ).
+          reference().resizeDimension< 1 >( m_numComponents );
+
+
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
