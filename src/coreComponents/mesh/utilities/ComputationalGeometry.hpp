@@ -560,75 +560,89 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   return result;
 }
 
-template< localIndex MAX_NODES >
+template< typename DST_VECTOR >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 meanCurvature_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
-                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points )
+void principalCurvatures_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
+                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
+                                    DST_VECTOR && curvatures )
 {
   localIndex const numberOfPoints = pointsIndices.size();
-  if(MAX_NODES == 3 || numberOfPoints == 3)
-  {
-    return 0.0;
-  }
+  // Compute center
   real64 center[3];
+  LvArray::tensorOps::copy<3>(center, points[ pointsIndices[0] ]);
+  for( localIndex p = 1; p < numberOfPoints; ++p )
+  {
+      LvArray::tensorOps::add<3>( center, points[ pointsIndices[p] ]);
+  }
+  LvArray::tensorOps::scale<3>(center, 1.0/numberOfPoints);
+
+  // Compute reference system of the plane where the first subtriangle lies
+  real64 firstAxis[3];
+  LvArray::tensorOps::copy<3>(firstAxis, points[ pointsIndices[0] ]);
+  LvArray::tensorOps::subtract<3>(firstAxis, center);
+  LvArray::tensorOps::normalize<3>(firstAxis);
+  real64 secondAxis[3];
+  LvArray::tensorOps::copy<3>(secondAxis, points[ pointsIndices[1] ]);
+  LvArray::tensorOps::subtract<3>(secondAxis, center);
+  LvArray::tensorOps::normalize<3>(secondAxis);
+  real64 normal[3];
+  LvArray::tensorOps::crossProduct(normal, firstAxis, secondAxis);
+  LvArray::tensorOps::crossProduct(secondAxis, normal, firstAxis);
+
+
   real64 averageNormal[3];
   centroid_3DPolygon(pointsIndices, points, center, averageNormal);
   real64 rotationMatrix[3][3];
   RotationMatrix_3D( averageNormal, rotationMatrix );
 
+  // Compute Vandermonde matrix
   array2d< real64 > vandermondeMatrix;
   array1d< real64 > pointToPlaneDistance;
   vandermondeMatrix.resize(numberOfPoints, 3);
   pointToPlaneDistance.resize(numberOfPoints);
-  real64 normalEquations[3][3], rightHandSide[3];
-  LvArray::tensorOps::fill<3,3>(normalEquations, 0.0);
-  LvArray::tensorOps::fill<3>(rightHandSide, 0.0);
   for( localIndex p = 0; p < numberOfPoints; ++p )
   {
     real64 pointToCenterVector[3];
-    LvArray::tensorOps::copy< 3 >( pointToCenterVector, points[p] );
+    LvArray::tensorOps::copy< 3 >( pointToCenterVector, points[pointsIndices[p]] );
     LvArray::tensorOps::subtract< 3 >( pointToCenterVector, center );
     real64 rotatedPointCoordinates[3];
     LvArray::tensorOps::Ri_eq_AjiBj<3,3>( rotatedPointCoordinates,
                                           rotationMatrix,
                                           pointToCenterVector);
-    vandermondeMatrix[p][0] = (rotatedPointCoordinates[1] * rotatedPointCoordinates[1]) * 0.5;
-    vandermondeMatrix[p][1] = (rotatedPointCoordinates[2] * rotatedPointCoordinates[2]) * 0.5;
-    vandermondeMatrix[p][2] =  rotatedPointCoordinates[1] * rotatedPointCoordinates[2];
+    vandermondeMatrix[p][0] = rotatedPointCoordinates[1] * rotatedPointCoordinates[1] * 0.5;
+    vandermondeMatrix[p][1] = rotatedPointCoordinates[2] * rotatedPointCoordinates[2] * 0.5;
+    vandermondeMatrix[p][2] = rotatedPointCoordinates[1] * rotatedPointCoordinates[2];
     pointToPlaneDistance[p] = rotatedPointCoordinates[0];
   }
 
-
+  // Build system of normal equations
+  real64 normalEquations[6], rightHandSide[3];
+  LvArray::tensorOps::fill<6>(normalEquations, 0.0);
+  LvArray::tensorOps::fill<3>(rightHandSide, 0.0);
   for( localIndex p = 0; p < numberOfPoints; ++p )
   {
-    normalEquations[0][0] = normalEquations[0][0] + vandermondeMatrix[p][0]*vandermondeMatrix[p][0];
-    normalEquations[0][1] = normalEquations[0][1] + vandermondeMatrix[p][0]*vandermondeMatrix[p][1];
-    normalEquations[0][2] = normalEquations[0][2] + vandermondeMatrix[p][0]*vandermondeMatrix[p][2];
-    normalEquations[1][1] = normalEquations[1][1] + vandermondeMatrix[p][1]*vandermondeMatrix[p][1];
-    normalEquations[1][2] = normalEquations[1][2] + vandermondeMatrix[p][1]*vandermondeMatrix[p][2];
-    normalEquations[2][2] = normalEquations[2][2] + vandermondeMatrix[p][2]*vandermondeMatrix[p][2];
+    normalEquations[0] = normalEquations[0] + vandermondeMatrix[p][0]*vandermondeMatrix[p][0]; // [0][0]
+    normalEquations[1] = normalEquations[1] + vandermondeMatrix[p][1]*vandermondeMatrix[p][1]; // [1][1]
+    normalEquations[2] = normalEquations[2] + vandermondeMatrix[p][2]*vandermondeMatrix[p][2]; // [2][2]
+    normalEquations[3] = normalEquations[3] + vandermondeMatrix[p][1]*vandermondeMatrix[p][2]; // [1][2]
+    normalEquations[4] = normalEquations[4] + vandermondeMatrix[p][0]*vandermondeMatrix[p][2]; // [0][2]
+    normalEquations[5] = normalEquations[5] + vandermondeMatrix[p][0]*vandermondeMatrix[p][1]; // [0][1]
+
     rightHandSide[0] = rightHandSide[0] + vandermondeMatrix[p][0]*pointToPlaneDistance[p];
     rightHandSide[1] = rightHandSide[1] + vandermondeMatrix[p][1]*pointToPlaneDistance[p];
     rightHandSide[2] = rightHandSide[2] + vandermondeMatrix[p][2]*pointToPlaneDistance[p];
   }
 
-  // Solve linear system with Cramer's rule
-  // The polynomial is written in the form p(x,y) = 0.5*(ax^2 + by^2 + 2cxy)
-  // We only compute a and b since we want the mean gaussian quadrature
-  real64 determinant = LvArray::tensorOps::determinant<3>(normalEquations);
-  GEOS_ERROR_IF(determinant < 1e-10, "Error in computing mean quadrature: system of normal equations is singular");
-  real64 a = (
-    rightHandSide[0] * ( normalEquations[1][1]*normalEquations[2][2] - normalEquations[1][2]*normalEquations[1][2])
-    - rightHandSide[1] * ( normalEquations[0][1]*normalEquations[2][2] - normalEquations[0][2]*normalEquations[1][2])
-    + rightHandSide[2] * ( normalEquations[0][1]*normalEquations[1][2] - normalEquations[0][2]*normalEquations[1][1])
-    ) / determinant;
-  real64 b = (
-    -rightHandSide[0] * ( normalEquations[0][1]*normalEquations[2][2] - normalEquations[1][2]*normalEquations[0][2])
-    + rightHandSide[1] * ( normalEquations[0][0]*normalEquations[2][2] - normalEquations[0][2]*normalEquations[0][2])
-    - rightHandSide[2] * ( normalEquations[0][0]*normalEquations[1][2] - normalEquations[0][2]*normalEquations[0][1])
-    ) / determinant;
-  return (a+b)*0.5;
+  // Solve system of normal equations by computing the inverse.
+  // The polynomial is written in the form secondPointIndex(x,y) = 0.5*(ax^2 + by^2 + 2cxy)
+  real64 invNormalEquations[6];
+  LvArray::tensorOps::symInvert<3>(invNormalEquations, normalEquations);
+  real64 coefficients[3];
+  LvArray::tensorOps::Ri_eq_symAijBj<3>( coefficients, invNormalEquations, rightHandSide );
+
+  // The two principal curvatures are eigenvalues of the matrix [ coefficients[0] , coefficients[2] ; coefficients[2] , coefficients[1] ]
+  LvArray::tensorOps::symEigenvalues<2>( curvatures, coefficients );
 }
 
 } /* namespace computationalGeometry */

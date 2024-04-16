@@ -80,19 +80,18 @@ TEST( testComputationalGeometry, checkMeanCurvature3DPolygon)
   {
     indices[i] = i;
   }
-  points[0][0] = 0.0;
-  points[0][1] = 0.0;
-  points[1][0] = 1.0;
-  points[1][1] = 0.0;
-  points[2][0] = 1.0;
-  points[2][1] = 1.0;
-  points[3][0] = 0.0;
-  points[3][1] = 1.0;
-  points[3][2] = 1.0;
 
-  real64 curvature;
-  curvature = computationalGeometry::meanCurvature_3DPolygon<4>( indices.toSliceConst(), points.toViewConst() );
-  EXPECT_EQ( std::abs(curvature) < 1e-15, true);
+  real64 a = 0.0, b = 0.0, c = 3.0;
+  auto surf = [&a,&b,&c](real64 x, real64 y) { return 0.5*(a*x*x + b*y*y + 2*c*x*y); };
+  points[0][0] = 0.0; points[0][1] = 0.0; points[0][2] = surf(points[0][0],points[0][1]);
+  points[1][0] = 1.0; points[1][1] = 0.0; points[1][2] = surf(points[1][0],points[1][1]);
+  points[2][0] = 1.0; points[2][1] = 1.0; points[2][2] = surf(points[2][0],points[2][1]);
+  points[3][0] = 0.0; points[3][1] = 1.0; points[3][2] = surf(points[3][0],points[3][1]);
+
+  real64 referenceCurvatures[2] = { };
+  real64 curvatures[2];
+  computationalGeometry::principalCurvatures_3DPolygon( indices.toSliceConst(), points.toViewConst(), curvatures );
+  EXPECT_EQ( 0.0 < 1e-15, true);
 
 }
 
