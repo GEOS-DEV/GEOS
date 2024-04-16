@@ -872,7 +872,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-      if( getLogLevel() > 1 && newtonIter == 0 )
+      if( getLogLevel() > 0 && newtonIter == 0 )
         updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
     }
