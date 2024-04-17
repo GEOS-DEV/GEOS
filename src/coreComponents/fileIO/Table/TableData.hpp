@@ -58,22 +58,22 @@ public:
 
   /**
    * @brief Get all error messages
-   * @return The set of error messages
+   * @return The vector of error messages
    */
-  std::set< string > const & getErrorMsgs() const;
+  std::vector< string > const & getErrorMsgs() const;
 
   /**
    * @brief Set an error message
-   * @param msg The error msg to set
+   * @param msg The error msg to vector
    */
-  void setErrorMsgs( string const & msg );
+  void addErrorMsgs( string const & msg );
 
 protected:
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
 
   /// store error if there are any inconsistencies related to the table
-  std::set< string > errorsMsg;
+  std::vector< string > errorsMsg;
 
 };
 

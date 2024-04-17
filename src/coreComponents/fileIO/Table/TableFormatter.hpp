@@ -131,30 +131,21 @@ private:
    * @param msgTableError A vector containg all error related to the table
    * @param sectionSeparator An empty string for building the section separator
    */
-  void layoutToString( std::ostringstream & tableOutput,
-                       std::vector< TableLayout::Column > & columns,
-                       std::set< string > & msgTableError,
-                       string & sectionSeparator ) const;
+  void outputLayout( std::ostringstream & tableOutput,
+                     std::vector< TableLayout::Column > & columns,
+                     std::vector< string > & msgTableError,
+                     string & sectionSeparator ) const;
 
   /**
-   * @brief Split all header names by detecting the newline \\n character.
+   * @brief Split all header names by detecting the newline \\n character. and
+   * set the same vector size for each split header and merge it into columns
    * @param columns The vector containg all columns
    * @param largestHeaderVectorSize The largest split header vector size
    * @param splitHeader A empty vector who will contain all split header names
    */
-  void parseAndStoreHeaderSections( std::vector< TableLayout::Column > const & columns,
-                                    size_t & largestHeaderVectorSize,
-                                    std::vector< std::vector< string > > & splitHeader ) const;
-
-  /**
-   * @brief Set the same vector size for each split header and merge it into columns
-   * @param columns The table columns to be merged
-   * @param largestHeaderVectorSize The reference value for adjusting splitHeader vector
-   * @param splitHeader The vector containing all split headers
-   */
-  void adjustHeaderSizesAndStore( std::vector< TableLayout::Column > & columns,
-                                  size_t const & largestHeaderVectorSize,
-                                  std::vector< std::vector< string > > & splitHeader ) const;
+  void splitAndSetColumnNames( std::vector< TableLayout::Column > & columns,
+                               size_t & largestHeaderVectorSize,
+                               std::vector< std::vector< string > > & splitHeader ) const;
 
   /**
    * @brief For each column find and set the column's longest string
@@ -165,9 +156,9 @@ private:
   /**
    * @brief recalculate the largest string size for each columns
    * @param columns Vector containing all table columns
-   * @param extraLines Extra characters to be added to \p m_maxStringSize of each columns
+   * @param extraCharacters Extra characters to be added to \p m_maxStringSize of each columns
    */
-  void recalculateMaxStringSize( std::vector< TableLayout::Column > & columns, integer const extraLines ) const;
+  void increaseColumnsSize( std::vector< TableLayout::Column > & columns, integer const extraCharacters ) const;
 
   /**
    * @brief Compute the max table line length
@@ -175,7 +166,7 @@ private:
    * @param msgTableError Vector containing all error messages
    */
   void computeTableMaxLineLength( std::vector< TableLayout::Column > & columns,
-                                  std::set< string > & msgTableError ) const;
+                                  std::vector< string > & msgTableError ) const;
 
   /**
    * @brief Build all separator needed from length information contained in columns vector
@@ -192,56 +183,39 @@ private:
    * @param tableOutput The output stream
    * @param msg Vector of string(s) to display
    * @param topSeparator The top table separator
-   * @param sectionSeparator The section table separator
    * @param alignment The aligment for a row
    */
-  void addTopRow( std::ostringstream & tableOutput,
-                  std::set< string > const & msg,
-                  string_view topSeparator,
-                  string_view sectionSeparator,
-                  TableLayout::Alignment alignment ) const;
-
-  /**
-   * @brief Add a row on top of the table
-   * @param tableOutput The output stream
-   * @param msg The message to display
-   * @param topSeparator The top table separator
-   * @param sectionSeparator The section table separator
-   * @param alignment The aligment for a row
-   */
-  void addTopRow( std::ostringstream & tableOutput,
-                  string const & msg,
-                  string_view topSeparator,
-                  string_view sectionSeparator,
-                  TableLayout::Alignment alignment ) const;
+  void outputTopRows( std::ostringstream & tableOutput,
+                      std::vector< string > const & msg,
+                      string_view topSeparator,
+                      TableLayout::Alignment alignment ) const;
 
   /**
    * @brief Build a row at the top of the table
    * @param tableOutput The output stream
    * @param msg The converted string to display.
    * @param topSeparator The top table separator
-   * @param sectionSeparator The section table separator
    * @param alignment The aligment for a row
    */
   void buildTopRow( std::ostringstream & tableOutput,
                     string const & msg,
                     string_view topSeparator,
-                    string_view sectionSeparator,
                     TableLayout::Alignment alignment ) const;
 
   /**
-   * @brief Build a section by specifying it's type ( header or section )
+   * @brief Output a section by specifying it's type ( header or section )
    * @param columns Vector containing all table columns
    * @param sectionSeparator Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section
    * @param section The section to be built
+   * @note Add the ending line if there are one or more rows
    */
-  void buildSectionRows( std::vector< TableLayout::Column > const & columns,
-                         string_view sectionSeparator,
-                         std::ostringstream & rows,
-                         integer const nbRows,
-                         TableLayout::Section const section ) const;
+  void outputSectionRows( std::vector< TableLayout::Column > const & columns,
+                          string_view sectionSeparator,
+                          std::ostringstream & rows,
+                          integer const nbRows,
+                          TableLayout::Section const section ) const;
 };
 }
 

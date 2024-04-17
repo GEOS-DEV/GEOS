@@ -255,8 +255,8 @@ TEST( testTable, table2DColumnMismatch )
     TableTextFormatter const tableLog( tableLayout );
     EXPECT_EQ( tableLog.toString( tableConverted.tableData ),
                "\n+-----------------------------------------------------------------------+\n"
-               "|  Cell(s) are missing in row                                           |\n"
                "|  Number of row cells ins't consistent with the number of columns.     |\n"
+               "|  Cell(s) are missing in row                                           |\n"
                "+---------------------+--------------------+----------------------------+\n"
                "|     Viscosity kg*s  |  Pression = 10000  |          Pression = 15000  |\n"
                "+---------------------+--------------------+----------------------------+\n"
