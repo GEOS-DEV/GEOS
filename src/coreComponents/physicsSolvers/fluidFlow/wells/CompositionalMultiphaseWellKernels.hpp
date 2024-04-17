@@ -1090,7 +1090,7 @@ public:
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
 
-  /// Number of Dof's set in this kernal
+  /// Number of Dof's set in this kernal   - no dQ in accum
   static constexpr integer numDof = NUM_COMP + 1 + IS_THERMAL;
 
   /// Compute time value for the number of equations
@@ -1412,12 +1412,7 @@ if constexpr ( IS_THERMAL )
       // apply equation/variable change transformation to the component mass balance equations
       real64 work[numComp + 1 + IS_THERMAL]{};
       shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp+1+ IS_THERMAL, stack.localJacobian, work );
-for( integer i=0; i<numComp+1; ++i )
-        std::cout << i << " " << stack.localResidual[i] << std::endl;
-
       shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
-for( integer i=0; i<numComp+1; ++i )
-        std::cout << i << " " << stack.localResidual[i] << std::endl;
     }
 
     // add contribution to residual and jacobian into:
@@ -1905,6 +1900,8 @@ GEOS_UNUSED_VAR( compFluxKernelOp );
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
+std::cout << i << " " << eqnRowIndices[i] << " " << dofColIndices_dRate << std::endl;
+          std::cout.flush();
           m_localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
                                                           &dofColIndices_dRate,
                                                           localFluxJacobian_dRate[i],
@@ -2533,7 +2530,7 @@ public:
                stack,
                dCompFlux
                );
-
+stack.offsetNext = m_wellElemDofNumber[iwelemNext];
       /*
          globalIndex eqnRowIndices[2*NC]{};
          globalIndex dofColIndices_dPresCompUp[NC+1]{};

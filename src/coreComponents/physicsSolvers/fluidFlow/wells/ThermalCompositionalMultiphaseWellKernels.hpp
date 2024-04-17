@@ -580,7 +580,7 @@ std::cout << "wellthermaccum " << ip << " " << dPhaseAmount[FLUID_PROP_COFFSET::
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
       stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
-std::cout << " ip " << ip << " " << stack.localJacobian[numEqn-1][0]  << " " << stack.localJacobian[numEqn-1][numDof-1] << std::endl;
+std::cout << "dPhaseEnergy  ip " << ip << " dp " << stack.localJacobian[numEqn-1][0]  << " dt " << stack.localJacobian[numEqn-1][numDof-1] << std::endl;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );

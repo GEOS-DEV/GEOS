@@ -47,7 +47,7 @@ m_numPhases( 0 ),
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString()).setInputFlag( InputFlags::FALSE );
 
-  this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+  registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );

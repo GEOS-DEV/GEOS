@@ -1006,7 +1006,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
                                                fluid );
 
 }
-void CompositionalMultiphaseWell::assembleSystem1( real64 const time,
+void CompositionalMultiphaseWell::assembleSystem( real64 const time,
                                                    real64 const dt,
                                                    DomainPartition & domain,
                                                    DofManager const & dofManager,
@@ -1015,7 +1015,7 @@ void CompositionalMultiphaseWell::assembleSystem1( real64 const time,
 {
   integer const useTotalMassEquation = 1;
   string const wellDofKey = dofManager.getKey( wellElementDofName());
-  if( 0 )
+  if( 1 )
   {
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1078,7 +1078,7 @@ void CompositionalMultiphaseWell::assembleSystem1( real64 const time,
 
   // then assemble the flux terms in the mass balance equations
   // get a reference to the degree-of-freedom numbers
-  if( 1 )
+  if( 0 )
   {
     // then assemble the flux terms in the mass balance equations
     assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
@@ -1517,6 +1517,9 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
+
+  return calculateResidualNorm1(  time_n, dt, domain, dofManager,  localRhs);
+ 
   GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
@@ -1950,6 +1953,15 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
         subRegion.getField< fields::well::pressure_n >();
       wellElemPressure.setValues< parallelDevicePolicy<> >( wellElemPressure_n );
 
+if ( isThermal() )
+      {
+        // get a reference to the primary variables on well elements
+        arrayView1d< real64 > const & wellElemTemperature =
+          subRegion.getField< fields::well::temperature >();
+        arrayView1d< real64 const > const & wellElemTemperature_n =
+          subRegion.getField< fields::well::temperature_n >();
+        wellElemTemperature.setValues< parallelDevicePolicy<> >( wellElemTemperature_n );        
+      }
       arrayView2d< real64, compflow::USD_COMP > const & wellElemGlobalCompDensity =
         subRegion.getField< fields::well::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemGlobalCompDensity_n =
