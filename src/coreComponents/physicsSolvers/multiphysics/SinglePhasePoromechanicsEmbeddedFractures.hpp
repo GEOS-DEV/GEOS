@@ -58,11 +58,6 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
-
-  virtual void
   assembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
