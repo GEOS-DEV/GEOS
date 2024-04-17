@@ -50,10 +50,13 @@ public:
                 arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPorosity( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & porosity ) const override
+  virtual void updateFromPressureAndPorosity( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & pressure,
+                                              real64 const & porosity ) const override
   {
+    GEOS_UNUSED_VAR( pressure );
+
     compute( porosity,
              m_permeability[k][q],
              m_dPerm_dPorosity[k][q] );
