@@ -458,14 +458,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::applyBoundaryConditions( real64 
                                          localRhs );
 }
 
-void SinglePhasePoromechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-                                                                   real64 const & dt,
-                                                                   DomainPartition & domain )
-{
-  flowSolver()->implicitStepSetup( time_n, dt, domain );
-  solidMechanicsSolver()->implicitStepSetup( time_n, dt, domain );
-}
-
 void SinglePhasePoromechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
                                                                       real64 const & dt,
                                                                       DomainPartition & domain )
