@@ -1182,8 +1182,11 @@ SolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
 }
 
 void
-SolverBase::updateResidualField( const geos::real64 & time_n, const geos::real64 & dt, geos::DomainPartition & domain,
-                                 const geos::DofManager & dofManager, const arrayView1d< const geos::real64 > & localRhs )
+SolverBase::updateResidualField( real64 const & GEOS_UNUSED_PARAM( time ),
+                                 real64 const & GEOS_UNUSED_PARAM( dt ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                 arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
 //                                    GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
 // for PoC comment then implement it for all solvers
