@@ -297,7 +297,7 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     energy[ei] = ( volume[ei] + deltaVolume[ei] ) *
-                 (porosity[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] + ( 1.0 - porosity[ei][0] ) * rockInternalEnergy[ei][0]);
+                 ( porosity[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] + ( 1.0 - porosity[ei][0] ) * rockInternalEnergy[ei][0] );
   } );
 }
 
@@ -447,6 +447,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
           getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
         solidInternalEnergyMaterial.saveConvergedState();
 
+        updateEnergy( subRegion );
       }
     } );
 
@@ -477,10 +478,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
       initPres.setValues< parallelDevicePolicy<> >( pres );
       initTemp.setValues< parallelDevicePolicy<> >( temp );
-
-      updateMass( subRegion );
-      if( m_isThermal )
-        updateEnergy( subRegion );
     } );
   } );
 
@@ -690,6 +687,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       {
         updateSolidInternalEnergyModel( subRegion );
         updateThermalConductivity( subRegion );
+        updateEnergy( subRegion );
       }
 
     } );
@@ -1303,6 +1301,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateEnergy( subRegion );
       }
     } );
   } );
