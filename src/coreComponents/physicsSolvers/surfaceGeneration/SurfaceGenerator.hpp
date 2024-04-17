@@ -21,6 +21,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 namespace geos
 {
