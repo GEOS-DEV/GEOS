@@ -55,7 +55,7 @@ void TableData::addErrorMsgs( string const & msg )
   std::istringstream ss( msg );
   string splitErrors;
 
-  while( getline( ss, splitErrors, '\n' ))
+  while( std::getline( ss, splitErrors, '\n' ))
   {
     errorsMsg.push_back( splitErrors );
   }

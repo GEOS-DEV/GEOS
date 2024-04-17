@@ -153,10 +153,10 @@ string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
   string sectionSeparator;
-  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
+  std::vector< TableLayout::Column > columns         = m_tableLayout.getColumns();
   std::vector< std::vector< string > > tableDataRows = tableData.getTableDataRows();
-  std::vector< string > msgTableError = tableData.getErrorMsgs();
-  integer const nbValuesRows = tableDataRows.size();
+  std::vector< string > msgTableError                = tableData.getErrorMsgs();
+  integer const nbValuesRows                         = tableDataRows.size();
 
   formatColumnsFromLayout( columns, tableDataRows );
   fillTableColumnsFromRows( columns, tableDataRows );
@@ -245,7 +245,6 @@ void TableTextFormatter::findAndSetMaxStringSize( std::vector< TableLayout::Colu
         maxStringSize = cell;
       }
     }
-
     column.m_maxStringSize = maxStringSize;
   }
 }
@@ -358,48 +357,13 @@ void TableTextFormatter::outputTopRows( std::ostringstream & tableOutput,
 {
   if( msg.size() != 0 && msg[0] != "" )
   {
-    string strConcat;
-    integer borderMargin = 0;
-
-    if( alignment == TableLayout::Alignment::left )
-    {
-      borderMargin = m_tableLayout.getBorderMargin();
-    }
-
+    tableOutput << GEOS_FMT( "{}\n", topSeparator );
     for( const std::string & str : msg )
     {
-      if( !strConcat.empty())
-      {
-        strConcat += '\n';
-      }
-      strConcat +=  GEOS_FMT( "{:>{}}", str, borderMargin + str.size() );
+      tableOutput << "|" << string( m_tableLayout.getBorderMargin() , ' ' );
+      tableOutput << buildCell( alignment, str, (topSeparator.length() - 6));
+      tableOutput << string( m_tableLayout.getBorderMargin() , ' ' ) << "|\n";
     }
-    buildTopRow( tableOutput, strConcat, topSeparator, alignment );
-  }
-}
-
-
-void TableTextFormatter::buildTopRow( std::ostringstream & tableOutput,
-                                      string const & msg,
-                                      string_view topSeparator,
-                                      TableLayout::Alignment alignment ) const
-{
-  size_t nbLine = std::count_if( msg.begin(), msg.end(), []( char c ){return c =='\n';} ) + 1;
-  std::vector< string > messages;
-  std::istringstream ss( msg );
-  string subMsg;
-
-  while( getline( ss, subMsg, '\n' ))
-  {
-    messages.push_back( subMsg );
-  }
-
-  tableOutput << GEOS_FMT( "{}\n", topSeparator );
-  for( size_t idxLine = 0; idxLine< nbLine; ++idxLine )
-  {
-    tableOutput << GEOS_FMT( "{}", "|" );
-    tableOutput << buildCell( alignment, messages[idxLine], (topSeparator.length() - 2));
-    tableOutput << GEOS_FMT( "{}\n", "|" );
   }
 }
 

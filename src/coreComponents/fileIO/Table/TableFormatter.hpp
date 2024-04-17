@@ -191,18 +191,6 @@ private:
                       TableLayout::Alignment alignment ) const;
 
   /**
-   * @brief Build a row at the top of the table
-   * @param tableOutput The output stream
-   * @param msg The converted string to display.
-   * @param topSeparator The top table separator
-   * @param alignment The aligment for a row
-   */
-  void buildTopRow( std::ostringstream & tableOutput,
-                    string const & msg,
-                    string_view topSeparator,
-                    TableLayout::Alignment alignment ) const;
-
-  /**
    * @brief Output a section by specifying it's type ( header or section )
    * @param columns Vector containing all table columns
    * @param sectionSeparator Line separator between sections
