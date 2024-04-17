@@ -9,7 +9,7 @@
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 10 }"/>
+      dimensions="{ 100, 200 }"/>
 
     <Rectangle
       name="core1"
@@ -17,7 +17,7 @@
       origin="{0.0, 0.0, 0.0}"
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 10 }"/>
+      dimensions="{ 100, 200 }"/>
 
     <Rectangle
       name="fracture2"
@@ -25,7 +25,7 @@
       origin="{0.0, 50.0, 0.0}"
       lengthVector="{1.0, 0.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 10 }"/>
+      dimensions="{ 50, 200 }"/>
 
     <Rectangle
       name="core2"
@@ -33,7 +33,7 @@
       origin="{0.0, 50.0, 0.0}"
       lengthVector="{1.0, 0.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 10 }"/>    
+      dimensions="{ 50, 200 }"/>    
   </Geometry>
   <!-- SPHINX_GEOMETRY_END -->
 
