@@ -89,6 +89,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_isFixedStressPoromechanicsUpdate( false )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
