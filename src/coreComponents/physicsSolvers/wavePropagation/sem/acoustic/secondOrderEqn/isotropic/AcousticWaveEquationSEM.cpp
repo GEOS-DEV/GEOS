@@ -298,14 +298,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        // acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-        // kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        nodeCoords,
-        //                                                        elemsToNodes,
-        //                                                        velocity,
-        //                                                        density,
-        //                                                        mass );
-
         AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
         kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                           nodeCoords,
@@ -324,24 +316,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              velocity,
                                                                              density,
                                                                              damping );
-
-        //AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
-        //                                                                             elementSubRegion.size(),
-        //
-        //
-        //
-        //
-        //
-        //
-        //                                                                                                                      nodeCoords,
-        //                                                                             elemsToFaces,
-        //                                                                             facesToNodes,
-        //                                                                             facesDomainBoundaryIndicator,
-        //                                                                             freeSurfaceFaceIndicator,
-        //                                                                             velocity,
-        //                                                                             density,
-        //damping );
-
 
 
       } );
@@ -372,9 +346,6 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
-
-  // freeSurfaceFaceIndicator.zero();
-  // freeSurfaceNodeIndicator.zero();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
