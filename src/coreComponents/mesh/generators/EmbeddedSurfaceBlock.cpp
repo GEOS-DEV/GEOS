@@ -27,12 +27,12 @@ ArrayOfArrays<localIndex> EmbeddedSurfaceBlock::getEmbeddedSurfElemToNodes() con
     return m_embeddedSurfElemToNodes;
 }
 
-ArrayOfArrays<localIndex> EmbeddedSurfaceBlock::getEmbeddedSurfElemTo3dElem() const {
+ToCellRelation<ArrayOfArrays<localIndex>> EmbeddedSurfaceBlock::getEmbeddedSurfElemTo3dElem() const {
      return m_embeddedSurfElemTo3dElem;
 }
 
-ArrayOfArrays<real64> EmbeddedSurfaceBlock::getEmbeddedSurfElemNodes() const {
-   return m_embeddedSurfElemNodes;
+ArrayOfArrays<real64> EmbeddedSurfaceBlock::getEmbeddedSurfElemNodesCoords() const {
+   return m_embeddedSurfElemNodesCoords;
 }
 
 ArrayOfArrays<real64> EmbeddedSurfaceBlock::getEmbeddedSurfElemNormalVectors() const {
@@ -64,12 +64,12 @@ void EmbeddedSurfaceBlock::setEmbeddedSurfElemToNodes(ArrayOfArrays<localIndex> 
     m_embeddedSurfElemToNodes = _embeddedSurfElemToNodes;
 }
 
-void EmbeddedSurfaceBlock::setEmbeddedSurfElemTo3dElem(ArrayOfArrays<localIndex> && _embeddedSurfElemTo3dElem){
+void EmbeddedSurfaceBlock::setEmbeddedSurfElemTo3dElem(ToCellRelation< ArrayOfArrays<localIndex>> && _embeddedSurfElemTo3dElem){
     m_embeddedSurfElemTo3dElem = _embeddedSurfElemTo3dElem;
 }
 
 void EmbeddedSurfaceBlock::setEmbeddedSurfElemNodes(ArrayOfArrays<real64> && _embeddedSurfElemNodes){
-    m_embeddedSurfElemNodes = _embeddedSurfElemNodes;
+    m_embeddedSurfElemNodesCoords = _embeddedSurfElemNodes;
 }
 
 }

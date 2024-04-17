@@ -28,7 +28,8 @@ namespace geos
  * @brief An embedded 2d element within a 3d element
  * 
  * @details The @p EmbeddedSurfaceBlockABC represents an array of 2d elements (@e surfacic) embedded within 
- * a 3d elements grid (2d element can intersect one or more 3d element). The 2d element is assumed to be a quad.  
+ * a 3d elements grid (2d element can intersect one 3d element). The 2d element is assumed to be a quad.
+ * and 3d elements are assumed to be regular hexa.  
  * @details In this class, we'll use the term @e 2d @e element for the elements of the @p EmbeddedSurfaceBlockABC,
  * which are geometrical quad surfaces (in 3d).
  * In the same way, we'll use the wording @e 2d @e face
@@ -54,7 +55,7 @@ public:
     * @brief Get the number of embedded surface elements
     * @return Number of embedded surface elements
     * @details Return the number of embedded surface elements, each surface element
-    * can intersect 1 or N 3d elements
+    * can intersect 1 3d elements
     */ 
     virtual localIndex numEmbeddedSurfElem() const = 0;
     
@@ -73,20 +74,22 @@ public:
     * @brief Get the indices of the parent 3d element of each embedded surface element (1 elem)
     * @return The mapping of first dimension @p numEmbeddedSurfElem.
     * Second dimension 1 to 1 3d element that it intersects.
+    * 2d element numbering is local to the @p EmbeddedSurfaceBlockABC
+    * 3d element numbering is local to the @p CellBlockABC
     *
-    * @details each embedded surface element intersects 1 3d element only. Index of this 3d element
-    * is returned for each embedded surface element.
+    * @details each embedded surface element intersects 1 3d element only. Element and block indices 
+    * of this 3d element (ToCellRelation) are returned for each embedded surface element.
     */
-    virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemTo3dElem() const = 0;
+    virtual ToCellRelation<ArrayOfArrays<localIndex>> getEmbeddedSurfElemTo3dElem() const = 0;
 
 
     /**
     * @brief Get the x, y, and z coordinates of the embedded surface elements nodes. 
     * @return An array of x, y, z coordinates of all the embedded surface elements nodes.
-    * first dimension is @p numEmbeddedSurfaceElements*4.
+    * first dimension is a maximum of @p numEmbeddedSurfaceElements*4 as nodes can be shared between elements.
     * Second dimension is 3, and represents the x, y and z.
     */
-    virtual ArrayOfArrays<real64> getEmbeddedSurfElemNodes() const = 0;
+    virtual ArrayOfArrays<real64> getEmbeddedSurfElemNodesCoords() const = 0;
 
     /**
     * @brief Get all the normal vectors for all the embedded surface elements. 

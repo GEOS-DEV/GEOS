@@ -269,9 +269,9 @@ bool EmbeddedSurfaceSubRegion::copyFromCellBlock(EmbeddedSurfaceBlockABC const &
 
   resize( embeddedSurfaceBlock.numEmbeddedSurfElem() );
   
-  ArrayOfArrays< localIndex > elemTo3dElem = embeddedSurfaceBlock.getEmbeddedSurfElemTo3dElem();
+  ToCellRelation<ArrayOfArrays< localIndex >> elemTo3dElem = embeddedSurfaceBlock.getEmbeddedSurfElemTo3dElem();
   ArrayOfArrays< localIndex > elemToNodes = embeddedSurfaceBlock.getEmbeddedSurfElemToNodes();
-  ArrayOfArrays<real64> elemNodesLocations = embeddedSurfaceBlock.getEmbeddedSurfElemNodes();
+  ArrayOfArrays<real64> elemNodesLocations = embeddedSurfaceBlock.getEmbeddedSurfElemNodesCoords();
   ArrayOfArrays<real64> elemNormalVectors = embeddedSurfaceBlock.getEmbeddedSurfElemNormalVectors();
   ArrayOfArrays<real64> elemTangentialVectors1 = embeddedSurfaceBlock.getEmbeddedSurfElemTangentialWidthVectors();
   ArrayOfArrays<real64> elemTangentialVectors2 = embeddedSurfaceBlock.getEmbeddedSurfElemTangentialLengthVectors();
@@ -282,27 +282,27 @@ bool EmbeddedSurfaceSubRegion::copyFromCellBlock(EmbeddedSurfaceBlockABC const &
   for(auto i = 0; i<numElems; ++i)
   {
     m_toNodesRelation.resizeArray( i, 4 );
-    localIndex elemIndex = elemTo3dElem[i][0];
-    localIndex elem3dIndex = elemTo3dElem[i][1];
+    localIndex elem3dIndex = elemTo3dElem.toCellIndex[i][0];
+    localIndex elemRegionIndex = elemTo3dElem.toBlockIndex[i][0];
     // region and subregion will be filled later.
-    m_2dElemToElems.m_toElementIndex.emplaceBack( elemIndex, elem3dIndex );
-    m_2dElemToElems.m_toElementSubRegion.emplaceBack( elemIndex, 0);
-    m_2dElemToElems.m_toElementRegion.emplaceBack( elemIndex, 0 );
+    m_2dElemToElems.m_toElementIndex.emplaceBack( i, elem3dIndex );
+    m_2dElemToElems.m_toElementSubRegion.emplaceBack( i, elemRegionIndex);
+    m_2dElemToElems.m_toElementRegion.emplaceBack( i, 0 );
     
     // we only accept quads
     array2d<real64>  elemNodeCoords(4,3);
     for( localIndex inode = 0; inode < 4; inode++ )
     {
-      auto nodeGlobalIndex = elemToNodes[elemIndex][ inode ];
-      m_toNodesRelation( elemIndex, inode ) = nodeGlobalIndex;
+      auto nodeGlobalIndex = elemToNodes[i][ inode ];
+      m_toNodesRelation( i, inode ) = nodeGlobalIndex;
       LvArray::tensorOps::copy<3>(elemNodeCoords[inode], elemNodesLocations[nodeGlobalIndex]);
     }
     
-    m_parentPlaneName[elemIndex] = "elem_" + std::to_string(elemIndex);
-    LvArray::tensorOps::copy<3>(m_normalVector[elemIndex], elemNormalVectors[elemIndex]);
-    LvArray::tensorOps::copy<3>(m_tangentVector1[elemIndex], elemTangentialVectors1[elemIndex]);
-    LvArray::tensorOps::copy<3>(m_tangentVector2[elemIndex], elemTangentialVectors2[elemIndex]);
-    this->calculateElementGeometricQuantities(elemNodeCoords.toViewConst(), elemIndex);
+    m_parentPlaneName[i] = "elem_" + std::to_string(i);
+    LvArray::tensorOps::copy<3>(m_normalVector[i], elemNormalVectors[i]);
+    LvArray::tensorOps::copy<3>(m_tangentVector1[i], elemTangentialVectors1[i]);
+    LvArray::tensorOps::copy<3>(m_tangentVector2[i], elemTangentialVectors2[i]);
+    this->calculateElementGeometricQuantities(elemNodeCoords.toViewConst(), i);
   }
   return true;
 }
