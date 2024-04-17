@@ -22,6 +22,7 @@
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
@@ -112,11 +113,13 @@ typedef PoromechanicsInitialization< MultiphasePoromechanics<> > MultiphasePorom
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics<> > SinglePhasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures > SinglePhasePoromechanicsEmbeddedFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsEmbeddedFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
 }
 
