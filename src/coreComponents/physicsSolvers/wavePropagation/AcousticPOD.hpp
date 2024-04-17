@@ -116,6 +116,8 @@ public:
 			      arrayView1d< real32 const > const var_n,
 			      arrayView2d< real32 > varAtReceivers );
 
+
+  void computeInitialConditions();
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
@@ -141,7 +143,9 @@ public:
     static constexpr char const * a_np1String() { return "a_np1"; }
     static constexpr char const * a_nString() { return "a_n"; }
     static constexpr char const * a_nm1String() { return "a_nm1"; }
+    static constexpr char const * perturbationString() { return "perturbation"; }
     static constexpr char const * sizePODString() { return "sizePOD"; }
+    static constexpr char const * orderInitString() { return "orderInit"; }
     
   } waveEquationViewKeys;
 
@@ -207,6 +211,9 @@ private:
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
+  /// Taylor order to compute the initial conditions
+  localIndex m_orderInit;
+  
   /// Whether or not to compute the POD matrices
   int m_computePODmatrix;
 
@@ -225,6 +232,9 @@ private:
   ///Inverse scalar product POD Matrix
   array2d< real32 > m_invAPOD;
 
+  // Model perturbation coefficient
+  real32 m_perturbation;
+  
   // Coefficient of the solution in the POD basis at time n+1
   array1d< real32 > m_a_np1;
 

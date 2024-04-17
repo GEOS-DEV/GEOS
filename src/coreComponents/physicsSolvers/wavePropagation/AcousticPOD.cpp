@@ -94,10 +94,20 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "POD basis coefficients at time n-1" );
 
+  registerWrapper( viewKeyStruct::perturbationString(), &m_perturbation ).
+    setInputFlag( InputFlags::FALSE ).
+    setDefaultValue( 0 ).
+    setDescription( "POD model perturbation coefficient" );
+  
   registerWrapper( viewKeyStruct::sizePODString(), &m_sizePOD ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "POD basis size" );
+
+  registerWrapper( viewKeyStruct::orderInitString(), &m_orderInit ).
+    setInputFlag( InputFlags::FALSE ).
+    setDefaultValue( 0 ).
+    setDescription( "Taylor order for initial condition computation" );
 }
 
 AcousticPOD::~AcousticPOD()
@@ -606,8 +616,12 @@ void AcousticPOD::computeUnknowns( real64 const & time_n,
   real64 const dt2 = dt*dt;
   
   GEOS_MARK_SCOPE ( updateP );
-  
-  if( m_forward )
+
+  if( cycleNumber == 0 )
+  {
+    computeInitialConditions();
+  }
+  else
   {
     arrayView2d< real32 const > const damping = m_dampingPOD.toViewConst();
     arrayView2d< real32 const > const mass = m_massPOD.toViewConst();
@@ -633,6 +647,57 @@ void AcousticPOD::computeUnknowns( real64 const & time_n,
       {
 	a_np1[m] += invA[m][n] * bV[n];
       }
+    } );
+  }
+}
+
+void AcousticPOD::computeInitialConditions()
+{
+  arrayView1d< real32 > const a_n = m_a_n;
+  arrayView1d< real32 > const a_np1 = m_a_np1;
+  int const size = a_np1.size();
+  array1d< real32 > b(size);
+  arrayView1d< real32 > bV = b.toView();
+  int ord = 0;
+  
+  localIndex const shotIndex = m_shotIndex;
+  real32 const alpha = m_perturbation;
+  localIndex const ord = m_orderInit;
+
+  real32 fact = 1;
+  for(int i=0; i<ord; ++i)
+  {
+    if( i>0 )
+    {
+      fact *= i;
+    }
+
+    std::string fileName1 = GEOS_FMT( "phi/shot_{:05}/initialConditions/order_{:02}/vector_00000.dat", shotIndex, i);
+    std::ifstream wf1( fileName1, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !wf1,
+		   getDataContext() << ": Could not open file "<< fileName1 << " for reading",
+		   InputError );
+    bV.move( MemorySpace::host, true );
+    wf1.read( (char *)&bV[0], size*sizeof( real32 ) );
+    wf1.close( );
+    
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const j )
+    {
+      a_n[j] += pow(alpha,i) * bV[j] / fact;
+    } );
+
+    std::string fileName2 = GEOS_FMT( "phi/shot_{:05}/initialConditions/order_{:02}/vector_00001.dat", shotIndex, i);
+    std::ifstream wf2( fileName2, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !wf2,
+                   getDataContext() << ": Could not open file "<< fileName2 << " for reading",
+                   InputError );
+    bV.move( MemorySpace::host, true );
+    wf2.read( (char *)&bV[0], size*sizeof( real32 ) );
+    wf2.close( );
+
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const j )
+    {
+      a_np1[j] += pow(alpha,i) * bV[j] / fact;
     } );
   }
 }
@@ -1119,7 +1184,7 @@ void AcousticPOD::computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
   array1d< real32 > phin( size );
   arrayView1d< real32 > phimV = phim.toView();
   arrayView1d< real32 > phinV	= phin.toView();
-  
+
   GEOS_MARK_SCOPE ( DirectRead );
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   for( localIndex m=0; m<countPhi; ++m )
@@ -1145,7 +1210,6 @@ void AcousticPOD::computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
       wf2.read( (char *)&phinV[0], size*sizeof( real32 ) );
       wf2.close( );
 
-      //std::cout<<m<<" , "<<n<<std::endl;
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
 	if( nodesGhostRank[a] < 0 )

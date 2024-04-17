@@ -164,7 +164,13 @@ public:
 			   arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
 			   localIndex const nq,
 			   std::string path);
+  
+  void writeInitialConditionsPOD(arrayView1d< real32 const > const stiffnessVector,
+				 int const ordF,
+				 int const cycle);
 
+  void writeInitialConditionsPODFinal(arrayView1d< integer const > const nodeGhostRank);
+  
 protected:
 
   virtual void postProcessInput() override final;
