@@ -25,7 +25,7 @@ void TableData::addRow( std::vector< string > const & row )
 {
   if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size() )
   {
-    string msg = "Number of row cells ins't consistent with the number of columns.";
+    string msg = "Remarks : some cells may be missing";
     if( std::find( errorsMsg.begin(), errorsMsg.end(), msg ) == errorsMsg.end())
     {
       errorsMsg.push_back( msg );
@@ -71,42 +71,38 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
 
-  // looping over first line to fill columnNames
-  for( auto const & [ columnValue, cellValue] : m_data.begin()->second )
+  for( auto const & columnValue : columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
     headerValues.push_back( columnValue );
   }
 
   // insert row value and row cell values
-  bool isConsistant = true;
   for( auto const & [rowValue, rowMap] : m_data )
   {
     integer i = 0;
     std::vector< string > currentRowValues;
+    integer idxColumn = 0;
+
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      //check is if the column are offset
-      if( std::abs( columnValue - headerValues[i] ) > 0.0 )
+      //check if column numbers in the evaluated row is consistent
+      if( columnValue  > headerValues[i] )
       {
-        isConsistant = false;
+        while( columnValue > headerValues[idxColumn] )
+        {
+          currentRowValues.push_back( "" );
+          ++idxColumn;
+        }
       }
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
+      ++idxColumn;
       ++i;
     }
+
     tableData1D.tableData.addRow( currentRowValues );
     rowsLength.push_back( currentRowValues.size());
-  }
-
-  if( !isConsistant )
-  {
-    tableData1D.tableData.addErrorMsgs( "Table isn't consistent, One or more cells are not in the right place" );
-  }
-
-  if( std::adjacent_find( rowsLength.begin(), rowsLength.end(), std::not_equal_to<>() ) != rowsLength.end() )
-  {
-    tableData1D.tableData.addErrorMsgs( "Cell(s) are missing in row" );
   }
 
   return tableData1D;

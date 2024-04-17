@@ -40,7 +40,7 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
 
     for( size_t idxColumn = 0; idxColumn < columns.size(); idxColumn++ )
     {
-      // Case of a hidden column during initialization
+      // in case of a hidden column during initialization
       if( m_tableLayout.getColumns()[idxColumn].m_parameter.enabled )
       {
         columns[idxColumn].m_columnValues.push_back( rows[idxRow][idxColumn] );

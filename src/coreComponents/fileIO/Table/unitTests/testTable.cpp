@@ -254,16 +254,15 @@ TEST( testTable, table2DColumnMismatch )
     //log
     TableTextFormatter const tableLog( tableLayout );
     EXPECT_EQ( tableLog.toString( tableConverted.tableData ),
-               "\n+-----------------------------------------------------------------------+\n"
-               "|  Number of row cells ins't consistent with the number of columns.     |\n"
-               "|  Cell(s) are missing in row                                           |\n"
-               "+---------------------+--------------------+----------------------------+\n"
-               "|     Viscosity kg*s  |  Pression = 10000  |          Pression = 15000  |\n"
-               "+---------------------+--------------------+----------------------------+\n"
-               "|  Temperature = 300  |              0.03  |                      0.02  |\n"
-               "|  Temperature = 350  |             0.035  |                            |\n"
-               "|  Temperature = 400  |              0.04  |       0.02666666666666667  |\n"
-               "+---------------------+--------------------+----------------------------+\n\n"
+               "\n+------------------------------------------------------------------+\n"
+               "|  Remarks : some cells may be missing                             |\n"
+               "+---------------------+--------------------+-----------------------+\n"
+               "|     Viscosity kg*s  |  Pression = 10000  |     Pression = 15000  |\n"
+               "+---------------------+--------------------+-----------------------+\n"
+               "|  Temperature = 300  |              0.03  |                 0.02  |\n"
+               "|  Temperature = 350  |             0.035  |                       |\n"
+               "|  Temperature = 400  |              0.04  |  0.02666666666666667  |\n"
+               "+---------------------+--------------------+-----------------------+\n\n"
                );
   }
 }

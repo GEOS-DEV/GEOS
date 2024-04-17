@@ -120,6 +120,9 @@ private:
 
   /// @brief all cell values by their [ row ][ column ]
   std::map< RowType, std::map< ColumnType, string > > m_data;
+
+  /// @brief Store all column values when adding cell
+  std::set< real64 > columnValues;
 };
 
 template< typename ... Args >
@@ -139,6 +142,7 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
+  columnValues.insert( columnValue );
   m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
 
