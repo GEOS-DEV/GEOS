@@ -63,7 +63,7 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Mass gradient POD forward matrix" );
-  
+
   registerWrapper( viewKeyStruct::dampingPODString(), &m_dampingPOD ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -98,7 +98,7 @@ AcousticPOD::AcousticPOD( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setDefaultValue( 0 ).
     setDescription( "POD model perturbation coefficient" );
-  
+
   registerWrapper( viewKeyStruct::sizePODString(), &m_sizePOD ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
@@ -171,10 +171,10 @@ void AcousticPOD::postProcessInput()
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::AcousticFreeSurfaceFaceIndicator >();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-    
+
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
       nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-    
+
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::AcousticMassVector >();
     {
@@ -192,24 +192,24 @@ void AcousticPOD::postProcessInput()
       GEOS_MARK_SCOPE( damping_zero );
       damping.zero();
     }
-    
-    
+
+
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
 											  CellElementSubRegion & elementSubRegion )
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      
+
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::AcousticVelocity >();
       arrayView1d< real32 const > const gradient = elementSubRegion.getField< fields::PartialGradient >();
-      
+
       finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
 	using FE_TYPE = TYPEOFREF( finiteElement );
-	
+
 	acousticPODKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 	kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
 							       nodeCoords32,
@@ -218,7 +218,7 @@ void AcousticPOD::postProcessInput()
 							       gradient,
 							       mass,
 							       massGradient);
-	
+
 	acousticPODKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 	kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
 							       nodeCoords32,
@@ -231,7 +231,7 @@ void AcousticPOD::postProcessInput()
       } );
     } );
   } );
-  
+
 
   if( m_computePODmatrix )
   {
@@ -248,7 +248,7 @@ void AcousticPOD::postProcessInput()
       arrayView1d< real32 const > const mass = nodeManager.getField< fields::AcousticMassVector >();
       arrayView1d< real32 const > const massGradient = nodeManager.getField< fields::AcousticMassGradientVector >();
       arrayView1d< real32 const > const damping = nodeManager.getField< fields::AcousticDampingVector >();
-      
+
       int sizePOD = m_sizePOD;
       arrayView1d< localIndex const > const nodesGhostRank = nodeManager.ghostRank();
 
@@ -273,7 +273,7 @@ void AcousticPOD::postProcessInput()
 
       m_invAPOD.resize( sizePOD, sizePOD );
       m_invAPOD.zero();
-      
+
       arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
 	nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
@@ -374,7 +374,7 @@ void AcousticPOD::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
     int const countPhi = m_sizePOD;
     int const shotIndex = m_shotIndex;
-    
+
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
     finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -600,9 +600,9 @@ void AcousticPOD::computeUnknowns( real64 const & time_n,
 				   DomainPartition & domain,
 				   MeshLevel & mesh,
 				   arrayView1d< string const > const & regionNames )
-{  
+{
   arrayView1d< real32 > const rhs = m_rhsPOD.toView();
-  
+
   arrayView1d< real32 > const a_nm1 = m_a_nm1.toView();
   arrayView1d< real32 > const a_n = m_a_n.toView();
   arrayView1d< real32 > const a_np1 = m_a_np1.toView();
@@ -614,7 +614,7 @@ void AcousticPOD::computeUnknowns( real64 const & time_n,
 
   /// calculate your time integrators
   real64 const dt2 = dt*dt;
-  
+
   GEOS_MARK_SCOPE ( updateP );
 
   if( cycleNumber == 0 )
@@ -628,7 +628,7 @@ void AcousticPOD::computeUnknowns( real64 const & time_n,
     arrayView2d< real32 const > const invA = m_invAPOD.toViewConst();
     array1d< real32 > b( a_n.size());
     arrayView1d< real32 > bV = b.toView();
-    
+
     forAll< EXEC_POLICY >( a_n.size(), [=] GEOS_HOST_DEVICE ( localIndex const m )
     {
       bV[m] = dt2 * (rhs[m] - a_n[m]);
@@ -658,8 +658,7 @@ void AcousticPOD::computeInitialConditions()
   int const size = a_np1.size();
   array1d< real32 > b(size);
   arrayView1d< real32 > bV = b.toView();
-  int ord = 0;
-  
+
   localIndex const shotIndex = m_shotIndex;
   real32 const alpha = m_perturbation;
   localIndex const ord = m_orderInit;
@@ -680,7 +679,7 @@ void AcousticPOD::computeInitialConditions()
     bV.move( MemorySpace::host, true );
     wf1.read( (char *)&bV[0], size*sizeof( real32 ) );
     wf1.close( );
-    
+
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const j )
     {
       a_n[j] += pow(alpha,i) * bV[j] / fact;
@@ -1222,7 +1221,7 @@ void AcousticPOD::computeMassAndDampingPOD( arrayView2d< real32 > const massPOD,
 	    {
 	      RAJA::atomicAdd< ATOMIC_POLICY >( &massPOD[n][m], localIncrement );
 	    }
-	    
+
 	    if( massGradient[a] != 0 )
 	    {
 	      localIncrement = phimV[a] * massGradient[a] * phinV[a];
@@ -1288,11 +1287,11 @@ void AcousticPOD::computeSeismoTracePOD( real64 const time_n,
     forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
-      {	
+      {
 	varAtReceivers[iSeismo][ircv] = 0.0;
 	real32 vtmp_np1 = 0.0;
 	real32 vtmp_n = 0.0;
-	
+
 	for( localIndex m = 0; m<var_np1.size( 0 ); ++m )
 	{
 	  vtmp_np1 += var_np1[m] * receiverConstants[ircv][m];

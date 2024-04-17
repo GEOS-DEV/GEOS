@@ -3,6 +3,14 @@
 #
 message("in tpls.cmake GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
+#
+# General TPL Folder verifications
+#
+if(NOT EXISTS ${GEOSX_TPL_DIR})
+  message(WARNING "'GEOSX_TPL_DIR' does not exist.\n")
+endif()
+
+
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()

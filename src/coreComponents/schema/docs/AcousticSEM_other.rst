@@ -24,6 +24,3 @@ LinearSolverParameters    node                                                  
 NonlinearSolverParameters node                                                                                                                                                           :ref:`DATASTRUCTURE_NonlinearSolverParameters`
 SolverStatistics          node                                                                                                                                                           :ref:`DATASTRUCTURE_SolverStatistics`
 ========================= ============================================================================================================================================================== =======================================================================
-
-
->>>>>>> develop

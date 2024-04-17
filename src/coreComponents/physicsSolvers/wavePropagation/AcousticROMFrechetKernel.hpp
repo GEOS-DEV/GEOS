@@ -149,7 +149,7 @@ struct computeStiffnessFrechetRhs
    * @param[in] xLocal coordinates of the nodes
    * @param[in] stiffnessPOD stiffness POD matrix
    * @param[in] phi POD basis
-   * @param[in] elemsToNodes map from element to nodes   
+   * @param[in] elemsToNodes map from element to nodes
  */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename FE_TYPE >
   static void
@@ -167,7 +167,7 @@ struct computeStiffnessFrechetRhs
     {
       real32 const cst = gradient[k] * pow(velocity[k], 2);
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      
+
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
       {
@@ -183,7 +183,7 @@ struct computeStiffnessFrechetRhs
 	FE_TYPE::computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
 	{
 	  real32 const localIncrement = val * p_n[elemsToNodes( k, j )];
-	  RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVectorFrechet[elemsToNodes( k, i )], localIncrement );	  
+	  RAJA::atomicAdd< parallelDeviceAtomic >( &stiffnessVectorFrechet[elemsToNodes( k, i )], localIncrement );
 	  if( cst != 0 )
 	  {
 	    RAJA::atomicAdd< parallelDeviceAtomic >( &rhs_fp1[elemsToNodes( k, i )], localIncrement );
@@ -192,7 +192,7 @@ struct computeStiffnessFrechetRhs
 	} );
       }
     } );
-  };
+  }
 };
 
 struct PrecomputeSourceAndReceiverKernel
