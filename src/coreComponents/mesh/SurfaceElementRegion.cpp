@@ -21,7 +21,6 @@
 #include "EdgeManager.hpp"
 #include "SurfaceElementRegion.hpp"
 
-
 namespace geos
 {
 using namespace dataRepository;
@@ -54,11 +53,13 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
+
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    bool experiment = false;
+    bool experiment = true;
     if (experiment)
     {
+
       EmbeddedSurfaceSubRegion &subRegion = elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>(m_faceBlockName);
       if (faceBlocks.hasGroup("EmbeddedSurface"))
       {

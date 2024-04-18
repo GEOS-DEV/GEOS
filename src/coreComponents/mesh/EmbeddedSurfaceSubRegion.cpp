@@ -27,6 +27,16 @@
 #include "BufferOps.hpp"
 #include "mesh/MeshFields.hpp"
 
+
+#include "mainInterface/GeosxState.hpp"
+#include "common/DataTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
 namespace geos
 {
 using namespace dataRepository;
@@ -264,6 +274,12 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
 
 
 bool EmbeddedSurfaceSubRegion::copyFromCellBlock(EmbeddedSurfaceBlockABC const & embeddedSurfaceBlock){
+  
+  
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
+  EmbeddedSurfaceNodeManager & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
   
   localIndex const numElems= embeddedSurfaceBlock.numEmbeddedSurfElem(); 
 
