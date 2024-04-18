@@ -1955,6 +1955,10 @@ public:
 
       if( m_ghostRank[i] >= 0 )
           return;
+
+      // TODO (jafranc) as in  "The 11th Society of Petroleum Engineers Comparative Solution Project: Problem Definition."
+      // Ferno et al., SPEJ, 2023 the proposed renormalization by porosity and densities of phase
+
          // step 1: mass residuals
       for( integer idof = 0; idof < m_numComponents; ++idof )
       {

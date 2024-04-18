@@ -896,7 +896,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     //if logLevel high enough and newton start having trouble converging, dumpt residual map.
-    if( getLogLevel() > 0 && residualNorm > lastResidual )
+//    if( getLogLevel() > 0 && residualNorm > lastResidual ) // tentative trigger
+    if( getLogLevel() > 0 ) // SPE11 trigger
           updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
       // do line search in case residual has increased
