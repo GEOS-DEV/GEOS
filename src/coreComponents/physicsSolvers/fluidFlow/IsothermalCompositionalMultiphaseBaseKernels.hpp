@@ -1950,23 +1950,12 @@ public:
   launch( localIndex const size, arrayView2d< real64 > & globalResidual ) const
   {
 
-
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i ) {
       auto localRow = m_dofNumber[i] - m_rankOffset;
 
-
       if( m_ghostRank[i] >= 0 )
-      {
-          GEOS_LOG_RANK_0(GEOS_FMT(">> ghost {}", i));
-          GEOS_LOG_RANK_0(GEOS_FMT(">> localRow = {} - {} = {} ", m_dofNumber[i], m_rankOffset, localRow));
           return;
-      }
-      else
-      {
-          GEOS_LOG_RANK_0(GEOS_FMT(">> localRow = {} - {} = {} ", m_dofNumber[i], m_rankOffset, localRow));
-      }
-
-      // step 1: mass residuals
+         // step 1: mass residuals
       for( integer idof = 0; idof < m_numComponents; ++idof )
       {
         globalResidual[i][idof] = m_localResidual[localRow + idof] * m_localResidual[localRow + idof];

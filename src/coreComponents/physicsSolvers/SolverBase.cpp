@@ -872,8 +872,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-      if( getLogLevel() > 0 && newtonIter == 0 )
-        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
     }
 
@@ -897,11 +895,16 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       break;
     }
 
-    // do line search in case residual has increased
+    //if logLevel high enough and newton start having trouble converging, dumpt residual map.
+    if( getLogLevel() > 0 && residualNorm > lastResidual )
+          updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+
+      // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
         && residualNorm > lastResidual && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
     {
       bool lineSearchSuccess = false;
+
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
       {
         residualNorm = lastResidual;
