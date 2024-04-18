@@ -71,7 +71,7 @@ set( CMAKE_Fortran_FLAGS_RELEASE ${RELEASE_FLAGS} CACHE PATH "" )
 set( ENABLE_MPI ON CACHE BOOL "" )
 
 if( NOT DEFINED ENV{HPCX_MPI_DIR} )
-    message( FATAL_ERROR "HPC-X OpenMPI is not defined. Please load the hpcx-ompi module." )
+    message( FATAL_ERROR "HPC-X OpenMPI is not loaded. Please load the hpcx-ompi module." )
 endif()
 
 #######################################                                                                                                                                           
