@@ -89,6 +89,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_isFixedStressPoromechanicsUpdate( false )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
@@ -96,7 +97,13 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    //START_SPHINX_INCLUDE_00
+    this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
+            setInputFlag( InputFlags::OPTIONAL ).
+            setDescription( "Temperature" );
+//END_SPHINX_INCLUDE_00
+
+    this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 1 ). // negative pressure is allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );

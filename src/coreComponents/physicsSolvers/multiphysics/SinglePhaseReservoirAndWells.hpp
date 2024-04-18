@@ -95,8 +95,8 @@ public:
                                    arrayView1d< real64 > const & localRhs )
   { flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs ); }
 
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
   void updateFluidState( ObjectManagerBase & subRegion ) const
   { flowSolver()->updateFluidState( subRegion ); }

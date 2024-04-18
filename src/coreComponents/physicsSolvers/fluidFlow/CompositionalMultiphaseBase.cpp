@@ -62,18 +62,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasCapPressure( 0 ),
   m_hasDiffusion( 0 ),
   m_hasDispersion( 0 ),
-  m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
   m_useSimpleAccumulation( 1 ),
   m_minCompDens( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision )
 {
-//START_SPHINX_INCLUDE_00
-  this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Temperature" );
-//END_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).

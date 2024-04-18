@@ -21,6 +21,7 @@
 #include "AcoustoElasticTimeSchemeSEMKernel.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "events/EventManager.hpp"
 #include <typeinfo>
 #include <limits>
 

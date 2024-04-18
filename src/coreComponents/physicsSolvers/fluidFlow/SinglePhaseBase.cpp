@@ -51,15 +51,10 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent ),
-  m_keepFlowVariablesConstantDuringInitStep( 0 )
+  FlowSolverBase( name, parent )
 {
-  this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature" );
-}
 
+}
 
 void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 {

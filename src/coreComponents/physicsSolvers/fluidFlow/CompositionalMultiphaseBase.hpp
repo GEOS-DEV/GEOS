@@ -223,11 +223,9 @@ public:
 
     // inputs
 
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
@@ -316,14 +314,6 @@ public:
                                DomainPartition & domain,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
-
-  /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
 
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
@@ -419,9 +409,6 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the input temperature
-  real64 m_inputTemperature;
-
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
@@ -433,9 +420,6 @@ protected:
 
   /// flag to determine whether or not to apply dispersion
   integer m_hasDispersion;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
