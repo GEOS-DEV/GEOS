@@ -138,6 +138,12 @@ public:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
+  enum class InitializationType : integer
+  {
+    Pressure,
+    Displacement,
+  };
+
   struct viewKeyStruct : Base::viewKeyStruct
   {
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
@@ -148,6 +154,9 @@ public:
 
     constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
 
+    constexpr static char const * newFractureInitializationTypeString() { return "newFractureInitializationType"; }
+
+    constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -193,6 +202,13 @@ private:
                                          int const cycleNumber,
                                          DomainPartition & domain ) override final;
 
+
+  /**
+   * @brief Initialize fields on the newly created elements of the fracture.
+   * @param domain the physical domain object
+   */
+  void initializeNewFractureFields( DomainPartition & domain );
+
   // name of the contact relation
   string m_contactRelationName;
 
@@ -210,7 +226,16 @@ private:
 
   integer m_isMatrixPoroelastic;
 
+  // flag to determine which initialization type to use for the new fracture cell
+  InitializationType m_newFractureInitializationType;
+
+  integer m_useQuasiNewton;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
+
 };
+
+ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::InitializationType,
+              "Pressure",
+              "Displacement" );
 
 
 } /* namespace geos */

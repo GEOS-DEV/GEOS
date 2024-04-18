@@ -1,9 +1,11 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testCapillaryPressure.cpp
+     testCO2BrinePVTModels.cpp
+     testCO2SpycherPruessModels.cpp
      testDamage.cpp
      testRelPerm.cpp
-     testRelPermHysteresis.cpp
-     testCapillaryPressure.cpp )
+     testRelPermHysteresis.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
@@ -20,6 +22,7 @@ set( gtest_triaxial_xmls
 set( gtest_pvt_xmls
      testPVT.xml
      testPVT_CO2Brine.xml
+     testPVT_CO2BrineTables.xml
      testPVT_PhaseComposition.xml
    )
 
@@ -36,10 +39,25 @@ endif()
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp )
+          testMultiFluid.cpp )
 
     list( APPEND dependencyList PVTPackage )
+endif()
+
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
+
+if (TARGET fmt::fmt)
+  list( APPEND dependencyList fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
 endif()
 
 # Add gtest C++ based tests

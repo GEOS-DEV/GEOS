@@ -19,6 +19,7 @@
 #include "TableFunction.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -176,13 +177,16 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
                  GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
-                           getDataContext(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
+                           getDataContext(),
+                           units::formatValue( coord, getDimUnit( dim ) ),
+                           units::formatValue( lowerBound, getDimUnit( dim ) ),
+                           units::formatValue( upperBound, getDimUnit( dim ) ) ),
                  SimulationError );
 }
 
 void TableFunction::print( std::string const & filename ) const
 {
-  std::ofstream os( filename + ".csv" );
+  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
 
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 

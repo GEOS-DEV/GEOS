@@ -26,13 +26,14 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "AcousticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
 
 using namespace dataRepository;
 using namespace fields;
-//using namespace wavesolverfields;
 
 AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std::string & name,
                                                                       Group * const parent ):
@@ -94,25 +95,25 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< wavesolverfields::Pressure_np1,
-                               wavesolverfields::ForcingRHS,
-                               wavesolverfields::MassVector,
-                               wavesolverfields::DampingVector,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( getName() );
+    nodeManager.registerField< acousticfields::Pressure_np1,
+                               acousticfields::ForcingRHS,
+                               acousticfields::AcousticMassVector,
+                               acousticfields::DampingVector,
+                               acousticfields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< acousticfields::AcousticFreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocity >( getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( getName() );
+      subRegion.registerField< acousticfields::AcousticVelocity >( getName() );
+      subRegion.registerField< acousticfields::AcousticDensity >( getName() );
 
-      subRegion.registerField< wavesolverfields::Velocity_x >( getName() );
-      subRegion.registerField< wavesolverfields::Velocity_y >( getName() );
-      subRegion.registerField< wavesolverfields::Velocity_z >( getName() );
+      subRegion.registerField< acousticfields::Velocity_x >( getName() );
+      subRegion.registerField< acousticfields::Velocity_y >( getName() );
+      subRegion.registerField< acousticfields::Velocity_z >( getName() );
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -123,9 +124,9 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-        subRegion.getField< wavesolverfields::Velocity_x >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Velocity_y >().resizeDimension< 1 >( numNodesPerElem );
-        subRegion.getField< wavesolverfields::Velocity_z >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< acousticfields::Velocity_x >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< acousticfields::Velocity_y >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< acousticfields::Velocity_z >().resizeDimension< 1 >( numNodesPerElem );
 
       } );
 
@@ -212,9 +213,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticFirstOrderWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,
@@ -247,28 +248,6 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
 }
 
-
-void AcousticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
-{
-  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
-  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
-  arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), getDataContext() << ": Too many steps compared to array size", std::runtime_error );
-  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
-  {
-    if( sourceIsAccessible[isrc] == 1 )
-    {
-      for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
-      {
-        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
-      }
-    }
-  } );
-}
-
 void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -288,29 +267,29 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// get table containing face to nodes map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    arrayView1d< real32 > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
+    arrayView1d< real32 > const damping = nodeManager.getField< acousticfields::DampingVector >();
     damping.zero();
     mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< acousticfields::AcousticFreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfields::AcousticDensity >();
 
       real64 dtCompute=0.0;
 
@@ -320,25 +299,26 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                          nodeCoords,
+                                                                          elemsToNodes,
+                                                                          velocity,
+                                                                          density,
+                                                                          mass );
 
-        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToNodes,
-                                                               velocity,
-                                                               density,
-                                                               mass );
+        AcousticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
+        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeCoords,
+                                                                             elemsToFaces,
+                                                                             facesToNodes,
+                                                                             facesDomainBoundaryIndicator,
+                                                                             freeSurfaceFaceIndicator,
+                                                                             velocity,
+                                                                             density,
+                                                                             damping );
 
-        acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
-                                                               elemsToFaces,
-                                                               facesToNodes,
-                                                               facesDomainBoundaryIndicator,
-                                                               freeSurfaceFaceIndicator,
-                                                               velocity,
-                                                               damping );
         //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
         if( m_preComputeDt==1 )
         {
@@ -346,7 +326,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
           dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                              nodeManager.size(),
-                                                                             X,
+                                                                             nodeCoords,
                                                                              elemsToNodes,
                                                                              density,
                                                                              mass );
@@ -383,15 +363,15 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
-  arrayView1d< real32 > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< acousticfields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
 
 
   freeSurfaceFaceIndicator.zero();
@@ -485,21 +465,21 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
-    arrayView1d< real32 const > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+    arrayView1d< real32 const > const damping = nodeManager.getField< acousticfields::DampingVector >();
 
-    arrayView1d< real32 > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
+    arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
-    arrayView1d< real32 > const rhs = nodeManager.getField< wavesolverfields::ForcingRHS >();
+    arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
-      arrayView2d< real32 > const velocity_x = elementSubRegion.getField< wavesolverfields::Velocity_x >();
-      arrayView2d< real32 > const velocity_y = elementSubRegion.getField< wavesolverfields::Velocity_y >();
-      arrayView2d< real32 > const velocity_z = elementSubRegion.getField< wavesolverfields::Velocity_z >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfields::AcousticDensity >();
+      arrayView2d< real32 > const velocity_x = elementSubRegion.getField< acousticfields::Velocity_x >();
+      arrayView2d< real32 > const velocity_y = elementSubRegion.getField< acousticfields::Velocity_y >();
+      arrayView2d< real32 > const velocity_z = elementSubRegion.getField< acousticfields::Velocity_z >();
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -553,8 +533,8 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     } );
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { wavesolverfields::Pressure_np1::key() } );
-    fieldsToBeSync.addElementFields( {wavesolverfields::Velocity_x::key(), wavesolverfields::Velocity_y::key(), wavesolverfields::Velocity_z::key()}, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Node, { acousticfields::Pressure_np1::key() } );
+    fieldsToBeSync.addElementFields( {acousticfields::Velocity_x::key(), acousticfields::Velocity_y::key(), acousticfields::Velocity_z::key()}, regionNames );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
@@ -580,13 +560,13 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
                                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView1d< real32 const > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
+    arrayView1d< real32 const > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      arrayView2d< real32 > const velocity_x = elementSubRegion.getField< wavesolverfields::Velocity_x >();
-      arrayView2d< real32 > const velocity_y = elementSubRegion.getField< wavesolverfields::Velocity_y >();
-      arrayView2d< real32 > const velocity_z = elementSubRegion.getField< wavesolverfields::Velocity_z >();
+      arrayView2d< real32 > const velocity_x = elementSubRegion.getField< acousticfields::Velocity_x >();
+      arrayView2d< real32 > const velocity_y = elementSubRegion.getField< acousticfields::Velocity_y >();
+      arrayView2d< real32 > const velocity_z = elementSubRegion.getField< acousticfields::Velocity_z >();
 
       arrayView2d< real32 > const uxReceivers = m_uxNp1AtReceivers.toView();
       arrayView2d< real32 > const uyReceivers = m_uyNp1AtReceivers.toView();
