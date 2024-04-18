@@ -272,10 +272,10 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
+   * @param subRegion subregion that contains the fields
    */
   void
-  updateFluidState( ObjectManagerBase & subRegion ) const;
+  updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
   /**
@@ -284,6 +284,20 @@ public:
    */
   virtual void
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Function to update energy
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateEnergy( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Update all relevant solid internal energy models using current values of temperature
@@ -354,6 +368,11 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
