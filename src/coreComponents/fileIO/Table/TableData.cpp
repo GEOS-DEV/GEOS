@@ -88,13 +88,10 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     for( auto const & [columnValue, cellValue] : rowMap )
     {
       //check if column numbers in the evaluated row is consistent
-      if( columnValue  > headerValues[idxColumn] )
+      while( columnValue > headerValues[idxColumn] )
       {
-        while( columnValue > headerValues[idxColumn] )
-        {
-          currentRowValues.push_back( "" );
-          ++idxColumn;
-        }
+        currentRowValues.push_back( "" );
+        ++idxColumn;
       }
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
       ++idxColumn;

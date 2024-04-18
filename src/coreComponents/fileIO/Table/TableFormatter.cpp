@@ -40,7 +40,7 @@ void TableFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Column 
     {
       if( m_tableLayout.getColumns()[idxColumn].m_parameter.enabled )
       {
-        columns[idxColumn].m_columnValues.push_back( std::move( rows[idxRow][idxColumn] ) );
+        columns[idxColumn].m_columnValues.push_back( rows[idxRow][idxColumn] );
       }
     }
   }
@@ -218,7 +218,7 @@ void TableTextFormatter::splitAndSetColumnNames( std::vector< TableLayout::Colum
     {
       headerParts.resize( nbHeaderRows, " " );
     }
-    columns[&headerParts - &splitHeaders[0]].m_parameter.splitColumnName = std::move( headerParts );
+    columns[&headerParts - &splitHeaders[0]].m_parameter.splitColumnName = headerParts;
   }
 
 }
