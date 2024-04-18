@@ -648,23 +648,12 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< elasticfields::StiffnessVectorx >();
-  arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< elasticfields::StiffnessVectory >();
-  arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< elasticfields::StiffnessVectorz >();
-
-  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< elasticfields::Displacementx_nm1 >();
-  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< elasticfields::Displacementy_nm1 >();
-  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< elasticfields::Displacementz_nm1 >();
   arrayView1d< real32 > const ux_n   = nodeManager.getField< elasticfields::Displacementx_n >();
   arrayView1d< real32 > const uy_n   = nodeManager.getField< elasticfields::Displacementy_n >();
   arrayView1d< real32 > const uz_n   = nodeManager.getField< elasticfields::Displacementz_n >();
   arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticfields::Displacementx_np1 >();
   arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
-
-  arrayView1d< real32 > const rhsx = nodeManager.getField< elasticfields::ForcingRHSx >();
-  arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
-  arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
   /// synchronize displacement fields
   FieldIdentifiers fieldsToBeSync;

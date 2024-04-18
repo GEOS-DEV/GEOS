@@ -187,9 +187,9 @@ struct ElasticTimeSchemeSEM
           real32 betal =  anelasticityCoefficients[ l ] * referenceFrequencies[ l ] * 2.0 * dt /( 2.0 + referenceFrequencies[ l ] * dt );
           real32 gammalp = 0.5 + 0.5 * gammal;
           real32 betalp = 0.5 * betal;
-          ux_np1[a] += dt2 * ( gammalp * divpsix( a, l ) + betalp * stiffnessVectorAx[a] );
-          uy_np1[a] += dt2 * ( gammalp * divpsiy( a, l ) + betalp * stiffnessVectorAy[a] );
-          uz_np1[a] += dt2 * ( gammalp * divpsiz( a, l ) + betalp * stiffnessVectorAz[a] );
+          ux_np1[a] += dt2 * ( gammalp * divpsix( a, l ) + betalp * stiffnessVectorAx[ a ] );
+          uy_np1[a] += dt2 * ( gammalp * divpsiy( a, l ) + betalp * stiffnessVectorAy[ a ] );
+          uz_np1[a] += dt2 * ( gammalp * divpsiz( a, l ) + betalp * stiffnessVectorAz[ a ] );
           divpsix( a, l ) = gammal * divpsix( a, l ) + betal * stiffnessVectorAx[ a ]; 
           divpsiy( a, l ) = gammal * divpsiy( a, l ) + betal * stiffnessVectorAy[ a ]; 
           divpsiz( a, l ) = gammal * divpsiz( a, l ) + betal * stiffnessVectorAz[ a ]; 
