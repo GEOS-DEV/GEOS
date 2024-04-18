@@ -31,6 +31,7 @@ set( ENABLE_VTK         ON  CACHE BOOL "" FORCE )
 
 set( ENABLE_DOXYGEN           ON CACHE BOOL "" FORCE )
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+set( ENABLE_SPHINX            ON CACHE BOOL "" FORCE )
 set( ENABLE_UNCRUSTIFY        ON CACHE BOOL "" FORCE )
 set( ENABLE_XML_UPDATES       ON CACHE BOOL "" FORCE )
 
@@ -42,7 +43,7 @@ set( ENABLE_BENCHMARKS ON CACHE BOOL "" FORCE )
 set( ENABLE_CALIPER    ON CACHE BOOL "" FORCE )
 
 #######################################
-# RAJA/CHAI/OPENMP SETUP
+# RAJA/CHAI SETUP
 #######################################
 
 set( ENABLE_OPENMP      OFF         CACHE PATH "" FORCE )
