@@ -82,7 +82,7 @@ public:
   void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
   { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
-  void updateFluidState( ObjectManagerBase & subRegion ) const
+  void updateFluidState( ElementSubRegionBase & subRegion ) const
   { flowSolver()->updateFluidState( subRegion ); }
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
   { flowSolver()->updatePorosityAndPermeability( subRegion ); }
