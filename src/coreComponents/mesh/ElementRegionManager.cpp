@@ -140,14 +140,22 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   {
     // testing only
     //
+    
+    bool experiment = true;
+    if (experiment)
+    {
+    
     CellBlockManagerABC & cellBlockManagerNoConst = const_cast<CellBlockManagerABC &>(cellBlockManager);
     CellBlockManager & cellBlockManagerConcrete = dynamic_cast<CellBlockManager &>(cellBlockManagerNoConst);
+
     string name = "EmbeddedSurface";
     createDummyEmbeddedSurfaceBlock(name, cellBlockManagerConcrete);
-    
-    //elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
-     
     elemRegion.generateMesh( cellBlockManager.getEmbeddedSurfaceBlocks() );
+    }
+    else{
+    elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+    }
+     
   } );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
