@@ -141,11 +141,11 @@ private:
    * set the same vector size for each split header and merge it into columns
    * @param columns The vector containg all columns
    * @param largestHeaderVectorSize The largest split header vector size
-   * @param splitHeader A empty vector who will contain all split header names
+   * @param splitHeaders A empty vector who will contain all split header names
    */
   void splitAndSetColumnNames( std::vector< TableLayout::Column > & columns,
                                size_t & largestHeaderVectorSize,
-                               std::vector< std::vector< string > > & splitHeader ) const;
+                               std::vector< std::vector< string > > & splitHeaders ) const;
 
   /**
    * @brief For each column find and set the column's longest string

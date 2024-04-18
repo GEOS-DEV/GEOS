@@ -80,15 +80,15 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
   // insert row value and row cell values
   for( auto const & [rowValue, rowMap] : m_data )
   {
-    integer i = 0;
     std::vector< string > currentRowValues;
-    integer idxColumn = 0;
-
+    currentRowValues.reserve( rowMap.size() );
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
+
+    integer idxColumn = 0;
     for( auto const & [columnValue, cellValue] : rowMap )
     {
       //check if column numbers in the evaluated row is consistent
-      if( columnValue  > headerValues[i] )
+      if( columnValue  > headerValues[idxColumn] )
       {
         while( columnValue > headerValues[idxColumn] )
         {
@@ -98,11 +98,10 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
       }
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
       ++idxColumn;
-      ++i;
     }
 
-    tableData1D.tableData.addRow( currentRowValues );
-    rowsLength.push_back( currentRowValues.size());
+    tableData1D.tableData.addRow( std::move( currentRowValues ) );
+    rowsLength.push_back( currentRowValues.size() );
   }
 
   return tableData1D;

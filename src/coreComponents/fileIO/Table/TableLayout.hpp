@@ -106,10 +106,10 @@ public:
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
-   * @param columnParameter List of structures to set up each colum parameters.
+   * @param columnParameters List of structures to set up each colum parameters.
    * @param title The table name
    */
-  TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title = "" );
+  TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
 
   /**
    * @return The columns vector
