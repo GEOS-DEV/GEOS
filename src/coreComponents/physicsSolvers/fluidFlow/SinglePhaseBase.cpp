@@ -446,8 +446,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
         SolidInternalEnergy const & solidInternalEnergyMaterial =
           getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
         solidInternalEnergyMaterial.saveConvergedState();
-
-        updateEnergy( subRegion );
       }
     } );
 
@@ -478,6 +476,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
       initPres.setValues< parallelDevicePolicy<> >( pres );
       initTemp.setValues< parallelDevicePolicy<> >( temp );
+
+      // finally update mass and energy
+      updateMass( subRegion );
+      if( m_isThermal )
+        updateEnergy( subRegion );
     } );
   } );
 
