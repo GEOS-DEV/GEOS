@@ -15,6 +15,7 @@ CompositionalMultiphaseReservoirPoromechanics node                 :ref:`XML_Com
 CompositionalMultiphaseWell                   node                 :ref:`XML_CompositionalMultiphaseWell`                   
 ElasticFirstOrderSEM                          node                 :ref:`XML_ElasticFirstOrderSEM`                          
 ElasticSEM                                    node                 :ref:`XML_ElasticSEM`                                    
+ElasticVTISEM                                 node                 :ref:`XML_ElasticVTISEM`                                 
 EmbeddedSurfaceGenerator                      node                 :ref:`XML_EmbeddedSurfaceGenerator`                      
 FlowProppantTransport                         node                 :ref:`XML_FlowProppantTransport`                         
 Hydrofracture                                 node                 :ref:`XML_Hydrofracture`                                 

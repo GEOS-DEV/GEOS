@@ -513,6 +513,7 @@
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
+			<xsd:element name="ElasticVTISEM" type="ElasticVTISEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -838,6 +839,53 @@
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--dasSignalNp1AtReceivers => DAS signal value at each receiver for each timestep-->
+		<xsd:attribute name="dasSignalNp1AtReceivers" type="real32_array2d" />
+		<!--displacementXNp1AtReceivers => Displacement value at each receiver for each timestep (x-component)-->
+		<xsd:attribute name="displacementXNp1AtReceivers" type="real32_array2d" />
+		<!--displacementYNp1AtReceivers => Displacement value at each receiver for each timestep (y-component)-->
+		<xsd:attribute name="displacementYNp1AtReceivers" type="real32_array2d" />
+		<!--displacementZNp1AtReceivers => Displacement value at each receiver for each timestep (z-component)-->
+		<xsd:attribute name="displacementZNp1AtReceivers" type="real32_array2d" />
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-LvArray_Array_lt_string_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<!--rcvElem => Element containing the receivers-->
+		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticVTISEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

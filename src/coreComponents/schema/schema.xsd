@@ -353,6 +353,10 @@
 					<xsd:selector xpath="ElasticSEM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversElasticVTISEMUniqueName">
+					<xsd:selector xpath="ElasticVTISEM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversEmbeddedSurfaceGeneratorUniqueName">
 					<xsd:selector xpath="EmbeddedSurfaceGenerator" />
 					<xsd:field xpath="@name" />
@@ -2120,6 +2124,7 @@ the relative residual norm satisfies:
 			</xsd:element>
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
+			<xsd:element name="ElasticVTISEM" type="ElasticVTISEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -2682,6 +2687,62 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
+		<!--dtSeismoTrace => Time step for output pressure at receivers-->
+		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
+		<!--forward => Set to 1 to compute forward propagation-->
+		<xsd:attribute name="forward" type="integer" default="1" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
+		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
+		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
+		<!--linearDASSamples => Number of sample points to be used for strain integration when integrating the strain for the DAS signal-->
+		<xsd:attribute name="linearDASSamples" type="integer" default="5" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
+		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
+		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
+		<xsd:attribute name="rickerOrder" type="integer" default="2" />
+		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
+		<xsd:attribute name="saveFields" type="integer" default="0" />
+		<!--shotIndex => Set the current shot for temporary files-->
+		<xsd:attribute name="shotIndex" type="integer" default="0" />
+		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
+		<!--sourceForce => Force of the source: 3 real values for a vector source, and 6 real values for a tensor source (in Voigt notation).The default value is { 0, 0, 0 } (no net force).-->
+		<xsd:attribute name="sourceForce" type="R1Tensor" default="{0,0,0}" />
+		<!--sourceMoment => Moment of the source: 6 real values describing a symmetric tensor in Voigt notation.The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion).-->
+		<xsd:attribute name="sourceMoment" type="R2SymTensor" default="{1,1,1,0,0,0}" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
+		<!--timeSourceFrequency => Central frequency for the time source-->
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
+		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
+		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticVTISEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

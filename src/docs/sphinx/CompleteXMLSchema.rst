@@ -430,6 +430,13 @@ Element: ElasticTransverseIsotropic
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic.rst
 
 
+.. _XML_ElasticVTISEM:
+
+Element: ElasticVTISEM
+======================
+.. include:: ../../coreComponents/schema/docs/ElasticVTISEM.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -1839,6 +1846,13 @@ Datastructure: ElasticSEM
 Datastructure: ElasticTransverseIsotropic
 =========================================
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticVTISEM:
+
+Datastructure: ElasticVTISEM
+============================
+.. include:: ../../coreComponents/schema/docs/ElasticVTISEM_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:

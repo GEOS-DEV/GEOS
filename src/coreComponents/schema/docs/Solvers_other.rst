@@ -14,6 +14,7 @@ CompositionalMultiphaseReservoirPoromechanics node :ref:`DATASTRUCTURE_Compositi
 CompositionalMultiphaseWell                   node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`                   
 ElasticFirstOrderSEM                          node :ref:`DATASTRUCTURE_ElasticFirstOrderSEM`                          
 ElasticSEM                                    node :ref:`DATASTRUCTURE_ElasticSEM`                                    
+ElasticVTISEM                                 node :ref:`DATASTRUCTURE_ElasticVTISEM`                                 
 EmbeddedSurfaceGenerator                      node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                      
 FlowProppantTransport                         node :ref:`DATASTRUCTURE_FlowProppantTransport`                         
 Hydrofracture                                 node :ref:`DATASTRUCTURE_Hydrofracture`                                 
