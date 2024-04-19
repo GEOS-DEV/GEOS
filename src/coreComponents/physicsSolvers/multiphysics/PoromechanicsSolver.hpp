@@ -186,6 +186,25 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain ) override
+  {
+    // always force outer loop for initialization
+    auto & subcycling = this->getNonlinearSolverParameters().m_subcyclingOption;
+    auto const subcycling_orig = subcycling;
+    if( m_performStressInitialization )
+      subcycling = 1;
+
+    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+
+    // restore original
+    subcycling = subcycling_orig;
+
+    return isConverged;
+  }
+
   /**
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
@@ -370,7 +389,8 @@ protected:
     }
 
     /// After the solid mechanics solver
-    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics )
+        && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );

@@ -195,6 +195,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
                                                                                                     this->flowSolver()->numFluidComponents(),
                                                                                                     this->flowSolver()->numFluidPhases(),
                                                                                                     this->flowSolver()->useTotalMassEquation(),
+                                                                                                    this->m_performStressInitialization,
                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
@@ -213,6 +214,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
                                                                                       this->flowSolver()->numFluidPhases(),
                                                                                       this->flowSolver()->useSimpleAccumulation(),
                                                                                       this->flowSolver()->useTotalMassEquation(),
+                                                                                      this->m_performStressInitialization,
                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
