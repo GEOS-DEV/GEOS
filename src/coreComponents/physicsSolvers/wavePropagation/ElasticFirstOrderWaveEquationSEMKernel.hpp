@@ -517,7 +517,7 @@ struct ComputeTimeStep
         uzView[a]= uzAuxView[a]/sqrt( normUtotAux );
       } );
 
-      if( abs( lambdaNew-lambdaOld )/abs( lambdaNew )<= epsilon )
+      if( LvArray::math::abs( lambdaNew-lambdaOld )/LvArray::math::abs( lambdaNew )<= epsilon )
       {
         counter++;
       }
@@ -534,7 +534,7 @@ struct ComputeTimeStep
 
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
 
-    real64 dt = 1.99/sqrt( abs( lambdaNew ));
+    real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
     return dt;
 
