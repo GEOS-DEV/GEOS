@@ -91,24 +91,24 @@ struct AcousticTimeSchemeSEM
    * @param[in] bottomSurfaceNodeIndicator array which contains indicators to telle if we are on the bottom boundary or not
    */
   static void LeapFrogVTIWithoutPML( real64 const dt,
-                              arrayView1d< real32 > const p_np1,
-                              arrayView1d< real32 > const p_n,
-                              arrayView1d< real32 > const p_nm1,
-                              arrayView1d< real32 > const q_np1,
-                              arrayView1d< real32 > const q_n,
-                              arrayView1d< real32 > const q_nm1,
-                              arrayView1d< real32 const > const mass,
-                              arrayView1d< real32 > const stiffnessVector_p,
-                              arrayView1d< real32 > const stiffnessVector_q,
-                              arrayView1d< real32 const > const damping_pp,
-                              arrayView1d< real32 const > const damping_pq,
-                              arrayView1d< real32 const > const damping_qp,
-                              arrayView1d< real32 const > const damping_qq,
-                              arrayView1d< real32 > const rhs,
-                              arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
-                              arrayView1d< localIndex const > const lateralSurfaceNodeIndicator,
-                              arrayView1d< localIndex const > const bottomSurfaceNodeIndicator,
-                              SortedArrayView< localIndex const > const solverTargetNodesSet )
+                                     arrayView1d< real32 > const p_np1,
+                                     arrayView1d< real32 > const p_n,
+                                     arrayView1d< real32 > const p_nm1,
+                                     arrayView1d< real32 > const q_np1,
+                                     arrayView1d< real32 > const q_n,
+                                     arrayView1d< real32 > const q_nm1,
+                                     arrayView1d< real32 const > const mass,
+                                     arrayView1d< real32 > const stiffnessVector_p,
+                                     arrayView1d< real32 > const stiffnessVector_q,
+                                     arrayView1d< real32 const > const damping_pp,
+                                     arrayView1d< real32 const > const damping_pq,
+                                     arrayView1d< real32 const > const damping_qp,
+                                     arrayView1d< real32 const > const damping_qq,
+                                     arrayView1d< real32 > const rhs,
+                                     arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
+                                     arrayView1d< localIndex const > const lateralSurfaceNodeIndicator,
+                                     arrayView1d< localIndex const > const bottomSurfaceNodeIndicator,
+                                     SortedArrayView< localIndex const > const solverTargetNodesSet )
   {
     real64 const dt2 = pow( dt, 2 );
     forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
