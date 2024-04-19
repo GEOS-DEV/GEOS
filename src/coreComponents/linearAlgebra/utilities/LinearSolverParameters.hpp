@@ -116,10 +116,10 @@ struct LinearSolverParameters
   {
     real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
-#if defined(GEOS_USE_HYPRE_CUDA) || defined(GEOS_USE_HYPRE_HIP)
-    integer maxRestart = 50;          ///< Max number of vectors in Krylov basis before restarting
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    integer maxRestart = 50;          ///< Max number of vectors in Krylov basis before restarting (GPUs)
 #else
-    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
+    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting (CPUs)
 #endif
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
     real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
@@ -231,12 +231,12 @@ struct LinearSolverParameters
       rigidBodyModes      ///< Rigid body modes
     };
 
-#if defined(GEOS_USE_HYPRE_CUDA) || defined(GEOS_USE_HYPRE_HIP)
-    CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm
-    SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm (GPUs)
+    SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type (GPUs)
 #else
-    CoarseningType coarseningType = CoarseningType::HMIS;           ///< Coarsening algorithm
-    SmootherType smootherType = SmootherType::l1sgs;                ///< Smoother type
+    CoarseningType coarseningType = CoarseningType::HMIS;           ///< Coarsening algorithm (CPUs)
+    SmootherType smootherType = SmootherType::l1sgs;                ///< Smoother type (CPUs)
 #endif
 
     integer maxLevels = 20;                                         ///< Maximum number of coarsening levels
