@@ -56,10 +56,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticVTIFletcherSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+                                                                         CONSTITUTIVE_TYPE,
+                                                                         FE_TYPE,
+                                                                         1,
+                                                                         1 >
 {
 public:
 
@@ -94,13 +94,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticVTIFletcherSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -108,7 +108,7 @@ public:
     m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
     m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< acousticvtifields::StiffnessVector_q >() ),    
+    m_stiffnessVector_q( nodeManager.getField< acousticvtifields::StiffnessVector_q >() ),
     m_density( elementSubRegion.template getField< acousticfields::AcousticDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< acousticvtifields::AcousticEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< acousticvtifields::AcousticDelta >() ),
@@ -268,7 +268,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticVTIFletcherSEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTIFletcherSEM,
-                                                                 real64 >;
+                                                                            real64 >;
 
 
 } // namespace acousticVTIFletcherWaveEquationSEMKernels
