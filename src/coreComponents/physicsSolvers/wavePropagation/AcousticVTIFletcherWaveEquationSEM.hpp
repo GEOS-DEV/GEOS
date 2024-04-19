@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOS Contributors
+ * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -25,7 +25,6 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "AcousticFields.hpp"
 #include "AcousticVTIFields.hpp"
-
 namespace geos
 {
 
@@ -33,11 +32,23 @@ class AcousticVTIFletcherWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticVTIFletcherWaveEquationSEM( const std::string & name,
-                                      Group * const parent );
+                           Group * const parent );
+
+  virtual ~AcousticVTIFletcherWaveEquationSEM() override;
+
+  AcousticVTIFletcherWaveEquationSEM() = delete;
+  AcousticVTIFletcherWaveEquationSEM( AcousticVTIFletcherWaveEquationSEM const & ) = delete;
+  AcousticVTIFletcherWaveEquationSEM( AcousticVTIFletcherWaveEquationSEM && ) = default;
+
+  AcousticVTIFletcherWaveEquationSEM & operator=( AcousticVTIFletcherWaveEquationSEM const & ) = delete;
+  AcousticVTIFletcherWaveEquationSEM & operator=( AcousticVTIFletcherWaveEquationSEM && ) = delete;
+
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "acoustic"; }
 
   static string catalogName() { return "AcousticVTIFletcherSEM"; }
   /**
@@ -48,6 +59,7 @@ public:
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
+
 
   /**
    * @defgroup Solver Interface Functions
@@ -61,12 +73,11 @@ public:
                                       DomainPartition & domain,
                                       bool const computeGradient ) override;
 
-
-  virtual real64 explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                       real64 const & GEOS_UNUSED_PARAM( dt ),
-                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                       DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                       bool const GEOS_UNUSED_PARAM( computeGradient ) ) override;
+  virtual real64 explicitStepBackward( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain,
+                                       bool const computeGradient ) override;
 
   /**@}*/
 
@@ -77,6 +88,13 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
+
+  /**
+   * @brief Initialize Perfectly Matched Layer (PML) information
+   */
+  virtual void initializePML() override;
+
+
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
@@ -85,8 +103,7 @@ public:
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-    static constexpr char const * lateralSurfaceString() { return "LateralSurface"; }
-    static constexpr char const * bottomSurfaceString() { return "BottomSurface"; }
+
   } waveEquationViewKeys;
 
 
@@ -103,17 +120,21 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
-  /**
-   * @brief (Empty but must be defined) Initialize Perfectly Matched Layer (PML) information
-   */
-  virtual void initializePML() override;
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        arrayView1d< string const > const & regionNames );
 
-  /**
-   * @brief  (Empty but must be defined) Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
-   */
-  virtual void applyPML( real64 const GEOS_UNUSED_PARAM( time ), DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 
 protected:
 
@@ -143,11 +164,18 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
-  /// Pressure_p_np1 at the receiver location for each time step for each receiver
+  /**
+   * @brief Apply Perfectly Matched Layer (PML) to the regions defined in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyPML( real64 const time, DomainPartition & domain ) override;
+
+  /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
 
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIFletcherWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
