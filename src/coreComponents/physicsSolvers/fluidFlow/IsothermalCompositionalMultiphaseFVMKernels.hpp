@@ -579,7 +579,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-      using Deriv = multifluid::DerivativeOffset;
+    using Deriv = multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,

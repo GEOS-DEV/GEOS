@@ -180,6 +180,8 @@ class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = NUM_DOF;
 
@@ -265,7 +267,7 @@ public:
     /// Transmissibility
     real64 transmissibility[maxNumConns][2]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans_dPres[maxNumConns][2]{};
+    real64 dTrans[1][maxNumConns][2]{};//only pressure here
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -336,7 +338,7 @@ public:
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,
-                                     stack.dTrans_dPres );
+                                     stack.dTrans[Deriv::dP] );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -354,7 +356,7 @@ public:
         real64 dFlux_dP[2]{0.0, 0.0};
 
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
-        real64 const dTrans_dP[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
+        real64 const dTrans_dP[2] = { stack.dTrans[Deriv::dP][connectionIndex][0], stack.dTrans[Deriv::dP][connectionIndex][1] };
 
         real64 presGrad = 0.0;
         real64 dPresGrad_dP[2]{0.0, 0.0};

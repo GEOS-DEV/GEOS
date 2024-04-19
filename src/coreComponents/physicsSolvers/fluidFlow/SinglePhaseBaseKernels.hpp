@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/Layouts.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -122,6 +123,8 @@ class ElementBasedAssemblyKernel
 
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = NUM_DOF;
 
@@ -174,7 +177,7 @@ public:
     real64 poreVolume = 0.0;
 
     /// Derivative of pore volume with respect to pressure
-    real64 dPoreVolume_dPres = 0.0;
+    real64 dPoreVolume[2] = {0.0, 0.0}; // deps on pressure and temperature
 
     // Residual information
 
@@ -213,7 +216,7 @@ public:
   {
     // initialize the pore volume
     stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0];
-    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+    stack.dPoreVolume[Deriv::dP] = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
     stack.localRow = m_dofNumber[ei] - m_rankOffset;
@@ -240,7 +243,7 @@ public:
     stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - m_mass_n[ei];
 
     // Derivative of residual wrt to pressure in the cell
-    stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
+    stack.localJacobian[0][0] = stack.dPoreVolume[Deriv::dP] * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
 
     // Customize the kernel with this lambda
     kernelOp();

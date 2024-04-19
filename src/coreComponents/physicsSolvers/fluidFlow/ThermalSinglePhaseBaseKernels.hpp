@@ -112,6 +112,8 @@ class ElementBasedAssemblyKernel : public singlePhaseBaseKernels::ElementBasedAs
 
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+
   using Base = singlePhaseBaseKernels::ElementBasedAssemblyKernel< SUBREGION_TYPE, NUM_DOF >;
   using Base::numDof;
   using Base::numEqn;
@@ -169,15 +171,13 @@ public:
     {}
 
     using Base::StackVariables::poreVolume;
-    using Base::StackVariables::dPoreVolume_dPres;
+    using Base::StackVariables::dPoreVolume;
     using Base::StackVariables::localRow;
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
 
     /// Derivative of pore volume with respect to temperature
-    real64 dPoreVolume_dTemp = 0.0;
-
     // Solid energy
 
     /// Solid energy at time n+1
@@ -202,7 +202,7 @@ public:
   {
     Base::setup( ei, stack );
 
-    stack.dPoreVolume_dTemp = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
+    stack.dPoreVolume[Deriv::dT] = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
 
     // initialize the solid volume
     real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosity[ei][0] );
@@ -231,18 +231,18 @@ public:
     Base::computeAccumulation( ei, stack, [&] ()
     {
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume_dTemp * m_density[ei][0];
+      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume[Deriv::dT] * m_density[ei][0];
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0];
 
-      real64 const dFluidEnergy_dP = stack.dPoreVolume_dPres * m_density[ei][0] * m_internalEnergy[ei][0]
+      real64 const dFluidEnergy_dP = stack.dPoreVolume[Deriv::dP] * m_density[ei][0] * m_internalEnergy[ei][0]
                                      + stack.poreVolume * m_dDensity_dPres[ei][0] * m_internalEnergy[ei][0]
                                      + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dPres[ei][0];
 
       real64 const dFluidEnergy_dT = stack.poreVolume * m_dDensity_dTemp[ei][0] * m_internalEnergy[ei][0]
                                      + stack.poreVolume * m_density[ei][0] * m_dInternalEnergy_dTemp[ei][0]
-                                     + stack.dPoreVolume_dTemp * m_density[ei][0] * m_internalEnergy[ei][0];
+                                     + stack.dPoreVolume[Deriv::dT] * m_density[ei][0] * m_internalEnergy[ei][0];
 
       // local accumulation
       stack.localResidual[numEqn-1] += fluidEnergy;

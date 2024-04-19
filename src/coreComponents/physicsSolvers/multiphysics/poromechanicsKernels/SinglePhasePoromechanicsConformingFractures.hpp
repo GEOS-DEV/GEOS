@@ -36,6 +36,8 @@ class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAsse
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -170,7 +172,7 @@ public:
                                      m_dPerm_dPres,
                                      m_dPerm_dDispJump,
                                      stack.transmissibility,
-                                     stack.dTrans_dPres,
+                                     stack.dTrans[Deriv::dP],
                                      stack.dTrans_dDispJump );
 
 
@@ -186,7 +188,7 @@ public:
         real64 mobility = 0.0;
         real64 potGrad = 0.0;
         real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
-        real64 const dTrans[2] = { stack.dTrans_dPres[connectionIndex][0], stack.dTrans_dPres[connectionIndex][1] };
+        real64 const dTrans[2] = { stack.dTrans[Deriv::dP][connectionIndex][0], stack.dTrans[Deriv::dP][connectionIndex][1] };
         real64 dFlux_dP[2] = { 0.0, 0.0 };
         localIndex const regionIndex[2]    = {m_seri[iconn][k[0]], m_seri[iconn][k[1]]};
         localIndex const subRegionIndex[2] = {m_sesri[iconn][k[0]], m_sesri[iconn][k[1]]};

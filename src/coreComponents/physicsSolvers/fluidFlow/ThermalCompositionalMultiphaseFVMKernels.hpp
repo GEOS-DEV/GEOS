@@ -509,7 +509,8 @@ public:
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans[Deriv::dP] );           // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans[Deriv::dT] );           // again, we have to pass something here, but this is unused for
+                                                                          // now
 
 
 

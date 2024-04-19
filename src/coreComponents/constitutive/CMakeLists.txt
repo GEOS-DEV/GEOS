@@ -83,6 +83,7 @@ set( constitutive_headers
      fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.hpp
      fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp
      fluid/multifluid/reactive/chemicalReactions/ReactionsBase.hpp
+     fluid/singlefluid/Layouts.hpp
      fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
      fluid/singlefluid/ParticleFluidBase.hpp

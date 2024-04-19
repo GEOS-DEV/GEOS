@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
+#include "constitutive/fluid/singlefluid/Layouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -737,6 +738,7 @@ class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   /// Compile time value for the number of phases
   static constexpr integer numPhases = NUM_PHASES;
   /// Compile time value for the number of components
@@ -836,7 +838,7 @@ public:
     /// Thermal Transmissibility
     real64 diffusiveTransmissibility[maxNumConns][2]{};
     /// Derivatives of transmissibility with respect to pressure
-    real64 dTrans_dPres[maxNumConns][2]{};
+    real64 dTrans[1][maxNumConns][2]{}; // only deps is pressure
 
     // Local degrees of freedom and local residual/jacobian
 
@@ -901,11 +903,11 @@ public:
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,
-                                     stack.dTrans_dPres );
+                                     stack.dTrans[Deriv::dP] );
 
     m_stencilWrapper.computeWeights( iconn,
                                      stack.diffusiveTransmissibility,
-                                     stack.dTrans_dPres );
+                                     stack.dTrans[Deriv::dP] );
 
 
     // As a first iteration, do everything in TPFA style: i is the left (minus) element, j is the right(plus) element.
