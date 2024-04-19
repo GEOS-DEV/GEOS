@@ -209,14 +209,14 @@ struct ComputeTimeStep
         real64 lambda = density[k]*Vp[k]*Vp[k]-2*mu;
 
         real64 xLocal[8][3];
-      for( localIndex a=0; a< 8; ++a )
-      {
-        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-        for( localIndex i=0; i<3; ++i )
+        for( localIndex a=0; a< 8; ++a )
         {
-          xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+          for( localIndex i=0; i<3; ++i )
+          {
+            xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          }
         }
-      }
         for( localIndex q = 0; q < numNodesPerElem; ++q )
         {
           m_finiteElement.computeFirstOrderStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )

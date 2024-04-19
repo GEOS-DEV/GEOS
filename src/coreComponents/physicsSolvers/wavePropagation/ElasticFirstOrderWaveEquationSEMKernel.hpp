@@ -321,14 +321,14 @@ struct ComputeTimeStep
       forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         real64 xLocal[8][3];
-      for( localIndex a=0; a< 8; ++a )
-      {
-        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-        for( localIndex i=0; i<3; ++i )
+        for( localIndex a=0; a< 8; ++a )
         {
-          xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+          for( localIndex i=0; i<3; ++i )
+          {
+            xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          }
         }
-      }
 
         mu[k] = density[k] * sWavespeed[k] * sWavespeed[k];
         lambda[k] = density[k] * pWavespeed[k] * pWavespeed[k] - 2.0*mu[k];
@@ -418,14 +418,14 @@ struct ComputeTimeStep
       {
 
         real64 xLocal[8][3];
-      for( localIndex a=0; a< 8; ++a )
-      {
-        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-        for( localIndex i=0; i<3; ++i )
+        for( localIndex a=0; a< 8; ++a )
         {
-          xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+          for( localIndex i=0; i<3; ++i )
+          {
+            xLocal[a][i] = nodeCoords[ nodeIndex ][ i ];
+          }
         }
-      }
 
         real32 flowx[numNodesPerElem] = {0.0};
         real32 flowy[numNodesPerElem] = {0.0};
