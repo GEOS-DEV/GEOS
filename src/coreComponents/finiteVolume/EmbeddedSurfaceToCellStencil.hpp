@@ -19,7 +19,7 @@
 #ifndef GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
 #define GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
 
-#include "StencilBase.hpp"
+#include "ToCell.hpp"
 
 namespace geos
 {
@@ -27,7 +27,7 @@ namespace geos
 /**
  * @brief Provide access to the EmbeddedSurfaceToCellStencil that may be called from a kernel function.
  */
-class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits >
+class EmbeddedSurfaceToCellStencilWrapper : public ToCellWrapperBase
 {
 public:
 
@@ -44,30 +44,31 @@ public:
                                        IndexContainerType const & elementIndices,
                                        WeightContainerType const & weights );
 
-  /**
-   * @brief Give the number of stencil entries.
-   * @return The number of stencil entries
-   */
-  localIndex size() const
-  {
-    return m_elementRegionIndices.size( 0 );
-  }
+//  /**
+//   * @brief Give the number of stencil entries.
+//   * @return The number of stencil entries
+//   */
+//  localIndex size() const
+//  {
+//    return m_elementRegionIndices.size( 0 );
+//  }
+//
+//  /**
+//   * @brief Give the number of stencil entries for the provided index.
+//   * @param[in] index the index of which the stencil size is request
+//   * @return The number of stencil entries for the provided index
+//   */
+//  GEOS_HOST_DEVICE
+//  GEOS_FORCE_INLINE
+//  localIndex stencilSize( localIndex index ) const override
+//  {
+//    GEOS_UNUSED_VAR( index );
+//    return maxStencilSize;
+//  }
 
-  /**
-   * @brief Give the number of stencil entries for the provided index.
-   * @param[in] index the index of which the stencil size is request
-   * @return The number of stencil entries for the provided index
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  localIndex stencilSize( localIndex index ) const override
-  {
-    GEOS_UNUSED_VAR( index );
-    return maxStencilSize;
-  }
 
-
-  using StencilWrapperBase< TwoPointStencilTraits >::computeWeights;
+  // handle by inheritance
+  using ToCellWrapperBase::computeWeights;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
@@ -81,36 +82,46 @@ public:
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
-  /**
-   * @brief Compute the stabilization weights
-   * @param[in] iconn connection index
-   * @param[out] stabilizationWeight view weights
-   */
-  GEOS_HOST_DEVICE
-  void computeStabilizationWeights( localIndex iconn,
-                                    real64 ( & stabilizationWeight )[1][2] ) const
-  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
+//  /**
+//   * @brief Compute the stabilization weights
+//   * @param[in] iconn connection index
+//   * @param[out] stabilizationWeight view weights
+//   */
+//        GEOS_HOST_DEVICE
+//        void computeStabilizationWeights( localIndex iconn,
+//                                          real64 ( & stabilizationWeight )[1][2] ) const
+//        { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
 
-  /**
-   * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
-   *
-   * @param iconn connection index
-   * @param hydraulicAperture hydraulic apertures of the fractures
-   */
-  GEOS_HOST_DEVICE
-  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
+/*  *//**
+ * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
+ *
+ * @param iconn connection index
+ * @param hydraulicAperture hydraulic apertures of the fractures
+ *//*
+   GEOS_HOST_DEVICE
+   void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+ * hydraulicAperture ) const;
 
-  /**
-   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
-   *
-   * @param iconn connection index
-   * @param hydraulicAperture hydraulic apertures of the fractures
-   */
-  GEOS_HOST_DEVICE
-  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
-
+ *//**
+ * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
+ *
+ * @param iconn connection index
+ * @param hydraulicAperture hydraulic apertures of the fractures
+ *//*
+   GEOS_HOST_DEVICE
+   void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+ * hydraulicAperture ) const;
+ */
 private:
-
+  GEOS_HOST_DEVICE
+  inline void
+  computeWeightsBase( localIndex const iconn,
+                      localIndex const (&k)[2],
+                      localIndex const ielem,
+                      arraySlice3d< real64 const >  const & coefficient,
+                      arraySlice3d< real64 const >  const & dCoeff_dVar,
+                      real64 & halfWeight,
+                      real64 & dHalfWeight_dVar ) const override;
   GEOS_HOST_DEVICE
   inline void
     computeWeightsBase( localIndex const iconn,
@@ -122,15 +133,7 @@ private:
                         real64 &halfWeight,
                         real64 ( &dHalfWeight_dVar )[2] ) const override;
 
-  GEOS_HOST_DEVICE
-  inline void
-  computeWeightsBase( localIndex const iconn,
-                      localIndex const (&k)[2],
-                      localIndex const ielem,
-                      arraySlice3d< real64 const >  const & coefficient,
-                      arraySlice3d< real64 const >  const & dCoeff_dVar,
-                      real64 & halfWeight,
-                      real64 & dHalfWeight_dVar ) const override;
+
 
   GEOS_HOST_DEVICE
   void
@@ -148,18 +151,22 @@ private:
 /**
  * @brief Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class EmbeddedSurfaceToCellStencil final : public StencilBase< TwoPointStencilTraits, EmbeddedSurfaceToCellStencil >
+class EmbeddedSurfaceToCellStencil final : public ToCellBase< EmbeddedSurfaceToCellStencil >
 {
 public:
 
-  virtual void move( LvArray::MemorySpace const space ) override;
+//  virtual void move( LvArray::MemorySpace const space ) override;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::move;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::size;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::stencilSize;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::add;
 
-  virtual void add( localIndex const numPts,
-                    localIndex const * const elementRegionIndices,
-                    localIndex const * const elementSubRegionIndices,
-                    localIndex const * const elementIndices,
-                    real64 const * const weights,
-                    localIndex const connectorIndex ) override;
+//  virtual void add( localIndex const numPts,
+//                    localIndex const * const elementRegionIndices,
+//                    localIndex const * const elementSubRegionIndices,
+//                    localIndex const * const elementIndices,
+//                    real64 const * const weights,
+//                    localIndex const connectorIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = EmbeddedSurfaceToCellStencilWrapper;
@@ -170,23 +177,24 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
-  /**
-   * @brief Return the stencil size.
-   * @return the stencil size
-   */
-  virtual localIndex size() const override
-  { return m_elementRegionIndices.size( 0 ); }
-
-  /**
-   * @brief Give the number of points in a stencil entry.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the size of a stencil entry
-   */
-  constexpr localIndex stencilSize( localIndex const index ) const
-  {
+//  /**
+//   * @brief Return the stencil size.
+//   * @return the stencil size
+//   */
+//  virtual localIndex size() const override
+//  { return m_elementRegionIndices.size( 0 ); }
+//
+/**
+ * @brief Give the number of points in a stencil entry.
+ * @param[in] index of the stencil entry for which to query the size
+ * @return the size of a stencil entry
+ */
+/*
+   constexpr localIndex stencilSize( localIndex const index ) const
+   {
     GEOS_UNUSED_VAR( index );
     return maxStencilSize;
-  }
+   }*/
 
 
 
@@ -273,33 +281,35 @@ EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 
 }
 
-GEOS_HOST_DEVICE
-inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
-{
-  // only the fracture side is modified, k=1
-  localIndex constexpr k = 1;
-  localIndex const er  =  m_elementRegionIndices[iconn][k];
-  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-  localIndex const ei  =  m_elementIndices[iconn][k];
-
-  m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
-}
-
-GEOS_HOST_DEVICE
-inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
-{
-  // only the fracture side is modified, k=1
-  localIndex constexpr k = 1;
-  localIndex const er  =  m_elementRegionIndices[iconn][k];
-  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-  localIndex const ei  =  m_elementIndices[iconn][k];
-
-  m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
-}
+//GEOS_HOST_DEVICE
+//inline void
+//EmbeddedSurfaceToCellStencilWrapper::
+//  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+// hydraulicAperture ) const
+//{
+//  // only the fracture side is modified, k=1
+//  localIndex constexpr k = 1;
+//  localIndex const er  =  m_elementRegionIndices[iconn][k];
+//  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+//  localIndex const ei  =  m_elementIndices[iconn][k];
+//
+//  m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+//}
+//
+//GEOS_HOST_DEVICE
+//inline void
+//EmbeddedSurfaceToCellStencilWrapper::
+//  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+// hydraulicAperture ) const
+//{
+//  // only the fracture side is modified, k=1
+//  localIndex constexpr k = 1;
+//  localIndex const er  =  m_elementRegionIndices[iconn][k];
+//  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+//  localIndex const ei  =  m_elementIndices[iconn][k];
+//
+//  m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
+//}
 
 } /* namespace geos */
 

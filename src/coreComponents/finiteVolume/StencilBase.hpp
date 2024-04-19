@@ -559,8 +559,8 @@ StencilWrapperBase< TRAITS >::computeWeights( localIndex const iconn,
         strides[2] = coeffNested.strides()[1];                //then shift gauss point as well
         dims[3] = coeffNested.dims()[3];
         strides[3] = coeffNested.strides()[3];                //direction remain last pos
-        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-        ArrayView< real64 const, 4 > dCoeffSwapped_dVar( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
+        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, coeffNested.dataBuffer());
+        ArrayView< real64 const, 4 > dCoeffSwapped_dVar( dims, strides, dCoeffNested_dVar.dataBuffer());
 
         computeWeightsBase( iconn, {0, 1}, i, coeffSwapped[ip], dCoeffSwapped_dVar[ip], halfWeight[i],
                             dHalfWeight[i] );
@@ -661,9 +661,9 @@ computeWeights( localIndex const iconn,
         strides[2] = coeffNested.strides()[1];                        //then shift gauss point as well
         dims[3] = coeffNested.dims()[3];
         strides[3] = coeffNested.strides()[3];                        //direction remain last pos
-        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-        ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar1.dataBuffer());
-        ArrayView< real64 const, 4 > dCoeffSwapped_dVar2( dims, strides, 0, dCoeffNested_dVar2.dataBuffer());
+        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, coeffNested.dataBuffer());
+        ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, dCoeffNested_dVar1.dataBuffer());
+        ArrayView< real64 const, 4 > dCoeffSwapped_dVar2( dims, strides, dCoeffNested_dVar2.dataBuffer());
 
         computeWeightsBase( iconn, ielem, coeffSwapped[ip], dCoeffSwapped_dVar1[ip], dCoeffSwapped_dVar2[ip],
                             halfWeight[ielem], dHalfWeight_dVar[ielem] );
@@ -767,8 +767,8 @@ computeWeights( localIndex const iconn,
         strides[2] = coeffNested.strides()[1];                        //then shift gauss point as well
         dims[3] = coeffNested.dims()[3];
         strides[3] = coeffNested.strides()[3];                        //direction remain last pos
-        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-        ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar1.dataBuffer());
+        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, coeffNested.dataBuffer());
+        ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, dCoeffNested_dVar1.dataBuffer());
 
         LvArray::typeManipulation::CArray< localIndex, 5 > ddims, dstrides;
         ddims[0] = dCoeffNested_dVar2.dims()[2];
@@ -781,7 +781,7 @@ computeWeights( localIndex const iconn,
         dstrides[3] = dCoeffNested_dVar2.strides()[3];
         ddims[4] = dCoeffNested_dVar2.dims()[4];
         dstrides[4] = dCoeffNested_dVar2.strides()[4];
-        ArrayView< real64 const, 5 > dCoeffSwapped_dVar2( ddims, dstrides, 0, dCoeffNested_dVar2.dataBuffer());
+        ArrayView< real64 const, 5 > dCoeffSwapped_dVar2( ddims, dstrides, dCoeffNested_dVar2.dataBuffer());
 
         computeWeightsBase( iconn,
                             elem,
