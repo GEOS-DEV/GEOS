@@ -73,7 +73,7 @@ protected:
   std::vector< std::vector< string > > m_rows;
 
   /// store error if there are any inconsistencies related to the table
-  std::vector< string > errorsMsg;
+  std::vector< string > m_errorsMsg;
 
 };
 
@@ -122,7 +122,7 @@ private:
   std::map< RowType, std::map< ColumnType, string > > m_data;
 
   /// @brief Store all column values when adding cell
-  std::set< real64 > columnValues;
+  std::set< real64 > m_columnValues;
 };
 
 template< typename ... Args >
@@ -142,7 +142,7 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
-  columnValues.insert( columnValue );
+  m_columnValues.insert( columnValue );
   m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
 

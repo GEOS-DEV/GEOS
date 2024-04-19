@@ -26,9 +26,9 @@ void TableData::addRow( std::vector< string > const & row )
   if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size() )
   {
     string msg = "Remarks : some cells may be missing";
-    if( std::find( errorsMsg.begin(), errorsMsg.end(), msg ) == errorsMsg.end())
+    if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
     {
-      errorsMsg.push_back( msg );
+      m_errorsMsg.push_back( msg );
     }
   }
   m_rows.push_back( row );
@@ -46,7 +46,7 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
 
 std::vector< string > const & TableData::getErrorMsgs() const
 {
-  return errorsMsg;
+  return m_errorsMsg;
 }
 
 void TableData::addErrorMsgs( string const & msg )
@@ -57,7 +57,7 @@ void TableData::addErrorMsgs( string const & msg )
 
   while( std::getline( ss, splitErrors, '\n' ))
   {
-    errorsMsg.push_back( splitErrors );
+    m_errorsMsg.push_back( splitErrors );
   }
 }
 
@@ -71,7 +71,7 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
 
-  for( auto const & columnValue : columnValues )
+  for( auto const & columnValue : m_columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
     headerValues.push_back( columnValue );

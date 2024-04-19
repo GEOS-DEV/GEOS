@@ -61,7 +61,7 @@ public:
     /// A boolean to display a colummn
     bool enabled = true;
     /// Vector containing substring column name delimited by "\n"
-    std::vector< string > splitColumnName;
+    std::vector< string > splitColumnNameLines;
 
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.

@@ -46,15 +46,6 @@ protected:
    * @brief Destroy the Table Formatter object
    */
   virtual ~TableFormatter() = default;
-
-  /**
-   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
-   * @param columns Vector of columns to be filled.
-   * @param tableData Vector containing all rows filled with values
-   */
-  void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
-                                 std::vector< std::vector< string > > & tableData ) const;
-
 };
 
 /**
@@ -124,6 +115,23 @@ public:
 
 private:
 
+  /// symbol for the extremity of a delemitor
+  static constexpr string_view sideCross = "+";
+  /// symbol to delimit a table column
+  static constexpr string_view innerCross = "+";
+  /// symbol for separator construction
+  static constexpr string_view verticalLine = "-";
+  ///  for the extremity of a row
+  static constexpr string_view horizontalLine = "|";
+
+  /**F
+   * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
+   * @param columns Vector of columns to be filled.
+   * @param tableData Vector containing all rows filled with values
+   */
+  void fillTableColumnsFromRows( std::vector< TableLayout::Column > & columns,
+                                 std::vector< std::vector< string > > & tableData ) const;
+
   /**
    * @brief Converts a TableLayout into a formatted representation.
    * @param tableOutput The output stream
@@ -133,7 +141,7 @@ private:
    */
   void outputLayout( std::ostringstream & tableOutput,
                      std::vector< TableLayout::Column > & columns,
-                     std::vector< string > & msgTableError,
+                     std::vector< string > const & msgTableError,
                      string & sectionSeparator ) const;
 
   /**
@@ -158,7 +166,8 @@ private:
    * @param columns Vector containing all table columns
    * @param extraCharacters Extra characters to be added to \p m_maxStringSize of each columns
    */
-  void increaseColumnsSize( std::vector< TableLayout::Column > & columns, integer const extraCharacters ) const;
+  void increaseColumnsSize( std::vector< TableLayout::Column > & columns,
+                            integer const extraCharacters ) const;
 
   /**
    * @brief Compute the max table line length
@@ -166,7 +175,7 @@ private:
    * @param msgTableError Vector containing all error messages
    */
   void computeTableMaxLineLength( std::vector< TableLayout::Column > & columns,
-                                  std::vector< string > & msgTableError ) const;
+                                  std::vector< string > const & msgTableError ) const;
 
   /**
    * @brief Build all separator needed from length information contained in columns vector
@@ -174,7 +183,7 @@ private:
    * @param topSeparator Top separator to be built
    * @param sectionSeparator section separator to be built
    */
-  void buildTableSeparators( std::vector< TableLayout::Column > & columns,
+  void buildTableSeparators( std::vector< TableLayout::Column > const & columns,
                              string & topSeparator,
                              string & sectionSeparator ) const;
 
