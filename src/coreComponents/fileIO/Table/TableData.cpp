@@ -84,17 +84,15 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
     currentRowValues.reserve( rowMap.size() );
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
 
-    integer idxColumn = 0;
+    std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      //check if column numbers in the evaluated row is consistent
-      while( columnValue > headerValues[idxColumn] )
+      // if a column value(s) is/are missing, insert empty entry(ies)
+      while( columnValue > *( columnIt++ ) && columnIt != m_columnValues.end() )
       {
         currentRowValues.push_back( "" );
-        ++idxColumn;
       }
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
-      ++idxColumn;
     }
 
     tableData1D.tableData.addRow( std::move( currentRowValues ) );
