@@ -169,16 +169,28 @@ void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
-  GEOS_UNUSED_VAR( maxPermeability );
+  // GEOS_UNUSED_VAR( maxPermeability );
   
   for( localIndex i=0; i < permeability.size(); i++ )
   {
-    real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
+    // real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
 
     // permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
     // dPerm_dPressure[i] = 0;
-    permeability[i] = perm;
-    dPerm_dPressure[i] = perm * pressureDependenceConstant[i];
+
+    if( pressureDependenceConstant[i] < 1e-20 )
+    {
+      permeability[i] = initialPermeability[i]; 
+      dPerm_dPressure[i] = 0.0;
+    }
+    else 
+    {
+      real64 const pressureOffSet = log( maxPermeability/initialPermeability[i] - 1 )/pressureDependenceConstant[i]; 
+
+      real64 const perm = maxPermeability/( 1 + exp( -pressureDependenceConstant[i]*( deltaPressure - pressureOffSet ) ) ); 
+      permeability[i] = perm; 
+      dPerm_dPressure[i] = perm*perm/maxPermeability*pressureDependenceConstant[i]*exp( -pressureDependenceConstant[i]*deltaPressure ); 
+    }
   }
 }
 
