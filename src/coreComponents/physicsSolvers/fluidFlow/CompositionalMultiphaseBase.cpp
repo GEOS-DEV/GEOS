@@ -18,8 +18,6 @@
 
 #include "CompositionalMultiphaseBase.hpp"
 
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
@@ -32,10 +30,8 @@
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
-#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
