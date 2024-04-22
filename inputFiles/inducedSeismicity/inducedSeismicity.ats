@@ -1,0 +1,14 @@
+import os
+import geos_ats
+from geos_ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+decks = [
+    TestDeck(
+        name="SeismicityRate_1d_verification_smoke",
+        description="",
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=10,
+        check_step=20,
+        restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e3)),
+        ]
+generate_geos_tests(decks)

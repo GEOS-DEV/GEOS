@@ -37,7 +37,7 @@ DECLARE_FIELD( initialProjectedNormalTraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Initial meanNormal stress acting on the fault");
+               "Initial meanNormal stress acting on the fault" );
 
 DECLARE_FIELD( projectedNormalTraction,
                "projectedNormalTraction",
@@ -45,7 +45,7 @@ DECLARE_FIELD( projectedNormalTraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "meanNormal stress acting on the fault");
+               "meanNormal stress acting on the fault" );
 
 DECLARE_FIELD( projectedNormalTraction_n,
                "projectedNormalTraction_n",
@@ -53,7 +53,7 @@ DECLARE_FIELD( projectedNormalTraction_n,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "meanNormal stress acting on the fault at the previous converged time step");
+               "meanNormal stress acting on the fault at the previous converged time step" );
 
 DECLARE_FIELD( initialProjectedShearTraction,
                "initialProjectedShearTraction",
@@ -61,7 +61,7 @@ DECLARE_FIELD( initialProjectedShearTraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Initial meanShear stress acting on the fault");
+               "Initial meanShear stress acting on the fault" );
 
 DECLARE_FIELD( projectedShearTraction,
                "projectedShearTraction",
@@ -69,7 +69,7 @@ DECLARE_FIELD( projectedShearTraction,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "meanShear stress acting on the fault");
+               "meanShear stress acting on the fault" );
 
 DECLARE_FIELD( projectedShearTraction_n,
                "projectedShearTraction_n",
@@ -77,15 +77,15 @@ DECLARE_FIELD( projectedShearTraction_n,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "meanShear stress acting on the fault at the previous converged time step");
+               "meanShear stress acting on the fault at the previous converged time step" );
 
 DECLARE_FIELD( seismicityRate,
                "seismicityRate",
                array1d< real64 >,
-               0,
+               1.0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Seismicity rate");
+               "Seismicity rate" );
 
 DECLARE_FIELD( logDenom,
                "logDenom",
@@ -93,7 +93,7 @@ DECLARE_FIELD( logDenom,
                0,
                LEVEL_2,
                WRITE_AND_READ,
-               "Log of the denominator of the integral form of the seismicity rate");
+               "Log of the denominator of the integral form of the seismicity rate" );
 
 }
 

@@ -34,13 +34,13 @@ public:
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
   SeismicityRateBase( const string & name,
-                 Group * const parent );
+                      Group * const parent );
 
   /// Destructor
   virtual ~SeismicityRateBase() override;
 
   /// This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override; 
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
@@ -51,28 +51,26 @@ public:
     static constexpr char const * faultShearDirectionString() { return "faultShearDirection"; }
   };
 
-  virtual void initializePreSubGroups() override;
-
 protected:
 
   /**
    * @brief called in SolverStep after member stress solver is called to
-   *  project the stress state to pre-defined fault orientations 
+   *  project the stress state to pre-defined fault orientations
    * @param subRegion The ElementSubRegionBase that will have the stress information
-  */
+   */
   void updateFaultTraction( ElementSubRegionBase & subRegion );
 
   /**
    * @brief called in SolverStep before member stress solver is called to
    *  project the initial stress state to pre-defined fault orientations,
-   *  only when cycleNumber == 0 
+   *  only when cycleNumber == 0
    * @param cycleNumber current cycle number
    * @param domain The DomainPartition of the problem
-  */
+   */
   void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
 
-  void constructFaultStressProjectionTensors( 
-    real64 (&faultNormalProjectionTensor)[6], real64 (&faultShearProjectionTensor)[6]);
+  void constructFaultStressProjectionTensors(
+    real64 ( &faultNormalProjectionTensor )[6], real64 ( &faultShearProjectionTensor )[6] );
 
   virtual void postProcessInput() override;
 
