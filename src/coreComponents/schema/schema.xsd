@@ -3601,10 +3601,10 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3627,10 +3627,10 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3709,20 +3709,20 @@ Local - Add stabilization only to interiors of macro elements.-->
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
-		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
