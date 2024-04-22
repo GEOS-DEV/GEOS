@@ -345,23 +345,23 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         //                                                                             density,
         //damping );
 
-        if( m_preComputeDt==1 )
-        {
-          acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+        // if( m_preComputeDt==1 )
+        // {
+        //   acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
 
-          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                             nodeManager.size(),
-                                                                             nodeCoords,
-                                                                             elemsToNodes,
-                                                                             mass );
+        //   dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+        //                                                                      nodeManager.size(),
+        //                                                                      nodeCoords,
+        //                                                                      elemsToNodes,
+        //                                                                      mass );
 
-          real64 globaldt = MpiWrapper::min( dtCompute );
+        //   real64 globaldt = MpiWrapper::min( dtCompute );
 
-          printf( "dt=%f\n", globaldt );
+        //   printf( "dt=%f\n", globaldt );
 
-          exit( 2 );
+        //   exit( 2 );
 
-        }
+        // }
 
       } );
     } );
@@ -391,6 +391,8 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+    arrayView1d< real32 > const p   = nodeManager.getField< acousticfields::Pressure_n >();
+    arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 CellElementSubRegion & elementSubRegion )
@@ -406,20 +408,140 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+        // acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
 
-        dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                           nodeManager.size(),
-                                                                           nodeCoords,
-                                                                           elemsToNodes,
-                                                                           mass );
+        // dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+        //                                                                    nodeManager.size(),
+        //                                                                    nodeCoords,
+        //                                                                    elemsToNodes,
+        //                                                                    mass );
 
-        dtOut = MpiWrapper::min( dtCompute );
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        localIndex const sizeNode = nodeManager.size();
 
+        real64 const epsilon = 0.00001;
+        localIndex const nIterMax = 10000;
+        localIndex numberIter = 0;
+        localIndex counter = 0;
+        real64 lambdaNew = 0.0;
+        
+        //Randomize p values
+        srand( time( NULL ));
+        for( localIndex a = 0; a < sizeNode; ++a )
+        {
+          p[a] = (real64)rand()/(real64) RAND_MAX;
+        }
+    
+        //Step 1: Normalize randomized pressure
+        real64 normP= 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, p, p, normP );
+    
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          p[a]/= sqrt( normP );
+        } );
+    
+        //Step 2: Initial iteration of (M^{-1}K)p
+        stiffnessVector.zero();
+        auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dtOut );
 
+        finiteElement::
+        regionBasedKernelApplication< EXEC_POLICY,
+                                      constitutive::NullModel,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              getDiscretizationName(),
+                                                              "",
+                                                              kernelFactory );
+
+           
+    
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          stiffnessVector[a]/= mass[a];
+        } );
+        real64 lambdaOld = lambdaNew;
+    
+        //Compute lambdaNew using two dotProducts
+        real64 dotProductPPaux = 0.0;
+        normP = 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, p, stiffnessVector, dotProductPPaux );
+        WaveSolverUtils::dotProduct( sizeNode, p, p, normP );
+    
+        lambdaNew = dotProductPPaux/normP;
+    
+        real64 normPaux = 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, stiffnessVector, stiffnessVector, normPaux );
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          p[a] = stiffnessVector[a]/( normPaux );
+        } );
+    
+        //Step 3: Do previous algorithm until we found the max eigenvalues
+        do
+        {
+          stiffnessVector.zero();
+          
+          finiteElement::
+          regionBasedKernelApplication< EXEC_POLICY,
+                                      constitutive::NullModel,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              getDiscretizationName(),
+                                                              "",
+                                                              kernelFactory );
+    
+          forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+          {
+            stiffnessVector[a]/= mass[a];
+          } );
+    
+          lambdaOld = lambdaNew;
+    
+          dotProductPPaux = 0.0;
+          normP=0.0;
+          WaveSolverUtils::dotProduct( sizeNode, p, stiffnessVector, dotProductPPaux );
+          WaveSolverUtils::dotProduct( sizeNode, p, p, normP );
+    
+          lambdaNew = dotProductPPaux/normP;
+    
+          normPaux = 0.0;
+          WaveSolverUtils::dotProduct( sizeNode, stiffnessVector, stiffnessVector, normPaux );
+    
+          forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+          {
+            p[a] = stiffnessVector[a]/( normPaux );
+          } );
+    
+          if( LvArray::math::abs( lambdaNew-lambdaOld )/LvArray::math::abs( lambdaNew )<= epsilon )
+          {
+            counter++;
+          }
+          else
+          {
+            counter=0;
+          }
+    
+          numberIter++;
+    
+    
+        }
+        while (counter < 10 && numberIter < nIterMax);
+    
+        GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    
+        real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
+
+        printf("lam=%f\n",lambdaNew);
+
+        dtOut = MpiWrapper::min( dt );
+
+        printf("dtinside=%f\n",dtOut);
 
       } );
     } );
+    stiffnessVector.zero();
+    p.zero();
   } );
   return dtOut;
 }
@@ -851,6 +973,8 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
+  printf("dtOut=%f\n",dtOut);
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
                                         MeshLevel & mesh,
@@ -1028,7 +1152,7 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 }
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
-                                               real64 const & dt,
+                                               real64  const & dt,
                                                integer cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
@@ -1049,6 +1173,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
+  printf("dtlowlevel=%f\n",dt);
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
@@ -1184,13 +1309,28 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 }
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                      real64 const & dt,
+                                                      real64  const & dt,
                                                       integer const cycleNumber,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
+
+  // real64 dtCompute;
+  // if(m_preComputeDt==1)
+  // {
+  //    real64 dtOut = 0.0;
+  //    computeTimeStep(dtOut);
+  //    m_preComputeDt = 0;
+  //    printf("dt=%f\n",dtOut);
+  //    dtCompute=dtOut;
+  //    return dtCompute;
+  // }
+  // else
+  // {
+  //   dtCompute=dt;
+  // }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
