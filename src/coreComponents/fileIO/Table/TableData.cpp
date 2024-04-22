@@ -16,13 +16,21 @@
  * @file TableData.cpp
  */
 
-#include "common/TableData.hpp"
+#include "TableData.hpp"
 
 namespace geos
 {
 
 void TableData::addRow( std::vector< string > const & row )
 {
+  if( m_rows.size() != 0 && row.size() != m_rows[m_rows.size() - 1].size() )
+  {
+    string msg = "Remarks : some cells may be missing";
+    if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
+    {
+      m_errorsMsg.push_back( msg );
+    }
+  }
   m_rows.push_back( row );
 }
 
@@ -36,33 +44,61 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
   return m_rows;
 }
 
+std::vector< string > const & TableData::getErrorMsgs() const
+{
+  return m_errorsMsg;
+}
+
+void TableData::addErrorMsgs( string const & msg )
+{
+  std::vector< string > splitHeaderParts;
+  std::istringstream ss( msg );
+  string splitErrors;
+
+  while( std::getline( ss, splitErrors, '\n' ))
+  {
+    m_errorsMsg.push_back( splitErrors );
+  }
+}
+
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
                                                        string_view rowFmt,
                                                        string_view columnFmt ) const
 {
   TableData2D::Conversion1D tableData1D;
+  std::vector< real64 > headerValues;
+  std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
-  // looping over first line to fill columnNames
-  for( auto const & [ columnValue, cellValue] : m_data.begin()->second )
+
+  for( auto const & columnValue : m_columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
+    headerValues.push_back( columnValue );
   }
 
   // insert row value and row cell values
   for( auto const & [rowValue, rowMap] : m_data )
   {
     std::vector< string > currentRowValues;
+    currentRowValues.reserve( rowMap.size() );
     currentRowValues.push_back( GEOS_FMT( rowFmt, rowValue ) );
+
+    std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )
     {
+      // if a column value(s) is/are missing, insert empty entry(ies)
+      while( columnValue > *( columnIt++ ) && columnIt != m_columnValues.end() )
+      {
+        currentRowValues.push_back( "" );
+      }
       currentRowValues.push_back( GEOS_FMT( "{}", cellValue ) );
-      // TODO : if columnValue[i] != headerNames[i] error/warning/drop/ignore
     }
-    tableData1D.tableData.addRow( currentRowValues );
+
+    tableData1D.tableData.addRow( std::move( currentRowValues ) );
+    rowsLength.push_back( currentRowValues.size() );
   }
 
   return tableData1D;
 }
-
 }

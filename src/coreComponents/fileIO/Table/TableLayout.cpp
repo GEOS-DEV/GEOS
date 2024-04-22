@@ -16,18 +16,19 @@
  * @file TableData.hpp
  */
 
-#include "common/TableLayout.hpp"
+#include "TableLayout.hpp"
 
 namespace geos
 {
 
-TableLayout::TableLayout( std::vector< string > const & headers, string const & title ):
+TableLayout::TableLayout( std::vector< string > const & columnNames, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  for( auto const & columnHeader : headers )
+  m_columns.reserve( columnNames.size() );
+  for( auto const & name : columnNames )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{columnHeader}, Alignment::right, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, ""} );
   }
 }
 
@@ -35,12 +36,10 @@ TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameters, s
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  for( auto const & columnParameter : columnParameters )
+  m_columns.reserve( columnParameters.size() );
+  for( auto const & param : columnParameters )
   {
-    if( columnParameter.enabled )
-    {
-      m_columns.push_back( {columnParameter, {}, ""} );
-    }
+    m_columns.push_back( { param, {}, ""} );
   }
 }
 

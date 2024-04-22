@@ -1,17 +1,8 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testDataTypes.cpp
-     testFixedSizeDeque.cpp
-     testTypeDispatch.cpp
-     testLifoStorage.cpp
-     testUnits.cpp )
+     testTable.cpp )
 
-if ( ENABLE_CALIPER )
-  list( APPEND gtest_geosx_tests
-        testCaliperSmoke.cpp )
-endif()
-
-set( dependencyList ${parallelDeps} common hdf5 gtest )
+set( dependencyList gtest fileIO ${parallelDeps} )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})

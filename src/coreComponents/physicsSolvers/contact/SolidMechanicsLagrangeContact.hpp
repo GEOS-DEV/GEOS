@@ -25,7 +25,7 @@
 namespace geos
 {
 
-class SolidMechanicsLagrangianFEM;
+class NumericalMethodsManager;
 
 class SolidMechanicsLagrangeContact : public ContactSolverBase
 {

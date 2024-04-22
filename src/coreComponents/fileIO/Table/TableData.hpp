@@ -25,14 +25,16 @@
 namespace geos
 {
 
-// Class for managing table data
+/**
+ * @brief Class for managing table data
+ */
 class TableData
 {
 public:
 
   /**
    * @brief Add a row to the table.
-   * @param Args The values passed to addRow (can be any type).
+   * The values passed to addRow (can be any type).
    * @param args Cell values to be added to the row.
    */
   template< typename ... Args >
@@ -40,7 +42,7 @@ public:
 
   /**
    * @brief Add a row to the table
-   * @param row A vector of string who contains cell Values
+   * @param row A vector of string representing a row
    */
   void addRow( std::vector< string > const & row );
 
@@ -54,20 +56,40 @@ public:
    */
   std::vector< std::vector< string > > const & getTableDataRows() const;
 
-private:
+  /**
+   * @brief Get all error messages
+   * @return The vector of error messages
+   */
+  std::vector< string > const & getErrorMsgs() const;
 
+  /**
+   * @brief Set an error message
+   * @param msg The error msg to vector
+   */
+  void addErrorMsgs( string const & msg );
+
+protected:
+  /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
+
+  /// store error if there are any inconsistencies related to the table
+  std::vector< string > m_errorsMsg;
 
 };
 
-// Class for managing 2D table m_data
+/**
+ * @brief Class for managing 2D table m_data
+ */
 class TableData2D
 {
 public:
 
+  /// Struct containing conversion informations
   struct Conversion1D
   {
+    /// Vector containing all columns names
     std::vector< string > headerNames;
+    /// TableData to be built
     TableData tableData;
   };
 
@@ -82,15 +104,15 @@ public:
   void addCell( real64 rowValue, real64 columnValue, T const & value );
 
   /**
-   * @brief Construct a TableData from the provided cells.
-   * @param targetUnit The table unit
+   * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
+   * @param dataDescription The table dataDescription shown at the top left side
    * @param rowFmt The y axis units of the table.
    * @param columnFmt  The x axis units of the table.
-   * The axis units can be customize, I.E with targetUnits = pressure [K]:
-   * GEOS_FMT( "{} = {{}}", targetUnits) => "pressure [K] = {}"
-   * @return A struct containing The columnNames and the TableData
+   * @note The rows and columns FMT can be customized. The bracket "{}" will be replaced by the axis value.
+   * By default it displays the axis value.
+   * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  Conversion1D buildTableData( string_view targetUnit, string_view rowFmt = "{{}}", string_view columnFmt = "{{}}" ) const;
+  Conversion1D buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   using RowType = real64;
@@ -98,6 +120,9 @@ private:
 
   /// @brief all cell values by their [ row ][ column ]
   std::map< RowType, std::map< ColumnType, string > > m_data;
+
+  /// @brief Store all column values when adding cell
+  std::set< real64 > m_columnValues;
 };
 
 template< typename ... Args >
@@ -117,8 +142,10 @@ template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
   static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
+  m_columnValues.insert( columnValue );
   m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
+
 
 }
 

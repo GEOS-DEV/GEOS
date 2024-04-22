@@ -24,12 +24,18 @@
 namespace geos
 {
 
+/**
+ * @brief Class for setup the table layout
+ */
 class TableLayout
 {
 
 public:
+
+  /// Type of aligment for a column
   enum Alignment { right, left, center };
 
+  /// Space to apply between all data and border
   enum MarginValue : integer
   {
     tiny = 0,
@@ -48,14 +54,14 @@ public:
    */
   struct ColumnParam
   {
-
+    /// Name for a column
     string columnName;
-    // Alignment for a column. By default aligned to the right side
+    /// Alignment for a column. By default aligned to the right side
     Alignment alignment = Alignment::right;
-    // A boolean to display a colummn
+    /// A boolean to display a colummn
     bool enabled = true;
-    // Vector containing substring column name delimited by "\n"
-    std::vector< string > splitColumnName;
+    /// Vector containing substring column name delimited by "\n"
+    std::vector< string > splitColumnNameLines;
 
     /**
      * @brief Construct a ColumnParam object with the specified name and alignment.
@@ -82,25 +88,28 @@ public:
    */
   struct Column
   {
-    ColumnParam parameter;
-    // A vector containing all column values
-    std::vector< string > columnValues;
-    // The largest string in the column
+    /// Structure who contains parameters for a column
+    ColumnParam m_parameter;
+    /// A vector containing all column values
+    std::vector< string > m_columnValues;
+    /// The largest string in the column
     string m_maxStringSize;
   };
 
   /**
    * @brief Construct a new Table object, all values in the table are centered by default
    * @param columnNames The names of the columns
+   * @param title The table name
    */
   TableLayout( std::vector< string > const & columnNames, string const & title = "" );
 
   /**
    * @brief Construct a new Table object by specifying value alignment and optionally their displays based to log levels
    * level
-   * @param columnParameter List of structures to set up each colum parameters.
+   * @param columnParameters List of structures to set up each colum parameters.
+   * @param title The table name
    */
-  TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title = "" );
+  TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title = "" );
 
   /**
    * @return The columns vector
@@ -127,13 +136,13 @@ public:
    */
   integer const & getMarginTitle() const;
 
-private:
-
   /**
    * @brief Set the minimal margin width between row content and borders.
-   * @param marginType The margin value
+   * @param marginValue The margin value
    */
   void setMargin( MarginValue marginValue );
+
+private:
 
   std::vector< Column > m_columns;
   string m_tableTitle;
