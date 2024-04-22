@@ -263,7 +263,7 @@ public:
     real64 const gravD = ( m_perfGravCoef[iperf] - m_wellElemGravCoef[iwelem] );
 
     pres[TAG::WELL] +=  m_wellElemTotalMassDens[iwelem] * gravD;
-    // Note RHS uses CP_Deriv while LHS uses Deriv !!!
+    // Note LHS uses CP_Deriv while RHS uses Deriv !!!
     dPres_dP[TAG::WELL] +=  m_dWellElemTotalMassDens_dPres[iwelem] * gravD;
     dPres[TAG::WELL][CP_Deriv::dP] +=  m_dWellElemTotalMassDens_dPres[iwelem] * gravD;
     if constexpr ( IS_THERMAL )
@@ -475,7 +475,7 @@ public:
                                                       flux * stack.m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
           // energy equation derivatives WRT well P
           stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * res_enthalpy ;
-          // stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * res_enthalpy ;   
+          stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * res_enthalpy ;   
 
           // energy equation derivatives WRT reservoir dens
           real64 dProp_dC[numComp]{};
@@ -675,17 +675,22 @@ public:
       {
         for( integer ip = 0; ip < NP; ++ip )
         {
+bool const phaseExists = stack.m_wellElemPhaseVolFrac[iwelem][ip] > 0.0;
+          if ( ! phaseExists )
+            continue;
+          double pflux = stack.m_wellElemPhaseVolFrac[iwelem][ip]*flux;
           real64 const wellelem_enthalpy = stack.m_wellElemPhaseEnthalpy[iwelem][0][ip];
-          stack.m_energyPerfFlux[iperf] += flux * wellelem_enthalpy;
+          stack.m_energyPerfFlux[iperf] += pflux * wellelem_enthalpy;
           // energy equation derivatives WRT res P & T
           stack.m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy ;
           stack.m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy ;
           // energy equation derivatives WRT well P & T
           stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy 
-                          +  flux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][CP_Deriv::dP];
+                          +  pflux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][CP_Deriv::dP]
+                         +  flux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][CP_Deriv::dP];
           stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy 
-                          +  flux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][CP_Deriv::dT];   
-
+                          +  pflux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][CP_Deriv::dT]
+                        +  flux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][CP_Deriv::dT];   
           // energy equation derivatives WRT reservoir dens
           real64 dProp_dC[numComp]{};
           applyChainRule( NC,
@@ -903,7 +908,8 @@ public:
                           multiFluidAccessors,
                           relPermAccessors,
                           disableReservoirToWellFlow ),
-                          m_stack(perforationData,
+                          m_stack(subRegion,
+                          perforationData,
                           fluid,
                           thermalCompFlowAccessors,
                           thermalMultiFluidAccessors) 
@@ -924,11 +930,14 @@ public:
 public:
 
     GEOS_HOST_DEVICE
-    StackVariables( PerforationData * const perforationData,
+    StackVariables( ElementSubRegionBase const & subRegion,
+                    PerforationData * const perforationData,
                     MultiFluidBase const & fluid,
                     ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                     ThermalMultiFluidAccessors const & thermalMultiFluidAccessors )
       : Base::StackVariables(),
+m_wellElemPhaseVolFrac(subRegion.getField< fields::well::phaseVolumeFraction >()),
+      m_dPhaseVolFrac( subRegion.getField< fields::well::dPhaseVolumeFraction >() ),
       m_wellElemPhaseEnthalpy( fluid.phaseEnthalpy()),
       m_dWellElemPhaseEnthalpy( fluid.dPhaseEnthalpy()),
       m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()) ,
@@ -938,7 +947,9 @@ public:
       m_dResPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ) 
     {}
 
-      /// Views on phase enthalpy
+      /// Views on well element properties
+  arrayView2d< real64 const, compflow::USD_PHASE >    m_wellElemPhaseVolFrac;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac;
   arrayView3d< real64 const, multifluid::USD_PHASE >  m_wellElemPhaseEnthalpy;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC >  m_dWellElemPhaseEnthalpy;
  

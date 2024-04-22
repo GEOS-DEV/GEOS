@@ -330,7 +330,7 @@ string const & fluidName = this->flowSolver()->template getConstitutiveName< Mul
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
 areWellsShut = 0;
 
-      if( 1 )
+      if( 0 )
       {
 
 

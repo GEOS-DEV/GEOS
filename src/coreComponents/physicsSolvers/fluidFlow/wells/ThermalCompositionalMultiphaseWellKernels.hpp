@@ -881,7 +881,7 @@ public:
         stack.localEnergyFluxJacobian_dQ[0][0]  = -m_dt*eflux_dq;
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
         {
-          stack.localEnergyFluxJacobian[0][dof] *= -m_dt*currentConnRate;
+          stack.localEnergyFluxJacobian[0][dof] = -m_dt*currentConnRate;
         }
       }
       else
@@ -904,12 +904,13 @@ public:
         }
         stack.localEnergyFlux[TAG::NEXT   ]   =  m_dt * eflux * currentConnRate;
         stack.localEnergyFlux[TAG::CURRENT  ] = -m_dt * eflux * currentConnRate;
+
         stack.localEnergyFluxJacobian_dQ [TAG::NEXT   ][0] =  m_dt * eflux;
         stack.localEnergyFluxJacobian_dQ [TAG::CURRENT][0] =  -m_dt * eflux;
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
         {
-        stack.localEnergyFluxJacobian[TAG::NEXT      ][dof] *=  m_dt*currentConnRate;
-          stack.localEnergyFluxJacobian[TAG::CURRENT   ][dof] *=  -m_dt*currentConnRate;
+        stack.localEnergyFluxJacobian[TAG::NEXT      ][dof]  =  m_dt*currentConnRate;
+          stack.localEnergyFluxJacobian[TAG::CURRENT   ][dof]  =  -m_dt*currentConnRate;
         }
       }
     

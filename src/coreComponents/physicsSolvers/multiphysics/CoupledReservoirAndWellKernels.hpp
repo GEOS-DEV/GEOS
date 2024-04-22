@@ -160,13 +160,13 @@ public:
         for( integer jdof = 0; jdof < NC+1; ++jdof )
         {
           dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
-          dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + COFFSET::DPRES + jdof;
+          dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
         }
         // For temp its different
         if constexpr ( IS_THERMAL )  
         {
           dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1; 
-          dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + CP_Deriv::dT; 
+          dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT; 
         }
         // populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
@@ -481,7 +481,7 @@ public:
           localIndex localDofIndexPres = ke * resNumDOF;
           localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
           localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-          localDofIndexPres += 1;
+          //localDofIndexPres += 1;
           // populate local flux vector and derivatives
            for( integer ic = 0; ic < numComp; ++ic )
            {

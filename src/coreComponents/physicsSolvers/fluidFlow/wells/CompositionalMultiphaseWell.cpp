@@ -1879,12 +1879,21 @@ if( isThermal() )
   {
     // synchronize
     FieldIdentifiers fieldsToBeSync;
-
+if ( isThermal() )
+    {
+    fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
+fields::well::temperature::key(),
+                                       fields::well::globalCompDensity::key(),
+                                       fields::well::mixtureConnectionRate::key() },
+                                     regionNames );
+}
+    else
+    { 
     fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
                                        fields::well::globalCompDensity::key(),
                                        fields::well::mixtureConnectionRate::key() },
                                      regionNames );
-
+    }
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -2202,6 +2211,14 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         subRegion.getField< fields::well::pressure_n >();
       wellElemPressure_n.setValues< parallelDevicePolicy<> >( wellElemPressure );
 
+if ( isThermal() )
+      {
+        arrayView1d< real64 const > const & wellElemTemperature =
+        subRegion.getField< fields::well::temperature >();
+        arrayView1d< real64 > const & wellElemTemperature_n =
+        subRegion.getField< fields::well::temperature_n >();
+        wellElemTemperature_n.setValues< parallelDevicePolicy<> >( wellElemTemperature );
+      }
       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemGlobalCompDensity =
         subRegion.getField< fields::well::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP > const & wellElemGlobalCompDensity_n =
