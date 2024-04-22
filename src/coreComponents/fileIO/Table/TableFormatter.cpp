@@ -146,6 +146,16 @@ void TableTextFormatter::fillTableColumnsFromRows( std::vector< TableLayout::Col
   }
 }
 
+string TableTextFormatter::layoutToString() const
+{
+  std::ostringstream tableOutput;
+  string sectionSeparator;
+  std::vector< TableLayout::Column > columns = m_tableLayout.getColumns();
+
+  outputLayout( tableOutput, columns, {}, sectionSeparator );
+  return tableOutput.str();
+}
+
 string TableTextFormatter::toString( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
