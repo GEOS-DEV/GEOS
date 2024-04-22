@@ -70,6 +70,7 @@ public:
   using Base::m_solidDensity;
   using Base::m_flowDofNumber;
   using Base::m_dt;
+  using Base::m_performStressInitialization;
 
   /**
    * @brief Constructor
@@ -90,6 +91,7 @@ public:
                                    real64 const inputDt,
                                    real64 const (&gravityVector)[3],
                                    string const inputFlowDofKey,
+                                   integer const performStressInitialization,
                                    string const fluidModelKey );
 
   //*****************************************************************************
@@ -305,6 +307,7 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
                                 real64 const,
                                 real64 const (&)[3],
                                 string const,
+                                integer const,
                                 string const >;
 
 } // namespace thermalPoromechanicsKernels
