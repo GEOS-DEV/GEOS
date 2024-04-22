@@ -17,9 +17,9 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "codingUtilities/TableLayout.hpp"
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>
@@ -59,7 +59,6 @@
 
 namespace geos
 {
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLogger()
@@ -297,7 +296,6 @@ static void addUmpireHighWaterMarks()
     }
 
     umpire::Allocator allocator = rm.getAllocator( allocatorName );
-
     umpire::strategy::AllocationStrategy const * allocationStrategy = allocator.getAllocationStrategy();
     umpire::MemoryResourceTraits const traits = allocationStrategy->getTraits();
     umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
@@ -358,7 +356,7 @@ static void addUmpireHighWaterMarks()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
-{
+{ 
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
