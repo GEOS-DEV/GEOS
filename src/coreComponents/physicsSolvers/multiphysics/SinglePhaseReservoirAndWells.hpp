@@ -82,7 +82,7 @@ public:
   void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
   { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
-  void updateFluidState( ObjectManagerBase & subRegion ) const
+  void updateFluidState( ElementSubRegionBase & subRegion ) const
   { flowSolver()->updateFluidState( subRegion ); }
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
   { flowSolver()->updatePorosityAndPermeability( subRegion ); }
@@ -93,7 +93,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate() { flowSolver()->enableFixedStressPoromechanicsUpdate(); }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override { flowSolver()->saveSequentialIterationState( domain ); }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override { flowSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

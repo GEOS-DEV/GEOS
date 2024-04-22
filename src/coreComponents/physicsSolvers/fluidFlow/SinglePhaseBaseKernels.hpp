@@ -152,12 +152,11 @@ public:
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
     m_wellBoreVolume( subRegion.template getField< fields::flow::wellBoreVolume >() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_porosityNew( solid.getPorosity() ),
+    m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_density_n( fluid.density_n() ),
     m_density( fluid.density() ),
     m_dDensity_dPres( fluid.dDensity_dPressure() ),
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -174,9 +173,6 @@ public:
 
     /// Pore volume at time n+1
     real64 poreVolume = 0.0;
-
-    /// Pore volume at the previous converged time step
-    real64 poreVolume_n = 0.0;
 
     /// Derivative of pore volume with respect to pressure
     real64 dPoreVolume_dPres = 0.0;
@@ -217,8 +213,7 @@ public:
               StackVariables & stack ) const
   {
     // initialize the pore volume
-    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0] + m_wellBoreVolume[ei];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0] + m_wellBoreVolume[ei];
+    stack.poreVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosity[ei][0] + m_wellBoreVolume[ei];
     stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
@@ -243,7 +238,7 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - m_mass_n[ei];
 
     // Derivative of residual wrt to pressure in the cell
     stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
@@ -316,14 +311,15 @@ protected:
   arrayView1d< real64 const > const m_wellBoreVolume;
 
   /// Views on the porosity
-  arrayView2d< real64 const > const m_porosity_n;
-  arrayView2d< real64 const > const m_porosityNew;
+  arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
   /// Views on density
-  arrayView2d< real64 const > const m_density_n;
   arrayView2d< real64 const > const m_density;
   arrayView2d< real64 const > const m_dDensity_dPres;
+
+  /// View on mass
+  arrayView1d< real64 const > const m_mass_n;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -361,14 +357,8 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
-#if ALLOW_CREATION_MASS
     , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
-#endif
-  {
-#if !defined(ALLOW_CREATION_MASS)
-    static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-  }
+  {}
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
@@ -382,20 +372,16 @@ public:
   {
     Base::computeAccumulation( ei, stack, [&] ()
     {
-#if ALLOW_CREATION_MASS
-      if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
+      if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual[0] += m_creationMass[ei] * 0.25;
       }
-#endif
     } );
   }
 
 protected:
 
-#if ALLOW_CREATION_MASS
   arrayView1d< real64 const > const m_creationMass;
-#endif
 
 };
 
@@ -482,24 +468,20 @@ public:
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< localIndex const > const & ghostRank,
                       ElementSubRegionBase const & subRegion,
-                      constitutive::SingleFluidBase const & fluid,
-                      constitutive::CoupledSolidBase const & solid,
                       real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
             ghostRank,
             minNormalizer ),
-    m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_density_n( fluid.density_n() )
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() )
   {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
     {
@@ -511,7 +493,7 @@ public:
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;
   }
@@ -519,14 +501,8 @@ public:
 
 protected:
 
-  /// View on the volume
-  arrayView1d< real64 const > const m_volume;
-
-  /// View on porosity at the previous converged time step
-  arrayView2d< real64 const > const m_porosity_n;
-
-  /// View on total mass/molar density at the previous converged time step
-  arrayView2d< real64 const > const m_density_n;
+  /// View on mass at the previous converged time step
+  arrayView1d< real64 const > const m_mass_n;
 
 };
 
@@ -557,8 +533,6 @@ public:
                    string const dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
-                   constitutive::SingleFluidBase const & fluid,
-                   constitutive::CoupledSolidBase const & solid,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
@@ -566,7 +540,7 @@ public:
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, minNormalizer );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );

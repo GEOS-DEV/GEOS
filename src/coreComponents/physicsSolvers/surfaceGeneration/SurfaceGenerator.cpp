@@ -454,7 +454,7 @@ void SurfaceGenerator::postRestartInitialization()
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, false );
+        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName );
       }
     }
 
@@ -509,13 +509,11 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName, true );
+        fluxApprox->addToFractureStencil( meshLevel, this->m_fractureRegionName );
       }
     }
 
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
-    fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
     meshLevel.getNodeManager().buildGeometricSets( GeometricObjectManager::getInstance() );

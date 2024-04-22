@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
@@ -94,7 +95,7 @@ public:
                                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                          [&]( localIndex const,
                                                                               ElementSubRegionBase & subRegion )
       {
@@ -140,7 +141,7 @@ public:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
@@ -183,6 +184,25 @@ public:
     flowSolver()->setupDofs( domain, dofManager );
 
     this->setupCoupling( domain, dofManager );
+  }
+
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain ) override
+  {
+    // always force outer loop for initialization
+    auto & subcycling = this->getNonlinearSolverParameters().m_subcyclingOption;
+    auto const subcycling_orig = subcycling;
+    if( m_performStressInitialization )
+      subcycling = 1;
+
+    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+
+    // restore original
+    subcycling = subcycling_orig;
+
+    return isConverged;
   }
 
   /**
@@ -369,7 +389,8 @@ protected:
     }
 
     /// After the solid mechanics solver
-    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics )
+        && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );

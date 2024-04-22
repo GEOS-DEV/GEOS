@@ -159,17 +159,13 @@ public:
   using Base::m_dofNumber;
   using Base::m_elemGhostRank;
   using Base::m_volume;
-  using Base::m_porosity_n;
   using Base::m_porosity;
   using Base::m_dPoro_dPres;
   using Base::m_dCompFrac_dCompDens;
-  using Base::m_phaseVolFrac_n;
   using Base::m_phaseVolFrac;
   using Base::m_dPhaseVolFrac;
-  using Base::m_phaseDens_n;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
-  using Base::m_phaseCompFrac_n;
   using Base::m_phaseCompFrac;
   using Base::m_dPhaseCompFrac;
   using Base::m_localMatrix;
@@ -197,12 +193,11 @@ public:
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > const kernelFlags )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
-    m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
-    m_rockInternalEnergy_n( solid.getInternalEnergy_n() ),
     m_rockInternalEnergy( solid.getInternalEnergy() ),
-    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() )
+    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() ),
+    m_energy_n( subRegion.getField< fields::flow::energy_n >() )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -214,9 +209,6 @@ public:
       : Base::StackVariables()
     {}
 
-    using Base::StackVariables::poreVolume;
-    using Base::StackVariables::poreVolume_n;
-    using Base::StackVariables::dPoreVolume_dPres;
     using Base::StackVariables::localRow;
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
@@ -229,9 +221,6 @@ public:
 
     /// Solid energy at time n+1
     real64 solidEnergy = 0.0;
-
-    /// Solid energy at the previous converged time step
-    real64 solidEnergy_n = 0.0;
 
     /// Derivative of solid internal energy with respect to pressure
     real64 dSolidEnergy_dPres = 0.0;
@@ -257,13 +246,11 @@ public:
 
     // initialize the solid volume
     real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
-    real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
     real64 const dSolidVolume_dTemp = -stack.dPoreVolume_dTemp;
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
-    stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
     stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0]
                                + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
@@ -281,9 +268,11 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
+    // start with old time step value
+    stack.localResidual[numEqn-1] = -m_energy_n[ei];
+
     Base::computeAccumulation( ei, stack, [&] ( integer const ip,
                                                 real64 const & phaseAmount,
-                                                real64 const & phaseAmount_n,
                                                 real64 const & dPhaseAmount_dP,
                                                 real64 const (&dPhaseAmount_dC)[numComp] )
     {
@@ -302,7 +291,6 @@ public:
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
       arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
-      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy_n = m_phaseInternalEnergy_n[ei][0];
       arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy = m_phaseInternalEnergy[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseInternalEnergy = m_dPhaseInternalEnergy[ei][0];
 
@@ -319,14 +307,13 @@ public:
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
 
       real64 const phaseEnergy = phaseAmount * phaseInternalEnergy[ip];
-      real64 const phaseEnergy_n = phaseAmount_n * phaseInternalEnergy_n[ip];
       real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip]
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip]
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
+      stack.localResidual[numEqn-1] += phaseEnergy;
 
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
@@ -344,7 +331,7 @@ public:
     // Step 3: assemble the solid part of the accumulation term
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
+    stack.localResidual[numEqn-1] += stack.solidEnergy;
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
 
@@ -396,14 +383,15 @@ protected:
   arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on phase internal energy
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseInternalEnergy;
 
   /// Views on rock internal energy
-  arrayView2d< real64 const > m_rockInternalEnergy_n;
   arrayView2d< real64 const > m_rockInternalEnergy;
   arrayView2d< real64 const > m_dRockInternalEnergy_dTemp;
+
+  /// Views on energy
+  arrayView1d< real64 const > m_energy_n;
 
 };
 
