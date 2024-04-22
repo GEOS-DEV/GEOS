@@ -17,9 +17,9 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "codingUtilities/TableLayout.hpp"
-#include "codingUtilities/TableData.hpp"
-#include "codingUtilities/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/Format.hpp"
 namespace geos
 {
@@ -144,7 +144,7 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  if( getLogLevel() >= 1 && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
     logPerforationTable();
@@ -551,17 +551,17 @@ void WellGeneratorBase::logInternalWell() const
                           nextElement );
   }
 
-  string wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
-  TableLayout tableWellLayout = TableLayout( {
+  string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
+  TableLayout const tableWellLayout = TableLayout( {
       TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::center},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
     }, wellTitle );
 
-  TableTextFormatter tableFormatter( tableWellLayout );
+  TableTextFormatter const tableFormatter( tableWellLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableWellData ));
 }
 
@@ -573,9 +573,9 @@ void WellGeneratorBase::logPerforationTable() const
     tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableLayout tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to"},
-                                 GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
-  TableTextFormatter tablePerfoLog( tableLayoutPerfo );
+  TableLayout const tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to"},
+                                       GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
+  TableTextFormatter const tablePerfoLog( tableLayoutPerfo );
   GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
 }
 

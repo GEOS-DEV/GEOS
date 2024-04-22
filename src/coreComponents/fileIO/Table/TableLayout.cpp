@@ -16,33 +16,30 @@
  * @file TableData.hpp
  */
 
-#include "codingUtilities/TableLayout.hpp"
+#include "TableLayout.hpp"
 
 namespace geos
 {
 
-TableLayout::TableLayout( std::vector< string > const & headers, string const & title ):
+TableLayout::TableLayout( std::vector< string > const & columnNames, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-  for( size_t idx = 0; idx< headers.size(); idx++ )
+  m_columns.reserve( columnNames.size() );
+  for( auto const & name : columnNames )
   {
-    m_columns.push_back( {TableLayout::ColumnParam{{headers[idx]}, Alignment::right, true}, {}, ""} );
+    m_columns.push_back( {TableLayout::ColumnParam{{name}, Alignment::right, true}, {}, ""} );
   }
 }
 
-TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameter, string const & title ):
+TableLayout::TableLayout( std::vector< ColumnParam > const & columnParameters, string const & title ):
   m_tableTitle( title )
 {
   setMargin( MarginValue::medium );
-
-  for( size_t idx = 0; idx< columnParameter.size(); idx++ )
+  m_columns.reserve( columnParameters.size() );
+  for( auto const & param : columnParameters )
   {
-    if( columnParameter[idx].enabled )
-    {
-      m_columns.push_back( {columnParameter[idx], {}, ""} );
-    }
-
+    m_columns.push_back( { param, {}, ""} );
   }
 }
 
