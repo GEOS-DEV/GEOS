@@ -49,29 +49,43 @@ void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
-    for( localIndex q = 0; q < 1; ++q )
+    for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
     {
-      m_diffusivity[ei][q][0] = m_diffusivityComponents[0];
-      m_diffusivity[ei][q][1] = m_diffusivityComponents[1];
-      m_diffusivity[ei][q][2] = m_diffusivityComponents[2];
+
+      // NOTE: enforcing 1 quadrature point
+      for( localIndex q = 0; q < 1; ++q )
+      {
+        //TODO change input to have diag tensor by phase
+        m_diffusivity[ei][q][ip][0] = m_diffusivityComponents[ip][0];
+        m_diffusivity[ei][q][ip][1] = m_diffusivityComponents[ip][1];
+        m_diffusivity[ei][q][ip][2] = m_diffusivityComponents[ip][2];
+      }
     }
   }
 }
 
 void ConstantDiffusion::postProcessInput()
 {
-  GEOS_THROW_IF( m_diffusivityComponents.size() != 3,
-                 GEOS_FMT( "{}: the size of the diffusivity must be equal to 3",
-                           getFullName() ),
+  GEOS_THROW_IF( m_diffusivityComponents.size( 0 ) != m_phaseNames.size(),
+                 GEOS_FMT( "{}: the size of the diffusivity must be equal to the number of phases ({})",
+                           getFullName(), m_phaseNames.size() ),
                  InputError );
 
-  GEOS_THROW_IF( m_diffusivityComponents[0] < 0 ||
-                 m_diffusivityComponents[1] < 0 ||
-                 m_diffusivityComponents[2] < 0,
-                 GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative",
-                           getFullName() ),
+  GEOS_THROW_IF( m_diffusivityComponents.size( 1 ) != 3,
+                 GEOS_FMT( "{}: the size of the diffusivity must be equal to the number of direction (3)",
+                           getFullName()),
                  InputError );
+
+  for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+  {
+
+    GEOS_THROW_IF( m_diffusivityComponents[ip][0] < 0 ||
+                   m_diffusivityComponents[ip][1] < 0 ||
+                   m_diffusivityComponents[ip][2] < 0,
+                   GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative for phase {}",
+                             getFullName(), m_phaseNames[ip] ),
+                   InputError );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantDiffusion, string const &, Group * const )

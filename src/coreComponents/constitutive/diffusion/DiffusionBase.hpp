@@ -57,17 +57,17 @@ protected:
    * @param diffusivity the array of cell-wise diffusion in the subregion
    * @param dDiffusivity_dTemperature the array of cell-wise derivatives of diffusion wrt temperature in the subregion
    */
-  DiffusionBaseUpdate( arrayView3d< real64 > const & diffusivity,
-                       arrayView3d< real64 > const & dDiffusivity_dTemperature )
+  DiffusionBaseUpdate( arrayView4d< real64 > const & diffusivity,
+                       arrayView4d< real64 > const & dDiffusivity_dTemperature )
     : m_diffusivity( diffusivity ),
     m_dDiffusivity_dTemperature( dDiffusivity_dTemperature )
   {}
 
   /// View on the cell-wise diffusivity
-  arrayView3d< real64 > const m_diffusivity;
+  arrayView4d< real64 > const m_diffusivity;
 
   /// View on the cell-wise derivatives of diffusivity wrt temperature
-  arrayView3d< real64 > const m_dDiffusivity_dTemperature;
+  arrayView4d< real64 > const m_dDiffusivity_dTemperature;
 
 private:
 
@@ -116,22 +116,16 @@ public:
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
   /**
-   * @brief Getter for the phase diffusivity multipliers
-   * @return an arrayView of multipliers
-   */
-  arrayView3d< real64 const > phaseDiffusivityMultiplier() const { return m_phaseDiffusivityMultiplier; }
-
-  /**
    * @brief Getter for the diffusivities in the subRegion
    * @return an arrayView of diffusivities
    */
-  arrayView3d< real64 const > diffusivity() const { return m_diffusivity; }
+  arrayView4d< real64 const > diffusivity() const { return m_diffusivity; }
 
   /**
    * @brief Getter for the derivatives of diffusivity wrt temperature in the subRegion
    * @return an arrayView of derivatives of diffusivities wrt temperature
    */
-  arrayView3d< real64 const > dDiffusivity_dTemperature() const { return m_dDiffusivity_dTemperature; }
+  arrayView4d< real64 const > dDiffusivity_dTemperature() const { return m_dDiffusivity_dTemperature; }
 
   /**
    * @brief Initialize the diffusivity state (needed when diffusion depends on temperature)
@@ -176,14 +170,11 @@ protected:
   /// array of phase-wise default diffusion multipliers
   array1d< real64 > m_defaultPhaseDiffusivityMultiplier;
 
-  /// array of phase-wise diffusion multipliers
-  array3d< real64 > m_phaseDiffusivityMultiplier;
-
   /// cell-wise diffusivities in the subregion
-  array3d< real64 > m_diffusivity;
+  array4d< real64 > m_diffusivity;
 
   /// cell-wise derivatives of diffusivities wrt temperature in the subregion
-  array3d< real64 > m_dDiffusivity_dTemperature;
+  array4d< real64 > m_dDiffusivity_dTemperature;
 
 };
 

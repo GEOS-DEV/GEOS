@@ -19,7 +19,7 @@
 #ifndef GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
 #define GEOS_FINITEVOLUME_EMBEDDEDSURFACETOCELLSTENCIL_HPP_
 
-#include "StencilBase.hpp"
+#include "ToCell.hpp"
 
 namespace geos
 {
@@ -27,14 +27,11 @@ namespace geos
 /**
  * @brief Provide access to the EmbeddedSurfaceToCellStencil that may be called from a kernel function.
  */
-class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits >
+class EmbeddedSurfaceToCellStencilWrapper : public ToCellWrapperBase
 {
 public:
 
-  /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
+  static constexpr real64 avgWeights = 1.0;
   /**
    * @brief Constructor
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
@@ -47,55 +44,31 @@ public:
                                        IndexContainerType const & elementIndices,
                                        WeightContainerType const & weights );
 
-  /**
-   * @brief Give the number of stencil entries.
-   * @return The number of stencil entries
-   */
-  localIndex size() const
-  {
-    return m_elementRegionIndices.size( 0 );
-  }
+//  /**
+//   * @brief Give the number of stencil entries.
+//   * @return The number of stencil entries
+//   */
+//  localIndex size() const
+//  {
+//    return m_elementRegionIndices.size( 0 );
+//  }
+//
+//  /**
+//   * @brief Give the number of stencil entries for the provided index.
+//   * @param[in] index the index of which the stencil size is request
+//   * @return The number of stencil entries for the provided index
+//   */
+//  GEOS_HOST_DEVICE
+//  GEOS_FORCE_INLINE
+//  localIndex stencilSize( localIndex index ) const override
+//  {
+//    GEOS_UNUSED_VAR( index );
+//    return maxStencilSize;
+//  }
 
-  /**
-   * @brief Give the number of stencil entries for the provided index.
-   * @param[in] index the index of which the stencil size is request
-   * @return The number of stencil entries for the provided index
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr localIndex stencilSize( localIndex const index ) const
-  {
-    GEOS_UNUSED_VAR( index );
-    return maxStencilSize;
-  }
 
-  /**
-   * @brief Give the number of points between which the flux is.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the number of points.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr localIndex numPointsInFlux( localIndex const index ) const
-  {
-    GEOS_UNUSED_VAR( index );
-    return maxNumPointsInFlux;
-  }
-
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex const iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+  // handle by inheritance
+  using ToCellWrapperBase::computeWeights;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
@@ -109,71 +82,91 @@ public:
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
+//  /**
+//   * @brief Compute the stabilization weights
+//   * @param[in] iconn connection index
+//   * @param[out] stabilizationWeight view weights
+//   */
+//        GEOS_HOST_DEVICE
+//        void computeStabilizationWeights( localIndex iconn,
+//                                          real64 ( & stabilizationWeight )[1][2] ) const
+//        { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
 
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
-   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
-   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
-   */
+/*  *//**
+ * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
+ *
+ * @param iconn connection index
+ * @param hydraulicAperture hydraulic apertures of the fractures
+ *//*
+   GEOS_HOST_DEVICE
+   void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+ * hydraulicAperture ) const;
+
+ *//**
+ * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
+ *
+ * @param iconn connection index
+ * @param hydraulicAperture hydraulic apertures of the fractures
+ *//*
+   GEOS_HOST_DEVICE
+   void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+ * hydraulicAperture ) const;
+ */
+private:
   GEOS_HOST_DEVICE
-  void computeWeights( localIndex const iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar1 )[1][2],
-                       real64 ( &dWeight_dVar2 )[1][2] ) const;
-
-  /**
-   * @brief Compute the stabilization weights
-   * @param[in] iconn connection index
-   * @param[out] stabilizationWeight view weights
-   */
+  inline void
+  computeWeightsBase( localIndex const iconn,
+                      localIndex const (&k)[2],
+                      localIndex const ielem,
+                      arraySlice3d< real64 const >  const & coefficient,
+                      arraySlice3d< real64 const >  const & dCoeff_dVar,
+                      real64 & halfWeight,
+                      real64 & dHalfWeight_dVar ) const override;
   GEOS_HOST_DEVICE
-  void computeStabilizationWeights( localIndex iconn,
-                                    real64 ( & stabilizationWeight )[1][2] ) const
-  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
+  inline void
+    computeWeightsBase( localIndex const iconn,
+                        localIndex const (&k)[2],
+                        localIndex const ielem,
+                        arraySlice3d< real64 const >  const & coefficient,
+                        arraySlice3d< real64 const >  const & dCoeff_dVar1,
+                        arraySlice3d< real64 const >  const & dCoeff_dVar2,
+                        real64 &halfWeight,
+                        real64 ( &dHalfWeight_dVar )[2] ) const override;
 
-  /**
-   * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
-   *
-   * @param iconn connection index
-   * @param hydraulicAperture hydraulic apertures of the fractures
-   */
+
+
   GEOS_HOST_DEVICE
-  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
-
-  /**
-   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
-   *
-   * @param iconn connection index
-   * @param hydraulicAperture hydraulic apertures of the fractures
-   */
-  GEOS_HOST_DEVICE
-  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
-
+  void
+  computeWeightsBase( const geos::localIndex iconn,
+                      const geos::localIndex ( & k )[2],
+                      const geos::localIndex ielem,
+                      const arraySlice3d< const geos::real64 > & coefficient,
+                      const arraySlice3d< const geos::real64 > & dCoeff_dVar1,
+                      const arraySlice4d< const geos::real64 > & dCoeff_dVar2,
+                      real64 & halfWeight,
+                      real64 ( & dHalfWeight_dVar ) [2] ) const override
+  { GEOS_UNUSED_VAR( iconn, k, ielem, coefficient, dCoeff_dVar1, dCoeff_dVar2, halfWeight, dHalfWeight_dVar ); }
 };
 
 /**
  * @brief Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class EmbeddedSurfaceToCellStencil final : public StencilBase< TwoPointStencilTraits, EmbeddedSurfaceToCellStencil >
+class EmbeddedSurfaceToCellStencil final : public ToCellBase< EmbeddedSurfaceToCellStencil >
 {
 public:
 
-  virtual void move( LvArray::MemorySpace const space ) override;
+//  virtual void move( LvArray::MemorySpace const space ) override;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::move;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::size;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::stencilSize;
+  using ToCellBase< EmbeddedSurfaceToCellStencil >::add;
 
-  virtual void add( localIndex const numPts,
-                    localIndex const * const elementRegionIndices,
-                    localIndex const * const elementSubRegionIndices,
-                    localIndex const * const elementIndices,
-                    real64 const * const weights,
-                    localIndex const connectorIndex ) override;
+//  virtual void add( localIndex const numPts,
+//                    localIndex const * const elementRegionIndices,
+//                    localIndex const * const elementSubRegionIndices,
+//                    localIndex const * const elementIndices,
+//                    real64 const * const weights,
+//                    localIndex const connectorIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = EmbeddedSurfaceToCellStencilWrapper;
@@ -184,63 +177,28 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
-  /**
-   * @brief Return the stencil size.
-   * @return the stencil size
-   */
-  virtual localIndex size() const override
-  { return m_elementRegionIndices.size( 0 ); }
-
-  /**
-   * @brief Give the number of points in a stencil entry.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the size of a stencil entry
-   */
-  constexpr localIndex stencilSize( localIndex const index ) const
-  {
+//  /**
+//   * @brief Return the stencil size.
+//   * @return the stencil size
+//   */
+//  virtual localIndex size() const override
+//  { return m_elementRegionIndices.size( 0 ); }
+//
+/**
+ * @brief Give the number of points in a stencil entry.
+ * @param[in] index of the stencil entry for which to query the size
+ * @return the size of a stencil entry
+ */
+/*
+   constexpr localIndex stencilSize( localIndex const index ) const
+   {
     GEOS_UNUSED_VAR( index );
     return maxStencilSize;
-  }
+   }*/
 
-private:
+
 
 };
-
-GEOS_HOST_DEVICE
-inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  computeWeights( localIndex iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 ( & weight )[1][2],
-                  real64 ( & dWeight_dVar )[1][2] ) const
-{
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
-
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
-
-  // Will change when implementing collocation points. Will use fracture normal to project the permeability
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
-
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = t0*t1/sumOfTrans;
-
-  weight[0][0] = value;
-  weight[0][1] = -value;
-
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
-  real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][2];
-
-  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-}
 
 GEOS_HOST_DEVICE
 inline void
@@ -264,74 +222,94 @@ EmbeddedSurfaceToCellStencilWrapper::
 
 GEOS_HOST_DEVICE
 inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  computeWeights( localIndex iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                  real64 (& weight)[1][2],
-                  real64 (& dWeight_dVar1 )[1][2],
-                  real64 (& dWeight_dVar2 )[1][2] ) const
+EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
+                                                         localIndex const (&k)[2],
+                                                         localIndex const ielem,
+                                                         arraySlice3d< real64 const > const & coefficient,
+                                                         arraySlice3d< real64 const > const & dCoeff_dVar1,
+                                                         arraySlice3d< real64 const > const & dCoeff_dVar2,
+                                                         real64 & halfWeight,
+                                                         real64 (& dHalfWeight_dVar)[2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
+  GEOS_UNUSED_VAR( k );
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+  localIndex const ei = m_elementIndices[iconn][ielem];
 
-  // Will change when implementing collocation points. Will use fracture normal to project the permeability
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
+  if( ielem == 0 )
+  {
+    // Will change when implementing collocation points. Will use fracture normal to project the permeability
+    halfWeight = m_weights[iconn][ielem] * LvArray::tensorOps::l2Norm< 3 >( coefficient[ei][0] );
+    dHalfWeight_dVar[0] = m_weights[iconn][0] * dCoeff_dVar1[ei][0][0];
+    dHalfWeight_dVar[1] = m_weights[iconn][0] * dCoeff_dVar2[ei][0][0];
+  }
+  else
+  {
+    // We consider the 3rd component of the permeability which is the normal one.
+    halfWeight = m_weights[iconn][1] * coefficient[ei][0][2];
+    dHalfWeight_dVar[0] = m_weights[iconn][0] * dCoeff_dVar1[ei][0][2];
+    dHalfWeight_dVar[1] = m_weights[iconn][0] * dCoeff_dVar2[ei][0][2];
+  }
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = t0*t1/sumOfTrans;
-
-  weight[0][0] = value;
-  weight[0][1] = -value;
-
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const dt0_dVar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
-  real64 const dt1_dVar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][2];
-  real64 const dt0_dVar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
-  real64 const dt1_dVar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][2];
-
-  dWeight_dVar1[0][0] = ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar1[0][1] = ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-
-  dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
 GEOS_HOST_DEVICE
 inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
+EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
+                                                         localIndex const (&k)[2],
+                                                         localIndex const ielem,
+                                                         arraySlice3d< real64 const > const & coefficient,
+                                                         arraySlice3d< real64 const > const & dCoeff_dVar,
+                                                         real64 & halfWeight,
+                                                         real64 & dHalfWeight_dVar ) const
 {
-  // only the fracture side is modified, k=1
-  localIndex constexpr k = 1;
-  localIndex const er  =  m_elementRegionIndices[iconn][k];
-  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-  localIndex const ei  =  m_elementIndices[iconn][k];
 
-  m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+
+  localIndex const ei = m_elementIndices[iconn][ielem];
+
+  if( ielem == 0 )
+  {
+    // Will change when implementing collocation points. Will use fracture normal to project the permeability
+    halfWeight = m_weights[iconn][ielem] * LvArray::tensorOps::l2Norm< 3 >( coefficient[ei][0] );
+    dHalfWeight_dVar = m_weights[iconn][ielem] * dCoeff_dVar[ei][0][0];
+  }
+  else
+  {
+    // We consider the 3rd component of the permeability which is the normal one.
+    halfWeight = m_weights[iconn][ielem] * coefficient[ei][0][2];
+    dHalfWeight_dVar = m_weights[iconn][ielem] * dCoeff_dVar[ei][0][2];
+  }
+
 }
 
-GEOS_HOST_DEVICE
-inline void
-EmbeddedSurfaceToCellStencilWrapper::
-  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
-{
-  // only the fracture side is modified, k=1
-  localIndex constexpr k = 1;
-  localIndex const er  =  m_elementRegionIndices[iconn][k];
-  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-  localIndex const ei  =  m_elementIndices[iconn][k];
-
-  m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
-}
+//GEOS_HOST_DEVICE
+//inline void
+//EmbeddedSurfaceToCellStencilWrapper::
+//  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+// hydraulicAperture ) const
+//{
+//  // only the fracture side is modified, k=1
+//  localIndex constexpr k = 1;
+//  localIndex const er  =  m_elementRegionIndices[iconn][k];
+//  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+//  localIndex const ei  =  m_elementIndices[iconn][k];
+//
+//  m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+//}
+//
+//GEOS_HOST_DEVICE
+//inline void
+//EmbeddedSurfaceToCellStencilWrapper::
+//  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > >
+// hydraulicAperture ) const
+//{
+//  // only the fracture side is modified, k=1
+//  localIndex constexpr k = 1;
+//  localIndex const er  =  m_elementRegionIndices[iconn][k];
+//  localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+//  localIndex const ei  =  m_elementIndices[iconn][k];
+//
+//  m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
+//}
 
 } /* namespace geos */
 

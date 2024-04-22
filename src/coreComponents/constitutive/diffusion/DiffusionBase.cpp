@@ -41,7 +41,6 @@ DiffusionBase::DiffusionBase( string const & name, Group * const parent )
 
   registerField( fields::diffusion::diffusivity{}, &m_diffusivity );
   registerField( fields::diffusion::dDiffusivity_dTemperature{}, &m_dDiffusivity_dTemperature );
-  registerField( fields::diffusion::phaseDiffusivityMultiplier{}, &m_phaseDiffusivityMultiplier );
 }
 
 void DiffusionBase::postProcessInput()
@@ -61,32 +60,18 @@ void DiffusionBase::postProcessInput()
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
                  InputError );
 
-  m_diffusivity.resize( 0, 0, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
+  m_diffusivity.resize( 0, 0, 0, 3 );
+  m_dDiffusivity_dTemperature.resize( 0, 0, 0, 3 );
 }
 
 void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_diffusivity.resize( 0, 1, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 1, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 1, 3 );
+  m_diffusivity.resize( 0, 1, 0, 3 );
+  m_dDiffusivity_dTemperature.resize( 0, 1, 0, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
-  {
-    // NOTE: enforcing 1 quadrature point
-    for( localIndex q = 0; q < 1; ++q )
-    {
-      for( integer ip = 0; ip < numFluidPhases(); ++ip )
-      {
-        m_phaseDiffusivityMultiplier[ei][q][ip] = m_defaultPhaseDiffusivityMultiplier[ip];
-      }
-    }
-  }
 
 }
 

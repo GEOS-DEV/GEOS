@@ -254,6 +254,7 @@ public:
 
     // Step 1: compute the thermal transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
