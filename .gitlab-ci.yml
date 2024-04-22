@@ -140,6 +140,8 @@ stages:
   variables:
     ALLOC_COMMAND: "lalloc 1"
     INTEGRATED_ALLOC_COMMAND: "lalloc 10"
+  before_script:
+    - module load cuda/11.8.0
   tags:
     - shell
     - lassen
