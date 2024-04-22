@@ -107,6 +107,11 @@ public:
   virtual ~TableTextFormatter() = default;
 
   /**
+   * @return A TableLayout converted into a formatted representation.
+   */
+  string layoutToString() const;
+
+  /**
    * @brief Convert the TableData to a table string.
    * @param tableData The TableData to convert.
    * @return The table string representation of the TableData.

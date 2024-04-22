@@ -271,6 +271,25 @@ TEST( testTable, table2DColumnMismatch )
   }
 }
 
+TEST( testTable, layoutTable )
+{
+  string filename = "fluid1_phaseModel1_PhillipsBrineDensity_table";
+  //2. format
+  string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
+  TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
+
+  //3. log
+  TableTextFormatter const tableLog( tableLayoutInfos );
+  EXPECT_EQ( tableLog.layoutToString(),
+             "\n-------------------------------------------------------------------------------------\n"
+             "|                   fluid1_phaseModel1_PhillipsBrineDensity_table                   |\n"
+             "-------------------------------------------------------------------------------------\n"
+             "|  The fluid1_phaseModel1_PhillipsBrineDensity_table PVT table exceeding 500 rows.  |\n"
+             "|  To visualize the tables, go to the generated csv                                 |\n"
+             "-------------------------------------------------------------------------------------\n"
+             );
+}
+
 TEST( testTable, tableSetMargin )
 {
   ////////////

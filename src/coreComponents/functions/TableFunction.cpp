@@ -20,9 +20,9 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "common/TableLayout.hpp"
-#include "common/TableData.hpp"
-#include "common/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 
 
 #include <algorithm>
