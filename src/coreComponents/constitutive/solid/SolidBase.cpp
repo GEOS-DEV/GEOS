@@ -27,32 +27,10 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density(),
+  ContinuumBase( name, parent ),
   m_thermalExpansionCoefficient()
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
-
-  registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Current Material Stress" ).
-    setDimLabels( 2, voightLabels );
-
-  registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
-    setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Previous Material Stress" );
-
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( -1 ). // will be overwritten
-    setDescription( "Material Density" );
-
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default Material Density" );
 
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
     setApplyDefaultValue( 0.0 ).
@@ -71,8 +49,7 @@ SolidBase::~SolidBase()
 
 void SolidBase::postProcessInput()
 {
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
-    setApplyDefaultValue( m_defaultDensity );
+  ContinuumBase::postProcessInput();
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
@@ -82,11 +59,9 @@ void SolidBase::postProcessInput()
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_density.resize( 0, numConstitutivePointsPerParentIndex );
-  m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
-  m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  ContinuumBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_thermalExpansionCoefficient.resize( 0 );
 }
 
 

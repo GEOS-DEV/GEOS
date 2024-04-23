@@ -58,11 +58,16 @@ public:
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                    arrayView2d< real64 > const & density,
+                    arrayView2d< real64 > const & wavespeed,
                     const bool & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus, 
                              shearModulus, 
                              thermalExpansionCoefficient,
-                             newStress, oldStress, 
+                             newStress, 
+                             oldStress,
+                             density,
+                             wavespeed, 
                              disableInelasticity ),
     m_yieldStrength( yieldStrength ),
     m_deformationGradient( deformationGradient ),
@@ -605,6 +610,8 @@ public:
                                m_thermalExpansionCoefficient,
                                m_newStress,
                                m_oldStress,
+                               m_density,
+                               m_wavespeed,
                                m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
@@ -618,6 +625,8 @@ public:
                                m_thermalExpansionCoefficient,
                                arrayView3d< real64, solid::STRESS_USD >(),
                                arrayView3d< real64, solid::STRESS_USD >(),
+                               m_density,
+                               m_wavespeed,
                                m_disableInelasticity );
     }
   }
@@ -643,6 +652,8 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 
