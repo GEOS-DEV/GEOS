@@ -67,8 +67,15 @@ public:
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                                     arrayView2d< real64 > const & density,
+                                     arrayView2d< real64 > const & wavespeed,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+    SolidBaseUpdates( newStress, 
+                      oldStress,
+                      density,
+                      wavespeed,
+                      thermalExpansionCoefficient,
+                      disableInelasticity ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -762,6 +769,8 @@ public:
                                               m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
+                                              m_density,
+                                              m_wavespeed,
                                               m_disableInelasticity );
   }
 
@@ -788,6 +797,8 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 

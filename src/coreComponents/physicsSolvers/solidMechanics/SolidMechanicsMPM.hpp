@@ -261,6 +261,7 @@ public:
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
     static constexpr char const * displacementString() { return "displacement"; }
+    static constexpr char const * centerOfVolumeString() { return "centerOfVolume"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
     static constexpr char const * cohesiveTractionString() { return "cohesiveTraction"; }
 
@@ -278,7 +279,7 @@ public:
 
     static constexpr char const * surfacePositionString() { return "surfacePosition"; }
 
-    static constexpr char const * materialPositionString() { return "materialPosition"; }
+    static constexpr char const * centerOfMassString() { return "centerOfMass"; }
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
     static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
@@ -378,8 +379,10 @@ public:
                              arrayView3d< real64 const > const & gridVelocity,
                              arrayView3d< real64 const > const & gridMomentum,
                              arrayView3d< real64 const > const & gridSurfaceNormal,
+                             arrayView2d< real64 const > const & gridSurfaceFieldMass,
                              arrayView3d< real64 const > const & gridSurfacePosition,
-                             arrayView3d< real64 const > const & gridMaterialPosition,
+                             arrayView3d< real64 const > const & gridCenterOfMass,
+                             arrayView3d< real64 const > const & gridCenterOfVolume,
                              arrayView2d< int const > const & gridCohesiveFieldFlag,
                              arrayView3d< real64 > const & gridContactForce );
 
@@ -389,8 +392,8 @@ public:
                                   int const b,
                                   real64 & frictionCoefficient );
 
-  void computePairwiseNodalContactForce( int const & separable,
-                                         int useCohesiveTangentialForces,
+  void computePairwiseNodalContactForce( int & separable,
+                                         int const & useCohesiveTangentialForces,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
                                          real64 const & mA,
@@ -403,10 +406,14 @@ public:
                                          arraySlice1d< real64 const > const qB,
                                          arraySlice1d< real64 const > const nA,
                                          arraySlice1d< real64 const > const nB,
+                                         real64 const spmA,
+                                         real64 const spmB,
                                          arraySlice1d< real64 const > const sA,
                                          arraySlice1d< real64 const > const sB, 
                                          arraySlice1d< real64 const > const xA, // Position of field A
                                          arraySlice1d< real64 const > const xB, // Position of field B
+                                         arraySlice1d< real64 const > const centerOfVolumeA,
+                                         arraySlice1d< real64 const > const centerOfVolumeB,
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
@@ -814,6 +821,8 @@ protected:
   real64 m_artificialViscosityQ1;
 
   int m_cpdiDomainScaling;
+  int m_subdivideGasParticles; // Gas particles larger than a grid cell are subdivided
+  int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
 
   real64 m_smallMass;
 

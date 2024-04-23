@@ -277,8 +277,8 @@ public:
   { return m_particleSurfaceNormal; }
 
   /**
-   * @brief Get the initial surface normal of each particle in this subregion.
-   * @return an arrayView1d of const particle initial surface normal
+   * @brief Get the initial surface position of each particle in this subregion.
+   * @return an arrayView1d of const particle initial surface position
    */
   arrayView2d< real64 const > getParticleInitialSurfacePosition() const
   { return m_particleInitialSurfacePosition; }
@@ -290,8 +290,8 @@ public:
   { return m_particleInitialSurfacePosition; }
 
   /**
-   * @brief Get the surface normal of each particle in this subregion.
-   * @return an arrayView1d of const particle surface normal
+   * @brief Get the surface position of each particle in this subregion.
+   * @return an arrayView1d of const particle surface position
    */
   arrayView2d< real64 const > getParticleSurfacePosition() const
   { return m_particleSurfacePosition; }
@@ -301,6 +301,32 @@ public:
    */
   arrayView2d< real64 > getParticleSurfacePosition()
   { return m_particleSurfacePosition; }
+
+  /**
+   * @brief Get the initial surface traction of each particle in this subregion.
+   * @return an arrayView1d of const particle initial surface traction
+   */
+  arrayView2d< real64 const > getParticleInitialSurfaceTraction() const
+  { return m_particleInitialSurfaceTraction; }
+
+  /**
+   * @copydoc getParticleInitialSurfaceTraction() const
+   */
+  arrayView2d< real64 > getParticleInitialSurfaceTraction()
+  { return m_particleInitialSurfaceTraction; }
+
+  /**
+   * @brief Get the surface traction of each particle in this subregion.
+   * @return an arrayView1d of const particle surface traction
+   */
+  arrayView2d< real64 const > getParticleSurfaceTraction() const
+  { return m_particleSurfaceTraction; }
+
+  /**
+   * @copydoc getParticleSurfaceTraction() const
+   */
+  arrayView2d< real64 > getParticleSurfaceTraction()
+  { return m_particleSurfaceTraction; }
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -446,8 +472,14 @@ public:
     /// @return String key for the member level field for the particle initial surface position.
     static constexpr char const * particleInitialSurfacePositionString() { return "particleInitialSurfacePosition"; }
   
-    /// @return String key for the member level field for the particle surface normal.
+    /// @return String key for the member level field for the particle surface position.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
+
+    /// @return String key for the member level field for the particle initial surface traction.
+    static constexpr char const * particleInitialSurfaceTractionString() { return "particleInitialSurfaceTraction"; }
+  
+    /// @return String key for the member level field for the particle surface traction.
+    static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
   };
 
   /**
@@ -576,6 +608,12 @@ protected:
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
+
+  /// Member level field for the particle initial surface traction.
+  array2d< real64 > m_particleInitialSurfaceTraction;
+
+  /// Member level field for the particle surface traction.
+  array2d< real64 > m_particleSurfaceTraction;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;
