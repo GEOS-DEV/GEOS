@@ -80,6 +80,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );
 
+      subRegion.registerField< fields::flow::mass >( getName() );
+      subRegion.registerField< fields::flow::mass_n >( getName() );
+
       if( m_isThermal )
       {
         subRegion.registerField< dMobility_dTemperature >( getName() );
@@ -239,6 +242,60 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
   } );
 }
 
+void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
+  arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
+
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+  arrayView2d< real64 const > const porosity_n = porousSolid.getPorosity_n();
+
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  arrayView2d< real64 const > const density = fluid.density();
+  arrayView2d< real64 const > const density_n = fluid.density_n();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    mass[ei] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * density[ei][0];
+    if( isZero( mass_n[ei] ) ) // this is a hack for hydrofrac cases
+      mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0]; // initialize newly created element mass
+  } );
+}
+
+void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 > const energy = subRegion.getField< fields::flow::energy >();
+
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+  arrayView2d< real64 const > const rockInternalEnergy = porousSolid.getInternalEnergy();
+
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  arrayView2d< real64 const > const density = fluid.density();
+  arrayView2d< real64 const > const fluidInternalEnergy = fluid.internalEnergy();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    energy[ei] = ( volume[ei] + deltaVolume[ei] ) *
+                 ( porosity[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] + ( 1.0 - porosity[ei][0] ) * rockInternalEnergy[ei][0] );
+  } );
+}
+
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
@@ -266,9 +323,10 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.update( porosity );
 }
 
-void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
+void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
+  updateMass( subRegion );
   updateMobility( subRegion );
 }
 
@@ -383,7 +441,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
         SolidInternalEnergy const & solidInternalEnergyMaterial =
           getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
         solidInternalEnergyMaterial.saveConvergedState();
-
       }
     } );
 
@@ -404,16 +461,21 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // Save initial pressure field
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
+      // Save initial pressure field
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 > const initPres = subRegion.getField< fields::flow::initialPressure >();
       arrayView1d< real64 const > const & temp = subRegion.template getField< fields::flow::temperature >();
       arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
       initPres.setValues< parallelDevicePolicy<> >( pres );
       initTemp.setValues< parallelDevicePolicy<> >( temp );
+
+      // finally update mass and energy
+      updateMass( subRegion );
+      if( m_isThermal )
+        updateEnergy( subRegion );
     } );
   } );
 
@@ -623,6 +685,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       {
         updateSolidInternalEnergyModel( subRegion );
         updateThermalConductivity( subRegion );
+        updateEnergy( subRegion );
       }
 
     } );
@@ -1188,6 +1251,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
+  if( m_keepFlowVariablesConstantDuringInitStep )
+    return;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -1201,6 +1267,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateEnergy( subRegion );
       }
     } );
   } );
@@ -1232,6 +1299,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateEnergy( subRegion );
       }
     } );
   } );
@@ -1317,6 +1385,15 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
                                         getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
 
   return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+}
+
+void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+{
+  FlowSolverBase::saveConvergedState( subRegion );
+
+  arrayView1d< real64 const > const mass = subRegion.template getField< fields::flow::mass >();
+  arrayView1d< real64 > const mass_n = subRegion.template getField< fields::flow::mass_n >();
+  mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
 } /* namespace geos */
