@@ -1,3 +1,4 @@
+# Integrated Test Docs Begin Parameters
 import geos_ats
 from geos_ats.test_builder import generate_geos_tests, RestartcheckParameters, TestDeck, CurveCheckParameters
 
@@ -10,7 +11,9 @@ curvecheck_params['filename'] = 'veloc_history.hdf5'
 curvecheck_params['tolerance'] = 1e-10
 curvecheck_params['time_units'] = 'milliseconds'
 curvecheck_params['curves'] = [['velocity', 'source']]
+# Integrated Test Docs End Parameters
 
+# Integrated Test Docs Begin Test Loop
 partitions = ((1, 1, 1), (2, 2, 2), (3, 3, 3))
 
 decks = [
@@ -25,3 +28,4 @@ decks = [
 ]
 
 generate_geos_tests(decks)
+# Integrated Test Docs End Test Loop
