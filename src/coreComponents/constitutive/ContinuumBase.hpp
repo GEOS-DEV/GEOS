@@ -14,13 +14,13 @@
 
 
 /**
- * @file SolidBase.hpp
+ * @file ContinuumBase.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
-#define GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTINUUMBASE_HPP_
+#define GEOS_CONSTITUTIVE_CONTINUUMBASE_HPP_
 
-#include "constitutive/ContinuumBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -29,7 +29,7 @@ namespace constitutive
 {
 
 /**
- * @brief Base class for all solid constitutive kernel wrapper classes.
+ * @brief Base class for all continuum constitutive kernel wrapper classes.
  *
  * The responsibility of this base is to:
  *
@@ -45,96 +45,59 @@ namespace constitutive
  * If an allocation occurs on the underlying Array after a KernelWrapper is created,
  * then the ArrayView members of that KernelWrapper are silently invalid.
  */
-class SolidBaseUpdates : public ContinuumBaseUpdates
+class ContinuumBaseUpdates
 {
 protected:
   /**
    * @brief constructor
    * @param[in] newStress The new stress data from the constitutive model class.
    * @param[in] oldStress The old stress data from the constitutive model class.
-   * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
-   * @param[in] disableInelasticity Flag to disable inelastic response
+   * @param[in] wavespeed The wavespeed data from the constitutive model class.
    */
-  SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                    arrayView2d< real64 > const & density,
-                    arrayView2d< real64 > const & wavespeed,
-                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                    const bool & disableInelasticity ):
-    ContinuumBaseUpdates( newStress,
-                          oldStress,
-                          density,
-                          wavespeed ),
-    m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
-    m_disableInelasticity( disableInelasticity )
+  ContinuumBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                        arrayView2d< real64 > const & density,
+                        arrayView2d< real64 > const & wavespeed ):
+    m_newStress( newStress ),
+    m_oldStress( oldStress ),
+    m_density( density ),
+    m_wavespeed( wavespeed )
   {}
 
   /// Deleted default constructor
-  SolidBaseUpdates() = delete;
+  ContinuumBaseUpdates() = delete;
 
   /**
    * @brief Copy Constructor
    * @param source Object to copy
    */
-  SolidBaseUpdates( SolidBaseUpdates const & source ) = default;
+  ContinuumBaseUpdates( ContinuumBaseUpdates const & source ) = default;
 
   /**
    * @brief Move Constructor
    * @param source Object to move resources from
    */
-  SolidBaseUpdates( SolidBaseUpdates && source ) = default;
+  ContinuumBaseUpdates( ContinuumBaseUpdates && source ) = default;
 
   /// Deleted copy assignment operator
-  SolidBaseUpdates & operator=( SolidBaseUpdates const & ) = delete;
+  ContinuumBaseUpdates & operator=( ContinuumBaseUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
+  ContinuumBaseUpdates & operator=( ContinuumBaseUpdates && ) =  delete;
 
 public:
 
-  /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
-  arrayView1d< real64 const > const m_thermalExpansionCoefficient;
+  /// A reference the current material stress at quadrature points.
+  arrayView3d< real64, solid::STRESS_USD > const m_newStress;
 
-  /// Flag to disable inelasticity
-  const bool & m_disableInelasticity;
+  /// A reference the previous material stress at quadrature points.
+  arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
 
-  /**
-   * @brief Get bulkModulus
-   * @param[in] k Element index.
-   * @return the bulkModulus of element k
-   */
-  GEOS_HOST_DEVICE
-  virtual real64 getBulkModulus( localIndex const k ) const
-  {
-    GEOS_UNUSED_VAR( k );
-    GEOS_ERROR( "getBulkModulus() not implemented for this model" );
+  /// A reference the current material density at quadrature points.
+  arrayView2d< real64 > m_density;
 
-    return 0;
-  }
-
-  /**
-   * @brief Get thermalExpansionCoefficient
-   * @param[in] k Element index.
-   * @return the thermalExpansionCoefficient of element k
-   */
-  GEOS_HOST_DEVICE
-  real64 getThermalExpansionCoefficient( localIndex const k ) const
-  {
-    return m_thermalExpansionCoefficient[k];
-  }
-
-  /**
-   * @brief Get shear modulus
-   * @param[in] k Element index.
-   * @return the shear modulus of element k
-   */
-  GEOS_HOST_DEVICE
-  virtual real64 getShearModulus( localIndex const k ) const
-  {
-    GEOS_UNUSED_VAR( k );
-    GEOS_ERROR( "getShearModulus() not implemented for this model" );
-    return 0;
-  }
+  /// A reference the current material wavespeed at quadrature points.
+  arrayView2d< real64 > m_wavespeed;
 
   /**
    * @name Update Interfaces: Stress and Stiffness
@@ -408,221 +371,28 @@ public:
     GEOS_UNUSED_VAR( stiffness );
     GEOS_ERROR( "hyperUpdate() not implemented for this model" );
   }                     
-
-  /**
-   * @brief Return the strain energy density at a given material point
-   *
-   * @param k the element inex
-   * @param q the quadrature index
-   * @return Strain energy density
-   */
-  GEOS_HOST_DEVICE
-  virtual real64 getStrainEnergyDensity( localIndex const k,
-                                         localIndex const q ) const
-  {
-    auto const & stress = m_newStress[k][q];
-
-    real64 strain[6]{};
-    getElasticStrain( k, q, strain );
-
-    real64 energy = 0;
-
-    for( localIndex i=0; i<6; ++i )
-    {
-      energy += stress[i]*strain[i];  // contraction sigma:epsilon
-    }
-    energy *= 0.5;
-
-    GEOS_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
-
-    return energy;
-  }
-
-  /**
-   * @brief Return the stiffness at a given element (small-strain interface)
-   *
-   * @note If the material model has a strain-dependent material stiffness (e.g.
-   * any plasticity, damage, or nonlinear elastic model) then this interface will
-   * not work.  Users should instead use one of the interfaces where a strain
-   * tensor is provided as input.
-   *
-   * @note Given the limitations above, this function may be removed from the
-   * public interface in the future.  Direct use in physics
-   * solvers is discouraged.
-   *
-   * @param k the element number
-   * @param stiffness the stiffness array
-   */
-  GEOS_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
-  {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "getElasticStiffness() not implemented for this model" );
-  }
-
-  /**
-   * @brief Perform a finite-difference stiffness computation
-   *
-   * This method uses stress evaluations and finite differencing to
-   * approximate the 6x6 stiffness matrix.
-   *
-   * @note This method only works for models providing the smallStrainUpdate
-   * method returning a 6x6 stiffness, as it will primarily be used to check
-   * the hand coded tangent against a finite difference reference.
-   * A similar method would need to be implemented to check compressed stiffness,
-   * stress-only, or finite-strain interfaces.
-   *
-   * @param k the element number
-   * @param q the quadrature index
-   * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
-   * @param stiffnessFD finite different stiffness approximation
-   */
-  GEOS_HOST_DEVICE
-  void computeSmallStrainFiniteDifferenceStiffness( localIndex k,
-                                                    localIndex q,
-                                                    real64 const & timeIncrement,
-                                                    real64 const ( &strainIncrement )[6],
-                                                    real64 ( & stiffnessFD )[6][6] ) const
-  {
-    real64 stiffness[6][6]{};      // coded stiffness
-    real64 stress[6]{};            // original stress
-    real64 stressFD[6]{};          // perturbed stress
-    real64 strainIncrementFD[6]{}; // perturbed strain
-    real64 norm = 0;               // norm for scaling (note: method is fragile w.r.t. scaling)
-
-    for( localIndex i=0; i<6; ++i )
-    {
-      strainIncrementFD[i] = strainIncrement[i];
-      norm += fabs( strainIncrement[i] );
-    }
-
-    real64 eps = 1e-4*norm;     // finite difference perturbation
-
-    smallStrainUpdate( k,
-                       q, 
-                       timeIncrement,
-                       strainIncrement, 
-                       stress, 
-                       stiffness );
-
-    for( localIndex i=0; i<6; ++i )
-    {
-      strainIncrementFD[i] += eps;
-
-      if( i>0 )
-      {
-        strainIncrementFD[i-1] -= eps;
-      }
-
-      smallStrainUpdate( k, 
-                         q, 
-                         timeIncrement,
-                         strainIncrementFD, 
-                         stressFD, 
-                         stiffnessFD );
-
-      for( localIndex j=0; j<6; ++j )
-      {
-        stiffnessFD[j][i] = (stressFD[j]-stress[j])/eps;
-      }
-    }
-
-    return;
-  }
-
-  /**
-   * @brief Perform a finite-difference check of the stiffness computation
-   *
-   * This method uses several stress evaluations and finite differencing to
-   * approximate the 6x6 stiffness matrix, and then computes an error between
-   * the coded stiffness method and the finite difference version.
-   *
-   * @note This method only works for models providing the smallStrainUpdate
-   * method returning a 6x6 stiffness.
-   *
-   * @param k the element number
-   * @param q the quadrature index
-   * @param strainIncrement strain increment (on top of which a FD perturbation will be added)
-   */
-  GEOS_HOST_DEVICE
-  bool checkSmallStrainStiffness( localIndex k,
-                                  localIndex q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  bool print = false ) const
-  {
-    real64 stiffness[6][6]{};     // coded stiffness
-    real64 stiffnessFD[6][6]{};   // finite difference approximation
-    real64 stress[6]{};           // original stress
-
-    smallStrainUpdate( k, 
-                       q, 
-                       timeIncrement,
-                       strainIncrement, 
-                       stress, 
-                       stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, 
-                                                 q, 
-                                                 timeIncrement, 
-                                                 strainIncrement, 
-                                                 stiffnessFD );
-
-    // compute relative error between two versions
-
-    real64 error = 0;
-    real64 norm = 0;
-
-    for( localIndex i=0; i<6; ++i )
-    {
-      for( localIndex j=0; j<6; ++j )
-      {
-        error += fabs( stiffnessFD[i][j]-stiffness[i][j] );
-        norm += fabs( stiffnessFD[i][j] );
-      }
-    }
-    error /= norm;
-
-    // optional printing for debugging purposes
-
-    if( print )
-    {
-      for( localIndex i=0; i<6; ++i )
-      {
-        for( localIndex j=0; j<6; ++j )
-        {
-          printf( "[%8.1e vs %8.1e] ", stiffnessFD[i][j], stiffness[i][j] );
-        }
-        printf( "\n" );
-      }
-    }
-
-    return (error < 1e-3);
-  }
-
 };
 
 
 /**
- * @class SolidBase
+ * @class ContinuumBase
  * This class serves as the base class for solid constitutive models.
  */
-class SolidBase : public constitutive::ContinuumBase
+class ContinuumBase : public constitutive::ConstitutiveBase
 {
 public:
   /**
    * @brief Constructor
-   * @param name Name of the SolidBase object in the repository.
-   * @param parent The parent group of the SolidBase object.
+   * @param name Name of the ContinuumBase object in the repository.
+   * @param parent The parent group of the ContinuumBase object.
    */
-  SolidBase( string const & name,
+  ContinuumBase( string const & name,
              Group * const parent );
 
   /**
    * Destructor
    */
-  virtual ~SolidBase() override;
+  virtual ~ContinuumBase() override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -630,7 +400,7 @@ public:
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "SolidBase";
+  static constexpr auto m_catalogNameString = "ContinuumBase";
 
   /**
    * @brief Static catalog string
@@ -645,15 +415,13 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Keys for data in this class
-  struct viewKeyStruct : public ContinuumBase::viewKeyStruct
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
-                                                                                                                              // thermal
-                                                                                                                              // expansion
-                                                                                                                              // coefficient
-                                                                                                                              // key
+    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
+    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
+    static constexpr char const * densityString() { return "density"; }                ///< Density key
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
+    static constexpr char const * wavespeedString() { return "wavespeed"; } 
   };
 
   /**
@@ -668,53 +436,104 @@ public:
   virtual void saveConvergedState() const override;
 
   /**
-   * @brief Enable/disable inelasticity
-   * @param flag Flag to disable (if true) or enable (if false) inelastic response
+   * @brief Number of elements storing solid data
+   * @return Number of elements
    */
-  void disableInelasticity( bool const flag )
+  localIndex numElem() const
   {
-    m_disableInelasticity = flag;
+    return m_oldStress.size( 0 );
   }
 
   /**
-   *@brief Get bulkModulus vector
-   *@return the bulkModulus of all elements
+   * @brief Number of quadrature points storing solid data
+   * @return Number of quadrature points
    */
-  GEOS_HOST_DEVICE
-  virtual arrayView1d< real64 const > getBulkModulus( ) const
+  localIndex numQuad() const
   {
-    GEOS_ERROR( "getBulkModulus() not implemented for this model" );
-
-    array1d< real64 > out;
-    return out.toViewConst();
+    return m_oldStress.size( 1 );
   }
 
   /**
-   *@brief Get shearModulus vector
-   *@return the shearModulus of all elements
+   * @name Accessors
    */
-  GEOS_HOST_DEVICE
-  virtual arrayView1d< real64 const > getShearModulus( ) const
-  {
-    GEOS_ERROR( "getShearModulus() not implemented for this model" );
+  ///@{
 
-    array1d< real64 > out;
-    return out.toViewConst();
+  /**
+   * @brief Non-const/mutable accessor for stress
+   * @return Accessor
+   */
+  arrayView3d< real64, solid::STRESS_USD > const getStress()
+  {
+    return m_newStress;
   }
+
+  /**
+   * @brief Const/non-mutable accessor for stress
+   * @return Accessor
+   */
+  arrayView3d< real64 const, solid::STRESS_USD > const getStress() const
+  {
+    return m_newStress;
+  }
+
+  /**
+   * @brief Non-const/Mutable accessor for density.
+   * @return Accessor
+   */
+  arrayView2d< real64 > const getDensity()
+  {
+    return m_density;
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for density
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return m_density;
+  }
+
+  /**
+   * @brief Non-const/Mutable accessor for wavespeed.
+   * @return Accessor
+   */
+  arrayView2d< real64 > const getWavespeed()
+  {
+    return m_wavespeed;
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for wavespeed.
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getWavespeed() const
+  {
+    return m_wavespeed;
+  }
+
+  ///@}
+  //
 
 protected:
 
   /// Post-process XML input
   virtual void postProcessInput() override;
 
-  /// The thermal expansion coefficient for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_thermalExpansionCoefficient;
+  /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
+  array3d< real64, solid::STRESS_PERMUTATION > m_newStress;
 
-  /// The default value of the thermal expansion coefficient for any new allocations.
-  real64 m_defaultThermalExpansionCoefficient = 0;
+  /// The previous stress at a quadrature point (i.e. at timestep (n-1))
+  array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
 
-  /// Flag to disable inelasticity (plasticity, damage, etc.)
-  bool m_disableInelasticity = false;
+  /// The material density at a quadrature point.
+  array2d< real64 > m_density;
+
+  /// The default density for new allocations.
+  real64 m_defaultDensity;
+
+  /// The wavespeed at a quadrature point
+  array2d< real64 > m_wavespeed;
 
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.
@@ -724,4 +543,4 @@ protected:
 } // namespace constitutive
 } // namespace geos
 
-#endif /* GEOS_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTINUUMBASE_HPP_ */

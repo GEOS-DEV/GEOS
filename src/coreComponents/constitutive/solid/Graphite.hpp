@@ -105,9 +105,13 @@ public:
                    arrayView1d< real64 > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                   arrayView2d< real64 > const & density,
+                   arrayView2d< real64 > const & wavespeed,
                    bool const & disableInelasticity ):
      SolidBaseUpdates( newStress, 
-                       oldStress, 
+                       oldStress,
+                       density,
+                       wavespeed,
                        thermalExpansionCoefficient, 
                        disableInelasticity ),
     m_defaultYoungModulusTransverse( defaultYoungModulusTransverse ),
@@ -409,7 +413,7 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
-  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for CeramicDamage model" );
+  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for Graphite model" );
 }
 
 GEOS_HOST_DEVICE
@@ -523,6 +527,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // Update effective elastic properties
     m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
     m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+    m_wavespeed[k][0] = sqrt( ( m_effectiveBulkModulus[k] + (4.0 / 3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
 
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ":\n"
@@ -1310,6 +1315,8 @@ public:
                             m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
+                            m_density,
+                            m_wavespeed,
                             m_disableInelasticity );
   }
 
@@ -1360,10 +1367,10 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
-
-
 
   /**
    * @brief Getter for default transverse Young's modulus
@@ -1590,4 +1597,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_KINEMATICDAMAGE_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_GRAPHITE_HPP_ */

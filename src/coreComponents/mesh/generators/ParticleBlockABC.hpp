@@ -116,6 +116,12 @@ public:
   virtual array1d< real64 > getParticleVolume() const = 0;
 
   /**
+   * @brief Get the list of particle porosity in this subregion.
+   * @return the list of particle porosity in this subregion.
+   */
+  virtual array1d< real64 > getParticlePorosity() const = 0;
+
+  /**
    * @brief Get the list of particle r-vectors in this subregion.
    * @return the list of particle r-vectors in this subregion.
    */
@@ -150,6 +156,18 @@ public:
    * @return the list of particle surface position in this subregion.
    */
   virtual array2d< real64 > getParticleSurfacePosition() const = 0;
+
+  /**
+   * @brief Get the list of particle initial surface traction in this subregion.
+   * @return the list of particle initial surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfaceTraction() const = 0;
+
+  /**
+   * @brief Get the list of particle surface traction in this subregion.
+   * @return the list of particle surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfaceTraction() const = 0;
 
   /**
    * @brief Get the number of particles.

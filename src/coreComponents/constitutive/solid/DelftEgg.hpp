@@ -68,8 +68,17 @@ public:
                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                   arrayView2d< real64 > const & density,
+                   arrayView2d< real64 > const & wavespeed,
                    const bool & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus,
+                             shearModulus,
+                             thermalExpansionCoefficient,
+                             newStress,
+                             oldStress,
+                             density,
+                             wavespeed,
+                             disableInelasticity ),
     m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
@@ -553,6 +562,8 @@ public:
                             m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
+                            m_density,
+                            m_wavespeed,
                             m_disableInelasticity );
   }
 
@@ -578,6 +589,8 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 

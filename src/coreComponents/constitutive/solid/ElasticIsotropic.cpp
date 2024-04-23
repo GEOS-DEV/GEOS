@@ -146,6 +146,9 @@ void ElasticIsotropic::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
+
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::wavespeedString() ).
+    setApplyDefaultValue( sqrt( ( m_defaultBulkModulus + (4.0/3.0) * m_defaultShearModulus ) / m_defaultDensity ) );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )

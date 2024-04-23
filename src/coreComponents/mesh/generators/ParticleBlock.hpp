@@ -177,6 +177,16 @@ public:
   void setParticleVolume( array1d< real64 > const particleVolume )
   { m_particleVolume = particleVolume; }
 
+  array1d< real64 > getParticlePorosity() const override
+  { return m_particlePorosity; }
+
+  /**
+   * @brief Set the list of particle porosities in this subregion.
+   * @param particlePorosity The input list of porosities
+   */
+  void setParticlePorosity( array1d< real64 > const particlePorosity )
+  { m_particlePorosity = particlePorosity; }
+
   array3d< real64 > getParticleRVectors() const override
   { return m_particleRVectors; }
 
@@ -230,6 +240,26 @@ public:
   void setParticleSurfacePosition( array2d< real64 > const particleSurfacePosition )
   { m_particleSurfacePosition = particleSurfacePosition; }
 
+  array2d< real64 > getParticleInitialSurfaceTraction() const override
+  { return m_particleInitialSurfaceTraction; }
+
+  /**
+   * @brief Set the list of surface tractions in this subregion.
+   * @param particleInitialSurfaceTraction The input list of initial surface tractions
+   */
+  void setParticleInitialSurfaceTraction( array2d< real64 > const particleInitialSurfaceTraction )
+  { m_particleInitialSurfaceTraction = particleInitialSurfaceTraction; }
+
+  array2d< real64 > getParticleSurfaceTraction() const override
+  { return m_particleSurfaceTraction; }
+
+  /**
+   * @brief Set the list of surface tractions in this subregion.
+   * @param particleSurfaceTraction The input list of surface positions
+   */
+  void setParticleSurfaceTraction( array2d< real64 > const particleSurfaceTraction )
+  { m_particleSurfaceTraction = particleSurfaceTraction; }
+
   localIndex numParticles() const override
   { return size(); }
 
@@ -281,6 +311,9 @@ private:
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;
 
+  /// Member level field for the particle porosity.
+  array1d< real64 > m_particlePorosity;
+
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;
 
@@ -319,6 +352,12 @@ private:
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
+
+  /// Member level field for the particle initial surface traction.
+  array2d< real64 > m_particleInitialSurfaceTraction;
+
+  /// Member level field for the particle surface traction.
+  array2d< real64 > m_particleSurfaceTraction;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {
