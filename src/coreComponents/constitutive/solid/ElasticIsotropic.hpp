@@ -54,8 +54,15 @@ public:
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                           arrayView2d< real64 > const & density,
+                           arrayView2d< real64 > const & wavespeed,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+    SolidBaseUpdates( newStress, 
+                      oldStress,
+                      density,
+                      wavespeed,
+                      thermalExpansionCoefficient,
+                      disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -295,6 +302,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 {
   GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
+  m_wavespeed[k][0] = ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0];
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
@@ -579,6 +587,8 @@ public:
                                       m_thermalExpansionCoefficient,
                                       m_newStress,
                                       m_oldStress,
+                                      m_density,
+                                      m_wavespeed,
                                       m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
@@ -588,6 +598,8 @@ public:
                                       m_thermalExpansionCoefficient,
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       arrayView3d< real64, solid::STRESS_USD >(),
+                                      m_density,
+                                      m_wavespeed,
                                       m_disableInelasticity );
     }
   }
@@ -609,6 +621,8 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 

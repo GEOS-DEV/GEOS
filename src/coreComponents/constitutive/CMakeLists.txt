@@ -8,6 +8,7 @@ set( constitutive_headers
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
+     ContinuumBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
@@ -21,6 +22,7 @@ set( constitutive_headers
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
      contact/FrictionlessContact.hpp
+     gas/Gas.hpp
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
@@ -153,6 +155,7 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
+     ContinuumBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/JFunctionCapillaryPressure.cpp
@@ -162,6 +165,7 @@ set( constitutive_sources
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
+     gas/Gas.cpp
      fluid/multifluid/MultiFluidBase.cpp
      fluid/multifluid/PVTDriver.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp

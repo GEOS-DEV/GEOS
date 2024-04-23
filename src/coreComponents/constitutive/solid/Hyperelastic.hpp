@@ -50,12 +50,19 @@ public:
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   HyperelasticUpdates( arrayView1d< real64 const > const & bulkModulus,
-                           arrayView1d< real64 const > const & shearModulus,
-                           arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                           arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                           const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
+                       arrayView1d< real64 const > const & shearModulus,
+                       arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                       arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                       arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                       arrayView2d< real64 > const & density,
+                       arrayView2d< real64 > const & wavespeed,
+                       const bool & disableInelasticity ):
+    SolidBaseUpdates( newStress, 
+                      oldStress,
+                      density,
+                      wavespeed,
+                      thermalExpansionCoefficient,
+                      disableInelasticity ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -235,9 +242,9 @@ void HyperelasticUpdates::getElasticStrain( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
-                                                                   localIndex const q,
-                                                                   real64 const ( &totalStrain )[6],
-                                                                   real64 ( & stress )[6] ) const
+                                                               localIndex const q,
+                                                               real64 const ( &totalStrain )[6],
+                                                               real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -249,10 +256,10 @@ void HyperelasticUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const 
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainNoStateUpdate( localIndex const k,
-                                                        localIndex const q,
-                                                        real64 const ( &totalStrain )[6],
-                                                        real64 ( & stress )[6],
-                                                        real64 ( & stiffness )[6][6] ) const
+                                                    localIndex const q,
+                                                    real64 const ( &totalStrain )[6],
+                                                    real64 ( & stress )[6],
+                                                    real64 ( & stiffness )[6][6] ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
   getElasticStiffness( k, q, stiffness );
@@ -536,6 +543,8 @@ public:
                                   m_thermalExpansionCoefficient,
                                   m_newStress,
                                   m_oldStress,
+                                  m_density,
+                                  m_wavespeed,
                                   m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
@@ -545,6 +554,8 @@ public:
                                   m_thermalExpansionCoefficient,
                                   arrayView3d< real64, solid::STRESS_USD >(),
                                   arrayView3d< real64, solid::STRESS_USD >(),
+                                  m_density,
+                                  m_wavespeed,
                                   m_disableInelasticity );
     }
   }
@@ -565,6 +576,8 @@ public:
                           m_shearModulus,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 

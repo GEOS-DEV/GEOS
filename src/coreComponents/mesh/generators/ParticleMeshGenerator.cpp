@@ -224,6 +224,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
           case ParticleColumnHeaders::SurfacePositionX:
           case ParticleColumnHeaders::SurfacePositionY:
           case ParticleColumnHeaders::SurfacePositionZ:
+          case ParticleColumnHeaders::SurfaceTractionX:
+          case ParticleColumnHeaders::SurfaceTractionY:
+          case ParticleColumnHeaders::SurfaceTractionZ:
             defaultValue = 0.0;
             break;
           default:
@@ -288,6 +291,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
     array2d< real64 > particleSurfaceNormal( npInBlock, 3); // TODO:: read from file eventually
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
+    array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
 
     // Assign particle data to the appropriate block.
     std::vector< int > & indices = indexMap[particleBlockName];
@@ -377,6 +381,10 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleSurfacePosition[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionY )];
       particleSurfacePosition[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionZ )];
 
+      particleSurfaceTraction[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionX )];
+      particleSurfaceTraction[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionY )];
+      particleSurfaceTraction[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionZ )];
+
       // Increment index
       index++;
     }
@@ -395,6 +403,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleInitialSurfacePosition( particleSurfacePosition );
     particleBlock.setParticleSurfacePosition( particleSurfacePosition );
+    particleBlock.setParticleInitialSurfaceTraction( particleSurfaceTraction );
+    particleBlock.setParticleSurfaceTraction( particleSurfaceTraction );
   } // loop over particle blocks
 
   // Resize particle regions

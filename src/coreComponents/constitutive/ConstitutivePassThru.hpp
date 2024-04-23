@@ -22,6 +22,8 @@
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
+#include "ContinuumBase.hpp"
+#include "gas/Gas.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
@@ -158,11 +160,11 @@ template< typename BASETYPE >
 struct ConstitutivePassThruMPM;
 
 /**
- * Specialization for models that derive from SolidBase that are used by the MPM solver.
+ * Specialization for models that derive from ContinuumBase that are used by the MPM solver.
  * NOTE: this is only a temporary dispatch to reduce the compilation time.
  */
 template<>
-struct ConstitutivePassThruMPM< SolidBase >
+struct ConstitutivePassThruMPM< ContinuumBase >
 {
 
   // NOTE: The switch order here can be fragile if a model derives from another
@@ -173,7 +175,7 @@ struct ConstitutivePassThruMPM< SolidBase >
 
   template< typename LAMBDA >
   static
-  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  void execute( ContinuumBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< Graphite,
                                  CeramicDamage,
@@ -184,8 +186,9 @@ struct ConstitutivePassThruMPM< SolidBase >
                                  VonMisesJ,
                                  ElasticIsotropic,
                                  Hyperelastic,
-                                 HyperelasticMMS >::execute( constitutiveRelation,
-                                                             std::forward< LAMBDA >( lambda ) );
+                                 HyperelasticMMS,
+                                 Gas >::execute( constitutiveRelation,
+                                                 std::forward< LAMBDA >( lambda ) );
   }
 };
 

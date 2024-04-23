@@ -152,6 +152,18 @@ public:
   virtual array2d< real64 > getParticleSurfacePosition() const = 0;
 
   /**
+   * @brief Get the list of particle initial surface traction in this subregion.
+   * @return the list of particle initial surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfaceTraction() const = 0;
+
+  /**
+   * @brief Get the list of particle surface traction in this subregion.
+   * @return the list of particle surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfaceTraction() const = 0;
+
+  /**
    * @brief Get the number of particles.
    * @return number of particles in the particle block
    */
