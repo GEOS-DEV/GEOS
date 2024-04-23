@@ -58,12 +58,14 @@
       referenceInternalEnergy="0"/>
 	<!-- SPHINX_SolidInternalEnergyEnd -->
 
+    <!-- SPHINX_SolidInternalEnergy_nonLinear -->
     <SolidInternalEnergy
       name="rockInternalEnergy_nonLinear"
       referenceVolumetricHeatCapacity="4.56e6"
       dVolumetricHeatCapacity_dTemperature="1e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
+    <!-- SPHINX_SolidInternalEnergy_nonLinearEnd -->
 
     <ConstantPermeability
       name="rockPerm"
