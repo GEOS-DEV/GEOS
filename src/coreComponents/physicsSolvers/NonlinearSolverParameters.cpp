@@ -190,8 +190,8 @@ void NonlinearSolverParameters::postProcessInput()
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search interpolation type = {}", EnumStrings< LineSearchInterpolationType >::toString( m_lineSearchInterpType ) ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search maximum number of cuts = {}", m_lineSearchMaxCuts ) );
       GEOS_LOG_RANK_0( GEOS_FMT( "  Line search cut factor = {}", m_lineSearchCutFactor ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "  Line starting iteration = {}", m_lineSearchStartingIteration ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "  Line residual increase factor = {}", m_lineSearchResidualFactor ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line search starting iteration = {}", m_lineSearchStartingIteration ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Line search residual increase factor = {}", m_lineSearchResidualFactor ) );
     }
     GEOS_LOG_RANK_0( GEOS_FMT( "  Norm type (flow solver) = {}", EnumStrings< solverBaseKernels::NormType >::toString( m_normType ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "  Minimum residual normalizer = {}", m_minNormalizer ) );
