@@ -745,6 +745,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
           }
         }
       } );
+
       stickResidual += stickSum.get();
       slipResidual += slipSum.get();
       slipNormalizer = LvArray::math::max( slipNormalizer, slipMax.get());
@@ -769,7 +770,7 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
     std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
   }
 
-  return sqrt( stickResidual*stickResidual + slipResidual*slipResidual + openResidual*openResidual );
+  return sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
