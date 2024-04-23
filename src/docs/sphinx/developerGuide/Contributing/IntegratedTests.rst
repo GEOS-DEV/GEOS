@@ -44,6 +44,16 @@ These can be triggered if the **ci: run integrated tests** label is selected for
 The optional label **ci: upload test baselines** can also be selected to instruct the test system to save and upload copies of the test results.
 
 To inspect the results of CI tests, select the *Checks* tab from the top of the pull request and then select *run_integrated_tests/build_test_deploy* from the left-hand panel.
+
+
+.. image:: integrated_test_location_pr_a.png
+   :width: 400px
+
+
+.. image:: integrated_test_location_pr_b.png
+   :width: 400px
+
+
 This page will show the full output of GEOS build process and the integrated test suite.
 At the bottom of this page, the logs will contain a summary of the test results and a list of any ignored/failed tests.
 
