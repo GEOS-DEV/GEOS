@@ -52,7 +52,7 @@ SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFrac
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
+  Base::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -69,7 +69,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
-  SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups();
+  Base::initializePostInitialConditionsPreSubGroups();
 
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
@@ -406,7 +406,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                         thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
                                                                                                             dofManager,
                                                                                                             regionNames,
-                                                                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                            Base::viewKeyStruct::porousMaterialNamesString(),
                                                                                                             localMatrix,
                                                                                                             localRhs,
                                                                                                             dt );
@@ -419,7 +419,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                         poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
                                                                               dofManager,
                                                                               regionNames,
-                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                              Base::viewKeyStruct::porousMaterialNamesString(),
                                                                               localMatrix,
                                                                               localRhs,
                                                                               dt );
@@ -438,84 +438,12 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
 }
 
-void SinglePhasePoromechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time_n,
-                                                                         real64 const dt,
-                                                                         DomainPartition & domain,
-                                                                         DofManager const & dofManager,
-                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                         arrayView1d< real64 > const & localRhs )
-{
-  solidMechanicsSolver()->applyBoundaryConditions( time_n, dt,
-                                                   domain,
-                                                   dofManager,
-                                                   localMatrix,
-                                                   localRhs );
-
-  flowSolver()->applyBoundaryConditions( time_n, dt,
-                                         domain,
-                                         dofManager,
-                                         localMatrix,
-                                         localRhs );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-                                                                   real64 const & dt,
-                                                                   DomainPartition & domain )
-{
-  flowSolver()->implicitStepSetup( time_n, dt, domain );
-  solidMechanicsSolver()->implicitStepSetup( time_n, dt, domain );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
-                                                                      real64 const & dt,
-                                                                      DomainPartition & domain )
-{
-  solidMechanicsSolver()->implicitStepComplete( time_n, dt, domain );
-  flowSolver()->implicitStepComplete( time_n, dt, domain );
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
-{
-  flowSolver()->resetStateToBeginningOfStep( domain );
-  solidMechanicsSolver()->resetStateToBeginningOfStep( domain );
-}
-
-
-real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 const & time_n,
-                                                                         real64 const & dt,
-                                                                         DomainPartition const & domain,
-                                                                         DofManager const & dofManager,
-                                                                         arrayView1d< real64 const > const & localRhs )
-{
-  // compute norm of momentum balance residual equations
-  real64 const momentumResidualNorm = solidMechanicsSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
-
-  // compute norm of mass balance residual equations
-  real64 const massResidualNorm = flowSolver()->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
-
-  real64 const residual = sqrt( momentumResidualNorm * momentumResidualNorm + massResidualNorm * massResidualNorm );
-
-  return residual;
-}
-
-void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
-                                                                     arrayView1d< real64 const > const & localSolution,
-                                                                     real64 const scalingFactor,
-                                                                     real64 const dt,
-                                                                     DomainPartition & domain )
-{
-  // update displacement and jump
-  solidMechanicsSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-  // update pressure field
-  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
-}
-
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   /// 1. update the reservoir
-  SinglePhasePoromechanics::updateState( domain );
+  Base::updateState( domain );
 
   // remove the contribution of the hydraulic aperture from the stencil weights
   flowSolver()->prepareStencilWeights( domain );
