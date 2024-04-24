@@ -168,7 +168,14 @@ if( NOT namedtype_POPULATED )
   add_subdirectory( ${namedtype_SOURCE_DIR} ${namedtype_BINARY_DIR} )
 endif()
 
-list( APPEND dependencyList NamedType )
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+#target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+
+list( APPEND dependencyList NamedType nlohmann_json::nlohmann_json)
 
 
 if( ENABLE_VTK )

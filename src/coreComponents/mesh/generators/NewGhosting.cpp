@@ -28,6 +28,9 @@
 #include <vtkPolyData.h>
 #include <vtkDataSetSurfaceFilter.h>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <algorithm>
 #include <utility>
 
