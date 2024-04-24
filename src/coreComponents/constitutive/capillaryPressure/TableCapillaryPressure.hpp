@@ -56,6 +56,7 @@ public:
     KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & capPresKernelWrappers,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
+                   integer const isClampedDerivative,
                    arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPres,
                    arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPres_dPhaseVolFrac );
 
@@ -141,15 +142,41 @@ TableCapillaryPressure::KernelWrapper::
       m_capPresKernelWrappers[TPT::INTERMEDIATE_WETTING].compute( &(phaseVolFraction)[ipWater],
                                                                   &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
 
+    if( m_isClampedDerivative && ( phaseVolFraction[ipWater] < m_capPresKernelWrappers[TPT::INTERMEDIATE_WETTING].getCoordinatesBounds()[0][0] ) )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipWater],
+                              dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] ));
+
+      dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] = 0.0;
+      phaseCapPres[ipWater] =
+        m_capPresKernelWrappers[0].compute( &m_capPresKernelWrappers[0].getCoordinatesBounds()[0][0],
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
+    }
     // gas-oil capillary pressure
     phaseCapPres[ipGas] =
       m_capPresKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &(phaseVolFraction)[ipGas],
                                                                      &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
 
+    if( m_isClampedDerivative && ( phaseVolFraction[ipGas] > m_capPresKernelWrappers[TPT::INTERMEDIATE_NONWETTING].getCoordinatesBounds()[0][1] ))
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipGas],
+                              dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] ));
+
+      phaseCapPres[ipGas] =
+        m_capPresKernelWrappers[0].compute( &m_capPresKernelWrappers[0].getCoordinatesBounds()[0][1],
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+      dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] = 0.0;
+
+    }
+    ;
     // when pc is on the gas phase, we need to multiply user input by -1
     // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
     phaseCapPres[ipGas] *= -1;
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
+
   }
   else if( ipWater < 0 )
   {
@@ -157,6 +184,18 @@ TableCapillaryPressure::KernelWrapper::
     phaseCapPres[ipGas] =
       m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipGas],
                                           &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+
+    if( m_isClampedDerivative && ( phaseVolFraction[ipGas] > m_capPresKernelWrappers[0].getCoordinatesBounds()[0][1] ) )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipGas],
+                              dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] ));
+
+      phaseCapPres[ipGas] =
+        m_capPresKernelWrappers[0].compute( &m_capPresKernelWrappers[0].getCoordinatesBounds()[0][1],
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+      dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] = 0.0;
+    }
 
     // when pc is on the gas phase, we need to multiply user input by -1
     // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
@@ -169,6 +208,21 @@ TableCapillaryPressure::KernelWrapper::
     phaseCapPres[ipWater] =
       m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipWater],
                                           &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
+    if( m_isClampedDerivative && ( phaseVolFraction[ipWater] < m_capPresKernelWrappers[0].getCoordinatesBounds()[0][0] ) )
+    {
+
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipWater],
+                              dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] ));
+
+      dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] = 0.0;
+      phaseCapPres[ipWater] =
+        m_capPresKernelWrappers[0].compute( &m_capPresKernelWrappers[0].getCoordinatesBounds()[0][0],
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
+
+    }
   }
 }
 

@@ -166,10 +166,12 @@ TableCapillaryPressure::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & capPresKernelWrappers,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
+                 integer const isClampedDerivative,
                  arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPres,
                  arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPres_dPhaseVolFrac )
   : CapillaryPressureBaseUpdate( phaseTypes,
                                  phaseOrder,
+                                 isClampedDerivative,
                                  phaseCapPres,
                                  dPhaseCapPres_dPhaseVolFrac ),
   m_capPresKernelWrappers( capPresKernelWrappers )
@@ -182,6 +184,7 @@ TableCapillaryPressure::createKernelWrapper()
   return KernelWrapper( m_capPresKernelWrappers,
                         m_phaseTypes,
                         m_phaseOrder,
+                        m_isClampedDerivative,
                         m_phaseCapPressure,
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }

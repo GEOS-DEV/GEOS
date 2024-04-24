@@ -43,6 +43,12 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::isClampedDerivativeString(), &m_isClampedDerivative ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDefaultValue( 0 ).
+    setDescription( "is the derivative 0 below Swirr or not" );
+
   registerField( fields::cappres::phaseCapPressure{}, &m_phaseCapPressure );
   registerField( fields::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
 

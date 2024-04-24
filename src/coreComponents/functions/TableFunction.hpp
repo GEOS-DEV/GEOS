@@ -74,6 +74,7 @@ public:
       m_coordinates = std::move( other.m_coordinates );
       m_values = std::move( other.m_values );
       m_interpolationMethod = other.m_interpolationMethod;
+      m_coordBounds = other.m_coordBounds;
       return *this;
     }
 
@@ -110,7 +111,10 @@ public:
     {
       m_coordinates.move( space, touch );
       m_values.move( space, touch );
+      m_coordBounds.move( space, touch );
     }
+
+    ArrayOfArraysView< real64 const > getCoordinatesBounds() const { return m_coordBounds.toViewConst(); };
 
 private:
 
@@ -129,6 +133,7 @@ private:
      */
     KernelWrapper( InterpolationType interpolationMethod,
                    ArrayOfArraysView< real64 const > const & coordinates,
+                   ArrayOfArraysView< real64 const > const & coordBounds,
                    arrayView1d< real64 const > const & values );
 
     /**
@@ -179,6 +184,8 @@ private:
     /// An array of table axes
     ArrayOfArraysView< real64 const > m_coordinates;
 
+
+    ArrayOfArraysView< real64 const > m_coordBounds;
     /// Table values (in fortran order)
     arrayView1d< real64 const > m_values;
   };
@@ -249,11 +256,14 @@ private:
    */
   ArrayOfArraysView< real64 const > getCoordinates() const { return m_coordinates.toViewConst(); }
 
+  ArrayOfArraysView< real64 const > getCoordinatesBounds() const { return m_coordBounds.toViewConst(); };
+
   /**
    * @copydoc getCoordinates() const
    */
   ArrayOfArraysView< real64 > getCoordinates() { return m_coordinates.toView(); }
 
+  ArrayOfArraysView< real64 > getCoordinatesBounds() { return m_coordBounds.toView(); };
   /**
    * @brief Get the table values
    * @return a reference to the 1d array of table values.  For ND arrays, values are stored in Fortran order.
@@ -368,6 +378,8 @@ private:
 
   /// An array of table axes
   ArrayOfArrays< real64 > m_coordinates;
+
+  ArrayOfArrays< real64 > m_coordBounds;
 
   /// Table values (in fortran order)
   array1d< real64 > m_values;

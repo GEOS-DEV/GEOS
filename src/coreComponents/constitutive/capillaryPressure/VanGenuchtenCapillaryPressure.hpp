@@ -38,10 +38,12 @@ public:
                                        real64 const volFracScale,
                                        arrayView1d< integer const > const & phaseTypes,
                                        arrayView1d< integer const > const & phaseOrder,
+                                       integer const isClampedDerivative,
                                        arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
                                        arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : CapillaryPressureBaseUpdate( phaseTypes,
                                    phaseOrder,
+                                   isClampedDerivative,
                                    phaseCapPressure,
                                    dPhaseCapPressure_dPhaseVolFrac ),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),

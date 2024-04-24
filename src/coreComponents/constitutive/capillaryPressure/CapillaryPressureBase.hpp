@@ -59,10 +59,12 @@ protected:
 
   CapillaryPressureBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                arrayView1d< integer const > const & phaseOrder,
+                               integer const isClampedDerivative,
                                arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
                                arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
+    m_isClampedDerivative( isClampedDerivative ),
     m_phaseCapPressure( phaseCapPressure ),
     m_dPhaseCapPressure_dPhaseVolFrac( dPhaseCapPressure_dPhaseVolFrac )
   {}
@@ -70,8 +72,11 @@ protected:
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
+  integer m_isClampedDerivative;
+
   arrayView3d< real64, cappres::USD_CAPPRES > m_phaseCapPressure;
   arrayView4d< real64, cappres::USD_CAPPRES_DS > m_dPhaseCapPressure_dPhaseVolFrac;
+
 
 private:
 
@@ -153,11 +158,14 @@ public:
    */
   arrayView4d< real64 const, cappres::USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
+  integer isClampedDerivative() const { return m_isClampedDerivative; }
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
+    static constexpr char const * isClampedDerivativeString() { return "isClampedDerivative"; }
   };
 
 private:
@@ -188,6 +196,8 @@ protected:
   // output quantities
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
   array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
+
+  integer m_isClampedDerivative;
 
 };
 

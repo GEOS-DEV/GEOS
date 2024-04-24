@@ -126,6 +126,7 @@ VanGenuchtenCapillaryPressure::createKernelWrapper()
                         m_volFracScale,
                         m_phaseTypes,
                         m_phaseOrder,
+                        m_isClampedDerivative,
                         m_phaseCapPressure,
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }

@@ -67,6 +67,7 @@ public:
                    arrayView2d< real64 const > const & jFuncMultiplier,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
+                   integer const isClampedDerivative,
                    arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPres,
                    arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPres_dPhaseVolFrac );
 
@@ -215,6 +216,7 @@ JFunctionCapillaryPressure::KernelWrapper::
     // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
     phaseCapPres[ipGas] *= -1;
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
+
   }
   else if( ipWater < 0 )
   {

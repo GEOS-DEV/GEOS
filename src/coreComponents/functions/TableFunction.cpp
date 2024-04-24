@@ -259,6 +259,7 @@ TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
 {
   return { m_interpolationMethod,
            m_coordinates.toViewConst(),
+           m_coordBounds.toViewConst(),
            m_values.toViewConst() };
 }
 
@@ -269,10 +270,12 @@ real64 TableFunction::evaluate( real64 const * const input ) const
 
 TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolationMethod,
                                              ArrayOfArraysView< real64 const > const & coordinates,
+                                             ArrayOfArraysView< real64 const > const & coordBounds,
                                              arrayView1d< real64 const > const & values )
   :
   m_interpolationMethod( interpolationMethod ),
   m_coordinates( coordinates ),
+  m_coordBounds( coordBounds ),
   m_values( values )
 {}
 
