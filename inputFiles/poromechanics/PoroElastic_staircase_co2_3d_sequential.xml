@@ -13,7 +13,9 @@
       solidSolverName="linearElasticity"
       reservoirAndWellsSolverName="reservoirAndWells"
       logLevel="1"
-      targetRegions="{ channel }">
+      targetRegions="{ channel }"
+      stabilizationType="Global"
+      stabilizationRegionNames="{ channel }">
       <NonlinearSolverParameters
         couplingType="Sequential"
         subcycling="1"
