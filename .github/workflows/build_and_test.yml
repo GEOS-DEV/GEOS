@@ -112,9 +112,9 @@ jobs:
           
           script_args+=(--data-basename ${DATA_BASENAME})
 
-          DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
+          DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
           if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
-            sudo mkdir -p ${DATA_EXCHANGE_DIR}
+            mkdir -p ${DATA_EXCHANGE_DIR}
           fi
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
