@@ -128,7 +128,7 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        if [ ${{ inputs.RUNS_ON }} == 'self-hosted' || ${{ inputs.RUNS_ON }} == 'streak2' ]; then
+        if [ ${{ inputs.RUNS_ON }} == 'self-hosted' ] || [ ${{ inputs.RUNS_ON }} == 'streak2' ]; then
           RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
           mkdir -p ${GITHUB_WORKSPACE}/certificates
           cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
