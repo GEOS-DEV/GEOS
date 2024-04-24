@@ -20,7 +20,7 @@
 #ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
-#include "events/EventManager.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geos
 {
@@ -34,6 +34,8 @@ namespace constitutive
 {
 class ConstitutiveManager;
 }
+class EventManager;
+class TasksManager;
 class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
@@ -308,13 +310,19 @@ public:
     return *m_fieldSpecificationManager;
   }
 
-
   /**
-   * @brief Returns the const EventManager.
-   * @return The const EventManager.
+   * @brief Returns the EventManager.
+   * @return The EventManager.
    */
   EventManager & getEventManager()
   {return *m_eventManager;}
+
+  /**
+   * @brief Returns the TasksManager.
+   * @return The TasksManager.
+   */
+  TasksManager & getTasksManager()
+  {return *m_tasksManager;}
 
 protected:
   /**
@@ -366,6 +374,9 @@ private:
 
   /// The EventManager
   EventManager * m_eventManager;
+
+  /// The TasksManager
+  TasksManager * m_tasksManager;
 
   /// The FunctionManager
   FunctionManager * m_functionManager;
