@@ -1048,4 +1048,104 @@ std::set< std::set< globalIndex > > FaceElementSubRegion::getCollocatedNodes() c
   return result;
 }
 
+void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
+                                        ElementRegionManager const & elemManager )
+{
+  ArrayOfArraysView< localIndex > const & elems2dToFaces = faceList().toView();
+  arrayView2d< localIndex const > const & faceToElementRegionIndex    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & faceToElementIndex          = faceManager.elementList();
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const cellElemGlobalIndex =
+    elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const kfe )
+  {
+    if( elems2dToFaces.sizeOfArray( kfe ) != 2 )
+    {
+      return;
+    }
+
+    localIndex const f0 = elems2dToFaces[kfe][0];
+    localIndex const f1 = elems2dToFaces[kfe][1];
+
+    localIndex const er0  = faceToElementRegionIndex[f0][0];
+    localIndex const esr0 = faceToElementSubRegionIndex[f0][0];
+    localIndex const ek0  = faceToElementIndex[f0][0];
+
+    localIndex const er1  = faceToElementRegionIndex[f1][0];
+    localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
+    localIndex const ek1  = faceToElementIndex[f1][0];
+
+    globalIndex const globalIndexElem0 = cellElemGlobalIndex[er0][esr0][ek0];
+    globalIndex const globalIndexElem1 = cellElemGlobalIndex[er1][esr1][ek1];
+
+    if( globalIndexElem0 > globalIndexElem1 )
+    {
+      std::swap( elems2dToFaces[kfe][0], elems2dToFaces[kfe][1] );
+    }
+  } );
+
+}
+
+void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager,
+                                                       ElementRegionManager const & elemManager )
+{
+  ArrayOfArraysView< localIndex > const & elems2dToFaces = faceList().toView();
+  arrayView2d< localIndex const > const & faceToElementRegionIndex    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & faceToElementIndex          = faceManager.elementList();
+
+  arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
+  FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+
+  auto elemCenter = elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+  // We need to modify the normals and the nodes ordering to be consistent.
+  arrayView2d< real64 > const faceNormal = faceManager.faceNormal();
+  forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
+  {
+    if( elems2dToFaces.sizeOfArray( kfe ) != 2 )
+    {
+      return;
+    }
+
+    localIndex const f0 = elems2dToFaces[kfe][0];
+    localIndex const f1 = elems2dToFaces[kfe][1];
+
+    /// Note: I am assuming that the 0 element is the elementSubregion one for faces
+    /// touching both a 3D and a 2D cell.
+    localIndex const er0  = faceToElementRegionIndex[f0][0];
+    localIndex const esr0 = faceToElementSubRegionIndex[f0][0];
+    localIndex const ek0  = faceToElementIndex[f0][0];
+
+    localIndex const er1  = faceToElementRegionIndex[f1][0];
+    localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
+    localIndex const ek1  = faceToElementIndex[f1][0];
+
+    real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
+    real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
+
+    LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
+    LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
+
+    // If the vector connecting the face center and the elem center is in the same
+    // direction as the unit normal, we flip the normal coz it should be pointing outward
+    // (i.e., towards the fracture element).
+    if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0 ) );
+      LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
+      std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+    }
+    if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1 ) );
+      LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
+      std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
+    }
+  } );
+
+}
+
 } /* namespace geos */

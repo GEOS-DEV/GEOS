@@ -147,18 +147,18 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     fluxApprox.addFieldName( contact::traction::key() );
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                                  MeshLevel &,
+                                                                  MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
     {
-      array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
-      std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-      stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
-      stencilTargetRegions.clear();
-      for( auto const & targetRegion: stencilTargetRegionsSet )
+      mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            SurfaceElementRegion const & region )
       {
-        stencilTargetRegions.emplace_back( targetRegion );
-      }
+        array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+        stencilTargetRegions.emplace_back( region.getName() );
+      } );
     } );
   }
 
@@ -534,6 +534,12 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
                           contact::traction::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+
+  dofManager.addCoupling( contact::traction::key(), stabilizationMethod );
 }
 
 void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
@@ -757,10 +763,8 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
       globalResidualNorm[0] += globalR2[2 * r + 0];
       globalResidualNorm[1] += globalR2[2 * r + 1];
     }
-    globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
     globalResidualNorm[0] = sqrt( globalResidualNorm[0] );
     globalResidualNorm[1] = sqrt( globalResidualNorm[1] );
-    globalResidualNorm[2] = sqrt( globalResidualNorm[2] );
   }
 
   MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
@@ -769,17 +773,15 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
   {
     m_initialResidual[0] = globalResidualNorm[0];
     m_initialResidual[1] = globalResidualNorm[1];
-    m_initialResidual[2] = globalResidualNorm[2];
     globalResidualNorm[0] = 1.0;
     globalResidualNorm[1] = 1.0;
-    globalResidualNorm[2] = 1.0;
   }
   else
   {
     globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
     globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
     // Add 0 just to match Matlab code results
-    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+    globalResidualNorm[2] = std::max( globalResidualNorm[0], globalResidualNorm[1] );
   }
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
@@ -1170,6 +1172,8 @@ void SolidMechanicsLagrangeContact::
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
+    auto localToGlobal = subRegion.localToGlobalMap().toView();
+
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
       using ContactType = TYPEOFREF( castedContact );
@@ -1206,11 +1210,11 @@ void SolidMechanicsLagrangeContact::
                 {
                   if( i == 0 )
                   {
-                    elemRHS[i] = +Ja * dispJump[kfe][i];
+                    elemRHS[i] += +Ja * dispJump[kfe][i];
                   }
                   else
                   {
-                    elemRHS[i] = +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
+                    elemRHS[i] += +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
                   }
                 }
 
@@ -1349,13 +1353,15 @@ void SolidMechanicsLagrangeContact::
 
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-
           for( localIndex idof = 0; idof < 3; ++idof )
           {
             localRhs[localRow + idof] += elemRHS[idof];
 
+            // std::cout << "global faceElement: " << localToGlobal[kfe] << " idof: " << idof << " nnz: " <<
+            // localMatrix.numNonZeros(localRow + idof) << std::endl;
             if( fractureState[kfe] != contact::FractureState::Open )
             {
+
               localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
                                                                         nodeDOF,
                                                                         dRdU[idof].dataIfContiguous(),
@@ -1581,7 +1587,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffDiagApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = 1.0e-2 * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
