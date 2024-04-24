@@ -82,6 +82,9 @@ enum Unit : integer
 
   /// Solubility in g/L
   Solubility,
+
+  /// Transmissibility in m2/s
+  Transmissibility,
 };
 
 
@@ -93,17 +96,18 @@ constexpr inline std::string_view getDescription( Unit unit )
 {
   switch( unit )
   {
-    default:              return "unknown [?]";
-    case Dimensionless:   return "dimensionless [1]";
-    case Pressure:        return "pressure [Pa]";
-    case Temperature:     return "temperature [K]";
-    case TemperatureInC:  return "temperature [C]";
-    case Distance:        return "distance [m]";
-    case Time:            return "time [s]";
-    case Viscosity:       return "viscosity [Pa*s]";
-    case Enthalpy:        return "enthalpy [J/kg]";
-    case Density:         return "density [kg/m3]";
-    case Solubility:      return "solubility [g/L]";
+    default:                return "unknown [?]";
+    case Dimensionless:     return "dimensionless [1]";
+    case Pressure:          return "pressure [Pa]";
+    case Temperature:       return "temperature [K]";
+    case TemperatureInC:    return "temperature [C]";
+    case Distance:          return "distance [m]";
+    case Time:              return "time [s]";
+    case Viscosity:         return "viscosity [Pa*s]";
+    case Enthalpy:          return "enthalpy [J/kg]";
+    case Density:           return "density [kg/m3]";
+    case Solubility:        return "solubility [g/L]";
+    case Transmissibility:  return "transmissibility [(Pa*s*rm3/s)/Pa]";
   }
 }
 
@@ -115,13 +119,14 @@ constexpr inline std::string_view getSymbol( Unit unit )
 {
   switch( unit )
   {
-    default:              return "?";
-    case Dimensionless:   return "1";
-    case Pressure:        return "Pa";
-    case Temperature:     return "K";
-    case TemperatureInC:  return "C";
-    case Distance:        return "m";
-    case Time:            return "s";
+    default:                return "?";
+    case Dimensionless:     return "1";
+    case Pressure:          return "Pa";
+    case Temperature:       return "K";
+    case TemperatureInC:    return "C";
+    case Distance:          return "m";
+    case Time:              return "s";
+    case Transmissibility:  return "(Pa*s*rm3/s)/Pa";
   }
 }
 
@@ -136,13 +141,14 @@ inline string formatValue( real64 value, Unit unit )
 {
   switch( unit )
   {
-    default:              return GEOS_FMT( "value of {} [?]", value );
-    case Dimensionless:   return GEOS_FMT( "value of {} [1]", value );
-    case Pressure:        return GEOS_FMT( "pressure of {} [Pa]", value );
-    case Temperature:     return GEOS_FMT( "temperature of {} [K]", value );
-    case TemperatureInC:  return GEOS_FMT( "temperature of {} [K]", convertCToK( value ) );
-    case Distance:        return GEOS_FMT( "distance of {} [s]", value );
-    case Time:            return GEOS_FMT( "time of {} [s]", value );
+    default:                return GEOS_FMT( "value of {} [?]", value );
+    case Dimensionless:     return GEOS_FMT( "value of {} [1]", value );
+    case Pressure:          return GEOS_FMT( "pressure of {} [Pa]", value );
+    case Temperature:       return GEOS_FMT( "temperature of {} [K]", value );
+    case TemperatureInC:    return GEOS_FMT( "temperature of {} [K]", convertCToK( value ) );
+    case Distance:          return GEOS_FMT( "distance of {} [s]", value );
+    case Time:              return GEOS_FMT( "time of {} [s]", value );
+    case Transmissibility:  return GEOS_FMT( "transmissibility of {} [(Pa*s*rm3/s)/Pa]", value );
   }
 }
 
