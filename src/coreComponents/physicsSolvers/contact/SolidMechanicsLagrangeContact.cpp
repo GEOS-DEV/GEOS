@@ -1162,19 +1162,11 @@ void SolidMechanicsLagrangeContact::
                 {
                   if( i == 0 )
                   {
-<<<<<<< HEAD
-                    elemRHS[i] += +Ja * dispJump[kfe][i];
-                  }
-                  else
-                  {
-                    elemRHS[i] += +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
-=======
                     elemRHS[i] = Ja * dispJump[kfe][i];
                   }
                   else
                   {
                     elemRHS[i] = Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
->>>>>>> origin/develop
                   }
                 }
 
