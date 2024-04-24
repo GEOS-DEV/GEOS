@@ -23,7 +23,6 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
-      LABELS: ${{ steps.extract_pr_info.outputs.LABELS }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
@@ -37,11 +36,6 @@ jobs:
           draft_status=$(echo ${pr_json} | jq '.draft')
           echo "Draft status of PR is ${draft_status}."
           if [[ $draft_status == true ]]; then exit 1 ; fi
-          
-          # If the workflow is meant to continue, we extract additional information for the json of the pr.
-          echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
-        else
-          echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
         fi
 
         
@@ -59,6 +53,26 @@ jobs:
       id: extract_docker_image_tag
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+
+  get_current_labels:
+    needs: [is_not_draft_pull_request]
+    runs-on: ubuntu-22.04
+    outputs:
+      LABELS: ${{ steps.update_labels.outputs.LABELS }}
+    steps:
+      - name: Check for updated labels
+        id: update_labels
+        run: |
+          if [[ ${{github.event_name}} != 'pull_request' ]]; then
+            echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+          echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+          if [[ "${{ !contains( fromJSON( LABELS ), 'ci: ready to be merged') }}" ]]; then
+            exit 1
+          fi
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
@@ -192,9 +206,9 @@ jobs:
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
-      - is_not_draft_pull_request
+      - get_current_labels
       - cpu_builds
-    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request' }}"
+    if: "${{ contains( fromJSON( needs.get_current_labels.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request' }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -230,8 +244,8 @@ jobs:
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
-      - is_not_draft_pull_request
-    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }}"
+      - get_current_labels
+    if: "${{ contains( fromJSON( needs.get_current_labels.outputs.LABELS ), 'ci: ready to be merged') }}"
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
