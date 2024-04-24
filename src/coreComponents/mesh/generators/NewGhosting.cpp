@@ -59,7 +59,7 @@ using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, f
 //  std::vector< NodeGlbIdx > nodes;
 //};
 
-using Edge = std::pair< NodeGlbIdx, NodeGlbIdx >;
+using Edge = std::tuple< NodeGlbIdx, NodeGlbIdx >;
 using Face = std::set< NodeGlbIdx >;
 
 struct Exchange
@@ -180,8 +180,8 @@ array1d< globalIndex > convertExchange( Exchange const & exchange )
   result.emplace_back( std::size( exchange.edges ) );
   for( Edge const & edge: exchange.edges )
   {
-    result.emplace_back( edge.first.get() );
-    result.emplace_back( edge.second.get() );
+    result.emplace_back( std::get< 0 >( edge ).get() );
+    result.emplace_back( std::get< 1 >( edge ).get() );
   }
   result.emplace_back( std::size( exchange.faces ) );
   for( Face const & face: exchange.faces )
