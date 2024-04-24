@@ -166,6 +166,22 @@ VanGenuchtenCapillaryPressureUpdate::
                                   phaseCapPres[ip_water],
                                   dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
 
+    if( m_isClampedDerivative &&  scaledWettingVolFrac < 0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.0",
+                              phaseVolFraction[ip_water],
+                              dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] ));
+
+      evaluateVanGenuchtenFunction( 0.,
+                                    dScaledWettingPhaseVolFrac_dVolFrac,
+                                    exponentInv,
+                                    multiplier,
+                                    eps,
+                                    phaseCapPres[ip_water],
+                                    dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
+      dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] = 0.0;
+    }
+
   }
 
 
@@ -189,6 +205,23 @@ VanGenuchtenCapillaryPressureUpdate::
                                   eps,
                                   phaseCapPres[ip_gas],
                                   dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+
+    if( m_isClampedDerivative && scaledWettingVolFrac < 0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.0",
+                              phaseVolFraction[ip_gas],
+                              dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] ));
+
+      evaluateVanGenuchtenFunction( 0.,
+                                    dScaledWettingPhaseVolFrac_dVolFrac,
+                                    exponentInv,
+                                    multiplier,
+                                    eps,
+                                    phaseCapPres[ip_gas],
+                                    dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+
+      dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] = 0.0;
+    }
   }
 }
 

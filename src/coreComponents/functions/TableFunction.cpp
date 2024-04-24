@@ -92,6 +92,12 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
                                catalogName(), getDataContext(), i ),
                      InputError );
     }
+
+    auto m = *std::min_element( coordinates[i].begin(), coordinates[i].end());
+    auto M = *std::max_element( coordinates[i].begin(), coordinates[i].end());
+    array1d< real64 > minmax( 2 );
+    minmax[0] = m; minmax[1] = M;
+    m_coordBounds.appendArray( minmax.begin(), minmax.end());
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
   reInitializeFunction();
@@ -129,6 +135,11 @@ void TableFunction::initializeFunction()
     {
       tmp.clear();
       readFile( m_coordinateFiles[ii], tmp );
+      auto m = *std::min_element( tmp.begin(), tmp.end());
+      auto M = *std::max_element( tmp.begin(), tmp.end());
+      array1d< real64 > minmax( 2 );
+      minmax[0] = m; minmax[1] = M;
+      m_coordBounds.appendArray( minmax.begin(), minmax.end());
       m_coordinates.appendArray( tmp.begin(), tmp.end() );
       numValues *= tmp.size();
     }

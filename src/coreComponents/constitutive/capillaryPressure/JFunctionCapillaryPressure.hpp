@@ -198,6 +198,20 @@ JFunctionCapillaryPressure::KernelWrapper::
     phaseCapPres[ipWater] =
       m_jFuncKernelWrappers[TPT::INTERMEDIATE_WETTING].compute( &(phaseVolFraction)[ipWater],
                                                                 &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
+    if( m_isClampedDerivative && phaseVolFraction[ipWater] < m_jFuncKernelWrappers[TPT::INTERMEDIATE_WETTING].getCoordinatesBounds()[0][0] )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipWater],
+                              dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] ));
+
+      // water-oil J-function
+      phaseCapPres[ipWater] =
+        m_jFuncKernelWrappers[TPT::INTERMEDIATE_WETTING].compute( &m_jFuncKernelWrappers[TPT::INTERMEDIATE_WETTING].getCoordinatesBounds()[0][0],
+                                                                  &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+      dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] = 0.;
+
+    }
     // apply water-oil multiplier
     phaseCapPres[ipWater] *= jFuncMultiplier[TPT::INTERMEDIATE_WETTING];
     dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] *= jFuncMultiplier[TPT::INTERMEDIATE_WETTING];
@@ -208,6 +222,22 @@ JFunctionCapillaryPressure::KernelWrapper::
     phaseCapPres[ipGas] =
       m_jFuncKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &(phaseVolFraction)[ipGas],
                                                                    &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+
+
+    if( m_isClampedDerivative && phaseVolFraction[ipGas] > m_jFuncKernelWrappers[TPT::INTERMEDIATE_NONWETTING].getCoordinatesBounds()[0][1] )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipGas],
+                              dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] ));
+
+      // gas-oil J-function
+      phaseCapPres[ipGas] =
+        m_jFuncKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &m_jFuncKernelWrappers[TPT::INTERMEDIATE_NONWETTING].getCoordinatesBounds()[0][1],
+                                                                     &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+      dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] = 0.;
+
+    }
+
     // apply gas-oil multiplier
     phaseCapPres[ipGas] *= jFuncMultiplier[TPT::INTERMEDIATE_NONWETTING];
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= jFuncMultiplier[TPT::INTERMEDIATE_NONWETTING];
@@ -224,6 +254,20 @@ JFunctionCapillaryPressure::KernelWrapper::
     phaseCapPres[ipGas] =
       m_jFuncKernelWrappers[0].compute( &(phaseVolFraction)[ipGas],
                                         &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+
+
+    if( m_isClampedDerivative && phaseVolFraction[ipGas] > m_jFuncKernelWrappers[0].getCoordinatesBounds()[0][1] )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipGas],
+                              dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] ));
+
+      phaseCapPres[ipGas] =
+        m_jFuncKernelWrappers[0].compute( &m_jFuncKernelWrappers[0].getCoordinatesBounds()[0][1],
+                                          &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+      dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] = 0.;
+    }
+
     // apply multiplier
     phaseCapPres[ipGas] *= jFuncMultiplier[0];
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= jFuncMultiplier[0];
@@ -239,6 +283,18 @@ JFunctionCapillaryPressure::KernelWrapper::
     phaseCapPres[ipWater] =
       m_jFuncKernelWrappers[0].compute( &(phaseVolFraction)[ipWater],
                                         &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
+    if( m_isClampedDerivative && phaseVolFraction[ipWater] < m_jFuncKernelWrappers[0].getCoordinatesBounds()[0][0] )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.",
+                              phaseVolFraction[ipWater],
+                              dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] ));
+
+      phaseCapPres[ipWater] =
+        m_jFuncKernelWrappers[0].compute( &m_jFuncKernelWrappers[0].getCoordinatesBounds()[0][0],
+                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+      dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] = 0.;
+    }
     // apply multiplier
     phaseCapPres[ipWater] *= jFuncMultiplier[0];
     dPhaseCapPres_dPhaseVolFrac[ipWater][ipWater] *= jFuncMultiplier[0];

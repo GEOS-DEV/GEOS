@@ -167,6 +167,23 @@ BrooksCoreyCapillaryPressureUpdate::
                                  phaseCapPres[ip_water],
                                  dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
 
+    if( m_isClampedDerivative && wettingVolFracScaled < 0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "Clamped Derivative @ s {} from {} -> {}",
+                              phaseVolFraction[ip_water],
+                              dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] ));
+
+      evaluateBrooksCoreyFunction( 0,
+                                   dWettingVolFracScaled_dVolFrac,
+                                   exponentInv,
+                                   entryPressure,
+                                   eps,
+                                   phaseCapPres[ip_water],
+                                   dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
+      dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] = 0.0;
+
+    }
+
   }
 
 
@@ -189,6 +206,24 @@ BrooksCoreyCapillaryPressureUpdate::
                                  eps,
                                  phaseCapPres[ip_gas],
                                  dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+
+    if( m_isClampedDerivative && wettingVolFracScaled < 0 )
+    {
+
+      GEOS_LOG_RANK_0( GEOS_FMT( "Clamped Derivative @ s {} from {} -> 0.0",
+                                 phaseVolFraction[ip_gas],
+                                 dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] ));
+
+      evaluateBrooksCoreyFunction( 0,
+                                   dWettingVolFracScaled_dVolFrac,
+                                   exponentInv,
+                                   entryPressure,
+                                   eps,
+                                   phaseCapPres[ip_gas],
+                                   dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+      dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] = 0.0;
+    }
+
   }
 }
 
