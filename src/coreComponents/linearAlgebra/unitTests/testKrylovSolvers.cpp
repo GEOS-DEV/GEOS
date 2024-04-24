@@ -50,6 +50,7 @@ LinearSolverParameters params_GMRES()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
+  parameters.krylov.maxRestart = 100;
   parameters.solverType = geos::LinearSolverParameters::SolverType::gmres;
   return parameters;
 }

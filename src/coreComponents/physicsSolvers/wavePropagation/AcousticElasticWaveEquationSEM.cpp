@@ -20,6 +20,7 @@
 #include "AcousticElasticWaveEquationSEMKernel.hpp"
 #include "AcoustoElasticTimeSchemeSEMKernel.hpp"
 #include "dataRepository/Group.hpp"
+#include "mesh/DomainPartition.hpp"
 #include <typeinfo>
 #include <limits>
 
@@ -68,7 +69,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
@@ -77,6 +78,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     arrayView2d< real64 const > const faceNormals          = faceManager.faceNormal().toViewConst();
+    arrayView2d< real64 const > const faceCenters          = faceManager.faceCenter().toViewConst();
     ArrayOfArraysView< localIndex const > const faceToNode = faceManager.nodeList().toViewConst();
     arrayView2d< localIndex const > const faceToSubRegion  = faceManager.elementSubRegionList();
     arrayView2d< localIndex const > const faceToRegion     = faceManager.elementRegionList();
@@ -97,6 +99,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
       {
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        arrayView2d< real64 const > const elemCenters = elementSubRegion.getElementCenter().toViewConst();
 
         finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
         {
@@ -112,6 +115,8 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
                                                                  faceToElement,
                                                                  faceToNode,
                                                                  faceNormals,
+                                                                 faceCenters,
+                                                                 elemCenters,
                                                                  couplingVectorx,
                                                                  couplingVectory,
                                                                  couplingVectorz );
@@ -135,7 +140,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & GEOS_UNUSED_PARAM( regionNames ) )
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -151,6 +156,7 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     arrayView1d< real32 const > const ux_n   = nodeManager.getField< elasticfields::Displacementx_n >();
     arrayView1d< real32 const > const uy_n   = nodeManager.getField< elasticfields::Displacementy_n >();
     arrayView1d< real32 const > const uz_n   = nodeManager.getField< elasticfields::Displacementz_n >();
+    // acoutic -> elastic coupling vectors
     arrayView1d< real32 const > const atoex  = nodeManager.getField< acoustoelasticfields::CouplingVectorx >();
     arrayView1d< real32 const > const atoey  = nodeManager.getField< acoustoelasticfields::CouplingVectory >();
     arrayView1d< real32 const > const atoez  = nodeManager.getField< acoustoelasticfields::CouplingVectorz >();
@@ -169,19 +175,19 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
 
     acousSolver->computeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
 
-    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+    forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const in )
     {
-      localIndex const a = interfaceNodesSet[n];
-      if( acousticFSNodeIndicator[a] == 1 )
+      localIndex const n = interfaceNodesSet[in];
+      if( acousticFSNodeIndicator[n] == 1 )
         return;
 
       real32 const localIncrement = (
-        atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
-        atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
-        atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / acousticMass[a];
+        atoex[n] * ( ux_np1[n] - 2.0 * ux_n[n] + ux_nm1[n] ) +
+        atoey[n] * ( uy_np1[n] - 2.0 * uy_n[n] + uy_nm1[n] ) +
+        atoez[n] * ( uz_np1[n] - 2.0 * uz_n[n] + uz_nm1[n] )
+        ) / acousticMass[n];
 
-      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
+      RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[n], localIncrement );
     } );
 
     acousSolver->synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, m_acousRegions );
