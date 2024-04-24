@@ -684,15 +684,11 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   string const & dofKey = dofManager.getKey( contact::traction::key() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-<<<<<<< HEAD
   real64 stickResidual = 0.0;
   real64 slipResidual = 0.0;
   real64 slipNormalizer = 0.0;
   real64 openResidual = 0.0;
   real64 openNormalizer = 0.0;
-=======
-  real64 contactResidual = 0.0;
->>>>>>> 184724a6282394805f71516dc4331ba1919bf279
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
