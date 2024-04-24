@@ -27,6 +27,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
+#include "events/EventManager.hpp"
 
 namespace geos
 {

@@ -28,6 +28,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
+#include "events/EventManager.hpp"
 
 namespace geos
 {

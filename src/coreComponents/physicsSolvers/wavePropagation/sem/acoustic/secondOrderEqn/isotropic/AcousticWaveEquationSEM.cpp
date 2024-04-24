@@ -29,6 +29,7 @@
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
+#include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 

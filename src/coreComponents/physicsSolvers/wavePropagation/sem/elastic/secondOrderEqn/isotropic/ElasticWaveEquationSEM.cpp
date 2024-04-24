@@ -29,6 +29,7 @@
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
+#include "events/EventManager.hpp"
 
 namespace geos
 {
