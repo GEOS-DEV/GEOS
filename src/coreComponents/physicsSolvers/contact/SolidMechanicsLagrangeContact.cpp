@@ -1124,8 +1124,6 @@ void SolidMechanicsLagrangeContact::
     arrayView2d< real64 const > const & previousDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
-    auto localToGlobal = subRegion.localToGlobalMap().toView();
-
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
       using ContactType = TYPEOFREF( castedContact );
