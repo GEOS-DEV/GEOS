@@ -110,21 +110,6 @@ private:
 
 
   /**
-   * @return a converted ConnectionData from the given kernel data.
-   * @param kernelData the kernel extracted data to be converted.
-   * @param localToGlobalMap the local to global id map, useful to convert the kernel extracted ids of the elements.
-   */
-  static ConnectionData ToConnectionData( KernelConnectionData const & kernelData,
-                                          LocalToGlobalMap const & localToGlobalMap );
-
-  /**
-   * @return the output file path for the given stencil.
-   * @param meshName the name of the mesh for which we want to output the data.
-   * @param stencilName the name of the stencil for which we want to output the data.
-   */
-  string getOutputFileName( string_view stencilName ) const;
-
-  /**
    * @brief gather the element-element connection data of the current timestep using a given StencilWrapper.
    * @tparam STENCILWRAPPER_T the type of the StencilWrapper
    * @param mesh the mesh for which we want the data
@@ -135,16 +120,47 @@ private:
   array1d< KernelConnectionData > gatherTimeStepData( MeshLevel const & mesh,
                                                       STENCILWRAPPER_T const & stencilWrapper ) const;
 
-/**
- * @brief Output the element-element connection data.
- * @param mesh the specific mesh for which we output the data. We will also need it to convert the ids to global ids.
- * @param stencil the specific mesh for which we output the data.
- * @param outputTime the time for when we gathered the data
- * @param kernelData the connection data, gathered by a kernel.
- */
+  /**
+   * @return a converted ConnectionData from the given kernel data.
+   * @param kernelData the kernel extracted data to be converted.
+   * @param localToGlobalMap the local to global id map, useful to convert the kernel extracted ids of the elements.
+   */
+  static ConnectionData ToConnectionData( KernelConnectionData const & kernelData,
+                                          LocalToGlobalMap const & localToGlobalMap );
+
+  /**
+   * @brief Output the element-element connection data of the current timestep.
+   * @param mesh the specific mesh for which we output the data. We will also need it to convert the ids to global ids.
+   * @param stencil the specific mesh for which we output the data.
+   * @param outputTime the time for when we gathered the data
+   * @param kernelData the connection data, gathered by a kernel.
+   */
   void outputTimeStepData( MeshLevel const & mesh, string_view stencilName, real64 outputTime,
                            arrayView1d< KernelConnectionData > const & kernelData );
 
+  /**
+   * @return the output file path for the given stencil, under the m_outputDir folder.
+   * @param meshName the name of the mesh for which we want to output the data.
+   * @param stencilName the name of the stencil for which we want to output the data.
+   * @param extension the file extension
+   */
+  string getOutputFileName( string_view stencilName, string_view extension ) const;
+
+  /**
+   * @brief Write the CSV header.
+   * @param outputFile the filestream where the header will be writen.
+   */
+  void writeCsvHeader( std::ofstream & outputFile ) const;
+
+  /**
+   * @brief Write the data in a CSV file.
+   * @tparam CONN_DATA_CONT Type of the iterable container containing ConnectionData instances.
+   * @param outputFile the filestream where the data will be writen.
+   * @param data an iterable container of ConnectionData instances
+   * @param time data timestep.
+   */
+  template< typename CONN_DATA_CONT >
+  void writeCsvData( std::ofstream & outputFile, CONN_DATA_CONT const & data, real64 const time ) const;
 };
 
 

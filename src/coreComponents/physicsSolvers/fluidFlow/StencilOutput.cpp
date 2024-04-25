@@ -33,7 +33,37 @@ using namespace dataRepository;
 StencilOutput::StencilOutput( const string & name,
                               Group * const parent ):
   Base( name, parent )
-{}
+
+
+bool StencilOutput::execute( real64 const time_n,
+                             real64 const dt,
+                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                             integer const GEOS_UNUSED_PARAM( eventCounter ),
+                             real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                             DomainPartition & domain )
+{
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+  {
+    m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                            MeshLevel & mesh,
+                                                                            arrayView1d< string const > const & )
+    {
+      NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_solver->getDiscretizationName() );
+
+      fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
+      {
+        // gather
+        auto const stencilWrapper = stencil.createKernelWrapper();
+        array1d< KernelConnectionData > const kernelData = gatherTimeStepData( mesh, stencilWrapper );
+        // output
+        outputTimeStepData( mesh, fluxApprox.getName(), time_n + dt, kernelData.toView() );
+      } );
+    } );
+  }
+  return false;
+}
 
 
 class StencilOutput::StencilOutputKernel
@@ -87,18 +117,6 @@ private:
   {}
 };
 
-StencilOutput::ConnectionData StencilOutput::ToConnectionData( KernelConnectionData const & kernelData,
-                                                               LocalToGlobalMap const & localToGlobalMap )
-{
-  ConnectionData conn;
-  for( localIndex i = 0; i < 2; ++i )
-  {
-    conn.transmissibility[i] = kernelData.transmissibility[i];
-    conn.globalId[i] = localToGlobalMap[kernelData.regionId[i]][kernelData.subRegionId[i]][kernelData.elementId[i]];
-  }
-  return conn;
-}
-
 template< typename STENCILWRAPPER_T >
 array1d< StencilOutput::KernelConnectionData >
 StencilOutput::gatherTimeStepData( MeshLevel const & mesh,
@@ -118,46 +136,31 @@ StencilOutput::gatherTimeStepData( MeshLevel const & mesh,
 }
 
 
-string StencilOutput::getOutputFileName( string_view stencilName ) const
+StencilOutput::ConnectionData StencilOutput::ToConnectionData( KernelConnectionData const & kernelData,
+                                                               LocalToGlobalMap const & localToGlobalMap )
 {
-  return GEOS_FMT( "{}/{}.csv",
-                   m_outputDir, stencilName );
-}
-
-void writeHeader( std::ofstream & outputFile )
-{
-  outputFile << GEOS_FMT( "{},A global id,B global id,{},{}",
-                          units::getDescription( units::Unit::Time ),
-                          GEOS_FMT( "A {}", units::getDescription( units::Unit::Transmissibility ) ),
-                          GEOS_FMT( "B {}", units::getDescription( units::Unit::Transmissibility ) ) );
-  outputFile << std::endl;
-}
-
-template< typename CONN_DATA_CONT >
-void writeData( std::ofstream & outputFile, real64 const time, CONN_DATA_CONT const & data )
-{
-  for( StencilOutput::ConnectionData const & conn : data )
+  ConnectionData conn;
+  for( localIndex i = 0; i < 2; ++i )
   {
-    outputFile << time << ","
-               << conn.globalId[0] << ","
-               << conn.globalId[1] << ","
-               << conn.transmissibility[0] << ","
-               << conn.transmissibility[1] << std::endl;
+    conn.transmissibility[i] = kernelData.transmissibility[i];
+    conn.globalId[i] = localToGlobalMap[kernelData.regionId[i]][kernelData.subRegionId[i]][kernelData.elementId[i]];
   }
+  return conn;
 }
+
 
 void StencilOutput::outputTimeStepData( MeshLevel const & mesh,
                                         string_view stencilName,
                                         real64 const outputTime,
                                         arrayView1d< KernelConnectionData > const & kernelData )
 {
-  string const fileName = getOutputFileName( stencilName );
+  string const fileName = getOutputFileName( stencilName, "csv" );
   bool const newFile = outputFiles.count( fileName ) == 0;
   std::ofstream outputFile( fileName, newFile ? std::ios_base::out : std::ios_base::app );
 
   if( newFile )
   {
-    writeHeader( outputFile );
+    writeCsvHeader( outputFile );
     outputFiles.insert( fileName );
     GEOS_LOG_RANK_IF( getLogLevel() > 0, GEOS_FMT( "{}: initialized file \"{}\".",
                                                    getDataContext(), fileName ) );
@@ -175,7 +178,7 @@ void StencilOutput::outputTimeStepData( MeshLevel const & mesh,
       return ToConnectionData( kernelConn, localToGlobalMap );
     } );
 
-    writeData( outputFile, outputTime, fileData );
+    writeCsvData( outputFile, fileData, outputTime );
     GEOS_LOG_RANK_IF( getLogLevel() > 0, GEOS_FMT( "{}: {} connections writen in file \"{}\".",
                                                    getDataContext(), kernelData.size(), fileName ) );
   }
@@ -184,34 +187,32 @@ void StencilOutput::outputTimeStepData( MeshLevel const & mesh,
 }
 
 
-bool StencilOutput::execute( real64 const time_n,
-                             real64 const dt,
-                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                             integer const GEOS_UNUSED_PARAM( eventCounter ),
-                             real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                             DomainPartition & domain )
+string StencilOutput::getOutputFileName( string_view stencilName, string_view extension ) const
 {
-  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
-  {
-    m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                            MeshLevel & mesh,
-                                                                            arrayView1d< string const > const & )
-    {
-      NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_solver->getDiscretizationName() );
+  return GEOS_FMT( "{}/{}.{}",
+                   m_outputDir, stencilName, extension );
+}
 
-      fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
-      {
-        // gather
-        auto const stencilWrapper = stencil.createKernelWrapper();
-        array1d< KernelConnectionData > const kernelData = gatherTimeStepData( mesh, stencilWrapper );
-        // output
-        outputTimeStepData( mesh, fluxApprox.getName(), time_n + dt, kernelData.toView() );
-      } );
-    } );
+void StencilOutput::writeCsvHeader( std::ofstream & outputFile ) const
+{
+  outputFile << GEOS_FMT( "{},A global id,B global id,{},{}",
+                          units::getDescription( units::Unit::Time ),
+                          GEOS_FMT( "A {}", units::getDescription( units::Unit::Transmissibility ) ),
+                          GEOS_FMT( "B {}", units::getDescription( units::Unit::Transmissibility ) ) );
+  outputFile << std::endl;
+}
+
+template< typename CONN_DATA_CONT >
+void StencilOutput::writeCsvData( std::ofstream & outputFile, CONN_DATA_CONT const & data, real64 const time ) const
+{
+  for( StencilOutput::ConnectionData const & conn : data )
+  {
+    outputFile << time << ","
+               << conn.globalId[0] << ","
+               << conn.globalId[1] << ","
+               << conn.transmissibility[0] << ","
+               << conn.transmissibility[1] << std::endl;
   }
-  return false;
 }
 
 
