@@ -55,6 +55,7 @@ jobs:
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
   get_current_labels:
+    continue-on-error: true
     needs: [is_not_draft_pull_request]
     runs-on: ubuntu-22.04
     outputs:
