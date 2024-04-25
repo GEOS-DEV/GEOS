@@ -97,7 +97,6 @@ std::map< std::set< int >, int > update_bucket_offsets( std::map< std::set< int 
 
   // Add the offsets associated to the new buckets
   int next_offset = 0;
-  bool offroad = false;
   for( auto const & [ranks, size]: sizes )
   {
     auto const it = reduced.find( ranks );
@@ -118,13 +117,9 @@ std::map< std::set< int >, int > update_bucket_offsets( std::map< std::set< int 
   return reduced;
 }
 
-std::map< std::set< int >, int > unserialize( void const * data,
-                                              int len )
+template< class V >
+std::map< std::set< int >, int > deserialize( V const & s )
 {
-
-  std::uint8_t const * data0 = reinterpret_cast<std::uint8_t const *>(data);
-
-  const std::span< const std::uint8_t > s( data0, len );
   json const j = json::from_cbor( s, false );
 
   int rank;
@@ -133,71 +128,96 @@ std::map< std::set< int >, int > unserialize( void const * data,
   return j.get< std::map< std::set< int >, int>>();
 }
 
+std::map< std::set< int >, int > deserialize( std::uint8_t const * data,
+                                              int len )
+{
+  const std::span< const std::uint8_t > s( data, len );
+  return deserialize( s );
+}
+
 std::vector< std::uint8_t > serialize( std::map< std::set< int >, int > const & in )
 {
   return json::to_cbor( json( in ) );
 }
 
 /**
- * `inout` contains the input from the current rank and must overwritten with the new result.
  * `in` contains the reduced result from the previous ranks
+ * `inout` contains the input from the current rank and must overwritten with the new result.
  */
 void f( void * in,
         void * inout,
         int * len,
         MPI_Datatype * dptr )
 {
-  std::map< std::set< int >, int > offsets = unserialize( in, *len );  // offsets provided by the previous rank(s)
-  std::map< std::set< int >, int > sizes = unserialize( inout, *len );  // sizes of the buckets provided by the current rank
-
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  std::map< std::set< int >, int > updated_offsets = update_bucket_offsets( sizes, offsets, rank );
+  // offsets provided by the previous rank(s)
+  std::map< std::set< int >, int > offsets = deserialize( reinterpret_cast<std::uint8_t const *>(in), *len );
 
+  // Sizes provided by the current rank, under the form of a pointer to the data.
+  // No need to serialize, since we're on the same rank.
+  std::uintptr_t addr;
+  std::memcpy( &addr, inout, sizeof( std::uintptr_t ) );
+  std::map< std::set< int >, int > const * sizes = reinterpret_cast<std::map< std::set< int >, int > *>(addr);
 
+  std::map< std::set< int >, int > updated_offsets = update_bucket_offsets( *sizes, offsets, rank );
+
+  // Serialize the updated offsets, so they get sent to the next rank.
   std::vector< std::uint8_t > const serialized = serialize( updated_offsets );
-  std::memcpy( inout, serialized.data(), *len );
+  std::memcpy( inout, serialized.data(), serialized.size() );
 }
 
 int main( int argc,
           char ** argv )
 {
-  constexpr int N = 2048;
-
   int rank, size;
-  std::uint8_t * local = (std::uint8_t *) ( malloc( N * sizeof( std::uint8_t ) ) );
-  std::uint8_t * recv = (std::uint8_t *) ( malloc( N * sizeof( std::uint8_t ) ) );
-
   MPI_Init( &argc, &argv );
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
   MPI_Comm_size( MPI_COMM_WORLD, &size );
 
+  constexpr int N = 2048;
+
+  std::vector< std::uint8_t > local( N, 0 );
+  std::vector< std::uint8_t > recv( N, 0 );
+
   MPI_Op myOp;
   MPI_Op_create( f, false, &myOp );
 
-  // Input
-  std::map< std::set< int >, int > sizes = get_bucket_sizes( rank );
+  // For the rank 0, the `MPI_Scan` will not call the reduction operator.
+  // So we need to reduce ourselves. Still we need to send this reduction to the following rank,
+  // by copying to it to the send buffer.
+  //
+  // For the other ranks, the reduction operator will be called.
+  // We'll then provide the data as a pointer to the instance on the current rank.
+  // The reduction operator will then update the offsets and send them to the following rank.
+  std::map< std::set< int >, int > const sizes = get_bucket_sizes( rank );
+  std::map< std::set< int >, int > result;
   if( rank == 0 )
   {
-    sizes = update_bucket_offsets( sizes, { { { 0, }, 0 } }, rank );
+    result = update_bucket_offsets( sizes, { { { 0, }, 0 } }, rank );
+    std::vector< std::uint8_t > const bytes = serialize( result );
+    std::memcpy( local.data(), bytes.data(), bytes.size() );
   }
-  std::vector< std::uint8_t > const mm = serialize( sizes );
-  std::memcpy( local, mm.data(), mm.size() );
+  else
+  {
+    std::uintptr_t const addr = reinterpret_cast<std::uintptr_t>(&sizes);
+    std::memcpy( local.data(), &addr, sizeof( std::uintptr_t ) );
+  }
 
-  MPI_Scan( local, recv, N, MPI_BYTE, myOp, MPI_COMM_WORLD );
+  MPI_Scan( local.data(), recv.data(), N, MPI_BYTE, myOp, MPI_COMM_WORLD );
 
-  std::map< std::set< int >, int > loc = unserialize( local, N );
-  std::map< std::set< int >, int > rec = unserialize( recv, N );
-  std::cout << "on rank " << rank << " FINAL local, recv -> " << json( loc ) << " | " << json( rec ) << std::endl;
+  if( rank != 0 )
+  {
+    result = deserialize( recv );
+  }
+
+  std::cout << "on rank " << rank << " FINAL recv -> " << json( result ) << std::endl;
 
   // Just be a little in order
   MPI_Barrier( MPI_COMM_WORLD );
 
   MPI_Finalize();
-
-  free( local );
-  free( recv );
 
   return 0;
 }
