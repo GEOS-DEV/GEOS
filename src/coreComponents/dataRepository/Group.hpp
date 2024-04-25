@@ -1414,6 +1414,15 @@ public:
    */
   void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
 
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    /// String for the logLevel wrapper
+    constexpr static char const * logLevelString() { return "logLevel"; }
+  };
+
   ///@}
 
   /**
