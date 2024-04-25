@@ -54,12 +54,9 @@ jobs:
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
-  get_cuda_labels:
-    continue-on-error: true
+  are_cuda_builds_required:
     needs: [is_not_draft_pull_request]
     runs-on: ubuntu-22.04
-    outputs:
-      LABELS: ${{ steps.update_labels.outputs.LABELS }}
     steps:
       - name: Check for updated cuda labels
         id: update_labels
@@ -70,7 +67,6 @@ jobs:
           else
             pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
             LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-            echo "$LABELS"
             echo "LABELS=$LABELS" >> "$GITHUB_OUTPUT"
 
             if [[ "${LABELS}" == *"ci: ready to be merged"* ]]; then
@@ -80,12 +76,9 @@ jobs:
             fi
           fi
 
-  get_integrated_test_labels:
-    continue-on-error: true
+  are_integrated_tests_required:
     needs: [is_not_draft_pull_request]
     runs-on: ubuntu-22.04
-    outputs:
-      LABELS: ${{ steps.update_labels.outputs.LABELS }}
     steps:
       - name: Check for updated test labels
         id: update_labels
@@ -96,7 +89,6 @@ jobs:
           else
             pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
             LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-            echo "$LABELS"
             echo "LABELS=$LABELS" >> "$GITHUB_OUTPUT"
 
             if [[ "${LABELS}" == *"ci: run integrated tests"* ]]; then
@@ -239,9 +231,8 @@ jobs:
   run_integrated_tests:
     needs:
       - is_not_draft_pull_request
-      - get_integrated_test_labels
+      - are_integrated_tests_required
       - cpu_builds
-    if: "${{ (contains( fromJSON( needs.get_integrated_test_labels.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request') }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -278,8 +269,7 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
-      - get_cuda_labels
-    if: "${{ contains( fromJSON( needs.get_cuda_labels.outputs.LABELS ), 'ci: ready to be merged') }}"
+      - are_cuda_builds_required
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
