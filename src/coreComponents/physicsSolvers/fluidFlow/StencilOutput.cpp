@@ -33,6 +33,16 @@ using namespace dataRepository;
 StencilOutput::StencilOutput( const string & name,
                               Group * const parent ):
   Base( name, parent )
+{
+  getWrapperBase( viewKeyStruct::writeCSVFlagString() ).
+    setDescription( GEOS_FMT( "Enable the CSV output for each targeted solver discretisation scheme "
+                              "under the folder defined by {}.",
+                              Base::viewKeyStruct::writeCSVFlagString() ) );
+
+  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
+    setDescription( GEOS_FMT( "When higher than 1: Display output events details.",
+                              Base::viewKeyStruct::writeCSVFlagString() ) );
+}
 
 
 bool StencilOutput::execute( real64 const time_n,
