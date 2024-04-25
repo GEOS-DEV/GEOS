@@ -178,8 +178,8 @@ int main( int argc,
 
   constexpr int N = 2048;
 
-  std::vector< std::uint8_t > local( N, 0 );
-  std::vector< std::uint8_t > recv( N, 0 );
+  std::vector< std::uint8_t > sendBuff( N, 0 );
+  std::vector< std::uint8_t > recvBuff( N, 0 );
 
   MPI_Op myOp;
   MPI_Op_create( f, false, &myOp );
@@ -197,22 +197,22 @@ int main( int argc,
   {
     result = update_bucket_offsets( sizes, { { { 0, }, 0 } }, rank );
     std::vector< std::uint8_t > const bytes = serialize( result );
-    std::memcpy( local.data(), bytes.data(), bytes.size() );
+    std::memcpy( sendBuff.data(), bytes.data(), bytes.size() );
   }
   else
   {
     std::uintptr_t const addr = reinterpret_cast<std::uintptr_t>(&sizes);
-    std::memcpy( local.data(), &addr, sizeof( std::uintptr_t ) );
+    std::memcpy( sendBuff.data(), &addr, sizeof( std::uintptr_t ) );
   }
 
-  MPI_Scan( local.data(), recv.data(), N, MPI_BYTE, myOp, MPI_COMM_WORLD );
+  MPI_Scan( sendBuff.data(), recvBuff.data(), N, MPI_BYTE, myOp, MPI_COMM_WORLD );
 
   if( rank != 0 )
   {
-    result = deserialize( recv );
+    result = deserialize( recvBuff );
   }
 
-  std::cout << "on rank " << rank << " FINAL recv -> " << json( result ) << std::endl;
+  std::cout << "on rank " << rank << " FINAL offsets -> " << json( result ) << std::endl;
 
   // Just be a little in order
   MPI_Barrier( MPI_COMM_WORLD );
