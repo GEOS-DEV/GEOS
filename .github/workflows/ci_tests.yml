@@ -254,14 +254,14 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             RUNS_ON: streak2
-            DOCKER_RUN_ARGS: "--cpus=32 --memory=512g --runtime=nvidia --gpus all"
+            DOCKER_RUN_ARGS: "--cpus=32 --memory=384g --runtime=nvidia --gpus all"
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             RUNS_ON: streak2
-            DOCKER_RUN_ARGS: "--cpus=32 --memory=512g --runtime=nvidia --gpus all"
+            DOCKER_RUN_ARGS: "--cpus=32 --memory=384g --runtime=nvidia --gpus all"
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
