@@ -206,7 +206,7 @@ jobs:
       - is_not_draft_pull_request
       - get_current_labels
       - cpu_builds
-    if: "${{ contains( fromJSON( needs.get_current_labels.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request' }}"
+    if: "${{ always() && (contains( fromJSON( needs.get_current_labels.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request') }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
