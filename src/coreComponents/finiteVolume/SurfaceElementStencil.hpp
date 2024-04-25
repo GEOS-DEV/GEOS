@@ -605,7 +605,9 @@ SurfaceElementStencilWrapper::
 
     geometricWeight[k] = m_weights[iconn][k] / 12.0;
     sumOfGeometricWeights += geometricWeight[k];
+    //std::cout << "transport weights: " << m_weights[iconn][k] << " ";
   }
+  //std::cout << std::endl;
 
   for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
   {
@@ -625,7 +627,9 @@ SurfaceElementStencilWrapper::
     localIndex const ei  =  m_elementIndices[iconn][k];
 
     m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
+//    std::cout << "remove_weights: " << m_weights[iconn][k] << " ";
   }
+//  std::cout << std::endl;
 }
 
 GEOS_HOST_DEVICE
@@ -640,7 +644,9 @@ SurfaceElementStencilWrapper::
     localIndex const ei  =  m_elementIndices[iconn][k];
 
     m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+//    std::cout << "add_weights: " << m_weights[iconn][k] << " ";
   }
+//  std::cout << std::endl;
 }
 
 } /* namespace geos */

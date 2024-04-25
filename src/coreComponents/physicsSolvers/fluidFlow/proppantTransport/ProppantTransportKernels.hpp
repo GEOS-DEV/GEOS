@@ -164,6 +164,7 @@ struct AccumulationKernel
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
           arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & deltaVolume,
           arrayView1d< real64 const > const & proppantPackVolFrac,
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,

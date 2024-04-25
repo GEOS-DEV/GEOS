@@ -214,6 +214,11 @@ public:
    */
   void updateState( ObjectManagerBase & dataGroup );
 
+  /**
+   * @brief Function to update cell-based fluid flux
+   */
+  void updateCellBasedFlux( real64 const time_n,
+                            DomainPartition & domain );
 protected:
 
   virtual void postProcessInput() override;
@@ -229,12 +234,6 @@ private:
   void updateComponentDensity( ObjectManagerBase & dataGroup );
 
   void updateProppantModel( ObjectManagerBase & dataGroup );
-
-  /**
-   * @brief Function to update cell-based fluid flux
-   */
-  void updateCellBasedFlux( real64 const time_n,
-                            DomainPartition & domain );
 
   void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

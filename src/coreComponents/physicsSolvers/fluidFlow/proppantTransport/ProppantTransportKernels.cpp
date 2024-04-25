@@ -93,6 +93,7 @@ AccumulationKernel::
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
           arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & deltaVolume,
           arrayView1d< real64 const > const & proppantPackVolFrac,
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,
@@ -109,16 +110,19 @@ AccumulationKernel::
       stackArray1d< real64, MAX_NC > localAccum( nDofs );
       stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( nDofs, nDofs );
 
-      real64 effectiveVolume = volume[ei];
+      real64 effectiveVolume = volume[ei] + deltaVolume[ei];
       real64 packPoreVolume = 0.0;
 
       if( proppantPackVolFrac[ei] < 1.0 )
       {
-        effectiveVolume = volume[ei] * ( 1.0 - proppantPackVolFrac[ei] );
-        packPoreVolume = volume[ei] * proppantPackVolFrac[ei] * ( 1.0 - maxProppantConcentration );
+        effectiveVolume *= ( 1.0 - proppantPackVolFrac[ei] );
+        packPoreVolume += packPoreVolume * proppantPackVolFrac[ei] * ( 1.0 - maxProppantConcentration );
       }
 
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
+      std::cout << "acc: element " << ei << " proppant pack "  <<proppantPackVolFrac[ei] 
+                << "volume " << volume[ei]
+                << "packLiftFlux: " << proppantLiftFlux[ei] << std::endl;
 
       compute( numComps,
                proppantConc_n[ei],
@@ -250,6 +254,7 @@ FluxKernel::
     dEdgeDens_dProppantC[i] = geometricWeight[i] * dDens_dProppantConc[ei][0];
 
     edgeViscosity += geometricWeight[i] * visc[ei][0];
+    //std::cout << "property: " << visc[ei][0] <<" " << dens[ei][0] << " ";
     dEdgeVisc_dP[i] = geometricWeight[i] * dVisc_dPres[ei][0];
     dEdgeVisc_dProppantC[i] = geometricWeight[i] * dVisc_dProppantConc[ei][0];
 
@@ -269,6 +274,7 @@ FluxKernel::
       dEdgeVisc_dComponentC[i][c] = geometricWeight[i] * dVisc_dComponentConc[ei][0][c];
     }
   }
+  //std::cout << std::endl;
 
   real64 const proppantFluxCoef = ( numberOfMobileProppantElems > 1 ) ? 1.0 : 0.0;
 
@@ -297,6 +303,7 @@ FluxKernel::
       }
     }
   }
+  //std::cout << std::endl;
 
   for( localIndex i = 0; i < numElems; ++i )
   {
@@ -356,6 +363,7 @@ FluxKernel::
                                                  apertureWeight[i] * fluidDens[i] / mixDens[i];
 
       edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
+      std::cout <<"proppant flux vertical " << ei << " " << edgeToFaceProppantFlux[i] << " " << pres[ei] << " ";
 
       for( localIndex j = 0; j < numElems; ++j )
       {
@@ -371,6 +379,7 @@ FluxKernel::
     {
       // horizontal
       edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) * proppantFluxCoef * edgeToFaceFlux[i];
+      std::cout <<"proppant flux horizontal " << ei << " " << edgeToFaceProppantFlux[i] << " " << pres[ei] << " ";
 
       dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFactor[ei] - (1.0 - proppantC[i]) * dCollisionFactor_dProppantConc[ei]) *
                                                  proppantFluxCoef * edgeToFaceFlux[i];
@@ -430,6 +439,7 @@ FluxKernel::
     }
   }
 
+  std::cout << std::endl;
   // get proppantCe
 
   real64 proppantCe = 0.0;
@@ -527,6 +537,7 @@ FluxKernel::
       proppantCe += proppantC[i] * geometricWeight[i];
     }
   }
+  std::cout << "    proppant ce" <<  proppantCe << std::endl;
 
   // get componentCe
 
@@ -925,6 +936,7 @@ FluxKernel::
   for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei  = stencilElementIndices[i];
+    //std::cout << ei << " ";
 
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
@@ -934,11 +946,13 @@ FluxKernel::
 
     for( localIndex k = 0; k < 3; ++k )
     {
-      std::cout << "before adding flux: " << cellBasedFlux[ei][k] << std::endl;
+      //std::cout << "before adding flux: " << cellBasedFlux[ei][k] << std::endl;
       RAJA::atomicAdd( parallelDeviceAtomic{}, &cellBasedFlux[ei][k], -edgeToFaceFlux * cellCenterToEdgeCenters[i][k] );
-      std::cout << "after adding flux: " << ei << " " << k << " " << -edgeToFaceFlux * cellCenterToEdgeCenters[i][k] << std::endl;
+      //std::cout << "after adding flux: " << i << " " <<  ei << " " << k << " " << -edgeToFaceFlux * cellCenterToEdgeCenters[i][k] << std::endl;
     }
+    //std::cout <<  cellBasedFlux[ei][0] << " " << cellBasedFlux[ei][1] <<" " << cellBasedFlux[ei][2] << " ";
   }
+  //std::cout << std::endl;
 }
 
 void FluxKernel::

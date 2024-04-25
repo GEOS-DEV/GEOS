@@ -237,10 +237,9 @@ real64 FlowProppantTransportSolver< HydrofractureSolver< SinglePhasePoromechanic
     while( seqIter < maxOuterLoop)
     {
 
-      GEOS_LOG_LEVEL_RANK_0( 1, "  Iteration: " << seqIter+1  << ", FlowSolver: " );
+      GEOS_LOG_LEVEL_RANK_0( 1, "  Iteration: " << seqIter+1  << ", FlowSolver: " << flowSolver()->getCatalogName() );
 
       dtReturnTemporary = flowSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
-      flowSolver()->updateState( domain );
 
       if( dtReturnTemporary < dtReturn )
       {
@@ -249,15 +248,14 @@ real64 FlowProppantTransportSolver< HydrofractureSolver< SinglePhasePoromechanic
         continue;
       }
 
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration: {}, Proppant Solver: ", seqIter+1 ) );
-
+      GEOS_LOG_LEVEL_RANK_0( 1,  "  Iteration: " << seqIter+1 << ", Proppant Solver: " << proppantTransportSolver()->getCatalogName() );
+      //proppantTransportSolver()->updateCellBasedFlux( time_n, domain );
       dtReturnTemporary = proppantTransportSolver()->nonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
-      proppantTransportSolver()->updateState( domain );
 
       ++seqIter;
     }
     this->m_solverStatistics.logNonlinearIteration();
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iterations *****", seqIter ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The outerloop iteration exits after {} executions *****", seqIter ) );
     // post processing of HF
     // TO DO: replace the actual surface gen name
     const auto surfaceGenerator = &flowSolver()->getParent().template getGroup< SurfaceGenerator >( "SurfaceGen" );

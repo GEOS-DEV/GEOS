@@ -371,6 +371,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   //      This is just here because it was convenient, but it is not appropriate
   //      to have physics based initialization in the flux approximator.
 
+  std::cout << "create frac ele\n";
 #if !defined(SET_CREATION_DISPLACEMENT)
   static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
 #endif

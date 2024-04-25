@@ -267,6 +267,7 @@ void ParticleFluidUpdate::compute( real64 const proppantConcentration,
                                    real64 & collisionFactor,
                                    real64 & dCollisionFactor_dProppantConcentration ) const
 {
+  std::cout << "setting velocity calculation\n";
   real64 const constCoef = 9.81 * m_proppantDiameter * m_proppantDiameter / 18.0;
 
   real64 singleParticleSettlingVelocity = 0.0;

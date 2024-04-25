@@ -428,6 +428,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
+          std::cout << "element " << ei << " " << proppantConc[ei] << " " << packVolFrac[ei] << std::endl;
         if( proppantConc[ei] >= maxProppantConcentration || packVolFrac[ei] >= 1.0 )
         {
           packVolFrac[ei] = 1.0;
@@ -548,6 +549,8 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const deltaVolume = subRegion.template getField< fields::flow::deltaVolume >();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
       arrayView2d< real64 const > const componentDens_n = subRegion.getField< fields::proppant::componentDensity_n >();
@@ -576,6 +579,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                   dCompDens_dPres,
                                   dCompDens_dCompConc,
                                   volume,
+                                  deltaVolume,
                                   proppantPackVolFrac,
                                   proppantLiftFlux,
                                   dt,
