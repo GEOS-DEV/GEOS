@@ -27,6 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "WaveSolverUtils.hpp"
+#include "events/EventManager.hpp"
 
 #include <limits>
 
