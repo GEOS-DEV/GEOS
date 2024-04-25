@@ -182,12 +182,12 @@ The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the
 
 .. code:: 
 
-        DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1
-        ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 
+        DensityFun SpanWagnerCO2Density 1.0e5 7.5e7 1e5 285.15 395.15 5
+        ViscosityFun FenghourCO2Viscosity 1.0e5 7.5e7 1e5 285.15 395.15 5 
 
 .. code::
   
-        DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 94 96 1 0
+        DensityFun PhillipsBrineDensity 1.0e5 7.5e7 1e5 285.15 395.15 5 0
         ViscosityFun PhillipsBrineViscosity 0
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
@@ -218,6 +218,10 @@ Here, these fields are homogeneous, except for the permeability field that is ta
         a **Constitutive** law. These permeability values will overwrite the values already set in the **Constitutive** block. 
 
 .. _Outputs_tag_co2_field_case:
+
+.. warning::
+  This XML file example does not take into account elevation when imposing the intial pressure with ``initialPressure``. 
+  Consider using a "HydrostraticEquilibrium" for a closer answer to modeled physical processes.
 
 ------
 Output

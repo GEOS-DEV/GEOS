@@ -18,7 +18,6 @@
 
 #include "SinglePhaseHybridFVM.hpp"
 
-#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -28,6 +27,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 
 /**
@@ -471,9 +471,6 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
       defaultViscosity += fluid.defaultViscosity();
       subRegionCounter++;
 
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
       // step 1.1: compute the norm in the subRegion
 
       singlePhaseBaseKernels::
@@ -483,8 +480,6 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
                                                    elemDofKey,
                                                    localRhs,
                                                    subRegion,
-                                                   fluid,
-                                                   solid,
                                                    m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );

@@ -4,3 +4,5 @@
 git submodule init
 git submodule deinit integratedTests
 git submodule update
+# Load the pretty printer for LvArray
+echo "source /workspaces/GEOS/src/coreComponents/LvArray/scripts/gdb-printers-shallow.py" > ~/.gdbinit

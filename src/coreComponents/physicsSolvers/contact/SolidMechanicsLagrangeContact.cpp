@@ -548,6 +548,17 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
                                                localRhs );
 
   assembleContact( domain, dofManager, localMatrix, localRhs );
+
+  // for sequenatial: add (fixed) pressure force contribution into residual (no derivatives)
+  if( m_isFixedStressPoromechanicsUpdate )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+      assembleForceResidualPressureContribution( mesh, regionNames, dofManager, localMatrix, localRhs );
+    } );
+  }
 }
 
 void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
@@ -568,6 +579,89 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
   } );
 }
 
+void SolidMechanicsLagrangeContact::
+  assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                             arrayView1d< string const > const & regionNames,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  FaceManager const & faceManager = mesh.getFaceManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+
+  string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+  arrayView1d< globalIndex const > const &
+  dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                            [&]( localIndex const,
+                                                                 FaceElementSubRegion const & subRegion )
+  {
+    arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+    {
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+      real64 Nbar[3];
+      Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+      Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+      Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+      LvArray::tensorOps::normalize< 3 >( Nbar );
+
+      globalIndex rowDOF[12];
+      real64 nodeRHS[12];
+      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+
+      for( localIndex kf=0; kf<2; ++kf )
+      {
+        localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          // Compute local area contribution for each node
+          array1d< real64 > nodalArea;
+          computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+          real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
+          array1d< real64 > globalNodalForce( 3 );
+          LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
+          for( localIndex i=0; i<3; ++i )
+          {
+            rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+            // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+            nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+          }
+        }
+
+        for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
+          {
+            RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+          }
+        }
+      }
+    } );
+  } );
+}
+
 real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time,
                                                              real64 const & dt,
                                                              DomainPartition const & domain,
@@ -578,37 +672,24 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
 
   real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
-  real64 momentumR2 = 0.0;
-  real64 contactR2 = 0.0;
+  real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
+
+  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+}
+
+real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartition const & domain,
+                                                                    DofManager const & dofManager,
+                                                                    arrayView1d< real64 const > const & localRhs )
+{
+  string const & dofKey = dofManager.getKey( contact::traction::key() );
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  real64 contactResidual = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    arrayView1d< globalIndex const > const & dispDofNumber =
-      nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
-
-    string const & dofKey = dofManager.getKey( contact::traction::key() );
-    globalIndex const rankOffset = dofManager.rankOffset();
-
-    arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
-    forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                      [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      if( elemGhostRank[k] < 0 )
-      {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( dispDofNumber[k] - rankOffset );
-        for( localIndex dim = 0; dim < 3; ++dim )
-        {
-          localSum0 += localRhs[localRow + dim] * localRhs[localRow + dim];
-        }
-      }
-    } );
-    momentumR2 += localSum0.get();
-
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
     {
@@ -627,68 +708,29 @@ real64 SolidMechanicsLagrangeContact::calculateResidualNorm( real64 const & time
           }
         }
       } );
-      contactR2 += localSum.get();
+      contactResidual += localSum.get();
     } );
   } );
-  real64 localR2[2] = { momentumR2, contactR2 };
-  real64 globalResidualNorm[3]{};
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  array1d< real64 > globalR2( 2 * size );
-  globalR2.zero();
+  contactResidual = MpiWrapper::sum( contactResidual );
+  contactResidual = sqrt( contactResidual );
 
-  // Everything is done on rank 0
-  MpiWrapper::gather( localR2,
-                      2,
-                      globalR2.data(),
-                      2,
-                      0,
-                      MPI_COMM_GEOSX );
-
-  if( rank==0 )
+  if( this->m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    globalResidualNorm[0] = 0.0;
-    globalResidualNorm[1] = 0.0;
-    for( int r=0; r<size; ++r )
-    {
-      // sum across all ranks
-      globalResidualNorm[0] += globalR2[2 * r + 0];
-      globalResidualNorm[1] += globalR2[2 * r + 1];
-    }
-    globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
-    globalResidualNorm[0] = sqrt( globalResidualNorm[0] );
-    globalResidualNorm[1] = sqrt( globalResidualNorm[1] );
-    globalResidualNorm[2] = sqrt( globalResidualNorm[2] );
-  }
-
-  MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
-
-  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    m_initialResidual[0] = globalResidualNorm[0];
-    m_initialResidual[1] = globalResidualNorm[1];
-    m_initialResidual[2] = globalResidualNorm[2];
-    globalResidualNorm[0] = 1.0;
-    globalResidualNorm[1] = 1.0;
-    globalResidualNorm[2] = 1.0;
+    this->m_initialContactResidual = contactResidual;
+    contactResidual = 1.0;
   }
   else
   {
-    globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
-    globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
-    // Add 0 just to match Matlab code results
-    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
+    contactResidual /= (this->m_initialContactResidual + 1.0);
   }
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout<< GEOS_FMT(
-      "        ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} )",
-      globalResidualNorm[0],
-      globalResidualNorm[1],
-      globalResidualNorm[2] );
+    std::cout << GEOS_FMT( "        ( Rtraction ) = ( {:15.6e} )", contactResidual );
   }
-  return sqrt( globalResidualNorm[2]*globalResidualNorm[2] + solidResidual*solidResidual );
+
+  return contactResidual;
 }
 
 void SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition const & domain )
@@ -1090,11 +1132,11 @@ void SolidMechanicsLagrangeContact::
                 {
                   if( i == 0 )
                   {
-                    elemRHS[i] = +Ja * dispJump[kfe][i];
+                    elemRHS[i] = Ja * dispJump[kfe][i];
                   }
                   else
                   {
-                    elemRHS[i] = +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
+                    elemRHS[i] = Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
                   }
                 }
 
@@ -1122,7 +1164,7 @@ void SolidMechanicsLagrangeContact::
             case contact::FractureState::Slip:
             case contact::FractureState::NewSlip:
               {
-                elemRHS[0] = +Ja * dispJump[kfe][0];
+                elemRHS[0] = Ja * dispJump[kfe][0];
 
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
@@ -1153,7 +1195,10 @@ void SolidMechanicsLagrangeContact::
                 {
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
+                    elemRHS[i] = Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
+
+                    dRdT( i, 0 ) = Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
+                    dRdT( i, i ) = Ja;
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1181,11 +1226,6 @@ void SolidMechanicsLagrangeContact::
                       }
                     }
                   }
-                  for( localIndex i = 1; i < 3; ++i )
-                  {
-                    dRdT( i, 0 ) = Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
-                    dRdT( i, i ) = Ja;
-                  }
                 }
                 else
                 {
@@ -1195,21 +1235,18 @@ void SolidMechanicsLagrangeContact::
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
-                    }
-                    for( localIndex i = 1; i < 3; ++i )
-                    {
+                      elemRHS[i] = Ja * traction[kfe][i] * ( 1.0 - limitTau / vauxNorm );
+
+                      dRdT( i, 0 ) = Ja * traction[kfe][i] * dLimitTau_dNormalTraction / vauxNorm;
                       dRdT( i, i ) = Ja;
                     }
                   }
                   else
                   {
-                    for( localIndex i = 1; i < 3; ++i )
+                    for( int i = 1; i < 3; ++i )
                     {
                       elemRHS[i] = 0.0;
-                    }
-                    for( localIndex i = 1; i < 3; ++i )
-                    {
+
                       dRdT( i, i ) = Ja;
                     }
                   }
@@ -1218,13 +1255,10 @@ void SolidMechanicsLagrangeContact::
               }
             case contact::FractureState::Open:
               {
-                for( localIndex i = 0; i < 3; ++i )
+                for( int i = 0; i < 3; ++i )
                 {
-                  elemRHS[i] = +Ja * traction[kfe][i];
-                }
+                  elemRHS[i] = Ja * traction[kfe][i];
 
-                for( localIndex i = 0; i < 3; ++i )
-                {
                   dRdT( i, i ) = Ja;
                 }
                 break;
@@ -1848,6 +1882,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       hasConfigurationConverged &= checkActiveSetSub.get();
     } );
   } );
+
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 

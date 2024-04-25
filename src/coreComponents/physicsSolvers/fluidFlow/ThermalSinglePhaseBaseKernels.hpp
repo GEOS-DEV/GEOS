@@ -120,10 +120,8 @@ public:
   using Base::m_elemGhostRank;
   using Base::m_volume;
   using Base::m_deltaVolume;
-  using Base::m_porosity_n;
-  using Base::m_porosityNew;
+  using Base::m_porosity;
   using Base::m_dPoro_dPres;
-  using Base::m_density_n;
   using Base::m_density;
   using Base::m_dDensity_dPres;
   using Base::m_localMatrix;
@@ -149,13 +147,12 @@ public:
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dDensity_dTemp( fluid.dDensity_dTemperature() ),
     m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
-    m_internalEnergy_n( fluid.internalEnergy_n() ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_dInternalEnergy_dPres( fluid.dInternalEnergy_dPressure() ),
     m_dInternalEnergy_dTemp( fluid.dInternalEnergy_dTemperature() ),
-    m_rockInternalEnergy_n( solid.getInternalEnergy_n() ),
     m_rockInternalEnergy( solid.getInternalEnergy() ),
-    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() )
+    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() ),
+    m_energy_n( subRegion.template getField< fields::flow::energy_n >() )
   {}
 
   /**
@@ -172,7 +169,6 @@ public:
     {}
 
     using Base::StackVariables::poreVolume;
-    using Base::StackVariables::poreVolume_n;
     using Base::StackVariables::dPoreVolume_dPres;
     using Base::StackVariables::localRow;
     using Base::StackVariables::dofIndices;
@@ -186,9 +182,6 @@ public:
 
     /// Solid energy at time n+1
     real64 solidEnergy = 0.0;
-
-    /// Solid energy at the previous converged time step
-    real64 solidEnergy_n = 0.0;
 
     /// Derivative of solid internal energy with respect to pressure
     real64 dSolidEnergy_dPres = 0.0;
@@ -212,14 +205,12 @@ public:
     stack.dPoreVolume_dTemp = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
 
     // initialize the solid volume
-    real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosityNew[ei][0] );
-    real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
+    real64 const solidVolume = ( m_volume[ei] + m_deltaVolume[ei] ) * ( 1.0 - m_porosity[ei][0] );
     real64 const dSolidVolume_dPres = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
     real64 const dSolidVolume_dTemp = -( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dTemp[ei][0];
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
-    stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
     stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0] + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
   }
@@ -235,6 +226,8 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
+    stack.localResidual[numEqn-1] = -m_energy_n[ei];
+
     Base::computeAccumulation( ei, stack, [&] ()
     {
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
@@ -242,7 +235,6 @@ public:
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0];
-      real64 const fluidEnergy_n = stack.poreVolume_n * m_density_n[ei][0] * m_internalEnergy_n[ei][0];
 
       real64 const dFluidEnergy_dP = stack.dPoreVolume_dPres * m_density[ei][0] * m_internalEnergy[ei][0]
                                      + stack.poreVolume * m_dDensity_dPres[ei][0] * m_internalEnergy[ei][0]
@@ -253,7 +245,7 @@ public:
                                      + stack.dPoreVolume_dTemp * m_density[ei][0] * m_internalEnergy[ei][0];
 
       // local accumulation
-      stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
+      stack.localResidual[numEqn-1] += fluidEnergy;
 
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
@@ -261,7 +253,7 @@ public:
     } );
 
     // Step 3: assemble the solid part of the accumulation term of the energy equation
-    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
+    stack.localResidual[numEqn-1] += stack.solidEnergy;
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
   }
@@ -297,15 +289,16 @@ protected:
   arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on fluid internal energy
-  arrayView2d< real64 const > const m_internalEnergy_n;
   arrayView2d< real64 const > const m_internalEnergy;
   arrayView2d< real64 const > const m_dInternalEnergy_dPres;
   arrayView2d< real64 const > const m_dInternalEnergy_dTemp;
 
   /// Views on rock internal energy
-  arrayView2d< real64 const > m_rockInternalEnergy_n;
-  arrayView2d< real64 const > m_rockInternalEnergy;
-  arrayView2d< real64 const > m_dRockInternalEnergy_dTemp;
+  arrayView2d< real64 const > const m_rockInternalEnergy;
+  arrayView2d< real64 const > const m_dRockInternalEnergy_dTemp;
+
+  /// View on energy
+  arrayView1d< real64 const > const m_energy_n;
 
 };
 
@@ -337,15 +330,9 @@ public:
                                      constitutive::CoupledSolidBase const & solid,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
-    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
-#if ALLOW_CREATION_MASS
-    , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
-#endif
-  {
-#if !defined(ALLOW_CREATION_MASS)
-    static_assert( true, "must have ALLOW_CREATION_MASS defined" );
-#endif
-  }
+    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
+  {}
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
@@ -358,20 +345,15 @@ public:
                             Base::StackVariables & stack ) const
   {
     Base::computeAccumulation( ei, stack );
-
-#if ALLOW_CREATION_MASS
-    if( Base::m_volume[ei] * Base::m_density_n[ei][0] > 1.1 * m_creationMass[ei] )
+    if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
     {
       stack.localResidual[0] += m_creationMass[ei] * 0.25;
     }
-#endif
   }
 
 protected:
 
-#if ALLOW_CREATION_MASS
   arrayView1d< real64 const > const m_creationMass;
-#endif
 
 };
 
