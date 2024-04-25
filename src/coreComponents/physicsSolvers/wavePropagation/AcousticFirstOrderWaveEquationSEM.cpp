@@ -26,7 +26,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "events/EventManager.hpp"
 #include "AcousticMatricesSEMKernel.hpp"
+#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -212,9 +214,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticFirstOrderWaveEquationSEMKernels::
-        PrecomputeSourceAndReceiverKernel::
-        launch< EXEC_POLICY, FE_TYPE >
+      PreComputeSourcesAndReceivers::
+        Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
+      < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,
@@ -295,27 +297,6 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-
-        // acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-
-        // kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        X,
-        //                                                        elemsToNodes,
-        //                                                        velocity,
-        //                                                        density,
-        //                                                        mass );
-
-        // acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-
-        // kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                        X,
-        //                                                        elemsToFaces,
-        //                                                        facesToNodes,
-        //                                                        facesDomainBoundaryIndicator,
-        //                                                        freeSurfaceFaceIndicator,
-        //                                                        velocity,
-        //                                                        damping );
-
 
         AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
         kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
