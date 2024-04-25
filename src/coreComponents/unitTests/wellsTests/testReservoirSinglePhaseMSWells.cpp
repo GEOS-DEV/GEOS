@@ -96,7 +96,7 @@ char const * PostXmlInput =
     </NumericalMethods>
     <ElementRegions>
       <CellElementRegion name="Region1"
-                         cellBlocks="{cb1}"
+                         cellBlocksMatch="{ * }"
                          materialList="{water, rock}"/>
       <WellElementRegion name="wellRegion1"
                          materialList="{water}"/>

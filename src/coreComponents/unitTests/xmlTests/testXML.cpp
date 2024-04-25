@@ -63,7 +63,7 @@ TEST( testXML, testXMLString )
       <ElementRegions>
         <CellElementRegion
           name="Region2"
-          cellBlocks="{ cb1 }"
+          cellBlocksMatch="{ * }"
           materialList="{ shale }"/>
       </ElementRegions>
       <Constitutive>

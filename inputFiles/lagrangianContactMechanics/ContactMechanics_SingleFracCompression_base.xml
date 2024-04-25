@@ -51,7 +51,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ 0_hexahedra, 1_hexahedra }"
+      cellBlocksMatch="{ * }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion

@@ -117,7 +117,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
-      cellBlocks="{ tetrahedra }"
+      cellBlocksMatch="{ * }"
       materialList="{ fluid1, rock, relperm }"/>
 
     <WellElementRegion

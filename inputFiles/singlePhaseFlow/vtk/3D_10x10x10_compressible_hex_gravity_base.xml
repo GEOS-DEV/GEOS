@@ -39,7 +39,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ hexahedra }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 

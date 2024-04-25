@@ -73,7 +73,7 @@
   <ElementRegions>
     <CellElementRegion
       name="dummy"
-      cellBlocks="{ cellBlock01 }"
+      cellBlocksMatch="{ * }"
       materialList="{ dummy }"/>
   </ElementRegions>
   <!-- SPHINX_MESH_END -->

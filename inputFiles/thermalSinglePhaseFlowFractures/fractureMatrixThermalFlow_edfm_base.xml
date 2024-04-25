@@ -35,7 +35,7 @@
   <ElementRegions>
     <CellElementRegion
       name="RockMatrix"
-      cellBlocks="{ cb1 }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock, thermalCond }"/>
 
     <SurfaceElementRegion

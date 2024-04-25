@@ -105,7 +105,7 @@ char const * xmlInput =
     <ElementRegions>
       <CellElementRegion
         name="Region"
-        cellBlocks="{ cb }"
+        cellBlocksMatch="{ * }"
         materialList="{ nullModel }"/>
     </ElementRegions>
     <Constitutive>

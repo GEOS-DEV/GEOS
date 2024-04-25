@@ -59,7 +59,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ hexagonalPrisms }"
+      cellBlocksMatch="{ * }"
       materialList="{ shale, water }"/>
   </ElementRegions>
   <!-- SPHINX_ELEMENTREGIONS_END -->
@@ -296,7 +296,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ hexagonalPrisms }"
+      cellBlocksMatch="{ * }"
       materialList="{ shale, water }"/>
   </ElementRegions>
 

@@ -112,7 +112,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{ cb1 }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock }"/>
 
     <WellElementRegion

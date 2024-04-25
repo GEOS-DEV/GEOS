@@ -82,7 +82,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra, wedges }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion

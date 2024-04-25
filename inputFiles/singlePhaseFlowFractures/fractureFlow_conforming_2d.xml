@@ -106,7 +106,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{ cb1 }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion

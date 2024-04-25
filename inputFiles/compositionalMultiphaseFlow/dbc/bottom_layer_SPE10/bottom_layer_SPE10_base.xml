@@ -11,7 +11,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocks="{ cellBlock }"
+      cellBlocksMatch="{ * }"
       materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 

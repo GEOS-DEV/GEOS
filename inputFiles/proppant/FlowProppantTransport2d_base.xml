@@ -99,7 +99,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocks="{ cb1 }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, sand }"/>
 
     <SurfaceElementRegion

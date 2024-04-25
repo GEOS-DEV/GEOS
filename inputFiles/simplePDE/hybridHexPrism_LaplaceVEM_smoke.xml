@@ -15,7 +15,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms }"
+      cellBlocksMatch="{ * }"
       materialList="{ nullModel }"/>
   </ElementRegions>
   
@@ -29,4 +29,3 @@
   </NumericalMethods>
 
 </Problem>
-

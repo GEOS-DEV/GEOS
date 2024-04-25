@@ -28,7 +28,7 @@
   <ElementRegions>
     <CellElementRegion
         name="Domain"
-        cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
+        cellBlocksMatch="{ * }"
         materialList="{ shale }"/>
   </ElementRegions>
 

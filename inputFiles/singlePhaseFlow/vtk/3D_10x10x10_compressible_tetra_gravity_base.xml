@@ -41,7 +41,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ tetrahedra }"
+      cellBlocksMatch="{ * }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
