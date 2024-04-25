@@ -260,7 +260,8 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            RUNS_ON: Runner_4core_16GB
+            RUNS_ON: streak2
+            DOCKER_RUN_ARGS: "--cpus=32 --memory=512g --runtime=nvidia --gpus all"
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
@@ -296,6 +297,47 @@ jobs:
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
 
+  cuda_tests:
+    name: ${{ matrix.name }}
+    needs:
+      - cuda_builds
+    strategy:
+      # In-progress jobs will not be cancelled if there is a failure
+      fail-fast : false
+      matrix:
+        include:
+          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+            BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            RUNS_ON: streak
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia --gpus all"
+
+          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
+            BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
+            RUNS_ON: streak
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia --gpus all"
+
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
+      ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
+      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+      RUNS_ON: ${{ matrix.RUNS_ON }}
+    secrets: inherit
+
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
   check_that_all_jobs_succeeded:
     runs-on: ubuntu-22.04
@@ -305,6 +347,7 @@ jobs:
     - check_code_style_and_documentation
     - cpu_builds
     - cuda_builds
+    - cuda_tests
     if: ${{ always() }}
     steps:
     - run: |
