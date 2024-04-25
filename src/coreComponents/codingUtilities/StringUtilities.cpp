@@ -55,8 +55,8 @@ string_view trimSpaces( string_view str )
 }
 
 
-string_view removeStringAndFollowingContent( string_view const str,
-                                             string_view const strToRemove )
+string removeStringAndFollowingContent( string_view const str,
+                                        string_view const strToRemove )
 {
   string_view newStr = str;
 
@@ -68,7 +68,7 @@ string_view removeStringAndFollowingContent( string_view const str,
     // remove the character and everything afterwards
     newStr = newStr.substr( 0, pos );
   }
-  return newStr;
+  return string( newStr );
 }
 
 // put definition here so we can control the allowable values of T and
