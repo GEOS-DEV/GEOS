@@ -72,7 +72,7 @@ jobs:
             LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
             echo "$LABELS" >> "$GITHUB_OUTPUT"
 
-            if [[ ${LABELS[@]} =~ "ci: ready to be merged" ]]; then
+            if [[ ${LABELS} == *"ci: ready to be merged"* ]]; then
               exit 0
             else
               exit 1
