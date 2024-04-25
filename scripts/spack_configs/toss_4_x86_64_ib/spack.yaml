@@ -72,7 +72,7 @@ spack:
       require: "@git.5a792c1775e7a7628d84dcde31652a689f1df7b5=develop"
 
     hypre:
-      require: "@git.eab5f9f7f18e5a5c6de34b7652b6ee5b9407d597"
+      require: "@git.d475cdfc63ac59ea9a554493a06e4033b8d6fade"
 
     chai:
       require: "@git.6fe3470ad020303530af2f3dbbfe18826bd3319b=develop"
