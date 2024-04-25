@@ -167,6 +167,8 @@ private:
 
   real64 m_initialContactResidual = 0.0;
 
+  real64 m_stabilitzationScalingCoefficient = 1.0;
+
   void createPreconditioner( DomainPartition const & domain );
 
   void computeFaceDisplacementJump( DomainPartition & domain );
@@ -178,10 +180,14 @@ private:
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+    
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+    
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
+
+    constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
   };
 
 };

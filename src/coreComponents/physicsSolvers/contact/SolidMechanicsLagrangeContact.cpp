@@ -64,6 +64,11 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
+  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilitzationScalingCoefficient ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
+  
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
@@ -524,11 +529,6 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
                        FieldLocation::Elem,
                        3,
                        meshTargets );
-
-  dofManager.addCoupling( contact::traction::key(),
-                          contact::traction::key(),
-                          DofManager::Connector::Face,
-                          meshTargets );
 
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           contact::traction::key(),
@@ -1299,8 +1299,6 @@ void SolidMechanicsLagrangeContact::
           {
             localRhs[localRow + idof] += elemRHS[idof];
 
-            // std::cout << "global faceElement: " << localToGlobal[kfe] << " idof: " << idof << " nnz: " <<
-            // localMatrix.numNonZeros(localRow + idof) << std::endl;
             if( fractureState[kfe] != contact::FractureState::Open )
             {
 
@@ -1529,7 +1527,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffDiagApprox[ kf ][ i ][ j ] = 1.0e-2 * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilitzationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }

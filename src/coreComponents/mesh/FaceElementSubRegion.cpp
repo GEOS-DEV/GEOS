@@ -1066,8 +1066,8 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
       return;
     }
 
-    localIndex const f0 = elems2dToFaces[kfe][0];
-    localIndex const f1 = elems2dToFaces[kfe][1];
+    localIndex & f0 = elems2dToFaces[kfe][0];
+    localIndex & f1 = elems2dToFaces[kfe][1];
 
     localIndex const er0  = faceToElementRegionIndex[f0][0];
     localIndex const esr0 = faceToElementSubRegionIndex[f0][0];
@@ -1082,7 +1082,7 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
 
     if( globalIndexElem0 > globalIndexElem1 )
     {
-      std::swap( elems2dToFaces[kfe][0], elems2dToFaces[kfe][1] );
+      std::swap( f0, f1 );
     }
   } );
 
