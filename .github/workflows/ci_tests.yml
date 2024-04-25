@@ -72,7 +72,7 @@ jobs:
             if [[ $LABELS == *"ci: ready to be merged"* ]]; then
               exit 0
             else
-              echo "$LABELS"
+              echo "${LABELS[@]}"
               exit 1
             fi
           fi
