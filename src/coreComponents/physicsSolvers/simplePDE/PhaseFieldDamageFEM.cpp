@@ -80,6 +80,12 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n2 :\n"
+                       "- Display the jacobian matrix\n"
+                       "\n2 :\n"
+                       "- Display the residuals values"  );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -451,8 +457,9 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   {
     applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
   }
-
-  if( getLogLevel() == 2 )
+  // Display jacobian matrix
+  // Display residuals values
+  if( getLogLevel() >= 2 )
   {
     GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
     GEOS_LOG_RANK_0( "\nJacobian:\n" );

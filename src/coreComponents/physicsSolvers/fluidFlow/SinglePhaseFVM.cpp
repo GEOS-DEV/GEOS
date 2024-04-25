@@ -58,7 +58,16 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
-{}
+{
+  SinglePhaseBase::enableLogLevelInput();
+
+  SinglePhaseBase::getWrapperBase( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n 1 :\n"
+                       "- Display the residual values\n"
+                       "\n1 and first nonlinear iterations :\n"
+                       "- Display the face boundary condition defined with pressure\n"
+                       "- Display the face boundary condition defined with temperature" );
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()

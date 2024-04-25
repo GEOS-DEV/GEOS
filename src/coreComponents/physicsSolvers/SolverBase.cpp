@@ -89,6 +89,15 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n"
+                       "- Display information about line search\n"
+                       "- Display global solution scaling factor"
+                       "\n1 and step remaining :\n"
+                       "- Display informations about timestep"
+                       "\nonly with loglevel = 2 :\n"
+                       "- Display informations about linear algebra objects (matrices and vectors)" );
+
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );

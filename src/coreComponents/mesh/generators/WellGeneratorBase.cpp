@@ -37,6 +37,8 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   , m_nDims( 3 )
   , m_polylineHeadNodeId( -1 )
 {
+  enableLogLevelInput();
+
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
@@ -70,6 +72,9 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n- Display informations about Internal wells and their perforations" );
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )

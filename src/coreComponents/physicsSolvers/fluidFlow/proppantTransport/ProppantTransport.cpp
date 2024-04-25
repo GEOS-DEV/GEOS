@@ -78,6 +78,9 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n- Display the residuals norm values\n" );
+
 }
 
 void ProppantTransport::postProcessInput()

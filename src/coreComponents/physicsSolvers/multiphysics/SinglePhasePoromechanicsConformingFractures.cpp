@@ -40,6 +40,11 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
                                                                                           Group * const parent )
   : Base( name, parent )
 {
+  enableLogLevelInput();
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n3 :\n- Display the summary of declared fields and coupling.\n" );
+
   LinearSolverParameters & params = m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;

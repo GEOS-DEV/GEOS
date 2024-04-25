@@ -219,6 +219,15 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n"
+                       "- Display informations about splitting node/edge/faces\n"
+                       "\n2 :\n"
+                       "- Display informations about all elements attached to the nodeID\n"
+                       "- Display informations about all faces on their element\n"
+                       "\n3 :\n"
+                       "- Display consistency checking of the maps" );
 }
 
 void SurfaceGenerator::postProcessInput()
@@ -1771,7 +1780,6 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 // >("usedFaces")[newNodeIndex];
 //  usedFacesNew = usedFaces[nodeID];
 
-
   if( getLogLevel() > 0 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
@@ -2063,8 +2071,6 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
         }
       }
 
-
-
       // 2b) loop over all faces on element.
       if( getLogLevel() > 1 )
       {
@@ -2333,7 +2339,6 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   arrayView2d< localIndex const > const & faceToSubRegionMap = faceManager.elementSubRegionList();
   arrayView2d< localIndex const > const & faceToElementMap = faceManager.elementList();
 
-
 #if 1
   if( getLogLevel() > 2 )
   {
@@ -2363,7 +2368,6 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
       std::cout << std::endl;
 
       std::cout << " elementToFaces->edges->nodes = ";
-
 
       // Now we do a loop over the facelist and process all the faces
       for( int kf=0; kf<elemSubRegion.numFacesPerElement(); ++kf )

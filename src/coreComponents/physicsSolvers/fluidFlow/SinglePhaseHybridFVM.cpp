@@ -47,6 +47,12 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   m_areaRelTol( 1e-8 )
 {
 
+    getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription(  "\n 1 :\n"
+                         "- Display the residuals values\n"
+                         "\n1 : and first nonlinear iteration :\n"
+                         "- Display the face boundary conditions definied with pressure" );
+
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;

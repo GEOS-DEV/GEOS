@@ -165,6 +165,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n- Display informations about NonLinearSolver parameters" );
+
 }
 
 void NonlinearSolverParameters::postProcessInput()

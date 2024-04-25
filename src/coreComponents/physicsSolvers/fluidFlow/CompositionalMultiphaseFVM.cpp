@@ -86,6 +86,12 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setApplyDefaultValue( ScalingType::Global ).
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n"
+                       "- Display the residual values\n"
+                       "\n1: and non first nonlinear iteration\n"
+                       "- Display face boundary conditions log" );
 }
 
 void CompositionalMultiphaseFVM::postProcessInput()
@@ -433,6 +439,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
         computeGlobalNorm( localResidualNorm, localResidualNormalizer, globalResidualNorm );
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
+
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
@@ -1050,6 +1057,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                        string const & )
     {
       BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+      // number of nonlinear iteration == 0
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );

@@ -115,6 +115,14 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n 1 and first nonlinear iteration :\n"
+                       "- Display the source flux boundary conditions\n"
+                       "- Display the Dirichlet pressure boundary conditions\n"
+                       "- Display the Dirichlet temperature boundary conditions\n"
+                       "\n1 :\n"
+                       "- Display the residuals values" );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
 }
 

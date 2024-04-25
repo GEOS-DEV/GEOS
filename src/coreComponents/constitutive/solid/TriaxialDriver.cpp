@@ -67,6 +67,11 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n"
+                       "- Print informations about TriaxialDriver\n"
+                       "- Indicate if the internal results are consistent" );
 }
 
 

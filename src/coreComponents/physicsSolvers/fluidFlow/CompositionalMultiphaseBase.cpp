@@ -151,6 +151,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (absolute) component density change in a sequential iteration, used for outer loop convergence check" );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n 1 and first nonlinear iteration :\n"
+                       "- Display the residuals values"
+                       "\n1 :\n"
+                       "- Display warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
 }
 
 void CompositionalMultiphaseBase::postProcessInput()

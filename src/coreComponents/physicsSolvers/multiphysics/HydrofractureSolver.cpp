@@ -78,6 +78,8 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_isMatrixPoroelastic(),
   m_newFractureInitializationType()
 {
+  Base::enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -106,6 +108,9 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   registerWrapper( viewKeyStruct::useQuasiNewtonString(), &m_useQuasiNewton ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
+
+  Base::getWrapperBase( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n- Display whether or not we Re-entering Newton Solve \n" );
 
   m_numResolves[0] = 0;
 

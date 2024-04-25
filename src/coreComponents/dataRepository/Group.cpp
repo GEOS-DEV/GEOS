@@ -646,7 +646,7 @@ void Group::enableLogLevelInput()
 {
   // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
   registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Sets the level of information to write in the standard output (the console typically).\n"
                     "A level of 0 outputs minimal information, higher levels require more." );

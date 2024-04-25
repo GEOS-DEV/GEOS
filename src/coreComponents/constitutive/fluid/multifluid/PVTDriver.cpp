@@ -85,6 +85,11 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n1 :\n"
+                       "- Display informations about PVTDriver\n"
+                       "- Indicate at the end if the internal results are consistent" );
 }
 
 void PVTDriver::postProcessInput()

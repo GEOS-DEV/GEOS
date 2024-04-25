@@ -120,6 +120,12 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
 
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    appendDescription( "\n2 :\n"
+                       "Display a warning about boundary conditions\n"
+                       "\n2 :\n"
+                       "Display residuals values" );
+
 }
 
 void SolidMechanicsLagrangianFEM::postProcessInput()

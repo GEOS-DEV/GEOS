@@ -101,8 +101,13 @@ public:
     : Base( name, parent ),
     m_isWellTransmissibilityComputed( false )
   {
+    // enableLogLevelInput();
+
     this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
+
+    // getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+    //   appendDescription( "\n2 :\n Display the value of the transmissibilities" );
   }
 
   /**

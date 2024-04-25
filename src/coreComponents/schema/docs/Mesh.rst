@@ -1,12 +1,16 @@
 
 
-================ ==== ======= =========================== 
-Name             Type Default Description                 
-================ ==== ======= =========================== 
-InternalMesh     node         :ref:`XML_InternalMesh`     
-InternalWellbore node         :ref:`XML_InternalWellbore` 
-ParticleMesh     node         :ref:`XML_ParticleMesh`     
-VTKMesh          node         :ref:`XML_VTKMesh`          
-================ ==== ======= =========================== 
+================ ======= ======= ======================================================================================================================================================================================================================================== 
+Name             Type    Default Description                                                                                                                                                                                                                              
+================ ======= ======= ======================================================================================================================================================================================================================================== 
+logLevel         integer 1       | Sets the level of information to write in the standard output (the console typically).                                                                                                                                                   
+                                 | A level of 0 outputs minimal information, higher levels require more.                                                                                                                                                                    
+                                 | 1 :                                                                                                                                                                                                                                      
+                                 | - Display informations about imported field name on region/subRegion                                                                                                                                                                     
+InternalMesh     node            :ref:`XML_InternalMesh`                                                                                                                                                                                                                  
+InternalWellbore node            :ref:`XML_InternalWellbore`                                                                                                                                                                                                              
+ParticleMesh     node            :ref:`XML_ParticleMesh`                                                                                                                                                                                                                  
+VTKMesh          node            :ref:`XML_VTKMesh`                                                                                                                                                                                                                       
+================ ======= ======= ======================================================================================================================================================================================================================================== 
 
 
