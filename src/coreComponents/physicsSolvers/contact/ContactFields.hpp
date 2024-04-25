@@ -89,22 +89,6 @@ DECLARE_FIELD( traction,
                WRITE_AND_READ,
                "Fracture traction vector in the local reference system." );
 
-DECLARE_FIELD( shearTraction,
-               "shearTraction",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Shear traction vector in the global reference system." );
-
-DECLARE_FIELD( normalTraction,
-               "normalTraction",
-               array2d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Normal traction vector in the global reference system." );
-
 DECLARE_FIELD( deltaTraction,
                "deltaTraction",
                array2d< real64 >,

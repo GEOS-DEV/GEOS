@@ -96,12 +96,6 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
       subRegion.registerField< fields::contact::oldFractureState >( getName() );
 
       subRegion.registerField< fields::contact::slip >( getName() );
-
-      subRegion.registerField< fields::contact::shearTraction >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
-
-      subRegion.registerField< fields::contact::normalTraction >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
     } );
 
   } );
