@@ -31,9 +31,17 @@ decks = [
         check_step=40,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="acous3D_vti_smoke",
+        name="acous3D_vtiFletcher_smoke",
         description=
-        'Acoustic wave solver, first-order FE, vertical transverse isotropic',
+        'Acoustic wave solver, first-order FE, vertical transverse isotropic with Fletcher's equation',
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=100,
+        check_step=200,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="acous3D_vtiZhang_smoke",
+        description=
+        'Acoustic wave solver, first-order FE, vertical transverse isotropic with Zhang's equations',
         partitions=((1, 1, 1), (2, 2, 2)),
         restart_step=100,
         check_step=200,
