@@ -128,7 +128,7 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        if [ ${{ inputs.RUNS_ON }} == 'streak2'* ]; then
+        if [ ${{ inputs.RUNS_ON }} == 'streak' ] || [ ${{ inputs.RUNS_ON }} == 'streak2' ]; then
           RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
           mkdir -p ${GITHUB_WORKSPACE}/certificates
           cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
@@ -155,13 +155,13 @@ jobs:
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
         
-        # SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-        # CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
-        # echo "CONTAINER_NAME: ${CONTAINER_NAME}"
-        # if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
-        #   docker rm -f ${CONTAINER_NAME}
-        # fi
-        # docker_args+=(--name ${CONTAINER_NAME})
+        SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        echo "CONTAINER_NAME: ${CONTAINER_NAME}"
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        docker_args+=(--name ${CONTAINER_NAME})
 
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
