@@ -29,7 +29,7 @@ namespace geos
  * @class StencilOutput
  * Task class allowing the ouput of communicating elements data.
  * Only current usage is to output the cell-cell transmissibility (= "CellToCellOutput"), but we could add more
- * implementations to output the transmissibility of boundary or surface connections (or everything that is managed 
+ * implementations to output the transmissibility of boundary or surface connections (or everything that is managed
  * by the stencils).
  */
 class StencilOutput : public FieldStatisticsBase< FlowSolverBase >
