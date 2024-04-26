@@ -462,7 +462,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         ySum += m_slsAnelasticityCoefficients[ l ];
       }
-      GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given qiality factor. This could lead to solution artifacts such as zero-velocity waves." );
+      GEOS_WARNING_IF( ySum > minQVal, "The anelasticity parameters are too high for the given quality factor. This could lead to solution artifacts such as zero-velocity waves." );
     }
 
   } );
@@ -626,7 +626,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
-  if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
+  if( m_attenuationType == WaveSolverUtils::AttenuationType::none )
   {
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
     finiteElement::
@@ -638,7 +638,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                                             "",
                                                             kernelFactory );
   }
-  else
+  else if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
     auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMAttenuationFactory( dt );
     finiteElement::
