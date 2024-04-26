@@ -123,8 +123,8 @@ public:
 
     // sub-stacks for elastic and anelastic kernels
     typename ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::StackVariables elastic;
-    typename ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
-                                 elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz >::StackVariables anelastic;
+    typename ExplicitElasticSEMBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
+                                     elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz >::StackVariables anelastic;
   };
   //***************************************************************************
 
@@ -181,8 +181,8 @@ protected:
 
   /// The kernels for the attenuated and standard stiffness vectors
   ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > m_elasticKernel;
-  ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
-                      elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz > m_anelasticKernel;
+  ExplicitElasticSEMBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
+                          elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz > m_anelasticKernel;
 
   /// The array containing the P-wave attenuation quality factor
   arrayView1d< real32 const > const m_qualityFactorP;

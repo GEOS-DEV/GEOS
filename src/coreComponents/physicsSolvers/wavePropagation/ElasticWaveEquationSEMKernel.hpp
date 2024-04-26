@@ -51,11 +51,11 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           typename SX = elasticfields::StiffnessVectorx, typename SY = elasticfields::StiffnessVectory, typename SZ = elasticfields::StiffnessVectorz >
-class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                             CONSTITUTIVE_TYPE,
-                                                             FE_TYPE,
-                                                             1,
-                                                             1 >
+class ExplicitElasticSEMBase : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                 CONSTITUTIVE_TYPE,
+                                                                 FE_TYPE,
+                                                                 1,
+                                                                 1 >
 {
 public:
 
@@ -87,14 +87,14 @@ public:
    * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param dt The time interval for the step.
    */
-  ExplicitElasticSEM( NodeManager & nodeManager,
-                      EdgeManager const & edgeManager,
-                      FaceManager const & faceManager,
-                      localIndex const targetRegionIndex,
-                      SUBREGION_TYPE const & elementSubRegion,
-                      FE_TYPE const & finiteElementSpace,
-                      CONSTITUTIVE_TYPE & inputConstitutiveType,
-                      real64 const dt ):
+  ExplicitElasticSEMBase( NodeManager & nodeManager,
+                          EdgeManager const & edgeManager,
+                          FaceManager const & faceManager,
+                          localIndex const targetRegionIndex,
+                          SUBREGION_TYPE const & elementSubRegion,
+                          FE_TYPE const & finiteElementSpace,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -120,7 +120,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitElasticSEM Description
+   * ### ExplicitElasticSEMBase Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -187,7 +187,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitElasticSEM Description
+   * ### ExplicitElasticSEMBase Description
    * Calculates stiffness vector
    *
    */
@@ -255,11 +255,14 @@ protected:
   /// The time increment for this time integration step.
   real64 const m_dt;
 
-
 };
 
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+using ExplicitElasticSEM = ExplicitElasticSEMBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 using ExplicitElasticSEMFactory = finiteElement::KernelFactory< ExplicitElasticSEM,
                                                                 real64 >;
 
