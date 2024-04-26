@@ -87,7 +87,7 @@ void from_json( const json & j,
 }
 
 using Edge = std::tuple< NodeGlbIdx, NodeGlbIdx >;
-using Face = std::set< NodeGlbIdx >;  // TODO change to std::vector< NodeGlbIdx > with a specific ordering.
+using Face = std::vector< NodeGlbIdx >;
 
 struct Exchange
 {
@@ -129,6 +129,52 @@ std::set< vtkIdType > extractBoundaryCells( vtkSmartPointer< vtkDataSet > mesh )
   return boundaryCellIdxs;
 }
 
+/**
+ * @brief Order the nodes of the faces in a way that can be reproduced across the MPI ranks.
+ * @param nodes The list of nodes as provided by the mesh.
+ * @return A face with the nodes in the appropriate order
+ * @details The nodes will be ordered in the following way.
+ * First, we look for the lowest node index. It will become the first node.
+ * Then we must pick the second node. We have to choices: just before or just after the first.
+ * (we do not want to shuffle the nodes completely, we need to keep track of the order).
+ * To do this, we select the nodes with the lowest index as well.
+ * This also defines a direction in which we'll pick the other nodes.
+ * For example, the face <tt>[2, 3, 1, 5, 9, 8]</tt> will become <tt>[1, 3, 2, 8, 9, 5]</tt>
+ * because we'll start with @c 1 and then select the @c 3 over the @c 5.
+ * Which defines the direction @c 2, @c 8, @c 9, @c 5.
+ * @note This is the same pattern that we apply for edges.
+ * Except that edges having only two nodes, it's not necessary to implement a dedicated function
+ * and <tt>std::minmax</tt> is enough.
+ */
+Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes )
+{
+  std::size_t const n = nodes.size();
+
+  // Handles negative values of `i`.
+  auto const modulo = [n]( integer const & i ) -> std::size_t
+  {
+    integer mod = i % n;
+    if( mod < 0 )
+    {
+      mod += n;
+    }
+    return mod;
+  };
+
+  Face f;
+  f.reserve( n );
+
+  auto const it = std::min_element( nodes.cbegin(), nodes.cend() );
+  std::size_t const minIdx = std::distance( nodes.cbegin(), it );
+  int const increment = nodes[modulo( minIdx - 1 )] < nodes[modulo( minIdx + 1 )] ? -1 : 1;
+  integer i = minIdx;
+  for( std::size_t count = 0; count < n; ++count, i = i + increment )
+  {
+    f.emplace_back( nodes.at( modulo( i ) ) );
+  }
+
+  return f;
+}
 
 Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
                             std::set< vtkIdType > const & cellIds )
@@ -164,21 +210,21 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
       vtkIdType const ln1 = edge->GetPointId( 1 );
       vtkIdType const gn0 = globalPtIds->GetValue( ln0 );
       vtkIdType const gn1 = globalPtIds->GetValue( ln1 );
-      tmpEdges.emplace_back( std::minmax( { gn0, gn1 } ) );
+      tmpEdges.emplace_back( std::minmax( { NodeGlbIdx{ gn0 }, NodeGlbIdx{ gn1 } } ) );
     }
 
     for( auto f = 0; f < cell->GetNumberOfFaces(); ++f )
     {
       vtkCell * face = cell->GetFace( f );
       vtkIdList * pids = face->GetPointIds();
-      Face ff;
-      for( auto i = 0; i < pids->GetNumberOfIds(); ++i )
+      std::vector< NodeGlbIdx > nodes( pids->GetNumberOfIds() );
+      for( std::size_t i = 0; i < nodes.size(); ++i )
       {
         vtkIdType const lni = face->GetPointId( i );
         vtkIdType const gni = globalPtIds->GetValue( lni );
-        ff.insert( NodeGlbIdx{ gni } );
+        nodes[i] = NodeGlbIdx{ gni };
       }
-      tmpFaces.emplace_back( ff );
+      tmpFaces.emplace_back( reorderFaceNodes( nodes ) );
     }
   }
 
@@ -239,10 +285,10 @@ Exchange convertExchange( array1d< globalIndex > const & input )
   for( ++i; i < input.size(); )
   {
     auto const s = input[i++];
-    std::set< NodeGlbIdx > face;
+    Face face( s );
     for( int j = 0; j < s; ++j, ++i )
     {
-      face.insert( NodeGlbIdx{ input[i] } );
+      face[j] = NodeGlbIdx{ input[i] };
     }
     exchange.faces.insert( face );
   }
@@ -469,7 +515,7 @@ BucketSizes getBucketSize(Buckets const & buckets)
 
 /**
  * @brief
- * @tparam LOC_IDX The local index type of the geometrical quantity considered (typically @p EdgeLocIdx or @p FaceLocIdx).
+ * @tparam LOC_IDX The local index type of the geometrical quantity considered (typically @c EdgeLocIdx or @c FaceLocIdx).
  * @param sizes
  * @param offsets
  * @param curRank
@@ -517,19 +563,16 @@ std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set
 
 std::vector< std::uint8_t > serialize( BucketSizes const & sizes )
 {
-//  std::cout << json( sizes ) << std::endl;
   return json::to_cbor( json( sizes ) );
 }
 
 std::vector< std::uint8_t > serialize( BucketOffsets const & offsets )
 {
-//  std::cout << json( offsets ) << std::endl;
   return json::to_cbor( json( offsets ) );
 }
 
 /**
  * @brief
- * @tparam BUCKET_TYPE
  * @tparam V Container of std::uint8_t
  * @param data
  * @return
@@ -592,17 +635,24 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   std::vector< std::uint8_t > recvBuffer( maxBufferSize );
 
   BucketSizes const sizes = getBucketSize( buckets );
-
   BucketOffsets offsets;
   if( curRank == MpiRank{ 0 } )
   {
+    // The `MPI_Scan` process will not call the reduction operator for rank 0.
+    // So we need to reduce ourselves for ourselves.
     offsets.edges = updateBucketOffsets< EdgeLocIdx >( sizes.edges, { { { MpiRank{ 0 }, }, EdgeLocIdx{ 0 } } }, curRank );
     offsets.faces = updateBucketOffsets< FaceLocIdx >( sizes.faces, { { { MpiRank{ 0 }, }, FaceLocIdx{ 0 } } }, curRank );
+    // Still we need to send this reduction to the following rank, by copying to it to the send buffer.
     std::vector< std::uint8_t > const bytes = serialize( offsets );
     std::memcpy( sendBuffer.data(), bytes.data(), bytes.size() );
   }
   else
   {
+    // For the other ranks, the reduction operator will be called during the `Mpi_Scan` process.
+    // So unlike for rank 0, we do not have to do it ourselves.
+    // In order to provide the `sizes` to the reduction operator, since `sizes` will only be used on the current ranl,
+    // we'll provide the information as a pointer to the instance.
+    // The reduction operator will then compute the new offsets and send them to the following rank.
     std::uintptr_t const addr = reinterpret_cast<std::uintptr_t>(&sizes);
     std::memcpy( sendBuffer.data(), &addr, sizeof( std::uintptr_t ) );
   }
@@ -618,8 +668,6 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   }
 
   std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
-
-//  BucketOffsets const receivedOffsets = deserialize< BucketOffsets >( recvBuffer );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
