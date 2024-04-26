@@ -213,7 +213,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Anelasticity coefficients for the standard-linear-solid (SLS) anelasticity."
                     "The default value is { }, corresponding to no attenuation. An array with the corresponding reference frequencies must be provided." );
 
-  registerWrapper( viewKeyStruct::useDASString(), &m_attenuationType ).
+  registerWrapper( viewKeyStruct::attenuationTypeString(), &m_attenuationType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( WaveSolverUtils::AttenuationType::none ).
     setDescription( "Flag to indicate which attenuation model to use: \"none\" for no attenuation, \"sls\\" " for the standard-linear-solid (SLS) model (Fichtner, 2014)." );
