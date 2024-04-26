@@ -160,8 +160,8 @@ on the entire domain throughout the simulation.
 To do so, we need to define a region encompassing the entire domain.
 We will name it ``Domain``, as refered to in the single-phase flow solver (in its ``targetRegions``),
 and list its constitutive models in the ``materialList``, which are ``water`` and ``rock``.
-Since we have imported a mesh with one region consisting of hexahedral cells, we must set the
-attribute ``cellBlocks`` to ``hexahedra``.
+Since we have imported a mesh with only one region, we can set ``cellBlocksMatch`` to ``{ * }``
+(we have could also set ``cellBlocks`` to ``{ hexahedra }`` as the mesh has only hexahedral cells).
 
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_base.xml
@@ -331,7 +331,8 @@ And the ``vtk`` file starts as follows (notice the tetrahedral point coordinates
    :lines: 1-20
 
 Again, the entire field is one region called ``Domain`` which contains ``water`` and ``rock``.
-Its ``cellBlocks`` now includes all ``tetrahedra`` elements.
+Since we have imported a mesh with only one region, we can again set ``cellBlocksMatch`` to ``{ * }``
+(we have could also set ``cellBlocks`` to ``{ tetrahedra }`` as the mesh has only tetrahedric cells).
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_base.xml
   :language: xml

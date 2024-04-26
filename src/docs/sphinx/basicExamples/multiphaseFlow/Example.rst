@@ -173,7 +173,7 @@ Reservoir region
 
 In the **ElementRegions** XML block, we define a **CellElementRegion** named ``reservoir`` corresponding to the
 reservoir mesh.
-The attribute ``cellBlocks`` is set to ``all`` to automatically target every cells of the mesh.
+``cellBlocksMatch`` is set to ``{ * }`` to automatically target every cells of the mesh.
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.

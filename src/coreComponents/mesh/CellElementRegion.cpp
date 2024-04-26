@@ -37,7 +37,7 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( GEOS_FMT( "List of the desired cell-blocks from the mesh to contain in this {}.\n"
+    setDescription( GEOS_FMT( "List of the desired cellBlocks names to contain in this {}.\n"
                               "The form of this attribute is of \"regionAttribute_elementType\", so \"1_tetrahedra\" select the "
                               "cellBlock that contains the tetrahedric elements for which the regionAttribute is 1.\n"
                               "The element types are: {}.\n"
@@ -49,7 +49,7 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::cellBlockAttributeValuesString(), &m_cellBlockAttributeValues ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( GEOS_FMT( "List of regionAttribute values for which we want to add the cells in this {}.\n"
-                              "I.e. {{ 1 }} selects the {{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }} cellBlocks.\n"
+                              "I.e. {{ 1, 2 }} selects the {{ 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... }} cellBlocks.\n"
                               "This setting cannot be used simultaneously with {} nor {}.",
                               catalogName(),
                               viewKeyStruct::sourceCellBlockNamesString(),
@@ -58,7 +58,8 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::cellBlockMatchPatternsString(), &m_cellBlockMatchPatterns ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( GEOS_FMT( "List of fnmatch pattern to match cellBlock names to add them in this {}.\n"
-                              "I.e. {{ 1_* }} selects the {{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }} cellBlocks.\n"
+                              "I.e. \"{{ * }}\" selects every elements, {{ [1-3]_* }} selects the "
+                              "{{ 1_tetrahedra, 2_tetrahedra, 3_tetrahedra, 1_pyramid... }} cellBlocks.\n"
                               "This setting cannot be used simultaneously with {} nor {}.",
                               catalogName(),
                               viewKeyStruct::sourceCellBlockNamesString(),

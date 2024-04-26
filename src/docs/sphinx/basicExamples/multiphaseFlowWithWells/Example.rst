@@ -242,8 +242,8 @@ In this section of the input file, we follow the procedure described in
 :ref:`TutorialDeadOilBottomLayersSPE10` for the definition of the reservoir region with multiphase constitutive models.
 
 We associate a **CellElementRegion** named ``reservoir`` to the reservoir mesh.
-Since we have imported a mesh with only one region, we can set the attribute ``cellBlocks`` to ``{ all }``
-(we could set it to ``{ hexahedra }`` as the mesh has only hexahedral cells).
+Since we have imported a mesh with only one region, we can set ``cellBlocksMatch`` to ``{ * }``
+(we could also set ``cellBlocks`` to ``{ hexahedra }`` as the mesh has only hexahedral cells).
 
 We also associate a **WellElementRegion** to each well. As the **CellElementRegion**,
 it contains a ``materialList`` that must point (by name) to the constitutive models
