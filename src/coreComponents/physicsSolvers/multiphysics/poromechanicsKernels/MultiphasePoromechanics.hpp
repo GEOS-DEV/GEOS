@@ -102,6 +102,7 @@ public:
                            localIndex const numPhases,
                            integer const useSimpleAccumulation,
                            integer const useTotalMassEquation,
+                           integer const performStressInitialization,
                            string const fluidModelKey );
 
   //*****************************************************************************
@@ -354,6 +355,8 @@ protected:
 
   /// Use total mass equation flag
   integer const m_useTotalMassEquation;
+
+  integer const m_performStressInitialization;
 };
 
 using MultiphasePoromechanicsKernelFactory =
@@ -367,6 +370,7 @@ using MultiphasePoromechanicsKernelFactory =
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                integer const,
                                 integer const,
                                 integer const,
                                 string const >;
