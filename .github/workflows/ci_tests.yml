@@ -201,7 +201,6 @@ jobs:
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: self-hosted
       DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
-      IS_OPTIONAL: true
       REQUIRED_LABEL: "ci: run integrated tests"
 
   code_coverage:
@@ -288,7 +287,6 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
-      IS_OPTIONAL: true
       REQUIRED_LABEL: "ci: ready to be merged"
     secrets: inherit
 
