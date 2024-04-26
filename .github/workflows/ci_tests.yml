@@ -54,46 +54,6 @@ jobs:
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
-  are_cuda_builds_required:
-    needs: [is_not_draft_pull_request]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check for updated cuda labels
-        id: update_labels
-        run: |
-          if [[ ${{github.event_name}} != 'pull_request' ]]; then
-            exit 0
-          else
-            pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-            LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-
-            if [[ "${LABELS}" == *"ci: ready to be merged"* ]]; then
-              exit 0
-            else
-              exit 1
-            fi
-          fi
-
-  are_integrated_tests_required:
-    needs: [is_not_draft_pull_request]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check for updated test labels
-        id: update_labels
-        run: |
-          if [[ ${{github.event_name}} != 'pull_request' ]]; then
-            exit 0
-          else
-            pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-            LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-
-            if [[ "${LABELS}" == *"ci: run integrated tests"* ]]; then
-              exit 0
-            else
-              exit 1
-            fi
-          fi
-
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
   if_not_unassigned_pull_request:
@@ -226,7 +186,7 @@ jobs:
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
-      - are_integrated_tests_required
+      - is_not_draft_pull_request
       - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
@@ -241,6 +201,8 @@ jobs:
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: self-hosted
       DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
+      IS_OPTIONAL: true
+      REQUIRED_LABEL: "ci: run integrated tests"
 
   code_coverage:
     needs:
@@ -263,7 +225,7 @@ jobs:
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
-      - are_cuda_builds_required
+      - is_not_draft_pull_request
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
@@ -326,6 +288,8 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
+      IS_OPTIONAL: true
+      REQUIRED_LABEL: "ci: ready to merge"
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
