@@ -89,27 +89,18 @@ string CellElementRegion::getCellBlockAttributeValue( string_view cellBlockName 
   return string( stringutilities::removeStringAndFollowingContent( cellBlockName, "_" ) );
 }
 
-std::set< string > getAvailableAttributeValues( Group const & cellBlocks )
+std::set< string > getAvailableAttributeValues( std::set< string > const & cellBlocksNames )
 {
   std::set< string > attributeValues;
-  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
+  for( auto const & cellBlockName : cellBlocksNames )
   {
-    attributeValues.insert( CellElementRegion::getCellBlockAttributeValue( cellBlock.getName() ) );
-  } );
+    attributeValues.insert( CellElementRegion::getCellBlockAttributeValue( cellBlockName ) );
+  }
   return attributeValues;
 }
 
-std::set< string > getCellBlockNamesSet( Group const & cellBlocks )
-{
-  std::set< string > cellBlockNames;
-  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
-  {
-    cellBlockNames.insert( cellBlock.getName() );
-  } );
-  return cellBlockNames;
-}
-
-std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & cellBlocks ) const
+std::set< string >
+CellElementRegion::computeSelectedCellBlocks( std::set< string > const & cellBlocksNames ) const
 {
   std::set< string > selectedCellBlocks;
 
@@ -147,19 +138,19 @@ std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & c
     for( string const & matchPattern : cellBlockMatchPatterns )
     {
       bool matching = false;
-      cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
+      for( auto const & cellBlockName : cellBlocksNames )
       {
         // if the pattern matches the tested cellBlock name
-        if( fnmatch( matchPattern.c_str(), cellBlock.getName().c_str(), 0 ) == 0 )
+        if( fnmatch( matchPattern.c_str(), cellBlockName.c_str(), 0 ) == 0 )
         {
           matching = true;
-          selectedCellBlocks.insert( cellBlock.getName() );
+          selectedCellBlocks.insert( cellBlockName );
         }
-      } );
+      }
 
       if( !matching )
       {
-        // a) check for the case where the user is requesting attribute values
+        // a) in the case where the user is requesting attribute values
         if( !m_cellBlockAttributeValues.empty() )
         {
           auto const attributeValueLength = matchPattern.size() - attributeValuePatternSuffix.size();
@@ -167,19 +158,19 @@ std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & c
           GEOS_THROW( GEOS_FMT( "{}: Attribute value '{}' not found.\nAvailable attribute list: {{ {} }}",
                                 getWrapperDataContext( viewKeyStruct::cellBlockAttributeValuesString() ),
                                 attributeValue,
-                                stringutilities::join( getAvailableAttributeValues( cellBlocks ), ", " ) ),
+                                stringutilities::join( getAvailableAttributeValues( cellBlocksNames ), ", " ) ),
                       InputError );
         }
-        // b) check for the case where the user is requesting match pattern
-        GEOS_THROW_IF( !m_cellBlockMatchPatterns.empty(),
-                       GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
-                                 getWrapperDataContext( viewKeyStruct::cellBlockMatchPatternsString() ),
-                                 matchPattern,
-                                 stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ),
-                       InputError );
-        // this error exists just in case, we should not fall there.
-        GEOS_ERROR( GEOS_FMT( "{}: Unknown error, no cellBlock matching the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
-                              matchPattern, stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ) );
+        else
+        {
+          // b) in the case where the user is requesting match pattern(s)
+          GEOS_THROW_IF( !m_cellBlockMatchPatterns.empty(),
+                         GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
+                                   getWrapperDataContext( viewKeyStruct::cellBlockMatchPatternsString() ),
+                                   matchPattern,
+                                   stringutilities::join( cellBlocksNames, ", " ) ),
+                         InputError );
+        }
       }
     }
   }
@@ -188,21 +179,13 @@ std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & c
   {
     for( string const & requestedCellBlockName : m_cellBlockNames )
     {
-      bool found = false;
-      cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
-      {
-        if( cellBlock.getName() == requestedCellBlockName )
-        {
-          selectedCellBlocks.insert( requestedCellBlockName );
-          found = true;
-        }
-      } );
-      GEOS_THROW_IF( !found,
+      GEOS_THROW_IF( cellBlocksNames.count( requestedCellBlockName ) == 0,
                      GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                                getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
                                requestedCellBlockName,
-                               stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ),
+                               stringutilities::join( cellBlocksNames, ", " ) ),
                      InputError );
+      selectedCellBlocks.insert( requestedCellBlockName );
     }
   }
 
@@ -210,26 +193,43 @@ std::set< string > CellElementRegion::computeSelectedCellBlocks( Group const & c
 }
 
 
-void CellElementRegion::generateMesh( Group const & cellBlocks )
+std::set< string >
+CellElementRegion::generateMesh( Group const & cellBlocks,
+                                 std::set< string > cellBlocksNames,
+                                 std::map< string, CellElementRegion const * > & cellBlocksMatchers )
 {
-  {
-    std::set< string > selectedCellBlocks = computeSelectedCellBlocks( cellBlocks );
-    m_cellBlockNames.clear();
-    m_cellBlockNames.insert( 0, selectedCellBlocks.cbegin(), selectedCellBlocks.cend() );
-  }
+  std::set< string > selectedCellBlocks = computeSelectedCellBlocks( cellBlocksNames );
+
+  m_cellBlockNames.clear();
+  m_cellBlockNames.insert( 0, selectedCellBlocks.cbegin(), selectedCellBlocks.cend() );
 
   for( string const & cellBlockName : m_cellBlockNames )
   {
+    // Duplication detection :
+    // For now, multiple regions per cell is not supported (by ElementRegionManager::getCellBlockToSubRegionMap())
+    // TODO: refactor the CellElementRegion & Mesh classes so regions are mapped to cellblocks IN the mesh (and potencially
+    // to multiple regions per cell). So, for external meshes, the cellblocks would no longer be exposed to the final user.
+    auto const [existingMatcherIt, isNewMatcher] = cellBlocksMatchers.emplace( cellBlockName, this );
+    GEOS_THROW_IF( !isNewMatcher,
+                   GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}\n- {}",
+                             cellBlockName, catalogName(),
+                             existingMatcherIt->second->getDataContext(), getDataContext() ),
+                   InputError );
+
     CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
     // should not be thrown as computeSelectedCellBlocks() should check every cellBlock names.
     GEOS_ERROR_IF( cellBlock == nullptr,
-                   GEOS_FMT( "{}: Unexpected error with {} named '{}'.\nAvailable cellBlock list: {{ {} }}",
-                             getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
-                             cellBlockName,
-                             stringutilities::join( getCellBlockNamesSet( cellBlocks ), ", " ) ) );
-
+                   GEOS_FMT( "{}: Unexpected error, {} not found.\nAvailable cellBlock list: {{ {} }}",
+                             getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ), cellBlockName,
+                             stringutilities::join( cellBlocksNames, ", " ) ) );
     registerSubRegion( *cellBlock );
   }
+
+  return selectedCellBlocks;
+}
+void CellElementRegion::generateMesh( Group const & )
+{
+  GEOS_ERROR( "Not implemented, use the overloading of this method." );
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )

@@ -118,8 +118,14 @@ public:
    * After the call, the content of m_cellBlockNames no longer contain duplicates, and takes into account
    * m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
    * @param cellBlocks the list of available cellBlocks.
+   * @param cellBlocksNames A set of all available cellBlock names.
+   * @param cellBlocksMatchers A map that link every cellBlock name to the CellElementRegion that references it.
+   *                           This map gets updated with the new referenced cellBlocks.
+   * @return the selected cellBlocks.
    */
-  virtual void generateMesh( Group const & cellBlocks ) override;
+  std::set< string > generateMesh( Group const & cellBlocks,
+                                   std::set< string > cellBlocksNames,
+                                   std::map< string, CellElementRegion const * > & cellBlocksMatchers );
 
   ///@}
 
@@ -177,7 +183,10 @@ private:
    * m_cellBlockMatchPatterns and m_cellBlockNames.
    * @param cellBlocks the input mesh cellBlock list
    */
-  std::set< string > computeSelectedCellBlocks( Group const & cellBlocks ) const;
+  std::set< string > computeSelectedCellBlocks( std::set< string > const & cellBlocksNames ) const;
+
+
+  virtual void generateMesh( Group const & cellBlocks ) override;
 
 };
 

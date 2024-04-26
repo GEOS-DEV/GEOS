@@ -1187,9 +1187,10 @@ private:
   ElementRegionManager & operator=( const ElementRegionManager & );
 
   /**
-   * @brief Check that the loaded sub regions are all linked with a cellBlock,
+   * @brief Check that the loaded sub regions are all linked with a cellBlock.
    */
-  void checkSubRegionRegistering( CellBlockManagerABC const & cellBlockManager );
+  void checkForNoOrphanCellBlocks( Group const & cellBlocks,
+                                   std::set< string > selectedCellBlocksNames );
 };
 
 

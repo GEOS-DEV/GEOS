@@ -119,18 +119,40 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
+
+std::set< string > getCellBlocksNamesSet( CellBlockManagerABC const & cellBlockManager )
+{
+  std::set< string > cellBlockNames;
+  cellBlockManager.getCellBlocks().forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
+  {
+    cellBlockNames.insert( cellBlock.getName() );
+  } );
+  return cellBlockNames;
+}
+
+
 void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+  // cellBlock loading
   {
-    elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
-  } );
+    std::set< string > cellBlockNames = getCellBlocksNamesSet( cellBlockManager );
+    std::set< string > selectedCellBlocks;
+    std::map< string, CellElementRegion const * > cellBlocksMatchers;
+
+    this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+    {
+      std::set selected = elemRegion.generateMesh( cellBlockManager.getCellBlocks(),
+                                                   cellBlockNames, cellBlocksMatchers );
+      selectedCellBlocks.insert( selected.begin(), selected.end() );
+    } );
+    checkForNoOrphanCellBlocks( cellBlockManager.getCellBlocks(), selectedCellBlocks );
+  }
+
+
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
     elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
   } );
-
-  checkSubRegionRegistering( cellBlockManager );
 
   // Some mappings of the surfaces subregions point to elements in other subregions and regions.
   // For the moment, those mappings only point to cell block indices.
@@ -152,44 +174,18 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
                                                                            tmp,
                                                                            relation );
   } );
-
 }
-void ElementRegionManager::checkSubRegionRegistering( CellBlockManagerABC const & cellBlockManager )
+
+void ElementRegionManager::checkForNoOrphanCellBlocks( Group const & cellBlocks,
+                                                       std::set< string > selectedCellBlocksNames )
 {
-  Group const & cellBlocks = cellBlockManager.getCellBlocks();
-  //std::map< string, CellElementSubRegion const * > cellBlocksSubRegion;
-
-  // region that contain a cellBlock (name)
-  std::map< string, CellElementRegion const * > cellBlocksRegion;
-
-  // Let's find out which CellElementSubRegion is using each source cellBlock.
-  forElementRegions< CellElementRegion >( [&]( CellElementRegion & region ) {
-    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion ) {
-      string const & subRegionName = subRegion.getName();
-      const auto [regionIterator, isNewRegion] = cellBlocksRegion.emplace( subRegionName, &region );
-      // if a region already referenced the cellBlock
-      if( !isNewRegion )
-      {
-        CellElementRegion const & otherRegion = *regionIterator->second;
-        // For now, multiple regions per cell is not supported (by ElementRegionManager::getCellBlockToSubRegionMap())
-        // TODO: refactor the CellElementRegion & Mesh classes so regions are mapped to cellblocks IN the mesh (and potencially
-        // to multiple regions per cell). So, for external meshes, the cellblocks would no longer be exposed to the final user.
-        GEOS_THROW( GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}\n- {}",
-                              subRegionName, catalogName(),
-                              otherRegion.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ),
-                              region.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) ),
-                    InputError );
-      }
-    } );
-  } );
-
   // checking if cellBlocks has not been referenced, and reporting which are missing.
   std::vector< string > orphanCellBlocksNames;
   std::set< string > orphanAttributeValues;
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const cbName = cellBlock.getName();
-    if( cellBlocksRegion.find( cbName ) == cellBlocksRegion.end() )
+    if( selectedCellBlocksNames.count( cbName ) == 0 )
     {
       orphanCellBlocksNames.push_back( cbName );
       string cbAttributeValue = CellElementRegion::getCellBlockAttributeValue( cbName );
@@ -199,6 +195,7 @@ void ElementRegionManager::checkSubRegionRegistering( CellBlockManagerABC const 
       }
     }
   } );
+
   if( !orphanCellBlocksNames.empty() )
   {
     std::ostringstream oss;
