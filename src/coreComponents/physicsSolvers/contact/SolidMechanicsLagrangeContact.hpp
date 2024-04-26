@@ -180,9 +180,9 @@ private:
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
-    
+
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
-    
+
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
