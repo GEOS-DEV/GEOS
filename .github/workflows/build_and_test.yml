@@ -50,7 +50,7 @@ on:
       REQUIRED_LABEL:
         required: false
         type: string
-        default: NONE
+        default: 'NONE'
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -60,7 +60,7 @@ jobs:
     steps:
     - name: Check labels
       run: | 
-        if [[ ${{ inputs.REQUIRED_LABEL != NONE }} ]]; then
+        if [[ ${{ inputs.REQUIRED_LABEL != 'NONE' }} ]]; then
           pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
           LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
           if [[ "${LABELS}" != *${{inputs.REQUIRED_LABEL}}* ]]; then
