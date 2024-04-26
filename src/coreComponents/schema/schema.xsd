@@ -5322,7 +5322,7 @@ The element types are: tetrahedra, pyramids, wedges, hexahedra, pentagonalPrisms
 This setting cannot be used simultaneously with cellBlockAttributeValues nor cellBlocksMatch.-->
 		<xsd:attribute name="cellBlocks" type="groupNameRef_array" default="{}" />
 		<!--cellBlocksMatch => List of fnmatch pattern to match cellBlock names to add them in this CellElementRegion.
-I.e. "{ * }" selects every elements, { [1-3]_* } selects the { 1_tetrahedra, 2_tetrahedra, 3_tetrahedra, 1_pyramid... } cellBlocks.
+I.e. "{ * }" selects every elements, { [1-5]_* } selects the { 1_tetrahedra, 2_tetrahedra, ..., 5_tetrahedra, 1_pyramid... } cellBlocks.
 This setting cannot be used simultaneously with cellBlocks nor cellBlockAttributeValues.-->
 		<xsd:attribute name="cellBlocksMatch" type="string_array" default="{}" />
 		<!--coarseningRatio => (no description available)-->
