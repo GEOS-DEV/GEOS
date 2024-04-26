@@ -113,6 +113,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
 
   // Get meshLevel
+  MeshBody & meshBody = domain.getMeshBody( 0 );
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   // Get managers
@@ -129,6 +130,53 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   localIndex localNumberOfSurfaceElems         = 0;
 
   NewObjectLists newObjects;
+  
+  bool bulk_edfm_fill = true;
+  if (bulk_edfm_fill){
+    
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    CellBlockManagerABC & cellBlockManagerNoConst = const_cast<CellBlockManagerABC &>(domain.getMeshBody(0).getCellBlockManager());
+    CellBlockManager & cellBlockManagerConcrete = dynamic_cast<CellBlockManager &>(cellBlockManagerNoConst);
+    Group const & embSurfBlocks = cellBlockManagerConcrete.getEmbeddedSurfaceBlocks();
+    if (embSurfBlocks.hasGroup("EmbeddedSurface"))
+      {
+       EmbeddedSurfaceBlockABC const &   embSurf = embSurfBlocks.getGroup<EmbeddedSurfaceBlockABC>("EmbeddedSurface");
+
+    
+    elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
+      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
+    {
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
+      FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+          {
+            bool added = embeddedSurfaceSubRegion.addAllEmbeddedSurfaces( er,
+                                                                         esr,
+                                                                         nodeManager,
+                                                                         embSurfNodeManager,
+                                                                         edgeManager,
+                                                                         cellToEdges,
+                                                                         embSurf);
+
+            if( added )
+            {
+              // Add all the fracture information to the CellElementSubRegion
+              for(localIndex edfmIndex=0; edfmIndex < embSurf.numEmbeddedSurfElem(); ++edfmIndex)
+              {
+              localIndex cellIndex = embSurf.getEmbeddedSurfElemTo3dElem().toCellIndex[edfmIndex][0];
+              subRegion.addFracturedElement( cellIndex, edfmIndex );
+              newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( edfmIndex );
+              }
+            }
+          }
+    } );// end loop over subregions
+    
+      }
+
+
+  }else{
+
 
   // Loop over all the fracture planes
   geometricObjManager.forGeometricObject< PlanarGeometricObject >( m_targetObjectsName, [&]( localIndex const,
@@ -205,7 +253,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       } );// end loop over cells
     } );// end loop over subregions
   } );// end loop over planes
-
+  }
   // Launch kernel to compute connectivity index of each fractured element.
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
     [&]( localIndex const, localIndex const, ElementRegionBase &, CellElementSubRegion & subRegion )

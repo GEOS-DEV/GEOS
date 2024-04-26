@@ -141,7 +141,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     // testing only
     //
     
-    bool experiment = true;
+    bool experiment = false;
     if (experiment)
     {
     
@@ -149,7 +149,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     CellBlockManager & cellBlockManagerConcrete = dynamic_cast<CellBlockManager &>(cellBlockManagerNoConst);
 
     string name = "EmbeddedSurface";
-    createDummyEmbeddedSurfaceBlock(name, cellBlockManagerConcrete);
+    createDummyEmbeddedSurfaceBlockOrig(name, cellBlockManagerConcrete);
     elemRegion.generateMesh( cellBlockManager.getEmbeddedSurfaceBlocks() );
     }
     else{
