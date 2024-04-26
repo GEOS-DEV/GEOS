@@ -40,34 +40,59 @@ namespace geos::ghosting
 
 using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
 using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
+using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
+using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable >;
 using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
 using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
 
-using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable >;
+using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 
-//struct Edge
-//{
-//  std::pair< NodeGlbIdx, NodeGlbIdx > nodes;
-//};
 
-//struct Face
-//{
-//  std::vector< NodeGlbIdx > nodes;
-//};
+void to_json( json & j,
+              const MpiRank & v )
+{
+  j = v.get();
+}
+
+void from_json( const json & j,
+                MpiRank & v )
+{
+  v = MpiRank{ j.get< MpiRank::UnderlyingType >() };  // TODO use a `traits` instead
+}
+
+void to_json( json & j,
+              const EdgeLocIdx & v )
+{
+  j = v.get();
+}
+
+void from_json( const json & j,
+                EdgeLocIdx & v )
+{
+  v = EdgeLocIdx{ j.get< EdgeLocIdx::UnderlyingType >() };
+}
+
+void to_json( json & j,
+              const FaceLocIdx & v )
+{
+  j = v.get();
+}
+
+void from_json( const json & j,
+                FaceLocIdx & v )
+{
+  v = FaceLocIdx{ j.get< FaceLocIdx::UnderlyingType >() };
+}
 
 using Edge = std::tuple< NodeGlbIdx, NodeGlbIdx >;
-using Face = std::set< NodeGlbIdx >;
+using Face = std::set< NodeGlbIdx >;  // TODO change to std::vector< NodeGlbIdx > with a specific ordering.
 
 struct Exchange
 {
   std::set< Edge > edges;
   std::set< Face > faces;
-//  SortedArray< Edge > edges;
-//  SortedArray< Face > faces;
 };
 
 template< bool DO_PACKING >
@@ -371,15 +396,6 @@ std::map< MpiRank, Exchange > exchange( int commId,
 }
 
 
-struct ScannedOffsets
-{
-  std::map< std::set< MpiRank >, EdgeGlbIdx > edgeOffsets;
-  std::map< std::set< MpiRank >, FaceGlbIdx > faceOffsets;
-  EdgeGlbIdx edgeRestart;
-  FaceGlbIdx faceRestart;
-};
-
-
 std::size_t buildMaxBufferSize( Buckets const & buckets )
 {
   auto const f = []( auto const & bucket ) -> std::size_t
@@ -393,6 +409,162 @@ std::size_t buildMaxBufferSize( Buckets const & buckets )
   };
 
   return MpiWrapper::sum( f( buckets.edges ) + f( buckets.faces ) );  // Add the ScannedOffsets::{edge, face}Restart
+}
+
+struct BucketSizes
+{
+  using mapping = std::map< std::set< MpiRank >, localIndex >;
+  mapping edges;
+  mapping faces;
+};
+
+void to_json( json & j,
+              const BucketSizes & v )
+{
+  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+}
+
+void from_json( const json & j,
+                BucketSizes & v )
+{
+  v.edges = j.at( "edges" ).get< BucketSizes::mapping >();
+  v.faces = j.at( "faces" ).get< BucketSizes::mapping >();
+}
+
+struct BucketOffsets
+{
+  std::map< std::set< MpiRank >, EdgeLocIdx > edges;
+  std::map< std::set< MpiRank >, FaceLocIdx > faces;
+};
+
+void to_json( json & j,
+              const BucketOffsets & v )
+{
+  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+}
+
+void from_json( const json & j,
+                BucketOffsets & v )
+{
+  v.edges = j.at( "edges" ).get< std::map< std::set< MpiRank >, EdgeLocIdx > >();
+  v.faces = j.at( "faces" ).get< std::map< std::set< MpiRank >, FaceLocIdx > >();
+}
+
+BucketSizes getBucketSize(Buckets const & buckets)
+{
+  BucketSizes output;
+
+  for( auto const & [ranks, edges]: buckets.edges )
+  {
+    output.edges.emplace_hint( output.edges.end(), ranks, std::size( edges ) );
+  }
+
+  for( auto const & [ranks, faces]: buckets.faces )
+  {
+    output.faces.emplace_hint( output.faces.end(), ranks, std::size( faces ) );
+  }
+
+  return output;
+}
+
+/**
+ * @brief
+ * @tparam LOC_IDX The local index type of the geometrical quantity considered (typically @p EdgeLocIdx or @p FaceLocIdx).
+ * @param sizes
+ * @param offsets
+ * @param curRank
+ * @return
+ */
+template< typename LOC_IDX >
+std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set< MpiRank >, localIndex > const & sizes,
+                                                              std::map< std::set< MpiRank >, LOC_IDX > const & offsets,
+                                                              MpiRank curRank )
+{
+  std::map< std::set< MpiRank >, LOC_IDX > reducedOffsets;
+
+  // Only consider the offsets that are still relevant (i.e. with high ranks)
+  for( auto const & [ranks, offset]: offsets )
+  {
+    MpiRank const maxConcerned = *std::max_element( ranks.begin(), ranks.cend() );
+    if( maxConcerned < curRank )
+    {
+      continue;
+    }
+    reducedOffsets.emplace_hint( reducedOffsets.end(), ranks, offset );
+  }
+
+  // Add the offsets associated to the new buckets
+  LOC_IDX nextOffset{ 0 };
+  for( auto const & [ranks, size]: sizes )
+  {
+    auto const it = reducedOffsets.find( ranks );
+    if( it == reducedOffsets.end() )
+    {
+      reducedOffsets.emplace_hint( reducedOffsets.end(), ranks, nextOffset );
+      nextOffset += LOC_IDX{ size };
+    }
+    else
+    {
+      nextOffset = it->second + LOC_IDX{ size };  // Define the new offset from the last
+    }
+  }
+
+  // Add an extra entry based for the following rank
+  reducedOffsets.emplace_hint( reducedOffsets.end(), std::set< MpiRank >{ curRank + MpiRank{ 1 } }, nextOffset );
+
+  return reducedOffsets;
+}
+
+std::vector< std::uint8_t > serialize( BucketSizes const & sizes )
+{
+//  std::cout << json( sizes ) << std::endl;
+  return json::to_cbor( json( sizes ) );
+}
+
+std::vector< std::uint8_t > serialize( BucketOffsets const & offsets )
+{
+//  std::cout << json( offsets ) << std::endl;
+  return json::to_cbor( json( offsets ) );
+}
+
+/**
+ * @brief
+ * @tparam BUCKET_TYPE
+ * @tparam V Container of std::uint8_t
+ * @param data
+ * @return
+ */
+template< class V >
+BucketOffsets deserialize( V const & data )
+{
+  return json::from_cbor( data, false ).template get< BucketOffsets >();
+}
+
+void f( void * in,
+        void * inout,
+        int * len,
+        MPI_Datatype * dptr )
+{
+  GEOS_ASSERT_EQ( *dptr, MPI_BYTE );
+
+  MpiRank const curRank{ MpiWrapper::commRank() };
+
+  // offsets provided by the previous rank(s)
+  BucketOffsets const offsets = deserialize( Span< std::uint8_t >( (std::uint8_t *) in, *len ) );
+
+  // Sizes provided by the current rank, under the form of a pointer to the data.
+  // No need to serialize, since we're on the same rank.
+  std::uintptr_t addr;
+  std::memcpy( &addr, inout, sizeof( std::uintptr_t ) );
+  BucketSizes const * sizes = reinterpret_cast<BucketSizes const *>(addr);
+
+  BucketOffsets updatedOffsets;
+  updatedOffsets.edges = updateBucketOffsets< EdgeLocIdx >( sizes->edges, offsets.edges, curRank );
+  updatedOffsets.faces = updateBucketOffsets< FaceLocIdx >( sizes->faces, offsets.faces, curRank );
+
+  // Serialize the updated offsets, so they get sent to the next rank.
+  std::vector< std::uint8_t > const serialized = serialize( updatedOffsets );
+  std::memcpy( inout, serialized.data(), serialized.size() );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
@@ -414,7 +586,40 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 
   Buckets const buckets = buildIntersectionBuckets( exchanged, curRank, neighbors );
 
-  std::size_t const maxBufferSize = buildMaxBufferSize( buckets );
+  std::size_t const maxBufferSize = 100 * buildMaxBufferSize( buckets );
+
+  std::vector< std::uint8_t > sendBuffer( maxBufferSize );
+  std::vector< std::uint8_t > recvBuffer( maxBufferSize );
+
+  BucketSizes const sizes = getBucketSize( buckets );
+
+  BucketOffsets offsets;
+  if( curRank == MpiRank{ 0 } )
+  {
+    offsets.edges = updateBucketOffsets< EdgeLocIdx >( sizes.edges, { { { MpiRank{ 0 }, }, EdgeLocIdx{ 0 } } }, curRank );
+    offsets.faces = updateBucketOffsets< FaceLocIdx >( sizes.faces, { { { MpiRank{ 0 }, }, FaceLocIdx{ 0 } } }, curRank );
+    std::vector< std::uint8_t > const bytes = serialize( offsets );
+    std::memcpy( sendBuffer.data(), bytes.data(), bytes.size() );
+  }
+  else
+  {
+    std::uintptr_t const addr = reinterpret_cast<std::uintptr_t>(&sizes);
+    std::memcpy( sendBuffer.data(), &addr, sizeof( std::uintptr_t ) );
+  }
+
+  MPI_Op op;
+  MPI_Op_create( f, false, &op );
+
+  MPI_Scan( sendBuffer.data(), recvBuffer.data(), maxBufferSize, MPI_BYTE, op, MPI_COMM_WORLD );
+
+  if( curRank != MpiRank{ 0 } )
+  {
+    offsets = deserialize( recvBuffer );
+  }
+
+  std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
+
+//  BucketOffsets const receivedOffsets = deserialize< BucketOffsets >( recvBuffer );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
