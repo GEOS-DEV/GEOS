@@ -123,11 +123,11 @@ struct ElasticTimeSchemeSEM
    * @param[in] stiffnessVectory array containing the product of the stiffness matrix R and the displacement in y-direction at time n
    * @param[in] stiffnessVectorz array containing the product of the stiffness matrix R and the displacement in z-direction at time n
    * @param[in] stiffnessVectorAx array containing the product of the attenuation stiffness matrix R and the displacement in x-direction at
-   *time n
+   * time n
    * @param[in] stiffnessVectorAy array containing the product of the attenuation stiffness matrix R and the displacement in y-direction at
-   *time n
+   * time n
    * @param[in] stiffnessVectorAz array containing the product of the attenuation stiffness matrix R and the displacement in z-direction at
-   *time n
+   * time n
    * @param[in] rhsx the right-hand-side for displacement in x-direction
    * @param[in] rhsy the right-hand-side for displacement in y-direction
    * @param[in] rhsz the right-hand-side for displacement in z-direction

@@ -656,7 +656,6 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   if( m_attenuationType == WaveSolverUtils::AttenuationType::sls )
   {
-    integer l = m_slsReferenceAngularFrequencies.size( 0 );
     arrayView1d< real32 > const stiffnessVectorAx = nodeManager.getField< elasticfields::StiffnessVectorAx >();
     arrayView1d< real32 > const stiffnessVectorAy = nodeManager.getField< elasticfields::StiffnessVectorAy >();
     arrayView1d< real32 > const stiffnessVectorAz = nodeManager.getField< elasticfields::StiffnessVectorAz >();
