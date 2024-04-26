@@ -58,8 +58,8 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::cellBlockMatchPatternsString(), &m_cellBlockMatchPatterns ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( GEOS_FMT( "List of fnmatch pattern to match cellBlock names to add them in this {}.\n"
-                              "I.e. \"{{ * }}\" selects every elements, {{ [1-3]_* }} selects the "
-                              "{{ 1_tetrahedra, 2_tetrahedra, 3_tetrahedra, 1_pyramid... }} cellBlocks.\n"
+                              "I.e. \"{{ * }}\" selects every elements, {{ [1-5]_* }} selects the "
+                              "{{ 1_tetrahedra, 2_tetrahedra, ..., 5_tetrahedra, 1_pyramid... }} cellBlocks.\n"
                               "This setting cannot be used simultaneously with {} nor {}.",
                               catalogName(),
                               viewKeyStruct::sourceCellBlockNamesString(),
