@@ -122,8 +122,8 @@ public:
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
 
-    static constexpr char const * slsReferenceAngularFrequenciesString() { return "attenuationReferenceFrequencies"; }
-    static constexpr char const * slsAnelasticityCoefficientsString() { return "attenuationAnelasticityCoefficients"; }
+    static constexpr char const * slsReferenceAngularFrequenciesString() { return "slsReferenceAngularFrequencies"; }
+    static constexpr char const * slsAnelasticityCoefficientsString() { return "slsAnelasticityCoefficients"; }
   };
 
   /**

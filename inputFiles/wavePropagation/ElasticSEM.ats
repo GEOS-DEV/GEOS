@@ -37,6 +37,22 @@ decks = [
         restart_step=100,
         check_step=200,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="elas3D_att_smoke",
+        description=
+        'Elastic wave solver, first-order FE, with SLS attenuation mechanism',
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=100,
+        check_step=200,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="elas3D_DAS_smoke",
+        description=
+        'Elastic wave solver, first-order FE, DAS signal',
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=100,
+        check_step=200,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)

@@ -46,6 +46,9 @@ char const * xmlInput =
         sourceCoordinates="{ { 50, 50, 50 } }"
         timeSourceFrequency="2"
         useDAS="strainIntegration"
+        attenuationType="sls"
+        slsReferenceAngularFrequencies="{ 69.6283, 592.177 }" 
+        slsAnelasticityCoefficients="{ 1.63675, 1.75153 }" 
         linearDASSamples="5"
         linearDASGeometry="{ { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
                                 { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
@@ -131,6 +134,20 @@ char const * xmlInput =
         objectPath="ElementRegions/Region/cb"
         fieldName="elasticDensity"
         scale="1"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="cellQp"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="elasticQualityFactorP"
+        scale="30"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="cellQs"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="elasticQualityFactorS"
+        scale="30"
         setNames="{ all }"/>
       <FieldSpecification
         name="zposFreeSurface"
