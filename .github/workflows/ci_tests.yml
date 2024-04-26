@@ -62,12 +62,10 @@ jobs:
         id: update_labels
         run: |
           if [[ ${{github.event_name}} != 'pull_request' ]]; then
-            echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
             exit 0
           else
             pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
             LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-            echo "LABELS=$LABELS" >> "$GITHUB_OUTPUT"
 
             if [[ "${LABELS}" == *"ci: ready to be merged"* ]]; then
               exit 0
@@ -84,12 +82,10 @@ jobs:
         id: update_labels
         run: |
           if [[ ${{github.event_name}} != 'pull_request' ]]; then
-            echo "LABELS=['ci: run integrated tests']" >> "$GITHUB_OUTPUT"
             exit 0
           else
             pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
             LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
-            echo "LABELS=$LABELS" >> "$GITHUB_OUTPUT"
 
             if [[ "${LABELS}" == *"ci: run integrated tests"* ]]; then
               exit 0
@@ -230,7 +226,6 @@ jobs:
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
-      - is_not_draft_pull_request
       - are_integrated_tests_required
       - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
@@ -268,7 +263,6 @@ jobs:
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
-      - is_not_draft_pull_request
       - are_cuda_builds_required
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
