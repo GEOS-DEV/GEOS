@@ -122,10 +122,10 @@ public:
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
 
-    static constexpr char const * slsReferenceFrequenciesString() { return "attenuationReferenceFrequencies"; }
+    static constexpr char const * slsReferenceAngularFrequenciesString() { return "attenuationReferenceFrequencies"; }
     static constexpr char const * slsAnelasticityCoefficientsString() { return "attenuationAnelasticityCoefficients"; }
   };
- 
+
   /**
    * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
    */
@@ -273,7 +273,7 @@ protected:
   /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
-  /// Flag to indicate which DAS type  will be modeled
+  /// Flag to indicate which DAS type will be modeled
   WaveSolverUtils::DASType m_useDAS;
 
   /// Number of points used for strain integration for dipole DAS
@@ -291,8 +291,11 @@ protected:
   /// Z component of the linear DAS direction vector
   array1d< real32 > m_linearDASVectorZ;
 
+  /// Flag to indicate which attenuation type will be modeled
+  WaveSolverUtils::AttenuationType m_attenuationType;
+
   /// Vector containing the reference frequencies for the standard-linear-solid (SLS) anelasticity model.
-  array1d< real32 > m_slsReferenceFrequencies;
+  array1d< real32 > m_slsReferenceAngularFrequencies;
 
   /// Vector containing the anelasticity coefficients for the standard-linear-solid (SLS) anelasticity model.
   array1d< real32 > m_slsAnelasticityCoefficients;

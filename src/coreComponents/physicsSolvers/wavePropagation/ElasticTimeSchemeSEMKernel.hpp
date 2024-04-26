@@ -122,9 +122,12 @@ struct ElasticTimeSchemeSEM
    * @param[in] stiffnessVectorx array containing the product of the stiffness matrix R and the displacement in x-direction at time n
    * @param[in] stiffnessVectory array containing the product of the stiffness matrix R and the displacement in y-direction at time n
    * @param[in] stiffnessVectorz array containing the product of the stiffness matrix R and the displacement in z-direction at time n
-   * @param[in] stiffnessVectorAx array containing the product of the attenuation stiffness matrix R and the displacement in x-direction at time n
-   * @param[in] stiffnessVectorAy array containing the product of the attenuation stiffness matrix R and the displacement in y-direction at time n
-   * @param[in] stiffnessVectorAz array containing the product of the attenuation stiffness matrix R and the displacement in z-direction at time n
+   * @param[in] stiffnessVectorAx array containing the product of the attenuation stiffness matrix R and the displacement in x-direction at
+   *time n
+   * @param[in] stiffnessVectorAy array containing the product of the attenuation stiffness matrix R and the displacement in y-direction at
+   *time n
+   * @param[in] stiffnessVectorAz array containing the product of the attenuation stiffness matrix R and the displacement in z-direction at
+   *time n
    * @param[in] rhsx the right-hand-side for displacement in x-direction
    * @param[in] rhsy the right-hand-side for displacement in y-direction
    * @param[in] rhsz the right-hand-side for displacement in z-direction
@@ -160,7 +163,7 @@ struct ElasticTimeSchemeSEM
                                    arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
                                    SortedArrayView< localIndex const > const solverTargetNodesSet,
                                    arrayView1d< real32 > referenceFrequencies,
-                                   arrayView1d< real32 > anelasticityCoefficients )     
+                                   arrayView1d< real32 > anelasticityCoefficients )
   {
     real64 const dt2 = pow( dt, 2 );
     integer nl = referenceFrequencies.size( 0 );
@@ -181,7 +184,7 @@ struct ElasticTimeSchemeSEM
         uz_np1[a] *= 2.0*mass[a];
         uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
         uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        for( integer l = 0; l < nl; l++)
+        for( integer l = 0; l < nl; l++ )
         {
           real32 gammal = ( 2.0 - referenceFrequencies[ l ] * dt )/( 2.0 + referenceFrequencies[ l ] * dt );
           real32 betal =  anelasticityCoefficients[ l ] * referenceFrequencies[ l ] * 2.0 * dt /( 2.0 + referenceFrequencies[ l ] * dt );
@@ -190,10 +193,10 @@ struct ElasticTimeSchemeSEM
           ux_np1[a] += dt2 * ( gammalp * divpsix( a, l ) + betalp * stiffnessVectorAx[ a ] );
           uy_np1[a] += dt2 * ( gammalp * divpsiy( a, l ) + betalp * stiffnessVectorAy[ a ] );
           uz_np1[a] += dt2 * ( gammalp * divpsiz( a, l ) + betalp * stiffnessVectorAz[ a ] );
-          divpsix( a, l ) = gammal * divpsix( a, l ) + betal * stiffnessVectorAx[ a ]; 
-          divpsiy( a, l ) = gammal * divpsiy( a, l ) + betal * stiffnessVectorAy[ a ]; 
-          divpsiz( a, l ) = gammal * divpsiz( a, l ) + betal * stiffnessVectorAz[ a ]; 
-        } 
+          divpsix( a, l ) = gammal * divpsix( a, l ) + betal * stiffnessVectorAx[ a ];
+          divpsiy( a, l ) = gammal * divpsiy( a, l ) + betal * stiffnessVectorAy[ a ];
+          divpsiz( a, l ) = gammal * divpsiz( a, l ) + betal * stiffnessVectorAz[ a ];
+        }
         ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
         uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
         uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];

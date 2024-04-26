@@ -51,10 +51,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitElasticSEMAttenuation : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                       CONSTITUTIVE_TYPE,
-                                                                       FE_TYPE,
-                                                                       1,
-                                                                       1 >
+                                                                        CONSTITUTIVE_TYPE,
+                                                                        FE_TYPE,
+                                                                        1,
+                                                                        1 >
 {
 public:
 
@@ -87,22 +87,21 @@ public:
    * @param dt The time interval for the step.
    */
   ExplicitElasticSEMAttenuation( NodeManager & nodeManager,
-                                EdgeManager const & edgeManager,
-                                FaceManager const & faceManager,
-                                localIndex const targetRegionIndex,
-                                SUBREGION_TYPE const & elementSubRegion,
-                                FE_TYPE const & finiteElementSpace,
-                                CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                real64 const dt ):
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 localIndex const targetRegionIndex,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                 real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_elasticKernel( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace, inputConstitutiveType, dt ), 
-    m_anelasticKernel( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace, inputConstitutiveType, dt ), 
+    m_elasticKernel( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace, inputConstitutiveType, dt ),
+    m_anelasticKernel( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace, inputConstitutiveType, dt ),
     m_qualityFactorP( elementSubRegion.template getField< elasticfields::ElasticQualityFactorP >() ),
     m_qualityFactorS( elementSubRegion.template getField< elasticfields::ElasticQualityFactorS >() )
-  {
-  }
+  {}
 
 
 
@@ -125,7 +124,7 @@ public:
     // sub-stacks for elastic and anelastic kernels
     typename ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::StackVariables elastic;
     typename ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
-                      elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz >::StackVariables anelastic;
+                                 elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz >::StackVariables anelastic;
   };
   //***************************************************************************
 
@@ -181,9 +180,9 @@ public:
 protected:
 
   /// The kernels for the attenuated and standard stiffness vectors
-  ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > m_elasticKernel; 
+  ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > m_elasticKernel;
   ExplicitElasticSEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE,
-                      elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz > m_anelasticKernel; 
+                      elasticfields::StiffnessVectorAx, elasticfields::StiffnessVectorAy, elasticfields::StiffnessVectorAz > m_anelasticKernel;
 
   /// The array containing the P-wave attenuation quality factor
   arrayView1d< real32 const > const m_qualityFactorP;
@@ -196,7 +195,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitElasticSEMAttenuationFactory = finiteElement::KernelFactory< ExplicitElasticSEMAttenuation,
-                                                                          real64 >;
+                                                                           real64 >;
 
 } // namespace ElasticWaveEquationSEMKernels
 

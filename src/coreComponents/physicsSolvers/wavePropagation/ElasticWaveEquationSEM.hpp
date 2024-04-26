@@ -152,6 +152,13 @@ public:
                             arrayView1d< string const > const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
+
+  /**
+   * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
+   *are usually global parameters
+   */
+  real32 computeGlobalMinQFactor();
+
 protected:
 
   virtual void postProcessInput() override final;
