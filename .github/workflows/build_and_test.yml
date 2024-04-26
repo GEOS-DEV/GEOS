@@ -68,7 +68,7 @@ jobs:
         LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
         echo " the labels are ${LABELS}"
         echo " the required label is ${{inputs.REQUIRED_LABEL}}"
-        if [[ "${LABELS}" != *${{inputs.REQUIRED_LABEL}}* ]]; then
+        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
           exit 1
         fi
       
