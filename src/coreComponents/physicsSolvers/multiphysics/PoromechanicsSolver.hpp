@@ -389,7 +389,8 @@ protected:
     }
 
     /// After the solid mechanics solver
-    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics )
+        && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
