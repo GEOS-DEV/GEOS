@@ -289,7 +289,7 @@ jobs:
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       IS_OPTIONAL: true
-      REQUIRED_LABEL: "ci: ready to merge"
+      REQUIRED_LABEL: "ci: ready to be merged"
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
