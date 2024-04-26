@@ -47,10 +47,6 @@ on:
         required: false
         type: boolean
         default: true
-      IS_OPTIONAL:
-        required: false
-        type: boolean
-        default: false
       REQUIRED_LABEL:
         required: false
         type: string
