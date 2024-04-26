@@ -31,12 +31,11 @@ namespace geos
 namespace finiteElement
 {
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
+template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
-class InterfaceKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
+class InterfaceKernelBase : public ImplicitKernelBase< FaceElementSubRegion,
                                                        CONSTITUTIVE_TYPE,
                                                        FE_TYPE,
                                                        NUM_DOF_PER_TEST_SP,
@@ -44,17 +43,20 @@ class InterfaceKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
 {
 public:
 
-  using Base = ImplicitKernelBase< SUBREGION_TYPE,
+  using Base = ImplicitKernelBase< FaceElementSubRegion,
                                    CONSTITUTIVE_TYPE,
                                    FE_TYPE,
                                    NUM_DOF_PER_TEST_SP,
                                    NUM_DOF_PER_TRIAL_SP >;
 
+  using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
+
   InterfaceKernelBase( NodeManager const & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
+                       FaceElementSubRegion const & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        arrayView1d< globalIndex const > const inputDofNumber,
@@ -89,6 +91,50 @@ public:
 
 };
 
+template< template< typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE > class KERNEL_TYPE,
+          typename ... ARGS >
+class InterfaceKernelFactory
+{
+public:
+
+  InterfaceKernelFactory( ARGS ... args ):
+    m_args( args ... )
+  {}
+
+  template< typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  KERNEL_TYPE< CONSTITUTIVE_TYPE, FE_TYPE > createKernel(
+    NodeManager & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    localIndex const targetRegionIndex,
+    FaceElementSubRegion const & elementSubRegion,
+    FE_TYPE const & finiteElementSpace,
+    CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    camp::tuple< NodeManager &,
+                 EdgeManager const &,
+                 FaceManager const &,
+                 localIndex const,
+                 FaceElementSubRegion const &,
+                 FE_TYPE const &,
+                 CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
+                                                      edgeManager,
+                                                      faceManager,
+                                                      targetRegionIndex,
+                                                      elementSubRegion,
+                                                      finiteElementSpace,
+                                                      inputConstitutiveType };
+
+    auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
+    return camp::make_from_tuple< KERNEL_TYPE< CONSTITUTIVE_TYPE, FE_TYPE > >( allArgs );
+    
+  }
+
+private:
+  /// The arguments to append to the standard kernel constructor arguments.
+  camp::tuple< ARGS ... > m_args;
+};
 
 //using NestedMapType = std::map< string, array1d< localIndex > > const;
 //using NestedMapFE = std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > >; 
@@ -99,12 +145,12 @@ template< typename POLICY,
 static
 real64 interfaceBasedKernelApplication( MeshLevel & mesh,
                                         string const & targetRegionName,
-                                        arrayView1d< localIndex const > const & faceElementsList, 
+                                        arrayView1d< localIndex const > const & faceElementList, 
                                         FiniteElementBase const & subRegionFE,
                                         //NestedMapType & faceTypesToFaceElements,
                                         //NestedMapFE  & faceTypeToFiniteElements,
                                         string const & constitutiveStringName,
-                                        KERNEL_FACTORY & kernelFactory )
+                                        KERNEL_FACTORY & interfaceKernelFactory )
 {
   GEOS_MARK_FUNCTION;
 
@@ -135,10 +181,10 @@ real64 interfaceBasedKernelApplication( MeshLevel & mesh,
   }
   std::cout << "constitutiveSringName: " << constitutiveStringName << std::endl;
 
-  //for (const auto& [finiteElementName, faceElementsList] : faceTypesToFaceElements)
+  //for (const auto& [finiteElementName, faceElementList] : faceTypesToFaceElements)
   //{
  
-    localIndex const numElems = faceElementsList.size();
+    localIndex const numElems = faceElementList.size();
  
     std::cout << "numElems:" << numElems << std::endl;
     //std::cout << "FE: " << finiteElementName << std::endl;
@@ -150,7 +196,7 @@ real64 interfaceBasedKernelApplication( MeshLevel & mesh,
                                                                      &edgeManager,
                                                                      &faceManager,
                                                                      targetRegionIndex,
-                                                                     &kernelFactory,
+                                                                     &interfaceKernelFactory,
                                                                      &subRegion,
                                                                      &subRegionFE,
                                                                      numElems]
@@ -165,7 +211,7 @@ real64 interfaceBasedKernelApplication( MeshLevel & mesh,
                                                                                        &edgeManager,
                                                                                        &faceManager,
                                                                                        targetRegionIndex,
-                                                                                       &kernelFactory,
+                                                                                       &interfaceKernelFactory,
                                                                                        &subRegion,
                                                                                        numElems,
                                                                                        &castedConstitutiveRelation] ( auto const finiteElement )
@@ -176,13 +222,13 @@ real64 interfaceBasedKernelApplication( MeshLevel & mesh,
       //                                                                                 numElems] ( auto const finiteElement )
       {
         //GEOS_UNUSED_VAR(finiteElement);
-        auto kernel = kernelFactory.createKernel( nodeManager,
-                                                  edgeManager,
-                                                  faceManager,
-                                                  targetRegionIndex,
-                                                  subRegion,
-                                                  finiteElement,
-                                                  castedConstitutiveRelation);
+        auto kernel = interfaceKernelFactory.createKernel( nodeManager,
+                                                           edgeManager,
+                                                           faceManager,
+                                                           targetRegionIndex,
+                                                           subRegion,
+                                                           finiteElement,
+                                                           castedConstitutiveRelation);
 
         //GEOS_UNUSED_VAR( kernel);
         using KERNEL_TYPE = decltype( kernel );

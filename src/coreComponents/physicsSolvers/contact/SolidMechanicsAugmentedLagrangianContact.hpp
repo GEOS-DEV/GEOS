@@ -100,9 +100,9 @@ public:
     std::map< string, 
               array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at(meshName); 
 
-    for (const auto & [finiteElementName, faceElementsList] : faceTypesToFaceElements)
+    for (const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements)
     {
-      arrayView1d< localIndex const > const faceElemList = faceElementsList.toViewConst();
+      arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
       lambda(finiteElementName, faceElemList);
     }
 
@@ -114,10 +114,10 @@ private:
   std::map< string, std::map< string, array1d< localIndex >>> m_faceTypesToFaceElements;
   std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
-  };
+  //struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  //{
+  //  constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
+  //};
 
 };
 

@@ -67,15 +67,17 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       // Register the rotation matrix
-      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the rotation matrices on the fracture." ).
+      subRegion.registerField< rotationMatrix >( this->getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
+      //subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
+      //  setPlotLevel( PlotLevel::NOPLOT ).
+      //  setRegisteringObjects( this->getName()).
+      //  setDescription( "An array that holds the rotation matrices on the fracture." ).
+      //  reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      //// Register the delta traction field
-      //subRegion.registerField< deltaTraction >( this->getName() ).
-      //  reference().resizeDimension< 1 >( 3 );
+      // Register the delta traction field
+      subRegion.registerField< deltaTraction >( this->getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
     } );
   } );
@@ -247,14 +249,16 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     //std::cout << "Before Rotation" << std::endl;
     arrayView3d< real64 > const 
-      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+      rotationMatrix = subRegion.getField< fields::contact::rotationMatrix >().toView();
+      //rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+      
 
     //std::cout << "Before Map" << std::endl;
     //std::map< string, 
     //          array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at(meshName); 
 
 
-    //for (const auto& [finiteElementName, faceElementsList] : faceTypesToFaceElements)
+    //for (const auto& [finiteElementName, faceElementList] : faceTypesToFaceElements)
     //for (auto it = faceTypesToFaceElements.begin(); it != faceTypesToFaceElements.end(); ++it) 
     //{
 
@@ -296,37 +300,36 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     //          array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at(meshName); 
 
 
-    //for (const auto& [finiteElementName, faceElementsList] : faceTypesToFaceElements)
+    //for (const auto& [finiteElementName, faceElementList] : faceTypesToFaceElements)
     //for (auto it = faceTypesToFaceElements.begin(); it != faceTypesToFaceElements.end(); ++it) 
     forFiniteElementOnFractureSubRegions( meshName, [&] (string const & finiteElementName,
-                                                        arrayView1d< localIndex const > const & faceElementsList )
+                                                        arrayView1d< localIndex const > const & faceElementList )
     {
 
       //string const & finiteElementName = it->first;
-      //array1d< localIndex > const &  faceElementsList = faceTypesToFaceElements.at(finiteElementName);  
+      //array1d< localIndex > const &  faceElementList = faceTypesToFaceElements.at(finiteElementName);  
 
       finiteElement::FiniteElementBase & subRegionFE = *(m_faceTypeToFiniteElements[finiteElementName]);
 
-      //arrayView1d< localIndex const > const faceElemList = faceElementsList.toViewConst();
+      //arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
 
       solidMechanicsALMKernels::ALMFactory kernelFactory( dispDofNumber,
                                                           dofManager.rankOffset(),
                                                           localMatrix,
                                                           localRhs,
                                                           dt,
-                                                          faceElementsList );
-                                                          //faceElementsList.toViewConst() );
+                                                          faceElementList );
+
  
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
                              constitutive::NullModel >( mesh,
                                                         fractureRegionName,
-                                                        faceElementsList,
+                                                        faceElementList,
                                                         subRegionFE,
                                                         "",
                                                         kernelFactory );
-                                                        //faceElementsList.toViewConst(),
 
     GEOS_UNUSED_VAR( maxTraction );
 

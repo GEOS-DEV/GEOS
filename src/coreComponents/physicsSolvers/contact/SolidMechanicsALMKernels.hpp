@@ -27,19 +27,16 @@ namespace geos
 namespace solidMechanicsALMKernels
 {
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
+template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ALMKernelsBase :
-  public finiteElement::InterfaceKernelBase< SUBREGION_TYPE,
-                                             CONSTITUTIVE_TYPE,
+  public finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
                                              FE_TYPE,
                                              3, 3 >
 {
 public:
   /// Alias for the base class;
-  using Base = finiteElement::InterfaceKernelBase< SUBREGION_TYPE,
-                                                   CONSTITUTIVE_TYPE,
+  using Base = finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
                                                    FE_TYPE, 
                                                    3, 3 >;
 
@@ -47,11 +44,15 @@ public:
 
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
+  using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
+  using Base::m_finiteElementSpace;
+
   ALMKernelsBase( NodeManager const & nodeManager,
                   EdgeManager const & edgeManager,
                   FaceManager const & faceManager,
                   localIndex const targetRegionIndex,
-                  SUBREGION_TYPE const & elementSubRegion,
+                  FaceElementSubRegion const & elementSubRegion,
                   FE_TYPE const & finiteElementSpace,
                   CONSTITUTIVE_TYPE & inputConstitutiveType,
                   arrayView1d< globalIndex const > const inputDofNumber,
@@ -59,7 +60,7 @@ public:
                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                   arrayView1d< real64 > const inputRhs,
                   real64 const inputDt, 
-                  arrayView1d< localIndex const > const & faceElementsList ):
+                  arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -72,7 +73,12 @@ public:
           inputMatrix,
           inputRhs,
           inputDt ),
-    m_faceElementsList(faceElementsList)
+    m_X( nodeManager.referencePosition()),
+    m_faceToNodes(faceManager.nodeList().toViewConst()),
+    m_elemsToFaces(elementSubRegion.faceList().toViewConst()),
+    m_faceElementList(faceElementList),
+    m_rotationMatrix(elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
+    m_deltaTraction(elementSubRegion.getField< fields::contact::deltaTraction >().toViewConst())
 {}
 
   struct StackVariables  
@@ -88,7 +94,9 @@ public:
       dispColIndices{ 0 },
       localRu{ 0.0 },
       localAutAtu{ { 0.0 } },
-      tLocal()
+      tLocal(),
+      localRotationMatrix{ { 0.0 } },
+      X()
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -105,6 +113,13 @@ public:
 
     /// Stack storage for the element local lagrange multiplier vector
     real64 tLocal[3];
+
+    /// C-array storage for rotation matrix
+    real64 localRotationMatrix[3][3];
+
+    /// local nodal coordinates
+    real64 X[ numNodesPerElem ][ 3 ];
+
   };
 
   template< typename POLICY,
@@ -120,16 +135,16 @@ public:
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    forAll< POLICY >( kernelComponent.m_faceElementsList.size(),
+    forAll< POLICY >( kernelComponent.m_faceElementList.size(),
                       [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      std::cout << "# QuadPoints: " << numQuadraturePointsPerElem << std::endl;
-      std::cout << "# NodesperElem: " << numNodesPerElem << std::endl;
+      //std::cout << "# QuadPoints: " << numQuadraturePointsPerElem << std::endl;
+      //std::cout << "# NodesperElem: " << numNodesPerElem << std::endl;
 
-      localIndex k = kernelComponent.m_faceElementsList[i];
+      localIndex k = kernelComponent.m_faceElementList[i];
       typename KERNEL_TYPE::StackVariables stack;
 
-      std::cout << i << " " << k << std::endl;
+      //std::cout << i << " " << k << std::endl;
 
       kernelComponent.setup( k, stack );
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
@@ -148,7 +163,23 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    GEOS_UNUSED_VAR(k, stack);
+    constexpr localIndex shift = numNodesPerElem * 3;
+
+    localIndex const kf0 = m_elemsToFaces[k][0];
+    localIndex const kf1 = m_elemsToFaces[k][1];
+    for( localIndex a=0; a<numNodesPerElem; ++a )
+    {
+      localIndex const kn0 = m_faceToNodes( kf0, a );
+      localIndex const kn1 = m_faceToNodes( kf1, a );
+
+      //std::cout << kn0 << " " << kn1 << std::endl;
+      for( int i=0; i<3; ++i )
+      {
+        stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
+        stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
+        stack.X[ a ][ i ] = m_X[ kn0 ][ i ];
+      }
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -157,7 +188,17 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    GEOS_UNUSED_VAR(k, q, stack);
+    GEOS_UNUSED_VAR( k );
+    //real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight< FE_TYPE >( q, stack.X );
+    real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight( q, stack.X );
+
+    real64 N[ numNodesPerElem ]; 
+    m_finiteElementSpace.template calcN( q, N );
+    GEOS_UNUSED_VAR(detJ);
+    //for( localIndex a = 0; a < numNodesPerFace; ++a )
+    //{
+    //  stack.nodalArea[a] += detJ * N[a];
+    //}
   }
 
   GEOS_HOST_DEVICE
@@ -172,19 +213,28 @@ public:
 
 protected:
 
-  arrayView1d< localIndex const > const m_faceElementsList;
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  ArrayOfArraysView< localIndex const > const m_faceToNodes; 
+
+  ArrayOfArraysView< localIndex const > const m_elemsToFaces;
+
+  arrayView1d< localIndex const > const m_faceElementList;
 
   arrayView3d< real64 const > const m_rotationMatrix;
 
+  arrayView2d< real64 const > const m_deltaTraction;
+
 };
 
-using ALMFactory = finiteElement::KernelFactory< ALMKernelsBase,
-                                                 arrayView1d< globalIndex const > const,
-                                                 globalIndex const,
-                                                 CRSMatrixView< real64, globalIndex const > const,
-                                                 arrayView1d< real64 > const,
-                                                 real64 const, 
-                                                 arrayView1d< localIndex const > const >;
+using ALMFactory = finiteElement::InterfaceKernelFactory< ALMKernelsBase,
+                                                          arrayView1d< globalIndex const > const,
+                                                          globalIndex const,
+                                                          CRSMatrixView< real64, globalIndex const > const,
+                                                          arrayView1d< real64 > const,
+                                                          real64 const, 
+                                                          arrayView1d< localIndex const > const >;
 
 
 struct ComputeRotationMatricesKernel
