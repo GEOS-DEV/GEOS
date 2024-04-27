@@ -38,8 +38,10 @@
     <PressurePermeability
       name="rockPerm"
       referencePermeabilityComponents="{ 4.0e-16, 4.0e-16, 4.0e-16 }"
-      pressureDependenceConstants="{ 1e-6, 1e-6, 1e-6 }"
-      referencePressure="5e6"/>
+      pressureDependenceConstants="{ 1e-5, 1e-5, 1e-5 }"
+      referencePressure="5e6"
+      maxPermeability="8e-15"
+      pressureModelType="Hyperbolic"/>
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"

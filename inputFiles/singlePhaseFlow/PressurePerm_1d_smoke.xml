@@ -41,18 +41,18 @@
     
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
+      cycleFrequency="10"
       target="/Outputs/vtkOutput_flow"/>
 
     <PeriodicEvent
       name="solverApplications"
       beginTime="0"
-      maxEventDt="100"
+      maxEventDt="10"
       target="/Solvers/singlePhaseFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="10"
+      cycleFrequency="100"
       target="/Outputs/restartOutput"/>
 
   </Events>

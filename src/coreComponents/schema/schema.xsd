@@ -4938,8 +4938,12 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PressurePermeabilityType">
+		<!--maxPermeability => Max. permeability can be reached.-->
+		<xsd:attribute name="maxPermeability" type="real64" default="1" />
 		<!--pressureDependenceConstants => Pressure dependence coefficients for each permeability component.-->
 		<xsd:attribute name="pressureDependenceConstants" type="R1Tensor" use="required" />
+		<!--pressureModelType => Type of the pressure dependence model. -->
+		<xsd:attribute name="pressureModelType" type="geos_constitutive_PressureModelType" default="Hyperbolic" />
 		<!--referencePermeabilityComponents => Reference xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="referencePermeabilityComponents" type="R1Tensor" use="required" />
 		<!--referencePressure => Reference pressure for the pressure permeability model-->
@@ -4947,6 +4951,11 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_constitutive_PressureModelType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Exponential|Hyperbolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="PressurePorosityType">
 		<!--compressibility => Solid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />

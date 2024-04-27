@@ -47,6 +47,16 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Reference permeability field" );
+
+  registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max. permeability can be reached." );
+
+  registerWrapper( viewKeyStruct::pressureModelTypeString(), &m_presModelType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( PressureModelType::Hyperbolic ).
+    setDescription( "Type of the pressure dependence model. " );
 }
 
 std::unique_ptr< ConstitutiveBase >
