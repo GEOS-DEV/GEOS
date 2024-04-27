@@ -106,7 +106,11 @@ Pack( buffer_unit_type *& buffer,
   return sizeOfPackedChars;
 }
 
-
+/**
+ * @brief Extract the cells at the boundary of the mesh.
+ * @param mesh The vtk mesh.
+ * @return The vtk cell ids.
+ */
 std::set< vtkIdType > extractBoundaryCells( vtkSmartPointer< vtkDataSet > mesh )
 {
   auto f = vtkDataSetSurfaceFilter::New();
@@ -324,9 +328,11 @@ struct Buckets
 
 
 /**
- * @brief
- * @param exchanged
+ * @brief Compute the intersection between for the ranks based on the information @p exchanged.
+ * @param exchanged Geometrical information provided by the ranks (including the current rank).
+ * @param curRank The current MPI rank.
  * @param neighbors excluding current rank
+ * @return The intersection buckets.
  */
 Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchanged,
                                   MpiRank curRank,
@@ -442,7 +448,16 @@ std::map< MpiRank, Exchange > exchange( int commId,
 }
 
 
-std::size_t buildMaxBufferSize( Buckets const & buckets )
+/**
+ * @brief Estimate an upper bound of the serialized size of the size buckets.
+ * @param buckets
+ * @return Size in bytes.
+ * @details MPI_Scan requires a fixed buffer size.
+ * An a-priori estimation of the maximum size of the buffer leads to crazy amounts of memory
+ * because of the combinatorial pattern of the rank intersections.
+ * Therefore, we use an MPI communication to get a better estimation.
+ */
+std::size_t buildMaxBufferSize( Buckets const & buckets )  // TODO give the size buckets instead?
 {
   auto const f = []( auto const & bucket ) -> std::size_t
   {
@@ -496,7 +511,12 @@ void from_json( const json & j,
   v.faces = j.at( "faces" ).get< std::map< std::set< MpiRank >, FaceLocIdx > >();
 }
 
-BucketSizes getBucketSize(Buckets const & buckets)
+/**
+ * @brief Compute the sizes of the intersection buckets.
+ * @param buckets The intersection buckets.
+ * @return The buckets of sizes.
+ */
+BucketSizes getBucketSize( Buckets const & buckets )
 {
   BucketSizes output;
 
@@ -516,10 +536,10 @@ BucketSizes getBucketSize(Buckets const & buckets)
 /**
  * @brief
  * @tparam LOC_IDX The local index type of the geometrical quantity considered (typically @c EdgeLocIdx or @c FaceLocIdx).
- * @param sizes
- * @param offsets
- * @param curRank
- * @return
+ * @param sizes The sizes of the intersection bucket (from the current MPI rank).
+ * @param offsets The offsets for each intersection bucket (from the MPI_Scan process, i.e. the previous ranks).
+ * @param curRank Current MPI rank.
+ * @return The offset buckets, updated with the sizes of the current MPI rank.
  */
 template< typename LOC_IDX >
 std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set< MpiRank >, localIndex > const & sizes,
@@ -528,10 +548,18 @@ std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set
 {
   std::map< std::set< MpiRank >, LOC_IDX > reducedOffsets;
 
-  // Only consider the offsets that are still relevant (i.e. with high ranks)
+  // We only keep the offsets that are still relevant to the current and higher ranks.
+  // Note that `reducedOffsets` will be used by the _current_ rank too.
+  // Therefore, we'll send information that may not be useful to higher ranks.
+  // This is surely acceptable because the information is tiny.
   for( auto const & [ranks, offset]: offsets )
   {
-    MpiRank const maxConcerned = *std::max_element( ranks.begin(), ranks.cend() );
+    MpiRank const maxConcerned = *std::max_element( ranks.cbegin(), ranks.cend() );
+    // TODO invert
+//    if( maxConcerned >= curRank )
+//    {
+//      reducedOffsets.emplace_hint( reducedOffsets.end(), ranks, offset );
+//    }
     if( maxConcerned < curRank )
     {
       continue;
@@ -539,7 +567,7 @@ std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set
     reducedOffsets.emplace_hint( reducedOffsets.end(), ranks, offset );
   }
 
-  // Add the offsets associated to the new buckets
+  // Add the offsets associated to the new size buckets from the current rank.
   LOC_IDX nextOffset{ 0 };
   for( auto const & [ranks, size]: sizes )
   {
@@ -583,12 +611,21 @@ BucketOffsets deserialize( V const & data )
   return json::from_cbor( data, false ).template get< BucketOffsets >();
 }
 
+/**
+ * @brief Custom MPI reduction function. Merges the sizes of the bucket from current rank into numbering offsets.
+ * @param[in] in Contains the reduced result from the previous ranks. Needs to be unpacked into a @c BucketOffsets instance.
+ * @param[inout] inout As an @e input, contains a pointer to the @c BucketSizes instance from the current rank.
+ * As an @e output, will contained the (packed) instance of @c BucketOffsets after the @c reduction.
+ * The @e output instance will be used by both current and next ranks.
+ * @param[in] len Number of data.
+ * @param[in] dataType Type of data. Mean to be @c MPI_BYTE for the current case.
+ */
 void f( void * in,
         void * inout,
         int * len,
-        MPI_Datatype * dptr )
+        MPI_Datatype * dataType )
 {
-  GEOS_ASSERT_EQ( *dptr, MPI_BYTE );
+  GEOS_ASSERT_EQ( *dataType, MPI_BYTE );
 
   MpiRank const curRank{ MpiWrapper::commRank() };
 
