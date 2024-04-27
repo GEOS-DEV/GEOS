@@ -47,6 +47,8 @@ public:
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
 
+  void initializeNeighbors();
+
   real64 * getLocalMin()
   {
     return m_min;
