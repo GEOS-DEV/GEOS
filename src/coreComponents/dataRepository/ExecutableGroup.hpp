@@ -22,12 +22,12 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "Group.hpp"
-
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
 
-class DomainPartition;
+// class DomainPartition;
 
 /**
  * @class ExecutableGroup
