@@ -280,9 +280,25 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 {
 
   //GEOS_UNUSED_VAR( time, dt, domain, dofManager, localMatrix, localRhs );
-  GEOS_UNUSED_VAR( time);
+  //GEOS_UNUSED_VAR( time);
 
   std::cout << "assembleSystem" << std::endl;
+
+  GEOS_MARK_FUNCTION;
+
+  SolidMechanicsLagrangianFEM::assembleSystem( time,
+                                               dt,
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
+
+  //ParallelMatrix parallel_matrix;
+  //ParallelMatrix parallel_matrix_1;
+  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  //parallel_matrix.write("mech.mtx");
+  // If specified as a b.c. apply traction
+  //applyTractionBC( time, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
@@ -335,6 +351,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
     } );
   });
+  //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  //parallel_matrix_1.write("amech.mtx");
 
   abort();
   /*

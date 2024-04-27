@@ -51,6 +51,7 @@ public:
 
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
+  using Base::m_matrix;
 
   InterfaceKernelBase( NodeManager const & nodeManager,
                        EdgeManager const & edgeManager,

@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/InterfaceKernelBase.hpp"
+#include "SolidMechanicsALMKernelsHelper.hpp"
 
 namespace geos
 {
@@ -47,6 +48,7 @@ public:
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_finiteElementSpace;
+  using Base::m_matrix;
 
   ALMKernelsBase( NodeManager const & nodeManager,
                   EdgeManager const & edgeManager,
@@ -86,17 +88,21 @@ public:
     /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
+    /// The number of lagrange multiplier dofs per element.
+    static constexpr int numTdofs = 3;
+
   public:
   
     GEOS_HOST_DEVICE
     StackVariables():
-      dispEqnRowIndices{ 0 },
-      dispColIndices{ 0 },
-      localRu{ 0.0 },
-      localAutAtu{ { 0.0 } },
-      tLocal(),
-      localRotationMatrix{ { 0.0 } },
-      X()
+      dispEqnRowIndices{},
+      dispColIndices{},
+      localRu{},
+      localAutAtu{{}},
+      localAtu{},
+      tLocal{},
+      localRotationMatrix{{}},
+      X{}
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -111,8 +117,11 @@ public:
     /// C-array storage for the element local AutAtu matrix.
     real64 localAutAtu[numUdofs][numUdofs];
 
+    /// C-array storage for the element local Atu matrix.
+    real64 localAtu[numTdofs][numUdofs];
+
     /// Stack storage for the element local lagrange multiplier vector
-    real64 tLocal[3];
+    real64 tLocal[numTdofs];
 
     /// C-array storage for rotation matrix
     real64 localRotationMatrix[3][3];
@@ -163,23 +172,36 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    constexpr localIndex shift = numNodesPerElem * 3;
+    constexpr int shift = numNodesPerElem * 3;
 
     localIndex const kf0 = m_elemsToFaces[k][0];
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      localIndex const kn0 = m_faceToNodes( kf0, a );
-      localIndex const kn1 = m_faceToNodes( kf1, a );
+      localIndex const kn0 = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
+      localIndex const kn1 = m_faceToNodes( kf1, FE_TYPE::permutation[ a ] );
 
       //std::cout << kn0 << " " << kn1 << std::endl;
       for( int i=0; i<3; ++i )
       {
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
         stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
-        stack.X[ a ][ i ] = m_X[ kn0 ][ i ];
+        stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
+        stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
+        stack.X[ a ][ i ] = m_X[  kn0 ][ i ];
       }
     }
+
+    for( int j=0; j<3; ++j )
+    {
+       for( int i=0; i<3; ++i )
+       {
+         stack.localRotationMatrix[ i ][ j ] = m_rotationMatrix( k, i, j );
+       }
+    }
+
+    LvArray::tensorOps::fill< stack.numTdofs, stack.numUdofs >( stack.localAtu, 0.0 );  //make 0
+    LvArray::tensorOps::fill< stack.numUdofs, stack.numUdofs >( stack.localAutAtu, 0.0 );  //make 0
   }
 
   GEOS_HOST_DEVICE
@@ -189,16 +211,19 @@ public:
                               StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    //real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight< FE_TYPE >( q, stack.X );
     real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight( q, stack.X );
+
+    std::cout << "detJ: " << detJ << std::endl;
 
     real64 N[ numNodesPerElem ]; 
     m_finiteElementSpace.template calcN( q, N );
-    GEOS_UNUSED_VAR(detJ);
-    //for( localIndex a = 0; a < numNodesPerFace; ++a )
-    //{
-    //  stack.nodalArea[a] += detJ * N[a];
-    //}
+
+    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
+                                                               stack.numUdofs, 
+                                                               numNodesPerElem>(stack.localAtu, 
+                                                                                N, 
+                                                                                FE_TYPE::permutation,
+                                                                                detJ);
   }
 
   GEOS_HOST_DEVICE
@@ -206,8 +231,61 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOS_UNUSED_VAR( k, stack );
+    GEOS_UNUSED_VAR( k );
 
+    real64 matRtAtu[3][stack.numUdofs], matRRtAtu[3][stack.numUdofs];
+
+    // transp(R) * Atu
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRtAtu, stack.localRotationMatrix, 
+                                                               stack.localAtu );
+
+    //std::cout << "matrixAtu: " << std::endl;
+    //for (int i=0; i<3; ++i)
+    //{
+    //  for (int j=0; j<stack.numUdofs; ++j)
+    //  {
+    //    std::cout << matRtAtu[ i ] [ j ] << " ";
+    //  }
+    //  std::cout << std::endl;
+    //}
+    //std::cout << std::endl;
+
+    // R*RtAtu 
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
+                                                               matRtAtu );
+
+    // transp(Atu)*RRtAtu
+    LvArray::tensorOps::Rij_eq_AkiBkj< stack.numUdofs, stack.numUdofs, 3 >( stack.localAutAtu, stack.localAtu, 
+                                                                            matRRtAtu); 
+                                                                          
+    //for (int i=0; i<stack.numUdofs; ++i)
+    //{
+    //  for (int j=0; j<stack.numUdofs; ++j)
+    //  {
+    //    std::cout << stack.localAutAtu[ i ] [ j ] << " ";
+    //  }
+    //  std::cout << std::endl;
+    //}
+    //std::cout << std::endl;
+    //abort();
+
+    for( localIndex i=0; i < stack.numUdofs; ++i )
+    {
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+
+      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+
+      //std::cout << "Add elements: " << dof << " "; 
+      //for( localIndex j=0; j < stack.numUdofs; ++j )
+      //  std::cout << stack.dispColIndices[j] << " "; 
+      //std::cout << std::endl;
+      // fill in matrix
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.dispColIndices,
+                                                                              stack.localAutAtu[i],
+                                                                              stack.numUdofs );
+    }
+   
     return 0.0;
   }
 

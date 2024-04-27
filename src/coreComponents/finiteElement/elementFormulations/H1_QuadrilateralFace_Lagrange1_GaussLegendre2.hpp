@@ -61,6 +61,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
+  /// Permutation
+  constexpr static localIndex permutation[numNodes] = { 0, 1, 3, 2};
+
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}
 
