@@ -74,6 +74,10 @@ public:
     return m_coords;
   }
 
+  [[nodiscard]] std::array< real64, 3 > getGridMin() const override;
+
+  [[nodiscard]] std::array< real64, 3 > getGridMax() const override;
+
   [[nodiscard]] std::array< real64, 9 > getGrid() const override;
 
   [[nodiscard]] std::array< real64, 3 > getBlockSize() const override;

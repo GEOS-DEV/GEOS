@@ -99,6 +99,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     partition.m_Periodic = pd.getPeriodic();
     partition.setGrid( pd.getGrid() );
     partition.setBlockSize( pd.getBlockSize() );
+    partition.initializeNeighbors();
     partition.setBoundingBox( pd.getBoundingBox() );
   } );
 
