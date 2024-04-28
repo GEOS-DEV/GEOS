@@ -361,6 +361,46 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const dt,
 }
 
 
+template< >
+void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 const dt,
+                                                           DomainPartition const & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+        // No thermal support yet
+          stabilizedSinglePhaseFVMKernels::FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                     dofKey,
+                                                                                     getName(),
+                                                                                     mesh.getElemManager(),
+                                                                                     stencilWrapper,
+                                                                                     dt,
+                                                                                     localMatrix.toViewConstSizes(),
+                                                                                     localRhs.toView() );
+
+    } );
+  } );
+
+}
+
+
+
 template<>
 void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const dt,
                                                                    DomainPartition const & domain,
