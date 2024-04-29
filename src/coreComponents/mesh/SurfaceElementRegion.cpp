@@ -75,8 +75,8 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
     // {
     //   elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>(m_faceBlockName);
     // }
-    
-    elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>("EmbeddedSurface");
+
+    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( "EmbeddedSurface" );
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
