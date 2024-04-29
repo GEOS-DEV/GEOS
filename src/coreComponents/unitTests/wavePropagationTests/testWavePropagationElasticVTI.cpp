@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/ElasticVTIWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
@@ -38,8 +38,8 @@ char const * xmlInput =
   R"xml(
   <Problem>
     <Solvers>
-      <ElasticVTISEM
-        name="elasticvtiSolver"
+      <ElasticSEM
+        name="elasticSolver"
         cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
@@ -54,7 +54,8 @@ char const * xmlInput =
                                 { 99.9, 0.1, 0.1 }, { 99.9, 0.1, 99.9 }, { 99.9, 99.9, 0.1 }, { 99.9, 99.9, 99.9 },
                                 { 50.1, 50.1, 50.1 } }"
         outputSeismoTrace="0"
-        dtSeismoTrace="0.1"/>
+        dtSeismoTrace="0.1"
+        useVTI="1"/>
     </Solvers>
     <Mesh>
       <InternalMesh
@@ -75,7 +76,7 @@ char const * xmlInput =
         forceDt="0.1"
         targetExactStartStop="0"
         targetExactTimestep="0"
-        target="/Solvers/elasticvtiSolver"/>
+        target="/Solvers/elasticSolver"/>
       <PeriodicEvent
         name="waveFieldNp1Collection"
         timeFrequency="0.1"
@@ -166,11 +167,11 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class ElasticVTIWaveEquationSEMTest : public ::testing::Test
+class ElasticWaveEquationSEMTest : public ::testing::Test
 {
 public:
 
-  ElasticVTIWaveEquationSEMTest():
+  ElasticWaveEquationSEMTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
@@ -186,18 +187,18 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  ElasticVTIWaveEquationSEM * propagator;
+  ElasticWaveEquationSEM * propagator;
 };
 
-real64 constexpr ElasticVTIWaveEquationSEMTest::time;
-real64 constexpr ElasticVTIWaveEquationSEMTest::dt;
-real64 constexpr ElasticVTIWaveEquationSEMTest::eps;
+real64 constexpr ElasticWaveEquationSEMTest::time;
+real64 constexpr ElasticWaveEquationSEMTest::dt;
+real64 constexpr ElasticWaveEquationSEMTest::eps;
 
-TEST_F( ElasticVTIWaveEquationSEMTest, SeismoTrace )
+TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
 {
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< ElasticVTIWaveEquationSEM >( "elasticvtiSolver" );
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< ElasticWaveEquationSEM >( "elasticSolver" );
   real64 time_n = time;
   // run for 1s (10 steps)
   for( int i=0; i<10; i++ )
@@ -209,7 +210,7 @@ TEST_F( ElasticVTIWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real32 > const dasReceivers = propagator->getReference< array2d< real32 > >( ElasticVTIWaveEquationSEM::viewKeyStruct::dasSignalNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const dasReceivers = propagator->getReference< array2d< real32 > >( ElasticWaveEquationSEM::viewKeyStruct::dasSignalNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
   dasReceivers.move( hostMemorySpace, false );
