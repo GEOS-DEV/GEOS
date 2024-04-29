@@ -285,14 +285,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
-  # Note: Keep a copy of the run logs, so that the correct version will be packed
-  cp -r integratedTests/TestResults integratedTests/TestResults_backup
+  tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
 
   # Rebaseline and pack into an archive
   echo "Rebaselining..."
   integratedTests/geos_ats.sh -a rebaselinefailed
-  rm -rf integratedTests/TestResults
-  mv integratedTests/TestResults_backup integratedTests/TestResults
 
   echo "Packing baselines..."
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
