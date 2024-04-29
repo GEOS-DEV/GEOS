@@ -272,16 +272,32 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
   return addEmbeddedElem;
 }
 array1d<localIndex> EmbeddedSurfaceSubRegion::getEdfmNodeParentEdgeIndex(ArrayOfArraysView<real64> const &elemNodesLocations,
+                                                                        ArrayOfArraysView<localIndex> const &elemToNodes,
                                                                          ToCellRelation<ArrayOfArrays<localIndex>> const  &elemTo3dElem,
                                                                          FixedOneToManyRelation const &cellToEdges,
                                                                          arrayView2d<localIndex const> const &edgeToNodes,
                                                                          arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const &nodesCoord)
 {
+  // first we build a node index to parent cell index map (we oly need one)
+  array1d<int> nodeToElem(elemNodesLocations.size());
+  for(int i = 0; i<elemNodesLocations.size(); i++){
+    nodeToElem[i] = -1;
+  }
+   // Assign each node to the first element that contains it
+   for (int elementIndex = 0; elementIndex < elemToNodes.size(); ++elementIndex) {
+        for (int node : elemToNodes[elementIndex]) {
+            if (nodeToElem[node] == -1) {
+                nodeToElem[node] = elementIndex;
+            }
+        }
+    }
+
   array1d<localIndex> parentEdgeIndex(elemNodesLocations.size());
   for (localIndex i = 0; i < elemNodesLocations.size(); ++i)
   {
 
-    auto cell3dIndex = elemTo3dElem.toCellIndex[i][0];
+    auto elementIndex =nodeToElem[i];  
+    auto cell3dIndex = elemTo3dElem.toCellIndex[elementIndex][0];
     double elemMinDistance = std::numeric_limits<double>::max();
     localIndex targetEdgeIndex;
 
@@ -342,7 +358,7 @@ array1d<localIndex> EmbeddedSurfaceSubRegion::getEdfmNodeParentEdgeIndex(ArrayOf
     ArrayOfArrays<real64> elemTangentialVectors2 = embeddedSurfaceBlock.getEmbeddedSurfElemTangentialLengthVectors();
 
     localIndex numEdfmNodes = elemNodesLocations.size();
-    array1d<localIndex> allPointsParentIndex =  getEdfmNodeParentEdgeIndex(elemNodesLocations.toView(),elemTo3dElem, cellToEdges, edgeToNodes, nodesCoord);
+    array1d<localIndex> allPointsParentIndex =  getEdfmNodeParentEdgeIndex(elemNodesLocations.toView(),elemToNodes.toView(),elemTo3dElem, cellToEdges, edgeToNodes, nodesCoord);
 
     // EDFM nodes get their gost rank and global parent index 
     // from their parent 3d element local edge index.

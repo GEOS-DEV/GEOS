@@ -152,6 +152,7 @@ public:
                               PlanarGeometricObject const * fracture );
 
 array1d<localIndex> getEdfmNodeParentEdgeIndex(ArrayOfArraysView<real64> const &elemNodesLocations,
+                                                                        ArrayOfArraysView<localIndex> const &elemToNodes,
                                                                          ToCellRelation<ArrayOfArrays<localIndex>> const  &elemTo3dElem,
                                                                          FixedOneToManyRelation const &cellToEdges,
                                                                          arrayView2d<localIndex const> const &edgeToNodes,
