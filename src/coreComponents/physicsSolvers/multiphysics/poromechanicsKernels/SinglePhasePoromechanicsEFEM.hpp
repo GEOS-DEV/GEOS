@@ -29,20 +29,19 @@ namespace poromechanicsEFEMKernels
 {
 
 /**
- * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geos::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
- *
- * ### SinglePhasePoromechanics Description
- * Implements the KernelBase interface functions required for solving the
- * quasi-static single-phase poromechanics problem using one of the
- * "finite element kernel application" functions such as
- * geos::finiteElement::RegionBasedKernelApplication.
- *
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFunc
  */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOS_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -219,10 +218,12 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
+  template< typename FUNC = poromechanicsEFEMKernels::NoOpFunc >
   GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const;
+                              StackVariables & stack,
+                              FUNC && kernelOp = poromechanicsEFEMKernels::NoOpFunc{} ) const;
 
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete

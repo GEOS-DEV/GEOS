@@ -213,8 +213,8 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 > stabTimeMonomialDofsNormView = stabTimeMonomialDofsNorm.toView();
 
   // Loop over cells on the device.
-  forAll< parallelDevicePolicy< > >( numCells, [=] GEOS_HOST_DEVICE
-                                       ( localIndex const cellIndex )
+  forAll< geos::parallelDevicePolicy< > >( numCells, [=] GEOS_HOST_DEVICE
+                                             ( localIndex const cellIndex )
   {
     typename VEM::StackVariables stack;
     VEM virtualElement;

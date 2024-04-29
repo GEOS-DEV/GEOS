@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 20 }"
+      yCoords="{ 0, 20 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 11 }"
+      ny="{ 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{ 1, 0, 0 }"
+      origin="{ 10.0, 10.0, 0.5 }"
+      lengthVector="{ 0, 1, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 25, 4 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="1e6">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      forceDt="1e5"
+      target="/Solvers/poroSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e6"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

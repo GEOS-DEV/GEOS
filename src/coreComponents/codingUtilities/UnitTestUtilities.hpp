@@ -19,6 +19,8 @@
 #ifndef GEOS_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 #define GEOS_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 
+#include "common/GEOS_RAJA_Interface.hpp"
+
 #include "common/DataTypes.hpp"
 
 #include "common/MpiWrapper.hpp"
