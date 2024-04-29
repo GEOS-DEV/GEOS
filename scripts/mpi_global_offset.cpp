@@ -13,7 +13,7 @@ struct S
 {
   std::int32_t n;  // Compute offsets and not values... S.edgeOffset, S.faceOffset, S.cellOffset
   std::int32_t e;
-  std::int32_t f;
+  std::int32_t f;  // add cells for global size.
 };
 
 void f_impl( S const * in,

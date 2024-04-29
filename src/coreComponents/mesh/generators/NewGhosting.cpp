@@ -40,10 +40,10 @@ namespace geos::ghosting
 
 using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
 using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
-using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
-using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable >;
+using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
+using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
+using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
+using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
 using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
 
@@ -63,27 +63,39 @@ void from_json( const json & j,
 }
 
 void to_json( json & j,
-              const EdgeLocIdx & v )
+              const NodeGlbIdx & v )
 {
   j = v.get();
-}
-
-void from_json( const json & j,
-                EdgeLocIdx & v )
-{
-  v = EdgeLocIdx{ j.get< EdgeLocIdx::UnderlyingType >() };
 }
 
 void to_json( json & j,
-              const FaceLocIdx & v )
+              const EdgeGlbIdx & v )
 {
   j = v.get();
 }
 
 void from_json( const json & j,
-                FaceLocIdx & v )
+                EdgeGlbIdx & v )
 {
-  v = FaceLocIdx{ j.get< FaceLocIdx::UnderlyingType >() };
+  v = EdgeGlbIdx{ j.get< EdgeGlbIdx::UnderlyingType >() };
+}
+
+void to_json( json & j,
+              const FaceGlbIdx & v )
+{
+  j = v.get();
+}
+
+void from_json( const json & j,
+                FaceGlbIdx & v )
+{
+  v = FaceGlbIdx{ j.get< FaceGlbIdx::UnderlyingType >() };
+}
+
+void to_json( json & j,
+              const CellGlbIdx & v )
+{
+  j = v.get();
 }
 
 using Edge = std::tuple< NodeGlbIdx, NodeGlbIdx >;
@@ -494,8 +506,8 @@ void from_json( const json & j,
 
 struct BucketOffsets
 {
-  std::map< std::set< MpiRank >, EdgeLocIdx > edges;
-  std::map< std::set< MpiRank >, FaceLocIdx > faces;
+  std::map< std::set< MpiRank >, EdgeGlbIdx > edges;
+  std::map< std::set< MpiRank >, FaceGlbIdx > faces;
 };
 
 void to_json( json & j,
@@ -507,8 +519,8 @@ void to_json( json & j,
 void from_json( const json & j,
                 BucketOffsets & v )
 {
-  v.edges = j.at( "edges" ).get< std::map< std::set< MpiRank >, EdgeLocIdx > >();
-  v.faces = j.at( "faces" ).get< std::map< std::set< MpiRank >, FaceLocIdx > >();
+  v.edges = j.at( "edges" ).get< std::map< std::set< MpiRank >, EdgeGlbIdx > >();
+  v.faces = j.at( "faces" ).get< std::map< std::set< MpiRank >, FaceGlbIdx > >();
 }
 
 /**
@@ -639,12 +651,82 @@ void f( void * in,
   BucketSizes const * sizes = reinterpret_cast<BucketSizes const *>(addr);
 
   BucketOffsets updatedOffsets;
-  updatedOffsets.edges = updateBucketOffsets< EdgeLocIdx >( sizes->edges, offsets.edges, curRank );
-  updatedOffsets.faces = updateBucketOffsets< FaceLocIdx >( sizes->faces, offsets.faces, curRank );
+  updatedOffsets.edges = updateBucketOffsets< EdgeGlbIdx >( sizes->edges, offsets.edges, curRank );
+  updatedOffsets.faces = updateBucketOffsets< FaceGlbIdx >( sizes->faces, offsets.faces, curRank );
 
   // Serialize the updated offsets, so they get sent to the next rank.
   std::vector< std::uint8_t > const serialized = serialize( updatedOffsets );
   std::memcpy( inout, serialized.data(), serialized.size() );
+}
+
+struct MaxGlbIdcs
+{
+  NodeGlbIdx nodes;
+  EdgeGlbIdx edges;
+  FaceGlbIdx faces;
+  CellGlbIdx cells;
+};
+
+void to_json( json & j,
+              const MaxGlbIdcs & mo )
+{
+  j = json{ { "nodes", mo.nodes },
+            { "edges", mo.edges },
+            { "faces", mo.faces },
+            { "cells", mo.cells } };
+}
+
+void g( void * in,
+        void * inout,
+        int * len,
+        MPI_Datatype * dataType )
+{
+  GEOS_ASSERT_EQ( *len, 1 );
+
+  MaxGlbIdcs const * i = reinterpret_cast<MaxGlbIdcs const *>(in);
+  MaxGlbIdcs * io = reinterpret_cast<MaxGlbIdcs *>(inout);
+
+  io->nodes = std::max( i->nodes, io->nodes );
+  io->edges = std::max( i->edges, io->edges );
+  io->faces = std::max( i->faces, io->faces );
+  io->cells = std::max( i->cells, io->cells );
+}
+
+MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
+                         EdgeGlbIdx const & maxEdgeId,
+                         FaceGlbIdx const & maxFaceId )
+{
+  MaxGlbIdcs offsets{ NodeGlbIdx{ 0 }, maxEdgeId, maxFaceId, CellGlbIdx{ 0 } };
+
+  auto const extract = []( vtkDataArray * globalIds ) -> vtkIdType
+  {
+    vtkIdTypeArray * gids = vtkIdTypeArray::FastDownCast( globalIds );
+    Span< vtkIdType > const s( (vtkIdType *) gids->GetPointer( 0 ), gids->GetNumberOfTuples() );
+    return *std::max_element( s.begin(), s.end() );
+  };
+
+  offsets.nodes = NodeGlbIdx{ extract( mesh->GetPointData()->GetGlobalIds() ) };
+  offsets.cells = CellGlbIdx{ extract( mesh->GetCellData()->GetGlobalIds() ) };
+
+  // Otherwise, use `MPI_Type_create_struct`.
+  static_assert( std::is_same_v< NodeGlbIdx::UnderlyingType, EdgeGlbIdx::UnderlyingType > );
+  static_assert( std::is_same_v< NodeGlbIdx::UnderlyingType, FaceGlbIdx::UnderlyingType > );
+  static_assert( std::is_same_v< NodeGlbIdx::UnderlyingType, CellGlbIdx::UnderlyingType > );
+
+//  MPI_Datatype const underlying = internal::getMpiType< NodeGlbIdx::UnderlyingType >();
+  MPI_Datatype t;
+//  MPI_Type_contiguous( sizeof( MatrixOffsets ) / sizeof( underlying ), underlying, &t );
+  MPI_Type_contiguous( 4, MPI_LONG_LONG_INT, &t );
+  MPI_Type_commit( &t );
+
+  MPI_Op op;
+  MPI_Op_create( g, true, &op );
+
+  MaxGlbIdcs result( offsets );
+
+  MPI_Allreduce( &offsets, &result, 1, t, op, MPI_COMM_WORLD );
+
+  return result;
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
@@ -677,8 +759,8 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   {
     // The `MPI_Scan` process will not call the reduction operator for rank 0.
     // So we need to reduce ourselves for ourselves.
-    offsets.edges = updateBucketOffsets< EdgeLocIdx >( sizes.edges, { { { MpiRank{ 0 }, }, EdgeLocIdx{ 0 } } }, curRank );
-    offsets.faces = updateBucketOffsets< FaceLocIdx >( sizes.faces, { { { MpiRank{ 0 }, }, FaceLocIdx{ 0 } } }, curRank );
+    offsets.edges = updateBucketOffsets< EdgeGlbIdx >( sizes.edges, { { { MpiRank{ 0 }, }, EdgeGlbIdx { 0 } } }, curRank );
+    offsets.faces = updateBucketOffsets< FaceGlbIdx >( sizes.faces, { { { MpiRank{ 0 }, }, FaceGlbIdx { 0 } } }, curRank );
     // Still we need to send this reduction to the following rank, by copying to it to the send buffer.
     std::vector< std::uint8_t > const bytes = serialize( offsets );
     std::memcpy( sendBuffer.data(), bytes.data(), bytes.size() );
@@ -704,7 +786,11 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
     offsets = deserialize( recvBuffer );
   }
 
-  std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
+//  std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
+
+  MpiRank const nextRank = curRank + MpiRank{ 1 };
+  MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ), offsets.faces.at( { nextRank } ) );
+  std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
