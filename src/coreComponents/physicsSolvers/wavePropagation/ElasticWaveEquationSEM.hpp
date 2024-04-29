@@ -24,6 +24,7 @@
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "ElasticFields.hpp"
+#include "ElasticVTIFields.hpp"
 
 namespace geos
 {
@@ -121,6 +122,8 @@ public:
     static constexpr char const * sourceForceString() { return "sourceForce"; }
     static constexpr char const * sourceMomentString() { return "sourceMoment"; }
 
+    static constexpr char const * useVtiString() { return "useVTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -213,6 +216,9 @@ private:
 
   /// Symmetric tensor describing the moment of the source
   R2SymTensor m_sourceMoment;
+
+  /// Flag to appliy VTI anisotropy
+  integer m_useVTI;
 
 };
 
