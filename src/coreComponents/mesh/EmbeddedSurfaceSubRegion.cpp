@@ -40,23 +40,11 @@ void surfaceWithGhostNodes::insert( globalIndex const & edgeIndex )
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                                     dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
-  m_normalVector(),
-  m_tangentVector1(),
-  m_tangentVector2(),
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex(),
   m_parentPlaneName()
 {
   m_elementType = ElementType::Polygon;
-
-  registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
-    setDescription( "Unit normal vector to the embedded surface." );
-
-  registerWrapper( viewKeyStruct::t1VectorString(), &m_tangentVector1 ).
-    setDescription( "Unit vector in the first tangent direction to the embedded surface." );
-
-  registerWrapper( viewKeyStruct::t2VectorString(), &m_tangentVector2 ).
-    setDescription( "Unit vector in the second tangent direction to the embedded surface." );
 
   registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
     setDescription( "The center of each EmbeddedSurface element." );

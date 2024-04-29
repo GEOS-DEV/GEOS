@@ -305,7 +305,8 @@ struct StateUpdateKernel
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,
           arrayView3d< real64 > const & dFractureTraction_dJump,
-          arrayView1d< integer const > const & fractureState )
+          arrayView1d< integer const > const & fractureState,
+          arrayView1d< real64 > const & slip )
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -313,6 +314,9 @@ struct StateUpdateKernel
                                       fractureState[k],
                                       fractureTraction[k],
                                       dFractureTraction_dJump[k] );
+
+      slip[ k ] = LvArray::math::sqrt( LvArray::math::square( jump( k, 1 ) ) +
+                                       LvArray::math::square( jump( k, 2 ) ) );
     } );
   }
 

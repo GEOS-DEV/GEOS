@@ -24,15 +24,14 @@
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
-      stabilizationName="tpfaFlow"
+      stabilizationName="contactStabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="10"
-        />
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangeContact>
@@ -67,8 +66,10 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation
+    <TwoPointFluxApproximation
         name="tpfaFlow"/>
+    <TwoPointFluxApproximation
+        name="contactStabilization"/>    
     </FiniteVolume>
   </NumericalMethods>
 
