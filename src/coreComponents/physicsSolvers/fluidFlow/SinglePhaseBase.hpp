@@ -180,10 +180,10 @@ public:
    */
   virtual void
   assembleStabilizedFluxTerms( real64 const dt,
-                     DomainPartition const & domain,
-                     DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) = 0;
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief assembles the flux terms for all cells for the poroelastic case

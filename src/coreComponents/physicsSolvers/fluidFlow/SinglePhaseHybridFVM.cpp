@@ -262,13 +262,13 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
 
 
 void SinglePhaseHybridFVM::assembleStabilizedFluxTerms( real64 const dt,
-                                              DomainPartition const & domain,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+                                                        DomainPartition const & domain,
+                                                        DofManager const & dofManager,
+                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                        arrayView1d< real64 > const & localRhs )
 {
   // pressure stabilization not implemented
-  return assembleFluxTerms(dt, domain, dofManager, localMatrix, localRhs);
+  return assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 }
 
 

@@ -81,10 +81,10 @@ public:
 
   void
   assembleStabilizedFluxTerms( real64 const dt,
-                     DomainPartition const & domain,
-                     DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) const
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const
   { flowSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
 
   void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )

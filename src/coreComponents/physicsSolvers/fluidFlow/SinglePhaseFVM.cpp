@@ -364,10 +364,10 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const dt,
 
 template< >
 void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 const dt,
-                                                           DomainPartition const & domain,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs )
+                                                                     DomainPartition const & domain,
+                                                                     DofManager const & dofManager,
+                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -385,15 +385,15 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 cons
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-        // No thermal support yet
-          stabilizedSinglePhaseFVMKernels::FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
+      // No thermal support yet
+      stabilizedSinglePhaseFVMKernels::FaceBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                                                  dofKey,
+                                                                                                                  getName(),
+                                                                                                                  mesh.getElemManager(),
+                                                                                                                  stencilWrapper,
+                                                                                                                  dt,
+                                                                                                                  localMatrix.toViewConstSizes(),
+                                                                                                                  localRhs.toView() );
 
     } );
   } );
@@ -458,12 +458,12 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 template< >
 void SinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( real64 const dt,
-                                                                   DomainPartition const & domain,
-                                                                   DofManager const & dofManager,
-                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                   arrayView1d< real64 > const & localRhs )
+                                                                             DomainPartition const & domain,
+                                                                             DofManager const & dofManager,
+                                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                             arrayView1d< real64 > const & localRhs )
 {
-	return SinglePhaseFVM<SinglePhaseProppantBase>::assembleFluxTerms(dt, domain, dofManager, localMatrix, localRhs);
+  return SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 }
 
 template< typename BASE >

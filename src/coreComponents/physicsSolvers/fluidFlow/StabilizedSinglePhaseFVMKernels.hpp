@@ -59,7 +59,7 @@ public:
 
   using StabSinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              fields::singlefluid::density_n>;
+                              fields::singlefluid::density_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -167,17 +167,17 @@ public:
                                            real64 const mobility,
                                            real64 const potGrad,
                                            real64 const fluxVal,
-                                           real64 const (&dFlux_dP)[2])
+                                           real64 const (&dFlux_dP)[2] )
     {
 
-    GEOS_UNUSED_VAR( alpha, mobility, potGrad, fluxVal, dFlux_dP );
+      GEOS_UNUSED_VAR( alpha, mobility, potGrad, fluxVal, dFlux_dP );
 
       /// stabilization flux and derivatives
       real64 stabFlux{};
       real64 dStabFlux_dP[2]{};
 
       real64 const stabTrans[2] = { stack.stabTransmissibility[connectionIndex][0],
-                                                     stack.stabTransmissibility[connectionIndex][1] };
+                                    stack.stabTransmissibility[connectionIndex][1] };
 
 
       real64 dPresGradStab = 0.0;
@@ -208,29 +208,29 @@ public:
       if( isStabilizationActive && areInSameMacroElement )
       {
 
-          real64 const laggedUpwindCoef = m_dens_n[er_up_stab][esr_up_stab][ei_up_stab][0];
-          stabFlux += dPresGradStab * laggedUpwindCoef;
-
-          for( integer ke = 0; ke < stack.numFluxElems; ++ke )
-          {
-            real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
-            dStabFlux_dP[ke] += tauStab * stabTrans[ke] * laggedUpwindCoef;
-          }
-      }
-
-      // Step 3: add the stabilization flux and its derivatives to the residual and Jacobian
-        integer const eqIndex0 = k[0] * numEqn ;
-        integer const eqIndex1 = k[1] * numEqn ;
-
-        stack.localFlux[eqIndex0] +=  stabFlux;
-        stack.localFlux[eqIndex1] += -stabFlux;
+        real64 const laggedUpwindCoef = m_dens_n[er_up_stab][esr_up_stab][ei_up_stab][0];
+        stabFlux += dPresGradStab * laggedUpwindCoef;
 
         for( integer ke = 0; ke < stack.numFluxElems; ++ke )
         {
-          localIndex const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[eqIndex0][localDofIndexPres] +=  dStabFlux_dP[ke];
-          stack.localFluxJacobian[eqIndex1][localDofIndexPres] += -dStabFlux_dP[ke];
+          real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
+          dStabFlux_dP[ke] += tauStab * stabTrans[ke] * laggedUpwindCoef;
         }
+      }
+
+      // Step 3: add the stabilization flux and its derivatives to the residual and Jacobian
+      integer const eqIndex0 = k[0] * numEqn;
+      integer const eqIndex1 = k[1] * numEqn;
+
+      stack.localFlux[eqIndex0] +=  stabFlux;
+      stack.localFlux[eqIndex1] += -stabFlux;
+
+      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
+      {
+        localIndex const localDofIndexPres = k[ke] * numDof;
+        stack.localFluxJacobian[eqIndex0][localDofIndexPres] +=  dStabFlux_dP[ke];
+        stack.localFluxJacobian[eqIndex1][localDofIndexPres] += -dStabFlux_dP[ke];
+      }
 
     } ); // end call to Base::computeFlux
 
@@ -240,7 +240,7 @@ protected:
 
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-  ElementViewConst< arrayView2d< real64 const >  > const m_dens_n;
+  ElementViewConst< arrayView2d< real64 const > > const m_dens_n;
 
   /// Views on the macroelement indices and stab constant
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
@@ -284,7 +284,7 @@ public:
     integer constexpr NUM_DOF = 1;
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+      elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
@@ -292,12 +292,12 @@ public:
     typename KERNEL_TYPE::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
     typename KERNEL_TYPE::StabSinglePhaseFlowAccessors stabSinglePhaseFlowAccessors( elemManager, solverName );
     typename KERNEL_TYPE::StabSinglePhaseFluidAccessors stabSinglePhaseFluidAccessors( elemManager, solverName );
-  typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+    typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
     KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                         singlePhaseFlowAccessors, stabSinglePhaseFlowAccessors, singlePhaseFluidAccessors, stabSinglePhaseFluidAccessors,
                         permeabilityAccessors,
-                        dt, localMatrix, localRhs);
+                        dt, localMatrix, localRhs );
     KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };
