@@ -50,6 +50,16 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
 SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
 {}
 
+void SinglePhasePoromechanicsEmbeddedFractures::postProcessInput()
+{
+  Base::postProcessInput();
+
+  GEOS_ERROR_IF( solidMechanicsSolver()->useStaticCondensation(),
+                 GEOS_FMT( "{}: {} = 1 in {} solver named {} is not supported for {}",
+                           this->getName(), SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
+                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ));
+}
+
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   Base::registerDataOnMesh( meshBodies );
