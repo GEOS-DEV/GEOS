@@ -126,9 +126,9 @@ jobs:
           
           script_args+=(--data-basename ${DATA_BASENAME})
 
-          DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
+          DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
           if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
-            sudo mkdir -p ${DATA_EXCHANGE_DIR}
+            mkdir -p ${DATA_EXCHANGE_DIR}
           fi
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
@@ -142,7 +142,7 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        if [ ${{ inputs.RUNS_ON }} == 'self-hosted' ]; then
+        if [ ${{ inputs.RUNS_ON }} == 'streak' ] || [ ${{ inputs.RUNS_ON }} == 'streak2' ]; then
           RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
           mkdir -p ${GITHUB_WORKSPACE}/certificates
           cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
