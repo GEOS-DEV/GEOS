@@ -134,6 +134,30 @@ public:
                                        std::set< localIndex > const & indices );
 
   /**
+   * @brief Function to flip the face normals of faces adjacent to the faceElements if they are not pointing in the direction of the
+   * fracture.
+   * @param faceManager The face manager group
+   * @param elemManager The element region manager
+   * @details We want to flip the normals of the faces neighboring the fracture element. To do so, we check
+   * if the vector connecting the face center and the element center of the neighboring 3d cell is in the same
+   * direction as the unit normal of the face. If they are not, we flip the normal because it should be pointing outward
+   * (i.e., towards the fracture element).
+   */
+  void fixNeighboringFacesNormals( FaceManager & faceManager,
+                                   ElementRegionManager const & elemManager );
+
+  /**
+   * @brief Function to flip the face map based on the gloal index of the nighboring elements
+   * @param faceManager The face manager group
+   * @param elemManager The element region manager
+   * @details In order to keep a consistent normal between multi processors ranks, we force the faces to be ordered
+   * based on the global numbering of the 3d elements attached to each face. The first face is always the one
+   * attached to the 3d cell with the smallest globalIndex.
+   */
+  void flipFaceMap( FaceManager & faceManager,
+                    ElementRegionManager const & elemManager );
+
+  /**
    * @brief Struct containing the keys to all face element views.
    * @struct viewKeyStruct
    */

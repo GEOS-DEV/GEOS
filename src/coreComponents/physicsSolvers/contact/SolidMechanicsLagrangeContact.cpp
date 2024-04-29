@@ -64,6 +64,11 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
+  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilitzationScalingCoefficient ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
+
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
@@ -147,18 +152,18 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     fluxApprox.addFieldName( contact::traction::key() );
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                                  MeshLevel &,
+                                                                  MeshLevel & mesh,
                                                                   arrayView1d< string const > const & regionNames )
     {
-      array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
-      std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-      stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
-      stencilTargetRegions.clear();
-      for( auto const & targetRegion: stencilTargetRegionsSet )
+      mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            SurfaceElementRegion const & region )
       {
-        stencilTargetRegions.emplace_back( targetRegion );
-      }
+        array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+        stencilTargetRegions.emplace_back( region.getName() );
+      } );
     } );
   }
 
@@ -452,8 +457,11 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
         arrayView3d< real64 > const &
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
-        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
+
+        arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
+        arrayView1d< real64 > const & slip = subRegion.getField< fields::contact::slip >();
+        arrayView1d< real64 > const & aperture = subRegion.getField< fields::elementAperture >();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
@@ -483,6 +491,10 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
           real64 dispJumpTemp[ 3 ];
           LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
           LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
+
+          slip[ kfe ] = LvArray::math::sqrt( LvArray::math::square( dispJump( kfe, 1 ) ) +
+                                             LvArray::math::square( dispJump( kfe, 2 ) ) );
+          aperture[ kfe ] = dispJump[ kfe ][ 0 ];
         } );
       }
     } );
@@ -518,15 +530,16 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
                        3,
                        meshTargets );
 
-  dofManager.addCoupling( contact::traction::key(),
-                          contact::traction::key(),
-                          DofManager::Connector::Face,
-                          meshTargets );
-
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           contact::traction::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+
+  dofManager.addCoupling( contact::traction::key(), stabilizationMethod );
 }
 
 void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
@@ -852,18 +865,20 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
                                                                 arrayView1d< string const > const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
 
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             FaceElementSubRegion & subRegion )
     {
       ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+      arrayView2d< real64 > const unitNormal   = subRegion.getNormalVector();
+      arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
+      arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
@@ -872,14 +887,27 @@ void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & d
           return;
         }
 
+        localIndex const f0 = elemsToFaces[kfe][0];
+        localIndex const f1 = elemsToFaces[kfe][1];
+
         stackArray1d< real64, 3 > Nbar( 3 );
-        localIndex const & f0 = elemsToFaces[kfe][0], f1 = elemsToFaces[kfe][1];
         Nbar[ 0 ] = faceNormal[f0][0] - faceNormal[f1][0];
         Nbar[ 1 ] = faceNormal[f0][1] - faceNormal[f1][1];
         Nbar[ 2 ] = faceNormal[f0][2] - faceNormal[f1][2];
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
+        real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ],
+                                          rotationMatrix[kfe][ 1 ][ 1 ],
+                                          rotationMatrix[kfe][ 2 ][ 1 ] };
+
+        real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ],
+                                          rotationMatrix[kfe][ 1 ][ 2 ],
+                                          rotationMatrix[kfe][ 2 ][ 2 ] };
+
+        LvArray::tensorOps::copy< 3 >( unitNormal[kfe], Nbar );
+        LvArray::tensorOps::copy< 3 >( unitTangent1[kfe], columnVector1 );
+        LvArray::tensorOps::copy< 3 >( unitTangent2[kfe], columnVector2 );
       } );
     } );
   } );
@@ -1307,13 +1335,13 @@ void SolidMechanicsLagrangeContact::
 
           localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
 
-
           for( localIndex idof = 0; idof < 3; ++idof )
           {
             localRhs[localRow + idof] += elemRHS[idof];
 
             if( fractureState[kfe] != contact::FractureState::Open )
             {
+
               localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
                                                                         nodeDOF,
                                                                         dRdU[idof].dataIfContiguous(),
@@ -1539,7 +1567,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffDiagApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilitzationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
@@ -1789,7 +1817,6 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   computeFaceDisplacementJump( domain );
 }
 
