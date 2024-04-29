@@ -1335,11 +1335,22 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                              localMatrix,
                                              localRhs );
 
-  assembleFluxTerms( dt,
-                     domain,
-                     dofManager,
-                     localMatrix,
-                     localRhs );
+  if( m_isJumpStabilized )
+  {
+    assembleStabilizedFluxTerms( dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
+  }
+  else
+  {
+    assembleFluxTerms( dt,
+                       domain,
+                       dofManager,
+                       localMatrix,
+                       localRhs );
+  }
 }
 
 void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
