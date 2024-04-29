@@ -1320,7 +1320,7 @@ computeFirstOrderStiffnessTerm( localIndex const q,
       const real64 w02 = w * gia * gjc;
       func( ibc, abj, w02 * detJ, J, 0, 2 );
       func( abj, ibc, w02 * detJ, J, 2, 0 );
-      const real64 w01 = w * gia * gjc;
+      const real64 w01 = w * gia * gjb;
       func( ibc, ajc, w01 * detJ, J, 0, 1 );
       func( ajc, ibc, w01 * detJ, J, 1, 0 );
     }

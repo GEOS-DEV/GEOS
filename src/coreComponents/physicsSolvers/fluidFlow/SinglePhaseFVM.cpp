@@ -150,13 +150,13 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       string const & fluidName = subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-      string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
       // step 1: compute the norm in the subRegion
 
       if( m_isThermal )
       {
+        string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
+        CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
         string const & solidInternalEnergyName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = SolverBase::getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
 
@@ -185,8 +185,6 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                      dofKey,
                                                      localRhs,
                                                      subRegion,
-                                                     fluid,
-                                                     solid,
                                                      m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionFlowResidualNorm,
                                                      subRegionFlowResidualNormalizer );

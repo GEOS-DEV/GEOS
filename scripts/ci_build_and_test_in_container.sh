@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 printenv
 
 SCRIPT_NAME=$0
@@ -174,7 +176,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  export ATS_FILTER="np<=2"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=4 --ats openmpi_maxprocs=4\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 
@@ -236,7 +239,7 @@ else
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
     # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
-    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
 
@@ -287,6 +290,12 @@ fi
 
 # Cleaning the build directory.
 or_die ninja clean
+
+
+# Clean the repository
+or_die cd ${GEOS_SRC_DIR}/inputFiles
+find . -name *.pyc | xargs rm -f
+
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then

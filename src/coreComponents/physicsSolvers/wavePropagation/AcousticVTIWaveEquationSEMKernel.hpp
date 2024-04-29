@@ -21,12 +21,12 @@
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverBaseFields.hpp"
 #include "WaveSolverUtils.hpp"
-
+#include "AcousticVTIFields.hpp"
 
 namespace geos
 {
+using namespace fields;
 
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticVTIWaveEquationSEMKernels
@@ -430,13 +430,13 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< fields::wavesolverfields::Pressure_p_n >() ),
-    m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
-    m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
-    m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::wavesolverfields::Delta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::F >() ),
+    m_p_n( nodeManager.getField< acousticvtifields::Pressure_p_n >() ),
+    m_q_n( nodeManager.getField< acousticvtifields::Pressure_q_n >() ),
+    m_stiffnessVector_p( nodeManager.getField< acousticvtifields::StiffnessVector_p >() ),
+    m_stiffnessVector_q( nodeManager.getField< acousticvtifields::StiffnessVector_q >() ),
+    m_epsilon( elementSubRegion.template getField< acousticvtifields::Epsilon >() ),
+    m_delta( elementSubRegion.template getField< acousticvtifields::Delta >() ),
+    m_vti_f( elementSubRegion.template getField< acousticvtifields::F >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

@@ -23,6 +23,7 @@
 #include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
 #include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "AcoustoElasticFields.hpp"
 #include <tuple>
 
 namespace geos
@@ -139,8 +140,8 @@ public:
   string getCatalogName() const override { return catalogName(); }
 
   /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
+   * @brief accessor for the pointer to the acoustic solver
+   * @return a pointer to the acoustic solver
    */
   AcousticWaveEquationSEM * acousticSolver() const
   {
@@ -148,8 +149,8 @@ public:
   }
 
   /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
+   * @brief accessor for the pointer to the elastic solver
+   * @return a pointer to the elastic solver
    */
   ElasticWaveEquationSEM * elasticSolver() const
   {
@@ -178,34 +179,6 @@ protected:
   arrayView1d< string const > m_acousRegions;
   arrayView1d< string const > m_elasRegions;
 };
-
-namespace fields
-{
-
-DECLARE_FIELD( CouplingVectorx,
-               "couplingVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Coupling term on x." );
-
-DECLARE_FIELD( CouplingVectory,
-               "couplingVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Coupling term on y." );
-
-DECLARE_FIELD( CouplingVectorz,
-               "couplingVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Coupling term on z." );
-}
 
 } /* namespace geos */
 

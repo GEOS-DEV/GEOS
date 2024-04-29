@@ -9,10 +9,11 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-            logLevel="1"
+      logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
-      maxNumResolves="2">
+      maxNumResolves="2"
+      useQuasiNewton="1">
     <!-- Sphinx_Solvers_Hydrofracture_End -->
 
       <NonlinearSolverParameters
@@ -71,7 +72,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>

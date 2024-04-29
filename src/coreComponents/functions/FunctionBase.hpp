@@ -69,7 +69,7 @@ public:
   /**
    * @brief Function initialization
    */
-  virtual void initializeFunction(){}
+  virtual void initializeFunction() = 0;
 
   /**
    * @brief Test to see if the function is a 1D function of time

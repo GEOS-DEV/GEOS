@@ -25,20 +25,19 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
 
-template< typename FLOW_SOLVER >
-class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER,
-                                                  SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER,
-                              SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -75,6 +74,16 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
   }
 
+  virtual void initializePostInitialConditionsPreSubGroups() override
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` must be set to 1 since the poromechanics solver is thermal",
+                             this->getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ),
+                   InputError );
+  }
+
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
@@ -86,7 +95,7 @@ public:
                                                                                  arrayView1d< string const > const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                          [&]( localIndex const,
                                                                               ElementSubRegionBase & subRegion )
       {
@@ -103,8 +112,6 @@ public:
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
-
-
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
@@ -134,7 +141,7 @@ public:
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
@@ -179,11 +186,30 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain ) override
+  {
+    // always force outer loop for initialization
+    auto & subcycling = this->getNonlinearSolverParameters().m_subcyclingOption;
+    auto const subcycling_orig = subcycling;
+    if( m_performStressInitialization )
+      subcycling = 1;
+
+    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+
+    // restore original
+    subcycling = subcycling_orig;
+
+    return isConverged;
+  }
+
   /**
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  MECHANICS_SOLVER * solidMechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
   }
@@ -346,9 +372,6 @@ protected:
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {
-      // save pressure and temperature at the end of this iteration
-      flowSolver()->saveIterationState( domain );
-
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
                                                                                   arrayView1d< string const > const & regionNames )
@@ -366,7 +389,8 @@ protected:
     }
 
     /// After the solid mechanics solver
-    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics )
+        && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
@@ -382,6 +406,8 @@ protected:
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+          // update bulk density to reflect porosity change into mechanics
+          updateBulkDensity( subRegion );
         } );
       } );
     }
