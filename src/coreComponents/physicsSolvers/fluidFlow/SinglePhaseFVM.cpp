@@ -36,6 +36,7 @@
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/StabilizedSinglePhaseFVMKernels.hpp"
 
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantFluxKernels.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
@@ -455,6 +456,15 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   } );
 }
 
+template< >
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( real64 const dt,
+                                                                   DomainPartition const & domain,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs )
+{
+	return SinglePhaseFVM<SinglePhaseProppantBase>::assembleFluxTerms(dt, domain, dofManager, localMatrix, localRhs);
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),

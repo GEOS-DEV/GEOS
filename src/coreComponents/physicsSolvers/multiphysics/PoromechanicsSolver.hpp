@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -47,7 +48,10 @@ namespace geos
         "Local" );
   }
        
-
+using namespace stabilization;
+using namespace fields;
+using namespace constitutive;
+using namespace dataRepository;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class PoromechanicsSolver : public CoupledSolver< FLOW_SOLVER, MECHANICS_SOLVER >
@@ -91,20 +95,20 @@ public:
       setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
 
     this->registerWrapper( viewKeyStruct::stabilizationTypeString(), &m_stabilizationType ).
-      setInputFlag(INPUTFLAGS::OPTIONAL).
+      setInputFlag(dataRepository::InputFlags::OPTIONAL).
       setDescription( "StabilizationType. Options are:\n" +
                       toString(StabilizationType::None) + "- Add no stabilization to mass equation \n" +
                       toString(StabilizationType::Global) + "- Add jump stabilization to all faces \n" + 
                       toString(StabilizationType::Local) + "- Add jump stabilization on interior of macro elements" );
 
-    this->registerWrapper( viewKeyStruct::stabilizatiopnRegionNamesString(), &m_stabilizationRegionNames ).
+    this->registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
       setRTTypeName(rtTypes::CustomTypes::groupNameRefArray ).
-      setInputFlag(InputFalgs::OPTIONAL ).
-      setDecsription("Regions where stabilization is applied.");
+      setInputFlag(dataRepository::InputFlags::OPTIONAL ).
+      setDescription("Regions where stabilization is applied.");
 
     this->registerWrapper( viewKeyStruct::stabilizationMultiplierString(), &m_stabilizationMultiplier ).
-      setApplyDefaultValue( 1.0 )
-      setInputFlag( InputFlags::OPTIONAL )
+      setApplyDefaultValue( 1.0 ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "Constant multiplier of stabilization strength" );
   }
 
@@ -176,7 +180,7 @@ public:
 
     if (m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local)
     {
-      flowSolver->enableJumpStabilization();
+      flowSolver()->enableJumpStabilization();
     }
 
     SolverBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -209,8 +213,8 @@ public:
 
         if (m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local)
         {
-          subRegion.registerField <fields::flow:macroElementIndex > (this->getName());
-          subRegion.registerField <fields::flow:elementStabCosntant > (this->getName());
+          subRegion.registerField <fields::flow::macroElementIndex > (this->getName());
+          subRegion.registerField <fields::flow::elementStabConstant > (this->getName());
         }
       } );
     } );
@@ -300,7 +304,7 @@ public:
     constexpr static char const * stabilizationTypeString() {return "stabilizationType"; }
 
     /// Name of regions on which stabilization applied
-    constexpr static const char * stabilizationRegionsNamesString() {return "stabilizationRegionsNames"; }
+    constexpr static const char * stabilizationRegionNamesString() {return "stabilizationRegionNames"; }
 
     /// Multiplier on stabilization strength
     constexpr static const char * stabilizationMultiplierString() {return "stabilizationMultiplier"; }
@@ -310,7 +314,7 @@ public:
   {  
     // Step 1: we loop over the regions where stabilization is active and collect their name
     set<string> regionFilter;
-    for ( string const & regionName : m_stabilizationregionNames )
+    for ( string const & regionName : m_stabilizationRegionNames )
     {
       regionFilter.insert(regionName);
     }
@@ -318,7 +322,7 @@ public:
     // Step 2: loop over target regions of solver, and tag the elements belonging to the stabilization regions
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
-                                                                                 arrayView1d<string const> cosnt & targetRegionNames )
+                                                                                 arrayView1d<string const> const & targetRegionNames )
         {
           //keep only target regions in filter
           array1d< string > filteredTargetRegionNames;
@@ -337,9 +341,9 @@ public:
                                                                                                     ElementSubRegionBase & subRegion )
           {
             arrayView1d<integer> const macroElementIndex = subRegion.getField<fields::flow::macroElementIndex>();
-            arrayview1d<real64> const elementStabConstant = subRegion.getField<fields::flow::elementStabConstant>();
+            arrayView1d<real64> const elementStabConstant = subRegion.getField<fields::flow::elementStabConstant>();
 
-            geos::constitutive::CoupledSolidBase const & porousSolid = this->template getConstitutiveModel< geos::constitutive::CpoupledSolidBase> ( subRegion, subRegion.getReference<string>( viewKeyStruct::porousMaterialNamesString() ) );
+            geos::constitutive::CoupledSolidBase const & porousSolid = this->template getConstitutiveModel< geos::constitutive::CoupledSolidBase> ( subRegion, subRegion.getReference<string>( viewKeyStruct::porousMaterialNamesString() ) );
 
            arrayView1d<real64 const> const bulkModulus = porousSolid.getBulkModulus();
            arrayView1d<real64 const> const shearModulus = porousSolid.getShearModulus();
@@ -347,7 +351,7 @@ public:
 
            real64 const stabilizationMultiplier = m_stabilizationMultiplier;
 
-           forAll< parallelDevicePolicy<> >(subregion.size(), [bulkModulus,
+           forAll< parallelDevicePolicy<> >(subRegion.size(), [bulkModulus,
                                                              shearModulus,
                                                              biotCoefficient,
                                                              stabilizationMultiplier,

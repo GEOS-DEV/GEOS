@@ -94,6 +94,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
                            ));
 }
 
+template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                             DofManager & dofManager ) const
 {
@@ -173,7 +174,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 c
                         thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory >( mesh,
                                                                                                     dofManager,
                                                                                                     regionNames,
-                                                                                                    viewKeyStruct::porousMaterialNamesString(),
+                                                                                                    Base::viewKeyStruct::porousMaterialNamesString(),
                                                                                                     localMatrix,
                                                                                                     localRhs,
                                                                                                     dt,
@@ -191,7 +192,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 c
                         poromechanicsKernels::MultiphasePoromechanicsKernelFactory >( mesh,
                                                                                       dofManager,
                                                                                       regionNames,
-                                                                                      viewKeyStruct::porousMaterialNamesString(),
+                                                                                      Base::viewKeyStruct::porousMaterialNamesString(),
                                                                                       localMatrix,
                                                                                       localRhs,
                                                                                       dt,
@@ -317,7 +318,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegion
   MultiFluidBase const & fluid = this->template getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
   // get the solid model (to access porosity and solid density)
-  string const solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+  string const solidName = subRegion.getReference< string >( Base::viewKeyStruct::porousMaterialNamesString() );
   CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
   // update the bulk density

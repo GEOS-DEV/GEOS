@@ -39,14 +39,14 @@ using namespace constitutive;
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public SinglePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = SinglePhaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using AbstractBase = singlePhaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
@@ -59,7 +59,7 @@ public:
 
   using StabSinglePhaseFluidAccessors =
     StencilMaterialAccessors< SingleFluidBase,
-                              fields::multifluid::density_n>;
+                              fields::singlefluid::density_n>;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -68,7 +68,7 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
 
-  using Base = SinglePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseFVMKernels::FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -163,28 +163,28 @@ public:
                                            localIndex const (&sesri)[2],
                                            localIndex const (&sei)[2],
                                            localIndex const connectionIndex,
-                                           localIndex const k_up,
-                                           localIndex const er_up,
-                                           localIndex const esr_up,
-                                           localIndex const ei_up,
+                                           real64 const alpha,
+                                           real64 const mobility,
                                            real64 const potGrad,
                                            real64 const fluxVal,
                                            real64 const (&dFlux_dP)[2])
     {
 
+    GEOS_UNUSED_VAR( alpha, mobility, potGrad, fluxVal, dFlux_dP );
+
       /// stabilization flux and derivatives
       real64 stabFlux{};
-      real64 dStabFlux_dP[numFluxElems]{};
+      real64 dStabFlux_dP[2]{};
 
-      real64 const stabTrans[numFluxElems] = { stack.stabTransmissibility[connectionIndex][0],
-                                               stack.stabTransmissibility[connectionIndex][1] };
+      real64 const stabTrans[2] = { stack.stabTransmissibility[connectionIndex][0],
+                                                     stack.stabTransmissibility[connectionIndex][1] };
 
 
       real64 dPresGradStab = 0.0;
-      integer stencilMacroElements[numFluxElems]{};
+      integer stencilMacroElements[2]{};
 
       // Step 1: compute the pressure jump at the interface
-      for( integer ke = 0; ke < numFluxElems; ++ke )
+      for( integer ke = 0; ke < stack.numFluxElems; ++ke )
       {
         localIndex const er  = seri[ke];
         localIndex const esr = sesri[ke];
@@ -211,7 +211,7 @@ public:
           real64 const laggedUpwindCoef = m_dens_n[er_up_stab][esr_up_stab][ei_up_stab][0];
           stabFlux += dPresGradStab * laggedUpwindCoef;
 
-          for( integer ke = 0; ke < numFluxElems; ++ke )
+          for( integer ke = 0; ke < stack.numFluxElems; ++ke )
           {
             real64 const tauStab = m_elementStabConstant[seri[ke]][sesri[ke]][sei[ke]];
             dStabFlux_dP[ke] += tauStab * stabTrans[ke] * laggedUpwindCoef;
@@ -225,7 +225,7 @@ public:
         stack.localFlux[eqIndex0] +=  stabFlux;
         stack.localFlux[eqIndex1] += -stabFlux;
 
-        for( integer ke = 0; ke < numFluxElems; ++ke )
+        for( integer ke = 0; ke < stack.numFluxElems; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
           stack.localFluxJacobian[eqIndex0][localDofIndexPres] +=  dStabFlux_dP[ke];
@@ -240,7 +240,7 @@ protected:
 
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-  ElementViewConst< arrayView3d< real64 const, singlefluid::USD_PHASE > > const m_dens_n;
+  ElementViewConst< arrayView2d< real64 const >  > const m_dens_n;
 
   /// Views on the macroelement indices and stab constant
   ElementViewConst< arrayView1d< integer const > > const m_macroElementIndex;
@@ -287,16 +287,16 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+    using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename KERNEL_TYPE::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
     typename KERNEL_TYPE::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
     typename KERNEL_TYPE::StabSinglePhaseFlowAccessors stabSinglePhaseFlowAccessors( elemManager, solverName );
     typename KERNEL_TYPE::StabSinglePhaseFluidAccessors stabSinglePhaseFluidAccessors( elemManager, solverName );
   typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-    KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+    KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                         singlePhaseFlowAccessors, stabSinglePhaseFlowAccessors, singlePhaseFluidAccessors, stabSinglePhaseFluidAccessors,
-                        permeabilityAccessors
+                        permeabilityAccessors,
                         dt, localMatrix, localRhs);
     KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
