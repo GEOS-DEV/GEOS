@@ -94,7 +94,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
                            ));
 }
 
-template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                             DofManager & dofManager ) const
 {
@@ -309,7 +308,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
     this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
   }
 }
-
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
