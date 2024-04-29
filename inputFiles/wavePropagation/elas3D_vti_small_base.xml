@@ -6,8 +6,8 @@
     <!-- define the source coordinates -->
     <!-- define the time source frequency -->
     <!-- define the receiver coordinates -->
-    <ElasticVTISEM
-      name="elasticvtiSolver"
+    <ElasticSEM
+      name="elasticSolver"
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region }"
@@ -16,7 +16,8 @@
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 5, 5, 11 },
                              { 5, 50, 11 },
-                             { 5, 95, 11 } }"/>
+                             { 5, 95, 11 } }"
+      useVTI="1"/>
   </Solvers>
 
   <Events
@@ -26,7 +27,7 @@
     <PeriodicEvent
       name="solverApplications"
       forceDt="0.001"
-      target="/Solvers/elasticvtiSolver"/>
+      target="/Solvers/elasticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
