@@ -286,6 +286,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
+  ls -lah ${DATA_EXCHANGE_DIR}/ | grep test_logs_${DATA_BASENAME_WE}.tar.gz
+
+  echo "Checking results..."
+  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
+  cat $tempdir/log_check.txt
 
   # Rebaseline and pack into an archive
   echo "Rebaselining..."
@@ -293,10 +298,6 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   echo "Packing baselines..."
   integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
-
-  echo "Checking results..."
-  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
-  cat $tempdir/log_check.txt
 
   if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
     INTEGRATED_TEST_EXIT_STATUS=0
