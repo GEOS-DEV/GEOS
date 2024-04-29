@@ -93,7 +93,7 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setDescription( "Moment of the source: 6 real values describing a symmetric tensor in Voigt notation."
                     "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
 
- 
+
   registerWrapper( viewKeyStruct::useVtiString(), &m_useVTI ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
@@ -166,8 +166,8 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
-      
-      if(m_useVTI)
+
+      if( m_useVTI )
       {
         subRegion.registerField< elasticvtifields::Gamma >( getName() );
         subRegion.registerField< elasticvtifields::Epsilon >( getName() );
@@ -581,31 +581,31 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
-  if(m_useVTI)
+  if( m_useVTI )
   {
     auto kernelFactory = ElasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
 
     finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
   }
   else
   {
-  auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
-  finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
   }
 
   addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
