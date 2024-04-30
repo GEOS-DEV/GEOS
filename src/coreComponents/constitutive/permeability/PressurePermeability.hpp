@@ -62,7 +62,7 @@ public:
                 real64 const (&referencePermeability)[3],
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPressure ) const;
-  
+
   GEOS_HOST_DEVICE
   void compute( real64 const & deltaPressure,
                 R1Tensor const pressureDependenceConstants,
@@ -97,7 +97,7 @@ public:
                  m_permeability[k][0],
                  m_dPerm_dPressure[k][0] );
 
-        break; 
+        break;
       }
       case PressureModelType::Hyperbolic:
       {
@@ -107,7 +107,7 @@ public:
                  m_maxPermeability,
                  m_permeability[k][0],
                  m_dPerm_dPressure[k][0] );
-        
+
         break;
       }
       default:
@@ -120,16 +120,16 @@ public:
 private:
 
   /// Pressure dependence model type
-  PressureModelType m_presModelType; 
-  
+  PressureModelType m_presModelType;
+
   /// Pressure dependent coefficients for each permeability component
   R1Tensor m_pressureDependenceConstants;
 
   /// Reference pressure in the model
   real64 const m_referencePressure;
 
-  /// Maximum permeability 
-  real64 const m_maxPermeability; 
+  /// Maximum permeability
+  real64 const m_maxPermeability;
 
   arrayView3d< real64 > m_referencePermeability;
 
@@ -182,6 +182,10 @@ public:
 
   virtual void initializeState() const override final;
 
+protected:
+
+  virtual void postProcessInput() override;
+
 private:
 
   /// Permeability components at the reference pressure
@@ -193,13 +197,13 @@ private:
   /// Reference pressure in the model
   real64 m_referencePressure;
 
-  /// Maximum permeability 
+  /// Maximum permeability
   real64 m_maxPermeability;
 
   array3d< real64 > m_referencePermeability;
 
   /// Pressure dependence model type
-  PressureModelType m_presModelType; 
+  PressureModelType m_presModelType;
 
 };
 
@@ -220,7 +224,6 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
   }
 }
 
-// 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
@@ -232,19 +235,11 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
 {
   for( localIndex i=0; i < permeability.size(); i++ )
   {
-    if( pressureDependenceConstants[i] < 1e-20 )
-    {
-      permeability[i] = referencePermeability[i]; 
-      dPerm_dPressure[i] = 0.0;
-    }
-    else 
-    {
-      real64 const pressureOffSet = log( maxPermeability/referencePermeability[i] - 1 )/pressureDependenceConstants[i]; 
+    real64 const pressureOffSet = log( maxPermeability/referencePermeability[i] - 1 )/pressureDependenceConstants[i];
 
-      real64 const perm = maxPermeability/( 1 + exp( -pressureDependenceConstants[i]*( deltaPressure - pressureOffSet ) ) ); 
-      permeability[i] = perm; 
-      dPerm_dPressure[i] = perm*perm/maxPermeability*pressureDependenceConstants[i]*exp( -pressureDependenceConstants[i]*deltaPressure ); 
-    }
+    real64 const perm = maxPermeability/( 1 + exp( -pressureDependenceConstants[i]*( deltaPressure - pressureOffSet ) ) );
+    permeability[i] = perm;
+    dPerm_dPressure[i] = perm*perm/maxPermeability*pressureDependenceConstants[i]*exp( -pressureDependenceConstants[i]*deltaPressure );
   }
 }
 
