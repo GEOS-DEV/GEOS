@@ -511,7 +511,6 @@
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanics" type="CompositionalMultiphaseReservoirPoromechanicsType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
-			<xsd:element name="DieterichSeismicityRate" type="DieterichSeismicityRateType" />
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
@@ -524,6 +523,7 @@
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="ReactiveCompositionalMultiphaseOBL" type="ReactiveCompositionalMultiphaseOBLType" />
+			<xsd:element name="SeismicityRate" type="SeismicityRateType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
@@ -777,17 +777,6 @@
 			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|uninitialized" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="DieterichSeismicityRateType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
-		</xsd:choice>
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-	</xsd:complexType>
 	<xsd:complexType name="ElasticFirstOrderSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1010,6 +999,17 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-LvArray_Array_lt_string_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-LvArray_Array_lt_string_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+	</xsd:complexType>
+	<xsd:complexType name="SeismicityRateType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -2903,9 +2903,6 @@
 		<!--externalSet => (no description available)-->
 		<xsd:attribute name="externalSet" type="LvArray_SortedArray_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 	</xsd:complexType>
-<<<<<<< HEAD
-	<xsd:complexType name="CellElementRegionType">
-=======
 	<xsd:complexType name="ParticleRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -2926,9 +2923,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="particleRegionsGroupType" />
 	<xsd:complexType name="edgeManagerType">
->>>>>>> origin/develop
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
@@ -2947,19 +2942,8 @@
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
-	<xsd:complexType name="elementSubRegionsType">
+	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegionUniqueSubRegion" type="WellElementRegionUniqueSubRegionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="neighborDataType" />
-	<xsd:complexType name="setsType">
-		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="SurfaceElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
@@ -2978,9 +2962,8 @@
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionType">
+	<xsd:complexType name="embeddedSurfacesNodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
@@ -3002,17 +2985,17 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--wellControlsName => (no description available)-->
-		<xsd:attribute name="wellControlsName" type="string" />
-		<!--wellGeneratorName => (no description available)-->
-		<xsd:attribute name="wellGeneratorName" type="string" />
+		<!--parentEdgeGlobalIndex => (no description available)-->
+		<xsd:attribute name="parentEdgeGlobalIndex" type="globalIndex_array" />
+		<!--parentEdgeIndex => Index of parent edge within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
+		<xsd:attribute name="parentEdgeIndex" type="integer_array" />
+		<!--referencePosition => (no description available)-->
+		<xsd:attribute name="referencePosition" type="real64_array2d" />
 	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionUniqueSubRegionType">
+	<xsd:complexType name="faceManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
-			<xsd:element name="wellElementSubRegion" type="wellElementSubRegionType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -3040,19 +3023,18 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nextWellElementIndex => (no description available)-->
-		<xsd:attribute name="nextWellElementIndex" type="integer_array" />
-		<!--nextWellElementIndexGlobal => (no description available)-->
-		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
+		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
+		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
-	<xsd:complexType name="ConstitutiveModelsType" />
-	<xsd:complexType name="wellElementSubRegionType">
+	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--ReferencePosition => (no description available)-->
+		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -3073,32 +3055,17 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--location => For each perforation, physical location (x,y,z coordinates)-->
-		<xsd:attribute name="location" type="real64_array2d" />
-		<!--numPerforationsGlobal => (no description available)-->
-		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
-		<!--reservoirElementIndex => For each perforation, element index of the perforated element-->
-		<xsd:attribute name="reservoirElementIndex" type="integer_array" />
-		<!--reservoirElementRegion => For each perforation, elementRegion index of the perforated element-->
-		<xsd:attribute name="reservoirElementRegion" type="integer_array" />
-		<!--reservoirElementSubregion => For each perforation, elementSubRegion index of the perforated element-->
-		<xsd:attribute name="reservoirElementSubregion" type="integer_array" />
-		<!--wellElementIndex => For each perforation, index of the well element-->
-		<xsd:attribute name="wellElementIndex" type="integer_array" />
-		<!--wellSkinFactor => For each perforation, well skin factor-->
-		<xsd:attribute name="wellSkinFactor" type="real64_array" />
-		<!--wellTransmissibility => For each perforation, well transmissibility-->
-		<xsd:attribute name="wellTransmissibility" type="real64_array" />
+		<!--primaryField => Primary field variable-->
+		<xsd:attribute name="primaryField" type="real64_array" />
 	</xsd:complexType>
-	<xsd:complexType name="edgeManagerType">
+	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3107,18 +3074,20 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
+	<xsd:complexType name="elementSubRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="WellElementRegionUniqueSubRegion" type="WellElementRegionUniqueSubRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="SurfaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3127,24 +3096,15 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="embeddedSurfacesNodeManagerType">
+	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
-		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
-		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3153,43 +3113,24 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-<<<<<<< HEAD
-		<!--parentEdgeGlobalIndex => (no description available)-->
-		<xsd:attribute name="parentEdgeGlobalIndex" type="globalIndex_array" />
-		<!--parentEdgeIndex => Index of parent edge within the mesh object it is registered on. => EmbeddedSurfaceGenerator-->
-		<xsd:attribute name="parentEdgeIndex" type="integer_array" />
-		<!--referencePosition => (no description available)-->
-		<xsd:attribute name="referencePosition" type="real64_array2d" />
-=======
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
 		<!--wellGeneratorName => (no description available)-->
 		<xsd:attribute name="wellGeneratorName" type="groupNameRef" />
->>>>>>> origin/develop
 	</xsd:complexType>
-	<xsd:complexType name="faceManagerType">
+	<xsd:complexType name="WellElementRegionUniqueSubRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
+			<xsd:element name="wellElementSubRegion" type="wellElementSubRegionType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="integer_array2d" />
-		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="integer_array2d" />
-		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="integer_array2d" />
-		<!--faceArea => (no description available)-->
-		<xsd:attribute name="faceArea" type="real64_array" />
-		<!--faceCenter => (no description available)-->
-		<xsd:attribute name="faceCenter" type="real64_array2d" />
-		<!--faceNormal => (no description available)-->
-		<xsd:attribute name="faceNormal" type="real64_array2d" />
-		<!--facePressure_n => Face pressure at the previous converged time step => CompositionalMultiphaseHybridFVM, SinglePhaseHybridFVM-->
-		<xsd:attribute name="facePressure_n" type="real64_array" />
+		<!--elementCenter => (no description available)-->
+		<xsd:attribute name="elementCenter" type="real64_array2d" />
+		<!--elementVolume => (no description available)-->
+		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3198,8 +3139,10 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
-		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
+		<!--nextWellElementIndex => (no description available)-->
+		<xsd:attribute name="nextWellElementIndex" type="integer_array" />
+		<!--nextWellElementIndexGlobal => (no description available)-->
+		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--numEdgesPerElement => (no description available)-->
@@ -3217,25 +3160,14 @@
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
 	</xsd:complexType>
-	<xsd:complexType name="nodeManagerType">
+	<xsd:complexType name="ConstitutiveModelsType" />
+	<xsd:complexType name="wellElementSubRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--ReferencePosition => (no description available)-->
-		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
-		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
-		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
-		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -3244,10 +3176,6 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-<<<<<<< HEAD
-		<!--primaryField => Primary field variable-->
-		<xsd:attribute name="primaryField" type="real64_array" />
-=======
 		<!--location => For each perforation, physical location (x,y,z coordinates)-->
 		<xsd:attribute name="location" type="real64_array2d" />
 		<!--numPerforationsGlobal => (no description available)-->
@@ -3264,7 +3192,6 @@
 		<xsd:attribute name="wellSkinFactor" type="real64_array" />
 		<!--wellTransmissibility => For each perforation, well transmissibility-->
 		<xsd:attribute name="wellTransmissibility" type="real64_array" />
->>>>>>> origin/develop
 	</xsd:complexType>
 	<xsd:complexType name="ParticleRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

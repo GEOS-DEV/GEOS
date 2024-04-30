@@ -2,7 +2,7 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_POROELASTIC_SOLVER -->
-    <DieterichSeismicityRate
+    <SeismicityRate
       name="seismicityRateSolver"
       discretization="singlePhaseTPFA"
       stressSolverName="PoroelasticitySolver"
@@ -11,7 +11,7 @@
       faultNormalDirection="{1.0, 0.0, 0.0}"
       faultShearDirection="{0.0, 1.0, 0.0}"
       backgroundStressingRate="3.171e-5">
-    </DieterichSeismicityRate>
+    </SeismicityRate>
 
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"

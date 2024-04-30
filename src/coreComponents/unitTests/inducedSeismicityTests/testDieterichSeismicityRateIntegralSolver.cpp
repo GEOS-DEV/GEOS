@@ -21,7 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/inducedSeismicity/DieterichSeismicityRate.hpp"
+#include "physicsSolvers/inducedSeismicity/SeismicityRate.hpp"
 
 #include <gtest/gtest.h>
 
@@ -40,7 +40,7 @@ char const * xmlInput =
   <?xml version="1.0" ?>
   <Problem>
     <Solvers>
-      <DieterichSeismicityRate
+      <SeismicityRate
         name="dieterichSR"
         discretization="singlePhaseTPFA"
         stressSolverName="singlePhaseFlow"
@@ -49,7 +49,7 @@ char const * xmlInput =
         initialFaultShearTraction="60e6"
         directEffect="0.01"
         backgroundStressingRate="3.171e-5">
-      </DieterichSeismicityRate>
+      </SeismicityRate>
       <SinglePhaseFVM
         name="singlePhaseFlow"
         discretization="singlePhaseTPFA"
@@ -192,11 +192,11 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class DieterichSeismicityRateIntegralSolverTest : public ::testing::Test
+class SeismicityRateIntegralSolverTest : public ::testing::Test
 {
 public:
 
-  DieterichSeismicityRateIntegralSolverTest():
+  SeismicityRateIntegralSolverTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
@@ -219,13 +219,13 @@ protected:
   static real64 constexpr iniTau = 60e6;
 
   GeosxState state;
-  DieterichSeismicityRate * propagator;
+  SeismicityRate * propagator;
 };
 
-TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
+TEST_F( SeismicityRateIntegralSolverTest, solverTest )
 {
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< DieterichSeismicityRate >( "dieterichSR" );
+  propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< SeismicityRate >( "dieterichSR" );
   real64 time_n = time;
 
   // run for 100 hours (100 steps)
@@ -248,18 +248,18 @@ TEST_F( DieterichSeismicityRateIntegralSolverTest, solverTest )
             // (field variables in seismicity rate solver) as specified in XML file
             if( i==0 )
             {
-              arrayView1d< real64 > const tempSigIni = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
+              arrayView1d< real64 > const tempSigIni = subRegion.getField< fields::inducedSeismicity::initialProjectedNormalTraction >();
               tempSigIni.setValues< parallelHostPolicy >( iniSig );
-              arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+              arrayView1d< real64 > const tempSig_n = subRegion.getField< fields::inducedSeismicity::projectedNormalTraction_n >();
               tempSig_n.setValues< parallelHostPolicy >( iniSig );
-              arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+              arrayView1d< real64 > const tempSig = subRegion.getField< fields::inducedSeismicity::projectedNormalTraction >();
               tempSig.setValues< parallelHostPolicy >( iniSig );
 
-              arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
+              arrayView1d< real64 > const tempTauIni = subRegion.getField< fields::inducedSeismicity::initialProjectedShearTraction >();
               tempTauIni.setValues< parallelHostPolicy >( iniTau );
-              arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
+              arrayView1d< real64 > const tempTau_n = subRegion.getField< fields::inducedSeismicity::projectedShearTraction_n >();
               tempTau_n.setValues< parallelHostPolicy >( iniTau );
-              arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+              arrayView1d< real64 > const tempTau = subRegion.getField< fields::inducedSeismicity::projectedShearTraction >();
               tempTau.setValues< parallelHostPolicy >( iniTau );
             }
 

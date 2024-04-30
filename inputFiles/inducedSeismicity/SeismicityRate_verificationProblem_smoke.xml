@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
   <Problem>
     <Solvers>
-      <DieterichSeismicityRate
+      <SeismicityRate
         name="dieterichSR"
         discretization="singlePhaseTPFA"
         stressSolverName="singlePhaseFlow"
@@ -10,7 +10,7 @@
         initialFaultShearTraction="60e6"
         directEffect="0.01"
         backgroundStressingRate="3.171e-5">
-      </DieterichSeismicityRate>
+      </SeismicityRate>
       <SinglePhaseFVM
         name="singlePhaseFlow"
         discretization="singlePhaseTPFA"

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITY_RATE_BASE_HPP
-#define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITY_RATE_BASE_HPP
+#ifndef GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
+#define GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
@@ -26,18 +26,25 @@
 namespace geos
 {
 
-class SeismicityRateBase : public SolverBase
+class SeismicityRate : public SolverBase
 {
 public:
   /// The default nullary constructor is disabled to avoid compiler auto-generation:
-  SeismicityRateBase() = delete;
+  SeismicityRate() = delete;
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
-  SeismicityRateBase( const string & name,
+  SeismicityRate( const string & name,
                       Group * const parent );
 
   /// Destructor
-  virtual ~SeismicityRateBase() override;
+  virtual ~SeismicityRate() override;
+
+  static string catalogName() { return "SeismicityRate"; }
+
+   /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
@@ -49,10 +56,28 @@ public:
     static constexpr char const * initialFaultShearTractionString() { return "initialFaultShearTraction"; }
     static constexpr char const * faultNormalDirectionString() { return "faultNormalDirection"; }
     static constexpr char const * faultShearDirectionString() { return "faultShearDirection"; }
+    static constexpr char const * directEffectString() { return "directEffect"; }
+    static constexpr char const * backgroundStressingRateString() { return "backgroundStressingRate"; }
   };
 
-protected:
+  virtual real64 solverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override final;
 
+  /**
+   * @brief single step advance in computing the seismicity rate based on
+   *  stress history according to closed form integral solution (Heimisson & Segall, 2018)
+   *  to the ODE formulated by Dieterich, 1994
+   * @param time_n time at previous converged step
+   * @param dt time step size
+   * @param subRegion ElementSubRegionBase to compute the solution in
+   */
+  void integralSolverStep( real64 const & time_n,
+                           real64 const & dt,
+                           ElementSubRegionBase & subRegion );                           
+
+protected:
   /**
    * @brief called in SolverStep after member stress solver is called to
    *  project the stress state to pre-defined fault orientations
@@ -87,8 +112,11 @@ protected:
   /// fault orientation
   R1Tensor m_faultNormalDirection;
   R1Tensor m_faultShearDirection;
+
+  real64 m_directEffect;
+  real64 m_backgroundStressingRate;
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITY_RATE_BASE_HPP */
+#endif /* GEOS_PHYSICSSOLVERS_INDUCED_SEISMICITY_SEISMICITYRATE_HPP */

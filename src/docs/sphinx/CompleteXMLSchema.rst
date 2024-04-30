@@ -367,13 +367,6 @@ Element: DelftEgg
 .. include:: ../../coreComponents/schema/docs/DelftEgg.rst
 
 
-.. _XML_DieterichSeismicityRate:
-
-Element: DieterichSeismicityRate
-================================
-.. include:: ../../coreComponents/schema/docs/DieterichSeismicityRate.rst
-
-
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -1023,6 +1016,13 @@ Element: Restart
 Element: Run
 ============
 .. include:: ../../coreComponents/schema/docs/Run.rst
+
+
+.. _XML_SeismicityRate:
+
+Element: SeismicityRate
+=======================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate.rst
 
 
 .. _XML_Silo:
@@ -1785,13 +1785,6 @@ Datastructure: DelftEgg
 .. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
 
 
-.. _DATASTRUCTURE_DieterichSeismicityRate:
-
-Datastructure: DieterichSeismicityRate
-======================================
-.. include:: ../../coreComponents/schema/docs/DieterichSeismicityRate_other.rst
-
-
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -2455,6 +2448,13 @@ Datastructure: Restart
 Datastructure: Run
 ==================
 .. include:: ../../coreComponents/schema/docs/Run_other.rst
+
+
+.. _DATASTRUCTURE_SeismicityRate:
+
+Datastructure: SeismicityRate
+=============================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate_other.rst
 
 
 .. _DATASTRUCTURE_Silo:
