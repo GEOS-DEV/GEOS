@@ -159,7 +159,11 @@ EOT
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem'
     
-    NPROC=32
+    if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+      NPROC=32
+    else
+      NPROC=32
+    fi
   else
     NPROC=$(nproc)
   fi
