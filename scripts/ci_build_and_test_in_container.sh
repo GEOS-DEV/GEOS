@@ -283,10 +283,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
   # Therefore, `ats` will exit with error code 0, even if some tests fail.
   # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
+  echo "Available baselines:"
+  ls -lah ${DATA_EXCHANGE_DIR} | grep baseline
+
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
-  ls -lah ${DATA_EXCHANGE_DIR}/ | grep test_logs_${DATA_BASENAME_WE}.tar.gz
 
   echo "Checking results..."
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
