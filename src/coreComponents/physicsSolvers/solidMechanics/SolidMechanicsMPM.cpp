@@ -16,6 +16,18 @@
  * @file SolidMechanicsMPM.cpp
  */
 
+#include "common/TypeDispatch.hpp"
+
+// Visibility checks for type dispatch
+template <typename T>
+struct is_type_visible: std::true_type {};
+// namespace geos
+// {
+// static_assert(is_type_visible<geos::types::ListofTypeList<>>::value, "types::ListofTypeList is not visible");
+static_assert(geos::types::ListofTypeList<>, "types::ListofTypeList is not visible");
+// }
+// static_assert(is_type_visible<types::StandardArrays>::value, "types::StandardArrays is not visible");
+
 #include "SolidMechanicsMPM.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
