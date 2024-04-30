@@ -35,6 +35,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
+#include "mesh/MeshFields.hpp"
+
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -286,7 +288,7 @@ void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const conc = dataGroup.getField< fields::proppant::proppantConcentration >();
-  arrayView1d< real64 const > const aperture = dataGroup.getReference< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString() );
+  arrayView1d< real64 const > const aperture = dataGroup.getReference< array1d< real64 > >( fields::elementAperture::key() );
   arrayView1d< integer > const isProppantMobile = dataGroup.getField< fields::proppant::isProppantMobile >();
 
   real64 const minAperture = m_minAperture;
@@ -1054,7 +1056,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( fields::proppant::proppantLiftFlux::key() );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const
-    aperture = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementApertureString() );
+    aperture = elemManager.constructArrayViewAccessor< real64, 1 >( fields::elementAperture::key() );
 
     typename ProppantPackVolumeKernel::FlowAccessors flowAccessors( elemManager, getName() );
     typename ProppantPackVolumeKernel::SlurryFluidAccessors slurryFluidAccessors( elemManager, getName() );

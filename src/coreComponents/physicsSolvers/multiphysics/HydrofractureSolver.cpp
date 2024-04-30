@@ -26,6 +26,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geos
 {
@@ -258,7 +259,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
                                          flow::pressure_n::key(),
-                                         SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                         fields::elementAperture::key() },
                                        { m_surfaceGenerator->getFractureRegionName() } );
 
       fieldsToBeSync.addFields( FieldLocation::Node,
@@ -1020,7 +1021,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
 
-      arrayView1d< real64 > const aperture = subRegion.getReference< array1d< real64 > >( "elementAperture" );
+      arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
 
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
