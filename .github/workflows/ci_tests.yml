@@ -223,7 +223,8 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      RUNS_ON: Runner_4core_16GB
+      RUNS_ON: streak2
+      DOCKER_RUN_ARGS: "--cpus=32 --memory=384g"
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
@@ -254,8 +255,8 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            RUNS_ON: streak
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all"
+            RUNS_ON: streak2
+            DOCKER_RUN_ARGS: "--cpus=32 --memory=384g --runtime=nvidia --gpus all"
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -300,6 +301,7 @@ jobs:
   cuda_tests:
     name: ${{ matrix.name }}
     needs:
+      - is_not_draft_pull_request
       - cuda_builds
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
