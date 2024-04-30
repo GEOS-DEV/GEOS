@@ -453,6 +453,44 @@ private:
 
 };
 
+template< typename FLAGS_ENUM >
+struct BitNodes
+{
+
+
+  GEOS_HOST_DEVICE
+  void set( FLAGS_ENUM flag )
+  {
+    flags.set( flag );
+  }
+
+  GEOS_HOST_DEVICE
+  void reset( FLAGS_ENUM flag )
+  {
+    flags.reset( flag );
+  }
+
+  GEOS_HOST_DEVICE
+  bool isSet( FLAGS_ENUM flag ) const
+  {
+    return flags.isSet( flag );
+  }
+
+  GEOS_HOST_DEVICE
+  bool isAnySet( FLAGS_ENUM flag ) const
+  {
+    return flags.isSet( flag ) && ( right ? right->isSet( flag ) : true ) && (left ? left->isSet( flag ) : true );
+  }
+
+
+  BitNodes * left = nullptr;
+  BitNodes * right = nullptr;
+
+private:
+  BitFlags< FLAGS_ENUM > flags;
+
+};
+
 // Temporary functions (axpy, scale, dot) used in Aitken's acceleration. Will be removed once the nonlinear
 // acceleration implementation scheme will use LAI vectors. See issue #2891
 // (https://github.com/GEOS-DEV/GEOS/issues/2891)

@@ -6,6 +6,7 @@ set( events_headers
      EventManager.hpp
      HaltEvent.hpp
      PeriodicEvent.hpp
+     ResidualDumpEvent.hpp
      SoloEvent.hpp
      tasks/TaskBase.hpp
      tasks/TasksManager.hpp
@@ -19,6 +20,7 @@ set( events_sources
      EventManager.cpp
      HaltEvent.cpp
      PeriodicEvent.cpp
+     ResidualDumpEvent.cpp
      SoloEvent.cpp
      tasks/TaskBase.cpp
      tasks/TasksManager.cpp

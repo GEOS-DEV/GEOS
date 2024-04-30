@@ -27,6 +27,7 @@
 #include "physicsSolvers/SolverStatistics.hpp"
 
 #include <limits>
+#include <queue>
 
 namespace geos
 {
@@ -36,6 +37,19 @@ class DomainPartition;
 class SolverBase : public ExecutableGroup
 {
 public:
+
+  enum class SolverGroupFlags
+  {
+    StruggleCvg = 1 << 0,     // 1
+//    StallCvg = 1 << 1,     // 2
+//    OscillateCvg= 1 << 2,     // 4
+//    LinUnCvg = 1 << 4,     // 8
+
+    // Flag5 = 1 << 5, // 16
+    // Flag6 = 1 << 5, // 32
+    // Flag7 = 1 << 6, // 64
+    // Flag8 = 1 << 7  //128
+  };
 
   explicit SolverBase( string const & name,
                        Group * const parent );
@@ -260,6 +274,9 @@ public:
                                          real64 const scaleFactor,
                                          real64 & lastResidual,
                                          real64 & residualNormT );
+
+  BitNodes< SolverGroupFlags > const *  getRootFlag() const
+  { return m_rootFlag; }
 
   /**
    * @brief Function for a linear implicit integration step
@@ -787,6 +804,11 @@ protected:
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
+
+  // moving and root pointer, queue for BFS
+  std::queue< BitNodes< SolverGroupFlags > * > m_flagQueue;
+  BitNodes< SolverGroupFlags > * m_currentFlags;
+  BitNodes< SolverGroupFlags > * m_rootFlag;
 
   real64 m_cflFactor;
   real64 m_maxStableDt;

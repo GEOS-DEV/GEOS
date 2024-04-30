@@ -113,7 +113,7 @@ public:
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
-  void getTargetReferences();
+  virtual void getTargetReferences();
 
   /**
    * @brief Events are triggered based upon their forecast values, which are defined
@@ -335,6 +335,12 @@ protected:
   /// The last cycle the event occurred.
   integer m_lastCycle;
 
+  integer m_currentSubEvent;
+  real64 m_eventProgress;
+  integer m_eventCount;
+  integer m_targetExecFlag;
+
+
 private:
   string m_eventTarget;
   real64 m_beginTime;
@@ -343,13 +349,13 @@ private:
   real64 m_maxEventDt;
   real64 m_finalDtStretch;
   integer m_targetExactStartStop;
-  integer m_currentSubEvent;
-  integer m_targetExecFlag;
+
+
+
+private:
   integer m_eventForecast;
   integer m_exitFlag;
-  integer m_eventCount;
   integer m_timeStepEventCount;
-  real64 m_eventProgress;
   real64 m_currentEventDtRequest;
 
   /// A pointer to the optional event target
