@@ -456,7 +456,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       {
         m_slsAnelasticityCoefficients[ 0 ] = 2.0 * minQVal / ( minQVal - 1.0 );
       }
-      // test if anelasticity is so high and artifacts could appear
+      // test if anelasticity is too high and artifacts could appear
       real32 ySum = 0.0;
       for( integer l = 0; l < m_slsAnelasticityCoefficients.size( 0 ); l++ )
       {
