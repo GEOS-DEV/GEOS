@@ -268,7 +268,7 @@ void SinglePhaseHybridFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                         arrayView1d< real64 > const & localRhs )
 {
   // pressure stabilization not implemented
-  return assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
+  GEOS_ERROR("Stabilized flux not available for this flow solver");
 }
 
 
