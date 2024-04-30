@@ -159,8 +159,10 @@ EOT
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem'
     
+    NPROC=32
+  else
+    NPROC=$(nproc)
   fi
-  NPROC=$(nproc)
   echo "Using ${NPROC} cores."
 
   echo "sccache initial state"
