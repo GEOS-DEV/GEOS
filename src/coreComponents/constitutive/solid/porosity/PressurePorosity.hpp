@@ -67,14 +67,10 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPressureAndTemperature( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & pressure,
-                                                 real64 const & GEOS_UNUSED_PARAM( pressure_k ),
-                                                 real64 const & GEOS_UNUSED_PARAM( pressure_n ),
-                                                 real64 const & temperature,
-                                                 real64 const & GEOS_UNUSED_PARAM( temperature_k ),
-                                                 real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
+  void updateFromPressureAndTemperature( localIndex const k,
+                                         localIndex const q,
+                                         real64 const & pressure,
+                                         real64 const & temperature ) const
   {
     computePorosity( pressure,
                      temperature,

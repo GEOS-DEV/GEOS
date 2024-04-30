@@ -16,7 +16,6 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
@@ -1121,7 +1120,7 @@ void debugOutputLAObject( T const & obj,
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    obj.write( filename, LAIOutputFormat::NATIVE_ASCII );
     GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
@@ -1353,7 +1352,7 @@ bool SolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSE
   return true;
 }
 
-void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // up to specific solver to save what is needed
   GEOS_ERROR( "Call to SolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );

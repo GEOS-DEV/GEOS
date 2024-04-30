@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+export PYTHONDONTWRITEBYTECODE=1
+
 printenv
 
 SCRIPT_NAME=$0
@@ -143,7 +145,7 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+  if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
     DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
     for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
       if [ -f "$file" ]; then
@@ -174,7 +176,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  export ATS_FILTER="np<=32"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 
@@ -252,7 +255,7 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
+  if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testLifoStorage|testExternalSolvers"
   else
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
@@ -287,6 +290,12 @@ fi
 
 # Cleaning the build directory.
 or_die ninja clean
+
+
+# Clean the repository
+or_die cd ${GEOS_SRC_DIR}/inputFiles
+find . -name *.pyc | xargs rm -f
+
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then

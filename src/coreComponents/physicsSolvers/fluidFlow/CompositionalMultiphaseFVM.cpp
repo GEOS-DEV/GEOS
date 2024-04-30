@@ -18,9 +18,7 @@
 
 #include "CompositionalMultiphaseFVM.hpp"
 
-#include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -972,6 +970,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       if( m_isThermal )
       {
+        //todo (jafranc) extend upwindScheme name if satisfied in isothermalCase
         thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,

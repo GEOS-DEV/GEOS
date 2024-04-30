@@ -25,7 +25,7 @@
 namespace geos
 {
 
-class SolidMechanicsLagrangianFEM;
+class NumericalMethodsManager;
 
 class SolidMechanicsLagrangeContact : public ContactSolverBase
 {
@@ -123,6 +123,12 @@ public:
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
+  void assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                                  arrayView1d< string const > const & regionNames,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
   void assembleStabilization( MeshLevel const & mesh,
                               NumericalMethodsManager const & numericalMethodManager,
                               DofManager const & dofManager,
@@ -148,12 +154,20 @@ public:
 
   string getStabilizationName() const { return m_stabilizationName; }
 
+protected:
+
+  real64 calculateContactResidualNorm( DomainPartition const & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localRhs );
+
 private:
   string m_stabilizationName;
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
+  real64 m_initialContactResidual = 0.0;
+
+  real64 m_stabilitzationScalingCoefficient = 1.0;
 
   void createPreconditioner( DomainPartition const & domain );
 
@@ -166,10 +180,14 @@ private:
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
+
+    constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
   };
 
 };

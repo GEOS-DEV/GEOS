@@ -19,12 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
-#include "common/DataLayouts.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
 {
@@ -138,6 +134,18 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update components mass/moles
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateCompAmount( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Update energy
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
@@ -149,11 +157,11 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override final;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -417,8 +425,6 @@ protected:
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
 
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const override final;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -483,6 +489,7 @@ protected:
   string m_referenceFluidModelName;
 
   /// maximum (absolute) component density change in a sequential iteration
+  real64 m_sequentialCompDensChange;
   real64 m_maxSequentialCompDensChange;
 
   /// the targeted CFL for timestep
