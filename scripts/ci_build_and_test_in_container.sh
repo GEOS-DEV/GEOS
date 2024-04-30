@@ -159,11 +159,16 @@ EOT
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem'
     
-    if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-      NPROC=32
+    if [ ${HOSTNAME} == 'streak.llnl.gov' ]; then
+      NPROC=8
     else
-      NPROC=32
+      if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+        NPROC=32
+      else
+        NPROC=16
+      fi
     fi
+
   else
     NPROC=$(nproc)
   fi
