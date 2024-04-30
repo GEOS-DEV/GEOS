@@ -90,7 +90,6 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-
   /**@}*/
 
 protected:
