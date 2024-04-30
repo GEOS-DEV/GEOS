@@ -14,7 +14,6 @@
 # SCIENTIFIC LIBRARIES
 #######################################
 
-set( ENABLE_FESAPI      ON  CACHE BOOL "" FORCE )
 set( ENABLE_HYPRE       ON  CACHE BOOL "" FORCE )
 set( ENABLE_MATHPRESSO  ON  CACHE BOOL "" FORCE )
 set( ENABLE_PAMELA      ON  CACHE BOOL "" FORCE )
