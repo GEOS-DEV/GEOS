@@ -1120,7 +1120,7 @@ void debugOutputLAObject( T const & obj,
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    obj.write( filename, LAIOutputFormat::NATIVE_ASCII );
     GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
