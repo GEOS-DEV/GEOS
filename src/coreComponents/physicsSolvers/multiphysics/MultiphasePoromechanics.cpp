@@ -118,6 +118,12 @@ void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBod
   if( m_stabilizationType == StabilizationType::Global ||
       m_stabilizationType == StabilizationType::Local )
   {
+
+    if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      this->flowSolver()->enableJumpStabilization();
+    }
+
     this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                      MeshLevel & mesh,
                                                                      arrayView1d< string const > const & regionNames )
@@ -224,6 +230,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 c
                                                                                                     this->flowSolver()->numFluidComponents(),
                                                                                                     this->flowSolver()->numFluidPhases(),
                                                                                                     this->flowSolver()->useTotalMassEquation(),
+                                                                                                    this->m_performStressInitialization,
                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
@@ -242,6 +249,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 c
                                                                                       this->flowSolver()->numFluidPhases(),
                                                                                       this->flowSolver()->useSimpleAccumulation(),
                                                                                       this->flowSolver()->useTotalMassEquation(),
+                                                                                      this->m_performStressInitialization,
                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
@@ -359,6 +367,20 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                  this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                  ": Local stabilization has been disabled temporarily",
                  InputError );
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::implicitStepSetup( real64 const & time_n,
+                                                                real64 const & dt,
+                                                                DomainPartition & domain )
+{
+  Base::implicitStepSetup( time_n, dt, domain );
+  if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential &&
+      (this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local))
+  {
+    this->updateStabilizationParameters( domain );
+  }
+
 }
 
 template< typename FLOW_SOLVER >
