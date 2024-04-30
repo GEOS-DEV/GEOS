@@ -4,7 +4,6 @@
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <SeismicityRate
       name="seismicityRateSolver"
-      discretization="singlePhaseTPFA"
       stressSolverName="PoroelasticitySolver"
       targetRegions="{ Domain }"
       directEffect="0.00005"

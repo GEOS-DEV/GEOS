@@ -16,19 +16,24 @@ class analyticalSolution():
         return self.aSigma * np.log( self.cTau*( time_n + dt ) + 1 ) + self.initial_fault_shear_traction
 
     def compute_seismic_rate(self, time_n, dt, shear_stress):
-        K = np.exp( shear_stress / self.aSigma - shear_stress / self.aSigma )
+        K = np.exp( shear_stress / self.aSigma - self.initial_fault_shear_traction / self.aSigma )
         denom = ( self.cTau*(time_n + dt - self.t_a ) + 1) * np.exp( (time_n+dt)  / self.t_a ) + self.cTau*self.t_a
         return K/denom
 
 def getParametersFromXML( xmlFilePath ):
     tree = ElementTree.parse( xmlFilePath )
-
-    solver = tree.find('Solvers/DieterichSeismicityRate')
+    root = tree.getroot()
     
     parameters = dict.fromkeys(["initialFaultNormalTraction", "initialFaultShearTraction", "backgroundStressingRate"])
-    parameters["initialFaultNormalTraction"] = float(solver.get("initialFaultNormalTraction"))
-    parameters["initialFaultShearTraction"]  = float(solver.get("initialFaultShearTraction"))
+
+    solver = tree.find('Solvers/SeismicityRate')
     parameters["backgroundStressingRate"]  = float(solver.get("backgroundStressingRate"))
+
+    for field_spec in root.findall(".//FieldSpecification"):
+        if field_spec.get('name') == 'initialShearTraction':
+            parameters["initialFaultShearTraction"] = float(field_spec.get("scale")) 
+        elif field_spec.get('name') == 'initialNormalTraction':
+            parameters["initialFaultNormalTraction"]  = float(field_spec.get("scale")) 
 
     return parameters
 
@@ -39,19 +44,15 @@ def curve_check_solution(**kwargs):
 
     analytical_solution = analyticalSolution( parameters )
 
-    time = 0.0
-    dt = 3600.0
-    final_time = 360000.0
-    times = []
+    times = np.squeeze(kwargs['seismicityRate Time'][:])
     analytical_rates = []
-    while time < final_time:
+    for time in times:
         tau = analytical_solution.compute_shear_stress(time, dt)
         analytical_rate = analytical_solution.compute_seismic_rate(time, dt, tau)
-        time += dt
         times.append(time)
         analytical_rates.append(analytical_rate)
 
-    return analytical_rates    
+    return np.array(analytical_rates)   
 
 
 def debug( xmlFilePath ):
@@ -65,19 +66,51 @@ def debug( xmlFilePath ):
     final_time = 360000.0
     times = []
     analytical_rates = []
+    tau_plot = []
     while time < final_time:
         tau = analytical_solution.compute_shear_stress(time, dt)
         analytical_rate = analytical_solution.compute_seismic_rate(time, dt, tau)
         time += dt
         times.append(time)
         analytical_rates.append(analytical_rate)
-        
+        tau_plot.append(tau)
 
+    import csv
+
+    # Write times to a CSV file without headers
+    with open('shearStress_time.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for time in times:
+            writer.writerow([time])
+
+    # Write tau_plot to a CSV file without headers
+    with open('shearStress_values.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for tau in tau_plot:
+            writer.writerow([tau])
+
+    import h5py            
+    file_path = '/usr/workspace/cusini1/geosx/geosx_dev/GEOS_2/build-quartz-gcc-12-release/Output/seismicityRate.hdf5'
+    with h5py.File(file_path, 'r') as file:
+        # List all groups
+        print("Keys: %s" % file.keys())
+
+        # Get the data
+        time = np.squeeze(file['seismicityRate Time'][:])
+        seismicityRate = np.squeeze(file['seismicityRate'][:])
+        print(time)
+        print(seismicityRate)
+    
     # Plot analytical (continuous line) and numerical (markers) aperture solution 
-    fig, ax = plt.subplots(figsize=(16, 12))
-    ax.plot(times, analytical_rates)
-    ax.set_xlabel('time [s]', weight="bold")
-    ax.set_ylabel('seismic rate', weight="bold")
+    fig, ax = plt.subplots(figsize=(16, 12), nrows=2, ncols=1)
+    
+    ax[0].plot(times, tau_plot)
+    ax[0].set_xlabel('time [s]', weight="bold")
+    ax[0].set_ylabel('shear stress', weight="bold")
+    
+    ax[1].plot(times, analytical_rates)
+    ax[1].set_xlabel('time [s]', weight="bold")
+    ax[1].set_ylabel('seismic rate', weight="bold")
     plt.savefig("seismicRate.png")
 
 if __name__ == "__main__":

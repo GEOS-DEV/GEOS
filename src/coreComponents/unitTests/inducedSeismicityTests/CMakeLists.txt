@@ -3,7 +3,7 @@
 #
 
 set( gtest_geosx_tests
-	   testDieterichSeismicityRateIntegralSolver.cpp
+	   testSeismicityRateIntegralSolver.cpp
    )
 
 set( dependencyList ${parallelDeps} gtest )

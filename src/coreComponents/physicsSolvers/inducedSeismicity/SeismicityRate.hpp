@@ -34,14 +34,14 @@ public:
 
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
   SeismicityRate( const string & name,
-                      Group * const parent );
+                  Group * const parent );
 
   /// Destructor
   virtual ~SeismicityRate() override;
 
   static string catalogName() { return "SeismicityRate"; }
 
-   /**
+  /**
    * @return Get the final class Catalog name
    */
   virtual string getCatalogName() const override { return catalogName(); }
@@ -75,7 +75,7 @@ public:
    */
   void integralSolverStep( real64 const & time_n,
                            real64 const & dt,
-                           ElementSubRegionBase & subRegion );                           
+                           ElementSubRegionBase & subRegion );
 
 protected:
   /**
@@ -84,6 +84,14 @@ protected:
    * @param subRegion The ElementSubRegionBase that will have the stress information
    */
   void updateFaultTraction( ElementSubRegionBase & subRegion );
+
+
+  real64 updateStresses( real64 const & time_n,
+                         real64 const & dt,
+                         const int cycleNumber,
+                         DomainPartition & domain );
+
+  void saveOldState( ElementSubRegionBase & subRegion );
 
   /**
    * @brief called in SolverStep before member stress solver is called to
@@ -94,8 +102,8 @@ protected:
    */
   void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
 
-  void constructFaultStressProjectionTensors(
-    real64 ( &faultNormalProjectionTensor )[6], real64 ( &faultShearProjectionTensor )[6] );
+  void constructFaultStressProjectionTensors( real64 ( &faultNormalProjectionTensor )[6],
+                                              real64 ( &faultShearProjectionTensor )[6] ) const;
 
   virtual void postProcessInput() override;
 
@@ -105,15 +113,16 @@ protected:
   /// stress solver name string
   string m_stressSolverName;
 
-  /// intial stress conditions
-  real64 m_initialFaultNormalTraction;
-  real64 m_initialFaultShearTraction;
-
-  /// fault orientation
+  /// fault orientation: normal direction
   R1Tensor m_faultNormalDirection;
+
+  /// fault orientation: shear direction
   R1Tensor m_faultShearDirection;
 
+  /// direct effect coefficient
   real64 m_directEffect;
+
+  /// bacground stressing rate
   real64 m_backgroundStressingRate;
 };
 

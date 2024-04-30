@@ -31,41 +31,41 @@ using namespace dataRepository;
 using namespace fields;
 using namespace constitutive;
 
-//START_SPHINX_INCLUDE_CONSTRUCTOR
 SeismicityRate::SeismicityRate( const string & name,
-                                        Group * const parent ):
+                                Group * const parent ):
   SolverBase( name, parent ),
   m_stressSolver( nullptr )
 {
-  this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of solver for computing stress" );
-  this->registerWrapper( viewKeyStruct::initialFaultNormalTractionString(), &m_initialFaultNormalTraction ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial normal traction" );
-  this->registerWrapper( viewKeyStruct::initialFaultShearTractionString(), &m_initialFaultShearTraction ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Initial shear traction" );
   this->registerWrapper( viewKeyStruct::directEffectString(), &m_directEffect ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Rate-and-state friction direct effect parameter" );
+
   this->registerWrapper( viewKeyStruct::backgroundStressingRateString(), &m_backgroundStressingRate ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Background stressing rate" );    
+    setDescription( "Background stressing rate" );
 
-  // Only temporarily store user-specified fault directions here, then initialize fault projection tensors
+  this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of solver for computing stress" );
+
   this->registerWrapper( viewKeyStruct::faultNormalDirectionString(), &m_faultNormalDirection ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fault normal direction" );
+
   this->registerWrapper( viewKeyStruct::faultShearDirectionString(), &m_faultShearDirection ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fault shear direction" );
 
+  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
+    setInputFlag( InputFlags::FALSE );  
+}
 
+void SeismicityRate::postProcessInput()
+{
   // Check orthogonality of user-specified faults
   if( std::abs( LvArray::tensorOps::AiBi< 3 >( m_faultNormalDirection, m_faultShearDirection )) > 1e-8 )
   {
-    GEOS_ERROR( "Fault normal and fault shear must be orthogonal" );
+    GEOS_ERROR( "Fault normal and fault shear directions must be orthogonal" );
   }
   // If user has specified faults, normalize them to be unit vectors
   else if( LvArray::tensorOps::l2Norm< 3 >( m_faultNormalDirection ) > 1e-8 )
@@ -73,13 +73,12 @@ SeismicityRate::SeismicityRate( const string & name,
     LvArray::tensorOps::normalize< 3 >( m_faultNormalDirection );
     LvArray::tensorOps::normalize< 3 >( m_faultShearDirection );
   }
-}
-//END_SPHINX_INCLUDE_CONSTRUCTOR
 
-void SeismicityRate::postProcessInput()
-{
   // Initialize member stress solver as specified in XML input
-  m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+  if( !m_stressSolverName.empty() )
+  {
+    m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+  }
 
   SolverBase::postProcessInput();
 }
@@ -89,7 +88,6 @@ SeismicityRate::~SeismicityRate()
   // TODO Auto-generated destructor stub
 }
 
-//START_SPHINX_INCLUDE_REGISTERDATAONMESH
 void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
@@ -105,15 +103,15 @@ void SeismicityRate::registerDataOnMesh( Group & meshBodies )
                                                                    ElementSubRegionBase & subRegion )
     {
       subRegion.registerField< inducedSeismicity::initialProjectedNormalTraction >( getName() );
-      
+
       subRegion.registerField< inducedSeismicity::initialProjectedShearTraction >( getName() );
 
       subRegion.registerField< inducedSeismicity::projectedNormalTraction >( getName() );
-      
+
       subRegion.registerField< inducedSeismicity::projectedNormalTraction_n >( getName() );
-      
+
       subRegion.registerField< inducedSeismicity::projectedShearTraction >( getName() );
-      
+
       subRegion.registerField< inducedSeismicity::projectedShearTraction_n >( getName() );
 
       subRegion.registerField< inducedSeismicity::seismicityRate >( getName() );
@@ -127,9 +125,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
 {
   // Retrieve field variables
   arrayView1d< real64 > const sig   = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
-  arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
   arrayView1d< real64 > const tau   = subRegion.getField< inducedSeismicity::projectedShearTraction >();
-  arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
 
   // Retrieve stress state computed by m_stressSolver, called in solverStep
   string const & solidModelName = subRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
@@ -138,8 +134,8 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
 
   // Construct Voigt notation projection tensor (dyadic product of fault normal and shear vectors)
   // for when multiplying in inner dot product with symmetric stress tensor
-  real64 faultNormalProjectionTensor[6];
-  real64 faultShearProjectionTensor[6];
+  real64 faultNormalProjectionTensor[6]{};
+  real64 faultShearProjectionTensor[6]{};
   constructFaultStressProjectionTensors( faultNormalProjectionTensor, faultShearProjectionTensor );
 
   // loop over all elements and compute unweighted average across all nodes
@@ -147,12 +143,8 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
   // TODO: APPLY WEIGHTS TO AVERAGE TO ACCOUNT FOR ELEMENT SHAPE
   forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    // update projected stresses from previou step
-    sig_n[k] = sig[k];
-    tau_n[k] = tau[k];
-
     // Compute average stress state
-    array1d< real64 > meanStress( 6 );
+    real64 meanStress[ 6 ]{};
     for( int q = 0; q < stress.size( 1 ); q++ )
     {
       LvArray::tensorOps::add< 6 >( meanStress, stress[k][q] );
@@ -170,7 +162,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
   // cast to access the Biot coefficient. Finally, effective stresses on the fault are calculated.
   if( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {
-    arrayView1d< real64 > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
 
     string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
@@ -184,12 +176,12 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
       forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         // Form pressure as tensor
-        array1d< real64 > pressureTensor( 6 );
+        real64 pressureTensor[ 6 ]{};
         LvArray::tensorOps::symAddIdentity< 3 >( pressureTensor, -biotCoefficient[k]*pres[k] );
 
         // Project pressure tensor onto fault orientations
-        const real64 pressureOnFaultNormal = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultNormalProjectionTensor );
-        const real64 pressureOnFaultShear  = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultShearProjectionTensor );
+        real64 const pressureOnFaultNormal = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultNormalProjectionTensor );
+        real64 const pressureOnFaultShear  = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultShearProjectionTensor );
 
         // Calculate total stress on the faults
         sig[k] += pressureOnFaultNormal;
@@ -205,7 +197,8 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
   if( cycleNumber == 0 )
   {
     // Call solverStep of stress solver with dt=0 to initialize stresses in the matrix
-    m_stressSolver->solverStep( time_n, 0.0, cycleNumber, domain );
+
+    updateStresses( time_n, 0.0, cycleNumber, domain );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -216,6 +209,9 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
                                                   [&]( localIndex const,
                                                        ElementSubRegionBase & subRegion )
       {
+
+        saveOldState( subRegion );
+
         // Retrieve field variables
         arrayView1d< real64 const > const sig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
         arrayView1d< real64 const > const tau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
@@ -223,48 +219,19 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
         arrayView1d< real64 > const sig_i = subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >();
         arrayView1d< real64 > const tau_i = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
 
-        // If solid stress solver has been called, call updateMeanSolidStress to project stress state onto faults
-        if( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
+        forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
-          if( LvArray::tensorOps::l2Norm< 3 >( m_faultNormalDirection ) < 1e-8 )
-          {
-            GEOS_ERROR( "Fault directions must be specified for solid stress solver" );
-          }
-
-          updateFaultTraction( subRegion );
-          forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-          {
-            // Set initial stress conditions on faults
-            sig_i[k] = sig[k];
-            tau_i[k] = tau[k];
-          } );
-
-        }
-        // If solid stress solver has not been called, initialize fault stresses to user-defined values
-        else
-        {
-          subRegion.getField< inducedSeismicity::initialProjectedNormalTraction >().toView().
-          setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
-          
-          arrayView1d< real64 > const tempSig = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
-          tempSig.setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
-          arrayView1d< real64 > const tempSig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
-          tempSig_n.setValues< parallelHostPolicy >( m_initialFaultNormalTraction );
-
-          arrayView1d< real64 > const tempTauIni = subRegion.getField< inducedSeismicity::initialProjectedShearTraction >();
-          tempTauIni.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
-          arrayView1d< real64 > const tempTau = subRegion.getField< inducedSeismicity::projectedShearTraction >();
-          tempTau.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
-          arrayView1d< real64 > const tempTau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
-          tempTau_n.setValues< parallelHostPolicy >( m_initialFaultShearTraction );
-        }
+          // Set initial stress conditions on faults
+          sig_i[k] = sig[k];
+          tau_i[k] = tau[k];
+        } );
       } );
     } );
   }
 }
 
-void SeismicityRate::constructFaultStressProjectionTensors(
-  real64 (& faultNormalProjectionTensor)[6], real64 (& faultShearProjectionTensor)[6] )
+void SeismicityRate::constructFaultStressProjectionTensors( real64 (& faultNormalProjectionTensor)[6],
+                                                            real64 (& faultShearProjectionTensor)[6] ) const
 {
   faultNormalProjectionTensor[0] = m_faultNormalDirection[0]*m_faultNormalDirection[0];
   faultNormalProjectionTensor[1] = m_faultNormalDirection[1]*m_faultNormalDirection[1];
@@ -282,17 +249,19 @@ void SeismicityRate::constructFaultStressProjectionTensors(
 }
 
 real64 SeismicityRate::solverStep( real64 const & time_n,
-                                       real64 const & dt,
-                                       const int cycleNumber,
-                                       DomainPartition & domain )
+                                   real64 const & dt,
+                                   const int cycleNumber,
+                                   DomainPartition & domain )
 {
   // Save initial stress state on pre-defined fault orientations to field variables
-  initializeFaultTraction( time_n, cycleNumber, domain );
+  if( cycleNumber == 0 )
+  {
+    initializeFaultTraction( time_n, cycleNumber, domain );
+  }
 
-  // Call member variable stress solver to update the stress state
-  real64 dtStress = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
+  real64 const dtStress = updateStresses( time_n, dt, cycleNumber, domain );
 
-  // Loop over subRegions to update stress on faults and solver for seismicity rate
+  // Loop over subRegions to solve for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -302,14 +271,11 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      // project new stress state to update stress on fault
-      if( subRegion.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() ) )
-      {
-        updateFaultTraction( subRegion );
-      }
-
       // solve for the seismicity rate given new stresses on faults
       integralSolverStep( time_n, dtStress, subRegion );
+
+      // save old state
+      saveOldState( subRegion );
     } );
   } );
 
@@ -317,12 +283,106 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
   return dtStress;
 }
 
+real64 SeismicityRate::updateStresses( real64 const & time_n,
+                                       real64 const & dt,
+                                       const int cycleNumber,
+                                       DomainPartition & domain )
+{
+  // Call member variable stress solver to update the stress state
+  if( m_stressSolver )
+  {
+
+    // 1. Solve the momentum balance
+    real64 const dtStress =  m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
+
+    // 2. Loop over subRegions to update stress on faults
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        updateFaultTraction( subRegion );
+      } );
+    } );
+    return dtStress;
+  }
+  else
+  {
+    char const bcLogMessage[] =
+      "SeismicityRate {}: at time {}s, "
+      "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+      "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+      "\nThe total number of target elements (including ghost elements) is {}. "
+      "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
+
+    forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                   MeshLevel & mesh,
+                                                                   arrayView1d< string const > const & )
+    {
+
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                           inducedSeismicity::projectedShearTraction::key() };
+
+      for( auto const & key : keys )
+      {
+        fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                                 mesh,
+                                                 key,
+                                                 [&]( FieldSpecificationBase const & fs,
+                                                      string const & setName,
+                                                      SortedArrayView< localIndex const > const & lset,
+                                                      ElementSubRegionBase & subRegion,
+                                                      string const & )
+        {
+          if( fs.getLogLevel() >= 1 )
+          {
+            globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+            GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
+                                       this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                       fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+          }
+
+          // Specify the bc value of the field
+          fs.applyFieldValue< FieldSpecificationEqual,
+                              parallelDevicePolicy<> >( lset,
+                                                        time_n + dt,
+                                                        subRegion,
+                                                        key );
+        } );
+      }
+    } );
+  }
+  return dt;
+}
+
+void SeismicityRate::saveOldState( ElementSubRegionBase & subRegion )
+{
+  // Retrieve field variables
+  arrayView1d< real64 > const sig   = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
+  arrayView1d< real64 > const sig_n = subRegion.getField< inducedSeismicity::projectedNormalTraction_n >();
+  arrayView1d< real64 > const tau   = subRegion.getField< inducedSeismicity::projectedShearTraction >();
+  arrayView1d< real64 > const tau_n = subRegion.getField< inducedSeismicity::projectedShearTraction_n >();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    // update projected stresses from previou step
+    sig_n[k] = sig[k];
+    tau_n[k] = tau[k];
+  } );
+}
+
 // Solve integral solution to ODE
 void SeismicityRate::integralSolverStep( real64 const & time_n,
                                          real64 const & dt,
                                          ElementSubRegionBase & subRegion )
 {
-  if ( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() )  )
+  if( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() )  )
   {
     seismicityRateKernels::createAndLaunch< parallelDevicePolicy<>, true >( subRegion, time_n, dt, m_directEffect, m_backgroundStressingRate );
   }
