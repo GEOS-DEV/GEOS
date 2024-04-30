@@ -48,7 +48,6 @@ struct ElasticTimeSchemeSEM
    * @param[in] rhsx the right-hand-side for displacement in x-direction
    * @param[in] rhsy the right-hand-side for displacement in y-direction
    * @param[in] rhsz the right-hand-side for displacement in z-direction
-   * @param[in] freeSurfaceNodeIndicator array which contains indicators to tell if we are on a free-surface boundary or not
    * @param[in] solverTargetNodesSet the targetted nodeset (useful in particular when we do elasto-acoustic simulation )
    */
   static void LeapFrog( real64 const dt,
@@ -71,31 +70,27 @@ struct ElasticTimeSchemeSEM
                         arrayView1d< real32 > const rhsx,
                         arrayView1d< real32 > const rhsy,
                         arrayView1d< real32 > const rhsz,
-                        arrayView1d< localIndex const > const freeSurfaceNodeIndicator,
                         SortedArrayView< localIndex const > const solverTargetNodesSet )
   {
     real64 const dt2 = pow( dt, 2 );
     forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = solverTargetNodesSet[n];
-      if( freeSurfaceNodeIndicator[a] != 1 )
-      {
-        ux_np1[a] = ux_n[a];
-        ux_np1[a] *= 2.0*mass[a];
-        ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
-        ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
-        uy_np1[a] = uy_n[a];
-        uy_np1[a] *= 2.0*mass[a];
-        uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
-        uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
-        uz_np1[a] = uz_n[a];
-        uz_np1[a] *= 2.0*mass[a];
-        uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
-        uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
-      }
+      ux_np1[a] = ux_n[a];
+      ux_np1[a] *= 2.0*mass[a];
+      ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
+      ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
+      ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
+      uy_np1[a] = uy_n[a];
+      uy_np1[a] *= 2.0*mass[a];
+      uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
+      uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
+      uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
+      uz_np1[a] = uz_n[a];
+      uz_np1[a] *= 2.0*mass[a];
+      uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
+      uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
+      uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
     } );
 
   };
