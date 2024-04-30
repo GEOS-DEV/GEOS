@@ -41,9 +41,9 @@ namespace geos::ghosting
 using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
 using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
 using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
+using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::PreIncrementable >;
 using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
-using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
+using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::PreIncrementable >;
 using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
 using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
 
@@ -182,7 +182,7 @@ Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes )
 
   auto const it = std::min_element( nodes.cbegin(), nodes.cend() );
   std::size_t const minIdx = std::distance( nodes.cbegin(), it );
-  int const increment = nodes[modulo( minIdx - 1 )] < nodes[modulo( minIdx + 1 )] ? -1 : 1;
+  int const increment = nodes[modulo( minIdx - 1 )] < nodes[modulo( minIdx + 1 )] ? -1 : 1;  // TODO based on increment, I can say if the face is flipped or not.
   integer i = minIdx;
   for( std::size_t count = 0; count < n; ++count, i = i + increment )
   {
@@ -292,7 +292,7 @@ Exchange convertExchange( array1d< globalIndex > const & input )
   int i;
   for( i = 1; i < 2 * numEdges + 1; i += 2 )
   {
-    NodeGlbIdx gn0{ input[i] }, gn1{ input[i + 1] };
+    NodeGlbIdx const gn0{ input[i] }, gn1{ input[i + 1] };
     exchange.edges.insert( std::minmax( gn0, gn1 ) );
   }
   GEOS_ASSERT_EQ( std::size_t(numEdges), exchange.edges.size() );
@@ -729,6 +729,84 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   return result;
 }
 
+struct MeshGraph  // TODO add the local <-> global mappings here?
+{
+  std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
+  std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;  // TODO use Face here?
+  std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
+};
+
+MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a sub-mesh?
+                          Buckets const & buckets,
+                          BucketSizes const & sizes,
+                          BucketOffsets const & offsets )
+{
+  MeshGraph result;
+
+  for( auto const & [ranks, size]: sizes.edges )
+  {
+    EdgeGlbIdx i{ offsets.edges.at( ranks ) };
+    for( Edge const & edge: buckets.edges.at( ranks ) )
+    {
+      result.e2n[i] = edge;
+      ++i;
+    }
+  }
+
+  // Simple inversion
+  std::map< std::tuple< NodeGlbIdx, NodeGlbIdx >, EdgeGlbIdx > n2e;
+  for( auto const & [e, n]: result.e2n )
+  {
+    n2e[n] = e;
+  }
+
+  std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
+  for( auto const & [ranks, size]: sizes.faces )
+  {
+    FaceGlbIdx i{ offsets.faces.at( ranks ) };
+    for( Face face: buckets.faces.at( ranks ) )  // Intentional copy for the future `emplace_back`.
+    {
+      n2f[face] = i;
+      face.emplace_back( face.front() );
+      for( std::size_t ii = 0; ii < face.size() - 1; ++ii )
+      {
+        NodeGlbIdx const & n0 = face[ii], & n1 = face[ii + 1];
+        std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
+        std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
+        result.f2e[i].insert( n2e.at( p1 ) );
+        bool const flipped = p0 != p1;  // TODO store somewhere.
+      }
+      ++i;
+    }
+  }
+
+  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+  vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );  // TODO do the mapping beforehand
+  for( vtkIdType c = 0; c < mesh->GetNumberOfCells(); ++c )
+  {
+    vtkCell * cell = mesh->GetCell( c );
+    CellGlbIdx const gci{ globalCellIds->GetValue( c ) };
+    // TODO copy paste?
+    for( auto f = 0; f < cell->GetNumberOfFaces(); ++f )
+    {
+      vtkCell * face = cell->GetFace( f );
+      vtkIdList * pids = face->GetPointIds();
+      std::vector< NodeGlbIdx > nodes( pids->GetNumberOfIds() );
+      for( std::size_t i = 0; i < nodes.size(); ++i )
+      {
+        vtkIdType const lni = face->GetPointId( i );
+        vtkIdType const gni = globalPtIds->GetValue( lni );
+        nodes[i] = NodeGlbIdx{ gni };
+      }
+      std::vector< NodeGlbIdx > const reorderedNodes = reorderFaceNodes( nodes );
+      result.c2f[gci].insert( n2f.at( reorderedNodes ) );
+      // TODO... bool const flipped = ... compare nodes and reorderedNodes. Or ask `reorderFaceNodes` to tell
+    }
+  }
+
+  return result;
+}
+
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                        std::set< MpiRank > const & neighbors )
 {
@@ -791,6 +869,8 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   MpiRank const nextRank = curRank + MpiRank{ 1 };
   MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ), offsets.faces.at( { nextRank } ) );
   std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
+
+  MeshGraph const graph = buildMeshGraph( mesh, buckets, sizes, offsets );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
