@@ -547,18 +547,18 @@ BucketSizes getBucketSize( Buckets const & buckets )
 
 /**
  * @brief
- * @tparam LOC_IDX The local index type of the geometrical quantity considered (typically @c EdgeLocIdx or @c FaceLocIdx).
+ * @tparam GLB_IDX The global index type of the geometrical quantity considered (typically @c EdgeGlbIdx or @c FaceGlbIdx).
  * @param sizes The sizes of the intersection bucket (from the current MPI rank).
  * @param offsets The offsets for each intersection bucket (from the MPI_Scan process, i.e. the previous ranks).
  * @param curRank Current MPI rank.
  * @return The offset buckets, updated with the sizes of the current MPI rank.
  */
-template< typename LOC_IDX >
-std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set< MpiRank >, localIndex > const & sizes,
-                                                              std::map< std::set< MpiRank >, LOC_IDX > const & offsets,
+template< typename GLB_IDX >
+std::map< std::set< MpiRank >, GLB_IDX > updateBucketOffsets( std::map< std::set< MpiRank >, localIndex > const & sizes,
+                                                              std::map< std::set< MpiRank >, GLB_IDX > const & offsets,
                                                               MpiRank curRank )
 {
-  std::map< std::set< MpiRank >, LOC_IDX > reducedOffsets;
+  std::map< std::set< MpiRank >, GLB_IDX > reducedOffsets;
 
   // We only keep the offsets that are still relevant to the current and higher ranks.
   // Note that `reducedOffsets` will be used by the _current_ rank too.
@@ -580,18 +580,18 @@ std::map< std::set< MpiRank >, LOC_IDX > updateBucketOffsets( std::map< std::set
   }
 
   // Add the offsets associated to the new size buckets from the current rank.
-  LOC_IDX nextOffset{ 0 };
+  GLB_IDX nextOffset{ 0 };
   for( auto const & [ranks, size]: sizes )
   {
     auto const it = reducedOffsets.find( ranks );
     if( it == reducedOffsets.end() )
     {
       reducedOffsets.emplace_hint( reducedOffsets.end(), ranks, nextOffset );
-      nextOffset += LOC_IDX{ size };
+      nextOffset += GLB_IDX{ size };
     }
     else
     {
-      nextOffset = it->second + LOC_IDX{ size };  // Define the new offset from the last
+      nextOffset = it->second + GLB_IDX{ size };  // Define the new offset from the last
     }
   }
 
