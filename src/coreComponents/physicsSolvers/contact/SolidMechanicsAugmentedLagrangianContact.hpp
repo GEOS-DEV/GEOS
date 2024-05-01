@@ -89,9 +89,9 @@ public:
 
   //virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  //void updateState( DomainPartition & domain ) override final;
+  void updateState( DomainPartition & domain ) override final;
 
-  //virtual bool updateConfiguration( DomainPartition & domain ) override final;
+  virtual bool updateConfiguration( DomainPartition & domain ) override final;
 
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const

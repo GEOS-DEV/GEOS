@@ -13,13 +13,14 @@
  */
 
 /**
- * @file SolidMechanicsALMKernels.hpp
+ * @file SolidMechanicsALMKernelsBase.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_
-#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELSBASE_HPP_
 
-#include "SolidMechanicsALMKernelsBase.hpp"
+#include "finiteElement/kernelInterface/InterfaceKernelBase.hpp"
+#include "SolidMechanicsALMKernelsHelper.hpp"
 
 namespace geos
 {
@@ -29,49 +30,40 @@ namespace solidMechanicsALMKernels
 
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ALM :
-  public ALMKernelsBase< CONSTITUTIVE_TYPE,
-                         FE_TYPE >
+class ALMKernelsBase :
+  public finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
+                                             FE_TYPE,
+                                             3, 3 >
 {
 public:
   /// Alias for the base class;
-  using Base = ALMKernelsBase< CONSTITUTIVE_TYPE,
-                               FE_TYPE >;
-  
-  
+  using Base = finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
+                                                   FE_TYPE, 
+                                                   3, 3 >;
+
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-  using Base::m_elemsToFaces;
-  using Base::m_faceToNodes;
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
-  using Base::m_X;
-  using Base::m_rotationMatrix;
-  using Base::m_penalty;
-  using Base::m_traction;
-  using Base::m_dispJump;
-  using Base::m_oldDispJump;
+  using Base::m_finiteElementSpace;
   using Base::m_matrix;
   using Base::m_rhs;
-/*
-  using Base::m_finiteElementSpace;
-  */
 
-  ALM( NodeManager const & nodeManager,
-       EdgeManager const & edgeManager,
-       FaceManager const & faceManager,
-       localIndex const targetRegionIndex,
-       FaceElementSubRegion & elementSubRegion,
-       FE_TYPE const & finiteElementSpace,
-       CONSTITUTIVE_TYPE & inputConstitutiveType,
-       arrayView1d< globalIndex const > const inputDofNumber,
-       globalIndex const rankOffset,
-       CRSMatrixView< real64, globalIndex const > const inputMatrix,
-       arrayView1d< real64 > const inputRhs,
-       real64 const inputDt, 
-       arrayView1d< localIndex const > const & faceElementList ):
+  ALMKernelsBase( NodeManager const & nodeManager,
+                  EdgeManager const & edgeManager,
+                  FaceManager const & faceManager,
+                  localIndex const targetRegionIndex,
+                  FaceElementSubRegion & elementSubRegion,
+                  FE_TYPE const & finiteElementSpace,
+                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                  arrayView1d< globalIndex const > const inputDofNumber,
+                  globalIndex const rankOffset,
+                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                  arrayView1d< real64 > const inputRhs,
+                  real64 const inputDt, 
+                  arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -83,19 +75,21 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputDt,
-          faceElementList )
+          inputDt ),
+    m_X( nodeManager.referencePosition()),
+    m_faceToNodes(faceManager.nodeList().toViewConst()),
+    m_elemsToFaces(elementSubRegion.faceList().toViewConst()),
+    m_faceElementList(faceElementList),
+    m_rotationMatrix(elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
+    m_traction(elementSubRegion.getField< fields::contact::traction >().toViewConst()),
+    m_dispJump( elementSubRegion.getField< fields::contact::dispJump >().toView() ),
+    m_oldDispJump( elementSubRegion.getField< fields::contact::oldDispJump >().toViewConst() ),
+    m_penalty( elementSubRegion.getField< fields::contact::penalty >().toViewConst() )
 {}
 
-  struct StackVariables: public Base::StackVariables
+  struct StackVariables  
   {
-  public:
-
-    GEOS_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables()
-    {}
-/*    /// The number of displacement dofs per element.
+    /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
     /// The number of lagrange multiplier dofs per element.
@@ -151,7 +145,6 @@ public:
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
 
-*/
   };
 
   template< typename POLICY,
@@ -161,10 +154,36 @@ public:
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
-    return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
+    GEOS_MARK_FUNCTION;
+    GEOS_UNUSED_VAR( numElems );
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+
+    forAll< POLICY >( kernelComponent.m_faceElementList.size(),
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      //std::cout << "# QuadPoints: " << numQuadraturePointsPerElem << std::endl;
+      //std::cout << "# NodesperElem: " << numNodesPerElem << std::endl;
+
+      localIndex k = kernelComponent.m_faceElementList[i];
+      typename KERNEL_TYPE::StackVariables stack;
+
+      //std::cout << i << " " << k << std::endl;
+
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+    } );
+
+    return maxResidual.get();
   }
   //END_kernelLauncher
 
+/*
   GEOS_HOST_DEVICE
   inline
   void setup( localIndex const k,
@@ -212,7 +231,31 @@ public:
       stack.oldDispJumpLocal[i] = m_oldDispJump(k, i);
     }
   }
+  */
 
+  GEOS_HOST_DEVICE
+  inline
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight( q, stack.X );
+
+    //std::cout << "detJ: " << detJ << std::endl;
+
+    real64 N[ numNodesPerElem ]; 
+    m_finiteElementSpace.template calcN( q, N );
+
+    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
+                                                               stack.numUdofs, 
+                                                               numNodesPerElem>(stack.localAtu, 
+                                                                                N, 
+                                                                                FE_TYPE::permutation,
+                                                                                detJ);
+  }
+
+/*
   GEOS_HOST_DEVICE
   inline
   real64 complete( localIndex const k,
@@ -292,12 +335,33 @@ public:
    
     return 0.0;
   }
+*/
 
 protected:
 
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  ArrayOfArraysView< localIndex const > const m_faceToNodes; 
+
+  ArrayOfArraysView< localIndex const > const m_elemsToFaces;
+
+  arrayView1d< localIndex const > const m_faceElementList;
+
+  arrayView3d< real64 const > const m_rotationMatrix;
+
+  arrayView2d< real64 const > const m_traction;
+
+  arrayView2d< real64 > const m_dispJump;
+
+  arrayView2d< real64 const > const m_oldDispJump;
+
+  arrayView2d< real64 const > const m_penalty;
+
 };
 
-using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
+/*
+using ALMFactory = finiteElement::InterfaceKernelFactory< ALMKernelsBase,
                                                           arrayView1d< globalIndex const > const,
                                                           globalIndex const,
                                                           CRSMatrixView< real64, globalIndex const > const,
@@ -335,10 +399,11 @@ struct ComputeRotationMatricesKernel
   }
 
 };
+*/
 
 } // namespace SolidMechanicsALMKernels
 
 } // namespace geos
 
 
-#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELSBASE_HPP_ */

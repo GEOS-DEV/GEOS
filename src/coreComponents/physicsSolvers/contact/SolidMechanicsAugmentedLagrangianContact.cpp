@@ -19,6 +19,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/contact/SolidMechanicsALMKernels.hpp"
+#include "physicsSolvers/contact/SolidMechanicsALMJumpUpdateKernels.hpp"
 
 namespace geos
 {
@@ -66,6 +67,7 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
+
       // Register the rotation matrix
       subRegion.registerField< rotationMatrix >( this->getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
@@ -75,9 +77,25 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
       //  setDescription( "An array that holds the rotation matrices on the fracture." ).
       //  reference().resizeDimension< 1, 2 >( 3, 3 );
 
-      // Register the delta traction field
-      subRegion.registerField< deltaTraction >( this->getName() ).
+      // Register the traction field
+      subRegion.registerField< traction >( this->getName() ).
         reference().resizeDimension< 1 >( 3 );
+
+      // Register the displacement jump
+      subRegion.registerField< dispJump >( this->getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      // Register the displacement jump
+      subRegion.registerField< deltaDispJump >( this->getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      // Register the displacement jump old
+      subRegion.registerField< oldDispJump >( this->getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      // Register the displacement jump
+      subRegion.registerField< penalty >( this->getName() ).
+        reference().resizeDimension< 1 >( 2 );
 
     } );
   } );
@@ -262,12 +280,22 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     //for (auto it = faceTypesToFaceElements.begin(); it != faceTypesToFaceElements.end(); ++it) 
     //{
 
-      solidMechanicsALMKernels::ComputeRotationMatricesKernel::
-        launch< parallelDevicePolicy<> >( subRegion.size(),
-                                          faceNormal,
-                                          elemsToFaces,
-                                          rotationMatrix );
+    solidMechanicsALMKernels::ComputeRotationMatricesKernel::
+      launch< parallelDevicePolicy<> >( subRegion.size(),
+                                        faceNormal,
+                                        elemsToFaces,
+                                        rotationMatrix );
     //}
+
+    arrayView2d< real64 > const 
+      penalty = subRegion.getField< fields::contact::penalty >().toView();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      penalty[k] [0] = 1.e+0;
+      penalty[k] [1] = 1.e+0;
+    });
+
   } );
 }
 
@@ -297,6 +325,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //ParallelMatrix parallel_matrix_1;
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix.write("mech.mtx");
+
   // If specified as a b.c. apply traction
   //applyTractionBC( time, dt, domain );
 
@@ -347,6 +376,23 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                         "",
                                                         kernelFactory );
 
+      //solidMechanicsALMKernels::ALMJumpUpdateFactory kernelFactory1( dispDofNumber,
+      //                                                               dofManager.rankOffset(),
+      //                                                               localMatrix,
+      //                                                               localRhs,
+      //                                                               dt,
+      //                                                               faceElementList );
+
+      //real64 maxTraction1 = finiteElement::
+      //                       interfaceBasedKernelApplication
+      //                     < parallelDevicePolicy< >,
+      //                       constitutive::NullModel >( mesh,
+      //                                                  fractureRegionName,
+      //                                                  faceElementList,
+      //                                                  subRegionFE,
+      //                                                  "",
+      //                                                  kernelFactory1 );
+
     GEOS_UNUSED_VAR( maxTraction );
 
     } );
@@ -354,7 +400,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix_1.write("amech.mtx");
 
-  abort();
   /*
   GEOS_MARK_FUNCTION;
 
@@ -412,6 +457,33 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 {
 
   GEOS_UNUSED_VAR( time_n, dt, domain);
+
+  std::cout << "implicitStepComplete" << std::endl;
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
+      //arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      //arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          oldDispJump[kfe][i] = dispJump[kfe][i];
+        }
+        //oldFractureState[kfe] = fractureState[kfe];
+      } );
+    } );
+
+  });
+
   /*
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
@@ -461,6 +533,8 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   GEOS_MARK_FUNCTION;
 
+  std::cout << "calculateResidualNorm" << std::endl;
+
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
   
@@ -475,8 +549,8 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                                   DomainPartition & domain )
 {
 
-  GEOS_UNUSED_VAR( dofManager, localSolution, scalingFactor, dt, domain);
-  /*
+  std::cout << "applySystemSolution" << std::endl;
+
   GEOS_MARK_FUNCTION;
 
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
@@ -485,6 +559,50 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                     dt,
                                                     domain );
 
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+
+  {
+
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    string const & fractureRegionName = this->getUniqueFractureRegionName();
+
+    CRSMatrix< real64, globalIndex > const voidMatrix;
+    array1d< real64 > const voidRhs;
+
+    forFiniteElementOnFractureSubRegions( meshName, [&] (string const & finiteElementName,
+                                                        arrayView1d< localIndex const > const & faceElementList )
+    {
+
+      finiteElement::FiniteElementBase & subRegionFE = *(m_faceTypeToFiniteElements[finiteElementName]);
+
+      solidMechanicsALMKernels::ALMJumpUpdateFactory kernelFactory( dispDofNumber,
+                                                                    dofManager.rankOffset(),
+                                                                    voidMatrix.toViewConstSizes(),
+                                                                    voidRhs.toView(),
+                                                                    dt,
+                                                                    faceElementList );
+
+      real64 maxTraction = finiteElement::
+                             interfaceBasedKernelApplication
+                           < parallelDevicePolicy< >,
+                             constitutive::NullModel >( mesh,
+                                                        fractureRegionName,
+                                                        faceElementList,
+                                                        subRegionFE,
+                                                        "",
+                                                        kernelFactory );
+
+    GEOS_UNUSED_VAR( maxTraction );
+
+    } );
+  });
+
+/*
   // EFEM /////////////////////////
   updateJump( dofManager, dt, domain );
 
@@ -573,14 +691,225 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
 
 // Contact //////////////////////////////////
-//void SolidMechanicsLagrangeContact::updateState( DomainPartition & domain )
-//{
+void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( domain );
+
+  std::cout << "updateState" << std::endl;
 //  /*
 //  GEOS_MARK_FUNCTION;
 //
 //  computeFaceDisplacementJump( domain );
 //  */
-//}
+}
+
+bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( domain );
+
+  std::cout << "updateConfiguration" << std::endl;
+
+  real64 tol[4];
+  tol[0] = 1e-5;
+  tol[1] = 1e-5;
+  tol[2] = 5.e-2; 
+  tol[3] = 1e0;
+
+  int hasConfigurationConverged = true;
+  int condConv = true;
+  array2d< real64 > traction_new;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+
+      //arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const  traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 const > const  dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const  deltaDispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const  penalty = subRegion.getField< contact::penalty >();
+
+      std::cout << traction.size() << " " << subRegion.size() << std::endl;
+      std::ptrdiff_t const sizes[ 2 ] = {subRegion.size(), 3};
+      traction_new.resize(2, sizes );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [&] ( localIndex const kfe )
+      {
+        real64 eps_N = penalty[kfe][0];
+        real64 eps_T = penalty[kfe][1];
+        traction_new[kfe][0] = traction[kfe][0] + eps_N * dispJump[kfe][0];
+        traction_new[kfe][1] = traction[kfe][1] + eps_T * deltaDispJump[kfe][1];
+        traction_new[kfe][2] = traction[kfe][2] + eps_T * deltaDispJump[kfe][2];
+      });
+      std::cout << "Computed traction_new" << std::endl;
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [&] ( localIndex const kfe )
+      {
+        //if( ghostRank[kfe] < 0 )
+        //{
+          if( traction_new[kfe][0] >= tol[3] )
+          {
+            std::cout << "Open" << std::endl;
+            abort();
+          }
+          else 
+          {
+            real64 deltaDisp = sqrt(pow(deltaDispJump[kfe][1],2) + pow(deltaDispJump[kfe][1],2));
+            std::cout << kfe << " " << std::abs(dispJump[kfe][0]) << " " << deltaDisp << std::endl;
+            if( std::abs(dispJump[kfe][0]) > tol[0] )
+            {
+              std::cout << "Stick and g > tol1 => compenetration" << std::endl;
+              condConv = false;
+            }
+            if( deltaDisp > tol[1] )
+            {
+              std::cout << "Stick and dg > tol2" << std::endl;
+              condConv = false;
+            }
+          }
+        //}
+      });
+    });
+  });
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+ 
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+      
+      arrayView2d< real64 > const  traction = subRegion.getField< contact::traction >();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [&] ( localIndex const kfe )
+      {
+         traction[kfe][0] = traction_new(kfe, 0);
+         traction[kfe][1] = traction_new(kfe, 1);
+         traction[kfe][2] = traction_new(kfe, 2);
+      });
+    });
+  });
+
+  if (!condConv)
+  {
+    hasConfigurationConverged = false;
+  }
+
+  /*forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                FaceElementSubRegion & subRegion )
+    {
+      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+
+      arrayView1d< real64 const > const & normalTractionTolerance =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
+      arrayView1d< real64 const > const & normalDisplacementTolerance =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+
+      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        {
+          if( ghostRank[kfe] < 0 )
+          {
+            integer const originalFractureState = fractureState[kfe];
+            if( originalFractureState == contact::FractureState::Open )
+            {
+              if( dispJump[kfe][0] > -normalDisplacementTolerance[kfe] )
+              {
+                fractureState[kfe] = contact::FractureState::Open;
+              }
+              else
+              {
+                fractureState[kfe] = contact::FractureState::Stick;
+              }
+            }
+            else if( traction[kfe][0] > normalTractionTolerance[kfe] )
+            {
+              fractureState[kfe] = contact::FractureState::Open;
+            }
+            else
+            {
+              real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
+
+              real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+              real64 const limitTau =
+                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                   dLimitTangentialTractionNorm_dTraction );
+
+              if( originalFractureState == contact::FractureState::Stick && currentTau >= limitTau )
+              {
+                currentTau *= (1.0 - m_slidingCheckTolerance);
+              }
+              else if( originalFractureState != contact::FractureState::Stick && currentTau <= limitTau )
+              {
+                currentTau *= (1.0 + m_slidingCheckTolerance);
+              }
+              if( currentTau > limitTau )
+              {
+                if( originalFractureState == contact::FractureState::Stick )
+                {
+                  fractureState[kfe] = contact::FractureState::NewSlip;
+                }
+                else
+                {
+                  fractureState[kfe] = contact::FractureState::Slip;
+                }
+              }
+              else
+              {
+                fractureState[kfe] = contact::FractureState::Stick;
+              }
+            }
+            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+          }
+        } );
+      } );
+
+      hasConfigurationConverged &= checkActiveSetSub.get();
+    } );
+  } );
+  // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
+  synchronizeFractureState( domain );
+
+  // Compute if globally the fracture state has changed
+  int hasConfigurationConvergedGlobally;
+  MpiWrapper::allReduce( &hasConfigurationConverged,
+                         &hasConfigurationConvergedGlobally,
+                         1,
+                         MPI_LAND,
+                         MPI_COMM_GEOSX );
+
+  return hasConfigurationConvergedGlobally;
+  */
+  return hasConfigurationConverged;
+}
 
 // EFEM //////////////////////////////////
 //void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )

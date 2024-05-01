@@ -49,6 +49,14 @@ struct FractureState
   };
 };
 
+DECLARE_FIELD( penalty,
+               "penalty",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Penalty coefficients" );
+
 DECLARE_FIELD( rotationMatrix,
                "rotationMatrix",
                array3d< real64 >,

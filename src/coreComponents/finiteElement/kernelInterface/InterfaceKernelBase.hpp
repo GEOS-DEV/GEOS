@@ -57,7 +57,7 @@ public:
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        localIndex const targetRegionIndex,
-                       FaceElementSubRegion const & elementSubRegion,
+                       FaceElementSubRegion & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        arrayView1d< globalIndex const > const inputDofNumber,
@@ -109,7 +109,7 @@ public:
     EdgeManager const & edgeManager,
     FaceManager const & faceManager,
     localIndex const targetRegionIndex,
-    FaceElementSubRegion const & elementSubRegion,
+    FaceElementSubRegion & elementSubRegion,
     FE_TYPE const & finiteElementSpace,
     CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
@@ -117,7 +117,7 @@ public:
                  EdgeManager const &,
                  FaceManager const &,
                  localIndex const,
-                 FaceElementSubRegion const &,
+                 FaceElementSubRegion &,
                  FE_TYPE const &,
                  CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
                                                       edgeManager,

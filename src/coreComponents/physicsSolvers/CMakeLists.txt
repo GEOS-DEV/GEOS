@@ -16,8 +16,10 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsAugmentedLagrangianContact.hpp
+     contact/SolidMechanicsALMKernelsBase.hpp
      contact/SolidMechanicsALMKernels.hpp
      contact/SolidMechanicsALMKernelsHelper.hpp
+     contact/SolidMechanicsALMJumpUpdateKernels.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
