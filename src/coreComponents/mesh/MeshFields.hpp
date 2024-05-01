@@ -114,6 +114,14 @@ DECLARE_FIELD( elementAperture,
                WRITE_AND_READ,
                "Element aperture." );
 
+DECLARE_FIELD( elementArea,
+               "elementArea",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Element area." );
+
 DECLARE_FIELD( parentIndex,
                "parentIndex",
                array1d< localIndex >,
@@ -145,6 +153,30 @@ DECLARE_FIELD( ruptureTime,
                LEVEL_0,
                WRITE_AND_READ,
                "Time that the object was ruptured/split." );
+
+DECLARE_FIELD( normalVector,
+               "normalVector",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Unit normal vector to the surface." );
+
+DECLARE_FIELD( tangentVector1,
+               "tangentVector1",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Unit vector in the first tangent direction to the surface." );
+
+DECLARE_FIELD( tangentVector2,
+               "tangentVector2",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Unit vector in the second tangent direction to the surface." );
 
 
 } // namespace fields
