@@ -43,7 +43,7 @@ struct PotGrad
   template< integer NC, integer ISTHERMAL >
   GEOS_HOST_DEVICE
   static void
-  compute (real64 const & gravCoef,
+  compute ( real64 const & gravCoef,
            real64 const & gravCoefNext,
            real64 const & pres,
            real64 const & presNext,
@@ -166,10 +166,10 @@ struct WellElementPhaseFlux
     real64 dGravHead_dP[numFluxSupportPoints]{};
     real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, IS_THERMAL >( gravCoef 
-                                             ,gravCoefNext
+                                             , gravCoefNext
                                              , pres
-                                             ,presNext
-                                             ,totalMassDens
+                                             , presNext
+                                             , totalMassDens
                                              , totalMassDensNext
                                              , dTotalMassDens
                                              , dTotalMassDensNext

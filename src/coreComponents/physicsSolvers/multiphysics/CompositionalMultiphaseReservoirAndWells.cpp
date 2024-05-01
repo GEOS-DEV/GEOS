@@ -441,7 +441,6 @@ arrayView4d< real64 const > const & dCompPerfRate =
                                                                               dofColIndices.data(),
                                                                               localPerfJacobian[i].dataIfContiguous(),
                                                                               2 * resNumDofs );
-std::cout << " coupled R&W perf " << i << " " << eqnRowIndices[i] << " " << localPerf[i] << " " << localRhs[eqnRowIndices[i]] << std::endl;
             RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }

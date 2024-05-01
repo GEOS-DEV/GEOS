@@ -1472,20 +1472,19 @@ public:
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
+                   arrayView1d< real64 const > const pressure,
+                   arrayView1d< real64 const > const temperature,
+                   arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > compDensScalingFactor,
+                   arrayView1d< real64 > temperatureScalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure =
-      subRegion.getField< fields::flow::pressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getField< fields::flow::globalCompDensity >();
-    arrayView1d< real64 > pressureScalingFactor =
-      subRegion.getField< fields::flow::pressureScalingFactor >();
-    arrayView1d< real64 > compDensScalingFactor =
-      subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
@@ -1527,15 +1526,15 @@ public:
                        integer const allowNegativePressure,
                        CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
+                       arrayView1d< real64 const > const pressure,
+                       arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                       arrayView1d< real64 > pressureScalingFactor,
+                       arrayView1d< real64 > compDensScalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
-                       arrayView1d< real64 const > const localSolution,
-                       arrayView1d< real64 const > const pressure,
-                       arrayView2d< real64 const, compflow::USD_COMP > const compDens,
-                       arrayView1d< real64 > pressureScalingFactor,
-                       arrayView1d< real64 > compDensScalingFactor )
+                       arrayView1d< real64 const > const localSolution )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -1772,22 +1771,20 @@ public:
                    integer const allowNegativePressure,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
+                   arrayView1d< real64 const > const pressure,
+                   arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                   arrayView1d< real64 > pressureScalingFactor,
+                   arrayView1d< real64 > compDensScalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
-    arrayView1d< real64 const > const pressure =
-      subRegion.getField< fields::flow::pressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-      subRegion.getField< fields::flow::globalCompDensity >();
-    arrayView1d< real64 > pressureScalingFactor =
-      subRegion.getField< fields::flow::pressureScalingFactor >();
-    arrayView1d< real64 > compDensScalingFactor =
-      subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
+
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
+                                pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
+                                numComp, dofKey, subRegion, localSolution );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 

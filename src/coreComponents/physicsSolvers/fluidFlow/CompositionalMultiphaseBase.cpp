@@ -1321,13 +1321,10 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                                MeshLevel const & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
-    std::cout << "assembleAccumulationAndVolumeBalanceTerms : domain " << domain.getName() << std::endl;
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      std::cout << "assembleAccumulationAndVolumeBalanceTerms : subregion " << subRegion.getName() << std::endl;
-
       string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );

@@ -23,7 +23,8 @@
 
 namespace geos
 {
-namespace internal {
+namespace internal
+{
 
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
@@ -97,7 +98,7 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
 
   //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
-  if ( n_phase == 1 )
+  if( n_phase == 1 )
   {
       switch( value )
       {
@@ -117,7 +118,7 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
         { GEOS_ERROR( "Unsupported number of components: " << value ); }
       }
   }
-  else if ( n_phase == 2 )
+  else if( n_phase == 2 )
   {
       switch( value )
       {
@@ -138,7 +139,7 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
       }
 
   }
-  else if ( n_phase == 3 )
+  else if( n_phase == 3 )
   {
       switch( value )
       {

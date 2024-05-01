@@ -42,7 +42,7 @@ m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
-  m_isThermal( false ),
+  m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ))
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString()).setInputFlag( InputFlags::FALSE );
@@ -51,8 +51,6 @@ m_numPhases( 0 ),
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
-
-
 
 }
 

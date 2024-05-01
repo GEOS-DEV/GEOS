@@ -169,6 +169,12 @@ ControlEquationHelper::
   {
     compDofColIndices[ ic ] = presDofColIndex + ic + 1;
   }
+  // remove above
+  globalIndex dofColIndices[COFFSET_WJ::nDer]{};
+  for( integer ic = 0; ic < COFFSET_WJ::nDer; ++ic )
+  {
+    dofColIndices[ ic ] = dofNumber + ic;
+  }
 
   real64 controlEqn = 0;
   real64 dControlEqn_dPres = 0;
@@ -252,6 +258,8 @@ ControlEquationHelper::
     GEOS_ERROR( "This constraint is not supported in CompositionalMultiphaseWell" );
   }
   localRhs[eqnRowIndex] += controlEqn;
+  if( 0 )
+  {
   localMatrix.addToRow< serialAtomic >( eqnRowIndex,
                                         &presDofColIndex,
                                         &dControlEqn_dPres,
@@ -264,6 +272,14 @@ ControlEquationHelper::
                                                             compDofColIndices,
                                                             dControlEqn_dComp,
                                                             NC );
+  }
+  else
+  {
+    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                              dofColIndices,
+                                                              dControlEqn,
+                                                              COFFSET_WJ::nDer );
+  }
   // tjb- remove when safe and modify local matrix updates
   assert( fabs( dControlEqn[COFFSET_WJ::dP] -dControlEqn_dPres ) < FLT_EPSILON );
   assert( fabs( dControlEqn[COFFSET_WJ::dQ] - dControlEqn_dRate ) < FLT_EPSILON );
@@ -384,7 +400,6 @@ FluxKernel::
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
     real64 const currentConnRate = connRate[iwelem];
-std::cout << " connRate " << iwelem << " " << currentConnRate << std::endl;
     localIndex iwelemUp = -1;
 
     if( iwelemNext < 0 && !isProducer ) // exit connection, injector
@@ -653,17 +668,17 @@ GEOS_UNUSED_VAR( dTotalMassDens_dPres );
   // localPresRelJacbain contains dP, dC and potentially dT derivatives for neighboring well elements
   // TAG::NEXT is 1, CURRENT is 0 , not sure why indexes are setup as below
   localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
-  localPresRelJacobian[TAG::CURRENT *(NC+1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
+  localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
 
   for( integer ic = 0; ic < NC; ++ic )
   {
     localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
-    localPresRelJacobian[TAG::CURRENT *(NC+1) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
+    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
   }
   if constexpr ( IS_THERMAL )
   {
     localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
-    localPresRelJacobian[TAG::CURRENT *(NC+1)+1] = 0.5 * dTotalMassDens[Deriv::dT];
+    localPresRelJacobian[TAG::CURRENT *(NC+1+IS_THERMAL)+NC+1] = 0.5 * dTotalMassDens[Deriv::dT];
   }
 }
 
@@ -1377,10 +1392,6 @@ PerforationKernel::
         // tjb- remove when safe  
     for( integer ic = 0; ic < NC; ic++ )
     {
-        if( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic] ) > FLT_EPSILON )
-        {
-          std::cout << ic << " " << dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] << " " << dCompPerfRate_dPres[TAG::RES][ic] << std::endl;
-        }
         assert( fabs( dCompPerfRate[TAG::RES][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::RES][ic] ) < FLT_EPSILON );
         assert( fabs( dCompPerfRate[TAG::WELL][ic][CP_Deriv::dP] -dCompPerfRate_dPres[TAG::WELL][ic] ) < FLT_EPSILON );
         for( integer jc = 0; jc < NC; ++jc )

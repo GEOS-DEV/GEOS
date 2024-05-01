@@ -45,10 +45,10 @@ namespace thermalSinglePhaseWellKernels
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
 template< integer NUM_DOF >
-class ElementBasedAssemblyKernel : public singlePhaseWellKernels::ElementBasedAssemblyKernel<NUM_DOF >
+class ElementBasedAssemblyKernel : public singlePhaseWellKernels::ElementBasedAssemblyKernel< NUM_DOF >
 {
 public:
-   using Base = singlePhaseWellKernels::ElementBasedAssemblyKernel<NUM_DOF >;
+  using Base = singlePhaseWellKernels::ElementBasedAssemblyKernel< NUM_DOF >;
   using Base::m_rankOffset;
   using Base::m_wellElemDofNumber;
   using Base::m_elemGhostRank;
@@ -83,7 +83,7 @@ public:
                               constitutive::SingleFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    :    Base(  rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
+    :    Base( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
     m_dWellElemDensity_dTemperature( fluid.dDensity_dTemperature()  ),
     m_internalEnergy( fluid.internalEnergy() ),
     m_internalEnergy_n( fluid.internalEnergy_n() ),
@@ -124,7 +124,6 @@ public:
 
 
   
-
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
@@ -135,13 +134,13 @@ public:
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const iwelem,
-                            StackVariables & stack) const
+                            StackVariables & stack ) const
   {
     Base::computeAccumulation( iwelem, stack, [&]( )
     {
 
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-    stack.localJacobian[0][numDof-1] =  stack.volume * m_dWellElemDensity_dTemperature[iwelem][0] ;
+      stack.localJacobian[0][numDof-1] =  stack.volume * m_dWellElemDensity_dTemperature[iwelem][0];
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.volume   * stack.density  * m_internalEnergy[iwelem][0];
@@ -164,7 +163,6 @@ public:
 
 
   
-
   /**
    * @brief Performs the kernel launch
    * @tparam POLICY the policy used in the RAJA kernels
@@ -233,10 +231,10 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
       integer constexpr NUM_DOF = 2;    
-      ElementBasedAssemblyKernel<  NUM_DOF >
+    ElementBasedAssemblyKernel< NUM_DOF >
       kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_DOF >::template
-      launch< POLICY, ElementBasedAssemblyKernel<   NUM_DOF > >( subRegion.size(), kernel );
+    launch< POLICY, ElementBasedAssemblyKernel< NUM_DOF > >( subRegion.size(), kernel );
  
   }
 };

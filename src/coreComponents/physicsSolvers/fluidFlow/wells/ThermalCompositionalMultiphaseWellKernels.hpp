@@ -316,13 +316,9 @@ public:
       }
       else
       {
-
         normalizer = LvArray::math::max( m_minNormalizer, normalizer );
-
         // Step 4: compute the contribution to the residual
-        std::cout << "bNormalize " << idof << " " << stack.localRow + idof << " " << m_localResidual[stack.localRow + idof] << " " << normalizer << std::endl;
         real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
-        std::cout << "Normalizer "   << val << " " <<  stack.localValue[0] << std::endl;
         if( val > stack.localValue[0] )
         {
           stack.localValue[0] = val;
@@ -572,15 +568,12 @@ public:
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount[FLUID_PROP_COFFSET::dT] * phaseInternalEnergy[ip]
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
-std::cout << "wellthermaccum " << ip << " " << dPhaseAmount[FLUID_PROP_COFFSET::dT] << " " << phaseInternalEnergy[ip]
-                << " " << phaseAmount << " " << dPhaseInternalEnergy[ip][Deriv::dT] << std::endl;
       // local accumulation
       stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
       stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
       stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
-std::cout << "dPhaseEnergy  ip " << ip << " dp " << stack.localJacobian[numEqn-1][0]  << " dt " << stack.localJacobian[numEqn-1][numDof-1] << std::endl;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
@@ -588,7 +581,6 @@ std::cout << "dPhaseEnergy  ip " << ip << " dp " << stack.localJacobian[numEqn-1
       {
         stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount[FLUID_PROP_COFFSET::dC+jc]
                                                  + dPhaseInternalEnergy_dC[jc] * phaseAmount;
-std::cout << "therm accu " << numEqn-1 << " " << jc+1 << " " << stack.localJacobian[numEqn-1][jc + 1] << std::endl;
       }
     } );
 
@@ -787,6 +779,13 @@ public:
     stack.localEnergyFlux.resize( stack.numConnectedElems );
     stack.localEnergyFluxJacobian.resize( stack.numConnectedElems, stack.stencilSize * numDof );
     stack.localEnergyFluxJacobian_dQ.resize( stack.numConnectedElems, 1 );
+    for( integer i=0; i<stack.numConnectedElems; i++ )
+    {
+      stack.localEnergyFlux[i]=0.0;
+      stack.localEnergyFluxJacobian_dQ[i][0]=0.0;
+      for( integer j=0; j< stack.stencilSize * numDof; j++ )
+        stack.localEnergyFluxJacobian[i][j] = 0.0;
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -827,6 +826,50 @@ public:
       }
 
     }
+    else // if ( stack.numConnectedElems == 2 )
+    {
+      // Setup Jacobian global row indicies
+      // equations for COMPONENT  + ENERGY balances
+      globalIndex eqnRowIndices[2]{};
+
+      // energy balance equations
+      eqnRowIndices[TAG::NEXT ]    = stack.offsetNext + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
+      eqnRowIndices[TAG::CURRENT ] = stack.offsetCurrent + WJ_ROFFSET::ENERGYBAL  - m_rankOffset;
+
+      // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
+      globalIndex dofColIndices[CP_Deriv::nDer]{};
+      globalIndex dofColIndices_dRate = stack.offsetCurrent   + WJ_COFFSET::dQ;
+
+      int ioff=0;
+      // Indice storage order reflects local jac col storage order CP::Deriv order P T DENS
+      // well jacobian order is P DENS Q T
+      dofColIndices[ioff++] = stack.offsetUp + WJ_COFFSET::dP;
+
+      if constexpr ( IS_THERMAL )
+      {
+        dofColIndices[ioff++] = stack.offsetUp + WJ_COFFSET::dT;
+      }
+      for( integer jdof = 0; jdof < NC; ++jdof )
+      {
+        dofColIndices[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
+      }
+      // Note this updates diag and offdiag
+      for( integer i = 0; i < 2; ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.template addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                   &dofColIndices_dRate,
+                                                                   stack.localEnergyFluxJacobian_dQ[i],
+                                                                   1 );
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                       dofColIndices,
+                                                                                       stack.localEnergyFluxJacobian[i],
+                                                                                       CP_Deriv::nDer );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], stack.localEnergyFlux[i] );
+        }
+      }
+    }
   }
 
   /**
@@ -852,7 +895,6 @@ public:
         real64 eflux_dq=0;
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-          std::cout << "eflux " << ip << " " << m_phaseEnthalpy[iwelemUp][0][ip] << " " <<  m_phaseFraction[iwelemUp][0][ip] << std::endl;
           eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
         }
@@ -870,8 +912,6 @@ public:
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
           for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
           {
-      std::cout << " wellflux " <<  ip << " " << dof << " " << m_phaseEnthalpy[iwelemUp][0][ip] << " " << m_dPhaseFraction[iwelemUp][0][ip][dof]
-                      << " " << m_dPhaseEnthalpy[iwelemUp][0][ip][dof] << " " <<  m_phaseFraction[iwelemUp][0][ip] << std::endl;
             stack.localEnergyFluxJacobian[0] [dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
                                                       +  m_dPhaseEnthalpy[iwelemUp][0][ip][dof]*m_phaseFraction[iwelemUp][0][ip];
 
@@ -894,8 +934,6 @@ public:
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
           for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
           {
-        std::cout << " wellflux " <<  ip << " " << dof << " " << m_phaseEnthalpy[iwelemUp][0][ip] << " " << m_dPhaseFraction[iwelemUp][0][ip][dof]
-                      << " " << m_dPhaseEnthalpy[iwelemUp][0][ip][dof] << " " <<  m_phaseFraction[iwelemUp][0][ip] << std::endl;
             stack.localEnergyFluxJacobian[TAG::NEXT   ][dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
                                                                 + m_dPhaseEnthalpy[iwelemUp][0][ip][dof]*m_phaseFraction[iwelemUp][0][ip];
             stack.localEnergyFluxJacobian[TAG::CURRENT ][dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
@@ -904,13 +942,12 @@ public:
         }
         stack.localEnergyFlux[TAG::NEXT   ]   =  m_dt * eflux * currentConnRate;
         stack.localEnergyFlux[TAG::CURRENT  ] = -m_dt * eflux * currentConnRate;
-
         stack.localEnergyFluxJacobian_dQ [TAG::NEXT   ][0] =  m_dt * eflux;
         stack.localEnergyFluxJacobian_dQ [TAG::CURRENT][0] =  -m_dt * eflux;
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
         {
-        stack.localEnergyFluxJacobian[TAG::NEXT      ][dof]  =  m_dt*currentConnRate;
-          stack.localEnergyFluxJacobian[TAG::CURRENT   ][dof]  =  -m_dt*currentConnRate;
+          stack.localEnergyFluxJacobian[TAG::NEXT      ][dof]  *=  m_dt*currentConnRate;
+          stack.localEnergyFluxJacobian[TAG::CURRENT   ][dof]  *=  -m_dt*currentConnRate;
         }
       }
     
