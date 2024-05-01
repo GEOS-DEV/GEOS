@@ -110,8 +110,14 @@ public:
                         real64 const dt,
                         DomainPartition & domain );
 
-
   virtual bool updateConfiguration( DomainPartition & domain ) override final;
+
+  bool useStaticCondensation() const { return m_useStaticCondensation; }
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+  };
 
 protected:
 
@@ -128,10 +134,6 @@ private:
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
-  };
 };
 
 
