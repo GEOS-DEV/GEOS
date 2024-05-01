@@ -64,7 +64,7 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v4.1.1
+      uses: actions/checkout@v4.1.4
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}

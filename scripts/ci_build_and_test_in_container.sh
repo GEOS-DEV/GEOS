@@ -239,6 +239,7 @@ if [[ "${TEST_DOCUMENTATION}" = true ]]; then
 fi
 
 # Performing the requested build.
+echo "Running Ninja with ${NPROC} cores."
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $NPROC geosx
 else
