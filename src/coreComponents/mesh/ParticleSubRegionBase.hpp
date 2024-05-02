@@ -210,7 +210,6 @@ public:
   arrayView2d< real64 > getParticleInitialMaterialDirection()
   { return m_particleInitialMaterialDirection; }
 
-
   /**
    * @brief Get the material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
@@ -528,7 +527,7 @@ public:
    * @brief Returns the local indices of all non-ghost particles
    * @return the local indices of all non-ghost particles
    */
-  SortedArrayView< localIndex const > const activeParticleIndices()
+  SortedArrayView< localIndex const > const activeParticleIndices() const
   {
     return m_activeParticleIndices.toView();
   }
@@ -537,7 +536,7 @@ public:
    * @brief Returns the local indices of all ghost particles
    * @return the local indices of all ghost particles
    */
-  SortedArrayView< localIndex const > const inactiveParticleIndices()
+  SortedArrayView< localIndex const > const inactiveParticleIndices() const
   {
     return m_inactiveParticleIndices.toView();
   }
@@ -599,8 +598,6 @@ protected:
 
   /// Member level field for the particle initial surface normal.
   array2d< real64 > m_particleInitialSurfaceNormal;
-
-  /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
 
   /// Member level field for the particle initial surface position.
@@ -618,6 +615,7 @@ protected:
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;
 
+  /// Indices of ghost particles
   SortedArray< localIndex > m_inactiveParticleIndices;
 
   /// Neighbor list

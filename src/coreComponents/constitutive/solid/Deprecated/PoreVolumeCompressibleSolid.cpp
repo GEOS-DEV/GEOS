@@ -76,8 +76,7 @@ void PoreVolumeCompressibleSolid::postProcessInput()
 {
   if( m_compressibility < 0.0 )
   {
-    string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
-    GEOS_ERROR( message );
+    GEOS_ERROR( getDataContext() << ": An invalid value of fluid bulk modulus (" << m_compressibility << ") is specified" );
   }
   m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 }

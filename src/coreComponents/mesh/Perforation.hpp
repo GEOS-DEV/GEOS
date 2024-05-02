@@ -32,7 +32,6 @@ namespace geos
 class Perforation : public dataRepository::Group
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -90,12 +89,17 @@ public:
    */
   real64 const & getDistanceFromWellHead() const { return m_distanceFromHead; }
 
-
   /**
    * @brief Get the well Peaceman index at the perforation.
    * @return the well transmissibility
    */
   real64 getWellTransmissibility() const { return m_wellTransmissibility; }
+
+  /**
+   * @brief Get the well skin factor at the perforation.
+   * @return the well skin factor
+   */
+  real64 getWellSkinFactor() const { return m_wellSkinFactor; }
 
   ///@}
 
@@ -106,31 +110,35 @@ public:
   struct viewKeyStruct
   {
     /// @return String key for the linear distance from well head
-    static constexpr char const * distanceFromHeadString() { return "distanceFromHead"; }
+    static constexpr char const *distanceFromHeadString() { return "distanceFromHead"; }
     /// @return String key for the well transmissibility at this perforation
-    static constexpr char const * wellTransmissibilityString() { return "transmissibility"; }
+    static constexpr char const *wellTransmissibilityString() { return "transmissibility"; }
+    /// @return String key for the well skin factor at this perforation
+    static constexpr char const *wellSkinFactorString() { return "skinFactor"; }
     /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString() };
+    dataRepository::ViewKey distanceFromHead = {distanceFromHeadString()};
     /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString() };
+    dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString()};
+    /// ViewKey for the well transmissibility at this perforation
+    dataRepository::ViewKey wellSkinFactor = { wellSkinFactorString() };
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
 
 protected:
-
   void postProcessInput() override;
 
 private:
-
   /// Linear distance from well head
   real64 m_distanceFromHead;
 
   /// Well transmissibility at this perforation
   real64 m_wellTransmissibility;
 
+  /// Well skin factor at this perforation
+  real64 m_wellSkinFactor;
 };
 
-} //namespace geos
+} // namespace geos
 
-#endif //GEOS_MESH_PERFORATION_HPP
+#endif // GEOS_MESH_PERFORATION_HPP

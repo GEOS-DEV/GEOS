@@ -38,7 +38,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( string const & name, G
 
   registerWrapper( viewKeyStruct::formulationString(), &m_formulation ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "default" ).
+    setApplyDefaultValue( Formulation::Default ).
     setDescription( "Specifier to indicate any specialized formuations. "
                     "For instance, one of the many enhanced assumed strain "
                     "methods of the Hexahedron parent shape would be indicated "
@@ -56,9 +56,8 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::postProcessInput()
 {
-//  GEOS_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
-  GEOS_ERROR_IF( m_formulation != "default" && m_formulation != "SEM", "Only standard element formulations and spectral element formulations are currently supported." );
-  GEOS_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
+  GEOS_ERROR_IF( m_useVem < 0 || m_useVem > 1,
+                 getDataContext() << ": The flag useVirtualElements can be either 0 or 1" );
 }
 
 std::unique_ptr< FiniteElementBase >
@@ -101,7 +100,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Wedge_VEM_Gauss1 >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
@@ -117,16 +116,16 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
-        else if( m_formulation == "SEM" )
+        else if( m_formulation == Formulation::SEM )
         {
 #if !defined( GEOS_USE_HIP )
           return std::make_unique< Q1_Hexahedron_Lagrange_GaussLobatto >();
 #else
-          GEOS_ERROR( "Cannot compile this on Crusher." );
+          GEOS_ERROR( "Cannot compile this with HIP active." );
           return nullptr;
 #endif
         }
@@ -168,7 +167,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 #endif
       default:
       {
-        GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have an associated element formulation." );
       }
     }
     return {};
@@ -180,15 +179,17 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_IF( m_formulation != "SEM",
-                       "Element type Hexahedron with order 2 available only when using the Spectral Element Method" );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 2 available" <<
+                       " only when using the Spectral Element Method" );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
-        GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
+                    " have an associated element formulation." );
       }
     }
     return {};
@@ -200,15 +201,17 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_IF( m_formulation != "SEM",
-                       "Element type Hexahedron with order 3 available only when using the Spectral Element Method" );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 3 available" <<
+                       " only when using the Spectral Element Method" );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
-        GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not" <<
+                    " have an associated element formulation." );
       }
     }
     return {};
@@ -220,15 +223,17 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_IF( m_formulation != "SEM",
-                       "Element type Hexahedron with order 4 available only when using the Spectral Element Method" );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 4 available only" <<
+                       " when using the Spectral Element Method" );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
-        GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
+                    " an associated element formulation." );
       }
     }
     return {};
@@ -240,20 +245,23 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_IF( m_formulation != "SEM",
-                       "Element type Hexahedron with order 5 available only when using the Spectral Element Method" );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 5 available only" <<
+                       " when using the Spectral Element Method" );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
 #else
-      GEOS_ERROR( "Cannot compile this on Crusher." );
+      GEOS_ERROR( "Cannot compile this with HIP active." );
 #endif
       default:
       {
-        GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+        GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have" <<
+                    " an associated element formulation." );
       }
     }
     return {};
   }
-  GEOS_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
+  GEOS_ERROR( getDataContext() << ": Element type " << parentElementShape << " does not have an" <<
+              " associated element formulation." );
   return {};
 }
 

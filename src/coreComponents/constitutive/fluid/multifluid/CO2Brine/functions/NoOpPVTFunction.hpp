@@ -38,17 +38,6 @@ public:
     : PVTFunctionBaseUpdate( componentMolarWeight )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const
-  {
-    GEOS_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
-  }
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -80,12 +69,13 @@ public:
   NoOpPVTFunction( string const & name,
                    string_array const & inputPara,
                    string_array const & componentNames,
-                   array1d< real64 > const & componentMolarWeight )
+                   array1d< real64 > const & componentMolarWeight,
+                   bool const printTable )
     : PVTFunctionBase( name,
                        componentNames,
                        componentMolarWeight )
   {
-    GEOS_UNUSED_VAR( inputPara );
+    GEOS_UNUSED_VAR( inputPara, printTable );
   }
 
   virtual ~NoOpPVTFunction() override = default;
@@ -93,6 +83,13 @@ public:
   static string catalogName() { return "NoOpPVTFunction"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
+
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  virtual void checkTablesParameters( real64 GEOS_UNUSED_PARAM( pressure ),
+                                      real64 GEOS_UNUSED_PARAM( temperature ) ) const override final
+  {}
 
   virtual PVTFunctionType functionType() const override
   {

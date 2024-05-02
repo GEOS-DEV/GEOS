@@ -402,7 +402,7 @@ Resolving Submodule Changes in Primary Branch PRs
 When you conduct work on a submodule during work on a primary GEOS
 branch with an open PR, the merging procedure requires that the submodule referenced
 by the GEOS PR branch be consistent with the submodule in the main branch of the project.
-This is checked and enforced via TravisCI.
+This is checked and enforced via our CI.
 
 Thus, in order to merge a PR that includes modifications to submodules, the various PRs for
 each repository should be staged and finalized, to the point they are all ready to be merged,

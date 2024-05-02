@@ -34,6 +34,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
   : CapillaryPressureBase( name, parent )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingCapPresTableNameString(), &m_wettingNonWettingCapPresTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Capillary pressure table [Pa] for the pair (wetting phase, non-wetting phase)\n"
                     "Note that this input is only used for two-phase flow.\n"
@@ -44,6 +45,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::wettingIntermediateCapPresTableNameString(), &m_wettingIntermediateCapPresTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Capillary pressure table [Pa] for the pair (wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
@@ -52,6 +54,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateCapPresTableNameString(), &m_nonWettingIntermediateCapPresTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Capillary pressure table [Pa] for the pair (non-wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"

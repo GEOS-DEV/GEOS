@@ -25,8 +25,9 @@
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
 #endif
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 
 namespace geos
 {
@@ -40,8 +41,10 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluidPVTPackage,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
@@ -57,8 +60,10 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluid,
+                               CompositionalMultiphaseFluidPVTPackage,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,

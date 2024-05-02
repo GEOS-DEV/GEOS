@@ -58,7 +58,8 @@ public:
                                                          real64 const & proppantPackVolumeFraction ) const
   {
     m_porosityUpdate.updateFromProppantVolumeFraction( k, q, proppantPackVolumeFraction );
-    m_permUpdate.updateFromApertureAndProppantVolumeFraction( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+    real64 const dHydraulicAperture_dNormalJump = 1.0;
+    m_permUpdate.updateFromApertureAndProppantVolumeFraction( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, proppantPackVolumeFraction );
   }
 
 private:

@@ -21,6 +21,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -37,6 +38,7 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid mechanics solver" );
 
@@ -61,7 +63,7 @@ void SolidMechanicsStateReset::postProcessInput()
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",
-                           getName(), m_solidSolverName ),
+                           getDataContext(), m_solidSolverName ),
                  InputError );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );

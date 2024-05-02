@@ -658,7 +658,7 @@ PresInitializationKernel::
 
 
   GEOS_THROW_IF( foundNegativePressure.get() == 1,
-                 "Invalid well initialization: negative pressure was found",
+                 wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
                  InputError );
 }
 

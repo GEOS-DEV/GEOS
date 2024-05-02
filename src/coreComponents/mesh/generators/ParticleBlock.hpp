@@ -20,6 +20,10 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/ParticleBlockABC.hpp"
 #include "mesh/ParticleType.hpp"
+#include "mesh/generators/ParticleBlockABC.hpp"
+#include "mesh/ParticleType.hpp"
+
+#include "dataRepository/Group.hpp"
 
 namespace geos
 {
@@ -144,6 +148,10 @@ public:
   array1d< int > getParticleSurfaceFlag() const override
   { return m_particleSurfaceFlag; }
 
+  /**
+   * @brief Set the list of particle surface flags in this subregion.
+   * @param particleSurfaceFlag The input list of surface flags.
+   */
   void setParticleSurfaceFlag( array1d< int > const particleSurfaceFlag )
   { m_particleSurfaceFlag = particleSurfaceFlag; }
 
@@ -162,7 +170,7 @@ public:
 
   /**
    * @brief Set the list of particle strength scale values in this subregion.
-   * @param particleDamage The input list of strength scale values
+   * @param particleStrengthScale The input list of strength scale values
    */
   void setParticleStrengthScale( array1d< real64 > const particleStrengthScale )
   { m_particleStrengthScale = particleStrengthScale; }

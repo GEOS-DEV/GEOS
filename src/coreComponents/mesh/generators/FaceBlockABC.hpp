@@ -103,7 +103,7 @@ public:
    * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
    * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
-  virtual array2d< localIndex > get2dElemToFaces() const = 0;
+  virtual ArrayOfArrays< localIndex > get2dElemToFaces() const = 0;
 
   /**
    * @brief Get the 3d elements that are aside each 2d element (geometrical surfaces in 3d) of the @p FaceBlockABC.
@@ -118,7 +118,22 @@ public:
    * For the same given 2d element, the 3d face at index 0 (or 1) in the @p get2dElemToFaces mapping
    * will be part of the boundary of the 3d element at the same index 0 (or 1) in the @p get2dElemToElems mapping.
    */
-  virtual ToCellRelation< array2d< localIndex > > get2dElemToElems() const = 0;
+  virtual ToCellRelation< ArrayOfArrays< localIndex > > get2dElemToElems() const = 0;
+
+  /**
+   * @brief Returns the collocated nodes for each node of each 2d element of the @p FaceBlockABC.
+   * @return The bucket of collocated nodes.
+   * Indices of the 2d elements (first dimension) local to the @p FaceBlockABC.
+   * The size of the first dimension is equal to @p num2dElements.
+   * The size of the second dimension is the number of nodes in the 2d element (e.g. 3 for a triangle).
+   *
+   * @details Each node of the @p FaceBlockABC is pointing to other nodes which are collocated.
+   * Those other nodes are meant to be nodes of neighboring 3d cells.
+   * All the collocated nodes of each node of each 2d element of the @p FaceBlockABC are gathered in the same bucket.
+   * @warning There is no guarantee that the nodes for each 2d element are provided any order.
+   * As well, there is no guarantee that buckets of collocated nodes are provided in any order.
+   */
+  virtual ArrayOfArrays< array1d< globalIndex > > get2dElemsToCollocatedNodesBuckets() const = 0;
 
   /**
    * @brief Get @e one 3d edge equivalent for each 2d faces (geometrical edges in 3d).
@@ -148,6 +163,12 @@ public:
    * 2d face and 2d element numberings are both local to the @p FaceBlockABC.
    */
   virtual ArrayOfArrays< localIndex > get2dFaceTo2dElems() const = 0;
+
+  /**
+   * @brief Get local to global map for the 2d elements.
+   * @return The mapping relationship as an array.
+   */
+  virtual array1d< globalIndex > localToGlobalMap() const = 0;
 };
 
 }

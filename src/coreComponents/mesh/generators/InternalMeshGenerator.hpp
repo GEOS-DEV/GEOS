@@ -21,11 +21,12 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
 
-class SpatialPartition;
 
 /**
  * @class InternalMeshGenerator
@@ -50,7 +51,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  virtual void generateMesh( DomainPartition & domain ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,
@@ -159,6 +159,7 @@ protected:
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
     constexpr static char const * meshTypeString() { return "meshType"; }
     constexpr static char const * positionToleranceString() { return "positionTolerance"; }
+    constexpr static char const * periodicString() { return "periodic"; }
   };
   /// @endcond
 
@@ -209,6 +210,9 @@ private:
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
+
+  // Array of periodic flags for each direction
+  array1d< int > m_periodic;
 
   /**
    * @brief Member variable for triangle pattern seletion.
@@ -263,13 +267,15 @@ private:
 
 
 
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+
   /**
    * @brief Convert ndim node spatialized index to node global index.
    * @param[in] node ndim spatialized array index
    */
   inline globalIndex nodeGlobalIndex( int const index[3] )
   {
-    return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
+    return index[0] + index[1]*(m_numElemsTotal[0]+1) + index[2]*(m_numElemsTotal[0]+1)*(m_numElemsTotal[1]+1);
   }
 
   /**
@@ -278,7 +284,7 @@ private:
    */
   inline globalIndex elemGlobalIndex( int const index[3] )
   {
-    return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
+    return index[0] + index[1]*m_numElemsTotal[0] + index[2]*m_numElemsTotal[0]*m_numElemsTotal[1];
   }
 
   /**
@@ -343,7 +349,11 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
-            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
+            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
+                           getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
+                                                  i == 1 ? viewKeyStruct::yBiasString() :
+                                                  viewKeyStruct::zBiasString() ) <<
+                           ", block index = " << block << " : Mesh bias must between -1 and 1!" );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];

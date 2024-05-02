@@ -74,7 +74,7 @@ public:
    */
   explicit Wrapper( string const & name,
                     Group & parent ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( true ),
     m_isClone( false ),
     m_data( new T() ),
@@ -97,7 +97,7 @@ public:
   explicit Wrapper( string const & name,
                     Group & parent,
                     std::unique_ptr< T > object ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( true ),
     m_isClone( false ),
     m_data( object.release() ),
@@ -120,7 +120,7 @@ public:
   explicit Wrapper( string const & name,
                     Group & parent,
                     T * object ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( false ),
     m_isClone( false ),
     m_data( object ),
@@ -563,8 +563,8 @@ public:
   { return wrapperHelpers::move( *m_data, space, touch ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual string typeRegex() const override
-  { return TypeRegex< T >::get(); }
+  virtual Regex const & getTypeRegex() const override
+  { return rtTypes::getTypeRegex< T >( m_rtTypeName ); }
 
   ///@}
 
@@ -710,31 +710,45 @@ public:
     return ss.str();
   }
 
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
     {
-      if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+      try
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     inputFlag == InputFlags::REQUIRED );
-        GEOS_THROW_IF( !m_successfulReadFromInput,
-                       GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
-                                 "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
-                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                 targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
-                       InputError );
+        if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       rtTypes::getTypeRegex< T >( getRTTypeName() ),
+                                                                       targetNode,
+                                                                       inputFlag == InputFlags::REQUIRED );
+          GEOS_THROW_IF( !m_successfulReadFromInput,
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'."
+                                   "Available options are:\n {}\n For more details, please refer to documentation at:\n"
+                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                   targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
+                                   getName(), dumpInputOptions( true ) ),
+                         InputError );
+        }
+        else
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       rtTypes::getTypeRegex< T >( getRTTypeName() ),
+                                                                       targetNode,
+                                                                       getDefaultValueStruct() );
+        }
       }
-      else
+      catch( std::exception const & ex )
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     getDefaultValueStruct() );
+        xmlWrapper::processInputException( ex, getName(), targetNode, nodePos );
       }
+
+      if( m_successfulReadFromInput )
+        createDataContext( targetNode, nodePos );
 
       return true;
     }
@@ -885,6 +899,15 @@ public:
   Wrapper< T > & setRegisteringObjects( string const & objectName )
   {
     WrapperBase::setRegisteringObjects( objectName );
+    return *this;
+  }
+
+  /**
+   * @copydoc WrapperBase::setRTTypeName(string_view)
+   */
+  Wrapper< T > & setRTTypeName( string_view rtTypeName )
+  {
+    WrapperBase::setRTTypeName( rtTypeName );
     return *this;
   }
 

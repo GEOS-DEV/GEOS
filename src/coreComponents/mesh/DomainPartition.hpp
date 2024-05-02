@@ -30,18 +30,17 @@ namespace geos
 {
 
 class SiloFile;
-namespace dataRepository
-{
+// namespace dataRepository
+// {
 // namespace keys
 // {
 // /// @return PartitionManager string key
 // string const partitionManager( "partitionManager" );
 // }
-}
+// }
 
 class ObjectManagerBase;
 class PartitionBase;
-class SpatialPartition;
 
 /**
  * @brief Partition of the decomposed physical domain. It also manages the connexion information to its neighbors.
@@ -136,8 +135,8 @@ public:
     dataRepository::GroupKey constitutiveManager = { constitutiveManagerString() };
     /// View key to the Group holding the CommunicationManager
     dataRepository::GroupKey communicationManager = { "communicationManager" };
-    /// View key to the Group holding the SpatialPartition
-    dataRepository::GroupKey spatialPartition = { "SpatialPartition" };
+    /// View key to the Group holding the partitionManager
+    dataRepository::GroupKey partitionManager = { "partitionManager" };
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;
@@ -256,21 +255,6 @@ public:
     getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
-
-  /**
-   * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > & getMetisNeighborList()
-  { return m_metisNeighborList; }
-
-  /**
-   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > const & getMetisNeighborList() const
-  { return m_metisNeighborList; }
-
   /**
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
@@ -285,26 +269,12 @@ public:
   std::vector< NeighborCommunicator > const & getNeighbors() const
   { return m_neighbors; };
 
-  SpatialPartition & getPartition() //CC: Maybe it should be const
-  {
-    return *m_spatialPartition;
-  }
-
 private:
 
   /**
-   * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
-   */
-  std::set< int > m_metisNeighborList;
-  /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
-  std::vector< NeighborCommunicator > m_neighbors;
-  /**
-   * @brief Spatial partition
-   */
-   SpatialPartition * m_spatialPartition;
-  
+  std::vector< NeighborCommunicator > m_neighbors; 
 
 };
 

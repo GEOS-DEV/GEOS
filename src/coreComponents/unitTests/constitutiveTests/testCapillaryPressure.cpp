@@ -170,8 +170,8 @@ CapillaryPressureBase & makeTableCapPressureTwoPhase( string const & name, Group
   values[5] = 3204.28;
 
   TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_pc" ) );
-  table_w.setTableCoordinates( coordinates );
-  table_w.setTableValues( values );
+  table_w.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_w.setTableValues( values, units::Pressure );
   table_w.reInitializeFunction();
 
   table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -223,8 +223,8 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   values_w[5] = 3294.76;
 
   TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_ow_pc" ) );
-  table_ow_w.setTableCoordinates( coordinates_w );
-  table_ow_w.setTableValues( values_w );
+  table_ow_w.setTableCoordinates( coordinates_w, { units::Dimensionless } );
+  table_ow_w.setTableValues( values_w, units::Pressure );
   table_ow_w.reInitializeFunction();
 
   table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -250,8 +250,8 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   values_g[5] = 26889.6;
 
   TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_og_pc" ) );
-  table_og_g.setTableCoordinates( coordinates_g );
-  table_og_g.setTableValues( values_g );
+  table_og_g.setTableCoordinates( coordinates_g, { units::Dimensionless } );
+  table_og_g.setTableValues( values_g, units::Pressure );
   table_og_g.reInitializeFunction();
 
   table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -314,8 +314,8 @@ CapillaryPressureBase & makeJFunctionCapPressureTwoPhase( string const & name, G
 
 
   TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_jFunction" ) );
-  table_w.setTableCoordinates( coordinates );
-  table_w.setTableValues( values );
+  table_w.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_w.setTableValues( values, units::Dimensionless );
   table_w.reInitializeFunction();
 
   table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -375,8 +375,8 @@ CapillaryPressureBase & makeJFunctionCapPressureThreePhase( string const & name,
   values_w[5] = 0.00603;
 
   TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_ow_jFunction" ) );
-  table_ow_w.setTableCoordinates( coordinates_w );
-  table_ow_w.setTableValues( values_w );
+  table_ow_w.setTableCoordinates( coordinates_w, { units::Dimensionless } );
+  table_ow_w.setTableValues( values_w, units::Dimensionless );
   table_ow_w.reInitializeFunction();
 
   table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -402,8 +402,8 @@ CapillaryPressureBase & makeJFunctionCapPressureThreePhase( string const & name,
   values_g[5] = 0.27203;
 
   TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_og_jFunction" ) );
-  table_og_g.setTableCoordinates( coordinates_g );
-  table_og_g.setTableValues( values_g );
+  table_og_g.setTableCoordinates( coordinates_g, { units::Dimensionless } );
+  table_og_g.setTableValues( values_g, units::Dimensionless );
   table_og_g.reInitializeFunction();
 
   table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );

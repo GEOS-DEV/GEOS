@@ -26,8 +26,6 @@ namespace geos
 {
 using namespace constitutive;
 
-class SolidMechanicsLagrangianFEM;
-
 class SolidMechanicsEmbeddedFractures : public ContactSolverBase
 {
 public:
@@ -44,6 +42,10 @@ public:
   {
     return "SolidMechanicsEmbeddedFractures";
   }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -56,11 +58,6 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
-
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
@@ -84,6 +81,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
@@ -108,8 +106,14 @@ public:
                         real64 const dt,
                         DomainPartition & domain );
 
-
   virtual bool updateConfiguration( DomainPartition & domain ) override final;
+
+  bool useStaticCondensation() const { return m_useStaticCondensation; }
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+  };
 
 protected:
 
@@ -120,15 +124,12 @@ protected:
 private:
 
   void updateJump( DofManager const & dofManager,
+                   real64 const dt,
                    DomainPartition & domain );
 
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
-  };
 };
 
 

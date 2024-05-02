@@ -72,6 +72,22 @@ DECLARE_FIELD( gravityCoefficient,
                WRITE_AND_READ,
                "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
+
 }
 
 }

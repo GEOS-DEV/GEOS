@@ -37,11 +37,13 @@ void testKernelDriver()
   array1d< real64 > arrDetJ( numQuadraturePoints );
   array2d< real64 > arrN( numQuadraturePoints, numNodes );
   array3d< real64 > arrdNdX( numQuadraturePoints, numNodes, 3 );
+  array3d< real64 > arrdNdXcheck( numQuadraturePoints, numNodes, 3 );
   array2d< real64 > Ntestarray( numQuadraturePoints, numNodes );
 
   arrayView1d< real64 > const & viewDetJ = arrDetJ;
   arrayView2d< real64 > const & viewN = arrN;
   arrayView3d< real64 > const & viewdNdX = arrdNdX;
+  arrayView3d< real64 > const & viewdNdXcheck = arrdNdXcheck;
   arrayView2d< real64 > const & Ntest = Ntestarray;
 
   forAll< POLICY >( 1,
@@ -80,7 +82,8 @@ void testKernelDriver()
   } );
 
 
-  real64 xCoords[numNodes][3];
+  array2d< real64 > xCoordsData( numNodes, 3 );
+  arrayView2d< real64 > const & xCoords = xCoordsData;
   xCoords[0][0]=-1.0;
   xCoords[1][0]=-sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
   xCoords[2][0]=-sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
@@ -189,13 +192,27 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
+    real64 xLocal[numNodes][3];
+
+    for( localIndex a=0; a< numNodes; ++a )
+    {
+      for( localIndex i=0; i<3; ++i )
+      {
+        xLocal[a][i] = xCoords[a][i];
+      }
+    }
+
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
 
       real64 dNdX[numNodes][3] = {{0}};
-
+      real64 dNdXcheck[numNodes][3] = {{0}};
+      // check the explicit calculation of gradient values
+      viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( xLocal[ q ],
+                                                                    xLocal,
+                                                                    dNdXcheck );
       viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
-                                                                    xCoords,
+                                                                    xLocal,
                                                                     dNdX );
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -212,6 +229,20 @@ void testKernelDriver()
           }
         }
       }
+      for( localIndex a=0; a<numNodes; ++a )
+      {
+        for( int i = 0; i < 3; ++i )
+        {
+          if( fabs( dNdXcheck[a][i] )<1e-9 )
+          {
+            viewdNdXcheck( q, a, i ) = 0;
+          }
+          else
+          {
+            viewdNdXcheck( q, a, i ) = dNdXcheck[a][i];
+          }
+        }
+      }
     }
   } );
 
@@ -223,6 +254,10 @@ void testKernelDriver()
     {
       for( localIndex a=0; a<numNodes; ++a )
       {
+        for( int i = 0; i < 3; ++i )
+        {
+          EXPECT_NEAR( viewdNdXcheck( q, a, i ), viewdNdX( q, a, i ), 1e-9 );
+        }
         EXPECT_FLOAT_EQ( gradNxtest[a][q], viewdNdX( q, a, 0 ) );
         EXPECT_FLOAT_EQ( gradNytest[a][q], viewdNdX( q, a, 1 ) );
         EXPECT_FLOAT_EQ( gradNztest[a][q], viewdNdX( q, a, 2 ) );

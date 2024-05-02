@@ -29,8 +29,8 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
-
 #include "events/mpmEvents/MPMEventManager.hpp"
+
 
 namespace geos
 {
@@ -46,6 +46,7 @@ class SpatialPartition;
 class SolidMechanicsMPM : public SolverBase
 {
 public:
+
   /**
    * @enum TimeIntegrationOption
    *
@@ -181,6 +182,11 @@ public:
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
+
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -731,6 +737,7 @@ protected:
   int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
   InterpolationOption m_fTableInterpType;
+
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
@@ -794,6 +801,7 @@ protected:
   int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
+
   real64 m_thinFeatureDFGThreshold;
 
   int m_useDamageAsSurfaceFlag;
@@ -831,6 +839,7 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
+
   int m_useSurfacePositionForContact;
   ContactNormalTypeOption m_contactNormalType;
   ContactGapCorrectionOption m_contactGapCorrection;

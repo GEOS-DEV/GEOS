@@ -46,10 +46,13 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&gravityVector)[3],
                                 string const inputFlowDofKey,
                                 localIndex const numComponents,
                                 localIndex const numPhases,
+                                integer const useTotalMassEquation,
+                                integer const performStressInitialization,
                                 string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -62,10 +65,14 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
         rankOffset,
         inputMatrix,
         inputRhs,
+        inputDt,
         gravityVector,
         inputFlowDofKey,
         numComponents,
         numPhases,
+        false, // do not use simple accumulation form
+        useTotalMassEquation,
+        performStressInitialization,
         fluidModelKey ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
@@ -119,13 +126,12 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dPressure = 0.0;
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
-  real64 timeIncrement = 0.0;
 
   // Step 1: call the constitutive model to update the total stress, the porosity and their derivatives
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
-                                                       m_pressure_n[k],
+                                                       m_dt,
                                                        m_pressure[k],
-                                                       timeIncrement,
+                                                       m_pressure_n[k],
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
@@ -133,6 +139,7 @@ smallStrainUpdate( localIndex const k,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
                                                        stack.stiffness,
+                                                       m_performStressInitialization,
                                                        porosity,
                                                        porosity_n,
                                                        dPorosity_dVolStrain,
@@ -541,9 +548,12 @@ complete( localIndex const k,
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
-  // Apply equation/variable change transformation(s)
-  real64 work[maxNumComponents + 1]{};
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dTemperature, work );
+  if( m_useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[maxNumComponents + 1]{};
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dTemperature, work );
+  }
 
   // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix
 

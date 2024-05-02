@@ -18,11 +18,8 @@
 
 #include "ParticleMeshGenerator.hpp"
 
-#include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "ParticleBlockManager.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -66,35 +63,18 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
   return nullptr;
 }
 
-/**
- * @param partition
- * @param domain
- */
-void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
+
+void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
 {
   GEOS_MARK_FUNCTION;
 
-  MeshBody & meshBody = domain.getMeshBody( this->getName() );
-  //GEOS_LOG_RANK( "Generating mesh for " + meshBody.getName() );
-  MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
-  ParticleManager & particleManager = meshLevel0.getParticleManager();
-
-  ParticleBlockManager & particleBlockManager = meshBody.registerGroup< ParticleBlockManager >( keys::particleManager );
-
-  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
-
   // This should probably handled elsewhere:
   int aa = 0;
-
   for( auto & particleBlockName : m_blockNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( particleBlockName );
     particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
   }
-
-  //GEOS_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
-  //GEOS_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
   int numMaterials, numParticleTypes;
   map< std::string, std::vector< std::vector< double > > > particleData;
@@ -116,8 +96,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   iss1 >> numMaterials >> numParticleTypes;
   particleTypes.resize( numParticleTypes );
 
-  //GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
-  //GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
+  // GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
+  // GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
 
   // Read in the material key
   for( int i=0; i<numMaterials; i++ )
@@ -128,7 +108,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int value; // Material ID
     iss2 >> key >> value;
     materialMap[key] = value;
-    //GEOS_LOG_RANK_0( "Material name/ID: " + key + "/" << value );
+    // GEOS_LOG_RANK_0( "Material name/ID: " + key + "/" << value );
   }
 
   // Read in the particle type key
@@ -194,7 +174,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 30; c++)
+      for(int c = 0; c < 33; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
@@ -238,7 +218,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       }
 
       particleData[particleTypes[i]].push_back( lineDataInside );
-
     }
   }
 
@@ -272,6 +251,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       materialID = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialType )]; // The particle file is configured such that the 11th column has the material ID
       if( materialID == blockMaterialMap[particleBlock.getName()] )
       {
+        // GEOS_LOG_RANK("npInBlock: " << npInBlock << " i: " << i);
         npInBlock++;
         indexMap[particleBlockName].push_back( i );
       }
@@ -310,7 +290,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleVelocity[index][0] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityX )];
       particleVelocity[index][1] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityY )];
       particleVelocity[index][2] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::VelocityZ )];
-
+  
       // Material (set above) is [10]
 
       // Group
@@ -329,6 +309,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       if( particleType == "SinglePoint" )
       {
         particleVolume[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
+
         double a = std::pow( particleVolume[index], 1.0/3.0 );
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -425,7 +406,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total
                                           // number of particles
-  //GEOS_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
+  GEOS_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 
 void ParticleMeshGenerator::postProcessInput()

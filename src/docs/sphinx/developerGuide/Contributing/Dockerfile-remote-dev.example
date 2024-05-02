@@ -17,9 +17,9 @@ RUN ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata
 
 # You will need cmake to build GEOSX.
-ARG CMAKE_VERSION=3.16.8
+ARG CMAKE_VERSION=3.23.3
 RUN apt-get install -y --no-install-recommends curl ca-certificates && \
-    curl -fsSL https://cmake.org/files/v${CMAKE_VERSION%.[0-9]*}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz | tar --directory=/usr/local --strip-components=1 -xzf - && \
+    curl -fsSL https://cmake.org/files/v${CMAKE_VERSION%.[0-9]*}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz | tar --directory=/usr/local --strip-components=1 -xzf - && \
     apt-get purge --auto-remove -y curl ca-certificates
 RUN apt-get autoremove -y
 
@@ -33,7 +33,7 @@ RUN echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config
 RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
 RUN mkdir -p -m 700 /root/.ssh
 # Put your own public key here!
-RUN echo "ssh-rsa [#a public ssh key]" > /root/.ssh/authorized_keys
+RUN echo "ssh-rsa AAAAB... your public ssh key here ...EinP5Q== somebody@somewhere.org" > /root/.ssh/authorized_keys
 
 # Some important variables are provided through the environment.
 # You need to explicitly tell sshd to forward them.

@@ -32,6 +32,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_io( )
 {
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "A list of collectors from which to collect and output time history information." );
 
@@ -124,9 +125,17 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   for( auto collectorPath : m_collectorPaths )
   {
-    HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collectorPath );
-    collector.initializePostSubGroups();
-    initCollectorParallel( domain, collector );
+    try
+    {
+      HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collectorPath );
+      collector.initializePostSubGroups();
+      initCollectorParallel( domain, collector );
+    }
+    catch( std::exception const & e )
+    {
+      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                     getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) ) );
+    }
   }
 }
 

@@ -80,6 +80,10 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName() { return "SinglePhaseWell"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -98,7 +102,7 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
@@ -107,6 +111,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void
@@ -171,8 +176,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleFluxTerms( real64 const time_n,
-                          real64 const dt,
+  void assembleFluxTerms( real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -252,6 +256,10 @@ public:
 protected:
 
   virtual void initializePostSubGroups() override;
+
+  void printRates( real64 const & time_n,
+                   real64 const & dt,
+                   DomainPartition & domain ) override;
 
 private:
 

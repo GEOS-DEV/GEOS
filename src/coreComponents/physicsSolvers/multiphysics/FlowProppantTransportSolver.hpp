@@ -61,6 +61,10 @@ public:
    * @return string that contains the catalog name to generate a new FlowProppantTransportSolver object through the object catalog.
    */
   static string catalogName() { return "FlowProppantTransport"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the proppant transport solver

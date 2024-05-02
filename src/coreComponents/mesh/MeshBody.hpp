@@ -20,7 +20,7 @@
 #define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-
+#include "dataRepository/KeyNames.hpp"
 
 namespace geos
 {
@@ -180,6 +180,23 @@ public:
    * @param hasParticles Boolean indicating whether the meshbody has particles
    */
   void setHasParticles( bool hasParticles );
+
+  /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
+  CellBlockManagerABC const & getCellBlockManager() const
+  {
+    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterCellBlockManager()
+  {
+    this->deregisterGroup( dataRepository::keys::cellManager );
+  }
 
   /**
    * @brief Data repository keys

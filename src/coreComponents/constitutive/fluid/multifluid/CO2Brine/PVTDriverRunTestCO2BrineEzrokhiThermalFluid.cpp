@@ -17,5 +17,5 @@
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiFluid >( constitutive::CO2BrineEzrokhiFluid &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CO2BrineEzrokhiThermalFluid >( constitutive::CO2BrineEzrokhiThermalFluid &, arrayView2d< real64 > const & );
 }

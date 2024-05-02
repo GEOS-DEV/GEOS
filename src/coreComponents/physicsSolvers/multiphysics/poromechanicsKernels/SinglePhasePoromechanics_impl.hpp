@@ -47,8 +47,10 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
+                          real64 const inputDt,
                           real64 const (&gravityVector)[3],
                           string const inputFlowDofKey,
+                          integer const performStressInitialization,
                           string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -61,12 +63,14 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
         rankOffset,
         inputMatrix,
         inputRhs,
+        inputDt,
         gravityVector,
         inputFlowDofKey,
         fluidModelKey ),
   m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
   m_fluidDensity_n( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density_n() ),
-  m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() )
+  m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
+  m_performStressInitialization( performStressInitialization )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -85,13 +89,12 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dPressure = 0.0;
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
-  real64 timeIncrement = 0.0;
 
   // Step 1: call the constitutive model to evaluate the total stress and compute porosity
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
-                                                       m_pressure_n[k],
+                                                       m_dt,
                                                        m_pressure[k],
-                                                       timeIncrement,
+                                                       m_pressure_n[k],
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
@@ -99,6 +102,7 @@ smallStrainUpdate( localIndex const k,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
                                                        stack.stiffness,
+                                                       m_performStressInitialization,
                                                        porosity,
                                                        porosity_n,
                                                        dPorosity_dVolStrain,

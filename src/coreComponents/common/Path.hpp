@@ -83,14 +83,23 @@ public:
   {}
 
   /**
+   * @brief Set the path prefix of the file
+   * @details The path prefix is usually a folder path in which the XML file is located
+   * @param p Path prefix to be set.
+   */
+  static void setPathPrefix( std::string_view p )
+  {
+    pathPrefix() = p;
+  }
+
+  /**
    * @brief Get the path prefix of the file
    * @details The path prefix is usually a folder path in which the XML file is located
    * @return the path prefix
    */
-  static std::string & pathPrefix()
+  static std::string_view getPathPrefix()
   {
-    static std::string s_pathPrefix;
-    return s_pathPrefix;
+    return pathPrefix();
   }
 
   /**
@@ -111,6 +120,18 @@ public:
     size_type const pos = fname.find_last_of( '.' );
     return pos == npos ? "" : fname.substr( pos + 1 );
   }
+
+private:
+
+  /**
+   * @brief @return the reference of global variable of the path prefix
+   */
+  static std::string & pathPrefix()
+  {
+    static std::string s_pathPrefix = "";
+    return s_pathPrefix;
+  }
+
 };
 
 /*!

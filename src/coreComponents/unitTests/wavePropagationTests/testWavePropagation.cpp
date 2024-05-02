@@ -124,8 +124,15 @@ char const * xmlInput =
         name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumVelocity"
+        fieldName="acousticVelocity"
         scale="1500"
+        setNames="{ all }"/>
+      <FieldSpecification
+        name="cellDensity"
+        initialCondition="1"
+        objectPath="ElementRegions/Region/cb"
+        fieldName="acousticDensity"
+        scale="1"
         setNames="{ all }"/>
       <FieldSpecification
         name="zposFreeSurface"
@@ -200,13 +207,13 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   pReceivers.move( hostMemorySpace, false );
 
   // check number of seismos and trace length
-  ASSERT_EQ( pReceivers.size( 1 ), 9 );
+  ASSERT_EQ( pReceivers.size( 1 ), 10 );
   ASSERT_EQ( pReceivers.size( 0 ), 11 );
 
   // check seismo content. The pressure values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
-  for( int i=0; i<11; i++ )
+  for( int i = 0; i < 11; i++ )
   {
     if( i > 0 )
     {
@@ -217,17 +224,17 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     {
       avg += pReceivers[i][r];
     }
-    avg /=8.0;
+    avg /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
   }
   // run adjoint solver
-  for( int i=0; i<10; i++ )
+  for( int i = 0; i < 10; i++ )
   {
     propagator->explicitStepBackward( time_n, dt, i, domain, false );
     time_n += dt;
   }
   // check again the seismo content.
-  for( int i=0; i<11; i++ )
+  for( int i = 0; i < 11; i++ )
   {
     if( i > 0 )
     {
@@ -238,7 +245,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
     {
       avg += pReceivers[i][r];
     }
-    avg /=8.0;
+    avg /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avg ) < 0.00001 );
   }
 }
