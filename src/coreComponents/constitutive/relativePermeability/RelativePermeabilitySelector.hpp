@@ -22,9 +22,11 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/BrooksCoreyStone2RelativePermeability.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeability.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 #include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/VanGenuchtenStone2RelativePermeability.hpp"
 
 namespace geos
 {
@@ -46,9 +48,11 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
 {
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
+                               BrooksCoreyStone2RelativePermeability,
                                TableRelativePermeability,
                                TableRelativePermeabilityHysteresis,
-                               VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenBakerRelativePermeability,
+                               VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -57,9 +61,11 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
 {
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
+                               BrooksCoreyStone2RelativePermeability,
                                TableRelativePermeability,
                                TableRelativePermeabilityHysteresis,
-                               VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
+                               VanGenuchtenBakerRelativePermeability,
+                               VanGenuchtenStone2RelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 #undef PASSTHROUGH_HANDLE_CASE

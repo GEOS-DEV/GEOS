@@ -50,9 +50,8 @@ blt_add_library( NAME       finiteElement
 
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX finiteElement )
 
-if( GEOSX_ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 

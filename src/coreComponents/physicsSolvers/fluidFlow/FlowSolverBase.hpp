@@ -63,8 +63,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  localIndex numDofPerCell() const { return m_numDofPerCell; }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
@@ -73,12 +71,39 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
+    static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
   };
+
+  /**
+   * @brief Prepare the stencil weights by removing the contribution of the hydraulic aperture before
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void prepareStencilWeights( DomainPartition & domain ) const;
+
+  /**
+   * @brief Update the stencil weights by adding the contribution of the hydraulic aperture after
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void updateStencilWeights( DomainPartition & domain ) const;
+
+  void enableFixedStressPoromechanicsUpdate();
+
+  void enableJumpStabilization();
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
+  /**
+   * @brief Utility function to save the iteration state (useful for sequential simulations)
+   * @param[in] domain the domain partition
+   */
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -106,6 +131,14 @@ public:
                                            std::map< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
+  integer & isThermal() { return m_isThermal; }
+
+  /**
+   * @brief Function to activate the flag allowing negative pressure
+   */
+  void allowNegativePressure() { m_allowNegativePressure = 1; }
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
 
@@ -148,6 +181,26 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
+
+  /// enable the fixed stress poromechanics update of porosity
+  bool m_isFixedStressPoromechanicsUpdate;
+
+  /// enable pressure jump stabilzation for fixed-stress poromechanics
+  bool m_isJumpStabilized;
+
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
+
+  /// maximum (absolute) pressure change in a Newton iteration
+  real64 m_maxAbsolutePresChange;
+
+  /// maximum (absolute) pressure change in a sequential iteration
+  real64 m_sequentialPresChange;
+  real64 m_maxSequentialPresChange;
+
+  /// maximum (absolute) temperature change in a sequential iteration
+  real64 m_sequentialTempChange;
+  real64 m_maxSequentialTempChange;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

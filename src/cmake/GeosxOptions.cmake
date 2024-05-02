@@ -4,9 +4,8 @@ message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
 message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
-option( GEOSX_ENABLE_FPE "" ON )
-
-option( ENABLE_CALIPER "" OFF )
+option( GEOS_ENABLE_TESTS "" ON )
+option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
@@ -113,20 +112,20 @@ endif()
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
-if( NOT BLT_CXX_STD STREQUAL c++14 )
-    MESSAGE( FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14" )
-endif( NOT BLT_CXX_STD STREQUAL c++14 )
+if( NOT BLT_CXX_STD STREQUAL c++17 )
+    MESSAGE( FATAL_ERROR "c++17 is NOT enabled. GEOSX requires c++17" )
+endif( NOT BLT_CXX_STD STREQUAL c++17 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                 GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
-                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
+                                 GNU   "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
+                                 CLANG "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
-                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable -Wno-dangling-reference"
                                  CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                )
 
@@ -148,14 +147,6 @@ endif()
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
-
-#set(CMAKE_CUDA_STANDARD 14 CACHE STRING "" FORCE)
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELEASE
-#                                 DEFAULT "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_RELWITHDEBINFO
-#                                 DEFAULT "-lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" )
-#blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CUDA_FLAGS_DEBUG
-#                                 DEFAULT "-G -O0 -Xcompiler -O0" )
 
 
 if( CMAKE_HOST_APPLE )

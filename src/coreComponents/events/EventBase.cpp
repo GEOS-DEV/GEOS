@@ -56,6 +56,7 @@ EventBase::EventBase( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::eventTargetString(), &m_eventTarget ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the object to be executed when the event criteria are met." );
 
@@ -144,7 +145,15 @@ void EventBase::getTargetReferences()
 {
   if( !m_eventTarget.empty())
   {
-    m_target = &this->getGroupByPath< ExecutableGroup >( m_eventTarget );
+    try
+    {
+      m_target = &this->getGroupByPath< ExecutableGroup >( m_eventTarget );
+    }
+    catch( std::exception const & e )
+    {
+      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) ) );
+    }
   }
 
   this->forSubGroups< EventBase >( []( EventBase & subEvent )

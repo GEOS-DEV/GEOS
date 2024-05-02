@@ -24,4 +24,3 @@ blt_add_library( NAME       schema
 
 target_include_directories( schema PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX schema )

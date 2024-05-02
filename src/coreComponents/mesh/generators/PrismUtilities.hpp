@@ -39,10 +39,11 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
 {
   static_assert( N > 4,
                  "Function getFaceNodePrism can be called for a prism with N-sided polygon base where N > 5." );
+  static constexpr auto nodeCountError = "Not enough nodes for {} element (face index = {}).\n";
 
   if( faceNum == 0 )
   {
-    GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+    GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[1];
     faceNodes[2] = elemNodes[N+1];
@@ -51,7 +52,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else if( faceNum == 1 )
   {
-    GEOS_ERROR_IF_LT( faceNodes.size(), N );
+    GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
     for( localIndex i = 1; i <  N; ++i )
     {
@@ -61,7 +62,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else if( faceNum == 2 )
   {
-    GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+    GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[N];
     faceNodes[2] = elemNodes[N*2-1];
@@ -70,7 +71,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else if( faceNum >= 3 && faceNum <= N )
   {
-    GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+    GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[faceNum-2];
     faceNodes[1] = elemNodes[faceNum-1];
     faceNodes[2] = elemNodes[N+faceNum-1];
@@ -79,7 +80,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else if( faceNum == N + 1 )
   {
-    GEOS_ERROR_IF_LT( faceNodes.size(), N );
+    GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     for( localIndex i = 0; i <  N; ++i )
     {
       faceNodes[i] = elemNodes[i+N];
@@ -88,7 +89,8 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "Invalid local face index for element of type Prism{}: {}", N, faceNum ) );
+    GEOS_ERROR( GEOS_FMT( "Local face index out of range for Prism{} element: face index = {}.\n{}",
+                          N, faceNum, generalMeshErrorAdvice ) );
     return 0;
   }
 

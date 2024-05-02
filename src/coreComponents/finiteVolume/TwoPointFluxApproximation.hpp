@@ -73,8 +73,7 @@ private:
   virtual void registerFractureStencil( Group & stencilGroup ) const override;
 
   virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
-                                     bool const initFields ) const override;
+                                     string const & faceElementRegionName ) const override;
 
   virtual void registerBoundaryStencil( Group & stencilGroup,
                                         string const & setName ) const override;

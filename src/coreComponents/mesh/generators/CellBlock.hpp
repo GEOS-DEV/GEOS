@@ -16,8 +16,6 @@
 #define GEOS_MESH_CELLBLOCK_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/ElementType.hpp"
 
@@ -249,9 +247,9 @@ private:
   /// Type of element in this block.
   ElementType m_elementType;
 
-  std::list< dataRepository::WrapperBase * > getExternalProperties() override
+  std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
   {
-    std::list< dataRepository::WrapperBase * > result;
+    std::list< dataRepository::WrapperBase const * > result;
     for( string const & externalPropertyName : m_externalPropertyNames )
     {
       result.push_back( &this->getWrapperBase( externalPropertyName ) );

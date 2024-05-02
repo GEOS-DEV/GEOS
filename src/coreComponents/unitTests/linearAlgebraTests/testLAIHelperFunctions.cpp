@@ -79,7 +79,7 @@ void assembleGlobalIndexVector( arrayView1d< globalIndex const > const & localTo
                                 integer const numDofPerPoint,
                                 arrayView1d< real64 > const & values )
 {
-  forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< geos::parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     if( dofNumber[k] >= 0 && ghostRank[k] < 0 )
     {

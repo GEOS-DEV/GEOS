@@ -22,6 +22,9 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+
 
 namespace geos
 {
@@ -100,6 +103,17 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
+
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
@@ -149,8 +163,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  assembleFluxTerms( real64 const time_n,
-                     real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -167,13 +180,13 @@ public:
    * @param jumpDofKey dofKey of the displacement jump
    */
   virtual void
-  assemblePoroelasticFluxTerms( real64 const time_n,
-                                real64 const dt,
-                                DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs,
-                                string const & jumpDofKey ) = 0;
+  assembleEDFMFluxTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         string const & jumpDofKey ) = 0;
 
   /**
    * @brief assembles the flux terms for all cells for the hydrofracture case
@@ -196,7 +209,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr char const * elemDofFieldString() { return "primaryVariables"; }
+    static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
 
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
@@ -259,10 +272,10 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
+   * @param subRegion subregion that contains the fields
    */
   void
-  updateFluidState( ObjectManagerBase & subRegion ) const;
+  updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
   /**
@@ -273,10 +286,30 @@ public:
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Function to update energy
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update thermal conductivity
+   * @param subRegion the group storing the required fields
+   */
+  void updateThermalConductivity( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Function to update fluid mobility
@@ -335,6 +368,11 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.

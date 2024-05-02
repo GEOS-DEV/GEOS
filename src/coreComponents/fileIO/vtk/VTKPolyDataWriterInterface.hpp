@@ -148,6 +148,14 @@ public:
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
 
+  /**
+   * @brief Set the names of the mesh levels to output
+   * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
+   */
+  void setLevelNames( arrayView1d< string const > const & levelNames )
+  {
+    m_levelNames.insert( levelNames.begin(), levelNames.end() );
+  }
 
   /**
    * @brief Main method of this class. Write all the files for one time step.
@@ -317,6 +325,9 @@ private:
 
   /// Names of the fields to output
   std::set< string > m_fieldNames;
+
+  /// Names of the mesh levels to output (an empty array means all levels are saved)
+  std::set< string > m_levelNames;
 
   /// The previousCycle
   integer m_previousCycle;

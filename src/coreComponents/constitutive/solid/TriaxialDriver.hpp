@@ -43,6 +43,14 @@ using namespace constitutive;
 class TriaxialDriver : public TaskBase
 {
 public:
+
+  enum class Mode
+  {
+    MixedControl,
+    StrainControl,
+    StressControl,
+  };
+
   TriaxialDriver( const string & name,
                   Group * const parent );
   ~TriaxialDriver() override;
@@ -116,7 +124,7 @@ private:
 
   integer m_numSteps;          ///< Number of load steps
   string m_solidMaterialName;  ///< Material identifier
-  string m_mode;               ///< Test mode: strainControl, stressControl, mixedControl
+  Mode m_mode;                 ///< Test mode: strainControl, stressControl, mixedControl
   string m_axialFunctionName;  ///< Time-dependent function controlling axial stress or strain (depends on test mode)
   string m_radialFunctionName; ///< Time-dependent function controlling radial stress or strain (depends on test mode)
   real64 m_initialStress;      ///< Initial stress value (scalar used to set an isotropic stress state)
@@ -132,6 +140,12 @@ private:
   static constexpr real64 m_newtonTol = 1e-6;   ///< Newton tolerance for mixed-control tests
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( TriaxialDriver::Mode,
+              "mixedControl",
+              "strainControl",
+              "stressControl" );
 
 } /* namespace geos */
 

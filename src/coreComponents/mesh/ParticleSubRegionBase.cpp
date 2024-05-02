@@ -18,6 +18,8 @@
 
 #include "ParticleSubRegionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+
+// CC: TODO check if this is needed
 #include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
 
 namespace geos
@@ -46,7 +48,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleInitialSurfaceNormal(),
   m_particleSurfaceNormal(),
   m_particleInitialSurfacePosition(),
-  m_particleSurfacePosition()
+  m_particleSurfacePosition(),
+  m_particleInitialSurfaceTraction(),
+  m_particleSurfaceTraction()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -105,6 +109,14 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleSurfacePositionString(), &m_particleSurfacePosition ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+  
+    registerWrapper( viewKeyStruct::particleInitialSurfaceTractionString(), &m_particleInitialSurfaceTraction ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleSurfaceTractionString(), &m_particleSurfaceTraction ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 }
