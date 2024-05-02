@@ -45,17 +45,17 @@ set( ENABLE_CALIPER    ON CACHE BOOL "" FORCE )
 # RAJA/CHAI SETUP
 #######################################
 
-set( ENABLE_OPENMP      OFF         CACHE PATH "" FORCE )
-set( ENABLE_CUDA        OFF         CACHE PATH "" FORCE )
+set( ENABLE_OPENMP      OFF         CACHE BOOL "" FORCE )
+set( ENABLE_CUDA        OFF         CACHE BOOL "" FORCE )
 
-set( ENABLE_CHAI        ON          CACHE PATH "" FORCE )
-set( CHAI_BUILD_TYPE    "cpu-no-rm" CACHE PATH "" FORCE )
-set( CHAI_ARGS          ""          CACHE PATH "" FORCE )
+set( ENABLE_CHAI        ON          CACHE BOOL   "" FORCE )
+set( CHAI_BUILD_TYPE    "cpu-no-rm" CACHE STRING "" FORCE )
+set( CHAI_ARGS          ""          CACHE STRING "" FORCE )
 
-set( ENABLE_RAJA        ON          CACHE PATH "" FORCE )
-set( RAJA_ENABLE_HIP    OFF         CACHE PATH "" FORCE )
-set( RAJA_ENABLE_OPENMP OFF         CACHE PATH "" FORCE )
-set( RAJA_ENABLE_TBB    OFF         CACHE PATH "" FORCE )
+set( ENABLE_RAJA        ON          CACHE BOOL "" FORCE )
+set( RAJA_ENABLE_HIP    OFF         CACHE BOOL "" FORCE )
+set( RAJA_ENABLE_OPENMP OFF         CACHE BOOL "" FORCE )
+set( RAJA_ENABLE_TBB    OFF         CACHE BOOL "" FORCE )
 
 #######################################
 # PYTHON SETUP
