@@ -52,8 +52,8 @@ set( CMAKE_CXX_COMPILER     "CC"  CACHE PATH "" )
 set( CMAKE_Fortran_COMPILER "ftn" CACHE PATH "" )
 
 set( COMMON_FLAGS  "-march=native -mtune=native" )
-set( RELEASE_FLAGS "-03 -DNDEBUG"                )
-set( DEBUG_FLAGS   "-00 -g"                      )
+set( RELEASE_FLAGS "-O3 -DNDEBUG"                )
+set( DEBUG_FLAGS   "-O0 -g"                      )
 
 set( CMAKE_C_FLAGS               ${COMMON_FLAGS}  CACHE STRING "" )
 set( CMAKE_CXX_FLAGS             ${COMMON_FLAGS}  CACHE STRING "" )
