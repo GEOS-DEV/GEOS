@@ -175,20 +175,20 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
   }
 }
 
-void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                 real64 const ( &max )[ 3 ] )
-{
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
-
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
-
-  initializeNeighbors();
-}
+//void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
+//                                 real64 const ( &max )[ 3 ] )
+//{
+//  // global values
+//  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+//  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+//  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+//  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+//
+//  // block values
+//  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+//
+//  initializeNeighbors();
+//}
 
 void SpatialPartition::initializeNeighbors()
 {
