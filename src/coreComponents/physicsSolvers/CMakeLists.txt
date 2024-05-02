@@ -146,9 +146,9 @@ set( physicsSolvers_headers
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp
-     wavePropagation/sem/acoustic/secondOrderEqn/vti/AcousticVTIFields.hpp
-     wavePropagation/sem/acoustic/secondOrderEqn/vti/AcousticVTIWaveEquationSEM.hpp
-     wavePropagation/sem/acoustic/secondOrderEqn/vti/AcousticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticFields.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticTimeSchemeSEMKernel.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
@@ -214,7 +214,7 @@ set( physicsSolvers_sources
      wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp
      wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.cpp
-     wavePropagation/sem/acoustic/secondOrderEqn/vti/AcousticVTIWaveEquationSEM.cpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
