@@ -219,7 +219,7 @@ jobs:
       with:
         submodules: false
         lfs: false
-        fetch-depth: 1
+        fetch-depth: 0
         sparse-checkout: |
           scripts
     - name: Check that the baseline logs are modified if rebaselines are detected
