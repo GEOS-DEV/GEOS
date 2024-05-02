@@ -137,54 +137,54 @@ bool PartitionDescriptor::isCoordInPartition( const real64 & coord,
   return rval;
 }
 
-void PartitionDescriptor::addNeighbors( const unsigned int idim,
-                                        MPI_Comm & cartcomm,
-                                        int * ncoords )
-{
-
-  if( idim == 3 )
-  {
-    bool me = true;
-    for( int i = 0; i < 3; i++ )
-    {
-      if( ncoords[i] != this->m_coords( i ))
-      {
-        me = false;
-        break;
-      }
-    }
-    if( !me )
-    {
-      int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( rank ) );
-    }
-  }
-  else
-  {
-    const int dim = this->m_partitions( LvArray::integerConversion< localIndex >( idim ) );
-    const bool periodic = this->m_periodic( LvArray::integerConversion< localIndex >( idim ) );
-    for( int i = -1; i < 2; i++ )
-    {
-      ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
-      bool ok = true;
-      if( periodic )
-      {
-        if( ncoords[idim] < 0 )
-          ncoords[idim] = dim - 1;
-        else if( ncoords[idim] >= dim )
-          ncoords[idim] = 0;
-      }
-      else
-      {
-        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
-      }
-      if( ok )
-      {
-        addNeighbors( idim + 1, cartcomm, ncoords );
-      }
-    }
-  }
-}
+//void PartitionDescriptor::addNeighbors( const unsigned int idim,
+//                                        MPI_Comm & cartcomm,
+//                                        int * ncoords )
+//{
+//
+//  if( idim == 3 )
+//  {
+//    bool me = true;
+//    for( int i = 0; i < 3; i++ )
+//    {
+//      if( ncoords[i] != this->m_coords( i ))
+//      {
+//        me = false;
+//        break;
+//      }
+//    }
+//    if( !me )
+//    {
+//      int const rank = MpiWrapper::cartRank( cartcomm, ncoords );
+//      m_neighbors.push_back( NeighborCommunicator( rank ) );
+//    }
+//  }
+//  else
+//  {
+//    const int dim = this->m_partitions( LvArray::integerConversion< localIndex >( idim ) );
+//    const bool periodic = this->m_periodic( LvArray::integerConversion< localIndex >( idim ) );
+//    for( int i = -1; i < 2; i++ )
+//    {
+//      ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
+//      bool ok = true;
+//      if( periodic )
+//      {
+//        if( ncoords[idim] < 0 )
+//          ncoords[idim] = dim - 1;
+//        else if( ncoords[idim] >= dim )
+//          ncoords[idim] = 0;
+//      }
+//      else
+//      {
+//        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+//      }
+//      if( ok )
+//      {
+//        addNeighbors( idim + 1, cartcomm, ncoords );
+//      }
+//    }
+//  }
+//}
 
 void PartitionDescriptor::setSizes( real64 const ( &min )[3],
                                     real64 const ( &max )[3] )
@@ -214,11 +214,11 @@ void PartitionDescriptor::setSizes( real64 const ( &min )[3],
     MpiWrapper::cartCoords( cartcomm, m_rank, 3, m_coords.data());
 
     //add neighbors
-    {
-      int ncoords[3];
-      m_neighbors.clear();
-      addNeighbors( 0, cartcomm, ncoords );
-    }
+//    {
+//      int ncoords[3];
+//      m_neighbors.clear();
+//      addNeighbors( 0, cartcomm, ncoords );
+//    }
 
     MpiWrapper::commFree( cartcomm );
   }
