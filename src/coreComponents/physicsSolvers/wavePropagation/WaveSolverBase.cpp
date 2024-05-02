@@ -197,6 +197,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+   registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply taper" );
+    
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -231,6 +237,17 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
         nodeCoords32[i][j] = X[i][j];
       }
     }
+
+    if (m_useTaper==1)
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+      {
+         subRegion.registerField<fields::taperCoeff>(this->getName());
+      } );
+
+    }
+    
   } );
 }
 

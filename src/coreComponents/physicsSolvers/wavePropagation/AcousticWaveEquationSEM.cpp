@@ -32,6 +32,7 @@
 #include "AcousticMatricesSEMKernel.hpp"
 #include "AcousticPMLSEMKernel.hpp"
 #include "PrecomputeSourcesAndReceiversKernel.hpp"
+#include "TaperKernel.hpp"
 
 namespace geos
 {
@@ -169,6 +170,8 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
+
+    TaperKernel::ComputeTaperCoeff::computeTaperCoeff<EXEC_POLICY>(elementSubRegion.size(),elemCenter);
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
