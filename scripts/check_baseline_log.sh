@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIFF=$(git diff --name-only develop)
+DIFF=$(git diff --name-only origin/develop)
 
 if [[ $DIFF == *".integrated_tests.yaml"* ]]; then
   echo "Changes to the integrated test baseline detected"
