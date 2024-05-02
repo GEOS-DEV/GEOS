@@ -30,14 +30,6 @@ public:
   virtual ~ResidualDumpEvent() = default;
   static string catalogName() { return "ResidualDumpEvent"; };
 
-  virtual void estimateEventTiming( real64 const time,
-                                    real64 const dt,
-                                    integer const cycle,
-                                    DomainPartition & domain ) override;
-
-
-//           virtual void validate() const override;
-
   struct viewKeyStruct : PeriodicEvent::viewKeyStruct
   {
     static constexpr char const * secondaryTargetString() { return "secondaryTarget";}

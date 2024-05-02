@@ -456,7 +456,7 @@ private:
 template< typename FLAGS_ENUM >
 struct BitNodes
 {
-
+  explicit BitNodes( BitNodes * parent_ ): parent( parent_ ){};
 
   GEOS_HOST_DEVICE
   void set( FLAGS_ENUM flag )
@@ -479,12 +479,12 @@ struct BitNodes
   GEOS_HOST_DEVICE
   bool isAnySet( FLAGS_ENUM flag ) const
   {
-    return flags.isSet( flag ) && ( right ? right->isSet( flag ) : true ) && (left ? left->isSet( flag ) : true );
+    return flags.isSet( flag ) || std::any_of( children.begin(), children.end(), [flag]( auto * child ){ return child->isAnySet( flag );} );
   }
 
 
-  BitNodes * left = nullptr;
-  BitNodes * right = nullptr;
+  BitNodes * parent;
+  std::vector< BitNodes * > children;
 
 private:
   BitFlags< FLAGS_ENUM > flags;

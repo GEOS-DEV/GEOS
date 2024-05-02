@@ -27,7 +27,7 @@
 #include "physicsSolvers/SolverStatistics.hpp"
 
 #include <limits>
-#include <queue>
+#include <stack>
 
 namespace geos
 {
@@ -806,7 +806,7 @@ protected:
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
 
   // moving and root pointer, queue for BFS
-  std::queue< BitNodes< SolverGroupFlags > * > m_flagQueue;
+  std::stack< BitNodes< SolverGroupFlags > * > m_flagQueue;
   BitNodes< SolverGroupFlags > * m_currentFlags;
   BitNodes< SolverGroupFlags > * m_rootFlag;
 

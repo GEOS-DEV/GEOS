@@ -243,7 +243,7 @@ bool SolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-  m_rootFlag = new BitNodes< SolverGroupFlags >;
+  m_rootFlag = new BitNodes< SolverGroupFlags >( nullptr );
   m_flagQueue.push( m_rootFlag );
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
@@ -268,8 +268,8 @@ bool SolverBase::execute( real64 const time_n,
     if( dtRemaining > 0.0 )
     {
       nextDt = setNextDt( dtAccepted, domain );
-      if( m_currentFlags->right )
-        m_currentFlags->left = new BitNodes< SolverGroupFlags >;
+      m_currentFlags->parent->children.push_back( new BitNodes< SolverGroupFlags >( m_currentFlags ) ); //siblings then
+      m_flagQueue.push( m_currentFlags->parent->children.back());
 
       if( nextDt < dtRemaining )
       {
@@ -723,7 +723,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
-    m_currentFlags = m_flagQueue.back(); m_flagQueue.pop();
+    m_currentFlags = m_flagQueue.top();
+    m_flagQueue.pop();
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
@@ -792,13 +793,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
 
-      if( !m_currentFlags->right && !m_currentFlags->left )
+      if( m_currentFlags->children.empty())
       {
         //adding a generation
-        m_currentFlags->left = new BitNodes< SolverGroupFlags >;
-        m_flagQueue.push( m_currentFlags->left );
-        m_currentFlags->right = new BitNodes< SolverGroupFlags >;
-        m_flagQueue.push( m_currentFlags->right );
+        m_currentFlags->children.push_back( new BitNodes< SolverGroupFlags >( m_currentFlags ));
+        m_flagQueue.push( m_currentFlags->children.back() );
       }
       else
         GEOS_ERROR( "Convergence tree is ill-formed" );
@@ -897,6 +896,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
+      //always output residual even if converged
+      if( getLogLevel()>0 )
+        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+
       break;
     }
 

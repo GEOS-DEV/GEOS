@@ -53,16 +53,6 @@ void ResidualDumpEvent::getTargetReferences()
   } );
 }
 
-void ResidualDumpEvent::estimateEventTiming( const geos::real64 time, const geos::real64 dt,
-                                             const geos::integer cycle, geos::DomainPartition & domain )
-{
-
-  PeriodicEvent::estimateEventTiming( time, dt, cycle, domain );
-
-//  if( m_flagSecondaryTrigger.isSet(SolverBase::SolverGroupFlags::StruggleCvg) )
-//    setReadyForExec();
-}
-
 void ResidualDumpEvent::validate() const
 {
 
