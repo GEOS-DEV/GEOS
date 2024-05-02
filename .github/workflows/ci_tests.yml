@@ -88,7 +88,7 @@ jobs:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
         lfs: false
-        fetch-depth: 0
+        fetch-depth: 1
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
@@ -219,7 +219,9 @@ jobs:
       with:
         submodules: false
         lfs: false
-        fetch-depth: 1
+        fetch-depth: 0
+        sparse-checkout: |
+          scripts
     - name: Check that the baseline logs are modified if rebaselines are detected
       run: "scripts/check_baseline_log.sh"
 
