@@ -190,8 +190,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleFluxTerms( real64 const time_n,
-                                  real64 const dt,
+  virtual void assembleFluxTerms( real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -274,6 +273,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -299,6 +299,9 @@ protected:
    */
   virtual void initializeWells( DomainPartition & domain ) = 0;
 
+  virtual void printRates( real64 const & time_n,
+                           real64 const & dt,
+                           DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;
@@ -308,6 +311,9 @@ protected:
 
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
+
+  integer m_writeCSV;
+  string const m_ratesOutputDir;
 
 };
 

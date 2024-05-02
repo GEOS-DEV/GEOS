@@ -224,6 +224,20 @@ public:
                                              real64 const (&X)[numNodes][3] );
 
   /**
+   * @brief Calculate the integration weights for a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @return The product of the quadrature rule weight and the determinate of
+   *   the parent/physical transformation matrix.
+   */
+  GEOS_HOST_DEVICE
+  static real64 transformedQuadratureWeight( localIndex const q,
+                                             real64 const (&X)[numNodes][3],
+                                             StackVariables const & stack )
+  { GEOS_UNUSED_VAR( stack ); return transformedQuadratureWeight( q, X ); }
+
+  /**
    * @brief Calculates the isoparametric "Jacobian" transformation
    *   matrix/mapping from the parent space to the physical space.
    * @param q The quadrature point index in 3d space.

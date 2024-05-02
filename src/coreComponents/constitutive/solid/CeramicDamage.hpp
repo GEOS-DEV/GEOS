@@ -29,6 +29,7 @@
  * integrated and tracked by this model.
  */
 
+
 #ifndef GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
 
@@ -218,6 +219,7 @@ real64 thirdInvariantStrengthScaling( const real64 J2,
                                       const real64 J3,
                                       const real64 dfdp ) const;
 
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
@@ -280,7 +282,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
+  // Elastic trial update (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, 
                                               q, 
                                               timeIncrement,
@@ -304,7 +306,6 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   endRotation[1][1] = 1.0;
   endRotation[2][2] = 1.0;
 
-  // call the constitutive model
   CeramicDamageUpdates::smallStrainUpdateHelper( k, 
                                                  q, 
                                                  timeIncrement, 
@@ -371,6 +372,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          timeIncrement,
                                                          strainIncrement, 
                                                          stress );
+
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -378,7 +380,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     return;
   }
 
-  // call the constitutive model
+  // Call the constitutive model
   CeramicDamageUpdates::smallStrainUpdateHelper( k, 
                                                  q, 
                                                  timeIncrement,
@@ -386,7 +388,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                  endRotation, 
                                                  stress );
 
-  // save new stress and return
+  // Save new stress and return
   saveStress( k, q, stress );
   return;
 }
@@ -468,6 +470,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                        meanStress,
                                        vonMises,
                                        deviator );
+
 
     real64 brittleDuctileTransitionPressure = Ycmax / mu;
     real64 J2 = vonMises * vonMises / 3.0;
@@ -646,7 +649,6 @@ real64 CeramicDamageUpdates::thirdInvariantStrengthScaling( const real64 J2,    
 
   return oneOverGamma;
 }
-
 
 /**
  * @class CeramicDamage

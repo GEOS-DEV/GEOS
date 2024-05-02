@@ -113,7 +113,6 @@ public:
                                              real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
-
   
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
@@ -123,7 +122,6 @@ public:
                                              real64 const ( & endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
-
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE

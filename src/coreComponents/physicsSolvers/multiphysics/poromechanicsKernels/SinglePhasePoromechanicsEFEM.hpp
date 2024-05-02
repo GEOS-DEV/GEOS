@@ -29,20 +29,19 @@ namespace poromechanicsEFEMKernels
 {
 
 /**
- * @brief Implements kernels for solving quasi-static single-phase poromechanics.
- * @copydoc geos::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
- *
- * ### SinglePhasePoromechanics Description
- * Implements the KernelBase interface functions required for solving the
- * quasi-static single-phase poromechanics problem using one of the
- * "finite element kernel application" functions such as
- * geos::finiteElement::RegionBasedKernelApplication.
- *
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFunc
  */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOS_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -76,6 +75,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_dt;
 
 
   SinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
@@ -92,6 +92,7 @@ public:
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&inputGravityVector)[3],
                                 string const fluidModelKey );
 
@@ -219,10 +220,12 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
+  template< typename FUNC = poromechanicsEFEMKernels::NoOpFunc >
   GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const;
+                              StackVariables & stack,
+                              FUNC && kernelOp = poromechanicsEFEMKernels::NoOpFunc{} ) const;
 
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
@@ -301,6 +304,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhasePorome
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                arrayView1d< real64 > const,
+                                                               real64 const,
                                                                real64 const (&)[3],
                                                                string const >;
 
@@ -347,9 +351,9 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dHydraulicAperture_dAperture = 0;
+      real64 dHydraulicAperture_dNormalJump = 0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      dHydraulicAperture_dAperture );
+                                                                      dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
@@ -363,6 +367,7 @@ struct StateUpdateKernel
 
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k], hydraulicAperture[k],
+                                                                            dHydraulicAperture_dNormalJump,
                                                                             jump, traction );
 
     } );

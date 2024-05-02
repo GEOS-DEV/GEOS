@@ -303,7 +303,6 @@ DECLARE_FIELD( particleCohesiveFieldMapping,
                LEVEL_1,
                WRITE_AND_READ,
                "particleCohesiveFieldMapping" );          
-
 }
 
 }

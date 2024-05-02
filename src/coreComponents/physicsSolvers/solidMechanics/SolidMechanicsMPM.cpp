@@ -44,9 +44,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-
 #include "codingUtilities/Utilities.hpp"
-
 #include "events/mpmEvents/MPMEvents.hpp"
 
 // CC: debug
@@ -1429,14 +1427,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   for(int i =0; i < 3; i++)
   {
-    if( periodic[i] && (partition.m_coords[i] == 0 || partition.m_coords[i] == partition.m_Partitions[i]-1) )
+    if( periodic[i] && (partition.getCoords()[i] == 0 || partition.getCoords()[i] == partition.getPartitions()[i]-1) )
     {
       real64 xExtent = partition.getGlobalMax()[i] - partition.getGlobalMin()[i];
       for(int g=0; g<nodeManager.size(); g++)
       {
         // if (gridPosition[g][i] < partition.getLocalMin()[i] && gridPosition[g][i] > partition.getLocalMax()[i] ){
           //Partition is on positive face
-          if( partition.m_coords[i] == partition.m_Partitions[i]-1) // CC: Does this need to be toleranced?
+          if( partition.getCoords()[i] == partition.getPartitions()[i]-1) // CC: Does this need to be toleranced?
           {
             if(gridPosition[g][i] < partition.getLocalMin()[i] - xExtent/2)
             {
@@ -1445,7 +1443,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
           }
 
           //Partition is on negative face
-          if( partition.m_coords[i] == 0){
+          if( partition.getCoords()[i] == 0){
             if(gridPosition[g][i] > partition.getLocalMax()[i] + xExtent/2) // CC: Does this need to be toleranced?
             {
               gridPosition[g][i] -= xExtent; //Do I nee to subtract two cells that are ghost? Shouldn't have those if periodic boundaries are on
@@ -1712,6 +1710,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   } );
 
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     subRegion.setActiveParticleIndices(); // Needed for computeAndWriteBoxAverage().
@@ -1921,7 +1920,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Get spatial partition, get node and particle managers. Resize m_iComm." );
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getGroup( domain.groupKeys.partitionManager ) );
   arrayView1d< int const > const periodic = partition.getPeriodic();
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
@@ -1948,6 +1948,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     initialize( nodeManager, particleManager, partition );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Set grid multi-field labels to avoid a VTK output bug" );
   solverProfiling( "Set grid multi-field labels to avoid a VTK output bug" );
@@ -1955,6 +1956,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Must be done every time step despite grid fields being registered
   // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
   setGridFieldLabels( nodeManager );
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Set grid fields to zero" );
@@ -2185,6 +2187,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   std::vector< std::string > fieldNames2 = { viewKeyStruct::maxDamageString() };
   syncGridFields( fieldNames2, domain, nodeManager, mesh, MPI_MAX );
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   solverProfiling( "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
@@ -2215,10 +2218,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   solverProfilingIf( "Interpolate F table", ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) );
   //#######################################################################################
   if( ( !m_stressControl[0] || !m_stressControl[1] || !m_stressControl[2] ) && ( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 ) )
-
   {
     interpolateFTable( dt, time_n );
   }
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Apply essential boundary conditions" );
@@ -2240,6 +2243,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                      partition );
     m_nextXProfileWriteTime += m_xProfileWriteInterval;
   }
+
 
   // //#######################################################################################
   // solverProfilingIf( "Directional overlap correction", m_directionalOverlapCorrection == 1 );
@@ -2300,6 +2304,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   solverProfiling( "Update particle geometry (e.g. volume, r-vectors) and density" );
   //#######################################################################################
   particleKinematicUpdate( particleManager );
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_useArtificialViscosity, "Compute artificial viscosity" );
@@ -2429,7 +2434,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     resizeGrid( partition, nodeManager, dt );
   }
 
-
  //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_resetDefGradForFullyDamagedParticles == 1, "Set F to scaled value for damaged particles, maintain J" );
   solverProfilingIf( "Set F to scaled value for damaged particles, maintain J",  m_resetDefGradForFullyDamagedParticles == 1 );
@@ -2438,7 +2442,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // negative J for super sheared particles with finite precision F Update.  This
   // Should only be used when all materials in the domain have a hypo-elastic
   // deviatoric update.
-
   if (m_resetDefGradForFullyDamagedParticles == 1)
   {
     resetDeformationGradient( particleManager );
@@ -2462,24 +2465,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     printProfilingResults();
   }
 
-  // // CC: debug
-  // GEOS_LOG_RANK( "Domain End: " <<
-  //                "xLocalMin=" << m_xLocalMin << ", " <<
-  //                "xLocalMax=" << m_xLocalMax << ", " <<
-  //                "xGlobalMin=" << m_xGlobalMin << ", " <<
-  //                "xGlobalMax=" << m_xGlobalMax << ", " << 
-  //                "domainL=" << m_domainL << ", " <<
-  //                "domainF=" << m_domainF);
-
-  // // CC: debug
-  // GEOS_LOG_RANK( "Step end: LocalMin=" << partition.getLocalMin() << ", " << 
-  //                "LocalMax=" << partition.getLocalMax() << ", " << 
-  //                "GridMin=" << partition.getGlobalMin() << ", " <<  
-  //                "GridMax=" << partition.getGlobalMax() );
-
   // Return stable time step
   return dtReturn;
 }
+
 
 void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                        const real64 time_n,
@@ -3191,7 +3180,6 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, op ); // needs an extra argument to
                                                                                                         // indicate unpack operation
-
   // (4) Swap send and receive indices back so we can sync from master to ghost
   for( size_t n=0; n<neighbors.size(); n++ )
   {
@@ -3303,6 +3291,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massString() );
   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
   arrayView3d< real64 > const gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() );
+
   arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
 
   // Get node sets
@@ -3337,10 +3326,10 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
         SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
         int const numBoundaryNodes = boundaryNodes.size();
         forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) // Probably
-                                                                                                                              // not a big
-                                                                                                                              // enough loop
-                                                                                                                              // to warrant
-                                                                                                                              // parallelization
+                                                                                                                                             // not a big
+                                                                                                                                             // enough loop
+                                                                                                                                             // to warrant
+                                                                                                                                             // parallelization
           {
             int const g = boundaryNodes[gg];
 
@@ -3421,7 +3410,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   }
 
   // Compute change in grid velocities for XPIC calculations
-
+  // TODO for multifield contact corrections
 
   // Reduce reaction forces from all partitions
   real64 globalFaceReactions[6];
@@ -3647,6 +3636,7 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( NodeManager & nodeManager )
         }
         else
         {
+          // CC: TODO: Change to lvarray fill
           surfaceNormal[0] = 0.0;
           surfaceNormal[1] = 0.0;
           surfaceNormal[2] = 0.0;
@@ -3654,6 +3644,7 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( NodeManager & nodeManager )
       }
       else
       {
+        // CC: TODO: Change to lvarray fill
         surfaceNormal[0] = 0.0;
         surfaceNormal[1] = 0.0;
         surfaceNormal[2] = 0.0;
@@ -3758,7 +3749,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           gridContactForce[g][fieldIndex][i] = 0.0;
         }
       }
- 
+
       // globalIndex const mappedNode = localToGlobalMap[ g ];     
       // if( !m_cohesiveNodeGlobalIndices.contains(  mappedNode ) )
       // {
@@ -4035,7 +4026,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
          ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
   real64 dfA[3];
 
-
   // CC: to fix field partitioning with explicit surface normals at sharp tips such as nanoindenter tip
   // TODO: confirm this works
   real64 dC[3] = { 0 };
@@ -4129,7 +4119,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
 
     // Determine force for tangential sticking
     real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
-
 
     // Get direction of tangential contact force
     real64 sAB[3];
@@ -4254,6 +4243,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
                                         viewKeyStruct::forceContactString(),
                                         viewKeyStruct::surfaceNormalString(),
                                         viewKeyStruct::centerOfMassString() };
+
   for( auto const & key: keys3d )
   {
     WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( key );
@@ -4796,13 +4786,11 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
 {
   GEOS_MARK_FUNCTION;
 
-  // CC: TODO Why is this done instead of getting these inside the particle region loop like elsewhere?
   // Get accessors for volume, position, damage, surface flag
   ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleVolumeAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleVolume" );
   ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
   ParticleManager::ParticleViewAccessor< arrayView1d< real64 const > > particleDamageAccessor = particleManager.constructArrayViewAccessor< real64, 1 >( "particleDamage" );
   ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleSurfaceFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleSurfaceFlag" );
-
   ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleCohesiveZoneFlag = particleManager.constructArrayViewAccessor< int, 1 >( "particleCohesiveZoneFlag" );
 
   // Perform neighbor operations
@@ -4818,7 +4806,7 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
     // Get particle position and damage field gradient
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-    
+
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
@@ -5025,7 +5013,6 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
       LvArray::tensorOps::add< 3, 3 >( temp, minusOldDeformationGradient );
       LvArray::tensorOps::scale< 3, 3 >( temp, 1 / dt );
       LvArray::tensorOps::copy< 3, 3 >( particleFDot[p], temp );
-
     } );
   } );
 }
@@ -5395,7 +5382,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
 
-     // Write to file
+    // Write to file
     std::ofstream file;
     file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
     if( file.fail() )
@@ -5440,12 +5427,10 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ", "
          << boxSums[16] / boxVolume
          << ", "
-         << boxSums[17]
-         << std::endl;
+         << boxSums[17] << std::endl;
     file.close();
   }
 }
-
 
 void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
                                            arrayView1d< real64 > currentStress,
@@ -7700,6 +7685,12 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     {                                                                                          // Grid max damage will require reduction
       localIndex const p = activeParticleIndices[pp];
 
+      // GEOS_LOG_RANK( "p: " << p << ", " << 
+      //                "m: " << particleMass[p] << ", " << 
+      //                "v= " << particleVelocity[p] << ", " << 
+      //                "bF: " << particleBodyForce[p] << ", " << 
+      //                "surfT: " << particleSurfaceTraction[p] );
+
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
@@ -7734,7 +7725,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         gridMaterialVolume[mappedNode][fieldIndex] += particleVolume[p] * shapeFunctionValue; // particleMass[p] / particleDensity[p]; // CC: is there a reason in old geos grid material volume was computed from mass and density and did not use particle volume directly?
         
         // TODO: Normalizing by volume might be better
-        gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ? 1 : particleDamage[p] ) * shapeFunctionValue;
+        gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ? 1.0 : particleDamage[p] ) * shapeFunctionValue;
         gridMaxDamage[mappedNode][fieldIndex] = fmax( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 || particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ? 1.0 : particleDamage[p] ); // If particle mapping with surface flag == 2 and 3 (surace and cohesive zone particles), overwrite mapping damage to grid as one to enforce separability criteria in computePairwiseNodalContactForce
       
         for( int i=0; i<numDims; i++ )
@@ -7784,8 +7775,6 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::materialVolumeString() );
   arrayView3d< real64 > const & gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::centerOfVolumeString() );
 
-  // arrayView3d< real64 > const & gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfacePositionString() );
-
   // Loop over velocity fields
   int const numNodes = nodeManager.size();
   real64 const smallMass = m_smallMass;
@@ -7806,7 +7795,6 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
           gridCenterOfMass[g][fieldIndex][i] /= gridMass[g][fieldIndex];
           gridCenterOfVolume[g][fieldIndex][i] /= gridMaterialVolume[g][fieldIndex];
-          // gridSurfacePosition[g][fieldIndex][i] /= gridMass[g][fieldIndex];
         }
       }
       else
@@ -7820,9 +7808,16 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridMomentum[g][fieldIndex][i] = 0.0;
           gridCenterOfVolume[g][fieldIndex][i] = 0.0;
           gridCenterOfMass[g][fieldIndex][i] = 0 * gridPosition[g][i]; // TODO: zero? since it's supposed to be relative position?
-          // gridSurfacePosition[g][fieldIndex][i] = 0.0;
         }
       }
+
+      // GEOS_LOG_RANK( "g: " <<  g << ", " << 
+      //                "mass: " << gridMass[g][fieldIndex] << ", " << 
+      //                "dmg: " << gridDamage[g][fieldIndex] << ", " << 
+      //                "intF: " << gridInternalForce[g][fieldIndex] << ", " << 
+      //                "extF: " << gridExternalForce[g][fieldIndex] << ", " << 
+      //                "vel: " << gridVelocity[g][fieldIndex] << ", " << 
+      //                "accel" << gridAcceleration[g][fieldIndex]);
     } );
   }
 }
@@ -9621,8 +9616,8 @@ void SolidMechanicsMPM::correctGhostParticleCentersAcrossPeriodicBoundaries(Part
 }
 
 
-void SolidMechanicsMPM::correctParticleCentersAcrossPeriodicBoundaries(ParticleManager & particleManager,
-                                                                       SpatialPartition & partition)
+void SolidMechanicsMPM::correctParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
+                                                                        SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
 
@@ -10756,7 +10751,6 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
 
           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], rotation, U);
         }
-
       } );
     }
   } );

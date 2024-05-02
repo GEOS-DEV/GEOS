@@ -393,7 +393,7 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
 
 MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
 {
-  CompositionalMultiphaseFluid & fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
+  CompositionalMultiphaseFluidPVTPackage & fluid = parent.registerGroup< CompositionalMultiphaseFluidPVTPackage >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -409,19 +409,19 @@ MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString() );
+  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::equationsOfStateString() );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
 
-  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString() );
+  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentCriticalPressureString() );
   critPres.resize( 4 );
   critPres[0] = 34e5; critPres[1] = 25.3e5; critPres[2] = 14.6e5; critPres[3] = 220.5e5;
 
-  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString() );
+  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentCriticalTemperatureString() );
   critTemp.resize( 4 );
   critTemp[0] = 126.2; critTemp[1] = 622.0; critTemp[2] = 782.0; critTemp[3] = 647.0;
 
-  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString() );
+  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentAcentricFactorString() );
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
@@ -601,26 +601,26 @@ MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent 
   coordinatesPVDG[0][12] = 53000000; valuesPVDG_Bg[12] = 0.003868; valuesPVDG_visc[12] = 0.00002935;
 
   TableFunction & tablePVDO_Bo = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_Bo" ) );
-  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO );
-  tablePVDO_Bo.setTableValues( valuesPVDO_Bo );
+  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
+  tablePVDO_Bo.setTableValues( valuesPVDO_Bo, units::Dimensionless );
   tablePVDO_Bo.reInitializeFunction();
   tablePVDO_Bo.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDO_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_visc" ) );
-  tablePVDO_visc.setTableCoordinates( coordinatesPVDO );
-  tablePVDO_visc.setTableValues( valuesPVDO_visc );
+  tablePVDO_visc.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
+  tablePVDO_visc.setTableValues( valuesPVDO_visc, units::Viscosity );
   tablePVDO_visc.reInitializeFunction();
   tablePVDO_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_Bg = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_Bg" ) );
-  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG );
-  tablePVDG_Bg.setTableValues( valuesPVDG_Bg );
+  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
+  tablePVDG_Bg.setTableValues( valuesPVDG_Bg, units::Dimensionless );
   tablePVDG_Bg.reInitializeFunction();
   tablePVDG_Bg.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_visc" ) );
-  tablePVDG_visc.setTableCoordinates( coordinatesPVDG );
-  tablePVDG_visc.setTableValues( valuesPVDG_visc );
+  tablePVDG_visc.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
+  tablePVDG_visc.setTableValues( valuesPVDG_visc, units::Viscosity );
   tablePVDG_visc.reInitializeFunction();
   tablePVDG_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
@@ -904,14 +904,14 @@ TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMolar )
     dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
-  { 5881.8128183956969224, 5869.522096458530541, 5854.9469601674582009, 9180.9455320478591602, 9157.2045503913905122, 9129.1751063784995495, 15755.475565136142905, 15696.691553847707837,
-    15627.990771463533747 };
+  { 5881.9010529428224, 5869.6094131788523, 5855.0332090690354, 9181.3523596865525, 9157.6071613646127, 9129.5728206336826, 15757.685798517123, 15698.877814368472,
+    15630.149353340639 };
   real64 const savedGasPhaseFrac[] =
   { 0.29413690046142371148, 0.29415754810481165027, 0.29418169867697463449, 0.29194010802017489326, 0.29196434961986583723, 0.29199266189550621142, 0.2890641335638892695, 0.28908718137828937067,
     0.28911404840933618843 };
   real64 const savedWaterDens[] =
-  { 53286.457784368176362, 53264.389103437584708, 53237.751306267287873, 53229.257940878436784, 53207.597127679167897, 53181.436584967217641, 53197.49848403003125, 53176.033397316634364,
-    53150.105086882285832 };
+  { 53296.719183517576, 53274.578175308554, 53247.856162690216, 53248.577831698305, 53226.801031868054, 53200.505577694363, 53232.959859840405, 53211.345942175059,
+    53185.244751356993 };
   real64 const savedGasDens[] =
   { 1876.2436091302606656, 1872.184636376355229, 1867.3711104617746059, 3053.1548401973859654, 3044.5748249030266379, 3034.4507978134674886, 5769.0622621289458039, 5742.8476745352018042,
     5712.2837704249559465 };
@@ -970,11 +970,11 @@ TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMass )
     dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
-  { 238.33977561940088208, 237.86350488026934613, 237.29874890241927687, 354.01144731214282046, 353.18618684355078585, 352.21120673560858449, 550.02182875764299297, 548.3889751707506548,
-    546.47580480217254717 };
+  { 238.31504112633914, 237.83897306400553, 237.27445306546298, 353.95258514794097, 353.12773295711992, 352.1532278769692, 549.90502586392017, 548.2725957521294,
+    546.35992000222234 };
   real64 const savedGasPhaseFrac[] =
-  { 0.28562868803317220667, 0.28567941665326646028, 0.285738749802139258, 0.28022484140718162404, 0.2802844989853667812, 0.28035417162546172332, 0.2731355646393489045, 0.27319238868618361815,
-    0.2732586251114847431 };
+  { 0.28566797890570228, 0.28571845092287312, 0.28577748565482669, 0.28029804182709406, 0.28035729907078311, 0.2804265068556816, 0.27326788204506247, 0.27332422114692956,
+    0.27338989611171055 };
   real64 const savedWaterDens[] =
   { 970.85108546544745423, 970.4075834766143771, 969.87385780866463847, 974.23383396044232541, 973.78856424100911227, 973.25280170872576946, 979.48333010951580491, 979.04147229150635212,
     978.50977403260912979 };
@@ -994,11 +994,11 @@ TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMass )
   { 1.9042384704865343673e-05, 1.9062615947696152414e-05, 1.9086923154230274463e-05, 2.0061713844617985449e-05, 2.0075955757102255573e-05, 2.0093249989250199265e-05, 2.3889596884008691474e-05,
     2.3865756080512667728e-05, 2.3839170076324036522e-05  };
   real64 const savedWaterPhaseGasComp[] =
-  { 0.02005966592318779787, 0.019990461277537684842, 0.019909503061226688919, 0.027365230280837819082, 0.027285226317914228894, 0.027191770514265831832, 0.036759501299346700187,
-    0.036684965747010883641, 0.036598063202886929601 };
+  { 0.020063528822832473, 0.019994285300494085, 0.019913282008777046, 0.027375162661670061, 0.027295074213708581, 0.02720152052681666, 0.036784005129927563,
+    0.036709327088310859, 0.036622259649145526 };
   real64 const savedWaterPhaseWaterComp[] =
-  { 0.9797478006656266114, 0.97981828292617156873, 0.97990072673671935188, 0.97227194517798976037, 0.97235397979974458327, 0.97244979317916002692, 0.9625743441996873484, 0.9626514061444874093,
-    0.962741233539301966 };
+  { 0.97993647117716742, 0.98000571469950604, 0.98008671799122282, 0.97262483733832983, 0.97270492578629131, 0.97279847947318321, 0.96321599487007259, 0.96329067291168902,
+    0.96337774035085455 };
 
   integer counter = 0;
   for( integer i = 0; i < 3; ++i )
