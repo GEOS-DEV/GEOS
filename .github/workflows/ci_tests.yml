@@ -88,7 +88,7 @@ jobs:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
         lfs: false
-        fetch-depth: 1
+        fetch-depth: 0
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
