@@ -515,9 +515,10 @@ We suggest the following workflow:
 #. Step 3. Download and unpack the new baselines from the link provided at the bottom of the test logs
 #. Step 4. Inspect the test results using the *test_results.html* file
 #. Step 5. Verify that the changes in the baseline files are desired
-#. Step 6. Update the baseline ID in the *GEOS/.integrated_tests.yaml* file 
-#. Step 7. Commit your changes and push the code
-#. Step 8. Wait for the CI tests to re-run and verify that the integrated tests step passed
+#. Step 6. Update the baseline ID in the *GEOS/.integrated_tests.yaml* file
+#. Step 7. Add a justification for the baseline changes to the *GEOS/BASELINE_NOTES.md* file
+#. Step 8. Commit your changes and push the code
+#. Step 9. Wait for the CI tests to re-run and verify that the integrated tests step passed
 
 
 
