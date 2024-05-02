@@ -155,11 +155,6 @@ public:
 
   void setBoundingBox( std::array< real64, 6 > const & bb )
   {
-//    real64 const min[3]{ bb[0], bb[1], bb[2] };
-//    real64 const max[3]{ bb[3], bb[4], bb[5] };
-
-//    setSizes( min, max );
-
     m_min[0] = bb[0];
     m_min[1] = bb[1];
     m_min[2] = bb[2];

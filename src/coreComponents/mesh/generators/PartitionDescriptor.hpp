@@ -17,7 +17,7 @@
 
 #include "PartitionDescriptorABC.hpp"
 
-#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+//#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -105,9 +105,9 @@ private:
    * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
    * @note Rough copy/paste of DomainPartition::AddNeighbors
    */
-  void addNeighbors( const unsigned int idim,
-                     MPI_Comm & cartcomm,
-                     int * ncoords );
+//  void addNeighbors( const unsigned int idim,
+//                     MPI_Comm & cartcomm,
+//                     int * ncoords );
 
   /// Size of the group associated with the MPI communicator
   int m_size;
@@ -142,7 +142,7 @@ private:
   real64 m_gridMax[3];
 
   /// Array of neighbor communicators.
-  std::vector< NeighborCommunicator > m_neighbors;
+//  std::vector< NeighborCommunicator > m_neighbors;
 
   /// The list of neighbors computed with metis
   std::set< int > m_metisNeighborList;
