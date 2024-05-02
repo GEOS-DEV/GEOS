@@ -20,14 +20,14 @@
 #   - cray-python          = 3.10.10
 #   - craype-x86-milan     = 1.0
 #     PrgEnv-gnu loads gcc 12 that does not support craype-x86-genoa
-#   - hpcx-ompi            = 2.17.1
+#   - hpcx                 = 2.17.1
 #   - intel-oneapi-mkl     = 2023.2.0
 #
 # Load modules this way :
 #   - module purge
 #   - module load PrgEnv-gnu/8.4.0 craype-x86-milan cmake/3.27.2 cray-python/3.10.10
 #   - module unload cray-libsci/23.09.1.1 cray-mpich/8.1.27
-#   - module load hpcx-ompi intel-oneapi-mkl/2023.2.0
+#   - module load hpcx intel-oneapi-mkl/2023.2.0
 #
 ########################################
 
@@ -71,7 +71,7 @@ set( CMAKE_Fortran_FLAGS_RELEASE ${RELEASE_FLAGS} CACHE PATH "" )
 set( ENABLE_MPI ON CACHE BOOL "" )
 
 if( NOT DEFINED ENV{HPCX_MPI_DIR} )
-    message( FATAL_ERROR "HPC-X OpenMPI is not loaded. Please load the hpcx-ompi module." )
+    message( FATAL_ERROR "HPC-X OpenMPI is not loaded. Please load the hpcx module." )
 endif()
 
 #######################################                                                                                                                                           
