@@ -15,6 +15,8 @@
 #include "InternalMeshGenerator.hpp"
 #include "CellBlockManager.hpp"
 
+#include "common/MpiWrapper.hpp"
+
 #include "common/DataTypes.hpp"
 
 #include "LvArray/src/tensorOps.hpp"

@@ -199,7 +199,7 @@ private:
   real64 m_max[3];
 
   /// Locations of partition boundaries
-  array1d< real64 > m_PartitionLocations[3];
+//  array1d< real64 > m_PartitionLocations[3];
 
   /// Length of partition dimensions (excluding ghost objects).
   real64 m_blockSize[3];
