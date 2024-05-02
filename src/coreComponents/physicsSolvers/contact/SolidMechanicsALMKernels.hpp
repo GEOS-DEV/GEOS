@@ -176,8 +176,9 @@ public:
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      localIndex const kn0 = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
-      localIndex const kn1 = m_faceToNodes( kf1, FE_TYPE::permutation[ a ] );
+      //localIndex const kn0_p = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
+      localIndex const kn0 = m_faceToNodes( kf0, a );
+      localIndex const kn1 = m_faceToNodes( kf1, a );
 
       //std::cout << kn0 << " " << kn1 << std::endl;
       for( int i=0; i<3; ++i )
@@ -186,7 +187,8 @@ public:
         stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
         stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
-        stack.X[ a ][ i ] = m_X[  kn0 ][ i ];
+        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ] ) ][ i ];
+        //stack.X[ a ][ i ] = m_X[ kn0 ][ i ];
       }
     }
 
@@ -201,9 +203,9 @@ public:
     //LvArray::tensorOps::fill< stack.numTdofs, stack.numUdofs >( stack.localAtu, 0.0 );  //make 0
     //LvArray::tensorOps::fill< stack.numUdofs, stack.numUdofs >( stack.localAutAtu, 0.0 );  //make 0
 
-    stack.localPenalty[0][0] = m_penalty(k, 0);
-    stack.localPenalty[1][1] = m_penalty(k, 1);
-    stack.localPenalty[2][2] = m_penalty(k, 1);
+    stack.localPenalty[0][0] = -m_penalty(k, 0);
+    stack.localPenalty[1][1] = -m_penalty(k, 1);
+    stack.localPenalty[2][2] = -m_penalty(k, 1);
 
     for( int i=0; i<stack.numTdofs; ++i )
     {
@@ -235,11 +237,18 @@ public:
     //{
     //  for (int j=0; j<stack.numUdofs; ++j)
     //  {
-    //    std::cout << matRtAtu[ i ] [ j ] << " ";
+    //    std::cout << matRRtAtu[ i ] [ j ] << " ";
     //  }
     //  std::cout << std::endl;
     //}
     //std::cout << std::endl;
+    //for( localIndex i=0; i < stack.numUdofs; ++i )
+    //{
+    //  localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+    //  std::cout << dof << " ";
+    //}
+    //std::cout << std::endl;
+    //abort();
 
     // D*RtAtu 
     LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matDRtAtu, stack.localPenalty, 
@@ -279,7 +288,8 @@ public:
       // Is it needed?
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
-      //std::cout << "Add elements: " << dof << " "; 
+      //if (k==1)
+      //  std::cout << "Add elements: " << dof << " "; 
       //for( localIndex j=0; j < stack.numUdofs; ++j )
       //  std::cout << stack.dispColIndices[j] << " "; 
       //std::cout << std::endl;

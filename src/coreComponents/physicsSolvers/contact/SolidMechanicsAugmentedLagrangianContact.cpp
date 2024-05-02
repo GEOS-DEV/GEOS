@@ -102,9 +102,18 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
   
 }
 
+void SolidMechanicsAugmentedLagrangianContact::initializePreSubGroups()
+{
+  std::cout << "initializePreSubGroups" << std::endl;
+  ContactSolverBase::initializePreSubGroups();
+  std::cout << "end initializePreSubGroups" << std::endl;
+
+}
+
 void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPreSubGroups()
 {
   std::cout << "initializePostInitialConditionsPreSubGroups" << std::endl;
+  //SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
 
   //array1d< localIndex > quadList;
   //array1d< localIndex > triList;
@@ -115,7 +124,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
   //this->m_faceTypesToFaceElements["Quadrilateral"] =  quadList;
   //this->m_faceTypesToFaceElements["Triangle"] =  quadList;
 
-  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
+
+/*
   auto & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
@@ -133,6 +143,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
     });
   });
   std::cout << "End initializePostInitialConditionsPreSubGroups" << std::endl;
+  */
   /*
   SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
   this->updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
@@ -144,11 +155,40 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
 {
   
   std::cout << "setupDofs" << std::endl;
-  //GEOS_UNUSED_VAR( domain, dofManager );
+  GEOS_UNUSED_VAR( domain, dofManager );
   
   GEOS_MARK_FUNCTION;
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
-  
+
+/*
+  map< std::pair< string, string >, array1d< string > > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                                MeshLevel const & meshLevel,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+      std::cout << region.getName() << std::endl;
+    } );
+    meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
+  } );
+
+  //dofManager.addField( solidMechanics::totalDisplacement::key(),
+  //                     FieldLocation::Node,
+  //                     3,
+  //                     meshTargets );
+
+  //dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+  //                        solidMechanics::totalDisplacement::key(),
+  //                        DofManager::Connector::Elem,
+  //                        meshTargets );
+  */
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & domain,
@@ -162,9 +202,10 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   //GEOS_UNUSED_VAR( dofManager, localMatrix, rhs, solution, setSparsity );
 
   std::cout << "setupSystem" << std::endl;
-  
   GEOS_MARK_FUNCTION;
-  SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
+  //SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, true );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
   
   //this->m_faceTypesToFaceElements["Quadrilateral"] = quadList;
   //this->m_faceTypesToFaceElements["Quadrilateral"].toView()
@@ -239,15 +280,13 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                                   real64 const & dt,
                                                                   DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( time_n, dt);
-
   /*
   computeRotationMatrices( domain );
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
   */
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 
   std::cout << "implicitStepSetup" << std::endl;
 
@@ -292,8 +331,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      penalty[k] [0] = 1.e+0;
-      penalty[k] [1] = 1.e+0;
+      penalty[k] [0] = 1.e+12;
+      penalty[k] [1] = 1.e+12;
     });
 
   } );
@@ -308,7 +347,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 {
 
   //GEOS_UNUSED_VAR( time, dt, domain, dofManager, localMatrix, localRhs );
-  //GEOS_UNUSED_VAR( time);
+  GEOS_UNUSED_VAR( time);
 
   std::cout << "assembleSystem" << std::endl;
 
@@ -322,7 +361,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localRhs );
 
   //ParallelMatrix parallel_matrix;
-  //ParallelMatrix parallel_matrix_1;
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix.write("mech.mtx");
 
@@ -397,8 +435,10 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
     } );
   });
+  //ParallelMatrix parallel_matrix_1;
   //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix_1.write("amech.mtx");
+  //abort();
 
   /*
   GEOS_MARK_FUNCTION;

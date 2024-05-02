@@ -50,6 +50,8 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void initializePreSubGroups() override final;
+
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
