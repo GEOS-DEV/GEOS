@@ -35,6 +35,8 @@ class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsEmbeddedFrac
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
+
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -149,7 +151,7 @@ public:
     using SinglePhaseFVMBase::StackVariables::stencilSize;
     using SinglePhaseFVMBase::StackVariables::numFluxElems;
     using SinglePhaseFVMBase::StackVariables::transmissibility;
-    using SinglePhaseFVMBase::StackVariables::dTrans_dPres;
+    using SinglePhaseFVMBase::StackVariables::dTrans;
     using SinglePhaseFVMBase::StackVariables::dofColIndices;
     using SinglePhaseFVMBase::StackVariables::localFlux;
     using SinglePhaseFVMBase::StackVariables::localFluxJacobian;
@@ -257,7 +259,7 @@ public:
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans[Deriv::dP] ); // again, we have to pass something here, but this is unused for now
 
     localIndex k[2];
     localIndex connectionIndex = 0;

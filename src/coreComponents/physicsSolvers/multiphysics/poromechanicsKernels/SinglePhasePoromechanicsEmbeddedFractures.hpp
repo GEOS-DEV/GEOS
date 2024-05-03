@@ -36,6 +36,7 @@ class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAsse
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -165,7 +166,7 @@ public:
                                      m_dPerm_dPres,
                                      m_dPerm_dDispJump,
                                      stack.transmissibility,
-                                     stack.dTrans_dPres,
+                                     stack.dTrans[Deriv::dP],
                                      stack.dTrans_dDispJump );
 
 
@@ -173,7 +174,7 @@ public:
     real64 dFlux_dTrans = 0.0;
     /// EDFM connections are always only between 2 elements. There are no star connections.
     real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
-    real64 dTrans[2] = { stack.dTrans_dPres[0][0], stack.dTrans_dPres[0][1] };
+    real64 dTrans[2] = { stack.dTrans[Deriv::dP][0][0], stack.dTrans[Deriv::dP][0][1] };
     real64 dFlux_dP[2] = {0.0, 0.0};
     localIndex const regionIndex[2]    = {m_seri[iconn][0], m_seri[iconn][1]};
     localIndex const subRegionIndex[2] = {m_sesri[iconn][0], m_sesri[iconn][1]};

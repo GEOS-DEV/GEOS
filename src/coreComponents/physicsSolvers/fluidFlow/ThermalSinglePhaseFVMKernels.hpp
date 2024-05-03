@@ -44,6 +44,7 @@ class FaceBasedAssemblyKernel : public singlePhaseFVMKernels::FaceBasedAssemblyK
 {
 public:
 
+  using Deriv = constitutive::singlefluid::DerivativeOffset;
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -152,7 +153,7 @@ public:
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numFluxElems;
     using Base::StackVariables::transmissibility;
-    using Base::StackVariables::dTrans_dPres;
+    using Base::StackVariables::dTrans;
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
@@ -331,7 +332,7 @@ public:
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans[Deriv::dP] ); // again, we have to pass something here, but this is unused for now
 
     localIndex k[2];
     localIndex connectionIndex = 0;
