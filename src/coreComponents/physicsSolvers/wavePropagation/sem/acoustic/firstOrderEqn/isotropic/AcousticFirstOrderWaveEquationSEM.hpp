@@ -5,7 +5,7 @@
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOS Contributors
+ * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -14,33 +14,32 @@
 
 
 /**
- * @file ElasticFirstOrderWaveEquationSEM.hpp
+ * @file AcousticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "ElasticFields.hpp"
-#include "WaveSolverBase.hpp"
-
+#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 
 namespace geos
 {
 
-class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
+class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
   using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  ElasticFirstOrderWaveEquationSEM( const std::string & name,
-                                    Group * const parent );
+  AcousticFirstOrderWaveEquationSEM( const std::string & name,
+                                     Group * const parent );
 
-  virtual ~ElasticFirstOrderWaveEquationSEM() override;
+  virtual ~AcousticFirstOrderWaveEquationSEM() override;
 
-  static string catalogName() { return "ElasticFirstOrderSEM"; }
+  static string catalogName() { return "AcousticFirstOrderSEM"; }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -69,7 +68,6 @@ public:
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
 
-
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
    */
@@ -82,18 +80,14 @@ public:
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;
 
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * displacementxNp1AtReceiversString() { return "displacementxNp1AtReceivers"; }
-    static constexpr char const * displacementyNp1AtReceiversString() { return "displacementyNp1AtReceivers"; }
-    static constexpr char const * displacementzNp1AtReceiversString() { return "displacementzNp1AtReceivers"; }
 
-    static constexpr char const * sigmaxxNp1AtReceiversString() { return "sigmaxxNp1AtReceivers"; }
-    static constexpr char const * sigmayyNp1AtReceiversString() { return "sigmayyNp1AtReceivers"; }
-    static constexpr char const * sigmazzNp1AtReceiversString() { return "sigmazzNp1AtReceivers"; }
-    static constexpr char const * sigmaxyNp1AtReceiversString() { return "sigmaxyNp1AtReceivers"; }
-    static constexpr char const * sigmaxzNp1AtReceiversString() { return "sigmaxzNp1AtReceivers"; }
-    static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
+    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
+
+    static constexpr char const * uxNp1AtReceiversString() { return "uxNp1AtReceivers"; }
+    static constexpr char const * uyNp1AtReceiversString() { return "uyNp1AtReceivers"; }
+    static constexpr char const * uzNp1AtReceiversString() { return "uzNp1AtReceivers"; }
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
     static constexpr char const * sourceRegionString() { return "sourceRegion"; }
@@ -125,7 +119,6 @@ private:
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
-   * @param regionNames name of the region you are currently on
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
@@ -143,41 +136,26 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_displacementxNp1AtReceivers;
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_pressureNp1AtReceivers;
 
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_displacementyNp1AtReceivers;
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uxNp1AtReceivers;
 
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_displacementzNp1AtReceivers;
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uyNp1AtReceivers;
 
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmaxxNp1AtReceivers;
-
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmayyNp1AtReceivers;
-
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmazzNp1AtReceivers;
-
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmaxyNp1AtReceivers;
-
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmaxzNp1AtReceivers;
-
-  /// Displacement_np1 at the receiver location for each time step for each receiver
-  array2d< real32 > m_sigmayzNp1AtReceivers;
+  /// Pressure_np1 at the receiver location for each time step for each receiver
+  array2d< real32 > m_uzNp1AtReceivers;
 
   /// Array containing the elements which contain a source
   array1d< localIndex > m_sourceElem;
 
   /// Array containing the elements which contain the region which the source belongs
   array1d< localIndex > m_sourceRegion;
-
 };
+
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */

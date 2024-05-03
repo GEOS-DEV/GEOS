@@ -20,7 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverUtils.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 
 
 namespace geos
@@ -39,7 +39,33 @@ struct StressComputation
   {}
 
   /**
-   * Add comments
+   * @brief Launches the computation of the strain tensor for one iteration
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] regionIndex Index of the subregion
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[in] ux_np1 displacement array in the x direction (only used here)
+   * @param[in] uy_np1 displacement array in the y direction (only used here)
+   * @param[in] uz_np1 displacement array in the z direction (only used here)
+   * @param[in] velocityVp P-wavespeed array
+   * @param[in] velocityVs S-wavespeed array
+   * @param[in] lambda lambda (Lamé parameter) array
+   * @param[in] mu mu (Lamé parameter) array
+   * @param[in] sourceConstants constant part of the source terms
+   * @param[in] sourceIsLocal flag indicating whether the source is accessible or not
+   * @param[in] sourceElem element where a source is located
+   * @param[in] sourceRegion region where the source is located
+   * @param[in] sourceValue value of the temporal source (eg. Ricker)
+   * @param[in] dt time-step
+   * @param[in] cycleNumber the number of cycle
+   * @param[out] stressxx xx-component of the strain tensor array (updated here)
+   * @param[out] stressyy yy-component of the strain tensor array (updated here)
+   * @param[out] stresszz zz-component of the strain tensor array (updated here)
+   * @param[out] stressxy xy-component of the strain tensor array (updated here)
+   * @param[out] stressxz xz-component of the strain tensor array (updated here)
+   * @param[out] stressyz yz-component of the strain tensor array (updated here)
    */
 
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -215,7 +241,27 @@ struct VelocityComputation
   {}
 
   /**
-   * add doc
+   * @brief Launches the computation of the displacement for one iteration
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of cells in the subRegion
+   * @param[in] size_node the number of nodes in the subRegion
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemsToNodes map from element to nodes
+   * @param[out] stressxx xx-component of the strain tensor array (only used here)
+   * @param[out] stressyy yy-component of the strain tensor array (only used here)
+   * @param[out] stresszz zz-component of the strain tensor array (only used here)
+   * @param[out] stressxy xy-component of the strain tensor array (only used here)
+   * @param[out] stressxz xz-component of the strain tensor array (only used here)
+   * @param[out] stressyz yz-component of the strain tensor array (only used here)
+   * @param[in] mass the mass matrix
+   * @param[in] dampingx the damping (x-component) matrix
+   * @param[in] dampingy the damping for (y-component) matrix
+   * @param[in] dampingz the damping for (z-component) matrix
+   * @param[in] dt time-step
+   * @param[in] ux_np1 displacement array in the x direction (updated here)
+   * @param[in] uy_np1 displacement array in the y direction (updated here)
+   * @param[in] uz_np1 displacement array in the z direction (updated here)
    */
 
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
