@@ -109,6 +109,7 @@ using Face = std::vector< NodeGlbIdx >;
 
 struct Exchange
 {
+  std::set< NodeGlbIdx > nodes;
   std::set< Edge > edges;
   std::set< Face > faces;
 };
@@ -116,12 +117,13 @@ struct Exchange
 void to_json( json & j,
               const Exchange & v )
 {
-  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+  j = json{ { "nodes", v.nodes }, { "edges", v.edges }, { "faces", v.faces }  };
 }
 
 void from_json( const json & j,
                 Exchange & v )
 {
+  v.nodes = j.at( "nodes" ).get< std::set< NodeGlbIdx > >();
   v.edges = j.at( "edges" ).get< std::set< Edge > >();
   v.faces = j.at( "faces" ).get< std::set< Face > >();
 }
@@ -203,7 +205,8 @@ Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes )
 Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
                             std::set< vtkIdType > const & cellIds )
 {
-  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+  vtkIdTypeArray * gids = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+  Span< vtkIdType > const globalPtIds( (vtkIdType *) gids->GetPointer( 0 ), gids->GetNumberOfTuples() );
 
   std::vector< Edge > tmpEdges;
   std::vector< Face > tmpFaces;
@@ -232,8 +235,8 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
       vtkCell * edge = cell->GetEdge( e );
       vtkIdType const ln0 = edge->GetPointId( 0 );
       vtkIdType const ln1 = edge->GetPointId( 1 );
-      vtkIdType const gn0 = globalPtIds->GetValue( ln0 );
-      vtkIdType const gn1 = globalPtIds->GetValue( ln1 );
+      vtkIdType const gn0 = globalPtIds[ln0];
+      vtkIdType const gn1 = globalPtIds[ln1];
       tmpEdges.emplace_back( std::minmax( { NodeGlbIdx{ gn0 }, NodeGlbIdx{ gn1 } } ) );
     }
 
@@ -245,18 +248,23 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
       for( std::size_t i = 0; i < nodes.size(); ++i )
       {
         vtkIdType const lni = face->GetPointId( i );
-        vtkIdType const gni = globalPtIds->GetValue( lni );
+        vtkIdType const gni = globalPtIds[lni];
         nodes[i] = NodeGlbIdx{ gni };
       }
       tmpFaces.emplace_back( reorderFaceNodes( nodes ) );
     }
   }
 
+  std::set< NodeGlbIdx > nodes;
+  std::transform( std::cbegin( globalPtIds ), std::cend( globalPtIds ),
+                  std::inserter( nodes, std::end( nodes ) ), []( vtkIdType const & id )
+                  { return NodeGlbIdx{ id }; } );
+
   // Removing the duplicates by copying into a `std::set`.
   std::set< Edge > edges{ tmpEdges.cbegin(), tmpEdges.cend() };  // SortedArray requires the input to be sorted already.
   std::set< Face > faces{ tmpFaces.cbegin(), tmpFaces.cend() };
 
-  return { std::move( edges ), std::move( faces ) };
+  return { std::move( nodes ), std::move( edges ), std::move( faces ) };
 }
 
 array1d< std::uint8_t > convertExchange( Exchange const & exchange )
@@ -785,6 +793,8 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   CommID const commId = CommunicationTools::getInstance().getCommID();
   std::map< MpiRank, Exchange > exchanged = exchange( int( commId ), ncs, buildExchangeData( mesh ) );
   exchanged[MpiRank{ MpiWrapper::commRank() }] = buildFullData( mesh );
+
+//  std::cout << "exchanged on rank " << curRank << " -> " << json( exchanged[MpiRank{ MpiWrapper::commRank() }] ) << std::endl;
 
   Buckets const buckets = buildIntersectionBuckets( exchanged, curRank, neighbors );
 
