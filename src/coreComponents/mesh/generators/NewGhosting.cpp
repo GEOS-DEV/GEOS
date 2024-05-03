@@ -21,6 +21,8 @@
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 
+//#include <_hypre_parcsr_mv.h>
+
 #include <NamedType/named_type.hpp>
 
 #include <vtkCellData.h>
@@ -309,6 +311,11 @@ struct Buckets
   std::map< std::set< MpiRank >, std::set< Face > > faces;
 };
 
+//void to_json( json & j,
+//              const Buckets & v )
+//{
+//  j = json{ { "nodes", v.nodes }, { "edges", v.edges }, { "faces", v.faces }  };
+//}
 
 /**
  * @brief
@@ -743,21 +750,60 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
 struct MeshGraph  // TODO add the local <-> global mappings here?
 {
   std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
-  std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;  // TODO use Face here?
+  std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
+  // TODO add the nodes here?
+  // TODO add all types of connections here? How?
 };
 
+void to_json( json & j,
+              const MeshGraph & v )  // For display
+{
+  j = json{ { "c2f", v.f2e }, { "f2e", v.f2e }, { "e2n", v.e2n }  };
+}
+
+
+/**
+ * @brief Builds the graph information for the owned elements only.
+ * @param mesh
+ * @param buckets
+ * @param offsets
+ * @param curRank
+ * @return
+ */
 MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a sub-mesh?
                           Buckets const & buckets,
-                          BucketSizes const & sizes,
-                          BucketOffsets const & offsets )
+                          BucketOffsets const & offsets,
+                          MpiRank curRank )
 {
   MeshGraph result;
 
-  for( auto const & [ranks, size]: sizes.edges )
+  auto const owning = [&curRank]( std::set< MpiRank > const & ranks ) -> bool
   {
-    EdgeGlbIdx i{ offsets.edges.at( ranks ) };
-    for( Edge const & edge: buckets.edges.at( ranks ) )
+    return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
+  };
+
+  // The `e2n` is a mapping for all the geometrical entities, not only the one owned like `result.e2n`.
+  // TODO check that it is really useful.
+  std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n;
+
+  for( auto const & [ranks, edges]: buckets.edges )
+  {
+    EdgeGlbIdx i = offsets.edges.at( ranks );  // TODO hack
+    for( Edge const & edge: edges )
+    {
+      e2n[i] = edge;
+      ++i;
+    }
+
+    if( !owning( ranks ) )
+    {
+      continue;
+    }
+
+//    EdgeGlbIdx i = offsets.edges.at( ranks );
+    i = offsets.edges.at( ranks );
+    for( Edge const & edge: edges )
     {
       result.e2n[i] = edge;
       ++i;
@@ -766,19 +812,32 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
 
   // Simple inversion
   std::map< std::tuple< NodeGlbIdx, NodeGlbIdx >, EdgeGlbIdx > n2e;
-  for( auto const & [e, n]: result.e2n )
+  for( auto const & [e, n]: e2n )
   {
-    n2e[n] = e;
+    n2e[n] = e;  // TODO what about ownership?
   }
 
   std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
-  for( auto const & [ranks, size]: sizes.faces )
+  for( auto const & [ranks, faces]: buckets.faces )
   {
-    FaceGlbIdx i{ offsets.faces.at( ranks ) };
-    for( Face face: buckets.faces.at( ranks ) )  // Intentional copy for the future `emplace_back`.
+    FaceGlbIdx i = offsets.faces.at( ranks );
+    for( Face const & face: faces )  // TODO hack
     {
       n2f[face] = i;
-      face.emplace_back( face.front() );
+      ++i;
+    }
+
+    if( !owning( ranks ) )
+    {
+      continue;
+    }
+
+//    FaceGlbIdx i{ offsets.faces.at( ranks ) };
+    i = offsets.faces.at( ranks );
+    for( Face face: faces )  // Intentional copy for the future `emplace_back`.
+    {
+//      n2f[face] = i;
+      face.emplace_back( face.front() );  // Trick to build the edges.
       for( std::size_t ii = 0; ii < face.size() - 1; ++ii )
       {
         NodeGlbIdx const & n0 = face[ii], & n1 = face[ii + 1];
@@ -817,6 +876,42 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
 
   return result;
 }
+
+void assembleAdjacencyMatrix( MeshGraph const & graph, MaxGlbIdcs const & gis, std::size_t const numNodes )
+{
+  std::size_t const eo = gis.nodes.get();
+  std::size_t const fo = eo + gis.edges.get();
+  std::size_t const co = fo + gis.faces.get();
+
+  std::size_t const n = co + gis.cells.get();  // Total number of entries in the graph.
+
+  std::size_t const numEdges = std::size( graph.e2n ); // TODO Handle to property of the data as well, not the full list!
+  std::size_t const numFaces = std::size( graph.f2e );
+  std::size_t const numCells = std::size( graph.c2f );
+
+  std::size_t const nnzDiag = numNodes + numEdges + numFaces + numCells;
+
+  std::size_t nnzOffDiag = std::size( graph.e2n ) * 2;
+  for( auto const & [_, edges]: graph.f2e )
+  {
+    nnzOffDiag += std::size( edges );
+  }
+  for( auto const & [_, faces]: graph.c2f )
+  {
+    nnzOffDiag += std::size( faces );
+  }
+
+//  hypre_ParCSRBooleanMatrix * hypre_ParCSRBooleanMatrixCreate( MPI_Comm comm,
+//                                                               HYPRE_BigInt global_num_rows,
+//                                                               HYPRE_BigInt global_num_cols,
+//                                                               HYPRE_BigInt * row_starts,
+//                                                               HYPRE_BigInt * col_starts,
+//                                                               HYPRE_Int num_cols_offd,
+//                                                               HYPRE_Int num_nonzeros_diag,
+//                                                               HYPRE_Int num_nonzeros_offd );
+// https://github.com/hypre-space/hypre/blob/d475cdfc63ac59ea9a554493a06e4033b8d6fade/src/parcsr_mv/_hypre_parcsr_mv.h#L867
+}
+
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                        std::set< MpiRank > const & neighbors )
@@ -877,13 +972,19 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
     offsets = deserialize( recvBuffer );
   }
 
-//  std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
+  std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
 
   MpiRank const nextRank = curRank + MpiRank{ 1 };
   MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ), offsets.faces.at( { nextRank } ) );
   std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
 
-  MeshGraph const graph = buildMeshGraph( mesh, buckets, sizes, offsets );
+  MeshGraph const graph = buildMeshGraph( mesh, buckets, offsets, curRank );  // TODO change into buildOwnedMeshGraph?
+  if( curRank == MpiRank{ 1 } )
+  {
+    std::cout << "My graph is " << json( graph ) << std::endl;
+  }
+
+  assembleAdjacencyMatrix( graph, matrixOffsets, mesh->GetNumberOfPoints() );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
