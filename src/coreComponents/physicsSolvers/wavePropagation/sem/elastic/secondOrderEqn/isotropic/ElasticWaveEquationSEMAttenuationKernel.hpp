@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ElasticWaveEquationSEMKernel.hpp
+ * @file ElasticWaveEquationSEMAttenuationKernel.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMATTENUATIONKERNEL_HPP_
