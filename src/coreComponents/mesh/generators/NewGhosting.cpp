@@ -311,6 +311,53 @@ struct Buckets
 
 
 /**
+ * @brief
+ * @tparam T Typically NodeGloIdx or a container of NodeGlbIdx (for edges and faces)
+ * @param exchanged
+ * @param curRank
+ * @param neighbors
+ * @return
+ */
+template< typename T >
+std::map< std::set< MpiRank >, std::set< T > >
+buildIntersectionBuckets( std::map< MpiRank, std::set< T > const & > const & exchanged,
+                          MpiRank curRank,
+                          std::set< MpiRank > const & neighbors )
+{
+  std::map< T, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms?
+  // We "register" all the edges of the current rank: they are the only one we're interested in.
+  for( T const & node: exchanged.at( curRank ) )
+  {
+    counts.emplace_hint( counts.end(), node, std::set< MpiRank >{ curRank } );
+  }
+
+  // We now loop on the neighbor edges.
+  // If a neighbor has an edge in common with the current rank, they we store it.
+  for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
+  {
+    for( T const & node: exchanged.at( neighborRank ) )
+    {
+      auto it = counts.find( node );
+      if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
+      {
+        it->second.insert( neighborRank );
+      }
+    }
+  }
+
+  std::map< std::set< MpiRank >, std::set< T > > nodeBuckets;
+  for( auto const & [node, ranks]: counts )
+  {
+    if( ranks.find( curRank ) != ranks.cend() )
+    {
+      nodeBuckets[ranks].insert( node );
+    }
+  }
+  return nodeBuckets;
+}
+
+
+/**
  * @brief Compute the intersection between for the ranks based on the information @p exchanged.
  * @param exchanged Geometrical information provided by the ranks (including the current rank).
  * @param curRank The current MPI rank.
@@ -321,70 +368,21 @@ Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchange
                                   MpiRank curRank,
                                   std::set< MpiRank > const & neighbors )
 {
-  std::map< std::set< MpiRank >, std::set< NodeGlbIdx > > nodeBuckets;
-  {  // Scope reduction // TODO DUPLICATED!
-    std::map< NodeGlbIdx, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms? + Duplicated
-    // We "register" all the edges of the current rank: they are the only one we're interested in.
-    for( NodeGlbIdx const & node: exchanged.at( curRank ).nodes )
-    {
-      counts.emplace_hint( counts.end(), node, std::set< MpiRank >{ curRank } );
-    }
-
-    // We now loop on the neighbor edges.
-    // If a neighbor has an edge in common with the current rank, they we store it.
-    for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
-    {
-      for( NodeGlbIdx const & node: exchanged.at( neighborRank ).nodes )
-      {
-        auto it = counts.find( node );
-        if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
-        {
-          it->second.insert( neighborRank );
-        }
-      }
-    }
-
-    for( auto const & [node, ranks]: counts )
-    {
-      if( ranks.find( curRank ) != ranks.cend() )
-      {
-        nodeBuckets[ranks].insert( node );
-      }
-    }
+  std::map< MpiRank, std::set< NodeGlbIdx > const & > nodeInfo;
+  for( auto const & [rank, exchange]: exchanged )
+  {
+    nodeInfo.emplace( rank, exchange.nodes );
   }
+  std::map< std::set< MpiRank >, std::set< NodeGlbIdx > > const nodeBuckets = buildIntersectionBuckets( nodeInfo, curRank, neighbors );
 
-  std::map< std::set< MpiRank >, std::set< Edge > > edgeBuckets;
-  {  // Scope reduction
-    std::map< Edge, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms?
-    // We "register" all the edges of the current rank: they are the only one we're interested in.
-    for( Edge const & edge: exchanged.at( curRank ).edges )
-    {
-      counts.emplace_hint( counts.end(), edge, std::set< MpiRank >{ curRank } );
-    }
-
-    // We now loop on the neighbor edges.
-    // If a neighbor has an edge in common with the current rank, they we store it.
-    for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
-    {
-      for( Edge const & edge: exchanged.at( neighborRank ).edges )
-      {
-        auto it = counts.find( edge );
-        if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
-        {
-          it->second.insert( neighborRank );
-        }
-      }
-    }
-
-    for( auto const & [edge, ranks]: counts )
-    {
-      if( ranks.find( curRank ) != ranks.cend() )
-      {
-        edgeBuckets[ranks].insert( edge );
-      }
-    }
+  std::map< MpiRank, std::set< Edge > const & > edgeInfo;
+  for( auto const & [rank, exchange]: exchanged )
+  {
+    edgeInfo.emplace( rank, exchange.edges );
   }
+  std::map< std::set< MpiRank >, std::set< Edge > > const edgeBuckets = buildIntersectionBuckets( edgeInfo, curRank, neighbors );
 
+  // For faces, the algorithm can be a tad simpler because faces can be shared by at most 2 ranks.
   std::map< std::set< MpiRank >, std::set< Face > > faceBuckets;
   std::set< Face > curFaces = exchanged.at( curRank ).faces;
   for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
