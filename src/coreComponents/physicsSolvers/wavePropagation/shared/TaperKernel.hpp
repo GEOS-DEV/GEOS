@@ -48,13 +48,13 @@ namespace geos
      * @param[out] divV_n array holding the divergence at time n
      */
     template< typename EXEC_POLICY>
-    void
-    launch( localIndex const size,
+    static void
+    computeTaperCoeff( localIndex const size,
             arrayView2d< real64 const > const elemCenter,
-            real32 const (&xMin)[3],
-            real32 const (&xMax)[3],
-            real32 const (&dMin)[3],
-            real32 const (&dMax)[3],
+            R1Tensor32 const xMin,
+            R1Tensor32 const xMax,
+            R1Tensor32 const dMin,
+            R1Tensor32 const dMax,
             real32 taperConstant,
             arrayView1d<real32 > const taperCoeff )
     {
@@ -62,7 +62,7 @@ namespace geos
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
          real32 tmpXmin = (xMin[0]-elemCenter[0][k])/dMin[0];
-         real32 tmpXmax = (elemCenter[0][k]-xMax[0])/dMax[0];
+         real32 tmpxMax = (elemCenter[0][k]-xMax[0])/dMax[0];
          
          real32 tmpYmin = (xMin[1]-elemCenter[1][k])/dMin[1];
          real32 tmpYmax = (elemCenter[1][k]-xMax[1])/dMax[1];
@@ -81,7 +81,7 @@ namespace geos
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xmax[1])
+             else if (elemCenter[k][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -94,7 +94,7 @@ namespace geos
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xmax[1])
+             else if (elemCenter[k][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -109,12 +109,12 @@ namespace geos
          {
           if (xMin[2]>elemCenter[2][k])
           {
-            dist = LvArray::math::min(tmpXmax,tmpZmin);
+            dist = LvArray::math::min(tmpxMax,tmpZmin);
             if (xMin[1]>elemCenter[1][k])
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xmax[1])
+             else if (elemCenter[k][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -126,7 +126,7 @@ namespace geos
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xmax[1])
+             else if (elemCenter[k][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -134,7 +134,7 @@ namespace geos
            }
            else
            {
-            dist=tmpXmax;
+            dist=tmpxMax;
            }      
          }
          if (xMin[2]>elemCenter[2][k])
@@ -143,7 +143,7 @@ namespace geos
           {
              dist= LvArray::math::min(tmpZmin,tmpYmin);
           }
-          else if (elemCenter[k][1] > xmax[1])
+          else if (elemCenter[k][1] > xMax[1])
           {
              dist=LvArray::math::min(tmpZmin,tmpYmax);
           }
@@ -159,7 +159,7 @@ namespace geos
             {
               dist = LvArray::math::min(tmpZmax,tmpYmin);
             }
-            else if (elemCenter[k][1] > xmax[1])
+            else if (elemCenter[k][1] > xMax[1])
             {
                dist=LvArray::math::min(tmpZmax,tmpYmax);
             }
@@ -173,7 +173,7 @@ namespace geos
            dist=tmpYmin;
          }
          
-         else if (elemCenter[k][1] > xmax[1])
+         else if (elemCenter[k][1] > xMax[1])
          {
            dist=tmpYmax;
          }
@@ -186,6 +186,27 @@ namespace geos
       
       } );
     }
+
+    template< typename EXEC_POLICY, typename FE_TYPE >
+    static void
+    multiplyByTaperCoeff(localIndex const size,
+                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                         arrayView1d<real32 const > const taperCoeff,
+                         arrayView1d<real32 > const vector)
+    {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        for (localIndex i = 0; i < numNodesPerElem; ++i)
+        {
+          vector[elemsToNodes[k][i]] *= taperCoeff[k];
+        }
+        
+      } );
+
+    }
+
 
   };
 

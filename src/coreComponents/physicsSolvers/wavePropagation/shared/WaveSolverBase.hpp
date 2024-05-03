@@ -354,17 +354,17 @@ protected:
   SortedArray< localIndex > m_solverTargetNodesSet;
 
    /// Mininum (x,y,z) coordinates of inner PML boundaries
-    real32 m_xMinTaper[3];
+    R1Tensor32 m_xMinTaper;
 
     /// Maximum (x,y,z) coordinates of inner PML boundaries
-    real32 m_xMaxTaper[3];
+    R1Tensor32 m_xMaxTaper;
 
     /// Desired constant for the taper, used to compute the damping profile
     real32 m_taperConstant;
 
     /// Thickness of the PML region, used to compute the damping profile
-    real32 m_thicknessMinXYZTaper[3];
-    real32 m_thicknessMaxXYZTaper[3];
+    R1Tensor32 m_thicknessMinXYZTaper;
+    R1Tensor32 m_thicknessMaxXYZTaper;
 
   struct parametersPML
   {
@@ -401,7 +401,7 @@ DECLARE_FIELD( referencePosition32,
                "Copy of the referencePosition from NodeManager in 32 bits integer" );
 DECLARE_FIELD( taperCoeff,
                "taperCoeff",
-               array1d<real32>,,
+               array1d<real32>,
                0,
                NOPLOT,
                WRITE_AND_READ,

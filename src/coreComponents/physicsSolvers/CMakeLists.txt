@@ -154,7 +154,6 @@ set( physicsSolvers_headers
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticTimeSchemeSEMKernel.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEMKernel.hpp )
->>>>>>> develop
 
 # Specify solver sources
 set( physicsSolvers_sources

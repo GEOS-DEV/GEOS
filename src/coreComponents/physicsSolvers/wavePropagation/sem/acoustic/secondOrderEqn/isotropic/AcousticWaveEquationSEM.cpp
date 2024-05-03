@@ -31,7 +31,7 @@
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
-#include "TaperKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/TaperKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
@@ -171,7 +171,12 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
-    TaperKernel::ComputeTaperCoeff::computeTaperCoeff<EXEC_POLICY>(elementSubRegion.size(),elemCenter);
+    arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
+
+    if (m_useTaper==1)
+    {
+      TaperKernel::computeTaperCoeff< EXEC_POLICY > (elementSubRegion.size(),elemCenter,m_xMinTaper, m_xMaxTaper,m_thicknessMinXYZTaper,m_thicknessMaxXYZTaper,m_taperConstant,taperCoeff);
+    }
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -973,6 +978,33 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     GEOS_MARK_SCOPE ( updateP );
     AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
+    
+    if(m_useTaper==1)
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                          CellElementSubRegion & elementSubRegion )
+  
+      {
+         GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+         getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+         InputError );
+  
+         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+         arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
+  
+         finiteElement::FiniteElementBase const &
+         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+         finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+         {
+  
+          using FE_TYPE = TYPEOFREF( finiteElement );
+  
+          TaperKernel::multiplyByTaperCoeff<EXEC_POLICY, FE_TYPE>(elementSubRegion.size(),elemsToNodes,taperCoeff,p_np1);
+  
+         } );
+  
+      } );
+    }
   }
   else
   {
