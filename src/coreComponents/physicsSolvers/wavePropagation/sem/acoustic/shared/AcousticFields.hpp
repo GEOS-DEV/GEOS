@@ -141,7 +141,7 @@ DECLARE_FIELD( AcousticVelocity,
 DECLARE_FIELD( AcousticDensity,
                "acousticDensity",
                array1d< real32 >,
-               0,
+               1,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
