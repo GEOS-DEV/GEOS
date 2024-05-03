@@ -246,6 +246,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
                                                                                 dt );
   } );
 
+  this->solidMechanicsSolver()->applyContactConstraint( dofManager, domain, localMatrix, localRhs );
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 }
 
