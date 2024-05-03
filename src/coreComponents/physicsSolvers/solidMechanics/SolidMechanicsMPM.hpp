@@ -264,48 +264,48 @@ public:
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
-    static constexpr char const * forceExternalString() { return "externalForce"; }
-    static constexpr char const * forceInternalString() { return "internalForce"; }
-    static constexpr char const * displacementString() { return "displacement"; }
-    static constexpr char const * centerOfVolumeString() { return "centerOfVolume"; }
-    static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
-    static constexpr char const * cohesiveTractionString() { return "cohesiveTraction"; }
+    static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
+    static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
+    static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
+    static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
+    static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
+    static constexpr char const * gridCohesiveTractionString() { return "gridCohesiveTraction"; }
 
-    static constexpr char const * massString() { return "mass"; }
-    static constexpr char const * materialVolumeString() { return "materialVolume"; }
-    static constexpr char const * velocityString() { return "velocity"; }
-    static constexpr char const * dVelocityString() { return "dVelocity"; }
-    static constexpr char const * momentumString() { return "momentum"; }
-    static constexpr char const * accelerationString() { return "acceleration"; }
-    static constexpr char const * forceContactString() { return "contactForce"; }
-    static constexpr char const * damageString() { return "damage"; }
-    static constexpr char const * damageGradientString() { return "damageGradient"; }
-    static constexpr char const * maxDamageString() { return "maxDamage"; }
-    static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
+    static constexpr char const * gridMassString() { return "gridMass"; }
+    static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
+    static constexpr char const * gridVelocityString() { return "gridVelocity"; }
+    static constexpr char const * gridDVelocityString() { return "gridDVelocity"; }
+    static constexpr char const * gridMomentumString() { return "gridMomentum"; }
+    static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
+    static constexpr char const * gridContactForceString() { return "gridContactForce"; }
+    static constexpr char const * gridDamageString() { return "gridDamage"; }
+    static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
+    static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
-    static constexpr char const * surfacePositionString() { return "surfacePosition"; }
+    static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
+    static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
 
-    static constexpr char const * centerOfMassString() { return "centerOfMass"; }
-    static constexpr char const * normalStressString() { return "normalStress"; }
-    static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
-    static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
-    static constexpr char const * referenceAreaVectorString() { return "referenceAreaVector"; }
-    static constexpr char const * referenceSurfacePositionString() { return "referenceSurfacePosition"; }
-    static constexpr char const * referenceMaterialVolumeString() { return "referenceMaterialVolume"; }
+    static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
+    static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
+    static constexpr char const * gridMassWeightedDamageString() { return "gridMassWeightedDamage"; }
+    static constexpr char const * gridCohesiveNodeString() { return "gridCohesiveNode"; }
+    static constexpr char const * gridReferenceAreaVectorString() { return "gridReferenceAreaVector"; }
+    static constexpr char const * gridReferenceSurfacePositionString() { return "gridReferenceSurfacePosition"; }
+    static constexpr char const * gridReferenceMaterialVolumeString() { return "gridReferenceMaterialVolume"; }
 
-    static constexpr char const * surfaceMassString() { return "surfaceMass"; }
-    static constexpr char const * surfaceFieldMassString() { return "surfaceFieldMass"; }
-    static constexpr char const * explicitSurfaceNormalString() { return "explicitSurfaceNormal"; }
-    static constexpr char const * maxMappedParticleIDString() { return "maxMappedParticleIDS"; }
-    static constexpr char const * principalExplicitSurfaceNormalString() { return "principalExplicitSurfaceNormal"; }
-    static constexpr char const * cohesiveFieldFlagString() { return "cohesiveFieldFlag"; }
-    static constexpr char const * cohesiveForceString() { return "cohesiveForce"; }
+    static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
+    static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
+    static constexpr char const * gridExplicitSurfaceNormalString() { return "gridExplicitSurfaceNormal"; }
+    static constexpr char const * gridMaxMappedParticleIDString() { return "gridMaxMappedParticleIDS"; }
+    static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
+    static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
+    static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
     
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
-    static constexpr char const * vPlusString() { return "vPlus"; }
-    static constexpr char const * dVPlusString() { return "dVPlus"; }
+    static constexpr char const * gridVPlusString() { return "gridVPlus"; }
+    static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
@@ -628,6 +628,8 @@ void interpolateTable( real64 x,
 
   void cpdiDomainScaling( ParticleManager & particleManager );
 
+  void subdivideParticles( ParticleManager & particleManager );
+
   void resizeMappingArrays( ParticleManager & particleManager );
 
   void populateMappingArrays( ParticleManager & particleManager,
@@ -658,8 +660,6 @@ void computeCPDIShapeFunctions( arrayView2d< real64 const > const gridPosition,
                                 arraySlice2d< real64 > const shapeFunctionGradientValues );
 
   void computeBodyForce( ParticleManager & particleManager );
-  
-  void computeWavespeed( ParticleManager & particleManager );
 
   void computeArtificialViscosity( ParticleManager & particleManager );
 
@@ -776,7 +776,6 @@ protected:
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
   CohesiveLawOption m_cohesiveLaw;
-  // int m_cohesiveFieldPartitioning;
   int m_enableCohesiveFailure;
   int m_preventCZInterpentration;
   real64 m_normalForceConstant;
@@ -822,7 +821,6 @@ protected:
 
   // Currently initializes all particles to this temperature
   // TODO: read in from particle file
-  real64 m_initialTemperature;
   int m_shockHeating;
   int m_useArtificialViscosity;
   real64 m_artificialViscosityQ0;
