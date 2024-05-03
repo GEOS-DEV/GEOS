@@ -174,7 +174,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 33; c++)
+      for(int c = 0; c < 35; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
@@ -191,9 +191,13 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
           case ParticleColumnHeaders::SurfaceNormalX:
             defaultValue = 1.0;
             break;
+          case ParticleColumnHeaders::Temperature:
+            defaultValue = 300.0;
+            break;
           case ParticleColumnHeaders::MaterialType:
           case ParticleColumnHeaders::ContactGroup:
           case ParticleColumnHeaders::Damage:
+          case ParticleColumnHeaders::Porosity:
           case ParticleColumnHeaders::VelocityX:
           case ParticleColumnHeaders::VelocityY:
           case ParticleColumnHeaders::VelocityZ:
@@ -266,6 +270,8 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< int > particleGroup( npInBlock );
     array1d< int > particleSurfaceFlag( npInBlock );
     array1d< real64 > particleDamage( npInBlock );
+    array1d< real64 > particlePorosity( npInBlock );
+    array1d< real64 > particleTemperature( npInBlock );
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
@@ -301,6 +307,12 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
       // Damage
       particleDamage[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::Damage )];
+
+      // Porosity
+      particlePorosity[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::Porosity )];
+
+      // Temperature
+      particleTemperature[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::Temperature )];
 
       // strengthScale
       particleStrengthScale[index] = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::StrengthScale )];
@@ -372,19 +384,17 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleBlock.setParticleID( particleID );
     particleBlock.setParticleCenter( particleCenter );
     particleBlock.setParticleVelocity( particleVelocity );
-    particleBlock.setParticleInitialMaterialDirection( particleMaterialDirection );
     particleBlock.setParticleMaterialDirection( particleMaterialDirection );
     particleBlock.setParticleGroup( particleGroup );
     particleBlock.setParticleSurfaceFlag( particleSurfaceFlag );
     particleBlock.setParticleDamage( particleDamage );
+    particleBlock.setParticlePorosity( particlePorosity );
+    particleBlock.setParticleTemperature( particleTemperature );
     particleBlock.setParticleStrengthScale( particleStrengthScale );
     particleBlock.setParticleVolume( particleVolume );
     particleBlock.setParticleRVectors( particleRVectors );
-    particleBlock.setParticleInitialSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
-    particleBlock.setParticleInitialSurfacePosition( particleSurfacePosition );
     particleBlock.setParticleSurfacePosition( particleSurfacePosition );
-    particleBlock.setParticleInitialSurfaceTraction( particleSurfaceTraction );
     particleBlock.setParticleSurfaceTraction( particleSurfaceTraction );
   } // loop over particle blocks
 
