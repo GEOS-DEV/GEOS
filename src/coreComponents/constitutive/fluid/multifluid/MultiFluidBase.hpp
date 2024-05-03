@@ -1047,7 +1047,7 @@ MultiFluidBase::KernelWrapper::
 {
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
-  integer const numDOF = numComp + 2; 
+  integer const numDOF = numComp + 2;
   for( integer ip = 0; ip < numPhase; ++ip )
   {
 
