@@ -201,7 +201,7 @@ struct PreComputeSourcesAndReceivers
    * @param[out] sourceConstants constant part of the source terms
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
-   * @param[out] rcvElem element where a receiver is located
+   * @param[out] receiverElem element where a receiver is located
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverConstants constant part of the receiver term
    * @param[out] sourceValue value of the temporal source (eg. Ricker)
@@ -230,7 +230,7 @@ struct PreComputeSourcesAndReceivers
                                                                    arrayView1d< localIndex > const sourceRegion,
                                                                    arrayView2d< real64 const > const receiverCoordinates,
                                                                    arrayView1d< localIndex > const receiverIsLocal,
-                                                                   arrayView1d< localIndex > const rcvElem,
+                                                                   arrayView1d< localIndex > const receiverElem,
                                                                    arrayView2d< localIndex > const receiverNodeIds,
                                                                    arrayView2d< real64 > const receiverConstants,
                                                                    arrayView1d< localIndex > const receiverRegion,
@@ -324,7 +324,7 @@ struct PreComputeSourcesAndReceivers
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
-            rcvElem[ircv] = k;
+            receiverElem[ircv] = k;
             receiverRegion[ircv] = regionIndex;
 
             real64 Ntest[numNodesPerElem];
@@ -360,25 +360,26 @@ struct PreComputeSourcesAndReceivers
    * @param[in] faceNormal array containing the normal of all faces
    * @param[in] faceCenter array containing the center of all faces
    * @param[in] sourceCoordinates coordinates of the source terms
-   * @param[in] receiverCoordinates coordinates of the receiver terms
-   * @param[in] dt time-step
-   * @param[in] timeSourceFrequency Peak frequency of the source
-   * @param[in] sourceForce force vector of the source
-   * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
-   * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
-   * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
-   * integration
-   * @param[in] linearDASGeometry geometry of the linear DAS receivers, if needed
-   * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsAccessible flag indicating whether the source is accessible or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
    * @param[out] sourceConstantsx constant part of the source terms in x-direction
    * @param[out] sourceConstantsy constant part of the source terms in y-direction
    * @param[out] sourceConstantsz constant part of the source terms in z-direction
+   * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
+   * @param[out] receiverConstants constant part of the receiver term
    * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
+   * @param[in] dt time-step
+   * @param[in] timeSourceFrequency Peak frequency of the source
+   * @param[in] timeSourceDelay  Delay of the source
+   * @param[in] rickerOrder Order of the Ricker wavelet
+   * @param[in] useDAS parameter that determines which kind of receiver needs to be modeled (DAS or not, and which type)
+   * @param[in] linearDASSamples parameter that gives the number of integration points to be used when computing the DAS signal via strain
+   * integration
+   * @param[in] linearDASGeometry geometry of the linear DAS receivers, if needed
+   * @param[in] sourceForce force vector of the source
+   * @param[in] sourceMoment moment (symmetric rank-2 tensor) of the source
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void

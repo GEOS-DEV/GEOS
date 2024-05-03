@@ -118,7 +118,7 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
-    static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverElemString() { return "receiverElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
@@ -319,7 +319,7 @@ protected:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_rcvElem;
+  array1d< localIndex > m_receiverElem;
 
   /// Array containing the elements which contain the region which the receiver belongs
   array1d< localIndex > m_receiverRegion;
