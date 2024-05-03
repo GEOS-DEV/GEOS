@@ -62,6 +62,12 @@ void from_json( const json & j,
   v = MpiRank{ j.get< MpiRank::UnderlyingType >() };  // TODO use a `traits` instead
 }
 
+void from_json( const json & j,
+                NodeGlbIdx & v )
+{
+  v = NodeGlbIdx{ j.get< NodeGlbIdx::UnderlyingType >() };
+}
+
 void to_json( json & j,
               const NodeGlbIdx & v )
 {
@@ -107,15 +113,17 @@ struct Exchange
   std::set< Face > faces;
 };
 
-template< bool DO_PACKING >
-localIndex
-Pack( buffer_unit_type *& buffer,
-      Exchange const & exchange )
+void to_json( json & j,
+              const Exchange & v )
 {
-  localIndex sizeOfPackedChars = 0;
-  sizeOfPackedChars += Pack< DO_PACKING >( buffer, exchange.edges );
-  sizeOfPackedChars += Pack< DO_PACKING >( buffer, exchange.faces );
-  return sizeOfPackedChars;
+  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+}
+
+void from_json( const json & j,
+                Exchange & v )
+{
+  v.edges = j.at( "edges" ).get< std::set< Edge > >();
+  v.faces = j.at( "faces" ).get< std::set< Face > >();
 }
 
 /**
@@ -251,69 +259,23 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
   return { std::move( edges ), std::move( faces ) };
 }
 
-
-array1d< globalIndex > convertExchange( Exchange const & exchange )
+array1d< std::uint8_t > convertExchange( Exchange const & exchange )
 {
-  std::size_t const edgeSize = 1 + 2 * std::size( exchange.edges );
-  std::size_t faceSize = 1;
-  for( Face const & face: exchange.faces )
+  std::vector< std::uint8_t > const tmp = json::to_cbor( json( exchange ) );
+  array1d< std::uint8_t > result;
+  result.reserve( tmp.size() );
+  for( std::uint8_t const & t: tmp )
   {
-    faceSize += 1 + std::size( face );  // `+1` because we need to store the size so we know where to stop.
+    result.emplace_back( t );
   }
-
-  array1d< globalIndex > result;
-  result.reserve( edgeSize + faceSize );
-
-  result.emplace_back( std::size( exchange.edges ) );
-  for( Edge const & edge: exchange.edges )
-  {
-    result.emplace_back( std::get< 0 >( edge ).get() );
-    result.emplace_back( std::get< 1 >( edge ).get() );
-  }
-  result.emplace_back( std::size( exchange.faces ) );
-  for( Face const & face: exchange.faces )
-  {
-    result.emplace_back( std::size( face ) );
-    for( NodeGlbIdx const & n: face )
-    {
-      result.emplace_back( n.get() );
-    }
-  }
-
   return result;
 }
 
-
-Exchange convertExchange( array1d< globalIndex > const & input )
+Exchange convertExchange( array1d< std::uint8_t > const & input )
 {
-  Exchange exchange;
-
-  globalIndex const numEdges = input[0];
-  int i;
-  for( i = 1; i < 2 * numEdges + 1; i += 2 )
-  {
-    NodeGlbIdx const gn0{ input[i] }, gn1{ input[i + 1] };
-    exchange.edges.insert( std::minmax( gn0, gn1 ) );
-  }
-  GEOS_ASSERT_EQ( std::size_t(numEdges), exchange.edges.size() );
-
-  globalIndex const numFaces = input[i];
-  for( ++i; i < input.size(); )
-  {
-    auto const s = input[i++];
-    Face face( s );
-    for( int j = 0; j < s; ++j, ++i )
-    {
-      face[j] = NodeGlbIdx{ input[i] };
-    }
-    exchange.faces.insert( face );
-  }
-
-  GEOS_ASSERT_EQ( std::size_t(numFaces), exchange.faces.size() );
-
-  return exchange;
+  std::vector< std::uint8_t > const tmp( std::cbegin( input ), std::cend( input ) );
+  return json::from_cbor( tmp, false ).template get< Exchange >();
 }
-
 
 Exchange buildFullData( vtkSmartPointer< vtkDataSet > mesh )
 {
@@ -423,7 +385,7 @@ std::map< MpiRank, Exchange > exchange( int commId,
   commData.resize( numNeighbors );
 
 
-  array1d< globalIndex > const cv = convertExchange( data );
+  array1d< std::uint8_t > const cv = convertExchange( data );
 
   for( integer i = 0; i < numNeighbors; ++i )
   {
@@ -437,7 +399,7 @@ std::map< MpiRank, Exchange > exchange( int commId,
   MpiWrapper::waitAll( numNeighbors, commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
   MpiWrapper::waitAll( numNeighbors, commData.mpiRecvBufferSizeRequest(), commData.mpiRecvBufferSizeStatus() );
 
-  array1d< array1d< globalIndex > > rawExchanged( neighbors.size() );
+  array1d< array1d< std::uint8_t > > rawExchanged( neighbors.size() );
 
   for( integer i = 0; i < numNeighbors; ++i )
   {
