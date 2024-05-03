@@ -98,8 +98,13 @@ struct ElasticMatricesSEM
      * @param[in] facesToNodes map from face to nodes
      * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
      * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
-     * @param[in] velocity cell-wise velocity
-     * @param[out] damping diagonal of the damping matrix
+     * @param[in] faceNormal array containing the normal fo the faces
+     * @param[in] density cell-wise density
+     * @param[in] velocityVp cell-wise P-wavespeed
+     * @param[in] velocityVs cell-wise S-wavespeed
+     * @param[out] dampingx diagonal of the damping matrix (x-direction)
+     * @param[out] dampingy diagonal of the damping matrix (y-direction)
+     * @param[out] dampingz diagonal of the damping matrix (z-direction)
      */
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
