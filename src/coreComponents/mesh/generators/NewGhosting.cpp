@@ -304,6 +304,7 @@ Exchange buildExchangeData( vtkSmartPointer< vtkDataSet > mesh )
 
 struct Buckets
 {
+  std::map< std::set< MpiRank >, std::set< NodeGlbIdx > > nodes;
   std::map< std::set< MpiRank >, std::set< Edge > > edges;
   std::map< std::set< MpiRank >, std::set< Face > > faces;
 };
@@ -320,33 +321,67 @@ Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchange
                                   MpiRank curRank,
                                   std::set< MpiRank > const & neighbors )
 {
-  std::map< Edge, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms?
-  // We "register" all the edges of the current rank: they are the only one we're interested in.
-  for( Edge const & edge: exchanged.at( curRank ).edges )
-  {
-    counts.emplace_hint( counts.end(), edge, std::set< MpiRank >{ curRank } );
-  }
-
-  // We now loop on the neighbor edges.
-  // If a neighbor has an edge in common with the current rank, they we store it.
-  for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
-  {
-    for( Edge const & edge: exchanged.at( neighborRank ).edges )
+  std::map< std::set< MpiRank >, std::set< NodeGlbIdx > > nodeBuckets;
+  {  // Scope reduction // TODO DUPLICATED!
+    std::map< NodeGlbIdx, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms? + Duplicated
+    // We "register" all the edges of the current rank: they are the only one we're interested in.
+    for( NodeGlbIdx const & node: exchanged.at( curRank ).nodes )
     {
-      auto it = counts.find( edge );
-      if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
+      counts.emplace_hint( counts.end(), node, std::set< MpiRank >{ curRank } );
+    }
+
+    // We now loop on the neighbor edges.
+    // If a neighbor has an edge in common with the current rank, they we store it.
+    for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
+    {
+      for( NodeGlbIdx const & node: exchanged.at( neighborRank ).nodes )
       {
-        it->second.insert( neighborRank );
+        auto it = counts.find( node );
+        if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
+        {
+          it->second.insert( neighborRank );
+        }
+      }
+    }
+
+    for( auto const & [node, ranks]: counts )
+    {
+      if( ranks.find( curRank ) != ranks.cend() )
+      {
+        nodeBuckets[ranks].insert( node );
       }
     }
   }
 
   std::map< std::set< MpiRank >, std::set< Edge > > edgeBuckets;
-  for( auto const & [edge, ranks]: counts )
-  {
-    if( ranks.find( curRank ) != ranks.cend() )
+  {  // Scope reduction
+    std::map< Edge, std::set< MpiRank > > counts;  // TODO Use better intersection algorithms?
+    // We "register" all the edges of the current rank: they are the only one we're interested in.
+    for( Edge const & edge: exchanged.at( curRank ).edges )
     {
-      edgeBuckets[ranks].insert( edge );
+      counts.emplace_hint( counts.end(), edge, std::set< MpiRank >{ curRank } );
+    }
+
+    // We now loop on the neighbor edges.
+    // If a neighbor has an edge in common with the current rank, they we store it.
+    for( MpiRank const & neighborRank: neighbors )  // This does not include the current rank.
+    {
+      for( Edge const & edge: exchanged.at( neighborRank ).edges )
+      {
+        auto it = counts.find( edge );
+        if( it != counts.cend() )  // TODO Extract `counts.cend()` out of the loop.
+        {
+          it->second.insert( neighborRank );
+        }
+      }
+    }
+
+    for( auto const & [edge, ranks]: counts )
+    {
+      if( ranks.find( curRank ) != ranks.cend() )
+      {
+        edgeBuckets[ranks].insert( edge );
+      }
     }
   }
 
@@ -368,6 +403,13 @@ Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchange
 
   // Checking if neighbors is too wide...  // TODO do we care?
   std::set< MpiRank > usefulNeighbors;
+  for( auto const & [ranks, nodes]: nodeBuckets )
+  {
+    if( not nodes.empty() )
+    {
+      usefulNeighbors.insert( ranks.cbegin(), ranks.cend() );
+    }
+  }
   for( auto const & [ranks, edges]: edgeBuckets )
   {
     if( not edges.empty() )
@@ -379,7 +421,7 @@ Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchange
   std::set_difference( neighbors.cbegin(), neighbors.cend(), usefulNeighbors.cbegin(), usefulNeighbors.cend(), std::back_inserter( uselessNeighbors ) );
   // TODO... Remove the neighbors?
 
-  return { edgeBuckets, faceBuckets };
+  return { nodeBuckets, edgeBuckets, faceBuckets };
 }
 
 
@@ -431,13 +473,14 @@ std::map< MpiRank, Exchange > exchange( int commId,
 
 
 /**
- * @brief Estimate an upper bound of the serialized size of the size buckets.
+ * @brief Estimate an upper bound of the serialized size of the size @p buckets.
  * @param buckets
  * @return Size in bytes.
- * @details MPI_Scan requires a fixed buffer size.
+ * @details @c MPI_Scan requires a fixed buffer size.
  * An a-priori estimation of the maximum size of the buffer leads to crazy amounts of memory
  * because of the combinatorial pattern of the rank intersections.
- * Therefore, we use an MPI communication to get a better estimation.
+ * Therefore, we use an initial MPI communication to get a better estimation.
+ * @node We don't care about the @c nodes because their global numbering is already done.
  */
 std::size_t buildMaxBufferSize( Buckets const & buckets )  // TODO give the size buckets instead?
 {
