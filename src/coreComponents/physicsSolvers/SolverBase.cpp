@@ -897,7 +897,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       isNewtonConverged = true;
       //always output residual even if converged
-      if( getLogLevel()>0 )
+      if( getLogLevel()>0 && !m_currentFlags->isSet( SolverGroupFlags::StruggleCvg ) )
         updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
       break;
