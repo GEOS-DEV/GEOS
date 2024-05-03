@@ -26,9 +26,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "events/EventManager.hpp"
-#include "AcousticMatricesSEMKernel.hpp"
-#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -148,7 +148,7 @@ void AcousticFirstOrderWaveEquationSEM::postProcessInput()
   m_uzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
   m_sourceElem.resize( numSourcesGlobal );
   m_sourceRegion.resize( numSourcesGlobal );
-  m_rcvElem.resize( numReceiversGlobal );
+  m_receiverElem.resize( numReceiversGlobal );
   m_receiverRegion.resize( numReceiversGlobal );
 }
 
@@ -176,7 +176,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  arrayView1d< localIndex > const rcvElem = m_rcvElem.toView();
+  arrayView1d< localIndex > const receiverElem = m_receiverElem.toView();
   arrayView1d< localIndex > const receiverRegion = m_receiverRegion.toView();
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
@@ -235,7 +235,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         sourceRegion,
         receiverCoordinates,
         receiverIsLocal,
-        rcvElem,
+        receiverElem,
         receiverNodeIds,
         receiverConstants,
         receiverRegion,
