@@ -61,7 +61,6 @@ namespace geos
       /// Loop over elements in the subregion, 'l' is the element index within the target set
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-      
          real32 tmpXmin = (xMin[0]-elemCenter[0][k])/dMin[0];
          real32 tmpXmax = (elemCenter[0][k]-xMax[0])/dMax[0];
          
