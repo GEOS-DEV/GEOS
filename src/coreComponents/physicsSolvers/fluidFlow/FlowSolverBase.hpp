@@ -140,6 +140,8 @@ public:
 
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
+  void enableLaggingFractureStencilWeightsUpdate(){ m_isLaggingFractureStencilWeightsUpdate = 1; };
+
 protected:
 
   /**
@@ -205,6 +207,8 @@ protected:
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  // flag to determine whether or not to apply lagging update for the fracture stencil weights
+  integer m_isLaggingFractureStencilWeightsUpdate;
 
 };
 

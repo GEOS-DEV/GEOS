@@ -112,6 +112,10 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override final;
+
   /**@}*/
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
@@ -157,6 +161,8 @@ public:
     constexpr static char const * newFractureInitializationTypeString() { return "newFractureInitializationType"; }
 
     constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
+
+    static constexpr char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -230,6 +236,9 @@ private:
   InitializationType m_newFractureInitializationType;
 
   integer m_useQuasiNewton;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
+
+  // flag to determine whether or not to apply lagging update for the fracture stencil weights
+  integer m_isLaggingFractureStencilWeightsUpdate;
 
 };
 
