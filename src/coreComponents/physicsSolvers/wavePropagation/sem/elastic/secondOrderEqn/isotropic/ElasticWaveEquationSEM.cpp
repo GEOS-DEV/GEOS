@@ -19,7 +19,7 @@
 
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
-#include "ElasticVTIWaveEquationSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
