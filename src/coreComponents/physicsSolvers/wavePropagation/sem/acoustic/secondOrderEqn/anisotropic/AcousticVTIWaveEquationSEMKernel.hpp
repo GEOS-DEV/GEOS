@@ -21,7 +21,7 @@
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverUtils.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 #include "AcousticVTIFields.hpp"
 
 namespace geos

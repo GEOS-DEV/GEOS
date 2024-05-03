@@ -37,6 +37,26 @@ struct CouplingKernel
 {
   static constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
+
+  /**
+   * @brief Launches the computation of the coupling vector
+   * @tparam EXEC_POLICY the execution policy
+   * @tparam ATOMIC_POLICY the atomic policy
+   * @param[in] size the number of faces
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] fluidRegionIndex Acoustic region
+   * @param[in] fluidSubRegionIndex Acoustic subregion
+   * @param[in] faceToSubRegion Array which gives you the subregion on which the face belongs
+   * @param[in] faceToRegion Array which gives you the region on which the face belongs
+   * @param[in] faceToElement Array which gives you the element on which the face belongs
+   * @param[in] facesToNodes Array which gives the nodes on the mesh knowing the face and the local node on an element
+   * @param[in] faceNormal Normals of the faces
+   * @param[in] faceCenters Centers of the faces
+   * @param[in] elemCenters Centers of the elements
+   * @param[out] couplingVectorx x-component of the coupling vector
+   * @param[out] couplingVectory y-component of the coupling vector
+   * @param[out] couplingVectorz z-component of the coupling vector
+   */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,

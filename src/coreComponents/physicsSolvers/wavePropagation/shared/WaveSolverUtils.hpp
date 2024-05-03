@@ -82,6 +82,11 @@ struct WaveSolverUtils
 
   /**
    * @brief Initialize (clear) the trace file.
+   * @param[in] prefix Prefix of the output file
+   * @param[in] name Name of the solver on which you write the seismo trace
+   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+   * @param[in] nReceivers Number of receivers
+   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
    */
   static void initTrace( char const * prefix,
                          string const & name,
@@ -110,6 +115,15 @@ struct WaveSolverUtils
 
   /**
    * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
+   * @param[in] prefix Prefix of the output file
+   * @param[in] name Name of the solver on which you write the seismo trace
+   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+   * @param[in] nReceivers Number of receivers
+   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
+   * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
+   * @param[out] varAtReceiversx Array containing the variable (x-direction) computed at the receivers
+   * @param[out] varAtReceiversy Array containing the variable (y-direction) computed at the receivers
+   * @param[out] varAtReceiversz Array containing the variable (z-direction) computed at the receivers
    */
   static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
@@ -128,6 +142,13 @@ struct WaveSolverUtils
 
   /**
    * @brief Write the seismo traces to a file.
+   * @param[in] prefix Prefix of the output file
+   * @param[in] name Name of the solver on which you write the seismo trace
+   * @param[in] outputSeismoTrace Boolean equals to 1 if you want to output the seismotrace on a txt file 0 either
+   * @param[in] nReceivers Number of receivers
+   * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
+   * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
+   * @param[in] varAtReceivers Array containing the the variable computed at the receivers
    */
   static void writeSeismoTrace( char const * prefix,
                                 string const & name,
@@ -166,6 +187,18 @@ struct WaveSolverUtils
 
   /**
    * @brief Compute the seismo traces.
+   * @param[in] time_n Current time iteration
+   * @param[in] dt time-step
+   * @param[in] timeSeismo time when the seismo is computed
+   * @param[in] iSeismo i-th seismo trace
+   * @param[in] receiverNodeIds indices of the nodes of the element where the receiver is located
+   * @param[in] receiverConstants constant part of the receiver term
+   * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
+   * @param[in] var_np1 Array containing the variable at time n+1
+   * @param[in] var_n Array containing the variable at time n
+   * @param[out] varAtReceivers Array containing the the variable computed at the receivers
+   * @param[in] coeffs Coefficients array for receivers
+   * @param[in] add Boolean to say if you want to add the value of interpolation to the same receiver coefficient or not
    */
   static void computeSeismoTrace( real64 const time_n,
                                   real64 const dt,
@@ -200,14 +233,14 @@ struct WaveSolverUtils
           }
         }
         // linear interpolation between the pressure value at time_n and time_{n+1}
-        real32 rcvCoeff = coeffs.size( 0 ) == 0 ? 1.0 : coeffs( ircv );
+        real32 receiverCoeff = coeffs.size( 0 ) == 0 ? 1.0 : coeffs( ircv );
         if( add )
         {
-          varAtReceivers( iSeismo, ircv ) += rcvCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
+          varAtReceivers( iSeismo, ircv ) += receiverCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
         }
         else
         {
-          varAtReceivers( iSeismo, ircv ) = rcvCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
+          varAtReceivers( iSeismo, ircv ) = receiverCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
         }
         // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
         // left in the forAll loop for sync issues since the following does not depend on `ircv`
@@ -216,13 +249,28 @@ struct WaveSolverUtils
     } );
   }
 
+  /**
+   * @brief Compute the seismo traces for 2d arrays
+   * @param[in] time_n Current time iteration
+   * @param[in] dt time-step
+   * @param[in] regionIndex Index of the current region
+   * @param[in] receiverRegion Array containing the region in which the receiver is located
+   * @param[in] timeSeismo time when the seismo is computed
+   * @param[in] iSeismo i-th seismo trace
+   * @param[in] receiverElem Array containing the element on which the receiver is located
+   * @param[in] receiverConstants constant part of the receiver term
+   * @param[in] receiverIsLocal flag indicating whether the receiver is local or not
+   * @param[in] var_np1 Array containing the variable at time n+1
+   * @param[in] var_n Array containing the variable at time n
+   * @param[out] varAtReceivers Array containing the the variable computed at the receivers
+   */
   static void compute2dVariableSeismoTrace( real64 const time_n,
                                             real64 const dt,
                                             localIndex const regionIndex,
                                             arrayView1d< localIndex const > const receiverRegion,
                                             real64 const timeSeismo,
                                             localIndex const iSeismo,
-                                            arrayView1d< localIndex const > const rcvElem,
+                                            arrayView1d< localIndex const > const receiverElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
                                             arrayView2d< real32 const > const var_np1,
@@ -245,8 +293,8 @@ struct WaveSolverUtils
           real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
-            vtmp_np1 += var_np1( rcvElem[ircv], inode ) * receiverConstants( ircv, inode );
-            vtmp_n += var_n( rcvElem[ircv], inode ) * receiverConstants( ircv, inode );
+            vtmp_np1 += var_np1( receiverElem[ircv], inode ) * receiverConstants( ircv, inode );
+            vtmp_n += var_n( receiverElem[ircv], inode ) * receiverConstants( ircv, inode );
           }
           // linear interpolation between the pressure value at time_n and time_{n+1}
           varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
