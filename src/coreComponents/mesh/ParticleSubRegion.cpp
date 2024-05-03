@@ -54,19 +54,17 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleGroup = particleBlock.getParticleGroup();
   m_particleSurfaceFlag = particleBlock.getParticleSurfaceFlag();
   m_particleDamage = particleBlock.getParticleDamage();
+  m_particlePorosity = particleBlock.getParticlePorosity();
+  m_particleTemperature = particleBlock.getParticleTemperature();
   m_particleStrengthScale = particleBlock.getParticleStrengthScale();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
-  m_particleInitialMaterialDirection = particleBlock.getParticleInitialMaterialDirection();
   m_particleMaterialDirection = particleBlock.getParticleMaterialDirection();
   m_particleVolume = particleBlock.getParticleVolume();
   m_particleRVectors = particleBlock.getParticleRVectors();
   m_hasRVectors = particleBlock.hasRVectors();
-  m_particleInitialSurfaceNormal = particleBlock.getParticleInitialSurfaceNormal();
   m_particleSurfaceNormal = particleBlock.getParticleSurfaceNormal();
-  m_particleInitialSurfacePosition = particleBlock.getParticleInitialSurfacePosition();
   m_particleSurfacePosition = particleBlock.getParticleSurfacePosition();
-  m_particleInitialSurfaceTraction = particleBlock.getParticleInitialSurfaceTraction();
   m_particleSurfaceTraction = particleBlock.getParticleSurfaceTraction();
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
@@ -103,11 +101,8 @@ void ParticleSubRegion::copyFromParticleSubRegion( ParticleSubRegion & particleS
   m_particleVolume = particleSubRegion.getParticleVolume();
   m_particleRVectors = particleSubRegion.getParticleRVectors();
   m_hasRVectors = particleSubRegion.hasRVectors();
-  m_particleInitialSurfaceNormal = particleSubRegion.getParticleInitialSurfaceNormal();
   m_particleSurfaceNormal = particleSubRegion.getParticleSurfaceNormal();
-  m_particleInitialSurfacePosition = particleSubRegion.getParticleInitialSurfacePosition();
   m_particleSurfacePosition = particleSubRegion.getParticleSurfacePosition();
-  m_particleInitialSurfaceTraction = particleSubRegion.getParticleInitialSurfaceTraction();
   m_particleSurfaceTraction = particleSubRegion.getParticleSurfaceTraction();
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,

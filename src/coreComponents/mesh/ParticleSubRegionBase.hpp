@@ -136,6 +136,31 @@ public:
   arrayView1d< real64 > getParticleDamage()
   { return m_particleDamage; }
 
+  /**
+   * @brief Get the porosity of each particle in this subregion.
+   * @return an arrayView1d of const particle porosity
+   */
+  arrayView1d< real64 const > getParticlePorosity() const
+  { return m_particlePorosity; }
+
+  /**
+   * @copydoc getParticlePorosity() const
+   */
+  arrayView1d< real64 > getParticlePorosity()
+  { return m_particlePorosity; }
+
+    /**
+   * @brief Get the temperature of each particle in this subregion.
+   * @return an arrayView1d of const particle temperature
+   */
+  arrayView1d< real64 const > getParticleTemperature() const
+  { return m_particleTemperature; }
+
+  /**
+   * @copydoc getParticleTemperature() const
+   */
+  arrayView1d< real64 > getParticleTemperature()
+  { return m_particleTemperature; }
 
   /**
    * @brief Get the strength scale of each particle in this subregion.
@@ -198,19 +223,6 @@ public:
   { return m_particleVelocity; }
 
   /**
-   * @brief Get the initial material direction of each particle in this subregion.
-   * @return an arrayView1d of const particle material direction
-   */
-  arrayView2d< real64 const > getParticleInitialMaterialDirection() const
-  { return m_particleInitialMaterialDirection; }
-
-  /**
-   * @copydoc getParticleInitialMaterialDirection() const
-   */
-  arrayView2d< real64 > getParticleInitialMaterialDirection()
-  { return m_particleInitialMaterialDirection; }
-
-  /**
    * @brief Get the material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
    */
@@ -250,19 +262,6 @@ public:
   { return m_particleRVectors; }
 
   /**
-   * @brief Get the initial surface normal of each particle in this subregion.
-   * @return an arrayView1d of const particle initial surface normal
-   */
-  arrayView2d< real64 const > getParticleInitialSurfaceNormal() const
-  { return m_particleInitialSurfaceNormal; }
-
-  /**
-   * @copydoc getParticleInitialSurfaceNormal() const
-   */
-  arrayView2d< real64 > getParticleInitialSurfaceNormal()
-  { return m_particleInitialSurfaceNormal; }
-
-  /**
    * @brief Get the surface normal of each particle in this subregion.
    * @return an arrayView1d of const particle surface normal
    */
@@ -276,19 +275,6 @@ public:
   { return m_particleSurfaceNormal; }
 
   /**
-   * @brief Get the initial surface position of each particle in this subregion.
-   * @return an arrayView1d of const particle initial surface position
-   */
-  arrayView2d< real64 const > getParticleInitialSurfacePosition() const
-  { return m_particleInitialSurfacePosition; }
-
-  /**
-   * @copydoc getParticleInitialSurfacePosition() const
-   */
-  arrayView2d< real64 > getParticleInitialSurfacePosition()
-  { return m_particleInitialSurfacePosition; }
-
-  /**
    * @brief Get the surface position of each particle in this subregion.
    * @return an arrayView1d of const particle surface position
    */
@@ -300,19 +286,6 @@ public:
    */
   arrayView2d< real64 > getParticleSurfacePosition()
   { return m_particleSurfacePosition; }
-
-  /**
-   * @brief Get the initial surface traction of each particle in this subregion.
-   * @return an arrayView1d of const particle initial surface traction
-   */
-  arrayView2d< real64 const > getParticleInitialSurfaceTraction() const
-  { return m_particleInitialSurfaceTraction; }
-
-  /**
-   * @copydoc getParticleInitialSurfaceTraction() const
-   */
-  arrayView2d< real64 > getParticleInitialSurfaceTraction()
-  { return m_particleInitialSurfaceTraction; }
 
   /**
    * @brief Get the surface traction of each particle in this subregion.
@@ -438,6 +411,12 @@ public:
     /// @return String key for the member level field for the particle damage.
     static constexpr char const * particleDamageString() { return "particleDamage"; }
 
+    /// @return String key for the member level field for the particle porosity.
+    static constexpr char const * particlePorosityString() { return "particlePorosity"; }
+
+        /// @return String key for the member level field for the particle temperature.
+    static constexpr char const * particleTemperatureString() { return "particleTemperature"; }
+
     /// @return String key for the member level field for the particle strength scale.
     static constexpr char const * particleStrengthScaleString() { return "particleStrengthScale"; }
 
@@ -450,9 +429,6 @@ public:
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
 
-    /// @return String key for the member level field for the particle initial material direction.
-    static constexpr char const * particleInitialMaterialDirectionString() { return "particleInitialMaterialDirection"; }
-
     /// @return String key for the member level field for the particle material direction.
     static constexpr char const * particleMaterialDirectionString() { return "particleMaterialDirection"; }
 
@@ -461,21 +437,12 @@ public:
 
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
-
-    /// @return String key for the member level field for the particle initial surface normal.
-    static constexpr char const * particleInitialSurfaceNormalString() { return "particleInitialSurfaceNormal"; }
   
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
 
-    /// @return String key for the member level field for the particle initial surface position.
-    static constexpr char const * particleInitialSurfacePositionString() { return "particleInitialSurfacePosition"; }
-  
     /// @return String key for the member level field for the particle surface position.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
-
-    /// @return String key for the member level field for the particle initial surface traction.
-    static constexpr char const * particleInitialSurfaceTractionString() { return "particleInitialSurfaceTraction"; }
   
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
@@ -572,6 +539,12 @@ protected:
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;
 
+  /// Member level field for the particle porosity.
+  array1d< real64 > m_particlePorosity;
+
+  /// Member level field for the particle temperature.
+  array1d< real64 > m_particleTemperature;
+
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;
 
@@ -580,9 +553,6 @@ protected:
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
-
-  /// Member level field for the particle initial material direction.
-  array2d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
   array2d< real64 > m_particleMaterialDirection;
@@ -596,18 +566,11 @@ protected:
   /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;
 
-  /// Member level field for the particle initial surface normal.
-  array2d< real64 > m_particleInitialSurfaceNormal;
+  /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
-
-  /// Member level field for the particle initial surface position.
-  array2d< real64 > m_particleInitialSurfacePosition;
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
-
-  /// Member level field for the particle initial surface traction.
-  array2d< real64 > m_particleInitialSurfaceTraction;
 
   /// Member level field for the particle surface traction.
   array2d< real64 > m_particleSurfaceTraction;

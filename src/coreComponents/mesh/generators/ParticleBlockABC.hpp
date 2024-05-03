@@ -80,6 +80,18 @@ public:
   virtual array1d< real64 > getParticleDamage() const = 0;
 
   /**
+   * @brief Get the list of particle porosity values in this subregion.
+   * @return the list of particle porosity values in this subregion.
+   */
+  virtual array1d< real64 > getParticlePorosity() const = 0;
+
+  /**
+   * @brief Get the list of particle temperature values in this subregion.
+   * @return the list of particle temperature values in this subregion.
+   */
+  virtual array1d< real64 > getParticleTemperature() const = 0;
+
+  /**
    * @brief Get the list of particle strength scale values in this subregion.
    * @return the list of particle strength scale values in this subregion.
    */
