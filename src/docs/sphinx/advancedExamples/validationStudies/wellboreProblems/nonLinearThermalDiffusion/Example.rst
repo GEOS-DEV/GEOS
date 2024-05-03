@@ -9,7 +9,7 @@ Non-Linear Thermal Diffusion Around a Wellbore
 Problem description
 ------------------------------------------------------------------
 
-This example is an extension of the linear thermal diffusion problem presented in :ref:`AdvancedExamplePureThermalDiffusionWellbore`. It uses the thermal single-phase flow solver to model a non-linear thermal diffusion problem around a wellbore. Precisely, the volumetric heat capacity of the solid rock in this example linearly depends on the temperature.
+This example is an extension of the linear thermal diffusion problem presented in :ref:`AdvancedExamplePureThermalDiffusionWellbore`. It uses the thermal single-phase flow solver to model a non-linear thermal diffusion problem around a wellbore where the volumetric heat capacity of the solid rock depends linearly on the temperature.
 
 
 **Input file**
@@ -28,13 +28,13 @@ and
   inputFiles/singlePhaseFlow/thermalCompressible_nonLinear_2d_benchmark.xml
 
 
-In this example, we would focus our attention on the ``Constitutive`` tag.
+In this example, we focus on the ``Constitutive`` tag.
 
 -----------------------------------------------------------
 Constitutive
 -----------------------------------------------------------
 
-The reference value of the volumetric heat capacity of the medium around the wellbore as well as its derivative w.r.t. temperature are defined in the ``SolidInternalEnergy`` XML block as  
+The reference value of the volumetric heat capacity of the medium around the wellbore and its derivative with respect to temperature are defined in the ``SolidInternalEnergy`` XML block:  
 
 .. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
@@ -46,7 +46,7 @@ The reference value of the volumetric heat capacity of the medium around the wel
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOS results and analytical results is shown in the figure below:
+A good agreement between the results obtained using GEOS and the analytical results is shown in the figure below:
 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion/nonLinearThermalDiffusionAroundWellbore.py
@@ -58,5 +58,5 @@ To go further
 
 **Feedback on this example**
 
-This concludes the example of pure thermal diffusion problem around a wellbore.
+This concludes the example of a non-linear thermal diffusion problem around a wellbore.
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
