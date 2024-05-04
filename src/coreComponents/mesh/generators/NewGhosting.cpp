@@ -786,29 +786,17 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
   // The `e2n` is a mapping for all the geometrical entities, not only the one owned like `result.e2n`.
   // TODO check that it is really useful.
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n;
-
   for( auto const & [ranks, edges]: buckets.edges )
   {
+    auto & m = owning( ranks ) ? result.e2n : e2n;
     EdgeGlbIdx i = offsets.edges.at( ranks );  // TODO hack
     for( Edge const & edge: edges )
     {
-      e2n[i] = edge;
-      ++i;
-    }
-
-    if( !owning( ranks ) )
-    {
-      continue;
-    }
-
-//    EdgeGlbIdx i = offsets.edges.at( ranks );
-    i = offsets.edges.at( ranks );
-    for( Edge const & edge: edges )
-    {
-      result.e2n[i] = edge;
+      m[i] = edge;
       ++i;
     }
   }
+  e2n.insert( std::cbegin( result.e2n ), std::cend( result.e2n ) );
 
   // Simple inversion
   std::map< std::tuple< NodeGlbIdx, NodeGlbIdx >, EdgeGlbIdx > n2e;
@@ -817,23 +805,14 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
     n2e[n] = e;  // TODO what about ownership?
   }
 
-  std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
   for( auto const & [ranks, faces]: buckets.faces )
   {
-    FaceGlbIdx i = offsets.faces.at( ranks );
-    for( Face const & face: faces )  // TODO hack
-    {
-      n2f[face] = i;
-      ++i;
-    }
-
     if( !owning( ranks ) )
     {
       continue;
     }
 
-//    FaceGlbIdx i{ offsets.faces.at( ranks ) };
-    i = offsets.faces.at( ranks );
+    FaceGlbIdx i = offsets.faces.at( ranks );
     for( Face face: faces )  // Intentional copy for the future `emplace_back`.
     {
 //      n2f[face] = i;
@@ -846,6 +825,17 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
         result.f2e[i].insert( n2e.at( p1 ) );
         bool const flipped = p0 != p1;  // TODO store somewhere.
       }
+      ++i;
+    }
+  }
+
+  std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
+  for( auto const & [ranks, faces]: buckets.faces )
+  {
+    FaceGlbIdx i = offsets.faces.at( ranks );
+    for( Face const & face: faces )  // TODO hack
+    {
+      n2f[face] = i;
       ++i;
     }
   }
