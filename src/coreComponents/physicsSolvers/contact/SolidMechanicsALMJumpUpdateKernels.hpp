@@ -130,17 +130,19 @@ public:
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      localIndex const kn0 = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
-      localIndex const kn1 = m_faceToNodes( kf1, FE_TYPE::permutation[ a ] );
+      //localIndex const kn0 = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
+      //localIndex const kn1 = m_faceToNodes( kf1, FE_TYPE::permutation[ a ] );
+      localIndex const kn0 = m_faceToNodes( kf0, a );
+      localIndex const kn1 = m_faceToNodes( kf1, a );
 
       //std::cout << kn0 << " " << kn1 << std::endl;
       for( int i=0; i<3; ++i )
       {
-        stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
-        stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
+        //stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
+        //stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
         //stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
         //stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
-        stack.X[ a ][ i ] = m_X[  kn0 ][ i ];
+        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ]) ][ i ];
         stack.uLocal[a*3+i] = m_displacement[kn0][i];
         stack.uLocal[shift + a*3+i] = m_displacement[kn1][i];
         stack.duLocal[a*3+i] = m_incrDisp[kn0][i];

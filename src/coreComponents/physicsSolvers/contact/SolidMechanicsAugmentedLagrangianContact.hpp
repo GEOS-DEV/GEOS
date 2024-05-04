@@ -48,7 +48,7 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  //virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   virtual void initializePreSubGroups() override final;
 
@@ -116,10 +116,10 @@ private:
   std::map< string, std::map< string, array1d< localIndex >>> m_faceTypesToFaceElements;
   std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
-  //struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  //{
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
   //  constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
-  //};
+  };
 
 };
 

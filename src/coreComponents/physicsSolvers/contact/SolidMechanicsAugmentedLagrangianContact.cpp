@@ -110,10 +110,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializePreSubGroups()
 
 }
 
-void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPreSubGroups()
-{
-  std::cout << "initializePostInitialConditionsPreSubGroups" << std::endl;
-  //SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
+//void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPreSubGroups()
+//{
+//  std::cout << "initializePostInitialConditionsPreSubGroups" << std::endl;
+//  SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
 
   //array1d< localIndex > quadList;
   //array1d< localIndex > triList;
@@ -148,7 +148,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
   SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
   this->updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
   */
-}
+//}
 
 void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const & domain,
                                                           DofManager & dofManager ) const
@@ -329,10 +329,10 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     arrayView2d< real64 > const 
       penalty = subRegion.getField< fields::contact::penalty >().toView();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      penalty[k] [0] = 1.e+12;
-      penalty[k] [1] = 1.e+12;
+      penalty[k] [0] = 1.e+9;
+      penalty[k] [1] = 1.e+9;
     });
 
   } );
@@ -348,7 +348,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
   //GEOS_UNUSED_VAR( time, dt, domain, dofManager, localMatrix, localRhs );
   GEOS_UNUSED_VAR( time);
-
+  synchronizeFractureState( domain );
   std::cout << "assembleSystem" << std::endl;
 
   GEOS_MARK_FUNCTION;
@@ -435,10 +435,18 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
     } );
   });
+  
   //ParallelMatrix parallel_matrix_1;
   //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix_1.write("amech.mtx");
   //abort();
+  //std::ofstream ofile;
+  //ofile.open("amech.rhs");
+
+  //for (int i=0; i<localRhs.size(); ++i)
+  //{
+  //  ofile << localRhs[i] << std::endl;
+  //}
 
   /*
   GEOS_MARK_FUNCTION;
@@ -512,7 +520,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
       //arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
       //arrayView1d< integer > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
@@ -575,8 +583,34 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   std::cout << "calculateResidualNorm" << std::endl;
 
+  //std::ofstream ofile;
+  //ofile.open("amech_crn.rhs");
+
+  //for (int i=0; i<localRhs.size(); ++i)
+  //{
+  //  ofile << localRhs[i] << std::endl;
+  //}
+
+  //std::cout << viewKeyStruct::targetNodesString() << std::endl;
+  //real64 normrhs = 0.0;
+  //for (int i=0; i<localRhs.size(); ++i)
+  //{
+  //  normrhs += localRhs[i]*localRhs[i];
+  //}
+  //std::cout << normrhs << std::endl;
+
+  //real64 normrhs = 0.0;
+  //for (localIndex i=0; i<localRhs.size(); i++ )
+  //{
+  //  std::cout << normrhs << " " << localRhs[i] << std::endl;
+  //  normrhs += localRhs[i] * localRhs[i];
+  //}
+
+  //std::cout << normrhs << std::endl;
+
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  //abort();
   
 
   return solidResidualNorm;
@@ -802,7 +836,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           }
           else 
           {
-            real64 deltaDisp = sqrt(pow(deltaDispJump[kfe][1],2) + pow(deltaDispJump[kfe][1],2));
+            real64 deltaDisp = sqrt(pow(deltaDispJump[kfe][1],2) + pow(deltaDispJump[kfe][2],2));
             std::cout << kfe << " " << std::abs(dispJump[kfe][0]) << " " << deltaDisp << std::endl;
             if( std::abs(dispJump[kfe][0]) > tol[0] )
             {

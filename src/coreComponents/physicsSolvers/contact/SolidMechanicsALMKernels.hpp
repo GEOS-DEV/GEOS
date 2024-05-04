@@ -224,13 +224,15 @@ public:
 
     //real64 matRtAtu[3][stack.numUdofs];
     real64 matRRtAtu[3][stack.numUdofs], matDRtAtu[3][stack.numUdofs];
+    real64 dispJumpR[stack.numUdofs];
     real64 oldDispJumpR[stack.numUdofs];
+    real64 tractionR[stack.numUdofs];
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
                                                                stack.localAtu );
 
-    LvArray::tensorOps::Ri_add_AjiBj< stack.numUdofs, 3 >( stack.localRu, matRRtAtu, stack.tLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
 
     //std::cout << "matrixAtu: " << std::endl;
     //for (int i=0; i<3; ++i)
@@ -263,9 +265,11 @@ public:
                                                                             matRRtAtu); 
 
     // Compute the local residuals
-    LvArray::tensorOps::Ri_add_AjiBj< stack.numUdofs, 3 >( stack.localRu, matDRtAtu, stack.dispJumpLocal );
-
+    LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
     LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
+
+    LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, tractionR, -1 );
+    LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, dispJumpR,  1 );
     LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, oldDispJumpR, -1 );
                                                                           
     //for (int i=0; i<stack.numUdofs; ++i)

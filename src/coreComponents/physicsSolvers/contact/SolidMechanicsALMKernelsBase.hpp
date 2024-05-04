@@ -109,7 +109,7 @@ public:
       tLocal{},
       dispJumpLocal{},
       oldDispJumpLocal{},
-      X{}
+      X{{}}
     {}
 
     /// C-array storage for the element local row degrees of freedom.
