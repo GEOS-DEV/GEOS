@@ -143,7 +143,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             LAMBDA && assembleFunction )
 {
   SinglePhaseWell & wellSolver = *solver.wellSolver();
-  SinglePhaseFVM<> & flowSolver = dynamicCast< SinglePhaseFVM<> & >( *solver.reservoirSolver() );
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
