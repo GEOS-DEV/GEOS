@@ -41,12 +41,12 @@ ENUM_STRINGS( StabilizationType,
               "Local" );
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
-class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
+template< typename FLOW_SOLVER >
+class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
 {
 public:
 
-  using Base = PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -179,11 +179,11 @@ private:
 
 };
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+template< typename FLOW_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+real64 MultiphasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
                                                                DofManager const & dofManager,
                                                                arrayView1d< string const > const & regionNames,
                                                                string const & materialNamesString,

@@ -28,8 +28,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {
@@ -39,8 +37,8 @@ using namespace constitutive;
 using namespace fields;
 using namespace stabilization;
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanics( const string & name,
+template< typename FLOW_SOLVER >
+MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & name,
                                                                  Group * const parent )
   : Base( name, parent )
 {
@@ -68,8 +66,8 @@ MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanic
   linearSolverParameters.dofsPerNode = 3;
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postProcessInput()
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
 {
   Base::postProcessInput();
 
@@ -81,8 +79,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postProcessInput(
                            ));
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::registerDataOnMesh( Group & meshBodies )
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBodies )
 {
   Base::registerDataOnMesh( meshBodies );
 
@@ -112,8 +110,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::registerDataOnMes
   }
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                             DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -121,8 +119,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( Do
                           DofManager::Connector::Elem );
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( real64 const time,
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time,
                                                              real64 const dt,
                                                              DomainPartition & domain,
                                                              DofManager const & dofManager,
@@ -160,8 +158,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( r
   }
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBasedTerms( real64 const time_n,
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 const time_n,
                                                                         real64 const dt,
                                                                         DomainPartition & domain,
                                                                         DofManager const & dofManager,
@@ -266,8 +264,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -296,8 +294,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( Doma
                                       this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
@@ -329,8 +327,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIni
   }
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePreSubGroups()
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
 {
   Base::initializePreSubGroups();
 
@@ -340,8 +338,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePreSubG
                  InputError );
 }
 
-    template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-    void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::implicitStepSetup( real64 const & time_n,
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::implicitStepSetup( real64 const & time_n,
                                                                 real64 const & dt,
                                                                 DomainPartition & domain )
 {
@@ -354,8 +352,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePreSubG
 
 }
 
-    template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-    void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateStabilizationParameters( DomainPartition & domain ) const
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::updateStabilizationParameters( DomainPartition & domain ) const
 {
   // Step 1: we loop over the regions where stabilization is active and collect their name
 
@@ -418,8 +416,8 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePreSubG
   } );
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
   string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -439,8 +437,6 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
 }
 
 template class MultiphasePoromechanics< CompositionalMultiphaseBase >;
-template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
-template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsEmbeddedFractures >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >;
 
 namespace

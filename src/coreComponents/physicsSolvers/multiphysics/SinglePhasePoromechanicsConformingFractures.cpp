@@ -37,7 +37,7 @@ using namespace dataRepository;
 using namespace fields;
 
 SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
-                                                                                                         Group * const parent )
+                                                                                          Group * const parent )
   : Base( name, parent )
 {
   LinearSolverParameters & params = m_linearSolverParameters.get();
