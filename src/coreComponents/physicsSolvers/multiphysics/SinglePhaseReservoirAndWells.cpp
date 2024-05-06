@@ -67,14 +67,12 @@ void
 SinglePhaseReservoirAndWells<>::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
   }
   else
   {
-    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
   }
 }
@@ -84,14 +82,13 @@ void
 SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics )
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    // add Reservoir
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
-    GEOS_LOG_RANK_0( "The MGR strategy for " << getCatalogName() << " is not implemented" );
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
 }
 
