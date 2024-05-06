@@ -34,6 +34,7 @@ SolverBase::SolverBase( string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
+  m_hasNonlinearIssues( false ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
@@ -243,8 +244,7 @@ bool SolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-  m_rootFlag = new BitNodes< SolverGroupFlags >( nullptr );
-  m_flagQueue.push( m_rootFlag );
+  m_hasNonlinearIssues = false;
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
@@ -268,8 +268,6 @@ bool SolverBase::execute( real64 const time_n,
     if( dtRemaining > 0.0 )
     {
       nextDt = setNextDt( dtAccepted, domain );
-      m_currentFlags->parent->children.push_back( new BitNodes< SolverGroupFlags >( m_currentFlags ) ); //siblings then
-      m_flagQueue.push( m_currentFlags->parent->children.back());
 
       if( nextDt < dtRemaining )
       {
@@ -723,8 +721,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
-    m_currentFlags = m_flagQueue.top();
-    m_flagQueue.pop();
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
@@ -793,14 +789,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
 
-      if( m_currentFlags->children.empty())
-      {
-        //adding a generation
-        m_currentFlags->children.push_back( new BitNodes< SolverGroupFlags >( m_currentFlags ));
-        m_flagQueue.push( m_currentFlags->children.back() );
-      }
-      else
-        GEOS_ERROR( "Convergence tree is ill-formed" );
 
     }
   } // end of outer loop (dt chopping strategy)
@@ -897,7 +885,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       isNewtonConverged = true;
       //always output residual even if converged
-      if( getLogLevel()>0 && !m_rootFlag->isAnySet( SolverGroupFlags::StruggleCvg ) )
+      if( getLogLevel()>0 && !m_hasNonlinearIssues )
         updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
       break;
@@ -912,20 +900,17 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                           maxAllowedResidualNormString,
                                           m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
-      m_currentFlags->set( SolverGroupFlags::StruggleCvg );
+      m_hasNonlinearIssues = true;
       break;
     }
 
 
     //if logLevel high enough and newton start having trouble converging, dumpt residual map.
-//    if( getLogLevel() > 0 && residualNorm > lastResidual ) // tentative trigger
-    if( getLogLevel() > 0 && m_currentFlags->isSet( SolverGroupFlags::StruggleCvg ) )  // SPE11 trigger
+    if( newtonIter==maxNewtonIter-1 )//last but one iter-left
     {
-      updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-    }
-    if( newtonIter==maxNewtonIter-2 )//last but one iter-left
-    {
-      m_currentFlags->set( SolverGroupFlags::StruggleCvg );
+      if( getLogLevel()>0 )
+        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+      m_hasNonlinearIssues = true;
     }
 
 
@@ -935,7 +920,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       bool lineSearchSuccess = false;
 
-//      m_currentFlags->set( SolverGroupFlags::StruggleCvg );
+//      m_hasNonlinearIssues = true;
 
       if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None &&
           newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )

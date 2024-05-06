@@ -453,43 +453,7 @@ private:
 
 };
 
-template< typename FLAGS_ENUM >
-struct BitNodes
-{
-  explicit BitNodes( BitNodes * parent_ ): parent( parent_ ){};
 
-  GEOS_HOST_DEVICE
-  void set( FLAGS_ENUM flag )
-  {
-    flags.set( flag );
-  }
-
-  GEOS_HOST_DEVICE
-  void reset( FLAGS_ENUM flag )
-  {
-    flags.reset( flag );
-  }
-
-  GEOS_HOST_DEVICE
-  bool isSet( FLAGS_ENUM flag ) const
-  {
-    return flags.isSet( flag );
-  }
-
-  GEOS_HOST_DEVICE
-  bool isAnySet( FLAGS_ENUM flag ) const
-  {
-    return flags.isSet( flag ) || std::any_of( children.begin(), children.end(), [flag]( auto * child ){ return child->isAnySet( flag );} );
-  }
-
-
-  BitNodes * parent;
-  std::vector< BitNodes * > children;
-
-private:
-  BitFlags< FLAGS_ENUM > flags;
-
-};
 
 // Temporary functions (axpy, scale, dot) used in Aitken's acceleration. Will be removed once the nonlinear
 // acceleration implementation scheme will use LAI vectors. See issue #2891

@@ -67,14 +67,14 @@ void ResidualTask::initializePostSubGroups()
 }
 
 bool ResidualTask::execute( const geos::real64 time_n, const geos::real64 dt, const geos::integer cycleNumber,
-                        const geos::integer eventCounter, const geos::real64 eventProgress,
-                        geos::DomainPartition & domain )
+                            const geos::integer eventCounter, const geos::real64 eventProgress,
+                            geos::DomainPartition & domain )
 {
 
   if( m_solverTarget!= nullptr && m_outputTarget!= nullptr )
   {
     m_solverTarget->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
-    if( dynamicCast< SolverBase * >( m_solverTarget )->getRootFlag()->isAnySet( SolverBase::SolverGroupFlags::StruggleCvg ) )
+    if( dynamicCast< SolverBase * >( m_solverTarget )->hasNonlinearIssues() )
       m_outputTarget->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   }
