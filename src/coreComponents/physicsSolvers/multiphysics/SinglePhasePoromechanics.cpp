@@ -325,7 +325,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensit
 template class SinglePhasePoromechanics<>;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >;
-//template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >;
+template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> >;
 //template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangeContact >;
 //template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsEmbeddedFractures >;
 
