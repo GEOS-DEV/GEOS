@@ -33,27 +33,15 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-// provide a definition for catalogName()
-template<>
-string SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
-{
-  return "SinglePhaseReservoir";
-}
-template< typename POROMECHANICS_SOLVER >
-string SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::catalogName()
-{
-  return POROMECHANICS_SOLVER::catalogName() + "Reservoir";
-}
-
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 SinglePhaseReservoirAndWells( const string & name,
                               Group * const parent )
   : Base( name, parent )
 {}
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 ~SinglePhaseReservoirAndWells()
 {}
 
@@ -103,9 +91,9 @@ setMGRStrategy()
   }
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
   Base::initializePreSubGroups();
@@ -113,18 +101,18 @@ initializePreSubGroups()
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
@@ -215,9 +203,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
   } );
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,

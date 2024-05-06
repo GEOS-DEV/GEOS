@@ -37,27 +37,15 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-// provide a definition for catalogName()
-template<>
-string CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName()
-{
-  return "CompositionalMultiphaseReservoir";
-}
-template< typename POROMECHANICS_SOLVER >
-string CompositionalMultiphaseReservoirAndWells< POROMECHANICS_SOLVER >::catalogName()
-{
-  return POROMECHANICS_SOLVER::catalogName() + "Reservoir";
-}
-
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 CompositionalMultiphaseReservoirAndWells( const string & name,
                                           Group * const parent )
   : Base( name, parent )
 {}
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 ~CompositionalMultiphaseReservoirAndWells()
 {}
 
@@ -107,9 +95,9 @@ setMGRStrategy()
   }
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
   Base::initializePreSubGroups();
@@ -126,18 +114,18 @@ initializePreSubGroups()
                  InputError );
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
@@ -242,9 +230,9 @@ addCouplingSparsityPattern( DomainPartition const & domain,
   } );
 }
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,

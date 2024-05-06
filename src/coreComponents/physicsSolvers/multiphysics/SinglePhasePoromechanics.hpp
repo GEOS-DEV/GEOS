@@ -53,19 +53,16 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
-  template< typename _FLOW_SOLVER=FLOW_SOLVER >
-  static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseBase >::value, string >::type
-  catalogName()
+  static string catalogName()
   {
-    return "SinglePhasePoromechanics";
-  }
-  template< typename _FLOW_SOLVER=FLOW_SOLVER >
-  static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, SinglePhaseReservoirAndWells< SinglePhaseBase > >::value, string >::type
-  catalogName()
-  {
-    return SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName() + "Poromechanics";
+    if constexpr ( std::is_same_v< FLOW_SOLVER, SinglePhaseBase > ) // special case
+    {
+      return "SinglePhasePoromechanics";
+    }
+    else // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
   }
 
   /**
