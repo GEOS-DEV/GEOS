@@ -26,7 +26,7 @@
 namespace geos
 {
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER = SinglePhaseBase >
+template< typename SINGLEPHASE_RESERVOIR_SOLVER >
 class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
                                                                           SinglePhaseWell >
 {

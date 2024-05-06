@@ -39,7 +39,7 @@ using namespace constitutive;
 
 // provide a definition for catalogName()
 template<>
-string CompositionalMultiphaseReservoirAndWells<>::catalogName()
+string CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName()
 {
   return "CompositionalMultiphaseReservoir";
 }
@@ -63,7 +63,7 @@ CompositionalMultiphaseReservoirAndWells< COMPOSITIONAL_RESERVOIR_SOLVER >::
 
 template<>
 CompositionalMultiphaseBase *
-CompositionalMultiphaseReservoirAndWells<>::
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
 flowSolver() const
 {
   return this->reservoirSolver();
@@ -79,7 +79,7 @@ flowSolver() const
 
 template<>
 void
-CompositionalMultiphaseReservoirAndWells<>::
+CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
@@ -434,12 +434,12 @@ assembleCouplingTerms( real64 const time_n,
   } );
 }
 
-template class CompositionalMultiphaseReservoirAndWells<>;
+template class CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >;
 template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > >;
 
 namespace
 {
-typedef CompositionalMultiphaseReservoirAndWells<> CompositionalMultiphaseFlowAndWells;
+typedef CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > CompositionalMultiphaseFlowAndWells;
 typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics< CompositionalMultiphaseBase > > CompositionalMultiphasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )

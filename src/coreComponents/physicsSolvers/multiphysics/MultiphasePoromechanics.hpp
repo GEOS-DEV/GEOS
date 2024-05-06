@@ -77,10 +77,10 @@ public:
   }
   template< typename _FLOW_SOLVER=FLOW_SOLVER >
   static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseReservoirAndWells<> >::value, string >::type
+  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >::value, string >::type
   catalogName()
   {
-    return CompositionalMultiphaseReservoirAndWells<>::catalogName() + "Poromechanics";
+    return CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName() + "Poromechanics";
   }
 
   /**

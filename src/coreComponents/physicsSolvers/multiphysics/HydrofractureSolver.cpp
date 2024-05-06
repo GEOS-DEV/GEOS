@@ -37,15 +37,15 @@ using namespace fields;
 
 // provide a definition for catalogName()
 template<>
-string HydrofractureSolver< SinglePhasePoromechanics<> >::catalogName()
+string HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::catalogName()
 {
   return "Hydrofracture";
 }
-template<>
-string HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > >::catalogName()
-{
-  return "Hydrofracture";
-}
+//template<>
+//string HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > >::catalogName()
+//{
+//  return "MultiphaseHydrofracture";
+//}
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
@@ -1137,8 +1137,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 namespace
 {
 typedef HydrofractureSolver<> SinglePhaseHydrofracture;
+// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
-// typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 

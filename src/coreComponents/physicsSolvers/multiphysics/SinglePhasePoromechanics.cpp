@@ -329,9 +329,9 @@ template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePha
 
 namespace
 {
-typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > SinglePhaseReservoirPoromechanics;
+typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanics, string const &, Group * const )
-typedef SinglePhasePoromechanics<> SinglePhasePoromechanics;
+typedef SinglePhasePoromechanics< SinglePhaseBase > SinglePhasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 }
 

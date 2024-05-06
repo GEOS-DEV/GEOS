@@ -136,7 +136,7 @@ char const * PostXmlInput =
   )xml";
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
+void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseBase > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
@@ -345,7 +345,7 @@ protected:
 
   void SetUp() override
   {
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells<> >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseBase > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -423,7 +423,7 @@ protected:
   static real64 constexpr EPS = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseReservoirAndWells<> * solver;
+  SinglePhaseReservoirAndWells< SinglePhaseBase > * solver;
 };
 
 real64 constexpr SinglePhaseReservoirSolverTest::TIME;

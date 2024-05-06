@@ -758,6 +758,7 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
   } );
 }
 
+
 void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
   solidMechanicsSolver()->outputConfigurationStatistics( domain );

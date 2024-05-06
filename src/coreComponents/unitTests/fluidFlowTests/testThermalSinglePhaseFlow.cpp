@@ -150,7 +150,7 @@ char const * xmlInput =
 // Sphinx end before input XML
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseFVM<> & solver,
+void testNumericalJacobian( SinglePhaseFVM< SinglePhaseBase > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
@@ -211,7 +211,7 @@ protected:
   {
 
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM<> >( "singleflow" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "singleflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -229,7 +229,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseFVM<> * solver;
+  SinglePhaseFVM< SinglePhaseBase > * solver;
 };
 
 real64 constexpr ThermalSinglePhaseFlowTest::time;
