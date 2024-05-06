@@ -43,7 +43,7 @@ struct ConstitutivePassThruHandler<>
   template< typename BASE, typename LAMBDA >
   static void execute( BASE & relation, LAMBDA lambda )
   {
-    GEOS_UNUSED_VAR( relation, lambda );
+    GEOS_UNUSED_VAR( lambda );
     GEOS_ERROR( "The constitutive model " << relation.getDataContext() << " was not dispatched. " <<
                 "The model type does not match the list of supported types." );
   }
