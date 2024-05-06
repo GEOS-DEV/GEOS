@@ -499,9 +499,6 @@ void CompositionalMultiphaseFVM::updateResidualField( const real64 & GEOS_UNUSED
                                                      localRhs,
                                                      subRegion );
 
-//        GEOS_LOG_RANK_0( GEOS_FMT( "Logging Residual max/min report {}",
-//                                   subRegion.getField< fields::flow::globalResidual >()));
-
       }
     } );
   } );

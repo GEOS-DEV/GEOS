@@ -35,6 +35,7 @@ public:
 
   static string catalogName() { return "Residual"; }
 
+
   void initializePostSubGroups() override;
 
   bool execute( const geos::real64 time_n,
@@ -45,7 +46,9 @@ public:
                 geos::DomainPartition & domain ) override;
 
 private:
-
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
   struct viewKeyStruct
   {
     constexpr static char const * solverTargetString()
@@ -55,12 +58,12 @@ private:
     { return "outputTarget";}
   };
 
+  /// both string name holder for the executable group to be always triggered (solver) and on flag triggered (output)
   string m_solverTargetString, m_outputTargetString;
+  /// the pointer to the solver target
   ExecutableGroup * m_solverTarget;
+  /// the pointer to the output target
   ExecutableGroup * m_outputTarget;
-
-  //TODO
-//  void registerDataOnMesh(geos::dataRepository::Group &meshBodies) override;
 
 };
 

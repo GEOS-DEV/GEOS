@@ -27,7 +27,6 @@
 #include "physicsSolvers/SolverStatistics.hpp"
 
 #include <limits>
-#include <stack>
 
 namespace geos
 {
@@ -262,6 +261,10 @@ public:
                                          real64 & lastResidual,
                                          real64 & residualNormT );
 
+  /**
+   * @brief getter for the current nonlinear resolution status
+   * @return return true if the current time-step solution reached the mximum number of nonlinear iterations
+   */
   bool hasNonlinearIssues() { return m_hasNonlinearIssues; }
   /**
    * @brief Function for a linear implicit integration step
@@ -420,6 +423,14 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
 
+  /**
+   * @brief function to update the residual map
+   * @param time_n time at the begining of the time step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated tieh the linear system
+   * @param localRhs the system right-hand side vector
+   */
   virtual void
   updateResidualField( real64 const & time_n,
                        real64 const & dt,
@@ -790,7 +801,7 @@ protected:
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
 
-  // moving and root pointer, queue for BFS
+  /// a boolean status-flag to signal a struggling time-step nonlinear-wise
   bool m_hasNonlinearIssues;
 
   real64 m_cflFactor;
