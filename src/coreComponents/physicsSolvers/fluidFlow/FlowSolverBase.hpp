@@ -138,14 +138,6 @@ public:
    */
   void allowNegativePressure() { m_allowNegativePressure = 1; }
 
-  /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
-
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
@@ -189,12 +181,6 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
-
-  /// the input temperature
-  real64 m_inputTemperature;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
