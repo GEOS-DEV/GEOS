@@ -8,8 +8,6 @@ printenv
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
-echo "running nproc"
-nproc
 
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
@@ -145,8 +143,8 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
+  if [ -n "${DOCKER_CERTS_DIR}" ] && [ -n "${DOCKER_CERTS_UPDATE_COMMAND}" ]; then
+    echo "Copying the certificates to the docker certificates folder."
     for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
       if [ -f "$file" ]; then
         filename=$(basename -- "$file")
@@ -156,27 +154,19 @@ EOT
         echo "Copied $filename to $new_filename"
       fi
     done
-    update-ca-certificates 
-    # gcloud config set core/custom_ca_certs_file cert.pem'
-    
-    if [ ${HOSTNAME} == 'streak.llnl.gov' ]; then
-      NPROC=8
-    else
-      if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-        NPROC=32
-      else
-        NPROC=16
-      fi
-    fi
-
-  else
-    NPROC=$(nproc)
+    ${DOCKER_CERTS_UPDATE_COMMAND}
   fi
-  echo "Using ${NPROC} cores."
+  # gcloud config set core/custom_ca_certs_file cert.pem'
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
+
+if [ -z "${NPROC}" ]; then
+  NPROC=$(nproc)
+  echo "NPROC unset, setting to ${NPROC}..."
+fi
+echo "Using ${NPROC} cores."
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
