@@ -794,13 +794,6 @@ Element: PeriodicEvent
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent.rst
 
 
-.. _XML_PermeabilityBase:
-
-Element: PermeabilityBase
-=========================
-.. include:: ../../coreComponents/schema/docs/PermeabilityBase.rst
-
-
 .. _XML_PhaseFieldDamageFEM:
 
 Element: PhaseFieldDamageFEM
@@ -2217,13 +2210,6 @@ Datastructure: Perforation
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent_other.rst
-
-
-.. _DATASTRUCTURE_PermeabilityBase:
-
-Datastructure: PermeabilityBase
-===============================
-.. include:: ../../coreComponents/schema/docs/PermeabilityBase_other.rst
 
 
 .. _DATASTRUCTURE_PhaseFieldDamageFEM:
