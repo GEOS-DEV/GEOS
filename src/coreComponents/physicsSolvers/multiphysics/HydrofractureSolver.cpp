@@ -35,18 +35,6 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-// provide a definition for catalogName()
-template<>
-string HydrofractureSolver< SinglePhasePoromechanics<> >::catalogName()
-{
-  return "Hydrofracture";
-}
-//template<>
-//string HydrofractureSolver< MultiphasePoromechanics<> >::catalogName()
-//{
-//  return "MultiphaseHydrofracture";
-//}
-
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
                                                                   Group * const parent )
