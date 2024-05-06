@@ -73,6 +73,7 @@ jobs:
             if [[ "${LABELS}" = *"${{inputs.UPLOAD_BASELINES}}"* ]]; then
               UPLOAD_BASELINES = true
             fi
+            echo UPLOAD_BASELINES=$UPLOAD_BASELINES >> $GITHUB_ENV
           fi
           exit 1
         fi
