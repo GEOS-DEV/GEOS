@@ -701,10 +701,6 @@
 					<xsd:selector xpath="PerfectlyPlastic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutivePermeabilityBaseUniqueName">
-					<xsd:selector xpath="PermeabilityBase" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousDamageElasticIsotropicUniqueName">
 					<xsd:selector xpath="PorousDamageElasticIsotropic" />
 					<xsd:field xpath="@name" />
@@ -3354,6 +3350,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->
 		<xsd:attribute name="stabilizationName" type="groupNameRef" use="required" />
+		<!--stabilizationScalingCoefficient => It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix.-->
+		<xsd:attribute name="stabilizationScalingCoefficient" type="real64" default="1" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -3799,7 +3797,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PerfectlyPlastic" type="PerfectlyPlasticType" />
-			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
 			<xsd:element name="PorousDamageElasticIsotropic" type="PorousDamageElasticIsotropicType" />
 			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
 			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
@@ -4754,10 +4751,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="defaultYieldStress" type="real64" default="1.79769e+308" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PermeabilityBaseType">
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

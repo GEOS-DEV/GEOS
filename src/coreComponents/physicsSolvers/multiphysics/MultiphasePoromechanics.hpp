@@ -68,19 +68,16 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
-  template< typename _FLOW_SOLVER=FLOW_SOLVER >
-  static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseBase >::value, string >::type
-  catalogName()
+  static string catalogName()
   {
-    return "MultiphasePoromechanics";
-  }
-  template< typename _FLOW_SOLVER=FLOW_SOLVER >
-  static
-  typename std::enable_if< std::is_same< _FLOW_SOLVER, CompositionalMultiphaseReservoirAndWells<> >::value, string >::type
-  catalogName()
-  {
-    return CompositionalMultiphaseReservoirAndWells<>::catalogName() + "Poromechanics";
+    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )   // special case
+    {
+      return "MultiphasePoromechanics";
+    }
+    else   // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
   }
 
   /**
