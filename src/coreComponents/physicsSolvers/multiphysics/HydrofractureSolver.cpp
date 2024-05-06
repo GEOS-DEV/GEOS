@@ -41,11 +41,11 @@ string HydrofractureSolver< SinglePhasePoromechanics<> >::catalogName()
 {
   return "Hydrofracture";
 }
-template<>
-string HydrofractureSolver< MultiphasePoromechanics<> >::catalogName()
-{
-  return "Hydrofracture";
-}
+//template<>
+//string HydrofractureSolver< MultiphasePoromechanics<> >::catalogName()
+//{
+//  return "MultiphaseHydrofracture";
+//}
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
