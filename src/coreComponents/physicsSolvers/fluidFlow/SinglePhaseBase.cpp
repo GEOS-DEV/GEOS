@@ -51,7 +51,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_keepFlowVariablesConstantDuringInitStep( 0 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
