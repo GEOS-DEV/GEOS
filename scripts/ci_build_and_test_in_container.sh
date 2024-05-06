@@ -14,8 +14,8 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
 # Don't rely on the output of free or similar tools to determine whether swap is present.
-echo "running free -m"
-free -m
+echo "running free -g"
+free -g
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
@@ -202,6 +202,8 @@ fi
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
+echo "running free -g"
+free -g
 GEOSX_BUILD_DIR=/tmp/geos-build
 or_die python3 scripts/config-build.py \
                -hc ${HOST_CONFIG} \
@@ -214,6 +216,10 @@ or_die python3 scripts/config-build.py \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
+
+echo "done with config-build.py"
+echo "running free -g"
+free -g
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOSX_BUILD_DIR}
