@@ -68,13 +68,6 @@ jobs:
         echo " the labels are ${LABELS}"
         echo " the required label is ${{inputs.REQUIRED_LABEL}}"
         if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
-          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
-            UPLOAD_BASELINES = false  
-            if [[ "${LABELS}" = *"${{inputs.UPLOAD_BASELINES}}"* ]]; then
-              UPLOAD_BASELINES = true
-            fi
-            echo UPLOAD_BASELINES=$UPLOAD_BASELINES >> $GITHUB_ENV
-          fi
           exit 1
         fi
       
@@ -86,9 +79,6 @@ jobs:
         rm -rf ./* ./.*|| true
         echo "expecting ${GITHUB_WORKSPACE} to be empty"
         ls -la ./
-        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
-          echo "contains ${UPLOAD_BASELINES}"
-        fi
 
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
@@ -223,7 +213,7 @@ jobs:
               echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
             fi
 
-            if $UPLOAD_BASELINES; then
+            # if $UPLOAD_BASELINES; then
               if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
                 CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
                 echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
@@ -231,7 +221,7 @@ jobs:
               else
                 echo "Could not find requested baseline to upload: ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
               fi
-            fi
+            # fi
           fi
         fi
         
