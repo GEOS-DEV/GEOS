@@ -26,6 +26,7 @@
 namespace geos
 {
 
+/// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
 template< typename RESERVOIR_SOLVER >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                                                                       CompositionalMultiphaseWell >

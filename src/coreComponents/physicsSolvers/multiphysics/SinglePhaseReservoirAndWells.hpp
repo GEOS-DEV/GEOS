@@ -26,6 +26,7 @@
 namespace geos
 {
 
+/// @tparam RESERVOIR_SOLVER single-phase flow or single-phase poromechanics solver
 template< typename RESERVOIR_SOLVER >
 class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                                                           SinglePhaseWell >
