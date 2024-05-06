@@ -50,7 +50,6 @@ NullModel                                     node         :ref:`XML_NullModel`
 ParallelPlatesPermeability                    node         :ref:`XML_ParallelPlatesPermeability`                    
 ParticleFluid                                 node         :ref:`XML_ParticleFluid`                                 
 PerfectlyPlastic                              node         :ref:`XML_PerfectlyPlastic`                              
-PermeabilityBase                              node         :ref:`XML_PermeabilityBase`                              
 PorousDamageElasticIsotropic                  node         :ref:`XML_PorousDamageElasticIsotropic`                  
 PorousDamageSpectralElasticIsotropic          node         :ref:`XML_PorousDamageSpectralElasticIsotropic`          
 PorousDamageVolDevElasticIsotropic            node         :ref:`XML_PorousDamageVolDevElasticIsotropic`            
