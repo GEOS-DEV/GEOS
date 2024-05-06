@@ -265,7 +265,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             RUNS_ON: streak2
             NPROC: 16
-            DOCKER_RUN_ARGS: "--cpus=16 --memory=192g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            DOCKER_RUN_ARGS: "--cpus=16 --memory=256g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
 
