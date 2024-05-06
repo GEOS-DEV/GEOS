@@ -212,12 +212,6 @@ jobs:
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
 
-        echo ${docker_args[@]} \
-        -h=`hostname` \
-        ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
-        ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
-        ${script_args[@]}
-
         set +e
         docker run \
           ${docker_args[@]} \
