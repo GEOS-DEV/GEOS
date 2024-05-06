@@ -288,6 +288,8 @@ jobs:
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      DOCKER_CERTS_DIR: ${{ matrix.DOCKER_CERTS_DIR }}
+      DOCKER_CERTS_UPDATE_COMMAND: ${{ matrix.DOCKER_CERTS_UPDATE_COMMAND }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
@@ -296,6 +298,7 @@ jobs:
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+      NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: ready to be merged"
     secrets: inherit
