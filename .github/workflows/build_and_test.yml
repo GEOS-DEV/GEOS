@@ -118,13 +118,20 @@ jobs:
         docker_args=()
         script_args=()
 
+        if [[ -n "${{ inputs.DOCKER_CERTS_DIR }}" ]]; then
+          DOCKER_CERTS_DIR=${{ inputs.DOCKER_CERTS_DIR }}
+          docker_args+=(-e DOCKER_CERTS_DIR=${DOCKER_CERTS_DIR})
+        fi
 
-        DOCKER_CERTS_DIR=${{ inputs.DOCKER_CERTS_DIR }}
-        DOCKER_CERTS_UPDATE_COMMAND=${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}
-        NPROC=${{ inputs.NPROC }}
-        docker_args+=(-e DOCKER_CERTS_DIR=${DOCKER_CERTS_DIR})
-        docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
-        docker_args+=(-e NPROC=${NPROC})
+        if [[ -n "${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}" ]]; then
+          DOCKER_CERTS_UPDATE_COMMAND=${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}
+          docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
+        fi
+
+        if [[ -n "${{ inputs.NPROC }}" ]]; then
+          NPROC=${{ inputs.NPROC }}
+          docker_args+=(-e NPROC=${NPROC})
+        fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
