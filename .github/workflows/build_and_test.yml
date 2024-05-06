@@ -86,6 +86,9 @@ jobs:
         rm -rf ./* ./.*|| true
         echo "expecting ${GITHUB_WORKSPACE} to be empty"
         ls -la ./
+        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
+          echo "contains ${UPLOAD_BASELINES}"
+        fi
 
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
