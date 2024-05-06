@@ -72,12 +72,10 @@ setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
   {
-    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
   }
   else
   {
-    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
   }
 }
@@ -87,10 +85,9 @@ void
 CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics )
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
-    // add Reservoir
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
+    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
