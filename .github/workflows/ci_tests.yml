@@ -267,7 +267,7 @@ jobs:
             NPROC: 16
             DOCKER_RUN_ARGS: "--cpus=16 --memory=192g --runtime=nvidia --gpus all"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
-            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust extract"
+            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
