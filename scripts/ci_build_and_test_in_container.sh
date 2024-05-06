@@ -143,17 +143,17 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [ -n "${DOCKER_CERTS_DIR}" ] && [ -n "${DOCKER_CERTS_UPDATE_COMMAND}" ]; then
-    echo "Copying the certificates to the docker certificates folder."
-    for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
-      if [ -f "$file" ]; then
-        filename=$(basename -- "$file")
-        filename_no_ext="${filename%.*}"
-        new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
-        cp "$file" "$new_filename"
-        echo "Copied $filename to $new_filename"
-      fi
-    done
+  if [ -n "${DOCKER_CERTS_UPDATE_COMMAND}" ]; then
+    # echo "Copying the certificates to the docker certificates folder."
+    # for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+    #   if [ -f "$file" ]; then
+    #     filename=$(basename -- "$file")
+    #     filename_no_ext="${filename%.*}"
+    #     new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
+    #     cp "$file" "$new_filename"
+    #     echo "Copied $filename to $new_filename"
+    #   fi
+    # done
     ${DOCKER_CERTS_UPDATE_COMMAND}
   fi
   # gcloud config set core/custom_ca_certs_file cert.pem'
