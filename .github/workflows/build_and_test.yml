@@ -58,6 +58,9 @@ on:
         required: false
         type: boolean
         default: true
+      REQUIRED_LABEL:
+        required: false
+        type: string
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -65,6 +68,17 @@ jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
     steps:
+    - name: does_pr_have_necessary_labels
+      if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
+      run: | 
+        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
+        echo " the labels are ${LABELS}"
+        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
+        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
+          exit 1
+        fi
+      
     - name: 'Cleanup build folder'
       run: |
         pwd
