@@ -33,35 +33,16 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
-  SinglePhaseCatalogNames {};
-
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
-template<> class SinglePhaseCatalogNames< SinglePhaseBase >
-{
-public:
-  // TODO: find a way to use the catalog name here
-  static string name() { return "SinglePhaseReservoir"; }
-};
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir"; }
-};
-}
-
 // provide a definition for catalogName()
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-string
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
-catalogName()
+template<>
+string SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName()
 {
-  return SinglePhaseCatalogNames< SINGLEPHASE_RESERVOIR_SOLVER >::name();
+  return "SinglePhaseReservoir";
+}
+template< typename POROMECHANICS_SOLVER >
+string SinglePhaseReservoirAndWells< POROMECHANICS_SOLVER >::catalogName()
+{
+  return POROMECHANICS_SOLVER::catalogName() + "Reservoir";
 }
 
 template< typename SINGLEPHASE_RESERVOIR_SOLVER >
