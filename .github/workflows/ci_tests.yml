@@ -23,7 +23,6 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
-      LABELS: ${{ steps.extract_pr_info.outputs.LABELS }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
@@ -37,11 +36,6 @@ jobs:
           draft_status=$(echo ${pr_json} | jq '.draft')
           echo "Draft status of PR is ${draft_status}."
           if [[ $draft_status == true ]]; then exit 1 ; fi
-          
-          # If the workflow is meant to continue, we extract additional information for the json of the pr.
-          echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
-        else
-          echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
         fi
 
         
@@ -194,7 +188,6 @@ jobs:
     needs:
       - is_not_draft_pull_request
       - cpu_builds
-    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: run integrated tests') || github.event_name != 'pull_request' }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -209,6 +202,7 @@ jobs:
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: streak2
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g"
+      REQUIRED_LABEL: "ci: run integrated tests"
 
   baseline_log:
     needs: [is_not_draft_pull_request]
@@ -247,7 +241,6 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
-    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }}"
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
@@ -310,6 +303,7 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
+      REQUIRED_LABEL: "ci: ready to be merged"
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
