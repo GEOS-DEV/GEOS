@@ -207,8 +207,23 @@ jobs:
       ENABLE_TRILINOS: OFF
       UPLOAD_BASELINES: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: upload test baselines') }}"
       GCP_BUCKET: geosx/integratedTests
-      RUNS_ON: streak
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=128g"
+      RUNS_ON: streak2
+      DOCKER_RUN_ARGS: "--cpus=32 --memory=384g"
+
+  baseline_log:
+    needs: [is_not_draft_pull_request]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4.1.1
+      with:
+        submodules: false
+        lfs: false
+        fetch-depth: 0
+        sparse-checkout: |
+          scripts
+    - name: Check that the baseline logs are modified if rebaselines are detected
+      run: "scripts/check_baseline_log.sh"
 
   code_coverage:
     needs:
