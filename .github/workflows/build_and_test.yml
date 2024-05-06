@@ -218,6 +218,8 @@ jobs:
         ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
         ${script_args[@]}
 
+        echo "running docker command..."
+
         set +e
         docker run \
           ${docker_args[@]} \

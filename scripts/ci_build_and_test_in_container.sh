@@ -1,6 +1,8 @@
 #!/bin/bash
 set -o pipefail
 
+echo "Running in container"
+
 export PYTHONDONTWRITEBYTECODE=1
 
 printenv
