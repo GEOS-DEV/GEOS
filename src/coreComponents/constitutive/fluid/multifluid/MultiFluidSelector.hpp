@@ -150,8 +150,18 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
-                               CompositionalMultiphaseFluidSelector,
-                               CO2BrineFluidSelector
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+//                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+//                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+#ifdef GEOSX_USE_PVTPackage
+                               CompositionalMultiphaseFluidPVTPackage,
+#endif
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid
+//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -161,8 +171,18 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
-                               CompositionalMultiphaseFluidSelector,
-                               CO2BrineFluidSelector
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+//                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+//                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+#ifdef GEOSX_USE_PVTPackage
+                               CompositionalMultiphaseFluidPVTPackage,
+#endif
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid
+                               //,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
+// units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
