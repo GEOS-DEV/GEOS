@@ -41,7 +41,6 @@ GEOS CI Pipeline
 
 In most cases, developers will be able to rely on the integrated tests that are run as part of the GEOS CI Pipeline.
 These can be triggered if the **ci: run integrated tests** label is selected for a pull request (this can be added from the right-hand panel on PR page).
-The optional label **ci: upload test baselines** can also be selected to instruct the test system to save and upload copies of the test results.
 
 To inspect the results of CI tests, select the *Checks* tab from the top of the pull request and then select *run_integrated_tests/build_test_deploy* from the left-hand panel.
 
@@ -85,7 +84,8 @@ At the bottom of this page, the logs will contain a summary of the test results 
   =======================
 
 
-If the **ci: upload test baselines** option is selected, then the log will provide instructions on where to download the test results and a baseline ID that can be assigned in the *.integrated_tests.yaml* file.
+The log will provide instructions on where to download the test results and a baseline ID that can be assigned in the *.integrated_tests.yaml* file.
+
 
 
 . code-block:: sh
