@@ -219,7 +219,7 @@ jobs:
                 echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
                 echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
               else
-                echo "Could not find requested baseline to upload: ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+                echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
               fi
             # fi
           fi
