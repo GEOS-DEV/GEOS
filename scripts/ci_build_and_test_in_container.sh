@@ -1,8 +1,6 @@
 #!/bin/bash
 set -o pipefail
 
-echo "Running in container"
-
 export PYTHONDONTWRITEBYTECODE=1
 
 printenv
@@ -14,8 +12,8 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
 # Don't rely on the output of free or similar tools to determine whether swap is present.
-# echo "running free -g"
-# free -g
+echo "running free -g"
+free -g
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
@@ -160,16 +158,11 @@ EOT
     done
     ${DOCKER_CERTS_UPDATE_COMMAND}
   fi
-  # gcloud config set core/custom_ca_certs_file cert.pem'
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
 
-if [ -z "${NPROC}" ]; then
-  NPROC=$(nproc)
-  echo "NPROC unset, setting to ${NPROC}..."
-fi
 echo "Using ${NPROC} cores."
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
@@ -217,8 +210,6 @@ or_die python3 scripts/config-build.py \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
-echo "done with config-build.py"
-
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -235,7 +226,6 @@ if [[ "${TEST_DOCUMENTATION}" = true ]]; then
 fi
 
 # Performing the requested build.
-echo "Running Ninja with ${NPROC} cores."
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $NPROC geosx
 else
