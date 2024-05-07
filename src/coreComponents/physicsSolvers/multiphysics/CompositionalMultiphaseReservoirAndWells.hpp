@@ -99,8 +99,8 @@ public:
                                arrayView1d< real64 > const & localRhs ) const
   { flowSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
 
-  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { flowSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return flowSolver()->updateFluidState( subRegion ); }
