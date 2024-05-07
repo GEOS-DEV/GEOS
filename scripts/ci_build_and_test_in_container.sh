@@ -79,6 +79,7 @@ RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
+NPROC=$(nproc)
 
 eval set -- ${args}
 while :
