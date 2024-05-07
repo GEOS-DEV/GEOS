@@ -507,6 +507,14 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  static constexpr char const * getBoundaryConditionMessage()
+  {
+    return "CompositionalMultiphaseBase {}: at time {}s, "
+           "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
+           "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+           "\nThe total number of target elements (including ghost elements) is {}. "
+           "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
+  }
 };
 
 template< typename OBJECT_TYPE >

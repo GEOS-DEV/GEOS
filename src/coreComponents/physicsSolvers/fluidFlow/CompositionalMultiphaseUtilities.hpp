@@ -20,9 +20,15 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
 
 #include "common/DataTypes.hpp"
+#include "common/DataLayouts.hpp"
 
 namespace geos
 {
+
+namespace constitutive
+{
+class MultiFluidBase;
+}
 
 namespace compositionalMultiphaseUtilities
 {
@@ -182,6 +188,32 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsIn
 {
   shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numRowsInBlock, numRowsInBlock, numColsInBlock, 1, mat, work );
 }
+
+/**
+ * @brief Update all relevant fluid models using current values of pressure and composition
+ * @param size the size of the data
+ * @param pressure the current pressure
+ * @param temperature the current temperature
+ * @param composition the current composition
+ */
+void updateFluidModel( constitutive::MultiFluidBase & fluid,
+                       localIndex const size,
+                       arrayView1d< real64 const > const & pressure,
+                       arrayView1d< real64 const > const & temperature,
+                       arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+
+/**
+ * @brief Update all relevant fluid models using current values of pressure and composition
+ * @param targetSet the set of indices to update
+ * @param pressure the current pressure
+ * @param temperature the current temperature
+ * @param composition the current composition
+ */
+void updateFluidModel( constitutive::MultiFluidBase & fluid,
+                       SortedArrayView< localIndex const > const & targetSet,
+                       arrayView1d< real64 const > const & pressure,
+                       arrayView1d< real64 const > const & temperature,
+                       arrayView2d< real64 const, compflow::USD_COMP > const & composition );
 
 } // namespace compositionalMultiphaseUtilities
 

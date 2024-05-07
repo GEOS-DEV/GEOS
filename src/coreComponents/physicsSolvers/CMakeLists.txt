@@ -165,8 +165,10 @@ set( physicsSolvers_sources
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
+     fluidFlow/CompositionalMultiphaseBaseComputeHydrostaticEquilibrium.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp
+     fluidFlow/CompositionalMultiphaseUtilities.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
@@ -182,6 +184,7 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseProppantFluxKernels.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp
+     fluidFlow/wells/CompositionalMultiphaseWellUpdateVolRatesForConstraint.cpp
      fluidFlow/wells/SinglePhaseWell.cpp
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
