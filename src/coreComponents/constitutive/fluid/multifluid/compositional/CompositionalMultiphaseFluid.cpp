@@ -19,10 +19,25 @@
 #include "CompositionalMultiphaseFluid.hpp"
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
+
+namespace fields
+{
+namespace multifluid
+{
+DECLARE_FIELD( kValues,
+               "kValues",
+               array4dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase equilibrium ratios" );
+}
+}
 
 namespace constitutive
 {
@@ -61,6 +76,8 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentBinaryCoeff ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
+
+  registerField( fields::multifluid::kValues{}, &m_kValues );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -81,10 +98,20 @@ template<> struct PhaseName< 3 > { static constexpr char const * catalogName() {
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
-  return GEOS_FMT( "Compositonal{}Fluid{}{}",
+  return GEOS_FMT( "Compositional{}Fluid{}{}",
                    compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+{
+  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  // Zero k-Values to force initialisation with Wilson k-Values
+  m_kValues.zero();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -133,6 +160,30 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
     m_componentBinaryCoeff.zero();
   }
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
+
+  // Binary interaction coefficients should be symmetric and have zero diagonal
+  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 0 ), NC,
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError );
+  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 1 ), NC,
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError );
+  for( integer ic = 0; ic < NC; ++ic )
+  {
+    GEOS_THROW_IF_GT_MSG( LvArray::math::abs( m_componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
+                          GEOS_FMT( "{}: {} entry at ({},{}) is {}: should be zero", getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                                    ic, ic, m_componentBinaryCoeff( ic, ic ) ),
+                          InputError );
+    for( integer jc = ic + 1; jc < NC; ++jc )
+    {
+      real64 const difference = LvArray::math::abs( m_componentBinaryCoeff( ic, jc )-m_componentBinaryCoeff( jc, ic ));
+      GEOS_THROW_IF_GT_MSG( difference, MultiFluidConstants::epsilon,
+                            GEOS_FMT( "{}: {} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
+                                      getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                                      ic, jc, m_componentBinaryCoeff( ic, jc ), jc, ic, m_componentBinaryCoeff( jc, ic ) ),
+                            InputError );
+    }
+  }
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -142,6 +193,14 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 
   // Create the fluid models
   createModels();
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
+{
+  MultiFluidBase::resizeFields( size, numPts );
+
+  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -157,7 +216,6 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 typename CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::KernelWrapper
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapper()
 {
-  //auto phaseModels = std::make_tuple((m_phases)...);
   return KernelWrapper( *m_componentProperties,
                         *m_flash,
                         *m_phase1,
@@ -172,7 +230,8 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
                         m_phaseEnthalpy.toView(),
                         m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
-                        m_totalDensity.toView() );
+                        m_totalDensity.toView(),
+                        m_kValues.toView() );
 }
 
 // Create the fluid models
@@ -218,12 +277,20 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::calculateCri
 // Explicit instantiation of the model template.
 template class CompositionalMultiphaseFluid<
     compositional::NegativeTwoPhaseFlashPRPR,
-    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
     compositional::NegativeTwoPhaseFlashSRKSRK,
-    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashPRPR,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashSRKSRK,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhasePengRobinsonConstantViscosity,
@@ -232,6 +299,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhasePengRobinsonLBCViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
                         string const &,
                         dataRepository::Group * const )
 

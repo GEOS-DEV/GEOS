@@ -56,13 +56,13 @@ public:
     integer const compIndex = std::get< 2 >( GetParam() );
     real64 const expectedKValue = std::get< 3 >( GetParam() );
 
-    array1d< real64 > kValues( numComps );
+    stackArray1d< real64, NC > kValues( numComps );
 
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
                                                         temperature,
                                                         createKernelWrapper(),
-                                                        kValues );
+                                                        kValues.toSlice() );
 
     ASSERT_EQ( kValues.size(), NC );
     checkRelativeError( expectedKValue, kValues[compIndex], relTol );

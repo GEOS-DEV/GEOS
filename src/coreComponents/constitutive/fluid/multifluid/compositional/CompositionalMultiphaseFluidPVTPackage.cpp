@@ -45,6 +45,10 @@ CompositionalMultiphaseFluidPVTPackage::CompositionalMultiphaseFluidPVTPackage( 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of equation of state types for each phase" );
 
+  registerWrapper( viewKeyStruct::constantPhaseViscosityString(), &m_constantPhaseViscosity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Viscosity for each phase" );
+
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical pressures" );
@@ -104,7 +108,16 @@ void CompositionalMultiphaseFluidPVTPackage::postProcessInput()
   checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+
+  if( m_constantPhaseViscosity.empty() )
+  {
+    m_constantPhaseViscosity.resize( NP );
+    for( integer ip = 0; ip < NP; ++ip )
+    {
+      m_constantPhaseViscosity[ip] = 0.001;      // Default value = 1 cP
+    }
+  }
+  checkInputSize( m_constantPhaseViscosity, NP, viewKeyStruct::constantPhaseViscosityString() );
 
   if( m_componentVolumeShift.empty() )
   {
@@ -167,6 +180,7 @@ CompositionalMultiphaseFluidPVTPackage::deliverClone( string const & name,
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+                 arrayView1d< geos::real64 const > const & constantPhaseViscosity,
                  arrayView1d< geos::real64 const > const & componentMolarWeight,
                  bool useMass,
                  PhaseProp::ViewType phaseFraction,
@@ -188,7 +202,8 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
   m_fluid( fluid ),
-  m_phaseTypes( phaseTypes )
+  m_phaseTypes( phaseTypes ),
+  m_constantPhaseViscosity( constantPhaseViscosity )
 {}
 
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper
@@ -196,6 +211,7 @@ CompositionalMultiphaseFluidPVTPackage::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
                         m_phaseTypes,
+                        m_constantPhaseViscosity,
                         m_componentMolarWeight,
                         m_useMass,
                         m_phaseFraction.toView(),

@@ -42,6 +42,7 @@ public:
    * @param[in] componentProperties The compositional component properties
    * @param[out] kValues the calculated k-values
    **/
+  template< integer USD >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void
@@ -49,7 +50,7 @@ public:
                                 real64 const pressure,
                                 real64 const temperature,
                                 ComponentProperties::KernelWrapper const & componentProperties,
-                                arraySlice1d< real64 > const kValues )
+                                arraySlice1d< real64, USD > const & kValues )
   {
     arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
     arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
@@ -59,6 +60,39 @@ public:
       real64 const pr = criticalPressure[ic] / pressure;
       real64 const tr = criticalTemperature[ic] / temperature;
       kValues[ic] = pr * exp( 5.37 * ( 1.0 + acentricFactor[ic] ) * ( 1.0 - tr ) );
+    }
+  }
+
+  /**
+   * @brief Calculate gas-liquid k-values near the convergence pressure
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[out] kValues the calculated k-values
+   **/
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeConstantLiquidKvalue( integer const numComps,
+                               real64 const pressure,
+                               real64 const temperature,
+                               ComponentProperties::KernelWrapper const & componentProperties,
+                               arraySlice1d< real64, USD > const & kValues )
+  {
+    GEOS_UNUSED_VAR( pressure, temperature );
+    arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
+    real64 averagePressure = 0.0; // Average pressure
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      averagePressure += criticalPressure[ic];
+    }
+    averagePressure /= numComps;
+    constexpr real64 kValueGap = 0.01;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      kValues[ic] = criticalPressure[ic] < averagePressure ? 1.0/(1.0 + kValueGap) : 1.0/(1.0 - kValueGap);
     }
   }
 
