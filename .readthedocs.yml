@@ -33,5 +33,4 @@ formats: all
 submodules:
   include: 
   - src/coreComponents/constitutive/PVTPackage
-  - integratedTests
   recursive: true
