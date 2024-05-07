@@ -170,7 +170,7 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override
   {
-    flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+    flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
     Base::implicitStepSetup( time_n, dt, domain );
   }
 
