@@ -57,6 +57,8 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
+
+// Eventually add a MPM solver utils file somewhere to move these functions into
 // A helper function to calculate polar decomposition. TODO: Previously this was an LvArray method, hopefully it will be again someday.
 GEOS_HOST_DEVICE
 void polarDecomposition( real64 (& R)[3][3],
@@ -64,6 +66,64 @@ void polarDecomposition( real64 (& R)[3][3],
 
 bool compareFloat( real64 a, real64 b, real64 epsilon){
   return std::fabs( a - b ) < epsilon;
+}
+
+// template< typename T >
+// void generateCombinationsUtil( std::vector<std::vector<T>>& result, 
+//                                std::vector<T>& current,
+//                                std::vector<std::vector<T>>& arrays, int depth) {
+//     if (depth == arrays.size()) {
+//         result.push_back(current);
+//         return;
+//     }
+
+//     for (int i = 0; i < arrays[depth].size(); ++i) {
+//         current.push_back(arrays[depth][i]);
+//         generateCombinationsUtil(result, current, arrays, depth + 1);
+//         current.pop_back();
+//     }
+// }
+
+// template< typename T >
+// vector<vector<T>> generateCombinations(std::vector<std::vector<T>>& arrays) {
+//     std::vector<std::vector<T>> result;
+//     std::vector<T> current;
+//     generateCombinationsUtil(result, current, arrays, 0);
+//     return result;
+// }
+
+// Flattened combinations function to avoid performance hit from recursive calls
+GEOS_HOST_DEVICE
+array2d< int > generateCombinations(array1d< array1d< int > > sets)
+{
+  int numSets = sets.size();
+  int numCombinations = 1;
+  array1d< int > m(numSets);
+  for( int s=0; s < numSets; s++)
+  {
+    numCombinations *= sets[s].size();
+    m[s] = numCombinations;
+  }
+
+  array2d< int > combinations( numCombinations, numSets);
+  for( int c = 0; c < numCombinations; c++ )
+  {
+    for( int s = 0; s < numSets; s++ )
+    {
+      int i = 0;
+      if ( s == 0 )
+      {
+        i = c % m[s];
+      }
+      else
+      {
+        i = ( c % m[s] ) / m[s-1];
+      }
+      combinations[c][s] = sets[s][i];
+    }
+  }
+
+  return combinations;
 }
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
@@ -132,11 +192,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_overlapThreshold2( 1.10 ),
   m_computeSPHJacobian( 0 ),
   m_shockHeating( 0 ),
+  m_computeInternalEnergyAndTemperature( 0 ),
   m_useArtificialViscosity( 0 ),
   m_artificialViscosityQ0( 0.0 ),
   m_artificialViscosityQ1( 0.0 ),
   m_cpdiDomainScaling( 0 ),
-  m_subdivideGasParticles( 0 ),
+  m_subdivideParticles( 0 ),
   m_disableSurfaceNormalsAndPositionsOnCPDIScaling( 0 ),
   m_smallMass( DBL_MAX ),
   m_numContactGroups( 0 ),
@@ -541,7 +602,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_shockHeating ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Reference particle temperature" );
+    setDescription( "Flag to enable shock heating" );
+
+  registerWrapper( "computeInternalEnergyAndTemperature", &m_computeInternalEnergyAndTemperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_computeInternalEnergyAndTemperature ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable computing changes to internal energy and temperature" );
 
   registerWrapper( "useArtificialViscosity", &m_useArtificialViscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -561,9 +628,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for CPDI domain scaling" );
 
-  registerWrapper( "subdivideGasParticles", &m_subdivideGasParticles ).
+  registerWrapper( "subdivideParticles", &m_subdivideParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_subdivideGasParticles ).
+    setDefaultValue( m_subdivideParticles ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for splitting particles when they span more than a grid cell (prevents numerical fracture)" );
 
@@ -918,7 +985,6 @@ void SolidMechanicsMPM::postProcessInput()
   {
     GEOS_ERROR_IF(!( m_prescribedBoundaryTransverseVelocities.size(0) == 6 && m_prescribedBoundaryTransverseVelocities.size(1) == 2 ), "Check dimensions of prescribedBoundaryTransverseVelocities!" );
   }
-  GEOS_LOG_RANK_0( m_prescribedBoundaryTransverseVelocities );
 
   if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
   {
@@ -1060,7 +1126,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
         // Single-indexed fields (scalars)
-        subRegion.registerField< isBad >( getName() );
+        subRegion.registerField< particleDeleteFlag >( getName() );
+        subRegion.registerField< particleSubdivideFlag >( getName() );
         subRegion.registerField< particleCrystalHealFlag >( getName() );
         subRegion.registerField< particleMaterialType >( getName() );
         subRegion.registerField< particleMass >( getName() );
@@ -1076,7 +1143,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleOverlap >( getName() );
         subRegion.registerField< particleSPHJacobian >( getName() );
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
-        subRegion.registerField< particleSubdivideFlag >( getName() );
+        subRegion.registerField< particleCopyFlag >( getName() );
 
         // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleBodyForce >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -1112,6 +1179,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
             if( !(m_plottableFieldsSorted.contains( wrapperName )) )
             {
               wrapper.setPlotLevel( PlotLevel::NOPLOT );
+            }
+            else
+            {
+              wrapper.setPlotLevel( PlotLevel::LEVEL_0 );
             }
           }
         }
@@ -1611,6 +1682,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
     arrayView1d< real64 > const particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
+
+    // Are these fields automatically set on initiailization?
+    arrayView1d< int > const particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
+    arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
     arrayView1d< real64 > const particleSPHJacobian = subRegion.getField< fields::mpm::particleSPHJacobian >();
     arrayView1d< real64 > const particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
     arrayView1d< real64 > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
@@ -1622,9 +1697,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     arrayView2d< real64 > const particleBodyForce = subRegion.getField< fields::mpm::particleBodyForce >();
     arrayView2d< real64 > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >(); 
+    arrayView2d< real64 > const particleCohesiveForce = subRegion.getField< fields::mpm::particleCohesiveForce >();
+    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+    
     arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< int > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
-    arrayView2d< real64 > const particleCohesiveForce = subRegion.getField< fields::mpm::particleCohesiveForce >();
     arrayView2d< real64 > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
     arrayView2d< real64 > const particleCohesiveReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleCohesiveReferenceSurfaceNormal >();
     arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
@@ -1632,8 +1710,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView2d< real64 > const particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
 
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
-    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 > const particleSphF = subRegion.getField< fields::mpm::particleSphF >();
 
@@ -1646,18 +1722,22 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     {
       particleMaterialType[p] = regionIndexOfSubRegion;
       particleReferenceVolume[p] = particleVolume[p];
-      particleCrystalHealFlag[p] = 0;
       particleReferencePorosity[p] = particlePorosity[p];
       particleReferenceTemperature[p] = particleTemperature[p];
+
+      // Should already be initialized by default value from DECLARE_FIELD
+      particleDeleteFlag[p] = 0;
+      particleCrystalHealFlag[p] = 0;
       particleInternalEnergy[p] = 0.0;
       particleKineticEnergy[p] = 0.0;
       particleArtificialViscosity[p] = 0.0;
       particleSPHJacobian[p] = 1.0;
       particleCohesiveZoneFlag[p] = 0;
       particleSubdivideFlag[p] = 0;
+      particleCopyFlag[p] = -1;
       
       // Initialize field from constitutive model
-      particleHeatCapacity[p] = 1.0; // CC: TODO Need to get this from constitutive model
+      particleHeatCapacity[p] = DBL_MAX; // CC: TODO Need to get this from constitutive model
       particleDensity[p] = constitutiveDensity[p][0];
       particleMass[p] = particleDensity[p] * particleVolume[p];
 
@@ -1693,7 +1773,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         }
       }
 
-      LvArray::tensorOps::fill< 6 >( particlePlasticStrain[p], 0.0 );
+      // LvArray::tensorOps::fill< 6 >( particlePlasticStrain[p], 0.0 );
 
     } );
 
@@ -1930,7 +2010,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   m_iComm.resize( domain.getNeighbors().size() );
 
-
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && cycleNumber == 0 , "At time step zero, perform initialization calculations" );
   solverProfilingIf( "At time step zero, perform initialization calculations", cycleNumber == 0 );
@@ -1969,6 +2048,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                    partition );
   }
 
+   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_subdivideParticles, "Subdivide highly deformed particles" );
+  solverProfilingIf( "Subdivide highly deformed particles", m_subdivideParticles == 1 );
+  //#######################################################################################
+  if( m_subdivideParticles == 1 )
+  {
+    subdivideParticles( particleManager ); 
+  }
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update global-to-local map" );
@@ -2290,7 +2377,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   particleKinematicUpdate( particleManager );
 
-
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Compute kinetic energy" );
   solverProfiling( "Compute kinetic energy" );
@@ -2309,11 +2395,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with old stress and Fdot" );
-  solverProfiling( "Increment internalEnergy with old stress and Fdot" );
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_computeInternalEnergyAndTemperature == 1, "Increment internalEnergy with old stress and Fdot" );
+  solverProfilingIf( "Increment internalEnergy with old stress and Fdot", m_computeInternalEnergyAndTemperature == 1 );
   //#######################################################################################
-  computeInternalEnergyAndTemperature( dt,
-                                       particleManager );
+  if( m_computeInternalEnergyAndTemperature == 1 )
+  {
+    computeInternalEnergyAndTemperature( dt,
+                                        particleManager );
+  }
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update constitutive model dependencies" );
@@ -2334,12 +2423,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateSolverDependencies( particleManager );
 
   //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with new stress and Fdot" );
-  solverProfiling( "Increment internalEnergy with new stress and Fdot" );
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_computeInternalEnergyAndTemperature == 1, "Increment internalEnergy with new stress and Fdot" );
+  solverProfilingIf( "Increment internalEnergy with new stress and Fdot", m_computeInternalEnergyAndTemperature == 1 );
   //#######################################################################################
-  computeInternalEnergyAndTemperature( dt,
-                                       particleManager );
-
+  if( m_computeInternalEnergyAndTemperature == 1 )
+  {
+    computeInternalEnergyAndTemperature( dt,
+                                        particleManager );
+  }
+  
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_boxAverageHistory == 1, "Compute and write box averages" );
   solverProfilingIf( "Compute and write box averages", m_boxAverageHistory == 1 );
@@ -2739,7 +2831,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
           {
             arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
-            arrayView1d< int > const particleIsBad = subRegion.getField< fields::mpm::isBad >();
+            arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
 
             SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
@@ -2776,7 +2868,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                     // Check distance in XZ plane from radius of gauge
                     if( distSqr  > gaugeRadius * gaugeRadius )
                     {
-                      particleIsBad[p] = 1;
+                      particleDeleteFlag[p] = 1;
                     }
                   } 
                   //Check if particle is outside of fillet radius
@@ -2787,7 +2879,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                     if( distSqr > rr * rr)
                     {
                       GEOS_LOG_RANK( p << ": " << std::sqrt(distSqr) << ", Pos: " << particlePosition[p] );
-                      particleIsBad[p] = 1;
+                      particleDeleteFlag[p] = 1;
                     }
                   }
                 }
@@ -2799,7 +2891,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                   
                 if( distSqr > diskRadius * diskRadius )
                 {
-                  particleIsBad[p] = 1;
+                  particleDeleteFlag[p] = 1;
                 }
               }
 
@@ -2809,7 +2901,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 
                 if( distSqr  > gaugeRadius * gaugeRadius )
                 {
-                  particleIsBad[p] = 1;
+                  particleDeleteFlag[p] = 1;
                 }
 
               }
@@ -2893,75 +2985,90 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     ParticleSubRegion & sourceSubRegion = dynamicCast< ParticleSubRegion & >( *sourceSubRegions[r] );
     ParticleSubRegion & destinationSubRegion = dynamicCast< ParticleSubRegion & >( *destinationSubRegions[r] );
 
+    // Resize destination subregion 
+    destinationSubRegion.resize( sourceSubRegion.size() );
+
     arrayView1d< real64 const > const sourceParticleVolume = sourceSubRegion.getParticleVolume();
     arrayView1d< real64 const > const sourceParticleReferenceVolume = sourceSubRegion.getField< fields::mpm::particleReferenceVolume >();
 
-    // // Get constitutive handles for density and state variables
-    // string const & sourceSolidMaterialName = sourceSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    // ContinuumBase & sourceConstitutiveModel = getConstitutiveModel< ContinuumBase >( sourceSubRegion, sourceSolidMaterialName );
+    // Get constitutive handles for density and state variables
+    string const & sourceSolidMaterialName = sourceSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase & sourceConstitutiveModel = getConstitutiveModel< ContinuumBase >( sourceSubRegion, sourceSolidMaterialName );
+    arrayView3d< real64 const > const sourceOldStress = sourceConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
+
     string const & destinationSolidMaterialName = destinationSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & destinationConstitutiveModel = getConstitutiveModel< ContinuumBase >( destinationSubRegion, destinationSolidMaterialName );
-    arrayView2d< real64 const > const destinationConstitutiveDensity = destinationConstitutiveModel.getDensity();
+    real64 const destinationDefaultConstitutiveDensity = destinationConstitutiveModel.getReference< real64 >( constitutive::ContinuumBase::viewKeyStruct::defaultDensityString() );
+    arrayView3d< real64 > const destinationOldStress = destinationConstitutiveModel.getReference< array3d< real64 > >( constitutive::ContinuumBase::viewKeyStruct::oldStressString() );
 
-    // Resize destination subregion 
-    destinationSubRegion.resize( sourceSubRegion.size() );
+    // Copy old stress from constitutive model separately for hypoelastic materials (is this stress really representative after a material swap?)
+    forAll< serialPolicy >( sourceSubRegion.size(), [&]( localIndex const p )
+    {
+      LvArray::tensorOps::copy< 6 >( destinationOldStress[p][0], sourceOldStress[p][0] );
+    } );
 
     sourceSubRegion.forWrappers( [&]( WrapperBase & sourceWrapper )
     {
       string const fieldName = sourceWrapper.getName();
-      WrapperBase & destinationWrapper = destinationSubRegion.getWrapperBase( fieldName );
-
-      bool overwriteField = overwrittableFields.count( fieldName ) > 0; // Cannot use contains (C++20)
-
-      // With parallelization (does not compile)
-      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      
+      //Filter out only particle fields for copy by prefix
+      if( fieldName.substr(0, 8) == "particle" )
       {
-        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
-        using T = typename ArrayType::ValueType;
-  
-        auto const sourceArray = Wrapper< ArrayType >::cast( sourceWrapper ).reference().toViewConst();
-        auto destinationArray = Wrapper< ArrayType >::cast( destinationWrapper ).reference().toView();
+        GEOS_LOG_RANK( fieldName );
+      
+        WrapperBase & destinationWrapper = destinationSubRegion.getWrapperBase( fieldName );
 
-        GEOS_ERROR_IF( sourceArray.size() != destinationArray.size(), "During material swap " << fieldName << "  fields did not have the same size!");
+        bool overwriteField = overwrittableFields.count( fieldName ) > 0; // Cannot use contains (C++20)
 
-        forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const p )
-        {   
-          // For scalar particle fields need to do assignment manually
-          if constexpr( ArrayType::NDIM == 1 )
-          {
-            // If wrapper name is among those that should be overriden by new sub region skip (e.g. mass, density, etc.)
-            // We currently only overwrite scalar quantities, but may need to adjust if we overwrite nonscalar quantities
-            if ( overwriteField )
+
+        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+        {
+          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+          using T = typename ArrayType::ValueType;
+    
+          auto const sourceArray = Wrapper< ArrayType >::cast( sourceWrapper ).reference().toViewConst();
+          auto destinationArray = Wrapper< ArrayType >::cast( destinationWrapper ).reference().toView();
+
+          GEOS_ERROR_IF( sourceArray.size() != destinationArray.size(), "During material swap " << fieldName << "  fields did not have the same size!");
+
+          forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const p )
+          {   
+            // For scalar particle fields need to do assignment manually
+            if constexpr( ArrayType::NDIM == 1 )
             {
-              // Is there a better way to do this?
-              if( fieldName == "particleMass" )
+              // If wrapper name is among those that should be overriden by new sub region skip (e.g. mass, density, etc.)
+              // We currently only overwrite scalar quantities, but may need to adjust if we overwrite nonscalar quantities
+              if ( overwriteField )
               {
-                destinationArray[p] = destinationConstitutiveDensity[p][0] * sourceParticleReferenceVolume[p];
-              }
+                // Is there a better way to do this?
+                if( fieldName == fields::mpm::particleMass::key() )
+                {
+                  destinationArray[p] = destinationDefaultConstitutiveDensity * sourceParticleReferenceVolume[p];
+                }
 
-              if( fieldName == "particleDensity" )
-              {
-                destinationArray[p] = destinationConstitutiveDensity[p][0] * sourceParticleReferenceVolume[p] / sourceParticleVolume[p];
+                if( fieldName == fields::mpm::particleDensity::key() )
+                {
+                  destinationArray[p] = destinationDefaultConstitutiveDensity * sourceParticleReferenceVolume[p] / sourceParticleVolume[p];
+                }
               }
-            }
+              else
+              {
+                destinationArray[p] = sourceArray[p];
+              }
+            } 
             else
             {
-              destinationArray[p] = sourceArray[p];
-            }
-          } 
-          else
-          {
-            auto sourceSlice = sourceArray[p];
-            auto destinationSlice = destinationArray[p];
-            LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
-            {
-              val = slice( indices ... );
-            } );
-          }      
-        } );
+              auto sourceSlice = sourceArray[p];
+              auto destinationSlice = destinationArray[p];
+              LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
+              {
+                val = slice( indices ... );
+              } );
+            }      
+          } );
 
-      }, sourceWrapper );   
-
+        }, sourceWrapper );   
+      }
     } );
     
     // Remove particles from subregion since they now reside in destination subregion
@@ -3685,9 +3792,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
-
-  // GEOS_LOG_RANK( "Separable: " << separable << ", Cohesive shear: " << useCohesiveTangentialForces << ", FrictionCoefficient: " << frictionCoefficient );
-
   // Total mass for the contact pair.
   real64 mAB = mA + mB;
 
@@ -3834,8 +3938,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
   // }
 
   real64 gap = (surfacePosB[0] - surfacePosA[0]) * nAB[0] + (surfacePosB[1] - surfacePosA[1]) * nAB[1] + (surfacePosB[2] - surfacePosA[2]) * nAB[2] - gapScale*gap0;
-
-  // GEOS_LOG_RANK( "gap: " << gap << ", nA: " << nA << ", nB: " << nB << ", sA: " << spA << ", sB: " << spB << ", nAB: {" << nAB[0] << ", " << nAB[1] << "}" << ", contactType: " << m_contactGapCorrection << ", separable: " << separable );
 
   // Total momentum for the contact pair.
   real64 qAB[3];
@@ -4918,7 +5020,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        constitutiveTemperature[p] = particleTemperature[p]; 
+        constitutiveTemperature[p] = particleTemperature[p];
       } );
     }
 
@@ -5000,14 +5102,17 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
 {
   GEOS_MARK_FUNCTION;
 
+  int numParticlesIllConditionedJacobian = 0;
+  int numParticlesVelocityOverflowed = 0;
+  int numParticlesOverMaxVelocity = 0;
+
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get particle fields
-    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
-    arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
@@ -5030,7 +5135,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
 
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &numParticlesIllConditionedJacobian, &numParticlesVelocityOverflowed, &numParticlesOverMaxVelocity] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
@@ -5038,27 +5143,28 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       bool flaggedForDeletion = false; 
       if( detF <= m_minParticleJacobian || detF >= m_maxParticleJacobian )
       {
-        printf( "Flagging particle with unreasonable Jacobian (J<%.2f or J>%.2f) for deletion! Global particle ID: %lld", m_minParticleJacobian, m_maxParticleJacobian, particleID[p] );
+        numParticlesIllConditionedJacobian++;
         flaggedForDeletion = true;
       }
 
       // With body forces and surface tractions, particles that become detached can accelerate sufficiently to overflow the velocity squared
-      // Here we detect if particle velocities will overflow when squared and flag them for deleteion to avoid erroring out
+      // Here we detect if particle velocities will overflow when squared and flag them for deletion to avoid erroring out
       real64 particleSpeedSquared = 0;
       for( int d = 0; d < m_numDims; d++  )
       {
         real64 addSqr = particleVelocity[p][d] * particleVelocity[p][d]; 
         if( particleSpeedSquared > std::numeric_limits< real64 >::max() - addSqr )
         {
-          printf( "Flagging particle velocity squared overflow for deletion! Global particle ID: %lld", particleID[p] );
+          numParticlesVelocityOverflowed++;
           flaggedForDeletion = true;
+          break;
         }
         particleSpeedSquared += addSqr;
       }
         
       if( !flaggedForDeletion && particleSpeedSquared > m_maxParticleVelocitySquared )
       {
-        printf( "Flagging particle with unreasonable velocity (v > %.2f) for deletion! Global particle ID: %lld", m_maxParticleVelocity, particleID[p] );
+        numParticlesOverMaxVelocity++;
         flaggedForDeletion = true;
       }
 
@@ -5100,17 +5206,41 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       } 
       else
       {
-        isBad[p] = 1; // TODO: Switch to a 'markBad' function which changes isBad and removes this particle from activeParticleIndices. Also
-                      // change isBad to deletionFlag.
+        particleDeleteFlag[p] = 1;
         particleVolume[p] = particleReferenceVolume[p];
         particleDensity[p] = particleMass[p] / particleReferenceVolume[p];
         LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], particleReferenceRVectors[p] );
       }
     } );
-    
-    // Remove isBad particles from active indicies by reconstructing them
+
+    // Remove particles to be deleted from active indicies by reconstructing them
     subRegion.setActiveParticleIndices();
   } );
+
+  int numParticlesIllConditionedJacobianGlobal;
+  MpiWrapper::allReduce< int >( &numParticlesIllConditionedJacobian,
+                                &numParticlesIllConditionedJacobianGlobal,
+                                1,
+                                MPI_SUM,
+                                MPI_COMM_GEOSX );
+
+  int numParticlesVelocityOverflowedGlobal;
+  MpiWrapper::allReduce< int >( &numParticlesVelocityOverflowed,
+                                &numParticlesVelocityOverflowedGlobal,
+                                1,
+                                MPI_SUM,
+                                MPI_COMM_GEOSX );
+
+  int numParticlesOverMaxVelocityGlobal;
+  MpiWrapper::allReduce< int >( &numParticlesOverMaxVelocity,
+                                &numParticlesOverMaxVelocityGlobal,
+                                1,
+                                MPI_SUM,
+                                MPI_COMM_GEOSX );
+
+  GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0, "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian << ") for deletion!" );
+  GEOS_LOG_RANK_0_IF( numParticlesVelocityOverflowedGlobal > 0, "Flagged " << numParticlesVelocityOverflowedGlobal << " particles velocity squared overflow for deletion!" );
+  GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0, "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
 
   // Compute particles R vectors
   computeRVectors( particleManager );
@@ -5682,11 +5812,9 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    // GEOS_LOG_RANK( "Max pID grid size: " << gridMaxMappedParticleID.size() << ", particleID size: " << particleID.size() << ", activeParticleIndices size: " << activeParticleIndices.size() );
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-      // GEOS_LOG_RANK( "subregionIndex: " << subRegionIndex << ", pp: " << pp << ", p" << p );
 
       for( int gg=0; gg < 8 * numberOfVerticesPerParticle; gg++ )
       {
@@ -5697,11 +5825,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
     subRegionIndex++;
   } );
 
-  // GEOS_LOG_RANK( "Syncing explicit principal grid normals" );
-
   syncGridFields( { viewKeyStruct::gridMaxMappedParticleIDString() }, domain, nodeManager, mesh, MPI_MAX );
-
-  // GEOS_LOG_RANK( "Assigning explicit principal grid normals" );
 
   arrayView2d< real64 > const gridExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() );
 
@@ -5711,8 +5835,6 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
   forAll< serialPolicy >( numNodes, [&] GEOS_HOST ( localIndex const g )
   {
     LvArray::tensorOps::fill< 3 >( gridExplicitSurfaceNormal[g], 0.0 );
-    
-    // GEOS_LOG_RANK( "g: " << g << ", max pID: " << gridMaxMappedParticleID[g]);
 
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
@@ -6796,15 +6918,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
         bool active = ( tempGridMassGlobal[gg][A] > m_smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( tempGridParticleSurfaceNormalGlobal[gg][A] ) > 1.0e-16 )
                       and
                       ( tempGridMassGlobal[gg][B] > m_smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( tempGridParticleSurfaceNormalGlobal[gg][B] ) > 1.0e-16 );
-
-        // GEOS_LOG_RANK_0( "g: " << gg << ", " << 
-        //                  "active: " << active << ", " << 
-        //                  "A: " << A << ", " << 
-        //                  "B: " << B << ", " << 
-        //                  "A_dmg: " << m_referenceCohesiveGridNodeDamages[gg][A] << ", " << 
-        //                  "B_dmg: " << m_referenceCohesiveGridNodeDamages[gg][B] << ", " << 
-        //                  "dn_max: " << m_maxCohesiveGridNodeNormalDisplacement[gg][A][B]  << ", " << 
-        //                  "dt_max: " << m_maxCohesiveGridNodeTangentialDisplacement[gg][A][B] );
     
 
         if( active )
@@ -6863,13 +6976,13 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
   //                        MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
   //                        MPI_COMM_GEOSX );      
 
-  for( int n = 0; n < numCohesiveNodes; n++)
-  {
-    for( int f = 0; f < m_numVelocityFields; f++ )
-    {
-      // GEOS_LOG_RANK_0( "n: " << n << ", f: " << f << ", c_dmg: " << m_referenceCohesiveGridNodeDamages[n][f] << ", dn_max: " << << ", dt_max: " << ); 
-    }
-  }
+  // for( int n = 0; n < numCohesiveNodes; n++)
+  // {
+  //   for( int f = 0; f < m_numVelocityFields; f++ )
+  //   {
+  //     // GEOS_LOG_RANK_0( "n: " << n << ", f: " << f << ", c_dmg: " << m_referenceCohesiveGridNodeDamages[n][f] << ", dn_max: " << << ", dt_max: " << ); 
+  //   }
+  // }
 
   // CC: debug, for debugging temp grid variables to visualize in paraview
   // arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
@@ -7690,7 +7803,7 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
         }
       }
       // }
-    
+
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
@@ -8295,7 +8408,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     if(  constitutiveModel.hasWrapper( "temperature" ) )
     {
       arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
-      arrayView1d< real64 > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
+      arrayView1d< real64 const > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -8363,7 +8476,7 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
     } );
 
     // Get relevant particle arrays
-    arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
 
     // Initialize the set of particles to delete
     std::set< localIndex > indicesToErase;
@@ -8376,7 +8489,7 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
                                                                                                     // not sure which
       {
         // localIndex const p = activeParticleIndices[pp];
-        if( isBad[p] == 1 )
+        if( particleDeleteFlag[p] == 1 )
         {
           indicesToErase.insert( p );
         }
@@ -8769,7 +8882,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
     // Get particle fields
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
-    arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
     ParticleType particleType = subRegion.getParticleType();
 
     // Define tolerance
@@ -8790,7 +8903,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           {
             if( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] )
             {
-              isBad[p] = 1;
+              particleDeleteFlag[p] = 1;
               break; // TODO: if this doesn't work, just modify "i"
             }
           }
@@ -8819,11 +8932,11 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
                                                particleRVectors[p][2][i];
               if( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent )
               {
-                isBad[p] = 1;
+                particleDeleteFlag[p] = 1;
                 break;
               }
             }
-            if( isBad[p] == 1 )
+            if( particleDeleteFlag[p] == 1 )
             {
               break;
             }
@@ -8878,9 +8991,9 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
-    string constitutiveModelName = constitutiveModel.getCatalogName();
+    // string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    // ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+    // string constitutiveModelName = constitutiveModel.getCatalogName();
 
     if( subRegion.getParticleType() == ParticleType::CPDI )
     {
@@ -8888,7 +9001,6 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
       arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
       arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      arrayView1d< int > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
 
       int const planeStrain = m_planeStrain;
       forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
@@ -8924,8 +9036,6 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
           // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
           if( scale )
           {
-            particleSubdivideFlag[p] = 1;
-
             for( int i=0; i<3; i++ )
             {
               r1[i] = 0.5 * (l[0][i] + l[1][i]);
@@ -8969,8 +9079,6 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
           // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
           if( scale )
           {
-            particleSubdivideFlag[p] = 1;
-
             for( int i=0; i<3; i++ )
             {
               r1[i] = 0.25 * ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
@@ -8991,9 +9099,12 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
   } );
 }
 
+// Should only be an option for CPDI, CPTI, and CPDI2 particles, right?
 void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
+
+  int const numDims = m_numDims;
 
   // Count the number of subregions
   int numberOfSubRegions = 0;
@@ -9002,145 +9113,311 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     numberOfSubRegions++;
   } );
 
-  // // Find max particle ID for assigning new particle IDs
-  // globalIndex maxParticleIDRank = 0;
-  // localIndex subRegionIndex = 0;
-  // int numDivisibleParticles = 0;
-  // array1d< int > numDivisibleParticlesPerSubRegion( 0, numberOfSubRegions );
-  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  // {
-  //   arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
-  //   arrayView1d< int const > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+  // Determine critical length for subdividing particles from problem dimensions
+  real64 const lCritSqr = std::pow( m_planeStrain == 1 ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) ), 2 );
 
-  //   SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices(); 
-  //   forAll< serialPolicy >( subRegion.size(), [=, &maxParticleIDRank, &numDivisibleParticlesPerSubRegion] GEOS_HOST_DEVICE ( localIndex const pp )
-  //   {
-  //     localIndex const p = activeParticleIndices[pp];
+  // Find max particle ID for assigning new particle IDs
+  // Determine number of new particles per region
+  globalIndex maxParticleIDRank = 0;
+  localIndex subRegionIndex = 0;
+  int numDivisibleParticles = 0;
+  int numNewParticles = 0;
+  array1d< int > numDivisibleParticlesPerSubRegion( numberOfSubRegions );
+  array1d< int > numNewParticlesPerSubRegion( numberOfSubRegions );
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+    arrayView1d< int > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+
+    numDivisibleParticlesPerSubRegion[subRegionIndex] = 0;
+    numNewParticlesPerSubRegion[subRegionIndex] = 0;
+
+    // Loop over all particles, because there should be no ghost particles yet
+    forAll< serialPolicy >( subRegion.size(), [=, &maxParticleIDRank, &numDivisibleParticles, &numNewParticles, &numDivisibleParticlesPerSubRegion, &numNewParticlesPerSubRegion] GEOS_HOST_DEVICE ( localIndex const p )
+    {      
+      maxParticleIDRank = std::max( maxParticleIDRank, particleID[p] );
+
+      // If particle rvector is beyond characteristic grid cell direction, divide along that direction
+      // This prevents us from unnecessarily adding more particles than we need to
+      int numberOfDivisions = 0;
+      for(int i = 0; i < numDims; i++)
+      {
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][i] ) > lCritSqr )
+        {
+          numberOfDivisions++;
+        }
+      }
+
+      if( numberOfDivisions > 0 )
+      {
+        particleSubdivideFlag[p] = 1;
+        numDivisibleParticlesPerSubRegion[subRegionIndex]++;
+        numNewParticlesPerSubRegion[subRegionIndex] += std::pow(2, numberOfDivisions) - 1;
+        numDivisibleParticles++;
+        numNewParticles += std::pow(2, numberOfDivisions) - 1;
+      }
+    } );
+    subRegionIndex++;
+  } );
+
+  // Reduce global ID
+  globalIndex maxParticleID;
+  MpiWrapper::allReduce< globalIndex >( &maxParticleIDRank,
+                                        &maxParticleID,
+                                        1,
+                                        MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                                        MPI_COMM_GEOSX );
+
+  // Gather array for number of new particles per rank for assigning global IDs
+  array1d< int > numNewParticlesPerRank( MpiWrapper::commSize() );
+  MpiWrapper::allGather( numNewParticles, numNewParticlesPerRank, MPI_COMM_GEOSX );
+
+  int rank = 0;
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+  globalIndex currGlobalIndex = maxParticleID+1;
+  int totalNewParticles = 0;
+  for( int i = 0; i < numNewParticlesPerRank.size(); i++ )
+  {
+    if( i < rank-1)
+    {
+      currGlobalIndex += numNewParticlesPerRank[i];
+    }
+    totalNewParticles += numNewParticlesPerRank[i];
+  }
+
+  GEOS_LOG_RANK_IF( totalNewParticles > 0, "Generated " << totalNewParticles << " particles from subdividing overly deformed particles!"  );
+
+  // Subdivide particles
+  subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // arrayView1d< globalIndex > const particleID = subRegion.getParticleID();
+    // arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    // arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    // arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+    // arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+    // arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
+    // arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    // arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+    // arrayView1d< int > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    // arrayView1d< int > const particleCopyFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+
+    size_t oldSubRegionSize = subRegion.size();
+    size_t newSubRegionSize = oldSubRegionSize + numNewParticlesPerSubRegion[subRegionIndex];
+    subRegion.resize( newSubRegionSize );
+
+    // It looks like there was an issue with getting a copy of the arrayview size before resizing subregion.
+    // Calling after as reference fixed it, but it is not clear if calling an arrayview reference before subregion resize also works, NEED TO TEST!!!!!!!
+    arrayView1d< globalIndex > const & particleID = subRegion.getParticleID();
+    arrayView1d< real64 > const & particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const & particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const & particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+    arrayView2d< real64 > const & particlePosition = subRegion.getParticleCenter();
+    arrayView2d< real64 > const & particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
+    arrayView3d< real64 > const & particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
+    arrayView3d< real64 > const & particleRVectors = subRegion.getParticleRVectors();
+    arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView1d< int > const & particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    arrayView1d< int > const & particleCopyFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+
+    localIndex subRegionNewParticleIndex = oldSubRegionSize;
+  
+    // Only iterate over old particles, assumes on resize they are all at the front of the arrays
+    forAll< serialPolicy >( oldSubRegionSize, [=, &currGlobalIndex, &subRegionNewParticleIndex] GEOS_HOST_DEVICE ( localIndex const p )
+    {   
+      if( particleSubdivideFlag[p] == 1 )
+      {
+        GEOS_LOG_RANK( "Start of subdividing: " << particleID << " - size " << particleID.size() );
+        GEOS_LOG_RANK( "(Start) p: " << particleID[p] << ", " << 
+                       "mass: " << particleMass[p] << ", " << 
+                       "vol: " << particleVolume[p] << ", " << 
+                       "pos: " << particlePosition[p] << ", " <<
+                       "refPos: " << particleReferencePosition[p] ); 
+
+        // Determine which directions to subdivide along
+        int numDivisions = 0;
+        array1d< array1d< int > > rVectorDivisions( numDims );
+        array1d< int > subdivideDirections( numDims );
+        LvArray::tensorOps::fill< 3 >( subdivideDirections, 0 );
+        for( int d = 0; d < numDims; d++)
+        {
+          if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][d] ) > lCritSqr )
+          {
+            subdivideDirections[d] = 1;
+            rVectorDivisions[d].resize(2);
+            rVectorDivisions[d][0] = 1;
+            rVectorDivisions[d][1] = -1;
+            numDivisions++;
+          }
+          else
+          {
+            rVectorDivisions[d].resize(1);
+            rVectorDivisions[d][0] = 0;
+          }
+        }
+
+        auto rVectorOffsetCombinations = generateCombinations( rVectorDivisions );
+
+        //Subdivide particle and copy particle field data
+        int subdivideFactor = std::pow(2, numDivisions);
+        // GEOS_LOG_RANK( "subdivisions: " << subdivideFactor << ", dirs: " << subdivideDirections );
+        for(int np = 1; np < subdivideFactor; np++ )
+        {
+          // Update particle mass, volume, initial volume, centers, reference positions, initial R vectors and Rvectors
+          particleID[subRegionNewParticleIndex] = currGlobalIndex++;
+          particleMass[subRegionNewParticleIndex] = particleMass[p] / subdivideFactor;
+          particleVolume[subRegionNewParticleIndex] = particleVolume[p] / subdivideFactor;
+          particleReferenceVolume[subRegionNewParticleIndex] = particleReferenceVolume[p] / subdivideFactor;
+
+          LvArray::tensorOps::copy< 3, 3 >( particleReferenceRVectors[subRegionNewParticleIndex], particleReferenceRVectors[p] );
+          LvArray::tensorOps::copy< 3, 3 >( particleRVectors[subRegionNewParticleIndex], particleRVectors[p] );
+          LvArray::tensorOps::copy< 3, 3 >( particleDeformationGradient[subRegionNewParticleIndex], particleDeformationGradient[p] );
+
+          // LvArray::tensorOps::scale< 3, 3 >( particleReferenceRVectors[subRegionNewParticleIndex], 0.5 );
+          // LvArray::tensorOps::scale< 3, 3 >( particleRVectors[subRegionNewParticleIndex], 0.5 );
+          for( int d = 0; d < numDims; d++ )
+          {
+            if( subdivideDirections[d] == 1 )
+            {
+              LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[subRegionNewParticleIndex][d], 0.5 );
+              LvArray::tensorOps::scale< 3 >( particleRVectors[subRegionNewParticleIndex][d], 0.5 );
+              // LvArray::tensorOps::scale< 3 >( particleDeformationGradient[subRegionNewParticleIndex][d], 0.5 );
+            }
+          }
+
+          LvArray::tensorOps::copy< 3 >( particlePosition[subRegionNewParticleIndex], particlePosition[p] );
+          LvArray::tensorOps::copy< 3 >( particleReferencePosition[subRegionNewParticleIndex], particleReferencePosition[p] );
+          for(int di =0; di < numDims; di++)
+          {
+            for(int dj =0; dj < numDims; dj++)
+            {   
+              particlePosition[subRegionNewParticleIndex][dj] += rVectorOffsetCombinations[np][di] * particleRVectors[subRegionNewParticleIndex][di][dj];
+              particleReferencePosition[subRegionNewParticleIndex][dj] += rVectorOffsetCombinations[np][di] * particleReferenceRVectors[subRegionNewParticleIndex][di][dj];
+            }
+          }
+
+          // Probably need another flag since casting from localIndex (unsigned) to int could potentially overflow
+          // but for now we need -1 to screen particles that should not copy
+          particleCopyFlag[subRegionNewParticleIndex] = static_cast< int >( p );
+
+          GEOS_LOG_RANK( "p: " << particleID[subRegionNewParticleIndex] << ", " << 
+                         "mass: " << particleMass[subRegionNewParticleIndex] << ", " << 
+                         "vol: " << particleVolume[subRegionNewParticleIndex] << ", " << 
+                         "pos: " << particlePosition[subRegionNewParticleIndex] << ", " <<
+                         "refPos: " << particleReferencePosition[subRegionNewParticleIndex] << ", " << 
+                         "copy flag: " << particleCopyFlag[subRegionNewParticleIndex] );
+
+          subRegionNewParticleIndex++; 
+        }
+
+        // Modifying original particle (globalID does not need updating)
+        particleMass[p] /= subdivideFactor;
+        particleVolume[p] /= subdivideFactor;
+        particleReferenceVolume[p] /= subdivideFactor;
+
+        for( int d = 0; d < numDims; d++ )
+        {
+          if( subdivideDirections[d] == 1 )
+          {
+            LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[p][d], 0.5 );
+            LvArray::tensorOps::scale< 3 >( particleRVectors[p][d], 0.5 );
+            // LvArray::tensorOps::scale< 3 >( particleDeformationGradient[p][d], 0.5 );
+          }
+        }
+
+        rea64 oldPosition[3] = { 0 }, oldReferencePosition[3];
+
+        for(int di =0; di < numDims; di++)
+        {
+          for(int dj =0; dj < numDims; dj++)
+          {   
+            particlePosition[p][dj] += rVectorOffsetCombinations[0][di] * particleRVectors[p][di][dj];
+            particleReferencePosition[p][dj] += rVectorOffsetCombinations[0][di] * particleReferenceRVectors[p][di][dj];
+          }
+        }
+
+        // Turn off subdivide flag for particle before copying to new particles
+        particleSubdivideFlag[p] = 0;
+
+        GEOS_LOG_RANK( "(After) p: " << particleID[p] << ", " << 
+                       "mass: " << particleMass[p] << ", " << 
+                       "vol: " << particleVolume[p] << ", " << 
+                       "pos: " << particlePosition[p] << ", " <<
+                       "refPos: " << particleReferencePosition[p] ); 
+
+        // Copy all other fields that do not need modification 
+        // TODO
+      }     
+    } );
+
+    std::set< std::string > ignoreFieldCopy( { "particleID",
+                                               "particleMass", 
+                                               "particleVolume",
+                                               "particleReferenceVolume",
+                                               "particlePosition",
+                                               "particleReferencePosition",
+                                               "particleRVectors",
+                                               "particleReferenceRVectors",
+                                               "particleCopyFlag",
+                                               "particleDeformationGradient" } );
+
+    subRegion.forWrappers( [&]( WrapperBase & fieldWrapper )
+    {
+      string const fieldName = fieldWrapper.getName();
       
-  //     maxParticleIDRank = max( maxParticleIDRank, particleID[p] );
-      
-  //     if( particleSubdivideFlag[p] == 1 )
-  //     {
-  //       numDivisibleParticlesPerSubRegion[subRegionIndex]++;
-  //       numDivisibleParticles++;
-  //     }
-  //   } );
-  //   subRegionIdex++;
-  // } );
+      // Filter out only particle fields for copy by prefix
+      if( fieldName.substr(0, 8) != "particle" || ignoreFieldCopy.count( fieldName ) > 0)
+      {
+        return;   
+      }
 
-  // // Reduce global ID
-  // globalIndex maxParticleID;
-  // MpiWrapper::allReduce( &maxParticleIDRank,
-  //                        maxParticleID,
-  //                        1,
-  //                        MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-  //                        MPI_COMM_GEOSX );
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      {
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+        using T = typename ArrayType::ValueType;
+  
+        auto sourceArray = Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
+        
+        forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const pp )
+        {  
+          if( particleCopyFlag[pp] > 0 )
+          {
+            // For scalar particle fields need to do assignment manually
+            if constexpr( ArrayType::NDIM == 1 )
+            {
+              // If wrapper name is among those that should be overriden by new sub region skip (e.g. mass, density, etc.)
+              // We currently only overwrite scalar quantities, but may need to adjust if we overwrite nonscalar quantities
+              sourceArray[pp] = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+            } 
+            else
+            {
+              auto sourceSlice = sourceArray[pp];
+              auto destinationSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+              LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
+              {
+                val = slice( indices ... );
+              } );
+            }      
+          }
+        } );
 
-  // // Gather array for number of new particles per rank for assigning global IDs
-  // array1d< int > divisibleParticlesPerRank( MpiWrapper::commSize() );
-  // MpiWrapper::allGather( numDivisibleParticles, divisibleParticlesPerRank, MPI_COMM_GEOSX );
+        }, fieldWrapper );   
+    } );
 
-  // int subdivideFactor = m_plane_strain == 1 ? 4 : 8;
-  // int const signs[8][3] = { { -1, -1, -1 },
-  //                           {  1, -1, -1 },
-  //                           {  1,  1, -1 },
-  //                           { -1,  1, -1 },
-  //                           { -1, -1,  1 },
-  //                           {  1, -1,  1 },
-  //                           {  1,  1,  1 },
-  //                           { -1,  1,  1 } };
+    //Erase copy flags after completing particle subdivision
+    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+    { 
+      particleCopyFlag[p] = -1;
+    } );
 
-  // int rank = 0;
-  // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-
-  // int currGlobalIndex = 0;
-  // for( int i = 0; i < rank-1; i++ )
-  // {
-  //   currGlobalIndex += (subdivideFactor - 1) * divisibleParticlesPerRank[i];
-  // }
-
-  // // Subdivide particles
-  // subRegionIndex = 0;
-  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  // {
-  //   arrayView1d< globalIndex > const particleID = subRegion.getParticleID();
-  //   arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-  //   arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-  //   arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
-  //   arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-  //   arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
-  //   arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
-  //   arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-  //   arrayView1d< int const > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
-
-  //   int oldSubRegionSize = subRegion.size();
-  //   int newSubRegionSize = oldSubregionSize + (subdivideFactor-1) * numDivisibleParticlesPerSubRegion[subRegionIndex];
-  //   subRegion.resize( newSubRegionSize );
-
-  //   int subRegionNewParticleIndex = oldSubRegionSize;
-
-  //   SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices(); 
-  //   forAll< serialPolicy >( subRegion.size(), [=, &currGlobalIndex, &subRegionNewParticleIndex] GEOS_HOST_DEVICE ( localIndex const pp )
-  //   {
-  //     localIndex const p = activeParticleIndices[pp];
-      
-  //     if( particleSubdivideFlag[p] == 1 )
-  //     {
-  //       for(int np = 1; np < subdivideFactor; np++ )
-  //       {
-  //         // Update particle mass, volume, initial volume, centers, reference positions, initial R vectors and Rvectors
-  //         particleID[subRegionNewParticleIndex] = currGlobalIndex++;
-  //         particleMass[subRegionNewParticleIndex] = particleMass[p] / subdivideFactor;
-  //         particleVolume[subRegionNewParticleIndex] = particleVolume[p] / subdivideFactor;
-  //         particleInitialVolume[subRegionNewParticleIndex] = particleInitialVolume[p] / subdivideFactor;
-
-  //         LvArray::tensorOps::copy< 3, 3 >( particleInitialRVectors[subRegionNewParticleIndex], particleInitialRVectors[p] );
-  //         LvArray::tensorOps::scale< 3, 3 >( particleInitialRVectors[subRegionNewParticleIndex], 0.5 );
-
-  //         LvArray::tensorOps::copy< 3, 3 >( particleRVectors[subRegionNewParticleIndex], particleRVectors[p] );
-  //         LvArray::tensorOps::scale< 3, 3 >( particleRVectors[subRegionNewParticleIndex], 0.5 );
-
-  //         LvArray::tensorOps::copy< 3 >( particlePosition[subRegionNewParticleIndex], particlePosition[p] );
-  //         LvArray::tensorOps::copy< 3 >( particleReferencePosition[subRegionNewParticleIndex], particleReferencePosition[p] );
-  //         for(int di =0; di < numDims; di++)
-  //         {
-  //           for(int dj =0; dj < numDims; dj++)
-  //           {   
-  //             particlePosition[subRegionNewParticleIndex] += signs[np][di] * particleRVectors[subRegionNewParticleIndex][di][dj];
-  //             particleReferencePosition[subRegionNewParticleIndex] += signs[np][di] * particleInitialRVectors[subRegionNewParticleIndex][di][dj];
-  //           }
-  //         }
-
-  //         subRegionNewParticleIndex++;
-  //       }
-
-  //       // Modifying original particle (globalID does not need updating)
-  //       particleMass[p] /= subdivideFactor;
-  //       particleVolume[p] /= subdivideFactor;
-  //       particleInitialVolume[p] /= subdivideFactor;
-
-  //       LvArray::tensorOps::scale< 3, 3 >( particleInitialRVectors[p], 0.5 );
-  //       LvArray::tensorOps::scale< 3, 3 >( particleRVectors[p], 0.5 );
-
-  //       for(int di =0; di < numDims; di++)
-  //       {
-  //         for(int dj =0; dj < numDims; dj++)
-  //         {   
-  //           particlePosition[p] += signs[np][di] * particleRVectors[p][di][dj];
-  //           particleReferencePosition[p] += signs[np][di] * particleInitialRVectors[p][di][dj];
-  //         }
-  //       }
-
-  //       // Copy all other fields that do not need modification 
-  //       // TODO
-  //     }
-  //   } );
-
-  //   // Rebuild active particle indices to include new particles
-  //   subRegion.setActiveParticleIndices();
-  //   subRegionIndex++;
-  // } );
+    // Rebuild active particle indices to include new particles
+    subRegion.setActiveParticleIndices();
+    subRegionIndex++;
+  } );
+  
+  GEOS_LOG_RANK_IF( totalNewParticles > 0, "Generated " << totalNewParticles << " particles from subdividing overly deformed particles!"  );
 }
 
 void SolidMechanicsMPM::resizeMappingArrays( ParticleManager & particleManager )
@@ -9322,21 +9599,19 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
       case ParticleType::CPDI:
         {
           arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
-      
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-        {
-          localIndex const p = activeParticleIndices[pp];
-
-          computeCPDIShapeFunctions( gridPosition,
-                                     particlePosition[p],
-                                     particleRVectors[p],
-                                     ijkMap,
-                                     xLocalMin,
-                                     hEl,
-                                     mappedNodes[pp],
-                                     shapeFunctionValues[pp],
-                                     shapeFunctionGradientValues[pp] );
-        } );
+          {
+            localIndex const p = activeParticleIndices[pp];
+            computeCPDIShapeFunctions( gridPosition,
+                                      particlePosition[p],
+                                      particleRVectors[p],
+                                      ijkMap,
+                                      xLocalMin,
+                                      hEl,
+                                      mappedNodes[pp],
+                                      shapeFunctionValues[pp],
+                                      shapeFunctionGradientValues[pp] );
+          } );
           break;
         }
 
@@ -9462,7 +9737,7 @@ void SolidMechanicsMPM::computeCPDIShapeFunctions( arrayView2d< real64 const > c
 
   // get IJK associated with each corner
   int cornerIJK[8][3]; // CPDI can map to up to 8 cells
-  for( int corner=0; corner<8; corner++ )
+  for( int corner=0; corner < 8; corner++ )
   {
     for( int i=0; i<3; i++ )
     {
@@ -9483,7 +9758,6 @@ void SolidMechanicsMPM::computeCPDIShapeFunctions( arrayView2d< real64 const > c
   for( int corner=0; corner<8; corner++ )
   {
     int cornerNode = ijkMap[cornerIJK[corner][0]][cornerIJK[corner][1]][cornerIJK[corner][2]];
-    // GEOS_LOG_RANK("Particle Corner " << corner << " mapped to corner IJK " << cornerIJK[corner][0] << ", "  << cornerIJK[corner][1] << ", " << cornerIJK[corner][2]);
     auto cornerNodePosition = gridPosition[cornerNode];
 
     real64 x, y, z;
@@ -9511,12 +9785,6 @@ void SolidMechanicsMPM::computeCPDIShapeFunctions( arrayView2d< real64 const > c
           shapeFunctionGradientValues[node][0] = alpha[corner][0] * weight;
           shapeFunctionGradientValues[node][1] = alpha[corner][1] * weight;
           shapeFunctionGradientValues[node][2] = alpha[corner][2] * weight;
-
-          if( shapeFunctionValues[node] > 10 )
-          {
-            GEOS_LOG_RANK( "pPos: " << particlePosition << ", n: " << node << ", g: " << mappedNodes[node] << ", S: " << shapeFunctionValues[node] << ", w: " << weight << ", 0.125 * w: " << 0.125 * weight << ", xw: " << xWeight << ", yw: " << yWeight << ", zw: " << zWeight );
-            // GEOS_LOG_RANK( "pPos: " << particlePosition << ", n: " << node << ", g: " << mappedNodes[node] << ", S: " << shapeFunctionValues[node] << ", w: " << weight << ", xw: " << xWeight << ", yw: " << yWeight << ", zw: " << zWeight );
-          }
           node++;
         }
       }
