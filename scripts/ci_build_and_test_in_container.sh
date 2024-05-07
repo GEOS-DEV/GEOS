@@ -74,6 +74,7 @@ GEOSX_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
+UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
@@ -106,6 +107,7 @@ do
     --nproc)                 NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
+    --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -172,8 +174,18 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
+
+  python3 -m pip cache purge
+
+  # Setup a temporary directory to hold tests
+  tempdir=$(mktemp -d)
+  echo "Setting up a temporary directory to hold tests and baselines: $tempdir"
+  trap "rm -rf $tempdir" EXIT
+  ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
+  ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
+
   export ATS_FILTER="np<=32"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
 fi
 
 
@@ -261,27 +273,39 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
+  
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
-  # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
-  # Therefore, `ats` will exit with error code 0, even if some tests fail.
-  # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
-  integratedTests/geos_ats.sh
-  # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
-  # So we store the status code for further use.
-  INTEGRATED_TEST_EXIT_STATUS=$?
+  # echo "Available baselines:"
+  # ls -lah ${DATA_EXCHANGE_DIR} | grep baseline
+
+  echo "Running integrated tests..."
+  integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+  tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
+
+  echo "Checking results..."
+  bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
+  cat $tempdir/log_check.txt
+
+  if grep -q "Overall status: PASSED" "$tempdir/log_check.txt"; then
+    echo "IntegratedTests passed. No rebaseline required."
+    INTEGRATED_TEST_EXIT_STATUS=0
+  else
+    echo "IntegratedTests failed. Rebaseline is required."
+
+    # Rebaseline and pack into an archive
+    echo "Rebaselining..."
+    integratedTests/geos_ats.sh -a rebaselinefailed
+
+    echo "Packing baselines..."
+    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+    INTEGRATED_TEST_EXIT_STATUS=1
+  fi
+
+  echo "Done!"
+
+  # INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
-
-  # Whatever the result of the integrated tests, we want to pack both the logs and the computed results.
-  # They are not in the same folder, so we do it in 2 steps.
-  # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
-  # in two different folder with meaningful names when unpacking. 
-  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
-  or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
-  or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
-
-  # want to clean the integrated tests folder to avoid polluting the next build.
-  or_die integratedTests/geos_ats.sh -a clean
 fi
 
 # Cleaning the build directory.

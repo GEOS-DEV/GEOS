@@ -54,6 +54,9 @@ on:
       RUNS_ON:
         required: true
         type: string
+      UPLOAD_BASELINES:
+        required: false
+        type: string
       USE_SCCACHE:
         required: false
         type: boolean
@@ -97,7 +100,7 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v2.1.0'
+      uses: 'google-github-actions/auth@v2.1.2'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
@@ -219,8 +222,25 @@ jobs:
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-            echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+            if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
+              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+            fi
+
+            if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
+              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
+            fi
+
+            # if $UPLOAD_BASELINES; then
+              if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
+                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+                echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
+                echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
+              else
+                echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
+              fi
+            # fi
           fi
         fi
         
@@ -233,7 +253,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v4.0.1
+      uses: codecov/codecov-action@v4.3.1
       with:
         files: geos_coverage.info.cleaned
         fail_ci_if_error: true
