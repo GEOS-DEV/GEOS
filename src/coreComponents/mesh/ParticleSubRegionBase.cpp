@@ -181,11 +181,11 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   m_inactiveParticleIndices.clear();
 
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
-  arrayView1d< int const > const particleIsBad = this->getField< fields::mpm::isBad >();
-  forAll< serialPolicy >( this->size(), [&, particleRank, particleIsBad] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
-                                                                                           // a sorted array. Parallelize with atomics?
+  arrayView1d< int const > const particleDeleteFlag = this->getField< fields::mpm::particleDeleteFlag >();
+  forAll< serialPolicy >( this->size(), [&, particleRank, particleDeleteFlag] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
+                                                                                                               // a sorted array. Parallelize with atomics?
     {
-      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) && particleIsBad[p] != 1 )
+      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) && particleDeleteFlag[p] != 1 )
       {
         m_activeParticleIndices.insert( p );
       }

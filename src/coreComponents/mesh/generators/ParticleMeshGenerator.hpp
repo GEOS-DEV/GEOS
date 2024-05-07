@@ -22,6 +22,9 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
+template<typename Enum>
+constexpr auto EnumSize = static_cast< int >(Enum::Count);
+
 namespace geos
 {
 
@@ -77,7 +80,8 @@ public:
     SurfacePositionZ,
     SurfaceTractionX,
     SurfaceTractionY,
-    SurfaceTractionZ
+    SurfaceTractionZ,
+    Count
   };
 
   /**

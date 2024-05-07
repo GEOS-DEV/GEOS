@@ -84,11 +84,11 @@ public:
    */
   void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
-  /**
-   * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
-   * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
-   */
-  void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
+  // /**
+  //  * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
+  //  * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
+  //  */
+  // void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
 
   ///@}
 

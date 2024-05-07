@@ -174,7 +174,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 35; c++)
+      for(int c = 0; c < EnumSize<ParticleColumnHeaders>; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
@@ -252,10 +252,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     int npInBlock = 0; // Number of particles in this particle block
     for( localIndex i=0; i<numThisType; i++ ) // Find out which particles belong to the current particle block
     {
-      materialID = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialType )]; // The particle file is configured such that the 11th column has the material ID
+      materialID = particleData[particleType][i][static_cast< int >( ParticleColumnHeaders::MaterialType )];
       if( materialID == blockMaterialMap[particleBlock.getName()] )
       {
-        // GEOS_LOG_RANK("npInBlock: " << npInBlock << " i: " << i);
         npInBlock++;
         indexMap[particleBlockName].push_back( i );
       }

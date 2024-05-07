@@ -822,12 +822,13 @@ protected:
   // Currently initializes all particles to this temperature
   // TODO: read in from particle file
   int m_shockHeating;
+  int m_computeInternalEnergyAndTemperature;
   int m_useArtificialViscosity;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
 
   int m_cpdiDomainScaling;
-  int m_subdivideGasParticles; // Gas particles larger than a grid cell are subdivided
+  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
 
   real64 m_smallMass;
