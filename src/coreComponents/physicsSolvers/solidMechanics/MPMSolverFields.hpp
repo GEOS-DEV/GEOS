@@ -32,8 +32,8 @@ namespace fields
 namespace mpm
 {
 
-DECLARE_FIELD( isBad,
-               "isBad",
+DECLARE_FIELD( particleDeleteFlag,
+               "particleDeleteFlag",
                array1d< int >,
                0,
                NOPLOT,
@@ -332,6 +332,14 @@ DECLARE_FIELD( particleSubdivideFlag,
                "particleSubdivideFlag", 
                array1d< int >,
                0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleSubdivideFlag" );   
+
+DECLARE_FIELD( particleCopyFlag, 
+               "particleSubdivideFlag", 
+               array1d< int >,
+               -1,
                LEVEL_1,
                WRITE_AND_READ,
                "particleSubdivideFlag" );        
