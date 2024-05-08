@@ -68,7 +68,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -80,7 +80,7 @@ UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
-NPROC=$(nproc)
+NPROC="$(nproc)"
 
 eval set -- ${args}
 while :

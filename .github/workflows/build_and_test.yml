@@ -190,7 +190,8 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
-        
+
+        DOCKER_REPOSITORY=${{ inputs.DOCKER_REPOSITORY }}
         SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
         CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
         echo "CONTAINER_NAME: ${CONTAINER_NAME}"
@@ -203,6 +204,14 @@ jobs:
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
         fi
+
+
+        echo running "docker run \
+          ${docker_args[@]} \
+          -h=`hostname` \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+          ${script_args[@]}"
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
