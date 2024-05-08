@@ -7,6 +7,11 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 
+PR #2917 (2024-05-07)
+======================
+
+New fields for wellsControls: wellControls1_ConstantMassRate_table, targetMassRate, massDensity, ...
+
 
 PR #3044 (2024-05-02)
 ======================
