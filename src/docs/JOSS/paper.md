@@ -101,8 +101,18 @@ In addition to its c++ core, GEOS maintains a Python3 interface that allows for 
 The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS c++ workflow.
 
 GEOS is intended to be a generic multi-physics simulation platform.
-As such, single physics 
+As such, single physics capabilities are developed and tested independently. 
+When coupling one or more single physics capabilities together to create a couple physics package, the strategy can be expressed as a monolithic linear system with an underlying block structure corresponding where the diagonal blocks result from each single physics package.
+The off-diagonal blocks represent the coupling between physics packages and are typically filled through various options, such as through the coupled physics package, or through a callback mechanism in the single physics package.
 
+need figure on relation between physics packages and block structured matrix
+$$
+A = \left(\begin{array}{@{}c|c|c@{}}
+    A_{11} & A_{12} & A_{13}  \\ \hline
+    A_{21} & A_{22} & A_{23}  \\ \hline
+    A_{11} & A_{12} & A_{13}  \\ 
+\end{array}\right)
+$$
 
 # Applications
 The development of GEOS targets multi-physics simulations of subsurfaces reservoirs.
