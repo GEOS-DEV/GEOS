@@ -13,7 +13,8 @@
  */
 
 /**
- * @file MultiFluidUpdate.cpp.template
+ * @file MultiFluidUpdate_@FLUID_TYPE@.cpp
+ * @details Generated from MultiFluidUpdate.cpp.template
  */
 
 #include "physicsSolvers/fluidFlow/kernels/MultiFluidUpdate.hpp"

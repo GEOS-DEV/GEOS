@@ -25,7 +25,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 //#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+//#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "dataRepository/Group.hpp"
@@ -664,6 +664,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
+#ifdef GEOS_USE_HIP
+  GEOS_UNUSED_VAR( wellControlsName );
+#endif
   integer const logLevel = wellControls.getLogLevel();
   string const massUnit = m_useMass ? "kg" : "mol";
 
@@ -691,142 +694,132 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   real64 & massDensity =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
 
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [&numComp,
+                              &numPhase,
+                              &fluid,
+                              pres,
+                              temp,
+                              compFrac,
+                              dCompFrac_dCompDens,
+                              connRate,
+                              totalDens,
+                              dTotalDens,
+                              phaseDens,
+                              dPhaseDens,
+                              phaseFrac,
+                              dPhaseFrac,
+                              &useSurfaceConditions,
+                              &surfacePres,
+                              &surfaceTemp,
+                              &currentTotalVolRate,
+                              &dCurrentTotalVolRate_dPres,
+                              dCurrentTotalVolRate_dCompDens,
+                              &dCurrentTotalVolRate_dRate,
+                              currentPhaseVolRate,
+                              dCurrentPhaseVolRate_dPres,
+                              dCurrentPhaseVolRate_dCompDens,
+                              dCurrentPhaseVolRate_dRate,
+                              &iwelemRef,
+                              &logLevel,
+                              &wellControlsName,
+                              &massUnit,
+                              &massDensity] ( localIndex const )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    GEOS_UNUSED_VAR( massUnit );
+    using Deriv = multifluid::DerivativeOffset;
 
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [&numComp,
-                                &numPhase,
-                                fluidWrapper,
-                                pres,
-                                temp,
-                                compFrac,
-                                dCompFrac_dCompDens,
-                                connRate,
-                                totalDens,
-                                dTotalDens,
-                                phaseDens,
-                                dPhaseDens,
-                                phaseFrac,
-                                dPhaseFrac,
-                                &useSurfaceConditions,
-                                &surfacePres,
-                                &surfaceTemp,
-                                &currentTotalVolRate,
-                                &dCurrentTotalVolRate_dPres,
-                                dCurrentTotalVolRate_dCompDens,
-                                &dCurrentTotalVolRate_dRate,
-                                currentPhaseVolRate,
-                                dCurrentPhaseVolRate_dPres,
-                                dCurrentPhaseVolRate_dCompDens,
-                                dCurrentPhaseVolRate_dRate,
-                                &iwelemRef,
-                                &logLevel,
-                                &wellControlsName,
-                                &massUnit,
-                                &massDensity] ( localIndex const )
+    stackArray1d< real64, maxNumComp > work( numComp );
+
+    // Step 1: evaluate the phase and total density in the reference element
+    //    We need to evaluate the density as follows:
+    //      - Surface conditions: using the surface pressure provided by the user
+    //      - Reservoir conditions: using the pressure in the top element
+    real64 refPres = pres[iwelemRef];
+    real64 refTemp = temp[iwelemRef];
+    if( useSurfaceConditions )
     {
-      GEOS_UNUSED_VAR( massUnit );
-      using Deriv = multifluid::DerivativeOffset;
-
-      stackArray1d< real64, maxNumComp > work( numComp );
-
-      // Step 1: evaluate the phase and total density in the reference element
-
-      //    We need to evaluate the density as follows:
-      //      - Surface conditions: using the surface pressure provided by the user
-      //      - Reservoir conditions: using the pressure in the top element
-      if( useSurfaceConditions )
+      // We need to compute the surface density
+      refPres = surfacePres;
+      refTemp = surfaceTemp;
+      if( logLevel >= 2 )
       {
-        // we need to compute the surface density
-        fluidWrapper.update( iwelemRef, 0, surfacePres, surfaceTemp, compFrac[iwelemRef] );
-        if( logLevel >= 2 )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                   wellControlsName, surfacePres, surfaceTemp ) );
-#ifdef GEOS_USE_HIP
-          GEOS_UNUSED_VAR( wellControlsName );
-#endif
-        }
+        GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+                                 wellControlsName, refPres, refTemp ) );
       }
-      else
+    }
+    MultiFluidUpdate::update( fluid, iwelemRef, 0, refPres, refTemp, compFrac[iwelemRef] );
+
+    // Step 2: update the total volume rate
+
+    real64 const currentTotalRate = connRate[iwelemRef];
+
+    // Step 2.1: compute the inverse of the total density and derivatives
+    massDensity =totalDens[iwelemRef][0];   // need to verify this is surface dens
+    real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
+    real64 const dTotalDensInv_dPres = -dTotalDens[iwelemRef][0][Deriv::dP] * totalDensInv * totalDensInv;
+    stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      dTotalDensInv_dCompDens[ic] = -dTotalDens[iwelemRef][0][Deriv::dC+ic] * totalDensInv * totalDensInv;
+    }
+    applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dTotalDensInv_dCompDens, work.data() );
+
+    // Step 2.2: divide the total mass/molar rate by the total density to get the total volumetric rate
+    currentTotalVolRate = currentTotalRate * totalDensInv;
+    dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
+    dCurrentTotalVolRate_dRate = totalDensInv;
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
+    }
+
+    if( logLevel >= 2 && useSurfaceConditions )
+    {
+      GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
+                               "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
+                               wellControlsName, totalDens[iwelemRef][0], massUnit,
+                               currentTotalRate, massUnit, currentTotalVolRate ) );
+    }
+
+    // Step 3: update the phase volume rate
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+
+      // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
+
+      // skip the rest of this function if phase ip is absent
+      bool const phaseExists = (phaseFrac[iwelemRef][0][ip] > 0);
+      if( !phaseExists )
       {
-        real64 const refPres = pres[iwelemRef];
-        fluidWrapper.update( iwelemRef, 0, refPres, temp[iwelemRef], compFrac[iwelemRef] );
+        continue;
       }
 
-      // Step 2: update the total volume rate
+      real64 const phaseDensInv =  1.0 / phaseDens[iwelemRef][0][ip];
+      real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
+      real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac[iwelemRef][0][ip][Deriv::dP] * phaseDensInv
+                                                       - dPhaseDens[iwelemRef][0][ip][Deriv::dP] * phaseFracTimesPhaseDensInv * phaseDensInv;
 
-      real64 const currentTotalRate = connRate[iwelemRef];
 
-      // Step 2.1: compute the inverse of the total density and derivatives
-      massDensity =totalDens[iwelemRef][0]; // need to verify this is surface dens
-      real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
-      real64 const dTotalDensInv_dPres = -dTotalDens[iwelemRef][0][Deriv::dP] * totalDensInv * totalDensInv;
-      stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
+      // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
+      currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
+      dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
+      dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalDensInv_dCompDens[ic] = -dTotalDens[iwelemRef][0][Deriv::dC+ic] * totalDensInv * totalDensInv;
+        dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
+        dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
+        dCurrentPhaseVolRate_dCompDens[ip][ic] *= currentTotalRate;
       }
-      applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dTotalDensInv_dCompDens, work.data() );
-
-      // Step 2.2: divide the total mass/molar rate by the total density to get the total volumetric rate
-      currentTotalVolRate = currentTotalRate * totalDensInv;
-      dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
-      dCurrentTotalVolRate_dRate = totalDensInv;
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
-      }
+      applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dCurrentPhaseVolRate_dCompDens[ip], work.data() );
 
       if( logLevel >= 2 && useSurfaceConditions )
       {
-        GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} {}/sm3. \n"
-                                 "The total rate is {} {}/s, which corresponds to a total surface volumetric rate of {} sm3/s",
-                                 wellControlsName, totalDens[iwelemRef][0], massUnit,
-                                 currentTotalRate, massUnit, currentTotalVolRate ) );
+        GEOS_LOG_RANK( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
+                                 "The phase surface volumetric rate is {} sm3/s",
+                                 wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
       }
-
-      // Step 3: update the phase volume rate
-      for( integer ip = 0; ip < numPhase; ++ip )
-      {
-
-        // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
-
-        // skip the rest of this function if phase ip is absent
-        bool const phaseExists = (phaseFrac[iwelemRef][0][ip] > 0);
-        if( !phaseExists )
-        {
-          continue;
-        }
-
-        real64 const phaseDensInv =  1.0 / phaseDens[iwelemRef][0][ip];
-        real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
-        real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac[iwelemRef][0][ip][Deriv::dP] * phaseDensInv
-                                                         - dPhaseDens[iwelemRef][0][ip][Deriv::dP] * phaseFracTimesPhaseDensInv * phaseDensInv;
-
-
-        // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
-        currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
-        dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
-        dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
-          dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
-          dCurrentPhaseVolRate_dCompDens[ip][ic] *= currentTotalRate;
-        }
-        applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dCurrentPhaseVolRate_dCompDens[ip], work.data() );
-
-        if( logLevel >= 2 && useSurfaceConditions )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: The density of phase {} at surface conditions is {} {}/sm3. \n"
-                                   "The phase surface volumetric rate is {} sm3/s",
-                                   wellControlsName, ip, phaseDens[iwelemRef][0][ip], massUnit, currentPhaseVolRate[ip] ) );
-        }
-      }
-    } );
+    }
   } );
 }
 
