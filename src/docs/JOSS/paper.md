@@ -112,7 +112,7 @@ A = \left(\begin{array}{@{}c|c|c@{}}
     A_{21} & A_{22} & A_{23}  \\ \hline
     A_{11} & A_{12} & A_{13}  \\ 
 \end{array}\right)
-$$
+$$\label{fig:Monolithic Coupled Matrix represented as block structured matrix}
 
 # Applications
 The development of GEOS targets multi-physics simulations of subsurfaces reservoirs.
