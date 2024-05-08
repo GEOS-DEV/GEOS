@@ -98,7 +98,7 @@ The combination of CHAI/Umpire provides memory motion management for platforms w
 Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with minimal loss of performance due to platform changes.
 
 In addition to its c++ core, GEOS maintains a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
-The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS event manager workflow.
+The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS c++ workflow.
 
 GEOS is intended to be a generic multi-physics simulation platform.
 As such, single physics 
