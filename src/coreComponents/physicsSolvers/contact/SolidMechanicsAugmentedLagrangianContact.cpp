@@ -215,24 +215,34 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                arrayView1d< string const > const regionNames )
   {
-    const FaceManager* const faceManager = &(mesh.getFaceManager());
-    const ElementRegionManager*  const elemManager = &(mesh.getElemManager());
-    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    const SurfaceElementRegion* const region = &(elemManager->getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() ));
-    const FaceElementSubRegion* const subRegion = &(region->getUniqueSubRegion< FaceElementSubRegion >());
+    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    array1d< localIndex > keys(subRegion->size());
-    array1d< localIndex > vals(subRegion->size());
+
+    array1d< localIndex > tmpSpace(2*subRegion.size());
+    SortedArray< localIndex > faceIdList;
+    {
+    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
+    array1d< localIndex > keys(subRegion.size());
+    array1d< localIndex > vals(subRegion.size());
     array1d< localIndex > quadList;
     array1d< localIndex > triList;
     RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nTri_r( 0 );
     RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nQuad_r( 0 );
 
-    forAll< parallelDevicePolicy<> > ( subRegion->size(), [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> > ( subRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
+
+      localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
+      tmpSpace[2*kfe] = kf0, tmpSpace[2*kfe+1] = kf1;
+
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
       if (numNodesPerFace == 3)
       {
@@ -271,8 +281,99 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
     this->m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
     this->m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    }
+
+    RAJA::stable_sort< parallelDevicePolicy<> >(tmpSpace);
+    faceIdList.insert( tmpSpace.begin(), tmpSpace.end());
+
+    //elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const, 
+    //                                                                       localIndex const, 
+    //                                                                       ElementRegionBase &, 
+    //                                                                       CellElementSubRegion & subRegion1 )
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & cellElementSubRegion )
+    {
+
+      arrayView2d< localIndex const  > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
+      std::cout << "ElemToFaces Size: " << elemsToFaces.size(0) << " " << elemsToFaces.size(1) << std::endl;
+
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nBubElems_r( 0 );
+
+      localIndex const n_max = cellElementSubRegion.size() * elemsToFaces.size(1);
+      array1d< localIndex > keys(n_max);
+      array1d< localIndex > perms(n_max);
+      array1d< localIndex > vals(n_max);
+      array1d< localIndex > localFaceIds(n_max);
+
+      forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        //std::cout << "Elem: " <<  kfe << std::endl;
+        for (int i=0; i < elemsToFaces.size(1); ++i) 
+        {
+          //std::cout << "      " <<  elemsToFaces[kfe][i] << " ";
+          perms[kfe*elemsToFaces.size(1)+i] = kfe*elemsToFaces.size(1)+i;
+          if (faceIdList.contains(elemsToFaces[kfe][i]))
+          {
+            keys[kfe*elemsToFaces.size(1)+i] = 0;
+            vals[kfe*elemsToFaces.size(1)+i] = kfe;
+            localFaceIds[kfe*elemsToFaces.size(1)+i] = i;
+            nBubElems_r += 1;
+            std::cout << "elem - faceId - locFaceId: " << kfe << " " << elemsToFaces[kfe][i] << " " << i << std::endl;
+          }
+          else 
+          {
+            keys[kfe*elemsToFaces.size(1)+i] = 1;
+            vals[kfe*elemsToFaces.size(1)+i] = -1;
+            localFaceIds[kfe*elemsToFaces.size(1)+i] = -1;
+          }
+        }
+        //std::cout << std::endl;
+      });
+
+      localIndex nBubElems = static_cast<localIndex>(nBubElems_r.get());
+      RAJA::sort_pairs< parallelDevicePolicy<> >(keys, perms);
+      std::cout << "# bubbles: " << nBubElems << std::endl;
+      //for (int i=0; i<keys.size(); ++i)
+      //{
+      //  std::cout << keys[i] << " " << perms[i] << std::endl;
+      //}
+      array1d< localIndex > bubbleElemsList;
+      bubbleElemsList.resize(nBubElems);
+
+      forAll< parallelDevicePolicy<> >( n_max, [&] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        keys[k] = vals[perms[k]];
+      });
+      //RAJA::stable_sort< parallelDevicePolicy<> >(vals);
+      //bubbleElemsList.insert( keys.begin(), keys.begin() + nBubElems);
+      forAll< parallelDevicePolicy<> >( nBubElems, [&] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        bubbleElemsList[k] = keys[k];
+      });
+      cellElementSubRegion.setBubbleElementsList(bubbleElemsList.toViewConst());
+
+      forAll< parallelDevicePolicy<> >( n_max, [&] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        keys[k] = localFaceIds[perms[k]];
+      });
+
+      array2d< localIndex > faceElemsList;
+      faceElemsList.resize(nBubElems,2);
+      forAll< parallelDevicePolicy<> >( nBubElems, [&] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        localIndex const kfe =  bubbleElemsList[k];
+        //if (faceIdList.contains(elemsToFaces[kfe][i]))
+        //{
+        faceElemsList[k][0] = elemsToFaces[kfe][keys[k]];
+        faceElemsList[k][1] = keys[k];
+        //}
+      });
+      cellElementSubRegion.setFaceElementsList(faceElemsList.toViewConst());
+
+    });
 
   });
+
 }
 
 
@@ -431,9 +532,24 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
       //                                                  "",
       //                                                  kernelFactory1 );
 
-    GEOS_UNUSED_VAR( maxTraction );
+      GEOS_UNUSED_VAR( maxTraction );
 
     } );
+
+    /*ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion const & subRegion1 )
+    {
+      arrayView1d< localIndex const > const bubElems = subRegion1.bubbleElementsList();
+      arrayView2d< localIndex const > const faceElems = subRegion1.faceElementsList();
+      std::cout << bubElems.size() << " " << faceElems.size(0) << " " << faceElems.size(1) << std::endl;
+      for (int i=0; i<bubElems.size(); ++i)
+      {
+        std::cout << bubElems[i] << " " << faceElems[i][0] << " " << faceElems[i][1] << std::endl;
+      }
+
+    });
+    abort();
+    */
   });
   
   //ParallelMatrix parallel_matrix_1;
