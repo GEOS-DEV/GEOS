@@ -48,6 +48,8 @@ Usage: $0
       Do not install the xsd schema.
   --no-run-unit-tests
       Do not run the unit tests (but they will be built).
+  --nproc N
+      Number of cores to use for the build.
   --repository /path/to/repository
       Internal mountpoint where the geos repository will be available. 
   --run-integrated-tests
