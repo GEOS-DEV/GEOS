@@ -8,14 +8,12 @@ printenv
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
-echo "running nproc"
-nproc
 
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
 # Don't rely on the output of free or similar tools to determine whether swap is present.
-echo "running free -m"
-free -m
+echo "running free -g"
+free -g
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
@@ -50,6 +48,8 @@ Usage: $0
       Do not install the xsd schema.
   --no-run-unit-tests
       Do not run the unit tests (but they will be built).
+  --nproc N
+      Number of cores to use for the build.
   --repository /path/to/repository
       Internal mountpoint where the geos repository will be available. 
   --run-integrated-tests
@@ -68,7 +68,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -80,6 +80,7 @@ UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
+NPROC="$(nproc)"
 
 eval set -- ${args}
 while :
@@ -105,6 +106,7 @@ do
     --install-dir-basename)  GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
+    --nproc)                 NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
@@ -147,9 +149,9 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
-    for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+  if [ -n "${DOCKER_CERTS_DIR}" ] && [ -n "${DOCKER_CERTS_UPDATE_COMMAND}" ]; then
+    echo "updating certificates."
+    for file in "${DOCKER_CERTS_DIR}"/llnl/*.crt.pem; do
       if [ -f "$file" ]; then
         filename=$(basename -- "$file")
         filename_no_ext="${filename%.*}"
@@ -158,18 +160,18 @@ EOT
         echo "Copied $filename to $new_filename"
       fi
     done
-    update-ca-certificates 
-    # gcloud config set core/custom_ca_certs_file cert.pem'
-    
-    NPROC=8
-  else
-    NPROC=$(nproc)
+    ${DOCKER_CERTS_UPDATE_COMMAND}
   fi
-  echo "Using ${NPROC} cores."
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
+
+if [ -z "${NPROC}" ]; then
+  NPROC=$(nproc)
+  echo "NPROC unset, setting to ${NPROC}..."
+fi
+echo "Using ${NPROC} cores."
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."

@@ -9,6 +9,9 @@ on:
         required: false
         type: string
         default: build
+      DOCKER_CERTS_UPDATE_COMMAND:
+        required: false
+        type: string
       CMAKE_BUILD_TYPE:
         required: true
         type: string
@@ -16,6 +19,10 @@ on:
         required: false
         type: boolean
         default: false
+      DOCKER_CERTS_DIR:
+        required: false
+        type: string
+        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -40,6 +47,10 @@ on:
       HOST_CONFIG:
         required: false
         type: string
+      NPROC:
+        required: false
+        type: string
+        default: ''
       RUNS_ON:
         required: true
         type: string
@@ -110,7 +121,20 @@ jobs:
         docker_args=()
         script_args=()
 
+        if [[ -n "${{ inputs.DOCKER_CERTS_DIR }}" ]]; then
+          DOCKER_CERTS_DIR=${{ inputs.DOCKER_CERTS_DIR }}
+          docker_args+=(-e DOCKER_CERTS_DIR=${DOCKER_CERTS_DIR})
+        fi
 
+        if [[ -n "${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}" ]]; then
+          DOCKER_CERTS_UPDATE_COMMAND=${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}
+          docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
+        fi
+
+        if [[ -n "${{ inputs.NPROC }}" ]]; then
+          NPROC=${{ inputs.NPROC }}
+          script_args+=(--nproc ${NPROC})
+        fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
@@ -145,11 +169,6 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        if [ ${{ inputs.RUNS_ON }} == 'streak' ] || [ ${{ inputs.RUNS_ON }} == 'streak2' ]; then
-          RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
-          mkdir -p ${GITHUB_WORKSPACE}/certificates
-          cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
-        fi
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
@@ -171,7 +190,8 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
-        
+
+        DOCKER_REPOSITORY=${{ inputs.DOCKER_REPOSITORY }}
         SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
         CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
         echo "CONTAINER_NAME: ${CONTAINER_NAME}"
@@ -184,6 +204,14 @@ jobs:
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
         fi
+
+
+        echo running "docker run \
+          ${docker_args[@]} \
+          -h=`hostname` \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+          ${script_args[@]}"
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
