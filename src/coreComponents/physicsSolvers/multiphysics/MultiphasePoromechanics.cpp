@@ -22,9 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -38,35 +36,6 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 using namespace stabilization;
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename FLOW_SOLVER > class
-  MultiphaseCatalogNames {};
-// Class specialization for a FLOW_SOLVER set to CompositionalMultiphaseBase
-template<> class MultiphaseCatalogNames< CompositionalMultiphaseBase >
-{
-public:
-  static string name() { return "MultiphasePoromechanics"; }
-};
-// Class specialization for a FLOW_SOLVER set to CompositionalMultiphaseReservoirAndWells
-template<> class MultiphaseCatalogNames< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName() + "Poromechanics"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename FLOW_SOLVER >
-string
-MultiphasePoromechanics< FLOW_SOLVER >::
-catalogName()
-{
-  return MultiphaseCatalogNames< FLOW_SOLVER >::name();
-}
 
 template< typename FLOW_SOLVER >
 MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & name,
@@ -102,7 +71,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
 {
   Base::postProcessInput();
 
-  GEOS_ERROR_IF( this->flowSolver()->catalogName() == "CompositionalMultiphaseReservoir" &&
+  GEOS_ERROR_IF( this->flowSolver()->getCatalogName() == "CompositionalMultiphaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
                  GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
                            this->getDataContext(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),

@@ -68,6 +68,5 @@ void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PermeabilityBase, string const &, Group * const )
 }
 } /* namespace geos */

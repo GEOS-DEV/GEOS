@@ -45,12 +45,6 @@ public:
   virtual ~EventBase() override;
 
   /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
-  static string catalogName() { return "EventBase"; }
-
-  /**
    * @brief If the event forecast is equal to 1, then signal the targets to prepare for execution
    *        during the next cycle.
    * @param time The current simulation time.

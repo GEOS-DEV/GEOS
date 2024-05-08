@@ -137,10 +137,6 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "PorosityBase"; }
-
-  virtual string getCatalogName() const override { return catalogName(); }
-
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
