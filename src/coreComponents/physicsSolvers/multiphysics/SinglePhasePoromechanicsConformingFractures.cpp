@@ -78,13 +78,13 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( 
 template< typename FLOW_SOLVER >
 bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateConfiguration( DomainPartition & domain )
 {
-  return solidMechanicsSolver()->updateConfiguration( domain );
+  return this->solidMechanicsSolver()->updateConfiguration( domain );
 }
 
 template< typename FLOW_SOLVER >
 bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::resetConfigurationToDefault( DomainPartition & domain ) const
 {
-  return solidMechanicsSolver()->resetConfigurationToDefault( domain );
+  return this->solidMechanicsSolver()->resetConfigurationToDefault( domain );
 }
 
 template< typename FLOW_SOLVER >
@@ -789,7 +789,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  solidMechanicsSolver()->outputConfigurationStatistics( domain );
+  this->solidMechanicsSolver()->outputConfigurationStatistics( domain );
 }
 
 template class SinglePhasePoromechanicsConformingFractures<>;
