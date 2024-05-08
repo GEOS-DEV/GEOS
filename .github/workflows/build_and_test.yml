@@ -131,9 +131,10 @@ jobs:
           docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
         fi
 
+        echo "inputs.NPROC: ${{ inputs.NPROC }}"
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
-          script_args+=(--nprocs ${NPROC})
+          script_args+=(--nproc ${NPROC})
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})

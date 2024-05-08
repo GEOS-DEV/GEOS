@@ -68,7 +68,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,nproc,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -106,7 +106,7 @@ do
     --install-dir-basename)  GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
-    --nprocs)                NPROC=$2;                   shift 2;;
+    --nproc)                NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
