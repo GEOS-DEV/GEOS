@@ -34,6 +34,6 @@ namespace geos
 
   using namespace constitutive;
 
-  template class MultiFluidUpdate::Updater< @FLUID_TYPE@ >;
+  template struct MultiFluidUpdate::Updater< @FLUID_TYPE@ >;
 
 } // namespace geos
