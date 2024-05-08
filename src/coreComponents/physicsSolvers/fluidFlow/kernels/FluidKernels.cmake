@@ -1,14 +1,14 @@
 set( kernelPath "coreComponents/physicsSolvers/fluidFlow/kernels" )
-set( fluidTypes DeadOilFluid
-                BlackOilFluid
-                CompositionalTwoPhasePengRobinsonConstantViscosity
-                CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
-                CompositionalTwoPhasePengRobinsonLBCViscosity
-                CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity
-                CO2BrinePhillipsFluid
+set( fluidTypes BlackOilFluid
                 CO2BrineEzrokhiFluid
+                CO2BrineEzrokhiThermalFluid
+                CO2BrinePhillipsFluid
                 CO2BrinePhillipsThermalFluid
-                CO2BrineEzrokhiThermalFluid  )
+                CompositionalTwoPhasePengRobinsonConstantViscosity
+                CompositionalTwoPhasePengRobinsonLBCViscosity
+                CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
+                CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity
+                DeadOilFluid )
 
 if( ENABLE_PVTPackage )
     set( fluidTypes
