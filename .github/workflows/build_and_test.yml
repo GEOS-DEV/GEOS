@@ -133,7 +133,7 @@ jobs:
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
-          script_args+=(--nproc ${NPROC})
+          script_args+=(--nprocs ${NPROC})
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
