@@ -9187,23 +9187,10 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     totalNewParticles += numNewParticlesPerRank[i];
   }
 
-  GEOS_LOG_RANK_IF( totalNewParticles > 0, "Generated " << totalNewParticles << " particles from subdividing overly deformed particles!"  );
-
   // Subdivide particles
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // arrayView1d< globalIndex > const particleID = subRegion.getParticleID();
-    // arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-    // arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
-    // arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
-    // arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-    // arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
-    // arrayView3d< real64 > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
-    // arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-    // arrayView1d< int > const particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
-    // arrayView1d< int > const particleCopyFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
-
     size_t oldSubRegionSize = subRegion.size();
     size_t newSubRegionSize = oldSubRegionSize + numNewParticlesPerSubRegion[subRegionIndex];
     subRegion.resize( newSubRegionSize );
@@ -9216,11 +9203,10 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     arrayView1d< real64 > const & particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView2d< real64 > const & particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 > const & particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
-    arrayView3d< real64 > const & particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 > const & particleRVectors = subRegion.getParticleRVectors();
-    arrayView3d< real64 > const & particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const & particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView1d< int > const & particleSubdivideFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
-    arrayView1d< int > const & particleCopyFlag = subRegion.getField< fields::mpm::particleSubdivideFlag >();
+    arrayView1d< int > const & particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
 
     localIndex subRegionNewParticleIndex = oldSubRegionSize;
   
@@ -9229,13 +9215,6 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
     {   
       if( particleSubdivideFlag[p] == 1 )
       {
-        GEOS_LOG_RANK( "Start of subdividing: " << particleID << " - size " << particleID.size() );
-        GEOS_LOG_RANK( "(Start) p: " << particleID[p] << ", " << 
-                       "mass: " << particleMass[p] << ", " << 
-                       "vol: " << particleVolume[p] << ", " << 
-                       "pos: " << particlePosition[p] << ", " <<
-                       "refPos: " << particleReferencePosition[p] ); 
-
         // Determine which directions to subdivide along
         int numDivisions = 0;
         array1d< array1d< int > > rVectorDivisions( numDims );
@@ -9243,6 +9222,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         LvArray::tensorOps::fill< 3 >( subdivideDirections, 0 );
         for( int d = 0; d < numDims; d++)
         {
+          // Check if any of the RVectors have lengths beyond the critical (as determined by the grid cell size)
           if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][d] ) > lCritSqr )
           {
             subdivideDirections[d] = 1;
@@ -9262,28 +9242,26 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
 
         //Subdivide particle and copy particle field data
         int subdivideFactor = std::pow(2, numDivisions);
-        // GEOS_LOG_RANK( "subdivisions: " << subdivideFactor << ", dirs: " << subdivideDirections );
+        real64 newMass = particleMass[p] / subdivideFactor;
+        real64 newVolume = particleVolume[p] / subdivideFactor;
+        real64 newReferenceVolume = particleReferenceVolume[p] / subdivideFactor;
         for(int np = 1; np < subdivideFactor; np++ )
         {
           // Update particle mass, volume, initial volume, centers, reference positions, initial R vectors and Rvectors
           particleID[subRegionNewParticleIndex] = currGlobalIndex++;
-          particleMass[subRegionNewParticleIndex] = particleMass[p] / subdivideFactor;
-          particleVolume[subRegionNewParticleIndex] = particleVolume[p] / subdivideFactor;
-          particleReferenceVolume[subRegionNewParticleIndex] = particleReferenceVolume[p] / subdivideFactor;
+          particleMass[subRegionNewParticleIndex] = newMass;
+          particleVolume[subRegionNewParticleIndex] = newVolume;
+          particleReferenceVolume[subRegionNewParticleIndex] = newReferenceVolume;
 
           LvArray::tensorOps::copy< 3, 3 >( particleReferenceRVectors[subRegionNewParticleIndex], particleReferenceRVectors[p] );
           LvArray::tensorOps::copy< 3, 3 >( particleRVectors[subRegionNewParticleIndex], particleRVectors[p] );
-          LvArray::tensorOps::copy< 3, 3 >( particleDeformationGradient[subRegionNewParticleIndex], particleDeformationGradient[p] );
 
-          // LvArray::tensorOps::scale< 3, 3 >( particleReferenceRVectors[subRegionNewParticleIndex], 0.5 );
-          // LvArray::tensorOps::scale< 3, 3 >( particleRVectors[subRegionNewParticleIndex], 0.5 );
           for( int d = 0; d < numDims; d++ )
           {
             if( subdivideDirections[d] == 1 )
             {
               LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[subRegionNewParticleIndex][d], 0.5 );
               LvArray::tensorOps::scale< 3 >( particleRVectors[subRegionNewParticleIndex][d], 0.5 );
-              // LvArray::tensorOps::scale< 3 >( particleDeformationGradient[subRegionNewParticleIndex][d], 0.5 );
             }
           }
 
@@ -9302,20 +9280,13 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
           // but for now we need -1 to screen particles that should not copy
           particleCopyFlag[subRegionNewParticleIndex] = static_cast< int >( p );
 
-          GEOS_LOG_RANK( "p: " << particleID[subRegionNewParticleIndex] << ", " << 
-                         "mass: " << particleMass[subRegionNewParticleIndex] << ", " << 
-                         "vol: " << particleVolume[subRegionNewParticleIndex] << ", " << 
-                         "pos: " << particlePosition[subRegionNewParticleIndex] << ", " <<
-                         "refPos: " << particleReferencePosition[subRegionNewParticleIndex] << ", " << 
-                         "copy flag: " << particleCopyFlag[subRegionNewParticleIndex] );
-
           subRegionNewParticleIndex++; 
         }
 
         // Modifying original particle (globalID does not need updating)
-        particleMass[p] /= subdivideFactor;
-        particleVolume[p] /= subdivideFactor;
-        particleReferenceVolume[p] /= subdivideFactor;
+        particleMass[p] = newMass;
+        particleVolume[p] = newVolume;
+        particleReferenceVolume[p] = newReferenceVolume;
 
         for( int d = 0; d < numDims; d++ )
         {
@@ -9323,11 +9294,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
           {
             LvArray::tensorOps::scale< 3 >( particleReferenceRVectors[p][d], 0.5 );
             LvArray::tensorOps::scale< 3 >( particleRVectors[p][d], 0.5 );
-            // LvArray::tensorOps::scale< 3 >( particleDeformationGradient[p][d], 0.5 );
           }
         }
-
-        rea64 oldPosition[3] = { 0 }, oldReferencePosition[3];
 
         for(int di =0; di < numDims; di++)
         {
@@ -9340,28 +9308,19 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
 
         // Turn off subdivide flag for particle before copying to new particles
         particleSubdivideFlag[p] = 0;
-
-        GEOS_LOG_RANK( "(After) p: " << particleID[p] << ", " << 
-                       "mass: " << particleMass[p] << ", " << 
-                       "vol: " << particleVolume[p] << ", " << 
-                       "pos: " << particlePosition[p] << ", " <<
-                       "refPos: " << particleReferencePosition[p] ); 
-
-        // Copy all other fields that do not need modification 
-        // TODO
       }     
     } );
 
+    // Copy all other fields that do not need modification 
     std::set< std::string > ignoreFieldCopy( { "particleID",
                                                "particleMass", 
                                                "particleVolume",
                                                "particleReferenceVolume",
-                                               "particlePosition",
+                                               "particleCenter",
                                                "particleReferencePosition",
                                                "particleRVectors",
                                                "particleReferenceRVectors",
-                                               "particleCopyFlag",
-                                               "particleDeformationGradient" } );
+                                               "particleCopyFlag" } );
 
     subRegion.forWrappers( [&]( WrapperBase & fieldWrapper )
     {
@@ -9373,6 +9332,8 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         return;   
       }
 
+      // GEOS_LOG_RANK("Copying " << fieldName);
+
       types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
         using ArrayType = camp::first< decltype( tupleOfTypes ) >;
@@ -9382,7 +9343,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         
         forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const pp )
         {  
-          if( particleCopyFlag[pp] > 0 )
+          if( particleCopyFlag[pp] >= 0 )
           {
             // For scalar particle fields need to do assignment manually
             if constexpr( ArrayType::NDIM == 1 )
@@ -9393,8 +9354,49 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
             } 
             else
             {
-              auto sourceSlice = sourceArray[pp];
-              auto destinationSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+              auto destinationSlice = sourceArray[pp];
+              auto sourceSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+              LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
+              {
+                val = slice( indices ... );
+              } );
+            }
+          }
+        } );
+
+        }, fieldWrapper );   
+    } );
+
+    // Copy constitutive model fields (e.g. stresses)
+    string const & modelName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, modelName );
+
+    constitutiveModel.forWrappers( [&]( WrapperBase & fieldWrapper )
+    {
+      // Do not copy default and reference scalar values from constitutive model
+      if(fieldWrapper.numArrayDims() == 0)
+      {
+        return;
+      }
+
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+      {
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+        using T = typename ArrayType::ValueType;
+  
+        auto sourceArray = Wrapper< ArrayType >::cast( fieldWrapper ).reference().toView();
+        forAll< serialPolicy >( sourceArray.size( 0 ), [&]( localIndex const pp )
+        {  
+          if( particleCopyFlag[pp] >= 0 )
+          {            
+            if constexpr( ArrayType::NDIM == 1 )
+            {
+              sourceArray[pp] = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
+            } 
+            else
+            {
+              auto destinationSlice = sourceArray[pp];
+              auto sourceSlice = sourceArray[static_cast< localIndex >( particleCopyFlag[pp] )];
               LvArray::forValuesInSliceWithIndices( destinationSlice, [slice=sourceSlice] ( T & val, auto const ... indices )
               {
                 val = slice( indices ... );

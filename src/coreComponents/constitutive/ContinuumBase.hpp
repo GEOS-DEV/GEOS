@@ -477,6 +477,24 @@ public:
   }
 
   /**
+   * @brief Non-const/mutable accessor for old stress
+   * @return Accessor
+   */
+  arrayView3d< real64, solid::STRESS_USD > const getOldStress()
+  {
+    return m_oldStress;
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for old stress
+   * @return Accessor
+   */
+  arrayView3d< real64 const, solid::STRESS_USD > const getOldStress() const
+  {
+    return m_oldStress;
+  }
+
+  /**
    * @brief Non-const/Mutable accessor for density.
    * @return Accessor
    */
