@@ -293,6 +293,7 @@ public:
 
     // control data (not registered on the mesh)
 
+    static constexpr char const * massDensityString() { return "massDensity";}
     static constexpr char const * currentBHPString() { return "currentBHP"; }
 
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
