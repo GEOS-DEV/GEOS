@@ -73,17 +73,17 @@ Carbon Capture and Storage (CCS) of CO2 in subsurface reservoirs and saline aqui
 Given the 2050 net-zero GHG goals, CO2 storage capacities required to offset emissions is orders of magnitude greater than current levels.(reference needed)
 One factor in the evaluation of CO2 storage sites are the containment risks associated with the injection of liquefied CO2 in the subsurface.
 The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO2 is injected into a subsurface reservoir. 
-Thus, GEOS is a freely available tool that is focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
+Thus, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
 Additionally GEOS provides the potential to estimate seismic events induced by CO2 injection.
 
 # C++ Infrastructure Components 
 
-The core c++17 infrastructure provides components to perform common computer science tasks that are required in a simulation code. 
-The components of the infrastructure include a data hierarchy, a discrete mesh data structure, a physics package interface, MPI communications tools, degree-of-freedom management, IO facilities, and an event manager.
+The core c++17 infrastructure provides components to perform common computer science tasks typical of a discrete numerical simulation. 
+The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a physics package interface, mesh based MPI communications interface, degree-of-freedom management, IO facilities, and an event manager.
 
-The data repository defines a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class that serves as a container to form a hierarchy.
+The data repository forms a hiearchy through the definiton of a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class that serves as a container of other `Group` and `Wrapper` objects.
 Drawing an analogy with a standard folder/file hierarchy, the `Group` class can be thought of as a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects. 
-The `Wrapper` can be thought of as a "File" as it contains the relevant data that is stored in the repository.
+The `Wrapper` can be thought of as a "File" as it contains the relevant data/functionality that is stored in the repository.
 The mesh interface is built on top of the data repository as a collection of managers for each mesh object type as shown in Figure \autoref{fig:meshHierarchy}.
 On each MPI rank there is a `MeshBody` object that represents a physical body.
 Each `MeshBody` contains a collection of `MeshLevel` objects that represent a discretization of the `MeshBody`.
@@ -95,17 +95,22 @@ The role of each mesh object manager is to hold maps between the mesh objects, a
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e. host memory and device memory).
-Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops.
+Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with minimal loss of performance due to platform changes.
 
-
-In addition to the c++ core, GEOS maintains a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
+In addition to its c++ core, GEOS maintains a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS event manager workflow.
 
-# Applications
-The development of GEOS specifically targets simulation of subsurfaces reservoirs.
-To date GEOS has been used to simulate problems relevant to CO2 storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
+GEOS is intended to be a generic multi-physics simulation platform.
+As such, single physics 
 
-However, GEOS is intended to be a generic multi-physics simulation platform.
+
+# Applications
+The development of GEOS targets multi-physics simulations of subsurfaces reservoirs.
+To date GEOS has been used to simulate problems relevant to CO2 storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
+Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
+
+The coupling strategy applied in GEOS is to require the capability of a tightly coupled monolithic system as a baseline capability.
+In cases where such tight coupling is not required, one may decompose the monolithic system into blocks and apply a sequential coupling approach.
 
 Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
 
