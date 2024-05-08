@@ -80,7 +80,7 @@ UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
-NPROC=""
+NPROC="$(nproc)"
 
 eval set -- ${args}
 while :
@@ -106,7 +106,7 @@ do
     --install-dir-basename)  GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
-    --nproc)                NPROC=$2;                   shift 2;;
+    --nproc)                 NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
