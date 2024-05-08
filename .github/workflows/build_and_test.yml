@@ -190,7 +190,8 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
-        
+
+        echo "DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}"
         SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
         echo "SPLIT_DOCKER_REPOSITORY: ${SPLIT_DOCKER_REPOSITORY[@]}"
         CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
