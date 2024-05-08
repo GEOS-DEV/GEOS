@@ -26,13 +26,14 @@
 namespace geos
 {
 
-template< typename COMPOSITIONAL_RESERVOIR_SOLVER >
-class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< COMPOSITIONAL_RESERVOIR_SOLVER,
+/// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
+template< typename RESERVOIR_SOLVER >
+class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                                                                       CompositionalMultiphaseWell >
 {
 public:
 
-  using Base = CoupledReservoirAndWellsBase< COMPOSITIONAL_RESERVOIR_SOLVER,
+  using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                              CompositionalMultiphaseWell >;
   using Base::getLogLevel;
   using Base::m_solvers;
@@ -55,7 +56,18 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr (std::is_same_v< RESERVOIR_SOLVER, CompositionalMultiphaseBase > ) // special case
+    {
+      return "CompositionalMultiphaseReservoir";
+    }
+    else // default
+    {
+      return RESERVOIR_SOLVER::catalogName() + "Reservoir";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -87,8 +99,8 @@ public:
                                arrayView1d< real64 > const & localRhs ) const
   { flowSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
 
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return flowSolver()->updateFluidState( subRegion ); }
