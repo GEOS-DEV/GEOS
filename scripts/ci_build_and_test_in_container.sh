@@ -167,6 +167,10 @@ EOT
   ${SCCACHE} --show-stats
 fi
 
+if [ -z "${NPROC}" ]; then
+  NPROC=$(nproc)
+  echo "NPROC unset, setting to ${NPROC}..."
+fi
 echo "Using ${NPROC} cores."
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
