@@ -337,12 +337,12 @@ DECLARE_FIELD( particleSubdivideFlag,
                "particleSubdivideFlag" );   
 
 DECLARE_FIELD( particleCopyFlag, 
-               "particleSubdivideFlag", 
+               "particleCopyFlag", 
                array1d< int >,
                -1,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleSubdivideFlag" );        
+               "particleCopyFlag" );        
 }
 
 }
