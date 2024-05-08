@@ -54,6 +54,8 @@ set( physicsSolvers_headers
      fluidFlow/ThermalSinglePhaseBaseKernels.hpp
      fluidFlow/ThermalSinglePhaseFVMKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/kernels/MultiFluidUpdate.hpp
+     fluidFlow/kernels/MultiFluidUpdateImpl.hpp
      fluidFlow/wells/CompositionalMultiphaseWellFields.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
@@ -180,6 +182,7 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/SinglePhaseProppantFluxKernels.cpp
+     fluidFlow/kernels/MultiFluidUpdate.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp
      fluidFlow/wells/SinglePhaseWell.cpp
@@ -219,6 +222,7 @@ set( physicsSolvers_sources
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+  include( fluidFlow/kernels/FluidKernels.cmake)
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
