@@ -32,6 +32,24 @@ class MultiFluidUpdate
 {
 public:
 /**
+ * @brief Update properties for a single point
+ * @details This single point update is rather expensive but it is only used in serial for
+ *          initialisation within 1D tables.
+ * @param fluid the fluid to use
+ * @param cell the index of the element to update
+ * @param node the index of the quadrature point
+ * @param pressure the current pressure
+ * @param temperature the current temperature
+ * @param composition the current composition
+ */
+  static void update( constitutive::MultiFluidBase & fluid,
+                      localIndex const index,
+                      integer const node,
+                      real64 const & pressure,
+                      real64 const & temperature,
+                      arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition );
+
+/**
  * @brief Update all the fluid properties
  * @param fluid the fluid to use
  * @param size the size of the data
@@ -61,18 +79,27 @@ public:
 
 private:
   template< typename FLUID_TYPE >
-  static void fluidUpdate( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
-                           localIndex const size,
-                           arrayView1d< real64 const > const & pressure,
-                           arrayView1d< real64 const > const & temperature,
-                           arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+  struct Updater
+  {
+    static void update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                        localIndex const index,
+                        integer const node,
+                        real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition );
 
-  template< typename FLUID_TYPE >
-  static void fluidUpdate( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           arrayView1d< real64 const > const & pressure,
-                           arrayView1d< real64 const > const & temperature,
-                           arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+    static void update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                        localIndex const size,
+                        arrayView1d< real64 const > const & pressure,
+                        arrayView1d< real64 const > const & temperature,
+                        arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+
+    static void update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        arrayView1d< real64 const > const & pressure,
+                        arrayView1d< real64 const > const & temperature,
+                        arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+  };
 };
 
 } //namespace geos

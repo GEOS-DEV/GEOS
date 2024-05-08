@@ -18,14 +18,13 @@
 
 #include "CompositionalMultiphaseWell.hpp"
 
-
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+//#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
@@ -34,7 +33,8 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/MultiFluidUpdate.hpp"
+//#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
@@ -690,6 +690,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dRateString() );
   real64 & massDensity =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
+
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
@@ -829,7 +830,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   } );
 }
 
-
 void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
@@ -841,20 +841,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-  {
-    using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
-  } );
+  MultiFluidUpdate::update( fluid, subRegion.size(), pres, temp, compFrac );
 }
 
 void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
@@ -982,18 +969,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
 
       // 4) Back calculate component densities
-      constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< serialPolicy >( subRegion.size(),
-                                  fluidWrapper,
-                                  wellElemPressure,
-                                  wellElemTemp,
-                                  wellElemCompFrac );
-      } );
+      MultiFluidUpdate::update( fluid, subRegion.size(), wellElemPressure, wellElemTemp, wellElemCompFrac );
 
       CompDensInitializationKernel::launch( subRegion.size(),
                                             numComp,

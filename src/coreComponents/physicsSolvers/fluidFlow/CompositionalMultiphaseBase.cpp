@@ -21,13 +21,11 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
 #include "constitutive/dispersion/DispersionFields.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
@@ -38,8 +36,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/kernels/MultiFluidUpdate.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
 
@@ -550,18 +548,15 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       compareMultiphaseModels( fluid, referenceFluid );
       compareMulticomponentModels( fluid, referenceFluid );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        bool const isFluidModelThermal = castedFluid.isThermal();
-        GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-        GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-      } );
+      bool const isFluidModelThermal = fluid.isThermal();
+      GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
+      GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -639,20 +634,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
-  constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-  {
-    using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( dataGroup.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
-  } );
+  MultiFluidUpdate::update( fluid, dataGroup.size(), pres, temp, compFrac );
 }
 
 void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGroup ) const
@@ -1808,20 +1790,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompFraction::key() );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        using FluidType = TYPEOFREF( castedFluid );
-        using ExecPolicy = typename FluidType::exec_policy;
-        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
-      } );
+      MultiFluidUpdate::update( fluid, targetSet, bcPres, bcTemp, compFrac );
 
       arrayView1d< integer const > const ghostRank =
         subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );

@@ -27,11 +27,22 @@ namespace geos
 {
 
 template< typename FLUID_TYPE >
-void MultiFluidUpdate::fluidUpdate( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
-                                    localIndex const size,
-                                    arrayView1d< real64 const > const & pressure,
-                                    arrayView1d< real64 const > const & temperature,
-                                    arrayView2d< real64 const, compflow::USD_COMP > const & composition )
+void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                                                      localIndex const index,
+                                                      integer const node,
+                                                      real64 const & pressure,
+                                                      real64 const & temperature,
+                                                      arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition )
+{
+  fluidWrapper.update( index, node, pressure, temperature, composition );
+}
+
+template< typename FLUID_TYPE >
+void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                                                      localIndex const size,
+                                                      arrayView1d< real64 const > const & pressure,
+                                                      arrayView1d< real64 const > const & temperature,
+                                                      arrayView2d< real64 const, compflow::USD_COMP > const & composition )
 {
   thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel::
     launch< typename FLUID_TYPE::exec_policy >( size,
@@ -42,11 +53,11 @@ void MultiFluidUpdate::fluidUpdate( typename FLUID_TYPE::KernelWrapper const & f
 }
 
 template< typename FLUID_TYPE >
-void MultiFluidUpdate::fluidUpdate( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
-                                    SortedArrayView< localIndex const > const & targetSet,
-                                    arrayView1d< real64 const > const & pressure,
-                                    arrayView1d< real64 const > const & temperature,
-                                    arrayView2d< real64 const, compflow::USD_COMP > const & composition )
+void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
+                                                      SortedArrayView< localIndex const > const & targetSet,
+                                                      arrayView1d< real64 const > const & pressure,
+                                                      arrayView1d< real64 const > const & temperature,
+                                                      arrayView2d< real64 const, compflow::USD_COMP > const & composition )
 {
   thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel::
     launch< typename FLUID_TYPE::exec_policy >( targetSet,

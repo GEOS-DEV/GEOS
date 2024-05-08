@@ -23,6 +23,27 @@ namespace geos
 {
 
 void MultiFluidUpdate::update( constitutive::MultiFluidBase & fluid,
+                               localIndex const index,
+                               integer const node,
+                               real64 const & pressure,
+                               real64 const & temperature,
+                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition )
+{
+  constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  {
+    using FluidType = TYPEOFREF( castedFluid );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+    Updater< FluidType >::update( fluidWrapper,
+                                  index,
+                                  node,
+                                  pressure,
+                                  temperature,
+                                  composition );
+  } );
+}
+
+void MultiFluidUpdate::update( constitutive::MultiFluidBase & fluid,
                                localIndex const size,
                                arrayView1d< real64 const > const & pressure,
                                arrayView1d< real64 const > const & temperature,
@@ -33,11 +54,11 @@ void MultiFluidUpdate::update( constitutive::MultiFluidBase & fluid,
     using FluidType = TYPEOFREF( castedFluid );
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    fluidUpdate< FluidType >( fluidWrapper,
-                              size,
-                              pressure,
-                              temperature,
-                              composition );
+    Updater< FluidType >::update( fluidWrapper,
+                                  size,
+                                  pressure,
+                                  temperature,
+                                  composition );
   } );
 }
 
@@ -52,11 +73,11 @@ void MultiFluidUpdate::update( constitutive::MultiFluidBase & fluid,
     using FluidType = TYPEOFREF( castedFluid );
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    fluidUpdate< FluidType >( fluidWrapper,
-                              targetSet,
-                              pressure,
-                              temperature,
-                              composition );
+    Updater< FluidType >::update( fluidWrapper,
+                                  targetSet,
+                                  pressure,
+                                  temperature,
+                                  composition );
   } );
 }
 
