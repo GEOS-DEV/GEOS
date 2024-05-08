@@ -80,7 +80,7 @@ UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 CODE_COVERAGE=false
-NPROC=-1
+NPROC=""
 
 eval set -- ${args}
 while :
