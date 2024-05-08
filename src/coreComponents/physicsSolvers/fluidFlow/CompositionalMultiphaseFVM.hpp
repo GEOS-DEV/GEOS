@@ -229,6 +229,14 @@ private:
 
   // no data needed here, see CompositionalMultiphaseBase
 
+  static constexpr char const * getFaceBoundaryConditionMessage()
+  {
+    return "CompositionalMultiphaseFVM {}: at time {}s, "
+           "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+           "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+           "\nThe total number of target faces (including ghost faces) is {}."
+           "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+  }
 };
 
 ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
