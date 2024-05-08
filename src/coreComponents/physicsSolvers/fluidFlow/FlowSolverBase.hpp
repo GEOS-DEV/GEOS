@@ -70,7 +70,9 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
@@ -92,6 +94,8 @@ public:
   void updateStencilWeights( DomainPartition & domain ) const;
 
   void enableFixedStressPoromechanicsUpdate();
+
+  void enableJumpStabilization();
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
@@ -135,6 +139,14 @@ public:
    * @brief Function to activate the flag allowing negative pressure
    */
   void allowNegativePressure() { m_allowNegativePressure = 1; }
+
+  /**
+   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
+   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
 
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
@@ -180,8 +192,17 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// the input temperature
+  real64 m_inputTemperature;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepFlowVariablesConstantDuringInitStep;
+
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  /// enable pressure jump stabilzation for fixed-stress poromechanics
+  bool m_isJumpStabilized;
 
   /// flag if negative pressure is allowed
   integer m_allowNegativePressure;

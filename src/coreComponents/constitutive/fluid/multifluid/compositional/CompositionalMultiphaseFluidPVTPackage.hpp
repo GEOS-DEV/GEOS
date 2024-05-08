@@ -64,6 +64,7 @@ public:
     static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
+    static constexpr char const * constantPhaseViscosityString() { return "constantPhaseViscosity"; }
   };
 
   /**
@@ -98,6 +99,7 @@ private:
 
     KernelWrapper( pvt::MultiphaseSystem & fluid,
                    arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+                   arrayView1d< real64 const > const & constantPhaseViscosity,
                    arrayView1d< real64 const > const & componentMolarWeight,
                    bool const useMass,
                    PhaseProp::ViewType phaseFraction,
@@ -112,6 +114,7 @@ private:
     pvt::MultiphaseSystem & m_fluid;
 
     arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
+    arrayView1d< real64 const > m_constantPhaseViscosity;
   };
 
   /**
@@ -138,6 +141,9 @@ private:
 
   // names of equations of state to use for each phase
   string_array m_equationsOfState;
+
+  // Phase viscosity
+  array1d< real64 > m_constantPhaseViscosity;
 
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
@@ -239,7 +245,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
     phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
 
     // TODO
-    phaseViscosity.value[ip] = 0.001;
+    phaseViscosity.value[ip] = m_constantPhaseViscosity[ip];
     phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
 
