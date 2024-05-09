@@ -56,7 +56,6 @@ void MultiFluidUpdate::KernelWrapper< FLUID_WRAPPER >::update( FLUID_WRAPPER con
 }
 
 template< typename FLUID_TYPE >
-GEOS_HOST_DEVICE
 void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
                                                       localIndex const index,
                                                       integer const node,
