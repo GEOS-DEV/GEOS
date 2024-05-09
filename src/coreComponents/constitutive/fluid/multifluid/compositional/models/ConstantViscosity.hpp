@@ -35,27 +35,16 @@ class ConstantViscosityUpdate final : public FunctionBaseUpdate
 public:
   ConstantViscosityUpdate() = default;
 
-  template< int USD1 >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 const & density,
+                arraySlice1d< real64 const, USD2 > const & dDensity,
                 real64 & viscosity,
-                bool useMass ) const;
-
-  template< int USD1, int USD2, int USD3 >
-  GEOS_HOST_DEVICE
-  void compute( ComponentProperties::KernelWrapper const & componentProperties,
-                real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                real64 const & density,
-                arraySlice1d< real64 const, USD3 > const & dDensity,
-                real64 & viscosity,
-                arraySlice1d< real64, USD3 > const & dViscosity,
+                arraySlice1d< real64, USD2 > const & dViscosity,
                 bool useMass ) const;
 };
 
@@ -82,7 +71,7 @@ public:
   KernelWrapper createKernelWrapper() const;
 };
 
-template< int USD1 >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
@@ -90,32 +79,13 @@ void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const 
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                        real64 const & density,
+                                       arraySlice1d< real64 const, USD2 > const & dDensity,
                                        real64 & viscosity,
+                                       arraySlice1d< real64, USD2 > const & dViscosity,
                                        bool useMass ) const
 {
   GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition );
-  GEOS_UNUSED_VAR( density );
-
-  viscosity = 0.001;
-}
-
-template< int USD1, int USD2, int USD3 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
-                                       real64 const & pressure,
-                                       real64 const & temperature,
-                                       arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                       arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                                       real64 const & density,
-                                       arraySlice1d< real64 const, USD3 > const & dDensity,
-                                       real64 & viscosity,
-                                       arraySlice1d< real64, USD3 > const & dViscosity,
-                                       bool useMass ) const
-{
-  GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
-  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
   GEOS_UNUSED_VAR( density, dDensity );
 
   viscosity = 0.001;
