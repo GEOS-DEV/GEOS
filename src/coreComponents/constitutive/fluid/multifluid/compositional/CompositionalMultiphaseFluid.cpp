@@ -53,6 +53,10 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
 
+  registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfStateNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "List of equation of state types for each phase\n* " + EnumStrings< compositional::EquationOfStateType >::concat( "\n* " ) );
+
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical pressures" );
@@ -134,9 +138,12 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
                           InputError );
 
   };
+  checkInputSize( m_equationsOfStateNames, NP, viewKeyStruct::equationsOfStateString() );
   checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
+
+  compositional::EquationOfState::validateNames( m_equationsOfStateNames );
 
   if( m_componentCriticalVolume.empty() )
   {
@@ -217,6 +224,7 @@ typename CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::KernelWr
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapper()
 {
   return KernelWrapper( *m_componentProperties,
+                        *m_equationsOfState,
                         *m_flash,
                         *m_phase1,
                         *m_phase2,
@@ -248,6 +256,8 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
     m_componentVolumeShift,
     m_componentBinaryCoeff );
 
+  m_equationsOfState = std::make_unique< compositional::EquationOfState >( m_equationsOfStateNames );
+
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                        *m_componentProperties );
 
@@ -276,19 +286,19 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::calculateCri
 
 // Explicit instantiation of the model template.
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashPRPR,
+    compositional::NegativeTwoPhaseFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashSRKSRK,
+    compositional::NegativeTwoPhaseFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashPRPR,
+    compositional::NegativeTwoPhaseFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashSRKSRK,
+    compositional::NegativeTwoPhaseFlashModel,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 

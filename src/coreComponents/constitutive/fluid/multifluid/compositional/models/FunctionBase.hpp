@@ -22,6 +22,7 @@
 #include "dataRepository/ObjectCatalog.hpp"
 
 #include "ComponentProperties.hpp"
+#include "EquationOfState.hpp"
 
 namespace geos
 {

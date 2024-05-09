@@ -19,16 +19,16 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_MULTIFLUIDBASE_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_MULTIFLUIDBASE_HPP_
 
-#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
 namespace geos
 {
 namespace constitutive
 {
+
+using namespace multifluid;
 
 class MultiFluidBase : public ConstitutiveBase
 {
@@ -203,13 +203,6 @@ public:
     static constexpr char const * useMassString() { return "useMass"; }
     static constexpr char const * checkPVTTablesRangesString() { return "checkPVTTablesRanges"; }
   };
-
-
-public:
-
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
-  using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
 
 public:
   class KernelWrapper
