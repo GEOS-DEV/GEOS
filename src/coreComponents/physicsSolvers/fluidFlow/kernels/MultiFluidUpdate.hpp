@@ -20,6 +20,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 
 namespace geos
 {
@@ -76,6 +77,36 @@ public:
                       arrayView1d< real64 const > const & pressure,
                       arrayView1d< real64 const > const & temperature,
                       arrayView2d< real64 const, compflow::USD_COMP > const & composition );
+
+/**
+ * @brief Calculate the properties required for Dirichlet boundary conditions
+ * @details Calculates the phase mobility, phase composition and phase enthalpy
+ * @param[in] fluidWrapper the fluid to use
+ * @param[in] pressure the current pressure
+ * @param[in] temperature the current temperature
+ * @param[in] composition the current composition
+ * @param[out] phaseMobility the calculated phase mobility
+ * @param[out] phaseEnthalpy the calculated phase enthalpy
+ * @param[out] phaseCompFraction the calculated phase compositions
+ * @param[out] totalDensity the calculated total fluid density
+ */
+  template< typename FLUID_WRAPPER >
+  struct KernelWrapper
+  {
+    GEOS_HOST_DEVICE
+    static void update( FLUID_WRAPPER const & fluidWrapper,
+                        real64 const & pressure,
+                        real64 const & temperature,
+                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseFraction,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseDensity,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseMassDensity,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                        arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
+                        arraySlice2d< real64, constitutive::multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                        real64 & totalDensity );
+  };
 
 private:
   template< typename FLUID_TYPE >

@@ -26,7 +26,37 @@
 namespace geos
 {
 
+template< typename FLUID_WRAPPER >
+GEOS_HOST_DEVICE
+void MultiFluidUpdate::KernelWrapper< FLUID_WRAPPER >::update( FLUID_WRAPPER const & fluidWrapper,
+                                                               real64 const & pressure,
+                                                               real64 const & temperature,
+                                                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseFraction,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseDensity,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseMassDensity,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                                                               arraySlice1d< real64, constitutive::multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
+                                                               arraySlice2d< real64, constitutive::multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                                                               real64 & totalDensity )
+{
+  constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                              pressure,
+                                                              temperature,
+                                                              composition,
+                                                              phaseFraction,
+                                                              phaseDensity,
+                                                              phaseMassDensity,
+                                                              phaseViscosity,
+                                                              phaseEnthalpy,
+                                                              phaseInternalEnergy,
+                                                              phaseCompFraction,
+                                                              totalDensity );
+}
+
 template< typename FLUID_TYPE >
+GEOS_HOST_DEVICE
 void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
                                                       localIndex const index,
                                                       integer const node,

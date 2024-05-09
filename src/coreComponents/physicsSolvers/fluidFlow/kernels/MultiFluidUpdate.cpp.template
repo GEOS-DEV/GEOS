@@ -36,4 +36,6 @@ namespace geos
 
   template struct MultiFluidUpdate::Updater< @FLUID_TYPE@ >;
 
+  template struct MultiFluidUpdate::KernelWrapper< @FLUID_TYPE@::KernelWrapper >;
+
 } // namespace geos

@@ -41,6 +41,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/MultiFluidUpdate.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -1850,7 +1851,7 @@ public:
     // Step 2: compute the fluid properties on the face
     // This is needed to get the phase mass density and the phase comp fraction at the face
     // Because we approximate the face mobility using the total element mobility
-
+#ifdef HAHAHA
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, m_numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, m_numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseMassDens( 1, 1, m_numPhases );
@@ -1873,12 +1874,33 @@ public:
                                                   facePhaseInternalEnergy[0][0],
                                                   facePhaseCompFrac[0][0],
                                                   faceTotalDens );
+#endif
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseMassDens( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, m_numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, m_numPhases );
+    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NUM_COMP,
+                multifluid::LAYOUT_PHASE_COMP > facePhaseCompFrac( 1, 1, m_numPhases, NUM_COMP );
+    real64 faceTotalDens = 0.0;
+    MultiFluidUpdate::KernelWrapper< FLUIDWRAPPER >::update( m_fluidWrapper,
+                                                             m_facePres[kf],
+                                                             m_faceTemp[kf],
+                                                             m_faceCompFrac[kf],
+                                                             facePhaseFrac[0][0],
+                                                             facePhaseDens[0][0],
+                                                             facePhaseMassDens[0][0],
+                                                             facePhaseVisc[0][0],
+                                                             facePhaseEnthalpy[0][0],
+                                                             facePhaseInternalEnergy[0][0],
+                                                             facePhaseCompFrac[0][0],
+                                                             faceTotalDens );
 
     // Step 3: loop over phases, compute and upwind phase flux and sum contributions to each component's flux
 
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-
       // working variables
       real64 dDensMean_dC[numComp]{};
       real64 dF_dC[numComp]{};
