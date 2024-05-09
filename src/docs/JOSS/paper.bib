@@ -35,8 +35,43 @@ year = {2020}
 @misc{hypre,
   key   =       {hypre},
   title =       {{\sl hypre}: High Performance Preconditioners},
-  note =        {\url{https://llnl.gov/casc/hypre}, \url{https://github.com/hypre-space/hypre}}
+  journal = {GitHub repository},
+  url = {\url{https://llnl.gov/casc/hypre}, \url{https://github.com/hypre-space/hypre}}
   }
+
+
+
+
+
+
+
+@article{BUI:2020,
+author = {Bui, Quan M. and Osei-Kuffuor, Daniel and Castelletto, Nicola and White, Joshua A.},
+title = {A Scalable Multigrid Reduction Framework for Multiphase Poromechanics of Heterogeneous Media},
+journal = {SIAM Journal on Scientific Computing},
+volume = {42},
+number = {2},
+pages = {B379-B396},
+year = {2020},
+doi = {10.1137/19M1256117},
+URL = {https://doi.org/10.1137/19M1256117},
+eprint = {https://doi.org/10.1137/19M1256117},
+abstract = { Simulation of multiphase poromechanics involves solving a multiphysics problem in which multiphase flow and transport are tightly coupled with the porous medium deformation. To capture this dynamic interplay, fully implicit methods, also known as monolithic approaches, are usually preferred. The main bottleneck of a monolithic approach is that it requires solution of large linear systems that result from the discretization and linearization of the governing balance equations. Because such systems are nonsymmetric, indefinite, and highly ill-conditioned, preconditioning is critical for fast convergence. Recently, most efforts in designing efficient preconditioners for multiphase poromechanics have been dominated by physics-based strategies. Current state-of-the-art “black-box” solvers such as algebraic multigrid (AMG) are ineffective because they cannot effectively capture the strong coupling between the mechanics and the flow subproblems, as well as the coupling inherent in the multiphase flow and transport process. In this work, we develop an algebraic framework based on multigrid reduction (MGR) that is suited for tightly coupled systems of PDEs. Using this framework, the decoupling between the equations is done algebraically through defining appropriate interpolation and restriction operators. One can then employ existing solvers for each of the decoupled blocks or design a new solver based on knowledge of the physics. We demonstrate the applicability of our framework when used as a “black-box” solver for multiphase poromechanics. We show that the framework is flexible to accommodate a wide range of scenarios, as well as efficient and scalable for large problems. }
+}
+
+@article{BUI:2021114111,
+title = {Multigrid reduction preconditioning framework for coupled processes in porous and fractured media},
+journal = {Computer Methods in Applied Mechanics and Engineering},
+volume = {387},
+pages = {114111},
+year = {2021},
+issn = {0045-7825},
+doi = {https://doi.org/10.1016/j.cma.2021.114111},
+url = {https://www.sciencedirect.com/science/article/pii/S0045782521004424},
+author = {Quan M. Bui and François P. Hamon and Nicola Castelletto and Daniel Osei-Kuffuor and Randolph R. Settgast and Joshua A. White},
+keywords = {Preconditioning, Algebraic multigrid, Hydraulic fracturing, Compositional flow, Mimetic finite difference method},
+abstract = {Many subsurface engineering applications involve tight-coupling between fluid flow, solid deformation, fracturing, and similar processes. To better understand the complex interplay of different governing equations, and therefore design efficient and safe operations, numerical simulations are widely used. Given the relatively long time-scales of interest, fully-implicit time-stepping schemes are often necessary to avoid time-step stability restrictions. A major computational bottleneck for these methods, however, is the linear solver. These systems are extremely large and ill-conditioned. Because of the wide range of processes and couplings that may be involved – e.g. formation and propagation of fractures, deformation of the solid porous medium, viscous flow of one or more fluids in the pores and fractures, complicated well sources and sinks, etc. – it is difficult to develop general-purpose but scalable linear solver frameworks. This challenge is further aggravated by the range of different discretization schemes that may be adopted, which have a direct impact on the linear system structure. To address this obstacle, we describe a flexible strategy based on multigrid reduction (MGR) that can produce purely algebraic preconditioners for a wide spectrum of relevant physics and discretizations. We demonstrate that MGR, guided by physics and theory in block preconditioning, can tackle several distinct and challenging problems, notably: a hybrid discretization of single-phase flow, compositional multiphase flow with complex wells, and hydraulic fracturing simulations. Extension to other systems can be handled quite naturally. We demonstrate the efficiency and scalability of the resulting solvers through numerical examples of difficult, field-scale problems.}
+}
 
 @article{Pearson:2017,
   	url = {http://adsabs.harvard.edu/abs/2017arXiv170304627P},
