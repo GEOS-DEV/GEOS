@@ -37,7 +37,7 @@
   </Mesh>
 
   <Events
-      maxTime="2e3">
+      maxTime="2e2">
     
     <PeriodicEvent
       name="outputs"
@@ -52,7 +52,7 @@
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="100"
+      cycleFrequency="10"
       target="/Outputs/restartOutput"/>
 
   </Events>
