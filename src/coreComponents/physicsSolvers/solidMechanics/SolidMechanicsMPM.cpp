@@ -7996,7 +7996,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         {
           for( int i = 0; i < numDims; i++)
           {
-            gridDVPlus[n][cg][i] = 0.0;
+            gridVPlus[n][cg][i] = 0.0;
           }
         }
       }
@@ -8035,9 +8035,9 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
               for (int i = 0; i < numDims; i++)
               {
-                gridDVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1.0 ) / r ) * 
-                                                        ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
-                                                          vMinus[mappedNodeJ][fieldIndexJ][i];
+                gridVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1.0 ) / r ) * 
+                                                          ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
+                                                            vMinus[mappedNodeJ][fieldIndexJ][i];
               }
             }
 
@@ -8055,7 +8055,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         {
           for( int i = 0; i < numDims; i++)
           {
-            vStar[n][cg][i] += std::pow(-1.0, r) * ( gridVPlus[n][cg][i] + ( updateOrder - 1.0 ) / updateOrder * gridDVPlus[n][cg][i] );
+            vStar[n][cg][i] += std::pow(-1.0, r) * ( gridVPlus[n][cg][i] ); // + ( updateOrder - 1.0 ) / updateOrder * gridDVPlus[n][cg][i] );
             vMinus[n][cg][i] = gridVPlus[n][cg][i];
           }
         }
@@ -8131,11 +8131,15 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
     } //End of updateOrder iterations
 
+
+
     // Update particles position and velocities now
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-    
+
+      // GEOS_LOG_RANK( "(Before XPIC) p: " << p << ", pos: " << particlePosition[p] << ", v: " << particleVelocity[p]);
+
       // Zero velocity gradient
       for( int i=0; i < numDims; i++ )
       {
@@ -8146,7 +8150,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           particleVelocityGradient[p][i][j] = 0.0;
         }
       }
-
+    
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
@@ -8169,9 +8173,11 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           real64 gA = gridAcceleration[mappedNode][fieldIndex][i];
 
           particlePosition[p][i] += S * gVPlus * dt  - ( S * gA * dt - m * S *( gVPlus - gA * dt ) + m * S * vStar[mappedNode][fieldIndex][i] ) * dt / 2.0;
-          // particlePosition[p][i] += 0.5 * S * dt * ( (m + 2.0 ) * gVPlus - ( 1.0 + m ) * gA * dt - m * vStar[mappedNode][fieldIndex][i] );
-          // particlePosition[p][i] += S * gVPlus * dt - ( S * gA * dt + ( -m * S * ( gVPlus - gA * dt ) + m * S * vStar[mappedNode][fieldIndex][i]) ) * dt / 2.0;
+
+          // particlePosition[p][i] += S * ( gVPlus * dt  - ( (1 + m ) * gA * dt + m * ( vStar[mappedNode][fieldIndex][i] - gVPlus ) ) * dt / 2.0 );
+
           particleVelocity[p][i] += S * ( m * ( gVPlus - vStar[mappedNode][fieldIndex][i] ) + ( 1 - m ) * gA * dt );
+
           // CC: What about update to velocity gradient?
           // Currently copy this from FLIP udpate with change from gridVelocity to vStar
           for( int j=0; j < numDims; j++ )
@@ -8180,6 +8186,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           }
         }
       }
+
+      // GEOS_LOG_RANK( "(After XPIC) p: " << p << ", pos: " << particlePosition[p] << ", v: " << particleVelocity[p]);
     } );
     subRegionIndex++;
   } );
@@ -9222,7 +9230,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
         LvArray::tensorOps::fill< 3 >( subdivideDirections, 0 );
         for( int d = 0; d < numDims; d++)
         {
-          // Check if any of the RVectors have lengths beyond the critical (as determined by the grid cell size)
+          // Check if any of the RVectors have lengths beyond the critical (as determined by the grid cell)
           if( LvArray::tensorOps::l2NormSquared< 3 >( particleRVectors[p][d] ) > lCritSqr )
           {
             subdivideDirections[d] = 1;
