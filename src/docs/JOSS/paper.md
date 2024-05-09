@@ -62,6 +62,7 @@ bibliography: paper.bib
 # Summary
 
 GEOS is a simulation framework focused on implementing tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
+The version of GEOS described here should be considered a separate work form the previous version of GEOS referred to in [@Settgast:2017].
 Specifically, GEOS provides implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar problems, and allows developers to easily extend or add new formulations to the suite of capabilities.
 The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures, and thermal effects.
 Extensive documentation for GEOS is available at https://geosx-geosx.readthedocs-hosted.com/en/latest. 
