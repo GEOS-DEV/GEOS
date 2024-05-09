@@ -1000,37 +1000,18 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   // Now let's build the domain indicator matrix.
   // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
-  Epetra_Map const rowMap2( MpiWrapper::commSize(), 1, 0, comm );
-  Epetra_Map const colMap2( int( n ), numOwned, ownedGlbIdcs.data(), 0, comm );
-//  rowMap2.Print( std::cout );
-//  colMap2.Print( std::cout );
-//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, std::size( ownedGlbIdcs ), true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
-//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, colMap2, std::size( ownedGlbIdcs ), true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
-  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, colMap2, numOwned, true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
+  Epetra_Map const indicatorRowMap( MpiWrapper::commSize(), 1, &curRank.get(), 0, comm );
+  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, indicatorRowMap, numOwned, true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
   std::vector< double > const one( numOwned, 1. );
   indicator.InsertGlobalValues( curRank.get(), numOwned, one.data(), ownedGlbIdcs.data() );
-  indicator.FillComplete();
+  Epetra_Map const domainMap( int( n ), 0, comm );  // Columns
+  Epetra_Map const rangeMap( MpiWrapper::commSize(), 0, comm );  // Rows
+  indicator.FillComplete( domainMap, rangeMap );
+  GEOS_LOG_RANK( "indicator.NumMyRows() = " << indicator.NumMyRows() );
+  GEOS_LOG_RANK( "indicator.NumMyCols() = " << indicator.NumMyCols() );
   GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
   GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/indicator.mat", indicator );
-
-//  // Now let's build the domain indicator matrix.
-//  // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
-//  Epetra_Map const colMap( MpiWrapper::commSize(), 1, 0, Epetra_MpiComm( MPI_COMM_GEOSX ) );
-//  colMap.Print(std::cout);
-//  // TODO Filling the transposition is surely easier...
-//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap, colMap, 1, true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
-//  std::vector< double > const one( 1, 1. );
-//  std::vector< int > const rank( 1, curRank.get() );
-//  for( std::size_t i = 0; i < numOwned; ++i )
-//  {
-////    indicator.InsertMyValues( i, 1, one.data(), rank.data() );  // TODO WRONG!
-//    indicator.InsertGlobalValues( ownedGlbIdcs[i], 1, one.data(), rank.data() );  // TODO WRONG!
-//  }
-//  indicator.FillComplete();
-//  GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
-//  GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
-//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/indicator.mat", indicator );
 
   Epetra_CrsMatrix result( Epetra_DataAccess::Copy, rowMap, numEntriesPerRow.data() );  // TODO bad estimation
   EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result );
