@@ -20,6 +20,7 @@
 
 #include "physicsSolvers/contact/SolidMechanicsALMKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsALMJumpUpdateKernels.hpp"
+#include "physicsSolvers/contact/SolidMechanicsALMBubbleKernels.hpp"
 
 namespace geos
 {
@@ -60,6 +61,16 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
   
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & )
+  {
+    FaceManager & faceManager = meshLevel.getFaceManager();
+
+    std::cout << "getName: " << getName() << std::endl;
+    faceManager.registerField< solidMechanics::totalBubbleDisplacement >( getName() ).
+      reference().resizeDimension< 1 >( 3 );
+  });
   
   using namespace fields::contact;
 
@@ -160,34 +171,29 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
   GEOS_MARK_FUNCTION;
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
-/*
   map< std::pair< string, string >, array1d< string > > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & )
   {
     array1d< string > regions;
-    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                    [&]( localIndex const,
-                                                                         SurfaceElementRegion const & region )
-    {
-      regions.emplace_back( region.getName() );
-      std::cout << region.getName() << std::endl;
-    } );
+    regions.emplace_back( getUniqueFractureRegionName() );
     meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
   } );
 
-  //dofManager.addField( solidMechanics::totalDisplacement::key(),
-  //                     FieldLocation::Node,
-  //                     3,
-  //                     meshTargets );
+  dofManager.addField( solidMechanics::totalBubbleDisplacement::key(),
+                       FieldLocation::Face,
+                       3,
+                       meshTargets );
+                       //getMeshTargets());
 
-  //dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-  //                        solidMechanics::totalDisplacement::key(),
-  //                        DofManager::Connector::Elem,
-  //                        meshTargets );
-  */
+  dofManager.addCoupling( solidMechanics::totalBubbleDisplacement::key(),
+                          solidMechanics::totalBubbleDisplacement::key(),
+                          DofManager::Connector::Elem);
+
+  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+                          solidMechanics::totalBubbleDisplacement::key(),
+                          DofManager::Connector::Elem);
 
 }
 
@@ -318,7 +324,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
             vals[kfe*elemsToFaces.size(1)+i] = kfe;
             localFaceIds[kfe*elemsToFaces.size(1)+i] = i;
             nBubElems_r += 1;
-            std::cout << "elem - faceId - locFaceId: " << kfe << " " << elemsToFaces[kfe][i] << " " << i << std::endl;
+            //std::cout << "elem - faceId - locFaceId: " << kfe << " " << elemsToFaces[kfe][i] << " " << i << std::endl;
           }
           else 
           {
@@ -451,6 +457,10 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   GEOS_UNUSED_VAR( time);
   synchronizeFractureState( domain );
   std::cout << "assembleSystem" << std::endl;
+  //ParallelMatrix parallel_matrix;
+  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  //parallel_matrix.write("mech0.mtx");
+  //abort();
 
   GEOS_MARK_FUNCTION;
 
@@ -551,6 +561,40 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     abort();
     */
   });
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    //ElementRegionManager & elemManager = mesh.getElemManager();
+
+    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+
+    solidMechanicsALMKernels::ALMBubbleFactory kernelFactory( dispDofNumber,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              dt,
+                                                              gravityVectorData );
+
+    real64 maxTraction = finiteElement::
+                           regionBasedKernelApplication
+                         < parallelDevicePolicy< >,
+                           constitutive::ElasticIsotropic,
+                           CellElementSubRegion >( mesh,
+                                                   regionNames,
+                                                   getDiscretizationName(),
+                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                   kernelFactory );
+
+    GEOS_UNUSED_VAR( maxTraction );
+
+  } );
   
   //ParallelMatrix parallel_matrix_1;
   //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
@@ -612,6 +656,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     GEOS_UNUSED_VAR( maxTraction );
   } );
   */
+  abort();
 
 }
 

@@ -58,6 +58,14 @@ DECLARE_FIELD( totalDisplacement,
                WRITE_AND_READ,
                "Total displacements at the nodes" );
 
+DECLARE_FIELD( totalBubbleDisplacement,
+               "totalBubbleDisplacement",
+               array2dLayoutTotalDisplacement,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Total bubble displacements at the faces" );
+
 DECLARE_FIELD( incrementalDisplacement,
                "incrementalDisplacement",
                array2dLayoutIncrDisplacement,

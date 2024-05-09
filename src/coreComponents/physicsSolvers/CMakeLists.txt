@@ -20,6 +20,7 @@ set( physicsSolvers_headers
      contact/SolidMechanicsALMKernels.hpp
      contact/SolidMechanicsALMKernelsHelper.hpp
      contact/SolidMechanicsALMJumpUpdateKernels.hpp
+     contact/SolidMechanicsALMBubbleKernels.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp

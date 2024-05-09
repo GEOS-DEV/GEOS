@@ -49,6 +49,33 @@ void accumulateAtuLocalOperator( real64 ( & matrix )[I_SIZE][J_SIZE],
   }
 }
 
+template< int I_SIZE,
+          int J_SIZE,
+          int NUM_SUPPORTS >
+GEOS_HOST_DEVICE
+inline
+void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
+                             real64 ( & dNdX )[NUM_SUPPORTS][3] )
+{
+  LvArray::tensorOps::fill< I_SIZE, J_SIZE >( strainMatrix, 0 );  //make 0
+  for( int a=0; a < NUM_SUPPORTS; ++a )
+  {
+
+    strainMatrix[0][a*3 + 0] = dNdX[a][0];
+    strainMatrix[1][a*3 + 1] = dNdX[a][1];
+    strainMatrix[2][a*3 + 2] = dNdX[a][2];
+
+    strainMatrix[3][a*3 + 1] = dNdX[a][2];
+    strainMatrix[3][a*3 + 2] = dNdX[a][1];
+
+    strainMatrix[4][a*3 + 0] = dNdX[a][2];
+    strainMatrix[4][a*3 + 2] = dNdX[a][0];
+
+    strainMatrix[5][a*3 + 0] = dNdX[a][1];
+    strainMatrix[5][a*3 + 1] = dNdX[a][0];
+  }
+}
+
 }
 
 } // geosx
