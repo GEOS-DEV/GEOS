@@ -81,38 +81,37 @@ Additionally GEOS provides the potential to estimate seismic events induced by C
 The core c++17 infrastructure provides components to perform common computer science tasks typical of a discrete numerical simulation. 
 The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a physics package interface, mesh based MPI communications interface, degree-of-freedom management, IO facilities, and an event manager.
 
-The data repository forms a hiearchy through the definiton of a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class that serves as a container of other `Group` and `Wrapper` objects.
-Drawing an analogy with a standard folder/file hierarchy, the `Group` class can be thought of as a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects. 
-The `Wrapper` can be thought of as a "File" as it contains the relevant data/functionality that is stored in the repository.
-The mesh interface is built on top of the data repository as a collection of managers for each mesh object type as shown in Figure \autoref{fig:meshHierarchy}.
-On each MPI rank there is a `MeshBody` object that represents a physical body.
-Each `MeshBody` contains a collection of `MeshLevel` objects that represent a discretization of the `MeshBody`.
-Each `MeshLevel` holds a collection of managers objects that contain data on each type of discrete mesh object (i.e. nodes, edges, faces, elements).
-The role of each mesh object manager is to hold maps between the mesh objects, and to hold field/dof data.
-
-![UML diagram of the mesh interface hierarchy.\label{fig:meshHierarchy}](MeshHierarchy.svg){ width=40% }
+The data repository forms an object hierarchy through the definition of a `Wrapper` class and a `Group` class. 
+Drawing an analogy with a standard folder/file hierarchy, the `Group` class can be thought of as a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects, while the `Wrapper` is a container for any arbitrary object.
+The mesh interface is built on top of the data repository as a collection of object managers for each mesh object type (e.g. node, edge, face, element).
+The management of distributed memory parallelism is done through MPI, and the execution of distributed memory parallelism typically requires little intervention from the physics developer.
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e. host memory and device memory).
 Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with minimal loss of performance due to platform changes.
 
-In addition to its c++ core, GEOS maintains a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
+GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages.
+However as a matter of practice, the primary linear algebra package used for the great majority of GEOS simulations is LLNL's hypre[@hypre].
+
+In addition to its c++ core, the the GEOS team provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS c++ workflow.
 
 GEOS is intended to be a generic multi-physics simulation platform.
 As such, single physics capabilities are developed and tested independently. 
-When coupling one or more single physics capabilities together to create a couple physics package, the strategy can be expressed as a monolithic linear system with an underlying block structure corresponding where the diagonal blocks result from each single physics package.
+When coupling one or more single physics capabilities together to create a couple physics package, the strategy can be expressed as a monolithic linear system with an underlying block structure corresponding where the row/col of the block corresponds with a set of constraint equations/degrees-of-freedom associated with a physics package.
+In figure \autoref{fig:matrix}, a system matrix ($A_{coupled}$) that couples 3 distinct physics packages (1,2,3) is shown.
+
+the diagonal blocks result from each single physics package.
 The off-diagonal blocks represent the coupling between physics packages and are typically filled through various options, such as through the coupled physics package, or through a callback mechanism in the single physics package.
 
-need figure on relation between physics packages and block structured matrix
-$$
-A = \left(\begin{array}{@{}c|c|c@{}}
+\begin{equation}
+A_{coupled} = \left(\begin{array}{@{}c|c|c@{}}
     A_{11} & A_{12} & A_{13}  \\ \hline
     A_{21} & A_{22} & A_{23}  \\ \hline
-    A_{11} & A_{12} & A_{13}  \\ 
+    A_{31} & A_{32} & A_{33}  \\ 
 \end{array}\right)
-$$\label{fig:Monolithic Coupled Matrix represented as block structured matrix}
+\end{equation}\label{fig:matrix}
 
 # Applications
 The development of GEOS targets multi-physics simulations of subsurfaces reservoirs.
@@ -122,20 +121,6 @@ Often these simulations involve coupling between compositional multiphase flow a
 The coupling strategy applied in GEOS is to require the capability of a tightly coupled monolithic system as a baseline capability.
 In cases where such tight coupling is not required, one may decompose the monolithic system into blocks and apply a sequential coupling approach.
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
-
-Double dollars make self-standing equations:
-
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
 
 # Acknowledgements
 
