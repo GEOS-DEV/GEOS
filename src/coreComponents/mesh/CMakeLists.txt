@@ -175,7 +175,7 @@ FetchContent_MakeAvailable(json)
 
 #target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 
-list( APPEND dependencyList NamedType nlohmann_json::nlohmann_json)
+list( APPEND dependencyList NamedType nlohmann_json::nlohmann_json trilinos )
 
 
 if( ENABLE_VTK )

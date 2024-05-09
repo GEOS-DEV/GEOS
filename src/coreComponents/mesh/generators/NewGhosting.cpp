@@ -21,7 +21,11 @@
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 
-//#include <_hypre_parcsr_mv.h>
+#include <Epetra_CrsMatrix.h>
+#include <Epetra_Map.h>
+#include <Epetra_MpiComm.h>
+#include <EpetraExt_MatrixMatrix.h>
+#include <EpetraExt_RowMatrixOut.h>
 
 #include <NamedType/named_type.hpp>
 
@@ -31,6 +35,7 @@
 #include <vtkDataSetSurfaceFilter.h>
 
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json;
 
 #include <algorithm>
@@ -43,14 +48,28 @@ namespace geos::ghosting
 using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
 using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
 using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::PreIncrementable >;
+using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
 using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
-using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::PreIncrementable >;
+using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
 using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
 using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
 
 using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 
+EdgeGlbIdx operator "" _egi( unsigned long long int i )
+{
+  return EdgeGlbIdx{ EdgeGlbIdx::UnderlyingType( i ) };
+}
+
+FaceGlbIdx operator "" _fgi( unsigned long long int i )
+{
+  return FaceGlbIdx{ FaceGlbIdx::UnderlyingType( i ) };
+}
+
+MpiRank operator "" _mpi( unsigned long long int i )
+{
+  return MpiRank{ MpiRank::UnderlyingType( i ) };
+}
 
 void to_json( json & j,
               const MpiRank & v )
@@ -119,7 +138,9 @@ struct Exchange
 void to_json( json & j,
               const Exchange & v )
 {
-  j = json{ { "nodes", v.nodes }, { "edges", v.edges }, { "faces", v.faces }  };
+  j = json{ { "nodes", v.nodes },
+            { "edges", v.edges },
+            { "faces", v.faces } };
 }
 
 void from_json( const json & j,
@@ -137,6 +158,7 @@ void from_json( const json & j,
  */
 std::set< vtkIdType > extractBoundaryCells( vtkSmartPointer< vtkDataSet > mesh )
 {
+  // TODO Better handle the boundary information, forgetting about the 3d cells and simply handling the outside shell.
   auto f = vtkDataSetSurfaceFilter::New();
   f->PassThroughCellIdsOn();
   f->PassThroughPointIdsOff();
@@ -406,25 +428,25 @@ Buckets buildIntersectionBuckets( std::map< MpiRank, Exchange > const & exchange
   }
   faceBuckets[{ curRank }] = curFaces;
 
-  // Checking if neighbors is too wide...  // TODO do we care?
-  std::set< MpiRank > usefulNeighbors;
-  for( auto const & [ranks, nodes]: nodeBuckets )
-  {
-    if( not nodes.empty() )
-    {
-      usefulNeighbors.insert( ranks.cbegin(), ranks.cend() );
-    }
-  }
-  for( auto const & [ranks, edges]: edgeBuckets )
-  {
-    if( not edges.empty() )
-    {
-      usefulNeighbors.insert( ranks.cbegin(), ranks.cend() );
-    }
-  }
-  std::vector< MpiRank > uselessNeighbors;
-  std::set_difference( neighbors.cbegin(), neighbors.cend(), usefulNeighbors.cbegin(), usefulNeighbors.cend(), std::back_inserter( uselessNeighbors ) );
-  // TODO... Remove the neighbors?
+//  // Checking if neighbors is too wide...  // TODO do we care here?
+//  std::set< MpiRank > usefulNeighbors;
+//  for( auto const & [ranks, nodes]: nodeBuckets )
+//  {
+//    if( not nodes.empty() )
+//    {
+//      usefulNeighbors.insert( ranks.cbegin(), ranks.cend() );
+//    }
+//  }
+//  for( auto const & [ranks, edges]: edgeBuckets )
+//  {
+//    if( not edges.empty() )
+//    {
+//      usefulNeighbors.insert( ranks.cbegin(), ranks.cend() );
+//    }
+//  }
+//  std::vector< MpiRank > uselessNeighbors;
+//  std::set_difference( neighbors.cbegin(), neighbors.cend(), usefulNeighbors.cbegin(), usefulNeighbors.cend(), std::back_inserter( uselessNeighbors ) );
+//  // TODO... Remove the neighbors?
 
   return { nodeBuckets, edgeBuckets, faceBuckets };
 }
@@ -512,7 +534,8 @@ struct BucketSizes
 void to_json( json & j,
               const BucketSizes & v )
 {
-  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+  j = json{ { "edges", v.edges },
+            { "faces", v.faces } };
 }
 
 void from_json( const json & j,
@@ -531,7 +554,8 @@ struct BucketOffsets
 void to_json( json & j,
               const BucketOffsets & v )
 {
-  j = json{ { "edges", v.edges }, { "faces", v.faces }  };
+  j = json{ { "edges", v.edges },
+            { "faces", v.faces } };
 }
 
 void from_json( const json & j,
@@ -614,7 +638,7 @@ std::map< std::set< MpiRank >, GLB_IDX > updateBucketOffsets( std::map< std::set
   }
 
   // Add an extra entry based for the following rank
-  reducedOffsets.emplace_hint( reducedOffsets.end(), std::set< MpiRank >{ curRank + MpiRank{ 1 } }, nextOffset );
+  reducedOffsets.emplace_hint( reducedOffsets.end(), std::set< MpiRank >{ curRank + 1_mpi }, nextOffset );
 
   return reducedOffsets;
 }
@@ -749,6 +773,7 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
 
 struct MeshGraph  // TODO add the local <-> global mappings here?
 {
+  std::set< NodeGlbIdx > nodes;
   std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
   std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
@@ -759,7 +784,9 @@ struct MeshGraph  // TODO add the local <-> global mappings here?
 void to_json( json & j,
               const MeshGraph & v )  // For display
 {
-  j = json{ { "c2f", v.f2e }, { "f2e", v.f2e }, { "e2n", v.e2n }  };
+  j = json{ { "c2f", v.f2e },
+            { "f2e", v.f2e },
+            { "e2n", v.e2n } };
 }
 
 
@@ -782,6 +809,15 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
   {
     return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
   };
+
+  for( auto const & [ranks, ns]: buckets.nodes )
+  {
+    if( owning( ranks ) )
+    {
+      result.nodes.insert( std::cbegin( ns ), std::cend( ns ) );
+    }
+  }
+
 
   // The `e2n` is a mapping for all the geometrical entities, not only the one owned like `result.e2n`.
   // TODO check that it is really useful.
@@ -851,15 +887,15 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
     {
       vtkCell * face = cell->GetFace( f );
       vtkIdList * pids = face->GetPointIds();
-      std::vector< NodeGlbIdx > nodes( pids->GetNumberOfIds() );
-      for( std::size_t i = 0; i < nodes.size(); ++i )
+      std::vector< NodeGlbIdx > faceNodes( pids->GetNumberOfIds() );
+      for( std::size_t i = 0; i < faceNodes.size(); ++i )
       {
         vtkIdType const lni = face->GetPointId( i );
         vtkIdType const gni = globalPtIds->GetValue( lni );
-        nodes[i] = NodeGlbIdx{ gni };
+        faceNodes[i] = NodeGlbIdx{ gni };
       }
-      std::vector< NodeGlbIdx > const reorderedNodes = reorderFaceNodes( nodes );
-      result.c2f[gci].insert( n2f.at( reorderedNodes ) );
+      std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes );
+      result.c2f[gci].insert( n2f.at( reorderedFaceNodes ) );
       // TODO... bool const flipped = ... compare nodes and reorderedNodes. Or ask `reorderFaceNodes` to tell
     }
   }
@@ -867,39 +903,137 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
   return result;
 }
 
-void assembleAdjacencyMatrix( MeshGraph const & graph, MaxGlbIdcs const & gis, std::size_t const numNodes )
+
+void assembleAdjacencyMatrix( MeshGraph const & graph,
+                              MaxGlbIdcs const & gis,
+                              MpiRank curRank )
 {
-  std::size_t const eo = gis.nodes.get();
-  std::size_t const fo = eo + gis.edges.get();
-  std::size_t const co = fo + gis.faces.get();
+  std::size_t const edgeOffset = gis.nodes.get() + 1;
+  std::size_t const faceOffset = edgeOffset + gis.edges.get() + 1;
+  std::size_t const cellOffset = faceOffset + gis.faces.get() + 1;
 
-  std::size_t const n = co + gis.cells.get();  // Total number of entries in the graph.
+  std::size_t const n = cellOffset + gis.cells.get() + 1;  // Total number of entries in the graph.
 
-  std::size_t const numEdges = std::size( graph.e2n ); // TODO Handle to property of the data as well, not the full list!
+  std::size_t const numNodes = std::size( graph.nodes );
+  std::size_t const numEdges = std::size( graph.e2n );
   std::size_t const numFaces = std::size( graph.f2e );
   std::size_t const numCells = std::size( graph.c2f );
+  std::size_t const numOwned = numNodes + numEdges + numFaces + numCells;
 
-  std::size_t const nnzDiag = numNodes + numEdges + numFaces + numCells;
+  std::vector< int > ownedGlbIdcs, numEntriesPerRow;  // TODO I couldn't use a vector of `std::size_t`
+  std::vector< std::vector< int > > indices;
+  ownedGlbIdcs.reserve( numOwned );
+  numEntriesPerRow.reserve( numOwned );
+  indices.reserve( numOwned );
 
-  std::size_t nnzOffDiag = std::size( graph.e2n ) * 2;
-  for( auto const & [_, edges]: graph.f2e )
+  for( NodeGlbIdx const & ngi: graph.nodes )
   {
-    nnzOffDiag += std::size( edges );
+    auto const i = ngi.get();
+    ownedGlbIdcs.emplace_back( i );
+    numEntriesPerRow.emplace_back( 1 );
+    std::vector< int > const tmp( 1, ownedGlbIdcs.back() );
+    indices.emplace_back( tmp );
   }
-  for( auto const & [_, faces]: graph.c2f )
+  for( auto const & [egi, nodes]: graph.e2n )
   {
-    nnzOffDiag += std::size( faces );
+    auto const i = egi.get() + edgeOffset;
+    ownedGlbIdcs.emplace_back( i );
+    numEntriesPerRow.emplace_back( std::tuple_size_v< decltype( nodes ) > + 1 );  // `+1` comes from the identity
+    std::vector< int > const tmp{ int( std::get< 0 >( nodes ).get() ), int( std::get< 1 >( nodes ).get() ), ownedGlbIdcs.back() };
+    indices.emplace_back( tmp );
+  }
+  for( auto const & [fgi, edges]: graph.f2e )
+  {
+    auto const i = fgi.get() + faceOffset;
+    ownedGlbIdcs.emplace_back( i );
+    numEntriesPerRow.emplace_back( std::size( edges ) + 1 );  // `+1` comes from the identity
+    std::vector< int > tmp;
+    tmp.reserve( numEntriesPerRow.back() );
+    for( EdgeGlbIdx const & egi: edges )
+    {
+      tmp.emplace_back( egi.get() + edgeOffset );
+    }
+    tmp.emplace_back( ownedGlbIdcs.back() );
+    indices.emplace_back( tmp );
+  }
+  for( auto const & [cgi, faces]: graph.c2f )
+  {
+    auto const i = cgi.get() + cellOffset;
+    ownedGlbIdcs.emplace_back( i );
+    numEntriesPerRow.emplace_back( std::size( faces ) + 1 );  // `+1` comes from the identity
+    std::vector< int > tmp;
+    tmp.reserve( numEntriesPerRow.back() );
+    for( FaceGlbIdx const & fgi: faces )
+    {
+      tmp.emplace_back( fgi.get() + faceOffset );
+    }
+    tmp.emplace_back( ownedGlbIdcs.back() );
+    indices.emplace_back( tmp );
   }
 
-//  hypre_ParCSRBooleanMatrix * hypre_ParCSRBooleanMatrixCreate( MPI_Comm comm,
-//                                                               HYPRE_BigInt global_num_rows,
-//                                                               HYPRE_BigInt global_num_cols,
-//                                                               HYPRE_BigInt * row_starts,
-//                                                               HYPRE_BigInt * col_starts,
-//                                                               HYPRE_Int num_cols_offd,
-//                                                               HYPRE_Int num_nonzeros_diag,
-//                                                               HYPRE_Int num_nonzeros_offd );
-// https://github.com/hypre-space/hypre/blob/d475cdfc63ac59ea9a554493a06e4033b8d6fade/src/parcsr_mv/_hypre_parcsr_mv.h#L867
+  GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
+  GEOS_ASSERT_EQ( numOwned, std::size( numEntriesPerRow ) );
+  GEOS_ASSERT_EQ( numOwned, std::size( indices ) );
+  for( std::size_t i = 0; i < numOwned; ++i )
+  {
+    GEOS_ASSERT_EQ( indices[i].size(), std::size_t( numEntriesPerRow[i] ) );
+  }
+
+//  GEOS_LOG_RANK( "n = " << n );
+//  GEOS_LOG_RANK( "ownedGlbIdcs = " << json( ownedGlbIdcs ) );
+
+  Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
+  Epetra_Map const rowMap( n, std::size( ownedGlbIdcs ), ownedGlbIdcs.data(), 0, comm );
+
+  Epetra_CrsMatrix adj( Epetra_DataAccess::Copy, rowMap, numEntriesPerRow.data(), true );
+
+  for( std::size_t i = 0; i < numOwned; ++i )
+  {
+    std::vector< int > const & rowIndices = indices[i];
+    std::vector< double > const rowValues( std::size( rowIndices ), 1. );
+    GEOS_ASSERT_EQ( std::size( rowIndices ), std::size_t( numEntriesPerRow[i] ) );
+    adj.InsertGlobalValues( ownedGlbIdcs[i], std::size( rowIndices ), rowValues.data(), rowIndices.data() );
+  }
+
+  adj.FillComplete();
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/adj.mat", adj );
+
+  // Now let's build the domain indicator matrix.
+  // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
+  Epetra_Map const rowMap2( MpiWrapper::commSize(), 1, 0, comm );
+  Epetra_Map const colMap2( int( n ), numOwned, ownedGlbIdcs.data(), 0, comm );
+//  rowMap2.Print( std::cout );
+//  colMap2.Print( std::cout );
+//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, std::size( ownedGlbIdcs ), true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
+//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, colMap2, std::size( ownedGlbIdcs ), true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
+  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap2, colMap2, numOwned, true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
+  std::vector< double > const one( numOwned, 1. );
+  indicator.InsertGlobalValues( curRank.get(), numOwned, one.data(), ownedGlbIdcs.data() );
+  indicator.FillComplete();
+  GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
+  GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/indicator.mat", indicator );
+
+//  // Now let's build the domain indicator matrix.
+//  // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
+//  Epetra_Map const colMap( MpiWrapper::commSize(), 1, 0, Epetra_MpiComm( MPI_COMM_GEOSX ) );
+//  colMap.Print(std::cout);
+//  // TODO Filling the transposition is surely easier...
+//  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap, colMap, 1, true );  // Maybe `rowMap` is bad... Or `Epetra_CrsMatrix` wrongly assumes it's square?
+//  std::vector< double > const one( 1, 1. );
+//  std::vector< int > const rank( 1, curRank.get() );
+//  for( std::size_t i = 0; i < numOwned; ++i )
+//  {
+////    indicator.InsertMyValues( i, 1, one.data(), rank.data() );  // TODO WRONG!
+//    indicator.InsertGlobalValues( ownedGlbIdcs[i], 1, one.data(), rank.data() );  // TODO WRONG!
+//  }
+//  indicator.FillComplete();
+//  GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
+//  GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
+//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/indicator.mat", indicator );
+
+  Epetra_CrsMatrix result( Epetra_DataAccess::Copy, rowMap, numEntriesPerRow.data() );  // TODO bad estimation
+  EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result );
 }
 
 
@@ -931,12 +1065,12 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 
   BucketSizes const sizes = getBucketSize( buckets );
   BucketOffsets offsets;
-  if( curRank == MpiRank{ 0 } )
+  if( curRank == 0_mpi )
   {
     // The `MPI_Scan` process will not call the reduction operator for rank 0.
     // So we need to reduce ourselves for ourselves.
-    offsets.edges = updateBucketOffsets< EdgeGlbIdx >( sizes.edges, { { { MpiRank{ 0 }, }, EdgeGlbIdx { 0 } } }, curRank );
-    offsets.faces = updateBucketOffsets< FaceGlbIdx >( sizes.faces, { { { MpiRank{ 0 }, }, FaceGlbIdx { 0 } } }, curRank );
+    offsets.edges = updateBucketOffsets< EdgeGlbIdx >( sizes.edges, { { { 0_mpi, }, 0_egi } }, curRank );
+    offsets.faces = updateBucketOffsets< FaceGlbIdx >( sizes.faces, { { { 0_mpi, }, 0_fgi } }, curRank );
     // Still we need to send this reduction to the following rank, by copying to it to the send buffer.
     std::vector< std::uint8_t > const bytes = serialize( offsets );
     std::memcpy( sendBuffer.data(), bytes.data(), bytes.size() );
@@ -957,24 +1091,24 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 
   MPI_Scan( sendBuffer.data(), recvBuffer.data(), maxBufferSize, MPI_BYTE, op, MPI_COMM_WORLD );
 
-  if( curRank != MpiRank{ 0 } )
+  if( curRank != 0_mpi )
   {
     offsets = deserialize( recvBuffer );
   }
 
   std::cout << "offsets on rank " << curRank << " -> " << json( offsets ) << std::endl;
 
-  MpiRank const nextRank = curRank + MpiRank{ 1 };
-  MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ), offsets.faces.at( { nextRank } ) );
+  MpiRank const nextRank = curRank + 1_mpi;
+  MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ) - 1_egi, offsets.faces.at( { nextRank } ) - 1_fgi );
   std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
 
   MeshGraph const graph = buildMeshGraph( mesh, buckets, offsets, curRank );  // TODO change into buildOwnedMeshGraph?
-  if( curRank == MpiRank{ 1 } )
-  {
-    std::cout << "My graph is " << json( graph ) << std::endl;
-  }
+//  if( curRank == MpiRank{ 1 } )
+//  {
+//    std::cout << "My graph is " << json( graph ) << std::endl;
+//  }
 
-  assembleAdjacencyMatrix( graph, matrixOffsets, mesh->GetNumberOfPoints() );
+  assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
