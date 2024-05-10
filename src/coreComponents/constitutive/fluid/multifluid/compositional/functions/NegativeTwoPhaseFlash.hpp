@@ -71,6 +71,35 @@ public:
                        arraySlice1d< real64, USD > const & liquidComposition,
                        arraySlice1d< real64, USD > const & vapourComposition );
 
+  /**
+   * @brief Calculate derivatives from the two-phase negative flash
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] composition composition of the mixture
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] equationOfState The equation of state parameters
+   * @param[in] vapourFraction the calculated vapour (gas) mole fraction
+   * @param[in] liquidComposition the calculated liquid phase composition
+   * @param[in] vapourComposition the calculated vapour phase composition
+   * @param[out] vapourFractionDerivs derivatives of the calculated vapour (gas) mole fraction
+   * @param[out] liquidCompositionDerivs derivatives of the calculated liquid phase composition
+   * @param[out] vapourCompositionDerivs derivatives of the calculated vapour phase composition
+   */
+  template< integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  static void computeDerivatives( integer const numComps,
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const > const & composition,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  EquationOfState::KernelWrapper const & equationOfState,
+                                  real64 const & vapourFraction,
+                                  arraySlice1d< real64 const, USD1 > const & liquidComposition,
+                                  arraySlice1d< real64 const, USD1 > const & vapourComposition,
+                                  arraySlice1d< real64, USD1 > const & vapourFractionDerivs,
+                                  arraySlice2d< real64, USD2 > const & liquidCompositionDerivs,
+                                  arraySlice2d< real64, USD2 > const & vapourCompositionDerivs );
 private:
   /**
    * @brief Cleanup composition making sure that all components are present
@@ -529,6 +558,180 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   return converged;
 }
 
+template< integer USD1, integer USD2 >
+GEOS_HOST_DEVICE
+void NegativeTwoPhaseFlash::computeDerivatives(
+  integer const numComps,
+  real64 const pressure,
+  real64 const temperature,
+  arraySlice1d< real64 const > const & composition,
+  ComponentProperties::KernelWrapper const & componentProperties,
+  EquationOfState::KernelWrapper const & equationOfState,
+  real64 const & vapourFraction,
+  arraySlice1d< real64 const, USD1 > const & liquidComposition,
+  arraySlice1d< real64 const, USD1 > const & vapourComposition,
+  arraySlice1d< real64, USD1 > const & vapourFractionDerivs,
+  arraySlice2d< real64, USD2 > const & liquidCompositionDerivs,
+  arraySlice2d< real64, USD2 > const & vapourCompositionDerivs )
+{
+  GEOS_UNUSED_VAR( numComps );
+  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( composition );
+  GEOS_UNUSED_VAR( componentProperties );
+  GEOS_UNUSED_VAR( equationOfState );
+  GEOS_UNUSED_VAR( vapourFraction );
+  GEOS_UNUSED_VAR( liquidComposition );
+  GEOS_UNUSED_VAR( vapourComposition );
+  GEOS_UNUSED_VAR( vapourFractionDerivs );
+  GEOS_UNUSED_VAR( liquidCompositionDerivs );
+  GEOS_UNUSED_VAR( vapourCompositionDerivs );
+ #ifdef HAHAHAHA
+  constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+
+  integer const numDofs = numComps + 2;
+
+  auto const setZero = []( real64 & val ) { val = 0.0; };
+  LvArray::forValuesInSlice( vapourFractionDerivs, setZero );
+  LvArray::forValuesInSlice( liquidCompositionDerivs, setZero );
+  LvArray::forValuesInSlice( vapourCompositionDerivs, setZero );
+
+  // Check if we are single or 2-phase
+  if( vapourFraction < MultiFluidConstants::epsilon )
+  {
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+      vapourCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+    }
+  }
+  else if( 1.0 - vapourFraction < MultiFluidConstants::epsilon )
+  {
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+      vapourCompositionDerivs( ic, Deriv::dC + ic ) = 1.0;
+    }
+  }
+  else
+  {
+    // Calculate the liquid and vapour fugacities and derivatives
+    stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
+    stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
+    stackArray2d< real64, maxNumComps * maxNumDofs > logLiquidFugacityDerivs( numComps, numDofs );
+    stackArray2d< real64, maxNumComps * maxNumDofs > logVapourFugacityDerivs( numComps, numDofs );
+
+    EOS_TYPE_LIQUID::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     liquidComposition,
+                                                     componentProperties,
+                                                     logLiquidFugacity );
+    EOS_TYPE_LIQUID::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     liquidComposition,
+                                                     componentProperties,
+                                                     logLiquidFugacity,
+                                                     logLiquidFugacityDerivs );
+    EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     vapourComposition,
+                                                     componentProperties,
+                                                     logVapourFugacity );
+    EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
+                                                     pressure,
+                                                     temperature,
+                                                     vapourComposition,
+                                                     componentProperties,
+                                                     logVapourFugacity,
+                                                     logVapourFugacityDerivs );
+
+    constexpr integer maxNumVals = 2*MultiFluidConstants::MAX_NUM_COMPONENTS+1;
+    integer const numVals = 2*numComps;
+    stackArray1d< real64, maxNumVals > b( numVals + 1 );
+    stackArray1d< real64, maxNumVals > x( numVals + 1 );
+    stackArray2d< real64, maxNumVals * maxNumVals > A( numVals + 1, numVals + 1 );
+
+    LvArray::forValuesInSlice( A.toSlice(), setZero );
+    LvArray::forValuesInSlice( b.toSlice(), setZero );
+
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      integer const xi = ic;
+      integer const yi = ic + numComps;
+      integer const vi = numVals;
+
+      integer e = ic;
+      A( e, xi ) = 1.0 - vapourFraction;
+      A( e, yi ) = vapourFraction;
+      A( e, vi ) = vapourComposition[ic] - liquidComposition[ic];
+
+      e = ic + numComps;
+      real64 const phiL = exp( logLiquidFugacity( ic ) );
+      real64 const phiV = exp( logVapourFugacity( ic ) );
+      for( integer jc = 0; jc < numComps; ++jc )
+      {
+        integer const xj = jc;
+        integer const yj = jc + numComps;
+        real64 const dPhiLdx = logLiquidFugacityDerivs( ic, Deriv::dC+jc );
+        real64 const dPhiVdy = logVapourFugacityDerivs( ic, Deriv::dC+jc );
+        A( e, xj ) =  liquidComposition[ic] * phiL * dPhiLdx;
+        A( e, yj ) = -vapourComposition[ic] * phiV * dPhiVdy;
+      }
+      A( e, xi ) += phiL;
+      A( e, yi ) -= phiV;
+
+      e = numVals;
+      A( e, xi ) = -1.0;
+      A( e, yi ) =  1.0;
+    }
+    // Pressure and temperature derivatives
+    for( integer const pc : {Deriv::dP, Deriv::dT} )
+    {
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        real64 const phiL = exp( logLiquidFugacity( ic ) );
+        real64 const phiV = exp( logVapourFugacity( ic ) );
+        b( ic ) = 0.0;
+        b( ic + numComps ) = -liquidComposition[ic] * phiL * logLiquidFugacityDerivs( ic, pc )
+                             + vapourComposition[ic] * phiV * logVapourFugacityDerivs( ic, pc );
+      }
+      b( numVals ) = 0.0;
+      solveLinearSystem( A, b, x );
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        liquidCompositionDerivs( ic, pc ) = x( ic );
+        vapourCompositionDerivs( ic, pc ) = x( ic + numComps );
+      }
+      vapourFractionDerivs( pc ) = x( numVals );
+    }
+    // Composition derivatives
+    for( integer kc = 0; kc < numComps; ++kc )
+    {
+      integer const pc = Deriv::dC + kc;
+
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        b( ic ) = -composition[ic];
+        b( ic + numComps ) = 0.0;
+      }
+      b( kc ) += 1.0;
+      b( numVals ) = 0.0;
+      solveLinearSystem( A, b, x );
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        liquidCompositionDerivs( ic, pc ) = x( ic );
+        vapourCompositionDerivs( ic, pc ) = x( ic + numComps );
+      }
+      vapourFractionDerivs( pc ) = x( numVals );
+    }
+  }
+#endif
+}
+
 GEOS_HOST_DEVICE
 integer NegativeTwoPhaseFlash::adjustComposition(
   integer const numComps,
@@ -586,14 +789,16 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
                                                       temperature,
                                                       liquidComposition.toSliceConst(),
                                                       componentProperties,
-                                                      equationOfState, liquidIndex,
+                                                      equationOfState,
+                                                      liquidIndex,
                                                       logLiquidFugacity );
   FugacityCalculator::computeLogFugacityCoefficients( numComps,
                                                       pressure,
                                                       temperature,
                                                       vapourComposition.toSliceConst(),
                                                       componentProperties,
-                                                      equationOfState, vapourIndex,
+                                                      equationOfState,
+                                                      vapourIndex,
                                                       logVapourFugacity );
 
   // Compute fugacity ratios and calculate the error
