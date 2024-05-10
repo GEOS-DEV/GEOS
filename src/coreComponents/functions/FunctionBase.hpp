@@ -61,15 +61,9 @@ public:
   virtual ~FunctionBase() override = default;
 
   /**
-   * @brief Static Factory Catalog Functions
-   * @return the catalog name
-   */
-  static string catalogName() { return "FunctionBase"; }
-
-  /**
    * @brief Function initialization
    */
-  virtual void initializeFunction(){}
+  virtual void initializeFunction() = 0;
 
   /**
    * @brief Test to see if the function is a 1D function of time

@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 
 namespace geos
 {
@@ -68,7 +68,18 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )   // special case
+    {
+      return "MultiphasePoromechanics";
+    }
+    else   // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -95,7 +106,18 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  void assembleElementBasedTerms( real64 const time,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
+
   virtual void updateState( DomainPartition & domain ) override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   /**@}*/
 
