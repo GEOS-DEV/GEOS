@@ -549,10 +549,15 @@ bool NegativeTwoPhaseFlash::solveLinearSystem( arraySlice2d< real64 const > cons
                                                arraySlice1d< real64 const > const & b,
                                                arraySlice1d< real64 > const & x )
 {
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_UNUSED_VAR( A );
   GEOS_UNUSED_VAR( b );
   GEOS_UNUSED_VAR( x );
   return false;
+#else
+  BlasLapackLA::solveLinearSystem( A, b, x );
+  return true;
+#endif
 }
 
 } // namespace compositional
