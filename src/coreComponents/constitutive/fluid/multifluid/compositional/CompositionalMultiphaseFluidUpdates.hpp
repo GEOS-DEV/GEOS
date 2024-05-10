@@ -175,7 +175,6 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
@@ -212,7 +211,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
@@ -394,7 +392,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
 update( localIndex const k,

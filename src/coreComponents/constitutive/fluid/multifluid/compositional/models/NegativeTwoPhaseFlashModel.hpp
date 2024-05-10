@@ -51,7 +51,41 @@ public:
                 arraySlice1d< real64 const > const & composition,
                 multifluid::PhaseComp::SliceType::ValueType const & kValues,
                 multifluid::PhaseProp::SliceType const phaseFraction,
-                multifluid::PhaseComp::SliceType const phaseComposition ) const;
+                multifluid::PhaseComp::SliceType const phaseComposition ) const
+  {
+    integer const numDofs = m_numComponents + 2;
+
+    NegativeTwoPhaseFlash::compute( m_numComponents,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    equationOfState,
+                                    kValues,
+                                    phaseFraction.value[m_vapourIndex],
+                                    phaseComposition.value[m_liquidIndex],
+                                    phaseComposition.value[m_vapourIndex] );
+
+    NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
+                                               pressure,
+                                               temperature,
+                                               composition,
+                                               componentProperties,
+                                               equationOfState,
+                                               phaseFraction.value[m_vapourIndex],
+                                               phaseComposition.value[m_liquidIndex].toSliceConst(),
+                                               phaseComposition.value[m_vapourIndex].toSliceConst(),
+                                               phaseFraction.derivs[m_vapourIndex],
+                                               phaseComposition.derivs[m_liquidIndex],
+                                               phaseComposition.derivs[m_vapourIndex] );
+
+    // Complete by calculating liquid phase fraction
+    phaseFraction.value[m_liquidIndex] = 1.0 - phaseFraction.value[m_vapourIndex];
+    for( integer ic = 0; ic < numDofs; ic++ )
+    {
+      phaseFraction.derivs[m_liquidIndex][ic] = -phaseFraction.derivs[m_vapourIndex][ic];
+    }
+  }
 
 private:
   integer const m_numComponents;
@@ -81,51 +115,6 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 };
-
-GEOS_HOST_DEVICE
-void NegativeTwoPhaseFlashModelUpdate::compute(
-  ComponentProperties::KernelWrapper const & componentProperties,
-  EquationOfState::KernelWrapper const & equationOfState,
-  real64 const & pressure,
-  real64 const & temperature,
-  arraySlice1d< real64 const > const & composition,
-  multifluid::PhaseComp::SliceType::ValueType const & kValues,
-  multifluid::PhaseProp::SliceType const phaseFraction,
-  multifluid::PhaseComp::SliceType const phaseComposition ) const
-{
-  integer const numDofs = m_numComponents + 2;
-
-  NegativeTwoPhaseFlash::compute( m_numComponents,
-                                  pressure,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  equationOfState,
-                                  kValues,
-                                  phaseFraction.value[m_vapourIndex],
-                                  phaseComposition.value[m_liquidIndex],
-                                  phaseComposition.value[m_vapourIndex] );
-
-  NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,
-                                             pressure,
-                                             temperature,
-                                             composition,
-                                             componentProperties,
-                                             equationOfState,
-                                             phaseFraction.value[m_vapourIndex],
-                                             phaseComposition.value[m_liquidIndex].toSliceConst(),
-                                             phaseComposition.value[m_vapourIndex].toSliceConst(),
-                                             phaseFraction.derivs[m_vapourIndex],
-                                             phaseComposition.derivs[m_liquidIndex],
-                                             phaseComposition.derivs[m_vapourIndex] );
-
-  // Complete by calculating liquid phase fraction
-  phaseFraction.value[m_liquidIndex] = 1.0 - phaseFraction.value[m_vapourIndex];
-  for( integer ic = 0; ic < numDofs; ic++ )
-  {
-    phaseFraction.derivs[m_liquidIndex][ic] = -phaseFraction.derivs[m_vapourIndex][ic];
-  }
-}
 
 } // end namespace compositional
 
