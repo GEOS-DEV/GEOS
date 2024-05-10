@@ -68,18 +68,6 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #define GEOSX_USE_HYPRE
 
-<<<<<<< HEAD
-#if defined( GEOSX_USE_HYPRE )
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_MAJOR 2
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 28
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_PATCH 0
-#endif
-
-=======
->>>>>>> origin/develop
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
@@ -183,11 +171,7 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
-<<<<<<< HEAD
-#define Python3_VERSION 3.10.12
-=======
 #define Python3_VERSION 3.10.6
->>>>>>> origin/develop
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */

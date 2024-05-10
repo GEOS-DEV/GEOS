@@ -90,9 +90,8 @@ public:
   real64 const & getDistanceFromWellHead() const { return m_distanceFromHead; }
 
   /**
-   * @class Perforation
-   *
-   * This class describes a perforation with its location, well transmissibility  and corresponding well element
+   * @brief Get the well Peaceman index at the perforation.
+   * @return the well transmissibility
    */
   real64 getWellTransmissibility() const { return m_wellTransmissibility; }
 
