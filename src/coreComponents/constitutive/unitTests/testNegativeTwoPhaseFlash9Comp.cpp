@@ -15,7 +15,6 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
@@ -38,7 +37,7 @@ using FlashData = std::tuple<
   Feed< 2 > const           // expected vapour composition (2 selected components)
   >;
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 class NegativeTwoPhaseFlashTest9CompFixture :  public ::testing::TestWithParam< FlashData >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -51,13 +50,19 @@ class NegativeTwoPhaseFlashTest9CompFixture :  public ::testing::TestWithParam< 
 public:
   NegativeTwoPhaseFlashTest9CompFixture()
     : m_fluid( createFluid() )
-  {}
+  {
+    string_array eos_names;
+    eos_names.emplace_back( EnumStrings< EquationOfStateType >::toString( EOS_TYPE ));
+    eos_names.emplace_back( EnumStrings< EquationOfStateType >::toString( EOS_TYPE ));
+    m_equationOfState = std::make_unique< EquationOfState >( eos_names );
+  }
 
   ~NegativeTwoPhaseFlashTest9CompFixture() = default;
 
   void testFlash( FlashData const & data )
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
+    auto equationOfState = this->m_equationOfState->createKernelWrapper();
 
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -78,16 +83,16 @@ public:
     stackArray2d< real64, numComps > kValues( 1, numComps );
     kValues.zero();
 
-    bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
-      numComps,
-      pressure,
-      temperature,
-      composition.toSliceConst(),
-      componentProperties,
-      kValues.toSlice(),
-      vapourFraction,
-      liquidComposition.toSlice(),
-      vapourComposition.toSlice() );
+    bool status = NegativeTwoPhaseFlash::compute( numComps,
+                                                  pressure,
+                                                  temperature,
+                                                  composition.toSliceConst(),
+                                                  componentProperties,
+                                                  equationOfState,
+                                                  kValues.toSlice(),
+                                                  vapourFraction,
+                                                  liquidComposition.toSlice(),
+                                                  vapourComposition.toSlice() );
 
     // Check the flash success result
     ASSERT_EQ( expectedStatus, status );
@@ -121,6 +126,7 @@ public:
     constexpr integer numValues = 1 + 2*numComps;
 
     auto componentProperties = this->m_fluid->createKernelWrapper();
+    auto equationOfState = this->m_equationOfState->createKernelWrapper();
 
     bool const expectedStatus = std::get< 3 >( data );
     if( !expectedStatus ) return;
@@ -155,16 +161,16 @@ public:
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
 
-      NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
-        numComps,
-        p,
-        t,
-        zmf.toSliceConst(),
-        componentProperties,
-        kValues.toSlice(),
-        values[0],
-        displacedLiquidComposition.toSlice(),
-        displacedVapourComposition.toSlice() );
+      NegativeTwoPhaseFlash::compute( numComps,
+                                      p,
+                                      t,
+                                      zmf.toSliceConst(),
+                                      componentProperties,
+                                      equationOfState,
+                                      kValues.toSlice(),
+                                      values[0],
+                                      displacedLiquidComposition.toSlice(),
+                                      displacedVapourComposition.toSlice() );
       for( integer ic = 0; ic < numComps; ++ic )
       {
         values[1+ic] = displacedLiquidComposition[ic];
@@ -172,29 +178,29 @@ public:
       }
     };
 
-    NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
-      numComps,
-      pressure,
-      temperature,
-      composition.toSliceConst(),
-      componentProperties,
-      kValues.toSlice(),
-      vapourFraction,
-      liquidComposition.toSlice(),
-      vapourComposition.toSlice() );
+    NegativeTwoPhaseFlash::compute( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition.toSliceConst(),
+                                    componentProperties,
+                                    equationOfState,
+                                    kValues.toSlice(),
+                                    vapourFraction,
+                                    liquidComposition.toSlice(),
+                                    vapourComposition.toSlice() );
 
-    NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE, EOS_TYPE >(
-      numComps,
-      pressure,
-      temperature,
-      composition.toSliceConst(),
-      componentProperties,
-      vapourFraction,
-      liquidComposition.toSliceConst(),
-      vapourComposition.toSliceConst(),
-      vapourFractionDerivs.toSlice(),
-      liquidCompositionDerivs.toSlice(),
-      vapourCompositionDerivs.toSlice() );
+    NegativeTwoPhaseFlash::computeDerivatives( numComps,
+                                               pressure,
+                                               temperature,
+                                               composition.toSliceConst(),
+                                               componentProperties,
+                                               equationOfState,
+                                               vapourFraction,
+                                               liquidComposition.toSliceConst(),
+                                               vapourComposition.toSliceConst(),
+                                               vapourFractionDerivs.toSlice(),
+                                               liquidCompositionDerivs.toSlice(),
+                                               vapourCompositionDerivs.toSlice() );
 
     // Test against numerically calculated values
     // --- Pressure derivatives ---
@@ -235,11 +241,12 @@ public:
 
 protected:
   std::unique_ptr< TestFluid< numComps > > m_fluid{};
+  std::unique_ptr< EquationOfState > m_equationOfState{};
 private:
   static std::unique_ptr< TestFluid< numComps > > createFluid();
 };
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 std::unique_ptr< TestFluid< numComps > > NegativeTwoPhaseFlashTest9CompFixture< EOS_TYPE >::createFluid()
 {
   std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {0, 0, 0, 0, 0, 0, 0, 0, 0} );
@@ -263,8 +270,8 @@ std::unique_ptr< TestFluid< numComps > > NegativeTwoPhaseFlashTest9CompFixture< 
   return fluid;
 }
 
-using NegativeTwoPhaseFlash9CompPR = NegativeTwoPhaseFlashTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
-using NegativeTwoPhaseFlash9CompSRK = NegativeTwoPhaseFlashTest9CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using NegativeTwoPhaseFlash9CompPR = NegativeTwoPhaseFlashTest9CompFixture< EquationOfStateType::PengRobinson >;
+using NegativeTwoPhaseFlash9CompSRK = NegativeTwoPhaseFlashTest9CompFixture< EquationOfStateType::SoaveRedlichKwong >;
 
 TEST_P( NegativeTwoPhaseFlash9CompPR, testNegativeFlash )
 {

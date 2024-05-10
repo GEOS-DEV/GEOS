@@ -33,8 +33,8 @@ namespace compositional
 
 enum class EquationOfStateType : integer
 {
-  PengRobinson = 1,
-  SoaveRedlichKwong = 2
+  PengRobinson,
+  SoaveRedlichKwong
 };
 
 class EquationOfState final

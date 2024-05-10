@@ -103,17 +103,32 @@ public:
                                   arraySlice2d< real64, USD2 > const & vapourCompositionDerivs );
 private:
   /**
-   * @brief Cleanup composition making sure that all components are present
+   * @brief Calculate which components are present.
+   * @details Creates a list of indices whose components have non-zero mole fraction.
    * @param[in] numComps number of components
-   * @param[in] inputComposition the current composition
-   * @param[out] outputComposition the composition after adjusting
-   * @return the number of un-adjusted components
+   * @param[in] composition the composition of the fluid
+   * @param[out] presentComponents the list of present components
+   * @return the number of present components
    */
+  template< typename ARRAY >
   GEOS_HOST_DEVICE
-  static integer adjustComposition(
-    integer const numComps,
-    arraySlice1d< real64 const > const & inputComposition,
-    arraySlice1d< real64 > const & outputComposition );
+  GEOS_FORCE_INLINE
+  static integer calculatePresentComponents( integer const numComps,
+                                             arraySlice1d< real64 const > const & composition,
+                                             ARRAY & presentComponents )
+  {
+    // Check for machine-zero feed values
+    integer presentCount = 0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      if( MultiFluidConstants::minForSpeciesPresence < composition[ic] )
+      {
+        presentComponents[presentCount++] = ic;
+      }
+    }
+    presentComponents.resize( presentCount );
+    return presentCount;
+  }
 
   /**
    * @brief Normalise a composition in place to ensure that the components add up to unity
@@ -206,18 +221,16 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
   stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
   stackArray1d< real64, maxNumComps > fugacityRatios( numComps );
-  stackArray1d< real64, maxNumComps > adjustedComposition( numComps );
   stackArray1d< integer, maxNumComps > componentIndices( numComps );
   auto const & kVapourLiquid = kValues[0];
 
-  adjustComposition( numComps, composition, adjustedComposition );
+  calculatePresentComponents( numComps, composition, componentIndices );
 
   // Initialise compositions to feed composition
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    componentIndices[ic] = ic;
-    liquidComposition[ic] = adjustedComposition[ic];
-    vapourComposition[ic] = adjustedComposition[ic];
+    liquidComposition[ic] = composition[ic];
+    vapourComposition[ic] = composition[ic];
   }
 
   // Check if k-Values need to be initialised
@@ -230,6 +243,10 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
       break;
     }
   }
+
+  bool kValueReset = true;
+  constexpr real64 boundsTolerance = 1.0e-3;
+
   if( needInitialisation )
   {
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
@@ -241,13 +258,15 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
 
   auto const presentComponents = componentIndices.toSliceConst();
 
+  real64 const initialVapourFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
+
   bool converged = false;
   for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
   {
     real64 const error = computeFugacityRatio( numComps,
                                                pressure,
                                                temperature,
-                                               adjustedComposition,
+                                               composition,
                                                componentProperties,
                                                equationOfState,
                                                kVapourLiquid.toSliceConst(),
@@ -268,31 +287,46 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     }
 
     // Update K-values
-    for( integer ic = 0; ic < numComps; ++ic )
+    if( (vapourPhaseMoleFraction < -boundsTolerance || 1.0-vapourPhaseMoleFraction < -boundsTolerance)
+        && 0.2 < LvArray::math::abs( vapourPhaseMoleFraction-initialVapourFraction )
+        && !kValueReset )
     {
-      kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
+      KValueInitialization::computeConstantLiquidKvalue( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         componentProperties,
+                                                         kVapourLiquid );
+      kValueReset =  true;
     }
-
-    // Retrieve physical bounds from negative flash values
-    if( vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
+    else
     {
-      vapourPhaseMoleFraction = 0.0;
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        liquidComposition[ic] = adjustedComposition[ic];
-        vapourComposition[ic] = adjustedComposition[ic];
-      }
-    }
-    else if( 1.0 - vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
-    {
-      vapourPhaseMoleFraction = 1.0;
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        liquidComposition[ic] = adjustedComposition[ic];
-        vapourComposition[ic] = adjustedComposition[ic];
+        kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
       }
     }
   }
+
+  // Retrieve physical bounds from negative flash values
+  if( vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
+  {
+    vapourPhaseMoleFraction = 0.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidComposition[ic] = composition[ic];
+      vapourComposition[ic] = composition[ic];
+    }
+  }
+  else if( 1.0 - vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
+  {
+    vapourPhaseMoleFraction = 1.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidComposition[ic] = composition[ic];
+      vapourComposition[ic] = composition[ic];
+    }
+  }
+
   return converged;
 }
 
@@ -465,27 +499,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   }
 }
 
-GEOS_HOST_DEVICE
-integer NegativeTwoPhaseFlash::adjustComposition(
-  integer const numComps,
-  arraySlice1d< real64 const > const & inputComposition,
-  arraySlice1d< real64 > const & outputComposition )
-{
-  constexpr real64 minFrac = MultiFluidConstants::minForSpeciesPresence;
-  constexpr real64 maxFrac = 1.0 - MultiFluidConstants::minForSpeciesPresence;
-
-  integer presentComponents = 0;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    outputComposition[ic] = LvArray::math::min( maxFrac, LvArray::math::max( minFrac, inputComposition[ic] ));
-    if( LvArray::math::abs( outputComposition[ic] - inputComposition[ic] ) < MultiFluidConstants::epsilon )
-    {
-      presentComponents++;
-    }
-  }
-  return presentComponents;
-}
-
 template< integer USD >
 GEOS_HOST_DEVICE
 real64 NegativeTwoPhaseFlash::computeFugacityRatio(
@@ -536,7 +549,7 @@ real64 NegativeTwoPhaseFlash::computeFugacityRatio(
 
   // Compute fugacity ratios and calculate the error
   real64 error = 0.0;
-  for( integer ic = 0; ic < numComps; ++ic )
+  for( integer const ic : presentComponents )
   {
     fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
     error += (fugacityRatios[ic]*fugacityRatios[ic]);
