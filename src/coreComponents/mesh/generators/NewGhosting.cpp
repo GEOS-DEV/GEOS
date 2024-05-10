@@ -43,6 +43,18 @@ using json = nlohmann::json;
 #include <algorithm>
 #include <utility>
 
+namespace geos
+{
+
+template< typename OUTPUT, typename INPUT >
+inline LVARRAY_HOST_DEVICE
+OUTPUT intConv( INPUT input )
+{
+  return LvArray::integerConversion< OUTPUT >( input );
+}
+
+}  // end of namespace
+
 
 namespace geos::ghosting
 {
@@ -775,10 +787,13 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
 
 struct MeshGraph  // TODO add the local <-> global mappings here?
 {
-  std::set< NodeGlbIdx > nodes;
   std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
   std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
+  std::set< NodeGlbIdx > nodes;
+  std::set< FaceGlbIdx > otherFaces;  // Faces that are there but not owned.
+  std::set< EdgeGlbIdx > otherEdges;  // Edges that are there but not owned.
+  std::set< NodeGlbIdx > otherNodes;  // Nodes that are there but not owned.
   // TODO add the nodes here?
   // TODO add all types of connections here? How?
 };
@@ -807,30 +822,32 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
 {
   MeshGraph result;
 
-  auto const owning = [&curRank]( std::set< MpiRank > const & ranks ) -> bool
+  auto const isCurrentRankOwning = [&curRank]( std::set< MpiRank > const & ranks ) -> bool
   {
     return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
   };
 
   for( auto const & [ranks, ns]: buckets.nodes )
   {
-    if( owning( ranks ) )
-    {
-      result.nodes.insert( std::cbegin( ns ), std::cend( ns ) );
-    }
+    std::set< NodeGlbIdx > & nodes = isCurrentRankOwning( ranks ) ? result.nodes : result.otherNodes;
+    nodes.insert( std::cbegin( ns ), std::cend( ns ) );
   }
-
 
   // The `e2n` is a mapping for all the geometrical entities, not only the one owned like `result.e2n`.
   // TODO check that it is really useful.
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n;
   for( auto const & [ranks, edges]: buckets.edges )
   {
-    auto & m = owning( ranks ) ? result.e2n : e2n;
+    bool const isOwning = isCurrentRankOwning( ranks );
+    auto & m = isOwning ? result.e2n : e2n;
     EdgeGlbIdx i = offsets.edges.at( ranks );  // TODO hack
     for( Edge const & edge: edges )
     {
       m[i] = edge;
+      if( not isOwning )
+      {
+        result.otherEdges.insert( i );  // TODO use the keys of e2n instead?
+      }
       ++i;
     }
   }
@@ -845,25 +862,32 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
 
   for( auto const & [ranks, faces]: buckets.faces )
   {
-    if( !owning( ranks ) )
-    {
-      continue;
-    }
+    bool const isOwning = isCurrentRankOwning( ranks );
 
-    FaceGlbIdx i = offsets.faces.at( ranks );
-    for( Face face: faces )  // Intentional copy for the future `emplace_back`.
+    if( isOwning )
     {
-//      n2f[face] = i;
-      face.emplace_back( face.front() );  // Trick to build the edges.
-      for( std::size_t ii = 0; ii < face.size() - 1; ++ii )
+      FaceGlbIdx i = offsets.faces.at( ranks );
+      for( Face face: faces )  // Intentional copy for the future `emplace_back`.
       {
-        NodeGlbIdx const & n0 = face[ii], & n1 = face[ii + 1];
-        std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
-        std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
-        result.f2e[i].insert( n2e.at( p1 ) );
-        bool const flipped = p0 != p1;  // TODO store somewhere.
+        face.emplace_back( face.front() );  // Trick to build the edges.
+        for( std::size_t ii = 0; ii < face.size() - 1; ++ii )
+        {
+          NodeGlbIdx const & n0 = face[ii], & n1 = face[ii + 1];
+          std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
+          std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
+          result.f2e[i].insert( n2e.at( p1 ) );
+          bool const flipped = p0 != p1;  // TODO store somewhere.
+        }
+        ++i;
       }
-      ++i;
+    }
+    else
+    {
+      FaceGlbIdx const size = FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( std::size( faces ) ) };
+      for( FaceGlbIdx ii = offsets.faces.at( ranks ); ii < size; ++ii )
+      {
+        result.otherFaces.insert( ii );  // TODO insert iota
+      }
     }
   }
 
@@ -916,17 +940,38 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   std::size_t const n = cellOffset + gis.cells.get() + 1;  // Total number of entries in the graph.
 
-  std::size_t const numNodes = std::size( graph.nodes );
-  std::size_t const numEdges = std::size( graph.e2n );
-  std::size_t const numFaces = std::size( graph.f2e );
-  std::size_t const numCells = std::size( graph.c2f );
-  std::size_t const numOwned = numNodes + numEdges + numFaces + numCells;
+  std::size_t const numOwnedNodes = std::size( graph.nodes );
+  std::size_t const numOwnedEdges = std::size( graph.e2n );
+  std::size_t const numOwnedFaces = std::size( graph.f2e );
+  std::size_t const numOwnedCells = std::size( graph.c2f );
+  std::size_t const numOwned = numOwnedNodes + numOwnedEdges + numOwnedFaces + numOwnedCells;
+
+  std::size_t const numOtherNodes = std::size( graph.otherNodes );
+  std::size_t const numOtherEdges = std::size( graph.otherEdges );
+  std::size_t const numOtherFaces = std::size( graph.otherFaces );
+  std::size_t const numOther = numOtherNodes + numOtherEdges + numOtherFaces;
 
   std::vector< int > ownedGlbIdcs, numEntriesPerRow;  // TODO I couldn't use a vector of `std::size_t`
   std::vector< std::vector< int > > indices;
   ownedGlbIdcs.reserve( numOwned );
   numEntriesPerRow.reserve( numOwned );
   indices.reserve( numOwned );
+
+  std::vector< int > otherGlbIdcs;  // TODO I couldn't use a vector of `std::size_t`
+  otherGlbIdcs.reserve( numOther );
+  for( NodeGlbIdx const & ngi: graph.otherNodes )
+  {
+    otherGlbIdcs.emplace_back( ngi.get() );
+  }
+  for( EdgeGlbIdx const & egi: graph.otherEdges )
+  {
+    otherGlbIdcs.emplace_back( egi.get() + edgeOffset );
+  }
+  for( FaceGlbIdx const & fgi: graph.otherFaces )
+  {
+    otherGlbIdcs.emplace_back( fgi.get() + faceOffset );
+  }
+  GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
 
   for( NodeGlbIdx const & ngi: graph.nodes )
   {
@@ -1002,16 +1047,15 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   // Now let's build the domain indicator matrix.
   // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
-  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, rowMap, 1, true );
-  constexpr double one{ 1. };
-  for( int const & gi: ownedGlbIdcs )
-  {
-    indicator.InsertGlobalValues( gi, 1, &one, &curRank.get() );
-
-  }
   Epetra_Map const mpiMap( MpiWrapper::commSize(), 0, comm );  // Rows
+  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, mpiMap, numOwned + numOther, true );
+
+  std::vector< double > const ones( n, 1. );
+  indicator.InsertGlobalValues( curRank.get(), numOwned, ones.data(), ownedGlbIdcs.data() );
+  indicator.InsertGlobalValues( curRank.get(), numOther, ones.data(), otherGlbIdcs.data() );
+
   Epetra_Map const graphNodeMap( int( n ), 0, comm );  // Columns
-  indicator.FillComplete( mpiMap, graphNodeMap );
+  indicator.FillComplete( graphNodeMap, mpiMap );
 
   if( curRank == 0_mpi )
   {
@@ -1027,7 +1071,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
     // Upward (n -> e -> f -> c)
 
     Epetra_CrsMatrix result0( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, false, result0, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result0, false );
     result0.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result0 );
 
@@ -1092,17 +1136,18 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
   {
-    std::vector< int > cells;
+    std::vector< int > interest;
     for( int i = 0; i < extracted; ++i )
     {
       int const & index = extractedIndices[i];
       double const & val = extractedValues[i];
-      if( val > 0 and index > int(cellOffset) )
+      if( val > 0 and index < int( edgeOffset ) )
       {
-        cells.push_back( index - cellOffset );
+//        interest.push_back( index - cellOffset );
+        interest.push_back( index );
       }
     }
-    GEOS_LOG_RANK( "ghost cells = " << json( cells ) );
+    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
   }
 
   GEOS_LOG_RANK("B");
