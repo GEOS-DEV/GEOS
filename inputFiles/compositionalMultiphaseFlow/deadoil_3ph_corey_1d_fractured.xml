@@ -312,7 +312,8 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput"
+      plotFileRoot="deadoil_3ph_corey_1d_fractured"/>
 
     <Restart
       name="restartOutput"/>
