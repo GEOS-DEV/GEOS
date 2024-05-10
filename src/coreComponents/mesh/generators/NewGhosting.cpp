@@ -26,6 +26,8 @@
 #include <Epetra_MpiComm.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
+#include <Epetra_RowMatrixTransposer.h>
+
 
 #include <NamedType/named_type.hpp>
 
@@ -996,7 +998,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   }
 
   adj.FillComplete();
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/adj.mat", adj );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", adj );
 
   // Now let's build the domain indicator matrix.
   // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
@@ -1007,14 +1009,98 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   Epetra_Map const domainMap( int( n ), 0, comm );  // Columns
   Epetra_Map const rangeMap( MpiWrapper::commSize(), 0, comm );  // Rows
   indicator.FillComplete( domainMap, rangeMap );
-  GEOS_LOG_RANK( "indicator.NumMyRows() = " << indicator.NumMyRows() );
-  GEOS_LOG_RANK( "indicator.NumMyCols() = " << indicator.NumMyCols() );
-  GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
-  GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/indicator.mat", indicator );
+  if( curRank == 0_mpi )
+  {
+    GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
+    GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
+  }
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  Epetra_CrsMatrix result( Epetra_DataAccess::Copy, rowMap, numEntriesPerRow.data() );  // TODO bad estimation
-  EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result );
+  int NN( MpiWrapper::commSize() );
+  GEOS_LOG_RANK("A");
+  auto multiply = [&]()-> Epetra_CrsMatrix
+  {
+    // Upward (n -> e -> f -> c)
+
+    Epetra_CrsMatrix result0( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result0, false );
+    result0.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result0 );
+
+    Epetra_CrsMatrix result1( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, result0, false, result1, false );
+    result1.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result1 );
+
+    Epetra_CrsMatrix result2( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, result1, false, result2, false );
+    result2.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result2 );
+
+    // Unneeded step
+    Epetra_CrsMatrix result3( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, result2, false, result3, false );
+    result3.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-3.mat", result3 );
+
+    // Downward (c -> f -> e -> n)
+
+    Epetra_CrsMatrix result4( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result3, false, result4, false );
+    result4.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result4 );
+
+    Epetra_CrsMatrix result5( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result4, false, result5, false );
+    result5.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result5 );
+
+    Epetra_CrsMatrix result6( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result5, false, result6, false );
+    result6.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result6 );
+
+    // Unneeded step
+    Epetra_CrsMatrix result7( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result6, false, result7, false );
+    result7.FillComplete( rangeMap, domainMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-7.mat", result7 );
+    return result7;
+  };
+  Epetra_CrsMatrix ghosted( multiply() );
+  ghosted.FillComplete( rangeMap, domainMap );
+  Epetra_RowMatrixTransposer transposer( &ghosted );
+  Epetra_CrsMatrix tGhosted( Epetra_DataAccess::Copy, indicatorRowMap, int( n ), false );
+  Epetra_CrsMatrix * ptGhosted = &tGhosted;
+  transposer.CreateTranspose( true, ptGhosted );
+  tGhosted.FillComplete( domainMap, rangeMap  );
+  GEOS_LOG_RANK( "tGhosted.NumGlobalCols() = " << tGhosted.NumGlobalCols() );
+  GEOS_LOG_RANK( "tGhosted.NumGlobalRows() = " << tGhosted.NumGlobalRows() );
+
+  // My test says that `tGhosted` is filled here.
+  int extracted = 0;
+  std::vector< double > extractedValues(n);
+//  extractedValues.reserve( n );
+  std::vector< int > extractedIndices(n);
+//  extractedIndices.reserve( n );
+  tGhosted.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
+  GEOS_LOG_RANK( "extracted = " << extracted );
+  {
+    std::vector< int > cells;
+    for( int i = 0; i < extracted; ++i )
+    {
+      int const & index = extractedIndices[i];
+      double const & val = extractedValues[i];
+      if( val > 0 and index > int(cellOffset) )
+      {
+        cells.push_back( index - cellOffset );
+      }
+    }
+    GEOS_LOG_RANK( "ghost cells = " << json( cells ) );
+  }
+
+//  ghosted.Print( std::cout );
+  GEOS_LOG_RANK("B");
 }
 
 
