@@ -21,7 +21,7 @@
 
 #include "FunctionBase.hpp"
 
-#include "constitutive/fluid/multifluid/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
 namespace geos
 {
@@ -48,13 +48,10 @@ public:
                 EquationOfState::KernelWrapper const & equationOfState,
                 real64 const & pressure,
                 real64 const & temperature,
-                multifluid::CompositionSliceConst const & composition,
+                arraySlice1d< real64 const > const & composition,
                 multifluid::PhaseComp::SliceType::ValueType const & kValues,
                 multifluid::PhaseProp::SliceType const phaseFraction,
-                multifluid::PhaseComp::SliceType const phaseComposition ) const
-  {
-    GEOS_UNUSED_VAR( componentProperties, equationOfState, pressure, temperature, composition, kValues, phaseFraction, phaseComposition );
-  }
+                multifluid::PhaseComp::SliceType const phaseComposition ) const;
 
 private:
   integer const m_numComponents;
@@ -84,6 +81,30 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 };
+
+GEOS_HOST_DEVICE
+void NegativeTwoPhaseFlashModelUpdate::compute(
+  ComponentProperties::KernelWrapper const & componentProperties,
+  EquationOfState::KernelWrapper const & equationOfState,
+  real64 const & pressure,
+  real64 const & temperature,
+  arraySlice1d< real64 const > const & composition,
+  multifluid::PhaseComp::SliceType::ValueType const & kValues,
+  multifluid::PhaseProp::SliceType const phaseFraction,
+  multifluid::PhaseComp::SliceType const phaseComposition ) const
+{
+  NegativeTwoPhaseFlash::compute( m_numComponents,
+                                  pressure,
+                                  temperature,
+                                  composition,
+                                  componentProperties,
+                                  equationOfState,
+                                  kValues,
+                                  phaseFraction.value[m_vapourIndex],
+                                  phaseComposition.value[m_liquidIndex],
+                                  phaseComposition.value[m_vapourIndex] );
+
+}
 
 } // end namespace compositional
 

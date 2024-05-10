@@ -28,16 +28,13 @@ namespace constitutive
 {
 namespace multifluid
 {
-template< localIndex MAXSIZE >
-using CompositionStackArray = StackArray< real64, 1, MAXSIZE >;
-
-using CompositionSlice = arraySlice1d< real64 >;
-using CompositionSliceConst = arraySlice1d< real64 const >;
 
 using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
 using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
 
+using CompositionSlice = arraySlice1d< real64, compflow::USD_COMP - 1 >;
+using CompositionSliceConst = arraySlice1d< real64 const, compflow::USD_COMP - 1 >;
 
 } // namespace multifluid
 } // namespace constitutive

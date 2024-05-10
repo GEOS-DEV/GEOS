@@ -49,7 +49,6 @@ public:
                                        PHASE1 const & phase1,
                                        PHASE2 const & phase2,
                                        PHASE3 const & phase3,
-                                       arrayView1d< real64 const > const & componentMolarWeight,
                                        bool const useMass,
                                        PhaseProp::ViewType phaseFrac,
                                        PhaseProp::ViewType phaseDens,
@@ -64,7 +63,7 @@ public:
   GEOS_HOST_DEVICE
   virtual void compute( real64 const pressure,
                         real64 const temperature,
-                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                        CompositionSliceConst const & composition,
                         PhaseProp::SliceType const phaseFrac,
                         PhaseProp::SliceType const phaseDens,
                         PhaseProp::SliceType const phaseMassDensity,
@@ -79,13 +78,13 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const override;
+                       CompositionSliceConst const & composition ) const override;
 
 protected:
   GEOS_HOST_DEVICE
   void compute( real64 const pressure,
                 real64 const temperature,
-                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                CompositionSliceConst const & composition,
                 PhaseProp::SliceType const phaseFrac,
                 PhaseProp::SliceType const phaseDens,
                 PhaseProp::SliceType const phaseMassDensity,
@@ -145,7 +144,6 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
                                      PHASE1 const & phase1,
                                      PHASE2 const & phase2,
                                      PHASE3 const & phase3,
-                                     arrayView1d< real64 const > const & componentMolarWeight,
                                      bool const useMass,
                                      PhaseProp::ViewType phaseFrac,
                                      PhaseProp::ViewType phaseDens,
@@ -156,7 +154,7 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
                                      PhaseComp::ViewType phaseCompFrac,
                                      FluidProp::ViewType totalDensity,
                                      PhaseComp::ViewValueType kValues ):
-  MultiFluidBase::KernelWrapper( componentMolarWeight,
+  MultiFluidBase::KernelWrapper( componentProperties.getComponentMolarWeight(),
                                  useMass,
                                  std::move( phaseFrac ),
                                  std::move( phaseDens ),
@@ -182,7 +180,7 @@ void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
-  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+  CompositionSliceConst const & composition,
   PhaseProp::SliceType const phaseFrac,
   PhaseProp::SliceType const phaseDens,
   PhaseProp::SliceType const phaseMassDensity,
@@ -219,7 +217,7 @@ void
 CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
-  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+  CompositionSliceConst const & composition,
   PhaseProp::SliceType const phaseFrac,
   PhaseProp::SliceType const phaseDens,
   PhaseProp::SliceType const phaseMassDensity,
@@ -238,7 +236,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   integer const numDof = numComp + 2;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
-  CompositionStackArray< maxNumComp > compMoleFrac( numComp );
+  stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
   real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
 
   if( m_useMass )
@@ -403,7 +401,7 @@ update( localIndex const k,
         localIndex const q,
         real64 const pressure,
         real64 const temperature,
-        arraySlice1d< geos::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+        CompositionSliceConst const & composition ) const
 {
   compute( pressure,
            temperature,

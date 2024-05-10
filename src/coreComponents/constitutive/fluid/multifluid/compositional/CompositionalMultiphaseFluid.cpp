@@ -229,7 +229,6 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
                         *m_phase1,
                         *m_phase2,
                         *m_phase3,
-                        m_componentMolarWeight,
                         m_useMass,
                         m_phaseFraction.toView(),
                         m_phaseDensity.toView(),
