@@ -1070,50 +1070,39 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   {
     // Upward (n -> e -> f -> c)
 
-    Epetra_CrsMatrix result0( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result0, false );
-    result0.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result0 );
+    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result_u0_0, false );
+    result_u0_0.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
-    Epetra_CrsMatrix result1( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, result0, false, result1, false );
-    result1.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result1 );
+    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_0, false, result_u0_1, false );
+    result_u0_1.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
 
-    Epetra_CrsMatrix result2( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, result1, false, result2, false );
-    result2.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result2 );
-
-    // Unneeded step
-    Epetra_CrsMatrix result3( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, result2, false, result3, false );
-    result3.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-3.mat", result3 );
+    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_1, false, result_u0_2, false );
+    result_u0_2.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
     // Downward (c -> f -> e -> n)
 
-    Epetra_CrsMatrix result4( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result3, false, result4, false );
-    result4.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result4 );
+    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result_u0_2, false, result_d0_0, false );
+    result_d0_0.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
 
-    Epetra_CrsMatrix result5( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result4, false, result5, false );
-    result5.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result5 );
+    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_0, false, result_d0_1, false );
+    result_d0_1.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
 
-    Epetra_CrsMatrix result6( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result5, false, result6, false );
-    result6.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result6 );
+    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, rowMap, NN, false );
+    EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_1, false, result_d0_2, false );
+    result_d0_2.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
 
-    // Unneeded step
-    Epetra_CrsMatrix result7( Epetra_DataAccess::Copy, rowMap, NN, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result6, false, result7, false );
-    result7.FillComplete( mpiMap, graphNodeMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-7.mat", result7 );
-    return result7;
+    return result_d0_2;
   };
 
   Epetra_CrsMatrix ghosted( multiply() );
