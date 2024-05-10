@@ -57,7 +57,7 @@ SeismicityRate::SeismicityRate( const string & name,
     setDescription( "Fault shear direction" );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );  
+    setInputFlag( InputFlags::FALSE );
 }
 
 void SeismicityRate::postProcessInput()
@@ -166,7 +166,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
 
     string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
-    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
       // Initialize biotCoefficient as const arrayView before passing it through the lambda cast
       arrayView1d< real64 const > const biotCoefficient = castedPorousSolid.getBiotCoefficient();
