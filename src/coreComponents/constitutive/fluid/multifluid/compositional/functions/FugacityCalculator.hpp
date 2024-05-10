@@ -47,27 +47,50 @@ struct FugacityCalculator
    */
   template< int USD >
   GEOS_HOST_DEVICE
-  static void computeLogFugacityCoefficients( integer const numComps,
-                                              real64 const pressure,
-                                              real64 const temperature,
-                                              arraySlice1d< real64 const, USD > const & composition,
-                                              ComponentProperties::KernelWrapper const & componentProperties,
-                                              EquationOfState::KernelWrapper const & equationOfState,
-                                              integer const phaseIndex,
-                                              arraySlice1d< real64 > const & logFugacity );
+  static void computeLogFugacity( integer const numComps,
+                                  real64 const pressure,
+                                  real64 const temperature,
+                                  arraySlice1d< real64 const, USD > const & composition,
+                                  ComponentProperties::KernelWrapper const & componentProperties,
+                                  EquationOfState::KernelWrapper const & equationOfState,
+                                  integer const phaseIndex,
+                                  arraySlice1d< real64 > const & logFugacity );
 
+  /**
+   * @brief Calculate the derivatives for the log fugacity for a phase
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] composition composition of the phase
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] equationOfState The equation of state parameters
+   * @param[in] phaseIndex The index of the phase within the equation of state parameters
+   * @param[in] logFugacity the calculated log fugacity
+   * @param[out] logFugacityDerivs the calculated derivatives of the log fugacity
+   */
+  template< int USD1, int USD2 >
+  GEOS_HOST_DEVICE
+  static void computeLogFugacityDerivatives( integer const numComps,
+                                             real64 const pressure,
+                                             real64 const temperature,
+                                             arraySlice1d< real64 const, USD1 > const & composition,
+                                             ComponentProperties::KernelWrapper const & componentProperties,
+                                             EquationOfState::KernelWrapper const & equationOfState,
+                                             integer const phaseIndex,
+                                             arraySlice1d< real64 const > const & logFugacity,
+                                             arraySlice2d< real64, USD2 > const & logFugacityDerivs );
 };
 
 template< int USD >
 GEOS_HOST_DEVICE
-void FugacityCalculator::computeLogFugacityCoefficients( integer const numComps,
-                                                         real64 const pressure,
-                                                         real64 const temperature,
-                                                         arraySlice1d< real64 const, USD > const & composition,
-                                                         ComponentProperties::KernelWrapper const & componentProperties,
-                                                         EquationOfState::KernelWrapper const & equationOfState,
-                                                         integer const phaseIndex,
-                                                         arraySlice1d< real64 > const & logFugacity )
+void FugacityCalculator::computeLogFugacity( integer const numComps,
+                                             real64 const pressure,
+                                             real64 const temperature,
+                                             arraySlice1d< real64 const, USD > const & composition,
+                                             ComponentProperties::KernelWrapper const & componentProperties,
+                                             EquationOfState::KernelWrapper const & equationOfState,
+                                             integer const phaseIndex,
+                                             arraySlice1d< real64 > const & logFugacity )
 {
   integer const eos_type = equationOfState.m_types[phaseIndex];
   if( EquationOfState::equals( eos_type, EquationOfStateType::PengRobinson ))
@@ -89,6 +112,43 @@ void FugacityCalculator::computeLogFugacityCoefficients( integer const numComps,
                                     composition,
                                     componentProperties,
                                     logFugacity );
+  }
+}
+
+template< int USD1, int USD2 >
+GEOS_HOST_DEVICE
+void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
+                                                        real64 const pressure,
+                                                        real64 const temperature,
+                                                        arraySlice1d< real64 const, USD1 > const & composition,
+                                                        ComponentProperties::KernelWrapper const & componentProperties,
+                                                        EquationOfState::KernelWrapper const & equationOfState,
+                                                        integer const phaseIndex,
+                                                        arraySlice1d< real64 const > const & logFugacity,
+                                                        arraySlice2d< real64, USD2 > const & logFugacityDerivs )
+{
+  integer const eos_type = equationOfState.m_types[phaseIndex];
+  if( EquationOfState::equals( eos_type, EquationOfStateType::PengRobinson ))
+  {
+    CubicEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    logFugacity,
+                                    logFugacityDerivs );
+  }
+  else if( EquationOfState::equals( eos_type, EquationOfStateType::SoaveRedlichKwong ))
+  {
+    CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    logFugacity,
+                                    logFugacityDerivs );
   }
 }
 
