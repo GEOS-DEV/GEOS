@@ -88,7 +88,7 @@ public:
    * @brief save the old state
    * @param subRegion
    */
-  void saveOldState( ElementSubRegionBase & subRegion );
+  void saveOldState( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief
@@ -103,6 +103,18 @@ public:
                                   real64 const (&faultShearProjectionTensor)[6],
                                   arrayView1d< real64 > const sig,
                                   arrayView1d< real64 > const tau ) const;
+
+  /**
+   * @brief called in SolverStep before member stress solver is called to
+   *  project the initial stress state to pre-defined fault orientations,
+   *  only when cycleNumber == 0
+   * @param cycleNumber current cycle number
+   * @param domain The DomainPartition of the problem
+   */
+  void initializeFaultTraction( real64 const time_n,
+                                integer const cycleNumber,
+                                DomainPartition & domain ) const;
+
 
 protected:
 
@@ -119,15 +131,6 @@ protected:
                          DomainPartition & domain ) const;
 
 
-
-  /**
-   * @brief called in SolverStep before member stress solver is called to
-   *  project the initial stress state to pre-defined fault orientations,
-   *  only when cycleNumber == 0
-   * @param cycleNumber current cycle number
-   * @param domain The DomainPartition of the problem
-   */
-  void initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain );
 
   void constructFaultStressProjectionTensors( real64 ( &faultNormalProjectionTensor )[6],
                                               real64 ( &faultShearProjectionTensor )[6] ) const;

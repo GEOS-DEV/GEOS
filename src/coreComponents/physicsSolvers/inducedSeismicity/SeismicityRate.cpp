@@ -173,20 +173,12 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
 
       // To calculate the action of the total stress on the fault from our previous calculations,
       // we need to project the action of the pore pressure on the stress tensor onto the fault
-      forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-      {
-        // Form pressure as tensor
-        real64 pressureTensor[ 6 ]{};
-        LvArray::tensorOps::symAddIdentity< 3 >( pressureTensor, -biotCoefficient[k]*pres[k] );
-
-        // Project pressure tensor onto fault orientations
-        real64 const pressureOnFaultNormal = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultNormalProjectionTensor );
-        real64 const pressureOnFaultShear  = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultShearProjectionTensor );
-
-        // Calculate total stress on the faults
-        sig[k] += pressureOnFaultNormal;
-        tau[k] += pressureOnFaultShear;
-      } );
+      computeTotalStressOnFault( biotCoefficient,
+                                 pres,
+                                 faultNormalProjectionTensor,
+                                 faultShearProjectionTensor,
+                                 sig,
+                                 tau );
     } );
   }
 }
@@ -216,7 +208,7 @@ void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > cons
   } );
 }
 
-void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain )
+void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain ) const
 {
   // Only call initialization step before stress solver has been called for first time step
   if( cycleNumber == 0 )
@@ -386,7 +378,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
   return dt;
 }
 
-void SeismicityRate::saveOldState( ElementSubRegionBase & subRegion )
+void SeismicityRate::saveOldState( ElementSubRegionBase & subRegion ) const
 {
   // Retrieve field variables
   arrayView1d< real64 > const sig   = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
