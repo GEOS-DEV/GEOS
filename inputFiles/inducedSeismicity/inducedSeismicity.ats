@@ -16,7 +16,7 @@ decks = [
         restart_step=40,
         check_step=90,
         restartcheck_params=RestartcheckParameters(atol=1e-4, rtol=1e-3)),
-        TestDeck(
+     TestDeck(
         name="SeismicityRate_analytical_verification_smoke",
         description="Prescribed logarithmic stressing history",
         partitions=((1, 1, 1), ),
