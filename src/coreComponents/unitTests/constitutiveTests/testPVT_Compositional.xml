@@ -12,7 +12,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      output="testPVT_Compositional_liveOilPR.txt"
+      baseline="testPVT_Compositional_liveOilPR.txt"
       logLevel="1"/>
     <PVTDriver
       name="testLiveOilPRLBC"
@@ -24,7 +24,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      output="testPVT_Compositional_liveOilPRLBC.txt"
+      baseline="testPVT_Compositional_liveOilPRLBC.txt"
       logLevel="1"/>
     <PVTDriver
       name="testLiveOilSRK"
@@ -36,7 +36,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      output="testPVT_Compositional_liveOilSRK.txt"
+      baseline="testPVT_Compositional_liveOilSRK.txt"
       logLevel="1"/>
     <PVTDriver
       name="testLiveOilSRKLBC"
@@ -48,7 +48,7 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      output="testPVT_Compositional_liveOilSRKLBC.txt"
+      baseline="testPVT_Compositional_liveOilSRKLBC.txt"
       logLevel="1"/>
   </Tasks>
 

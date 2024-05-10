@@ -55,7 +55,8 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfStateNames ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of equation of state types for each phase\n* " + EnumStrings< compositional::EquationOfStateType >::concat( "\n* " ) );
+    setDescription( "List of equation of state types for each phase. Valid options:\n* " +
+                    EnumStrings< compositional::EquationOfStateType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -91,19 +92,10 @@ integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterP
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-// Naming conventions
-namespace compositional
-{
-template< int NP > struct PhaseName {};
-template<> struct PhaseName< 2 > { static constexpr char const * catalogName() { return "TwoPhase"; } };
-template<> struct PhaseName< 3 > { static constexpr char const * catalogName() { return "ThreePhase"; } };
-}
-
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
-  return GEOS_FMT( "Compositional{}Fluid{}{}",
-                   compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
+  return GEOS_FMT( "Compositional{}Fluid{}",
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
 }

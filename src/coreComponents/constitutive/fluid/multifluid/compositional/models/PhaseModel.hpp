@@ -48,9 +48,9 @@ struct PhaseModel
   /**
    * @brief Constructor of the struct, in charge of the instantiation of the submodels
    * @param[in] phaseModelName name of the phase model, used only in the instantiation of the submodels
-   * @param[in] phaseIndex the index of the phase
    * @param[in] componentProperties Compositional fluid model component parameters
    * @param[in] equationOfState Equation of state parameters
+   * @param[in] phaseIndex the index of the phase
    */
   PhaseModel( string const & phaseModelName,
               ComponentProperties const & componentProperties,

@@ -539,43 +539,6 @@ INSTANTIATE_TEST_SUITE_P(
     )
   );
 
-
-#ifdef HAHAHAHA
-INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash2CompPR,
-  ::testing::Values(
-    FlashData< 2 >( 1.000000e+05, 1.231500e+02, { 0.10000000, 0.90000000 }, true, 0.89111708, { 0.90429170, 0.09570830 }, { 0.00172601, 0.99827399 } )
-    )
-  );
-
-INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash2CompSRK,
-  ::testing::Values(
-    FlashData< 2 >( 1.000000e+05, 1.231500e+02, { 0.10000000, 0.90000000 }, true, 0.89111708, { 0.90429170, 0.09570830 }, { 0.00172601, 0.99827399 } )
-    )
-  );
-
-INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash4CompPR,
-  ::testing::Values(
-    FlashData< 4 >( 1.000000e+05, 3.331500e+02, { 0.99000000, 0.00000000, 0.00000000, 0.01000000 }, true, 1.00000000, { 0.00000033, 0.00000000, 0.00000000, 0.99999967 },
-                    { 0.99000000, 0.00000000, 0.00000000, 0.01000000 } )
-    )
-  );
-
-INSTANTIATE_TEST_SUITE_P(
-  NegativeTwoPhaseFlash,
-  NegativeTwoPhaseFlash4CompSRK,
-  ::testing::Values(
-    FlashData< 4 >( 1.000000e+05, 1.931500e+02, { 0.05695100, 0.10481800, 0.10482200, 0.73340900 }, true, 0.05645957, { 0.00052723, 0.11109010, 0.11109434, 0.77728833 },
-                    { 0.99989306, 0.00000003, 0.00000000, 0.00010691 } )
-    )
-  );
-#endif
-
 } // testing
 
 } // geos

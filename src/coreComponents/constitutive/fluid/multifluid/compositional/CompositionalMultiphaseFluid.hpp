@@ -129,9 +129,9 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase models
-  std::unique_ptr< PHASE1 > m_phase1;
-  std::unique_ptr< PHASE2 > m_phase2;
-  std::unique_ptr< PHASE3 > m_phase3;
+  std::unique_ptr< PHASE1 > m_phase1{};
+  std::unique_ptr< PHASE2 > m_phase2{};
+  std::unique_ptr< PHASE3 > m_phase3{};
 
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
   std::unique_ptr< compositional::EquationOfState > m_equationsOfState{};
@@ -139,7 +139,7 @@ private:
   // Equation of state names
   string_array m_equationsOfStateNames;
 
-  // Standard EOS component input
+  // Standard compositional input
   array1d< real64 > m_componentCriticalPressure;
   array1d< real64 > m_componentCriticalTemperature;
   array1d< real64 > m_componentCriticalVolume;
@@ -147,7 +147,7 @@ private:
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
 
-  // backup data
+  // Backup data
   PhaseComp::ValueType m_kValues;
 };
 

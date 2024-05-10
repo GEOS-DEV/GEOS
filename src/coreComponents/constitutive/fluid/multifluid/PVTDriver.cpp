@@ -313,6 +313,10 @@ void PVTDriver::compareWithBaseline()
   {
     headerRows += getFluid().numFluidPhases();
   }
+  if( m_outputMassDensity )
+  {
+    headerRows++;
+  }
 
   string line;
   for( integer row=0; row < headerRows; ++row )
@@ -337,7 +341,9 @@ void PVTDriver::compareWithBaseline()
       GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance,
                      "Results do not match baseline at data row " << row+1
                                                                   << " (row " << row+headerRows << " with header)"
-                                                                  << " and column " << col+1, std::runtime_error );
+                                                                  << " and column " << col+1
+                                                                  << " file: " << value << ", calculated: " << m_table[row][col],
+                     std::runtime_error );
     }
   }
 

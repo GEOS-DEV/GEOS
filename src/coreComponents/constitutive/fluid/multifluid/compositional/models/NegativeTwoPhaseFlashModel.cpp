@@ -29,7 +29,7 @@ namespace compositional
 
 string NegativeTwoPhaseFlashModel::catalogName()
 {
-  return "";
+  return "TwoPhase";
 }
 
 NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,

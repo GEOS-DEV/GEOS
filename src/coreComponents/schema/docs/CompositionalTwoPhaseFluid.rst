@@ -12,7 +12,7 @@ componentCriticalVolume      real64_array       {0}      Component critical volu
 componentMolarWeight         real64_array       required Component molar weights                                                                                      
 componentNames               string_array       required List of component names                                                                                      
 componentVolumeShift         real64_array       {0}      Component volume shifts                                                                                      
-equationsOfState             string_array       required | List of equation of state types for each phase                                                               
+equationsOfState             string_array       required | List of equation of state types for each phase. Valid options:                                               
                                                          | * pr                                                                                                         
                                                          | * srk                                                                                                        
 name                         groupName          required A name is required for any non-unique nodes                                                                  
