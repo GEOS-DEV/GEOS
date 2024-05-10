@@ -37,18 +37,6 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-// provide a definition for catalogName()
-template<>
-string SinglePhasePoromechanicsConformingFractures<>::catalogName()
-{
-  return "SinglePhasePoromechanicsConformingFractures";
-}
-//template<>
-//string SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >::catalogName()
-//{
-//  return "SinglePhaseReservoirPoromechanicsConformingFractures";
-//}
-
 template< typename FLOW_SOLVER >
 SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromechanicsConformingFractures( const string & name,
                                                                                                          Group * const parent )

@@ -59,7 +59,18 @@ public:
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFractures object through the object
    * catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FLOW_SOLVER, SinglePhaseBase > )
+    {
+      return "SinglePhasePoromechanicsConformingFractures";
+    }
+    else
+    {
+      return FLOW_SOLVER::catalogName() + "PoromechanicsConformingFractures";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
