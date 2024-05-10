@@ -77,21 +77,48 @@ public:
                            real64 const & dt,
                            ElementSubRegionBase & subRegion );
 
-protected:
   /**
    * @brief called in SolverStep after member stress solver is called to
    *  project the stress state to pre-defined fault orientations
    * @param subRegion The ElementSubRegionBase that will have the stress information
    */
-  void updateFaultTraction( ElementSubRegionBase & subRegion );
+  void updateFaultTraction( ElementSubRegionBase & subRegion ) const;
 
+  /**
+   * @brief save the old state
+   * @param subRegion
+   */
+  void saveOldState( ElementSubRegionBase & subRegion );
 
+  /**
+   * @brief
+   * @param biotCoefficient
+   * @param pres
+   * @param sig
+   * @param tau
+   */
+  void computeTotalStressOnFault( arrayView1d< real64 const > const biotCoefficient,
+                                  arrayView1d< real64 const > const pres,
+                                  real64 const (&faultNormalProjectionTensor)[6],
+                                  real64 const (&faultShearProjectionTensor)[6],
+                                  arrayView1d< real64 > const sig,
+                                  arrayView1d< real64 > const tau ) const;
+
+protected:
+
+  /**
+   * @brief update the stresses either by asking the stressSolver or by applying b.c.
+   * @param time_n the current time
+   * @param dt the current time step
+   * @param cycleNumber the cycle number
+   * @param domain the DomainPartion group
+   */
   real64 updateStresses( real64 const & time_n,
                          real64 const & dt,
                          const int cycleNumber,
-                         DomainPartition & domain );
+                         DomainPartition & domain ) const;
 
-  void saveOldState( ElementSubRegionBase & subRegion );
+
 
   /**
    * @brief called in SolverStep before member stress solver is called to

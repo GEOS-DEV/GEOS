@@ -121,7 +121,7 @@ void SeismicityRate::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
+void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) const
 {
   // Retrieve field variables
   arrayView1d< real64 > const sig   = subRegion.getField< inducedSeismicity::projectedNormalTraction >();
@@ -189,6 +189,31 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion )
       } );
     } );
   }
+}
+
+void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > const biotCoefficient,
+                                                arrayView1d< real64 const > const pres,
+                                                real64 const (&faultNormalProjectionTensor)[6],
+                                                real64 const (&faultShearProjectionTensor)[6],
+                                                arrayView1d< real64 > const sig,
+                                                arrayView1d< real64 > const tau ) const
+{
+  // To calculate the action of the total stress on the fault from our previous calculations,
+  // we need to project the action of the pore pressure on the stress tensor onto the fault
+  forAll< parallelDevicePolicy<> >( sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  {
+    // Form pressure as tensor
+    real64 pressureTensor[ 6 ]{};
+    LvArray::tensorOps::symAddIdentity< 3 >( pressureTensor, -biotCoefficient[k]*pres[k] );
+
+    // Project pressure tensor onto fault orientations
+    real64 const pressureOnFaultNormal = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultNormalProjectionTensor );
+    real64 const pressureOnFaultShear  = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultShearProjectionTensor );
+
+    // Calculate total stress on the faults
+    sig[k] += pressureOnFaultNormal;
+    tau[k] += pressureOnFaultShear;
+  } );
 }
 
 void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain )
@@ -286,7 +311,7 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
 real64 SeismicityRate::updateStresses( real64 const & time_n,
                                        real64 const & dt,
                                        const int cycleNumber,
-                                       DomainPartition & domain )
+                                       DomainPartition & domain ) const
 {
   // Call member variable stress solver to update the stress state
   if( m_stressSolver )
