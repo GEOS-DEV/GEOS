@@ -39,18 +39,21 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
-                               BlackOilFluid,
-                               CompositionalTwoPhaseConstantViscosity,
+  ConstitutivePassThruHandler< BlackOilFluid,
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid,
+// Activating these two on device builds will lead to compiler segfault.
+// Need to split compilation units for all the options
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
+#endif
+                               CompositionalTwoPhaseConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
-                               CO2BrinePhillipsFluid,
-                               CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
+                               DeadOilFluid
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -58,18 +61,19 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
-                               BlackOilFluid,
-                               CompositionalTwoPhaseConstantViscosity,
+  ConstitutivePassThruHandler< BlackOilFluid,
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid,
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
+#endif
+                               CompositionalTwoPhaseConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
-                               CO2BrinePhillipsFluid,
-                               CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid
-                               //,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
+                               DeadOilFluid
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 

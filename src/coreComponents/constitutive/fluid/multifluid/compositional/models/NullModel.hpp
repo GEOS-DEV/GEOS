@@ -48,6 +48,7 @@ public:
                 bool useMass ) const
   {
     GEOS_UNUSED_VAR( componentProperties,
+                     equationOfState,
                      pressure, temperature,
                      phaseComposition, dPhaseComposition,
                      value, dValue,
