@@ -39,17 +39,17 @@ def getParametersFromXML( xmlFilePath ):
 
 def curve_check_solution(**kwargs):
      
-    xmlFilePath = "./SeismicityRate_verificationProblem_smoke.xml"
+    xmlFilePath = "./SeismicityRate_analytical_verification_smoke.xml"
     parameters = getParametersFromXML( xmlFilePath )
 
     analytical_solution = analyticalSolution( parameters )
 
     times = np.squeeze(kwargs['seismicityRate Time'][:])
     analytical_rates = []
+    dt = 3600.0
     for time in times:
         tau = analytical_solution.compute_shear_stress(time, dt)
         analytical_rate = analytical_solution.compute_seismic_rate(time, dt, tau)
-        times.append(time)
         analytical_rates.append(analytical_rate)
 
     return np.array(analytical_rates)   
