@@ -61,6 +61,7 @@ public:
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE & inputConstitutiveType,
                     arrayView1d< globalIndex const > const uDofNumber,
+                    arrayView1d< globalIndex const > const bDofNumber,
                     globalIndex const rankOffset,
                     CRSMatrixView< real64, globalIndex const > const inputMatrix,
                     arrayView1d< real64 > const inputRhs,
@@ -79,7 +80,9 @@ public:
           inputRhs,
           inputDt,
           inputGravityVector ),
-    m_bubbleElems( elementSubRegion.bubbleElementsList())
+    m_bDofNumber( bDofNumber ),
+    m_bubbleElems( elementSubRegion.bubbleElementsList() ),
+    m_elemsToFaces(elementSubRegion.faceElementsList() )
   {}
 
   struct StackVariables  // it's better not to inherit all the stack variable. There is a lot of unused ones.
@@ -160,11 +163,21 @@ public:
 
       for( int i=0; i<3; ++i )
       {
-        //stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
-        //stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
+        stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
+        stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
         stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
         //stack.uLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
       }
+    }
+
+
+    localIndex const localFaceIndex = m_elemsToFaces[k];
+
+    for( int i=0; i<3; ++i )
+    {
+      // need to grab the index.
+      stack.bEqnRowIndices[i] = m_bDofNumber[localFaceIndex] + i - m_dofRankOffset;
+      stack.bColIndices[i]    = m_bDofNumber[localFaceIndex] + i;
     }
   }
 
@@ -236,12 +249,18 @@ public:
 
 protected:
 
+  /// The global degree of freedom number of bubble
+  arrayView1d< globalIndex const > const m_bDofNumber;
+
   arrayView1d< localIndex const > const m_bubbleElems;
+
+  arrayView2d< localIndex const > const  m_elemsToFaces;
 
 };
 
 /// The factory used to construct a QuasiStatic kernel.
 using ALMBubbleFactory = finiteElement::KernelFactory< ALMBubbleKernels,
+                                                       arrayView1d< globalIndex const > const,
                                                        arrayView1d< globalIndex const > const,
                                                        globalIndex const,
                                                        CRSMatrixView< real64, globalIndex const > const,

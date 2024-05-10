@@ -567,15 +567,20 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
     //ElementRegionManager & elemManager = mesh.getElemManager();
 
     string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
 
     solidMechanicsALMKernels::ALMBubbleFactory kernelFactory( dispDofNumber,
+                                                              bubbleDofNumber,
                                                               dofManager.rankOffset(),
                                                               localMatrix,
                                                               localRhs,
