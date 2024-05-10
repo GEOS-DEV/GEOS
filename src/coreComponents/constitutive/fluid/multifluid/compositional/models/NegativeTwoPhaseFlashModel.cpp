@@ -33,8 +33,9 @@ string NegativeTwoPhaseFlashModel::catalogName()
 }
 
 NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
-                                                        ComponentProperties const & componentProperties ):
-  FunctionBase( name, componentProperties )
+                                                        ComponentProperties const & componentProperties,
+                                                        EquationOfState const & equationOfState ):
+  FunctionBase( name, componentProperties, equationOfState )
 {}
 
 typename NegativeTwoPhaseFlashModel::KernelWrapper

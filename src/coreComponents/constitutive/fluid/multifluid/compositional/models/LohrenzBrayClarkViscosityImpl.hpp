@@ -35,6 +35,7 @@ namespace compositional
 template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
+                                               EquationOfState::KernelWrapper const & equationOfState,
                                                real64 const & pressure,
                                                real64 const & temperature,
                                                arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -46,6 +47,7 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
 {
   GEOS_UNUSED_VAR( pressure );   // No-direct pressure dependence (instead through density)
   GEOS_UNUSED_VAR( useMass );
+  GEOS_UNUSED_VAR( equationOfState );
 
   integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   integer constexpr maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;

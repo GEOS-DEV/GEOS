@@ -29,13 +29,15 @@ namespace constitutive
 namespace compositional
 {
 
-LohrenzBrayClarkViscosityUpdate::LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type )
-  : m_mixing_type( mixing_type )
+LohrenzBrayClarkViscosityUpdate::LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type ):
+  m_mixing_type( mixing_type )
 {}
 
 LohrenzBrayClarkViscosity::LohrenzBrayClarkViscosity( string const & name,
-                                                      ComponentProperties const & componentProperties ):
-  FunctionBase( name, componentProperties )
+                                                      ComponentProperties const & componentProperties,
+                                                      EquationOfState const & equationOfState,
+                                                      integer const phaseIndex ):
+  FunctionBase( name, componentProperties, equationOfState, phaseIndex )
 {}
 
 LohrenzBrayClarkViscosity::KernelWrapper

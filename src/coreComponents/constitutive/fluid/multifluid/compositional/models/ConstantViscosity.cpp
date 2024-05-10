@@ -28,8 +28,10 @@ namespace compositional
 {
 
 ConstantViscosity::ConstantViscosity( string const & name,
-                                      ComponentProperties const & componentProperties ):
-  FunctionBase( name, componentProperties )
+                                      ComponentProperties const & componentProperties,
+                                      EquationOfState const & equationOfState,
+                                      integer const phaseIndex ):
+  FunctionBase( name, componentProperties, equationOfState, phaseIndex )
 {}
 
 ConstantViscosity::KernelWrapper

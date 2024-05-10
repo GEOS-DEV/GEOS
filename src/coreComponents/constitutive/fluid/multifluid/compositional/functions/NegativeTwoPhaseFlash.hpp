@@ -87,7 +87,7 @@ public:
    * @param[out] liquidCompositionDerivs derivatives of the calculated liquid phase composition
    * @param[out] vapourCompositionDerivs derivatives of the calculated vapour phase composition
    */
-  template< integer USD1, integer USD2 >
+  template< integer USD1, integer USD2, integer USD3 >
   GEOS_HOST_DEVICE
   static void computeDerivatives( integer const numComps,
                                   real64 const pressure,
@@ -98,9 +98,9 @@ public:
                                   real64 const & vapourFraction,
                                   arraySlice1d< real64 const, USD1 > const & liquidComposition,
                                   arraySlice1d< real64 const, USD1 > const & vapourComposition,
-                                  arraySlice1d< real64, USD1 > const & vapourFractionDerivs,
-                                  arraySlice2d< real64, USD2 > const & liquidCompositionDerivs,
-                                  arraySlice2d< real64, USD2 > const & vapourCompositionDerivs );
+                                  arraySlice1d< real64, USD2 > const & vapourFractionDerivs,
+                                  arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
+                                  arraySlice2d< real64, USD3 > const & vapourCompositionDerivs );
 private:
   /**
    * @brief Calculate which components are present.
@@ -342,7 +342,7 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   return converged;
 }
 
-template< integer USD1, integer USD2 >
+template< integer USD1, integer USD2, integer USD3 >
 GEOS_HOST_DEVICE
 void NegativeTwoPhaseFlash::computeDerivatives(
   integer const numComps,
@@ -354,9 +354,9 @@ void NegativeTwoPhaseFlash::computeDerivatives(
   real64 const & vapourFraction,
   arraySlice1d< real64 const, USD1 > const & liquidComposition,
   arraySlice1d< real64 const, USD1 > const & vapourComposition,
-  arraySlice1d< real64, USD1 > const & vapourFractionDerivs,
-  arraySlice2d< real64, USD2 > const & liquidCompositionDerivs,
-  arraySlice2d< real64, USD2 > const & vapourCompositionDerivs )
+  arraySlice1d< real64, USD2 > const & vapourFractionDerivs,
+  arraySlice2d< real64, USD3 > const & liquidCompositionDerivs,
+  arraySlice2d< real64, USD3 > const & vapourCompositionDerivs )
 {
   constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
   constexpr integer maxNumDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;

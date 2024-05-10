@@ -151,22 +151,14 @@ private:
   PhaseComp::ValueType m_kValues;
 };
 
-using CompositionalTwoPhasePengRobinsonConstantViscosity = CompositionalMultiphaseFluid<
+using CompositionalTwoPhaseConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
-using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity = CompositionalMultiphaseFluid<
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
-using CompositionalTwoPhasePengRobinsonLBCViscosity = CompositionalMultiphaseFluid<
-  compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
-using CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity = CompositionalMultiphaseFluid<
-  compositional::NegativeTwoPhaseFlashModel,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

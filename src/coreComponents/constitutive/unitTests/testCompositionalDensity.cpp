@@ -53,7 +53,7 @@ struct FluidData< 9 >
   }
 };
 
-template< int NC, typename EOS_TYPE >
+template< int NC, EquationOfStateType EOS_TYPE >
 class CompositionalDensityTestFixture :  public ::testing::TestWithParam< DensityData< NC > >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -66,7 +66,10 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_density = std::make_unique< CompositionalDensity< EOS_TYPE > >( "PhaseDensity", componentProperties );
+    string_array eos_names;
+    eos_names.emplace_back( EnumStrings< EquationOfStateType >::toString( EOS_TYPE ) );
+    m_equationOfState = std::make_unique< EquationOfState >( eos_names );
+    m_density = std::make_unique< CompositionalDensity >( "PhaseDensity", componentProperties, *m_equationOfState, 0 );
   }
 
   ~CompositionalDensityTestFixture() = default;
@@ -81,6 +84,7 @@ public:
     real64 const expectedMassDensity = std::get< 4 >( data );
 
     auto componentProperties = m_fluid->createKernelWrapper();
+    auto equationOfState = m_equationOfState->createKernelWrapper();
     auto kernelWrapper = this->m_density->createKernelWrapper();
 
     real64 molarDensity = 0.0;
@@ -88,6 +92,7 @@ public:
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
     kernelWrapper.compute( componentProperties,
+                           equationOfState,
                            pressure,
                            temperature,
                            phaseComposition.toSliceConst(),
@@ -109,6 +114,7 @@ public:
     TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
 
     auto componentProperties = m_fluid->createKernelWrapper();
+    auto equationOfState = m_equationOfState->createKernelWrapper();
     auto kernelWrapper = m_density->createKernelWrapper();
 
     real64 molarDensity = 0.0;
@@ -117,6 +123,7 @@ public:
     stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
 
     kernelWrapper.compute( componentProperties,
+                           equationOfState,
                            pressure,
                            temperature,
                            phaseComposition.toSliceConst(),
@@ -130,7 +137,8 @@ public:
       real64 densityMolar = 0.0;
       real64 densityMass = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      kernelWrapper.compute( componentProperties, p, t,
+      kernelWrapper.compute( componentProperties, equationOfState,
+                             p, t,
                              zmf.toSliceConst(),
                              densityMolar,
                              tempDerivs.toSlice(),
@@ -197,12 +205,13 @@ public:
   }
 
 protected:
-  std::unique_ptr< CompositionalDensity< EOS_TYPE > > m_density{};
+  std::unique_ptr< EquationOfState > m_equationOfState{};
+  std::unique_ptr< CompositionalDensity > m_density{};
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
 
-using CompositionalDensity9CompPR = CompositionalDensityTestFixture< 9, CubicEOSPhaseModel< PengRobinsonEOS > >;
-using CompositionalDensity9CompSRK = CompositionalDensityTestFixture< 9, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using CompositionalDensity9CompPR = CompositionalDensityTestFixture< 9, EquationOfStateType::PengRobinson >;
+using CompositionalDensity9CompSRK = CompositionalDensityTestFixture< 9, EquationOfStateType::SoaveRedlichKwong >;
 
 TEST_P( CompositionalDensity9CompPR, testDensityDerivatives )
 {

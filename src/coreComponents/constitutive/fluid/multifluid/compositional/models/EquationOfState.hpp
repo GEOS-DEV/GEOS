@@ -46,6 +46,13 @@ public:
   const EquationOfState & operator=( const EquationOfState & ) = delete;
 
   /**
+   * @brief Get the type of the quation of state for a phase
+   * @param phaseIndex The index of the phase
+   * @return The type of the equation of state for the phase
+   */
+  integer getEquationOfStateType( integer const & phaseIndex ) const;
+
+  /**
    * @brief A kernel wrapper for the equation of state parameters
    */
   struct KernelWrapper

@@ -38,6 +38,7 @@ public:
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                EquationOfState::KernelWrapper const & equationOfState,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -57,10 +58,11 @@ public:
 class NullModel : public FunctionBase
 {
 public:
-
   NullModel( string const & name,
-             ComponentProperties const & componentProperties ):
-    FunctionBase( name, componentProperties )
+             ComponentProperties const & componentProperties,
+             EquationOfState const & equationOfState,
+             integer const phaseIndex ):
+    FunctionBase( name, componentProperties, equationOfState, phaseIndex )
   {}
 
   virtual ~NullModel() override = default;
@@ -84,8 +86,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper();
-  };
-
+  }
 };
 
 } // end namespace compositional

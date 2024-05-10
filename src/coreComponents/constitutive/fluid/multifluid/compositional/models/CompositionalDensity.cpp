@@ -25,7 +25,52 @@ namespace constitutive
 {
 
 namespace compositional
-{} // namespace compositional
+{
+
+CompositionalDensity::CompositionalDensity( string const & name,
+                                            ComponentProperties const & componentProperties,
+                                            EquationOfState const & equationOfState,
+                                            integer const phaseIndex ):
+  FunctionBase( name, componentProperties, equationOfState, phaseIndex ),
+  m_phaseIndex( phaseIndex )
+{
+  // Calculate the dimensional volume shift
+  m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
+  calculateDimensionalVolumeShift( componentProperties,
+                                   equationOfState,
+                                   m_componentDimensionalVolumeShift );
+}
+
+CompositionalDensityUpdate::CompositionalDensityUpdate( arrayView1d< real64 const > const & volumeShift,
+                                                        integer const eosType ):
+  m_componentDimensionalVolumeShift( volumeShift ),
+  m_eosType( eosType )
+{}
+
+CompositionalDensity::KernelWrapper CompositionalDensity::createKernelWrapper() const
+{
+  integer const eosType = m_equationOfState.getEquationOfStateType( m_phaseIndex );
+  return KernelWrapper( m_componentDimensionalVolumeShift, eosType );
+}
+
+void CompositionalDensity::calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                                            EquationOfState const & equationOfState,
+                                                            arraySlice1d< real64 > componentDimensionalVolumeShift )
+{
+  integer const eosType = equationOfState.getEquationOfStateType( m_phaseIndex );
+  if( EquationOfState::equals( eosType, EquationOfStateType::PengRobinson ))
+  {
+    CubicEOSPhaseModel< PengRobinsonEOS >::calculateDimensionalVolumeShift( componentProperties,
+                                                                            componentDimensionalVolumeShift );
+  }
+  else if( EquationOfState::equals( eosType, EquationOfStateType::SoaveRedlichKwong ))
+  {
+    CubicEOSPhaseModel< SoaveRedlichKwongEOS >::calculateDimensionalVolumeShift( componentProperties,
+                                                                                 componentDimensionalVolumeShift );
+  }
+}
+
+} // namespace compositional
 
 } // namespace constitutive
 

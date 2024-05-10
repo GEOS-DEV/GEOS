@@ -50,6 +50,7 @@ public:
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                EquationOfState::KernelWrapper const & equationOfState,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -264,9 +265,11 @@ class LohrenzBrayClarkViscosity : public FunctionBase
 {
 public:
   LohrenzBrayClarkViscosity( string const & name,
-                             ComponentProperties const & componentProperties );
+                             ComponentProperties const & componentProperties,
+                             EquationOfState const & equationOfState,
+                             integer const phaseIndex );
 
-  static string catalogName() { return "LBC"; }
+  static string catalogName() { return "LohrenzBrayClarkViscosity"; }
 
   FunctionType functionType() const override
   {

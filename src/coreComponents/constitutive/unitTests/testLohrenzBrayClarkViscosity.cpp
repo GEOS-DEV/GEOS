@@ -67,8 +67,11 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_density = std::make_unique< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > >( "PhaseDensity", componentProperties );
-    m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties );
+    string_array eos_names;
+    eos_names.emplace_back( EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson ) );
+    m_equationOfState = std::make_unique< EquationOfState >( eos_names );
+    m_density = std::make_unique< CompositionalDensity >( "PhaseDensity", componentProperties, *m_equationOfState, 0 );
+    m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties, *m_equationOfState, 0 );
   }
 
   ~LohrenzBrayClarkViscosityTestFixture() = default;
@@ -88,12 +91,14 @@ public:
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
     auto componentProperties = m_fluid->createKernelWrapper();
+    auto equationOfState = m_equationOfState->createKernelWrapper();
     auto densityKernelWrapper = m_density->createKernelWrapper();
     auto viscosityKernelWrapper = m_viscosity->createKernelWrapper();
 
     viscosityKernelWrapper.setMixingType( mixing_type );
 
     densityKernelWrapper.compute( componentProperties,
+                                  equationOfState,
                                   pressure,
                                   temperature,
                                   phaseComposition.toSliceConst(),
@@ -104,6 +109,7 @@ public:
                                   false );
 
     viscosityKernelWrapper.compute( componentProperties,
+                                    equationOfState,
                                     pressure,
                                     temperature,
                                     phaseComposition.toSliceConst(),
@@ -125,6 +131,7 @@ public:
     TestFluid< NC >::createArray( phaseComposition, std::get< 3 >( data ));
 
     auto componentProperties = m_fluid->createKernelWrapper();
+    auto equationOfState = m_equationOfState->createKernelWrapper();
     auto densityKernelWrapper = m_density->createKernelWrapper();
     auto viscosityKernelWrapper = m_viscosity->createKernelWrapper();
 
@@ -138,6 +145,7 @@ public:
     stackArray1d< real64, numDofs > viscosityDerivs( numDofs );
 
     densityKernelWrapper.compute( componentProperties,
+                                  equationOfState,
                                   pressure,
                                   temperature,
                                   phaseComposition.toSliceConst(),
@@ -148,6 +156,7 @@ public:
                                   false );
 
     viscosityKernelWrapper.compute( componentProperties,
+                                    equationOfState,
                                     pressure,
                                     temperature,
                                     phaseComposition.toSliceConst(),
@@ -162,9 +171,9 @@ public:
       real64 densityMass = 0.0;
       real64 phaseViscosity = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      densityKernelWrapper.compute( componentProperties, p, t, zmf.toSliceConst(),
+      densityKernelWrapper.compute( componentProperties, equationOfState, p, t, zmf.toSliceConst(),
                                     densityMolar, tempDerivs.toSlice(), densityMass, tempDerivs.toSlice(), false );
-      viscosityKernelWrapper.compute( componentProperties, p, t, zmf.toSliceConst(),
+      viscosityKernelWrapper.compute( componentProperties, equationOfState, p, t, zmf.toSliceConst(),
                                       densityMass, tempDerivs.toSliceConst(), phaseViscosity, tempDerivs.toSlice(), false );
       return phaseViscosity;
     };
@@ -210,7 +219,8 @@ public:
 
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
-  std::unique_ptr< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > > m_density{};
+  std::unique_ptr< EquationOfState > m_equationOfState{};
+  std::unique_ptr< CompositionalDensity > m_density{};
   std::unique_ptr< LohrenzBrayClarkViscosity > m_viscosity{};
 };
 

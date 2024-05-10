@@ -38,6 +38,7 @@ public:
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                EquationOfState::KernelWrapper const & equationOfState,
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -52,7 +53,9 @@ class ConstantViscosity : public FunctionBase
 {
 public:
   ConstantViscosity( string const & name,
-                     ComponentProperties const & componentProperties );
+                     ComponentProperties const & componentProperties,
+                     EquationOfState const & equationOfState,
+                     integer const phaseIndex );
 
   static string catalogName() { return ""; }
 
@@ -75,6 +78,7 @@ template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
+                                       EquationOfState::KernelWrapper const & equationOfState,
                                        real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
@@ -84,7 +88,8 @@ void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const 
                                        arraySlice1d< real64, USD2 > const & dViscosity,
                                        bool useMass ) const
 {
-  GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( componentProperties, equationOfState );
+  GEOS_UNUSED_VAR( pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition );
   GEOS_UNUSED_VAR( density, dDensity );
 

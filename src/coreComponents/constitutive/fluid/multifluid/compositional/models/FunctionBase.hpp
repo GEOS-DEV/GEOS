@@ -69,14 +69,17 @@ protected:
 
 class FunctionBase
 {
-
 public:
-
   FunctionBase( string const & name,
-                ComponentProperties const & componentProperties ):
+                ComponentProperties const & componentProperties,
+                EquationOfState const & equationOfState,
+                integer const phaseIndex = -1 ):
     m_functionName( name ),
-    m_componentProperties( componentProperties )
-  {}
+    m_componentProperties( componentProperties ),
+    m_equationOfState( equationOfState )
+  {
+    GEOS_UNUSED_VAR( phaseIndex );
+  }
 
   virtual ~FunctionBase() = default;
 
@@ -90,6 +93,9 @@ protected:
 
   /// Compositional component properties
   ComponentProperties const & m_componentProperties;
+
+  /// Equation of state parameters
+  EquationOfState const & m_equationOfState;
 };
 
 } // end namespace compositional

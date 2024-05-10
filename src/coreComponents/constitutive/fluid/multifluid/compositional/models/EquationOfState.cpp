@@ -43,6 +43,11 @@ EquationOfState::createKernelWrapper() const
   return KernelWrapper( m_types );
 }
 
+integer EquationOfState::getEquationOfStateType( integer const & phaseIndex ) const
+{
+  return m_types[phaseIndex];
+}
+
 bool EquationOfState::validateNames( string_array const & names )
 {
   for( string const & name : names )

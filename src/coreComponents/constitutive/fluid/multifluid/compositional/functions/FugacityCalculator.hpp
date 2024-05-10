@@ -92,8 +92,8 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                              integer const phaseIndex,
                                              arraySlice1d< real64 > const & logFugacity )
 {
-  integer const eos_type = equationOfState.m_types[phaseIndex];
-  if( EquationOfState::equals( eos_type, EquationOfStateType::PengRobinson ))
+  integer const eosType = equationOfState.m_types[phaseIndex];
+  if( EquationOfState::equals( eosType, EquationOfStateType::PengRobinson ))
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
     computeLogFugacityCoefficients( numComps,
@@ -103,7 +103,7 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                     componentProperties,
                                     logFugacity );
   }
-  else if( EquationOfState::equals( eos_type, EquationOfStateType::SoaveRedlichKwong ))
+  else if( EquationOfState::equals( eosType, EquationOfStateType::SoaveRedlichKwong ))
   {
     CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
     computeLogFugacityCoefficients( numComps,
@@ -127,8 +127,8 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                                         arraySlice1d< real64 const > const & logFugacity,
                                                         arraySlice2d< real64, USD2 > const & logFugacityDerivs )
 {
-  integer const eos_type = equationOfState.m_types[phaseIndex];
-  if( EquationOfState::equals( eos_type, EquationOfStateType::PengRobinson ))
+  integer const eosType = equationOfState.m_types[phaseIndex];
+  if( EquationOfState::equals( eosType, EquationOfStateType::PengRobinson ))
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
     computeLogFugacityCoefficients( numComps,
@@ -139,7 +139,7 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                     logFugacity,
                                     logFugacityDerivs );
   }
-  else if( EquationOfState::equals( eos_type, EquationOfStateType::SoaveRedlichKwong ))
+  else if( EquationOfState::equals( eosType, EquationOfStateType::SoaveRedlichKwong ))
   {
     CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
     computeLogFugacityCoefficients( numComps,

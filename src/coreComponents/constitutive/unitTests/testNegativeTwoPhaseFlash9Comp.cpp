@@ -19,6 +19,7 @@
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;
+using namespace geos::constitutive::multifluid;
 
 namespace geos
 {
@@ -78,9 +79,10 @@ public:
     TestFluid< numComps >::createArray( expectedVapourComposition, std::get< 6 >( data ));
 
     real64 vapourFraction = -1.0;
-    stackArray1d< real64, numComps > liquidComposition( numComps );
-    stackArray1d< real64, numComps > vapourComposition( numComps );
-    stackArray2d< real64, numComps > kValues( 1, numComps );
+    StackArray< real64, 4, 2*numComps, LAYOUT_PHASE_COMP > phaseCompositions( 1, 1, 2, numComps );
+    auto const liquidComposition = phaseCompositions[0][0][0];
+    auto const vapourComposition = phaseCompositions[0][0][1];
+    StackArray< real64, 4, numComps, LAYOUT_PHASE_COMP > kValues( 1, 1, 1, numComps );
     kValues.zero();
 
     bool status = NegativeTwoPhaseFlash::compute( numComps,
@@ -89,10 +91,10 @@ public:
                                                   composition.toSliceConst(),
                                                   componentProperties,
                                                   equationOfState,
-                                                  kValues.toSlice(),
+                                                  kValues[0][0],
                                                   vapourFraction,
-                                                  liquidComposition.toSlice(),
-                                                  vapourComposition.toSlice() );
+                                                  liquidComposition,
+                                                  vapourComposition );
 
     // Check the flash success result
     ASSERT_EQ( expectedStatus, status );
@@ -137,9 +139,10 @@ public:
     TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
 
     real64 vapourFraction = -1.0;
-    stackArray1d< real64, numComps > liquidComposition( numComps );
-    stackArray1d< real64, numComps > vapourComposition( numComps );
-    stackArray2d< real64, numComps > kValues( 1, numComps );
+    StackArray< real64, 4, 2*numComps, LAYOUT_PHASE_COMP > phaseCompositions( 1, 1, 2, numComps );
+    auto const liquidComposition = phaseCompositions[0][0][0];
+    auto const vapourComposition = phaseCompositions[0][0][1];
+    StackArray< real64, 4, numComps, LAYOUT_PHASE_COMP > kValues( 1, 1, 1, numComps );
     kValues.zero();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
@@ -158,8 +161,9 @@ public:
     };
 
     auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
-      stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
-      stackArray1d< real64, numComps > displacedVapourComposition( numComps );
+      StackArray< real64, 4, 2*numComps, LAYOUT_PHASE_COMP > displacedPhaseCompositions( 1, 1, 2, numComps );
+      auto const displacedLiquidComposition = displacedPhaseCompositions[0][0][0];
+      auto const displacedVapourComposition = displacedPhaseCompositions[0][0][1];
 
       NegativeTwoPhaseFlash::compute( numComps,
                                       p,
@@ -167,10 +171,10 @@ public:
                                       zmf.toSliceConst(),
                                       componentProperties,
                                       equationOfState,
-                                      kValues.toSlice(),
+                                      kValues[0][0],
                                       values[0],
-                                      displacedLiquidComposition.toSlice(),
-                                      displacedVapourComposition.toSlice() );
+                                      displacedLiquidComposition,
+                                      displacedVapourComposition );
       for( integer ic = 0; ic < numComps; ++ic )
       {
         values[1+ic] = displacedLiquidComposition[ic];
@@ -184,10 +188,10 @@ public:
                                     composition.toSliceConst(),
                                     componentProperties,
                                     equationOfState,
-                                    kValues.toSlice(),
+                                    kValues[0][0],
                                     vapourFraction,
-                                    liquidComposition.toSlice(),
-                                    vapourComposition.toSlice() );
+                                    liquidComposition,
+                                    vapourComposition );
 
     NegativeTwoPhaseFlash::computeDerivatives( numComps,
                                                pressure,
