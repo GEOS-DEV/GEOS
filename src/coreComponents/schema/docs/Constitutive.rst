@@ -25,6 +25,7 @@ CompressibleSolidCarmanKozenyPermeability      node         :ref:`XML_Compressib
 CompressibleSolidConstantPermeability          node         :ref:`XML_CompressibleSolidConstantPermeability`          
 CompressibleSolidExponentialDecayPermeability  node         :ref:`XML_CompressibleSolidExponentialDecayPermeability`  
 CompressibleSolidParallelPlatesPermeability    node         :ref:`XML_CompressibleSolidParallelPlatesPermeability`    
+CompressibleSolidPressurePermeability          node         :ref:`XML_CompressibleSolidPressurePermeability`          
 CompressibleSolidSlipDependentPermeability     node         :ref:`XML_CompressibleSolidSlipDependentPermeability`     
 CompressibleSolidWillisRichardsPermeability    node         :ref:`XML_CompressibleSolidWillisRichardsPermeability`    
 ConstantDiffusion                              node         :ref:`XML_ConstantDiffusion`                              
@@ -65,6 +66,7 @@ PorousModifiedCamClay                          node         :ref:`XML_PorousModi
 PorousViscoDruckerPrager                       node         :ref:`XML_PorousViscoDruckerPrager`                       
 PorousViscoExtendedDruckerPrager               node         :ref:`XML_PorousViscoExtendedDruckerPrager`               
 PorousViscoModifiedCamClay                     node         :ref:`XML_PorousViscoModifiedCamClay`                     
+PressurePermeability                           node         :ref:`XML_PressurePermeability`                           
 PressurePorosity                               node         :ref:`XML_PressurePorosity`                               
 ProppantPermeability                           node         :ref:`XML_ProppantPermeability`                           
 ProppantPorosity                               node         :ref:`XML_ProppantPorosity`                               

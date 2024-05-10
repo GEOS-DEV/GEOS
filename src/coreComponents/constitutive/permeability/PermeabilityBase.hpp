@@ -47,11 +47,12 @@ public:
   localIndex numGauss() const { return m_permeability.size( 1 ); }
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPorosity( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & porosity ) const
+  virtual void updateFromPressureAndPorosity( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & pressure,
+                                              real64 const & porosity ) const
   {
-    GEOS_UNUSED_VAR( k, q, porosity );
+    GEOS_UNUSED_VAR( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE
