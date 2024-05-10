@@ -1076,21 +1076,20 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   ghosted.FillComplete( mpiMap, graphNodeMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
 
+  // Transposing in order to get easy access to the row...
   Epetra_RowMatrixTransposer transposer( &ghosted );
-  Epetra_CrsMatrix tGhosted( Epetra_DataAccess::Copy, mpiMap, int( n ), false );
-  Epetra_CrsMatrix * ptGhosted = &tGhosted;
+  Epetra_CrsMatrix * ptGhosted = nullptr;  // The transposer returns a pointer we must handle ourselves.
   transposer.CreateTranspose( true, ptGhosted );
-  tGhosted.FillComplete( graphNodeMap, mpiMap  );
-  GEOS_LOG_RANK( "tGhosted.NumGlobalCols() = " << tGhosted.NumGlobalCols() );
-  GEOS_LOG_RANK( "tGhosted.NumGlobalRows() = " << tGhosted.NumGlobalRows() );
+  GEOS_LOG_RANK( "ptGhosted->NumGlobalCols() = " << ptGhosted->NumGlobalCols() );
+  GEOS_LOG_RANK( "ptGhosted->NumGlobalRows() = " << ptGhosted->NumGlobalRows() );
 
   // My test says that `tGhosted` is filled here.
   int extracted = 0;
   std::vector< double > extractedValues( n );
-//  extractedValues.reserve( n );
   std::vector< int > extractedIndices( n );
-//  extractedIndices.reserve( n );
-  tGhosted.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
+  ptGhosted->ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
+  extractedValues.resize( extracted );
+  extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
   {
     std::vector< int > cells;
@@ -1107,6 +1106,8 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   }
 
   GEOS_LOG_RANK("B");
+
+  delete ptGhosted;
 }
 
 
