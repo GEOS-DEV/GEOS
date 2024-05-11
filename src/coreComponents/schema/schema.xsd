@@ -393,6 +393,10 @@
 					<xsd:selector xpath="ReactiveCompositionalMultiphaseOBL" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSeismicityRateUniqueName">
+					<xsd:selector xpath="SeismicityRate" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseFVMUniqueName">
 					<xsd:selector xpath="SinglePhaseFVM" />
 					<xsd:field xpath="@name" />
@@ -2144,6 +2148,7 @@ the relative residual norm satisfies:
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="ReactiveCompositionalMultiphaseOBL" type="ReactiveCompositionalMultiphaseOBLType" />
+			<xsd:element name="SeismicityRate" type="SeismicityRateType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
@@ -3064,6 +3069,32 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="transMultExp" type="real64" default="1" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SeismicityRateType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--backgroundStressingRate => Background stressing rate-->
+		<xsd:attribute name="backgroundStressingRate" type="real64" use="required" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--directEffect => Rate-and-state friction direct effect parameter-->
+		<xsd:attribute name="directEffect" type="real64" use="required" />
+		<!--faultNormalDirection => Fault normal direction-->
+		<xsd:attribute name="faultNormalDirection" type="R1Tensor" default="{0,0,0}" />
+		<!--faultShearDirection => Fault shear direction-->
+		<xsd:attribute name="faultShearDirection" type="R1Tensor" default="{0,0,0}" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--stressSolverName => Name of solver for computing stress-->
+		<xsd:attribute name="stressSolverName" type="string" default="" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
