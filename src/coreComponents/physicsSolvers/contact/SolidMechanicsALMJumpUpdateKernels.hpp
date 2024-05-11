@@ -55,7 +55,8 @@ public:
                  FaceElementSubRegion & elementSubRegion,
                  FE_TYPE const & finiteElementSpace,
                  CONSTITUTIVE_TYPE & inputConstitutiveType,
-                 arrayView1d< globalIndex const > const inputDofNumber,
+                 arrayView1d< globalIndex const > const uDofNumber,
+                 arrayView1d< globalIndex const > const bDofNumber,
                  globalIndex const rankOffset,
                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
                  arrayView1d< real64 > const inputRhs,
@@ -68,13 +69,15 @@ public:
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
-          inputDofNumber,
+          uDofNumber,
+          bDofNumber,
           rankOffset,
           inputMatrix,
           inputRhs,
           inputDt,
           faceElementList ),
     m_displacement(nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
+    m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >() ),
     m_incrDisp( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_deltaDispJump( elementSubRegion.getField< fields::contact::deltaDispJump >().toView() )
   {}
@@ -87,6 +90,8 @@ public:
     /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
+    static constexpr int numBdofs = 3 * 2;
+
     static constexpr int numTdofs = 3;
 
   public:
@@ -95,13 +100,19 @@ public:
     StackVariables():
       Base::StackVariables(),
       uLocal{},
+      bLocal{},
       duLocal{},
+      dbLocal{},
       deltaDispJumpLocal{}
     {}
 
     real64 uLocal[numUdofs];
 
+    real64 bLocal[numBdofs];
+
     real64 duLocal[numUdofs];
+
+    real64 dbLocal[numBdofs];
 
     real64 deltaDispJumpLocal[numTdofs];
 
@@ -158,6 +169,12 @@ public:
        }
     }
 
+    for( int i=0; i<3; ++i )
+    {
+      stack.bLocal[ i ] = m_bubbleDisp[ kf0 ][i];
+      stack.bLocal[ 3 + i ] = m_bubbleDisp[ kf1 ][i];
+    }
+
     //for( int i=0; i<stack.numTdofs; ++i )
     //{
     //  stack.dispJumpLocal[i] = m_dispJump(k, i);
@@ -174,13 +191,19 @@ public:
 
     //real64 matRtAtu[3][stack.numUdofs];
     real64 matRtAtu[3][stack.numUdofs];
+    real64 matRtAtb[3][stack.numBdofs];
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRtAtu, stack.localRotationMatrix, 
                                                                stack.localAtu );
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numBdofs, 3 >( matRtAtb, stack.localRotationMatrix, 
+                                                               stack.localAtb );
 
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.deltaDispJumpLocal, matRtAtu, stack.duLocal );
+
+    LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.dispJumpLocal, matRtAtb, stack.bLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.deltaDispJumpLocal, matRtAtb, stack.dbLocal );
 
     for( int i=0; i<3; ++i )
     {
@@ -196,6 +219,8 @@ protected:
   /// The rank-global displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_displacement;
 
+  arrayView2d< real64 const > const m_bubbleDisp;
+
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_incrDisp;
 
@@ -204,6 +229,7 @@ protected:
 };
 
 using ALMJumpUpdateFactory = finiteElement::InterfaceKernelFactory< ALMJumpUpdate,
+                                                                    arrayView1d< globalIndex const > const,
                                                                     arrayView1d< globalIndex const > const,
                                                                     globalIndex const,
                                                                     CRSMatrixView< real64, globalIndex const > const,

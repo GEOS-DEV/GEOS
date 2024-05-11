@@ -146,6 +146,37 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
+   * @brief Calculate shape bubble functions values at a given point in the parent space.
+   * @param pointCoord coordinates of the given point.
+   * @param N An array to pass back the shape function values for each support
+   *   face.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void calcBubbleN( real64 const (&pointCoord)[2],
+                           real64 (& N)[1] )
+  {
+    GEOS_UNUSED_VAR( pointCoord, N );
+    GEOS_ERROR("Unsupported bubble functions for triangle elements");
+  }
+
+  /**
+   * @brief Calculate shape bubble functions values at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  static void calcBubbleN( localIndex const q,
+                           real64 (& N)[1] )
+  {
+    GEOS_UNUSED_VAR( q, N );
+    GEOS_ERROR("Unsupported bubble functions for triangle elements");
+  }
+
+  /**
    * @brief Calculate the integration weights for a quadrature point.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.

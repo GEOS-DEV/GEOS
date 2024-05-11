@@ -58,7 +58,8 @@ public:
                   FaceElementSubRegion & elementSubRegion,
                   FE_TYPE const & finiteElementSpace,
                   CONSTITUTIVE_TYPE & inputConstitutiveType,
-                  arrayView1d< globalIndex const > const inputDofNumber,
+                  arrayView1d< globalIndex const > const uDofNumber,
+                  arrayView1d< globalIndex const > const bDofNumber,
                   globalIndex const rankOffset,
                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                   arrayView1d< real64 > const inputRhs,
@@ -71,7 +72,7 @@ public:
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
-          inputDofNumber,
+          uDofNumber,
           rankOffset,
           inputMatrix,
           inputRhs,
@@ -80,6 +81,7 @@ public:
     m_faceToNodes(faceManager.nodeList().toViewConst()),
     m_elemsToFaces(elementSubRegion.faceList().toViewConst()),
     m_faceElementList(faceElementList),
+    m_bDofNumber( bDofNumber ),
     m_rotationMatrix(elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
     m_traction(elementSubRegion.getField< fields::contact::traction >().toViewConst()),
     m_dispJump( elementSubRegion.getField< fields::contact::dispJump >().toView() ),
@@ -95,15 +97,25 @@ public:
     /// The number of lagrange multiplier dofs per element.
     static constexpr int numTdofs = 3;
 
+    /// The number of bubble dofs per element.
+    static constexpr int numBdofs = 3*2;
+
   public:
   
     GEOS_HOST_DEVICE
     StackVariables():
       dispEqnRowIndices{},
       dispColIndices{},
+      bEqnRowIndices{},
+      bColIndices{},
       localRu{},
+      localRb{},
       localAutAtu{{}},
+      localAbtAtb{{}},
+      localAbtAtu{{}},
+      localAutAtb{{}},
       localAtu{{}},
+      localAtb{{}},
       localRotationMatrix{{}},
       localPenalty{{}},
       tLocal{},
@@ -118,14 +130,35 @@ public:
     /// C-array storage for the element local column degrees of freedom.
     globalIndex dispColIndices[numUdofs];
 
+    /// C-array storage for the element local row degrees of freedom.
+    globalIndex bEqnRowIndices[numBdofs];
+
+    /// C-array storage for the element local column degrees of freedom.
+    globalIndex bColIndices[numBdofs];
+
     /// C-array storage for the element local Ru residual vector.
     real64 localRu[numUdofs];
+
+    /// C-array storage for the element local Rb residual vector.
+    real64 localRb[numBdofs];
 
     /// C-array storage for the element local AutAtu matrix.
     real64 localAutAtu[numUdofs][numUdofs];
 
+    /// C-array storage for the element local AbtAtb matrix.
+    real64 localAbtAtb[numBdofs][numBdofs];
+
+    /// C-array storage for the element local AbtAtu matrix.
+    real64 localAbtAtu[numBdofs][numUdofs];
+
+    /// C-array storage for the element local AbtAtu matrix.
+    real64 localAutAtb[numUdofs][numBdofs];
+
     /// C-array storage for the element local Atu matrix.
     real64 localAtu[numTdofs][numUdofs];
+
+    /// C-array storage for the element local Atb matrix.
+    real64 localAtb[numTdofs][numBdofs];
 
     /// C-array storage for rotation matrix
     real64 localRotationMatrix[3][3];
@@ -247,12 +280,25 @@ public:
     real64 N[ numNodesPerElem ]; 
     m_finiteElementSpace.template calcN( q, N );
 
+    real64 BubbleN[1]; 
+    // It is needed only because I inserted a placeholder for calcBubbleN in some finite elements
+    BubbleN[0]=0.0;  //make 0
+    constexpr int bperm[1] = {0};
+    m_finiteElementSpace.template calcBubbleN( q, BubbleN );
+
     solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
                                                                stack.numUdofs, 
                                                                numNodesPerElem>(stack.localAtu, 
                                                                                 N, 
                                                                                 FE_TYPE::permutation,
                                                                                 detJ);
+
+    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
+                                                               stack.numBdofs, 
+                                                               1>(stack.localAtb, 
+                                                                  BubbleN, 
+                                                                  bperm,
+                                                                  detJ);
   }
 
 /*
@@ -347,6 +393,9 @@ protected:
   ArrayOfArraysView< localIndex const > const m_elemsToFaces;
 
   arrayView1d< localIndex const > const m_faceElementList;
+
+  /// The global degree of freedom number of bubble
+  arrayView1d< globalIndex const > const m_bDofNumber;
 
   arrayView3d< real64 const > const m_rotationMatrix;
 

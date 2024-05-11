@@ -273,6 +273,22 @@ public:
     }
 
     /**
+     * @brief The value of the bubble basis function evaluated at a
+     *   point along the axes.
+     *
+     * @param coords The coordinates (in the parent frame) at which to evaluate the basis
+     * @param N Array to hold the value of the basis functions.
+     */
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
+    static void valueBubble( real64 const (&coords)[2],
+                                 real64 (& N)[1] )
+    {
+      N[0] = LagrangeBasis1::valueBubble( coords[0] ) *
+             LagrangeBasis1::valueBubble( coords[1] );
+    }
+
+    /**
      * @brief The parent coordinates for a support point in the xi0 direction.
      * @param linearIndex The linear index of the support point
      * @return

@@ -485,8 +485,13 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   {
 
     NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     string const & fractureRegionName = this->getUniqueFractureRegionName();
 
@@ -508,6 +513,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
       //arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
 
       solidMechanicsALMKernels::ALMFactory kernelFactory( dispDofNumber,
+                                                          bubbleDofNumber,
                                                           dofManager.rankOffset(),
                                                           localMatrix,
                                                           localRhs,
@@ -570,8 +576,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     FaceManager const & faceManager = mesh.getFaceManager();
     //ElementRegionManager & elemManager = mesh.getElemManager();
 
-    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -661,7 +667,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
     GEOS_UNUSED_VAR( maxTraction );
   } );
   */
-  abort();
+  //abort();
 
 }
 
@@ -790,6 +796,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 {
 
   std::cout << "applySystemSolution" << std::endl;
+  //abort();
 
   GEOS_MARK_FUNCTION;
 
@@ -799,6 +806,19 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                     dt,
                                                     domain );
 
+  dofManager.addVectorToField( localSolution,
+                               solidMechanics::totalBubbleDisplacement::key(),
+                               solidMechanics::totalBubbleDisplacement::key(),
+                               scalingFactor );
+
+  //dofManager.addVectorToField( localSolution,
+  //                             solidMechanics::totalBubbleDisplacement::key(),
+  //                             solidMechanics::incrementalBubbleDisplacement::key(),
+  //                             scalingFactor );
+
+ // dofManager.addVectorToField( localSolution, contact::dispJump::key(), contact::deltaDispJump::key(), scalingFactor );
+
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -806,8 +826,13 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
   {
 
     NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     string const & fractureRegionName = this->getUniqueFractureRegionName();
 
@@ -821,6 +846,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
       finiteElement::FiniteElementBase & subRegionFE = *(m_faceTypeToFiniteElements[finiteElementName]);
 
       solidMechanicsALMKernels::ALMJumpUpdateFactory kernelFactory( dispDofNumber,
+                                                                    bubbleDofNumber,
                                                                     dofManager.rankOffset(),
                                                                     voidMatrix.toViewConstSizes(),
                                                                     voidRhs.toView(),
@@ -841,6 +867,25 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
     } );
   });
+
+
+/*
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { contact::dispJump::key(),
+                                       contact::deltaDispJump::key() },
+                                     { getUniqueFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+  */
 
 /*
   // EFEM /////////////////////////
@@ -974,6 +1019,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       //arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const  traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const  dispJump = subRegion.getField< contact::dispJump >();
+      //Only to test quickly
+      //arrayView2d< real64 const > const  deltaDispJump = subRegion.getField< contact::deltaDispJump >();
       arrayView2d< real64 const > const  deltaDispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const  penalty = subRegion.getField< contact::penalty >();
 
