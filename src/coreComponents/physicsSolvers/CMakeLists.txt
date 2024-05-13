@@ -168,7 +168,6 @@ set( physicsSolvers_sources
      contact/SolidMechanicsLagrangeContact.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
-     fluidFlow/CompositionalMultiphaseFVMApplyFaceDirichletBC.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
