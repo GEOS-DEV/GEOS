@@ -107,8 +107,8 @@ decks = [
         description=
         "Two-phase flow test for IHU (1D displacement, 2-phase, capillary pressure)",
         partitions=((1, 1, 1), (3, 1, 1)),
-        restart_step=30,
-        check_step=50,
+        restart_step=34,
+        check_step=60,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
 
