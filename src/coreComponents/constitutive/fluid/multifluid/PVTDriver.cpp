@@ -309,6 +309,10 @@ void PVTDriver::compareWithBaseline()
   {
     headerRows++;
   }
+  if( m_outputMassDensity )
+  {
+    headerRows++;
+  }
   if( m_outputPhaseComposition )
   {
     headerRows += getFluid().numFluidPhases();
