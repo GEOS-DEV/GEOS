@@ -68,7 +68,19 @@ public:
   /// Destructor for the class
   ~HydrofractureSolver() override {}
 
-  static string catalogName();
+  static string catalogName()
+  {
+    // single phase
+    if constexpr ( std::is_same_v< POROMECHANICS_SOLVER, SinglePhasePoromechanics< SinglePhaseBase > > )
+    {
+      return "Hydrofracture";
+    }
+//  // multi phase (TODO)
+//  else if constexpr ( std::is_same_v< POROMECHANICS_SOLVER, MultiphasePoromechanics< CompositionalMultiphaseBase > > )
+//  {
+//    return "MultiphaseHydrofracture";
+//  }
+  }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
