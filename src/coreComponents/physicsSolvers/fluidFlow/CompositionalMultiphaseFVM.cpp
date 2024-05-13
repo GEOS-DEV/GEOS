@@ -888,6 +888,16 @@ bool CompositionalMultiphaseFVM::validateFaceDirichletBC( DomainPartition & doma
   return bcConsistent;
 }
 
+namespace
+{
+char const faceBcLogMessage[] =
+  "CompositionalMultiphaseFVM {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target faces (including ghost faces) is {}."
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+}
+
 void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                        real64 const dt,
                                                        DofManager const & dofManager,
@@ -918,13 +928,13 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
     FaceManager const & faceManager = mesh.getFaceManager();
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
-    applyFieldValue< FaceManager >( time_n, dt, mesh, getFaceBoundaryConditionMessage(),
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
                                     fields::flow::pressure::key(), fields::flow::facePressure::key() );
     // Take BCs defined for "globalCompFraction" field and apply values to "faceGlobalCompFraction"
-    applyFieldValue< FaceManager >( time_n, dt, mesh, getFaceBoundaryConditionMessage(),
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
                                     fields::flow::globalCompFraction::key(), fields::flow::faceGlobalCompFraction::key() );
     // Take BCs defined for "temperature" field and apply values to "faceTemperature"
-    applyFieldValue< FaceManager >( time_n, dt, mesh, getFaceBoundaryConditionMessage(),
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
                                     fields::flow::temperature::key(), fields::flow::faceTemperature::key() );
 
     // Then launch the face Dirichlet kernel
@@ -1043,9 +1053,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_RANK_0( GEOS_FMT( getFaceBoundaryConditionMessage(),
-                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )
