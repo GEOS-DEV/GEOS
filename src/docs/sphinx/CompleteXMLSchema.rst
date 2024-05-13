@@ -290,6 +290,13 @@ Element: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
+.. _XML_CompressibleSolidPressurePermeability:
+
+Element: CompressibleSolidPressurePermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePermeability.rst
+
+
 .. _XML_CompressibleSolidSlipDependentPermeability:
 
 Element: CompressibleSolidSlipDependentPermeability
@@ -913,6 +920,13 @@ Element: PorousViscoModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay.rst
 
 
+.. _XML_PressurePermeability:
+
+Element: PressurePermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/PressurePermeability.rst
+
+
 .. _XML_PressurePorosity:
 
 Element: PressurePorosity
@@ -1023,6 +1037,13 @@ Element: Restart
 Element: Run
 ============
 .. include:: ../../coreComponents/schema/docs/Run.rst
+
+
+.. _XML_SeismicityRate:
+
+Element: SeismicityRate
+=======================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate.rst
 
 
 .. _XML_Silo:
@@ -1701,6 +1722,13 @@ Datastructure: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidPressurePermeability:
+
+Datastructure: CompressibleSolidPressurePermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePermeability_other.rst
+
+
 .. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
 
 Datastructure: CompressibleSolidSlipDependentPermeability
@@ -2345,6 +2373,13 @@ Datastructure: PorousViscoModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay_other.rst
 
 
+.. _DATASTRUCTURE_PressurePermeability:
+
+Datastructure: PressurePermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/PressurePermeability_other.rst
+
+
 .. _DATASTRUCTURE_PressurePorosity:
 
 Datastructure: PressurePorosity
@@ -2455,6 +2490,13 @@ Datastructure: Restart
 Datastructure: Run
 ==================
 .. include:: ../../coreComponents/schema/docs/Run_other.rst
+
+
+.. _DATASTRUCTURE_SeismicityRate:
+
+Datastructure: SeismicityRate
+=============================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate_other.rst
 
 
 .. _DATASTRUCTURE_Silo:
