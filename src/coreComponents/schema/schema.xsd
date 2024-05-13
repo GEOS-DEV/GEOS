@@ -2758,6 +2758,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--useDAS => Flag to indicate if DAS data will be modeled, and which DAS type to use: 1 for strain integration, 2 for displacement difference-->
 		<xsd:attribute name="useDAS" type="geos_WaveSolverUtils_DASType" default="none" />
+		<!--useVTI => Flag to apply VTI anisotropy. The default is to use isotropic physic.-->
+		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
