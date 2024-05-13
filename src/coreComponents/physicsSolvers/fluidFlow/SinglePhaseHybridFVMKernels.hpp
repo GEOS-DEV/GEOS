@@ -91,12 +91,12 @@ struct PressureGradientKernel
   template< integer NUM_FACES >
   inline
   static void
-  compute( localIndex elemIndex,
+  compute( localIndex const elemIndex,
            arrayView2d< real64 const > const faceCenter,
-           real64 const elemCenter[3],
-           arraySlice1d< localIndex const > const & elemToFaces,
+           rarrayView2d< real64 const > const elemCenter,
+           arrayView2d< localIndex const > const elemToFaces,
            arrayView1d< real64 const > const facePressure,
-           real64 const pres,
+           arrayView1d< real64 const > const pres,
            arrayView2d< real64 > const & presGradient )
   {
     stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates( NUM_FACES+1, 4 );
@@ -105,14 +105,14 @@ struct PressureGradientKernel
 
     for( integer dim=0; dim<3; ++dim )
     {
-      coordinates( 0, dim ) = elemCenter[dim];
+      coordinates( 0, dim ) = elemCenter(ei, dim);
     }
     coordinates( 0, 3 ) = 1.0;
-    pressures[0] = pres;
+    pressures[0] = pres[ei];
 
     for( integer fi=0; fi<NUM_FACES; ++fi )
     {
-      localIndex const localFaceIndex = elemToFaces[fi];
+      localIndex const localFaceIndex = elemToFaces(ei, fi);
 
       real64 const facePresLocal = facePressure[localFaceIndex];
 
@@ -163,10 +163,10 @@ struct PressureGradientKernel
       {
         PressureGradientKernel::compute< NUM_FACES >( ei,
                                                       faceCenter,
-                                                      elemCenter[ei],
-                                                      elemsToFaces[ei],
+                                                      elemCenter,
+                                                      elemsToFaces,
                                                       facePres,
-                                                      pres[ei],
+                                                      pres,
                                                       presGradient );
       } );
     } );
