@@ -10,6 +10,8 @@ authors:
     orcid: 0000-0002-2536-7867
     corresponding: true
     affiliation: 1
+  - name: Julien R. Besset
+    affiliation: 2
   - name: Andrea Borio
     affiliation: 5
   - name: Nicola Castelletto
@@ -22,7 +24,11 @@ authors:
     affiliation: 1
   - name: Philippe Cordier
     affiliation: 2
+  - name: Cameron M. Crook
+    affiliation: 1
   - name: Matteo Cusini
+    affiliation: 1
+  - name: Fan Fei
     affiliation: 1
   - name: Stefano Frambati
     affiliation: 2
@@ -36,20 +42,33 @@ authors:
     affiliation: 2
   - name: Brian M. Han
     affiliation: 1
+  - name: Michael Homel
+    affiliation: 1
+  - name: Jian Huang
+    affiliation: 2
+  - name: Dickson Kachuma
+    affiliation: 2
+  - name: Mohammad Karimi-Fard
+    affiliation: 3
   - name: Sergey Klevtsov
     affiliation: 3
   - name: Alexandre Lapene
     affiliation: 2
-  - name: Victor Paludetto Magri
+  - name: Victor A. P. Magri
     affiliation: 1
+  - name: Stefan Povolny
+    affiliation: 1
+  - name: Shabnam J. Semnani
   - name: Chris S. Sherman
     affiliation: 1
+  - name: Melvin Rey
   - name: Hamdi Tchelepi
     affiliation: 3
   - name: William R. Tobin
     affiliation: 1
   - name: Pavel Tomin
     affiliation: 4
+  - name: Lionel Untereiner
   - name: Joshua White
     affiliation: 1
 affiliations:
@@ -142,7 +161,7 @@ Lassen &  4 &   16 & 1,018.3K & 7.7 & 44.3 & 2,829.7 &  4,363.5 & 100\% \\
 \end{tabular}
 $$
 
-
+![Scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF_Scaling}](GEOS_Frontier.pdf){ width=40% }
 
 # Acknowledgements
 
