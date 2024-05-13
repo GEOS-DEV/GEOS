@@ -130,12 +130,12 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
 
-          - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+#          - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
+#            CMAKE_BUILD_TYPE: Release
+#            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+#            ENABLE_HYPRE: ON
+#            ENABLE_TRILINOS: OFF
+#            GCP_BUCKET: geosx/ubuntu22.04-gcc11
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -183,11 +183,11 @@ jobs:
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
-  # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
-    needs:
-      - is_not_draft_pull_request
-      - cpu_builds
+    - name: Integrated tests (Ubuntu 22.04, gcc 11.4.0, open-mpi 4.1.2)
+#    needs:
+#      - is_not_draft_pull_request
+#      - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:

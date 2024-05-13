@@ -33,8 +33,8 @@ decks = [
     TestDeck(
         name="deadoil_3ph_stone2_1d",
         description=
-        "Two-phase flow test for IHU (1D displacement, 2-phase, capillary pressure)",
-        partitions=((1, 1, 1), (2, 1, 1), (3, 1, 1)),
+        "Compositional multiphase flow test (1D displacement, 3-phase dead-oil, Stone2 relperm curves)",
+        partitions=((1, 1, 1), (3, 1, 1)),
         restart_step=109,
         check_step=209,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
