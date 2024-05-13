@@ -28,7 +28,7 @@ void TableData::addRow( std::vector< string > const & row )
     string msg = "Remarks : some cells may be missing";
     if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
     {
-      m_errorsMsg.push_back( msg );
+      addErrorMsg(msg);
     }
   }
   m_rows.push_back( row );
@@ -37,6 +37,7 @@ void TableData::addRow( std::vector< string > const & row )
 void TableData::clear()
 {
   m_rows.clear();
+  m_errorsMsg.clear();
 }
 
 std::vector< std::vector< string > > const & TableData::getTableDataRows() const
@@ -49,16 +50,9 @@ std::vector< string > const & TableData::getErrorMsgs() const
   return m_errorsMsg;
 }
 
-void TableData::addErrorMsgs( string const & msg )
+void TableData::addErrorMsg( string const & msg )
 {
-  std::vector< string > splitHeaderParts;
-  std::istringstream ss( msg );
-  string splitErrors;
-
-  while( std::getline( ss, splitErrors, '\n' ))
-  {
-    m_errorsMsg.push_back( splitErrors );
-  }
+  m_errorsMsg.push_back( msg );
 }
 
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
