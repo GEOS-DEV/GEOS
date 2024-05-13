@@ -13,11 +13,11 @@
  */
 
 /**
- * @file DirichletFaceBasedAssemblyKernel_@NUM_COMP@_@FLUID_TYPE@.cpp
- * @details Generated from DirichletFaceBasedAssemblyKernel.cpp.template
+ * @file DirichletFaceBasedAssemblyKernelFVM_@NUM_COMP@_@FLUID_TYPE@.cpp
+ * @details Generated from DirichletFaceBasedAssemblyKernelFVM.cpp.template
  */
 
-#include "physicsSolvers/fluidFlow/DirichletFaceBasedAssemblyKernelImpl.hpp"
+#include "physicsSolvers/fluidFlow/DirichletFaceBasedAssemblyKernelFVMImpl.hpp"
 #include "common/GeosxConfig.hpp"
 
 #include "constitutive/fluid/multifluid/blackOil/DeadOilFluid.hpp"

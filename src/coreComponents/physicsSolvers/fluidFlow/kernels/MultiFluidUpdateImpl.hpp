@@ -26,6 +26,7 @@
 namespace geos
 {
 
+#ifdef HAHA
 template< typename FLUID_WRAPPER >
 GEOS_HOST_DEVICE
 void MultiFluidUpdate::KernelWrapper< FLUID_WRAPPER >::update( FLUID_WRAPPER const & fluidWrapper,
@@ -54,6 +55,7 @@ void MultiFluidUpdate::KernelWrapper< FLUID_WRAPPER >::update( FLUID_WRAPPER con
                                                               phaseCompFraction,
                                                               totalDensity );
 }
+#endif
 
 template< typename FLUID_TYPE >
 void MultiFluidUpdate::Updater< FLUID_TYPE >::update( typename FLUID_TYPE::KernelWrapper const & fluidWrapper,
