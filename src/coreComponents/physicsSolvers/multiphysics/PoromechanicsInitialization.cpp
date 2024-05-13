@@ -33,15 +33,6 @@ namespace geos
 
 using namespace dataRepository;
 
-// provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-PoromechanicsInitialization< POROMECHANICS_SOLVER >::
-catalogName()
-{
-  return POROMECHANICS_SOLVER::catalogName() + "Initialization";
-}
-
 template< typename POROMECHANICS_SOLVER >
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 PoromechanicsInitialization( const string & name,
