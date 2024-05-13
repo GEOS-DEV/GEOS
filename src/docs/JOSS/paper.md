@@ -125,6 +125,24 @@ In cases where such tight coupling is not required, one may decompose the monoli
 
 ![Northern Lights computational mesh. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.](NL_volIntOne.png)
 
+$$
+\begin{tabular}{crrrccrrr} \toprule
+Machine & Nodes & Ranks & DoF/rank & \begin{tabular}{@{}c@{}}  Newton \\ Iterations \\ per timestep \\ (avg.) \end{tabular} & \begin{tabular}{@{}c@{}}  GMRES \\ Iterations \\ per Newton \\ (avg.) \end{tabular} & \begin{tabular}{@{}c@{}}  Setup \\ Phase \\ {[s]} \end{tabular}  & \begin{tabular}{@{}c@{}}  Solve \\ Phase \\ {[s]} \end{tabular} & Efficiency\\
+\midrule
+       &  2 &  72 &    226.3K & 7.5 & 30.3 & 6,709.1 & 13,724.7 & 100\% \\
+Quartz &  4 & 144 &    113.1K & 7.5 & 30.9 & 3,815.8 &  7,479.4 &  90\% \\
+       &  8 & 288 &     56.6K & 7.6 & 30.9 & 2,290.2 &  4,296.1 &  78\% \\
+       & 16 & 576 &     28.3K & 7.6 & 31.2 & 1,698.7 &  2,233.7 &  65\% \\
+\midrule     
+       &  2 &    8 & 2,036.6K & \multicolumn{5}{c}{ ********************* N/A (out of memory) ********************* } \\
+Lassen &  4 &   16 & 1,018.3K & 7.7 & 44.3 & 2,829.7 &  4,363.5 & 100\% \\
+       &  8 &   32 &   509.2K & 7.5 & 46.2 & 1,834.0 &  3,636.3 &  66\% \\
+       & 16 &   64 &   254.6K & 7.5 & 45.6 & 1,472.6 &  3,774.5 &  34\% \\
+\bottomrule
+\end{tabular}
+$$
+
+
 
 # Acknowledgements
 
