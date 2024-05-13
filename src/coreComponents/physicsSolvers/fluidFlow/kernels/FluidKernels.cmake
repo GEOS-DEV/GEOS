@@ -26,5 +26,17 @@ foreach( FLUID_TYPE ${fluidTypes} )
     configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/MultiFluidUpdate.cpp.template
                     ${filename} )
     list( APPEND physicsSolvers_sources ${filename} )                    
+
+    foreach( NUM_COMP 1 2 3 4 5 )
+        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/DirichletFaceBasedAssemblyKernel_${NUM_COMP}_${FLUID_TYPE}.cpp" )
+        string(REPLACE "<" "-" filename ${filename})
+        string(REPLACE ">" "-" filename ${filename})
+        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE " " ""  filename ${filename})
+        message( " -- Generating file: ${filename}")
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/DirichletFaceBasedAssemblyKernel.cpp.template
+                        ${filename} )
+        list( APPEND physicsSolvers_sources ${filename} )
+    endforeach()
 endforeach()
 
