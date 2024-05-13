@@ -64,6 +64,16 @@ public:
    */
   integer getNumberOfComponents() const { return m_componentNames.size(); }
 
+  /**
+   * Data accessors
+   */
+  arrayView1d< real64 > const & getComponentMolarWeight() const { return m_componentMolarWeight; }
+  arrayView1d< real64 > const & getComponentCriticalPressure() const { return m_componentCriticalPressure; }
+  arrayView1d< real64 > const & getComponentCriticalTemperature() const { return m_componentCriticalTemperature; }
+  arrayView1d< real64 > const & getComponentCriticalVolume() const { return m_componentCriticalVolume; }
+  arrayView1d< real64 > const & getComponentAcentricFactor() const { return m_componentAcentricFactor; }
+  arrayView1d< real64 > const & getComponentVolumeShift() const { return m_componentVolumeShift; }
+
   struct KernelWrapper
   {
     KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight,
