@@ -10,42 +10,48 @@ authors:
     orcid: 0000-0002-2536-7867
     corresponding: true
     affiliation: 1
+  - name: Andrea Borio
+    affiliation: 5
+  - name: Nicola Castelletto
+    affiliation: 1
+  - name: Aurélien Citrain
+    affiliation: 2
   - name: Benjamin C. Corbett
     affiliation: 1
   - name: James Corbett
     affiliation: 1
-  - name: Francois Hamon
-    affiliation: 2
-  - name: Thomas Gazzola
+  - name: Philippe Cordier
     affiliation: 2
   - name: Matteo Cusini
     affiliation: 1
-  - name: Chris S. Sherman
+  - name: Stefano Frambati
+    affiliation: 2
+  - name: Andrea Franceschini
+    affiliation: 3
+  - name: Thomas Gazzola
+    affiliation: 2
+  - name: Herve Gross
+    affiliation: 2
+  - name: Francois Hamon
+    affiliation: 2
+  - name: Brian M. Han
     affiliation: 1
   - name: Sergey Klevzoff
     affiliation: 3
-  - name: Nicola Castelletto
-    affiliation: 1
+  - name: Alexandre Lapene
+    affiliation: 2
   - name: Victor Paludetto Magri
     affiliation: 1
+  - name: Chris S. Sherman
+    affiliation: 1
+  - name: Hamdi Tchelepi
+    affiliation: 3
   - name: William R. Tobin
     affiliation: 1
+  - name: Pavel Tomin
+    affiliation: 4
   - name: Joshua White
     affiliation: 1
-  - name: Brian M. Han
-    affiliation: 1
-  - name: Herve Gross
-    affiliation: 2
-  - name: Stefano Frambati
-    affiliation: 2
-  - name: Aurélien Citrain
-    affiliation: 2
-  - name: Andrea Franceschini
-    affiliation: 2
-  - name: Andrea Borio
-    affiliation: 4
-  - name: Jian Huang
-    affiliation: 2
 affiliations:
  - name: Lawrence Livermore National Laboratory, USA
    index: 1
@@ -53,7 +59,10 @@ affiliations:
    index: 2
  - name: Stanford University, USA
    index: 3
+ - name: Chevron Technical Center, USA
+   index: 4
  - name: Politecnico di Torino, Italy
+   index: 5
 date: 15 December 2023
 bibliography: paper.bib
 
@@ -90,22 +99,12 @@ The management of distributed memory parallelism is done through a MPI, and the 
 GEOS is intended to be a generic multi-physics simulation platform.
 As such, single physics packages are developed and tested independent of other physics packages. 
 When coupling one or more single physics capabilities together to create a couple physics package, the strategy can be described as a monolithic linear system with an underlying block structure corresponding where the row/col of the block corresponds with a set of constraint equations/degrees-of-freedom associated with a physics package.
-As an example, figure \autoref{fig:matrix} shows a system matrix ($A_{coupled}$) that couples 3 distinct physics packages (1,2,3).
 the diagonal blocks result from each single physics package contributions to its own boundary value problem.
 The off-diagonal blocks represent the coupling between physics packages and are typically filled through one of several options, such as through the coupled physics package, or through a callback mechanism in the single physics package which adds the off-diagonal contributions to the single-physics kernels.
 
-\begin{equation}
-A_{coupled} = \left(\begin{array}{@{}c|c|c@{}}
-    A_{11} & A_{12} & A_{13}  \\ \hline
-    A_{21} & A_{22} & A_{23}  \\ \hline
-    A_{31} & A_{32} & A_{33}  \\ 
-\end{array}\right)
-\end{equation}\label{fig:matrix}
-
-
 To solve linear systems, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages.
 However as a matter of practice, the primary linear algebra package used for the great majority of GEOS simulations is LLNL's hypre[@hypre].
-For multi-physics problems involving the solution of a linear system, GEOS exclusively relies on hypre's implementation a multi-grid reduction preconditioner strategy as presented [@BUI:2020],[@BUI:2021114111].
+For multi-physics problems involving the solution of a linear system, GEOS exclusively relies on hypre's implementation a multi-grid reduction preconditioning strategy as presented by [@BUI:2020],[@BUI:2021114111].
 
 In addition to its c++ core, the the GEOS team provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 The Python3 interface provides data exchange between GEOS simulations and the Python driver, as well as allowing the Python layer to call specific GEOS packages outside of standard GEOS c++ workflow.
@@ -123,6 +122,8 @@ Often these simulations involve coupling between compositional multiphase flow a
 
 The coupling strategy applied in GEOS is to require the capability of a tightly coupled monolithic system as a baseline capability.
 In cases where such tight coupling is not required, one may decompose the monolithic system into blocks and apply a sequential coupling approach.
+
+
 
 
 # Acknowledgements
