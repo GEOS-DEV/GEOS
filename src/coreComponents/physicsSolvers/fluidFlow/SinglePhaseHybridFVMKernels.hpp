@@ -93,7 +93,7 @@ struct PressureGradientKernel
   static void
   compute( localIndex const elemIndex,
            arrayView2d< real64 const > const faceCenter,
-           rarrayView2d< real64 const > const elemCenter,
+           arrayView2d< real64 const > const elemCenter,
            arrayView2d< localIndex const > const elemToFaces,
            arrayView1d< real64 const > const facePressure,
            arrayView1d< real64 const > const pres,
