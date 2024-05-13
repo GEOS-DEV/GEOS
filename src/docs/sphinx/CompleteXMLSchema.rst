@@ -1039,6 +1039,13 @@ Element: Run
 .. include:: ../../coreComponents/schema/docs/Run.rst
 
 
+.. _XML_SeismicityRate:
+
+Element: SeismicityRate
+=======================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate.rst
+
+
 .. _XML_Silo:
 
 Element: Silo
@@ -2483,6 +2490,13 @@ Datastructure: Restart
 Datastructure: Run
 ==================
 .. include:: ../../coreComponents/schema/docs/Run_other.rst
+
+
+.. _DATASTRUCTURE_SeismicityRate:
+
+Datastructure: SeismicityRate
+=============================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate_other.rst
 
 
 .. _DATASTRUCTURE_Silo:
