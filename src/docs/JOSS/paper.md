@@ -36,7 +36,7 @@ authors:
     affiliation: 2
   - name: Brian M. Han
     affiliation: 1
-  - name: Sergey Klevzoff
+  - name: Sergey Klevtsov
     affiliation: 3
   - name: Alexandre Lapene
     affiliation: 2
@@ -123,7 +123,7 @@ Often these simulations involve coupling between compositional multiphase flow a
 The coupling strategy applied in GEOS is to require the capability of a tightly coupled monolithic system as a baseline capability.
 In cases where such tight coupling is not required, one may decompose the monolithic system into blocks and apply a sequential coupling approach.
 
-
+![Northern Lights computational mesh. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.](NL_volIntOne.png)
 
 
 # Acknowledgements
