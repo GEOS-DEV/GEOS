@@ -61,11 +61,9 @@ authors:
   - name: Stefan Povolny
     affiliation: 1
   - name: Shabnam J. Semnani
-    affiliation: ?
   - name: Chris S. Sherman
     affiliation: 1
   - name: Melvin Rey
-    affiliation: ?
   - name: Hamdi Tchelepi
     affiliation: 3
   - name: William R. Tobin
@@ -73,7 +71,6 @@ authors:
   - name: Pavel Tomin
     affiliation: 4
   - name: Lionel Untereiner
-    affiliation: ?
   - name: Joshua White
     affiliation: 1
 affiliations:
