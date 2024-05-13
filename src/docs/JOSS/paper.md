@@ -26,8 +26,6 @@ authors:
     affiliation: 2
   - name: Cameron M. Crook
     affiliation: 1
-  - name: 
-    affiliation:
   - name: Matteo Cusini
     affiliation: 1
   - name: Fan Fei
