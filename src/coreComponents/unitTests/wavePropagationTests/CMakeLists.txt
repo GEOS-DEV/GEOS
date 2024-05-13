@@ -6,6 +6,7 @@ set( gtest_geosx_tests
      testWavePropagationVTIZhang.cpp
      testWavePropagationQ2.cpp
      testWavePropagationElasticFirstOrder.cpp
+     testWavePropagationElasticVTI.cpp
      testWavePropagationDAS.cpp
      )
 
