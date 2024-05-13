@@ -105,14 +105,14 @@ struct PressureGradientKernel
 
     for( integer dim=0; dim<3; ++dim )
     {
-      coordinates( 0, dim ) = elemCenter(ei, dim);
+      coordinates( 0, dim ) = elemCenter(elemIndex, dim);
     }
     coordinates( 0, 3 ) = 1.0;
-    pressures[0] = pres[ei];
+    pressures[0] = pres[elemIndex];
 
     for( integer fi=0; fi<NUM_FACES; ++fi )
     {
-      localIndex const localFaceIndex = elemToFaces(ei, fi);
+      localIndex const localFaceIndex = elemToFaces(elemIndex, fi);
 
       real64 const facePresLocal = facePressure[localFaceIndex];
 
