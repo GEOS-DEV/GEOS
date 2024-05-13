@@ -166,7 +166,7 @@ $$
   header.NIT::after{content: "Newton <br/> iterations <br/> per timestep <br/>  (avg.)";}
   header.LIT::after{content: "Newton <br/> iterations <br/> per timestep <br/>  (avg.)";}
 </style>
--->
+
 
 +---------+-------+-------+----------+-----+------+---------+----------+------------+
 | Machine | Nodes | Ranks | DoF/rank | NIT | LIT  | Setup   | Solve    | Efficiency |   
@@ -180,7 +180,7 @@ $$
 |         | 8     | 32    | 509.2K   | 7.5 | 46.2 | 1,834.0 | 3,636.3  | 66%        |
 |         | 16    | 64    | 254.6K   | 7.5 | 45.6 | 1,472.6 | 3,774.5  | 3\%        |
 +=========+=======+=======+==========+=====+======+=========+==========+============+
-<!---
+
 your c
 |         | 2     | 8     | 2,036.6K | \multicolumn{5}{c}{ ********************* N/A (out of memory) ********************* } |
 -->
