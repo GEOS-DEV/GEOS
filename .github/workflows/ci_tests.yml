@@ -184,7 +184,7 @@ jobs:
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
   run_integrated_tests:
-    - name: Integrated tests (Ubuntu 22.04, gcc 11.4.0, open-mpi 4.1.2)
+#    - name: Integrated tests (Ubuntu 22.04, gcc 11.4.0, open-mpi 4.1.2)
 #    needs:
 #      - is_not_draft_pull_request
 #      - cpu_builds
