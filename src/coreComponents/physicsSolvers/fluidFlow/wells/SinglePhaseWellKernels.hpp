@@ -663,9 +663,9 @@ public:
                             StackVariables & stack,
                             FUNC && KernelOp = NoOpFunc{} ) const
   {
-
-    localIndex const eqnRowIndex = m_wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - m_rankOffset;
-    globalIndex const presDofColIndex = m_wellElemDofNumber[iwelem] + COFFSET::DPRES;
+    GEOS_UNUSED_VAR( iwelem );
+    //localIndex const eqnRowIndex = m_wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - m_rankOffset;
+    //globalIndex const presDofColIndex = m_wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
     stack.localResidual[0] = stack.volume * ( stack.density - stack.density_n );
     stack.localJacobian[0][1] = stack.volume * stack.dDensity_dPres;

@@ -1093,7 +1093,7 @@ public:
   /// Number of Dof's set in this kernal   - no dQ in accum
   static constexpr integer numDof = NUM_COMP + 1 + IS_THERMAL;
 
-  /// Compute time value for the number of equations
+  /// Compute time value for the number of equations  mass bal + vol bal + energy bal
   static constexpr integer numEqn = NUM_COMP + 1 + IS_THERMAL;
 
 
@@ -1109,6 +1109,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
+                              integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
@@ -1117,6 +1118,7 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
+    m_isProducer( isProducer ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
@@ -1398,11 +1400,33 @@ if constexpr ( IS_THERMAL )
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
-  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
+  void complete( localIndex const ei, //GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
+    integer const numRows = numComp+1+ IS_THERMAL;
+
+    if constexpr (IS_THERMAL)
+    {
+      if( ei == 0 && !m_isProducer )
+      {
+        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
+        // No other energy balance derivatives
+        // Assumption is iwelem =0 is top segment with fixed temp BC
+
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+        {
+          stack.localJacobian[numRows-1][i] = 0.0;
+        }
+        // constant Temperature
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+          stack.localJacobian[i][numRows-1]  = 0.0;
+        stack.localJacobian[numRows-1][numRows-1] = 1.0;
+
+        stack.localResidual[numRows-1]=0.0;
+      }
+    }
 
     if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
@@ -1416,7 +1440,7 @@ if constexpr ( IS_THERMAL )
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    integer const numRows = numComp+1+ IS_THERMAL;
+
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.eqnRowIndices[i]]  += stack.localResidual[i];
@@ -1462,6 +1486,9 @@ protected:
 
   /// Number of fluid phases
   integer const m_numPhases;
+
+  /// Well type
+  integer const m_isProducer;
 
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
@@ -1533,6 +1560,7 @@ public:
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
+                   integer const isProducer,
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    string const dofKey,
@@ -1544,7 +1572,7 @@ public:
     geos::internal::kernelLaunchSelectorCompThermSwitch( numComps, 0, [&]( auto NC, auto IS_THERMAL )
     {
       localIndex constexpr NUM_COMP = NC();
-      localIndex constexpr NUM_DOF = NC()+2;
+
 integer constexpr istherm = IS_THERMAL();
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
@@ -1552,7 +1580,7 @@ integer constexpr istherm = IS_THERMAL();
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
 
       ElementBasedAssemblyKernel< NUM_COMP, istherm >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
+      kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       ElementBasedAssemblyKernel< NUM_COMP, istherm >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, istherm > >( subRegion.size(), kernel );
     } );
@@ -1698,6 +1726,7 @@ public:
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
+    GEOS_UNUSED_VAR( iconn );
     using namespace compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
@@ -1945,6 +1974,7 @@ public:
     real64 dCompFlux_dPresUp[NC]{};
     real64 dCompFlux_dCompDensUp[NC][NC]{};
 
+    real64 dComp[NC][NC];
     real64 dCompFlux[NC][numDof]{};
     // Step 1) decide the upwind well element
 
@@ -1970,6 +2000,11 @@ public:
         for( integer jc = 0; jc < NC; ++jc )
         {
           dCompFrac_dCompDensUp[ic][jc] = 0.0;
+          dComp[ic][jc] =   m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
+        }
+        //for ( integer jc = 0 ;jc < WJ_COFFSET::nDer ; ++jc)
+        for( integer jc = 0; jc < NC; ++jc )
+        {
           dCompFlux[ic][WJ_COFFSET::dC+jc] = 0.0;
         }
       }
@@ -2161,7 +2196,7 @@ stack.offsetNext = m_wellElemDofNumber[iwelemNext];
        */
     }
 
-    compFluxKernelOp( iwelemNext, iwelemUp, currentConnRate );
+    compFluxKernelOp( iwelemNext, iwelemUp, currentConnRate, dComp );
   }
 
 

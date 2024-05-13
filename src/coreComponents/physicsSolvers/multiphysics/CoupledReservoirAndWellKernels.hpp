@@ -180,7 +180,7 @@ public:
               m_numCrossFlowPerforations += 1;
             }
           }
-      if( 1 )
+      if( 0 )
           {
 
           for( integer ke = 0; ke < 2; ++ke )

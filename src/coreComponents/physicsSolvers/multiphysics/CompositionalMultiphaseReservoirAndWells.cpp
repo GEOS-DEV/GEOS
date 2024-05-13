@@ -347,8 +347,8 @@ areWellsShut = 0;
         perforationData->getField< fields::well::dCompPerforationRate_dPres >();
       arrayView4d< real64 const > const & dCompPerfRate_dComp =
         perforationData->getField< fields::well::dCompPerforationRate_dComp >();
-arrayView4d< real64 const > const & dCompPerfRate =
-          perforationData->getField< fields::well::dCompPerforationRate >();
+        //arrayView4d< real64 const > const & dCompPerfRate =
+        //  perforationData->getField< fields::well::dCompPerforationRate >();
       arrayView1d< localIndex const > const & perfWellElemIndex =
         perforationData->getField< fields::perforation::wellElementIndex >();
 
@@ -465,7 +465,7 @@ arrayView4d< real64 const > const & dCompPerfRate =
       {
         integer useTotalMassEquation1=1;
         integer numCrossflowPerforations=0;
-        if( isThermal ( ) )
+        if( isThermal ( )  )
         {
           coupledReservoirAndWellKernels::
             ThermalCompositionalMultiPhaseFluxKernelFactory::

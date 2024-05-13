@@ -445,10 +445,8 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                                                           ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
       arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
       arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
-      arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
       arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
       auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
@@ -457,11 +455,9 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      pressure,
-                                                     temperature,
                                                      compDens,
                                                      pressureScalingFactor,
                                                      compDensScalingFactor,
-                                                     temperatureScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
@@ -530,8 +526,6 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
     {
       arrayView1d< real64 const > const pressure =
         subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const temperature =
-        subRegion.getField< fields::flow::temperature >();
       arrayView2d< real64 const, compflow::USD_COMP > const compDens =
         subRegion.getField< fields::flow::globalCompDensity >();
       arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();

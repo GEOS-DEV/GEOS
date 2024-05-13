@@ -687,19 +687,24 @@ bool const phaseExists = stack.m_wellElemPhaseVolFrac[iwelem][ip] > 0.0;
           stack.m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy;
           stack.m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy;
 
-          // energy equation derivatives WRT well P & T
           stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy 
                                                                      +  pflux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][Deriv::dP]
-                                                                     +  flux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dP];
-          stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][Deriv::dT] * wellelem_enthalpy
+                                                                     +  pflux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dP];
+          stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy
                                                                      +  pflux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][Deriv::dT]
                                                                      +   flux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dT];
 
-          //energy equation
+          //energy e
+          real64 dPVF_dC[numComp]{};
+          applyChainRule( NC,
+                          m_dWellElemCompFrac_dCompDens[iwelem],
+                          stack.m_dPhaseVolFrac[iwelem][ip],
+                          dPVF_dC,
+                          Deriv::dC );
           for( integer ic=0; ic<NC; ic++ )
           {
             stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy *  dFlux[TAG::WELL][CP_Deriv::dC+ic] * stack.m_wellElemPhaseVolFrac[iwelem][ip];
-            stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * flux * stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dC+ic];
+            stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * flux * dPVF_dC[ ic];
           }
           // energy equation enthalpy derivatives WRT well dens
           real64 dProp_dC[numComp]{};

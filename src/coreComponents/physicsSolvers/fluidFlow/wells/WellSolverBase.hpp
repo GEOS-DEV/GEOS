@@ -197,7 +197,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void assembleFluxTerms( real64 const dt,
-                                  DomainPartition const & domain,
+                                  DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) = 0;

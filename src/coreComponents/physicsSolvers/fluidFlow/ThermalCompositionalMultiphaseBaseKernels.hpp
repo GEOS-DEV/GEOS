@@ -333,11 +333,13 @@ public:
       stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
+      //std::cout << "res " << dPhaseInternalEnergy[ip][Deriv::dC] << " "  << dPhaseInternalEnergy[ip][Deriv::dC+1] << std::endl;
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
         stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
                                                  + dPhaseInternalEnergy_dC[jc] * phaseAmount;
+        //std::cout << "phase " << ip << " jc " << jc << " " << stack.localJacobian[numEqn-1][jc + 1] << std::endl;
       }
     } );
 

@@ -197,6 +197,8 @@ void WellSolverBase::assembleSystem( real64 const time,
                                                                           [&]( localIndex const,
                                                                                WellElementSubRegion & subRegion )
       {
+        WellControls const & well_controls = getWellControls( subRegion );
+        integer isProducer = well_controls.isProducer();
         string const dofKey = dofManager.getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString());
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
 
@@ -208,6 +210,7 @@ void WellSolverBase::assembleSystem( real64 const time,
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                      numPhases,
+                                                     isProducer,
                                                      dofManager.rankOffset(),
                                                      useTotalMassEquation,
                                                      wellDofKey,
@@ -231,7 +234,8 @@ void WellSolverBase::assembleSystem( real64 const time,
                                                                           [&]( localIndex const,
                                                                                WellElementSubRegion & subRegion )
       {
-
+        WellControls const & well_controls = getWellControls( subRegion );
+        integer isProducer = well_controls.isProducer();
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
 
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
@@ -242,6 +246,7 @@ void WellSolverBase::assembleSystem( real64 const time,
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                      numPhases,
+                                                     isProducer,
                                                      dofManager.rankOffset(),
                                                      useTotalMassEquation,
                                                      wellDofKey,
@@ -278,7 +283,8 @@ void WellSolverBase::assembleSystem( real64 const time,
                                                                           [&]( localIndex const,
                                                                                WellElementSubRegion & subRegion )
       {
-
+          WellControls const & well_controls = getWellControls( subRegion );
+          integer isProducer = well_controls.isProducer();
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         int numPhases = fluid.numFluidPhases();
@@ -290,6 +296,7 @@ void WellSolverBase::assembleSystem( real64 const time,
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                      numPhases,
+                                                         isProducer,
                                                      dofManager.rankOffset(),
                                                      useTotalMassEquation,
                                                      wellDofKey,
@@ -304,6 +311,7 @@ void WellSolverBase::assembleSystem( real64 const time,
           ElementBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                      numPhases,
+                                                         isProducer,
                                                      dofManager.rankOffset(),
                                                      useTotalMassEquation,
                                                      wellDofKey,

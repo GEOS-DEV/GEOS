@@ -1954,9 +1954,16 @@ PresTempCompFracInitializationKernel::
   // for an injector, we use the injection stream values
   else
   {
+    if( wellControls.useSurfaceConditions() )
+    {
+      // use surface temperature from injection stream
+      avgTemp = wellControls.getSurfaceTemperature();
+    }
+  else
+  {
     // use temperature from injection stream
     avgTemp = wellControls.getInjectionTemperature();
-
+    }
     // use comp frac from injection stream
     for( integer ic = 0; ic < numComps; ++ic )
     {

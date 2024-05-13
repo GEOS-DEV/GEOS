@@ -515,11 +515,9 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      pressure,
-                                                     temperature,
                                                      compDens,
                                                      pressureScalingFactor,
                                                      compDensScalingFactor,
-                                                     temperatureScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
@@ -665,10 +663,10 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                         getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   if( numNegDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {} ",
                                         getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
   if( minTotalDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {} ",
                                         getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
   return MpiWrapper::min( localCheck );
