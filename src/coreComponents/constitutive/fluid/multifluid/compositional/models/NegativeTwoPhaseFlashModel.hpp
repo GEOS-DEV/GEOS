@@ -64,7 +64,7 @@ public:
     integer const numDofs = 2 + m_numComponents;
 
     // Iterative solve to converge flash
-    bool const flashStatus = NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+    NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
       m_numComponents,
       pressure,
       temperature,
@@ -74,9 +74,6 @@ public:
       phaseFraction.value[m_vapourIndex],
       phaseCompFraction.value[m_liquidIndex],
       phaseCompFraction.value[m_vapourIndex] );
-    GEOS_UNUSED_VAR( flashStatus );
-    //GEOS_ERROR_IF( !flashStatus,
-    //                 GEOS_FMT( "Negative two phase flash failed to converge {:.5e} {:.3f}", pressure, temperature ));
 
     // Calculate derivatives
     NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
