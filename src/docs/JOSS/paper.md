@@ -163,14 +163,14 @@ In cases where such tight coupling is not required, one may decompose the monoli
 
 
 
-| Machine | Nodes | Ranks | DoF/rank | NIT | LIT  | Setup   | Solve    | Efficiency |   
+| Machine | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
 | ------- | ----: | ----: |--------: | --- | ---- | ------- | -------: | ---------: |
 |         | 2     | 72    | 226.3K   | 7.5 | 30.3 | 6,709.1 | 13,724.7 | 100%       |
 | Quartz  | 4     | 144   | 113.1K   | 7.5 | 30.9 | 3,815.8 | 7,479.4  | 90%        |
 |         | 8     | 288   | 56.6K    | 7.6 | 30.9 | 2,290.2 | 4,296.1  | 78%        |
 |         | 16    | 576   | 28.3K    | 7.6 | 31.2 | 1,698.7 | 2,233.7  | 65%        |
 
-| Machine | Nodes | Ranks | DoF/rank | NIT | LIT  | Setup   | Solve    | Efficiency |   
+| Machine | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
 | ------- | ----: | ----: |--------: | --- | ---- | ------- | -------: | ---------: |
 |         | 4     | 16    | 1,018.3K | 7.7 | 44.3 | 2,829.7 | 4,363.5  | 100%       |
 | Lassen  | 8     | 32    | 509.2K   | 7.5 | 46.2 | 1,834.0 | 3,636.3  | 66%        |
