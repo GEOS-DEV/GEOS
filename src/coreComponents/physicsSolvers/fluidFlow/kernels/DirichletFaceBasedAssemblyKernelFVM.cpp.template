@@ -43,4 +43,11 @@ namespace geos
 
   } // namespace isothermalCompositionalMultiphaseFVMKernels
 
+  namespace thermalCompositionalMultiphaseFVMKernels
+  {
+    using namespace constitutive;
+
+    // Thermal implementation
+    template class DirichletFaceBasedAssemblyKernel< @NUM_COMP@, @NUM_COMP@+2, @FLUID_TYPE@::KernelWrapper >;
+  }
 } // namespace geos
