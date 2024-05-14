@@ -59,7 +59,7 @@ public:
   CommID & operator=( CommID && ) = delete;
 
   /// user defined conversion operator to int
-  constexpr operator int()
+  constexpr operator int() const
   { return m_id; }
 
 private:
