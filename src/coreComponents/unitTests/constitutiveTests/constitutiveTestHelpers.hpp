@@ -138,7 +138,7 @@ public:
 protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
-  BASE * m_model;
+  BASE * m_model{nullptr};
 };
 
 } // namespace testing

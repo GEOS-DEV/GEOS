@@ -209,6 +209,8 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::deliverClone( str
                                                                              Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
+  CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 > & fluid = dynamicCast< CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 > & >( *clone );
+  fluid.createModels();
   return clone;
 }
 

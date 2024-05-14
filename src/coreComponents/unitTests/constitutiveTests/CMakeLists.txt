@@ -4,6 +4,8 @@ set( gtest_geosx_tests
      testCO2BrinePVTModels.cpp
      testCO2SpycherPruessModels.cpp
      testDamage.cpp
+     testMultiFluidCompositionalMultiphase.cpp
+     testMultiFluidDeadOil.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )
 
