@@ -324,6 +324,14 @@ public:
   void computeHydrostaticEquilibrium();
 
   /**
+   * @brief Update the cell-wise pressure gradient
+   */
+  virtual void updatePressureGradient( DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( domain );
+  }
+
+  /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param[in] time current time
    * @param[in] dt time step
