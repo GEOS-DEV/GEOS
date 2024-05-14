@@ -143,13 +143,14 @@ set( physicsSolvers_headers
      wavePropagation/sem/elastic/shared/ElasticFields.hpp
      wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp
      wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEMKernel.hpp
-     wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEMAttenuationKernel.hpp
      wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp
      wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIFields.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp
