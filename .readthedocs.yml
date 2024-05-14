@@ -6,11 +6,12 @@ version: 2
 build:
   os: "ubuntu-22.04"
   apt_packages:
-    - curl
-    - graphviz
-    - npm
-    - openjdk-21-jre-headless
-  - texlive  tools:
+  - curl
+  - graphviz
+  - npm
+  - openjdk-21-jre-headless
+  - texlive  
+  tools:
     nodejs: "16"
     python: "3.10"
   jobs:
