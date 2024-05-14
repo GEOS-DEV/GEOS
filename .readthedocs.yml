@@ -10,7 +10,7 @@ build:
   - graphviz
   - npm
   - openjdk-21-jre-headless
-  - texlive  
+  - texlive
   tools:
     nodejs: "16"
     python: "3.10"
