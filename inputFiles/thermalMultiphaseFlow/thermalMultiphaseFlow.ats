@@ -10,7 +10,7 @@ decks = [
     TestDeck(
         name="co2_thermal_2d",
         description=
-        'Thermal compositional co2-brine flow test (2D co2 injection, 2-phase co2-brine, Phillips, Brooks-Corey relperm curves, thermal)',
+        'Thermal compositional co2-brine flow test (2D co2 injection, 2-phase co2-brine, Brooks-Corey relperm curves, thermal)',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=9,
         check_step=11,
