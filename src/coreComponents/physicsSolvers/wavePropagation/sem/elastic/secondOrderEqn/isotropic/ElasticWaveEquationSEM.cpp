@@ -639,7 +639,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 
   if( m_useVTI )
   {
-    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+    auto kernelFactory = elasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
@@ -651,7 +651,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   }
   else
   {
-    auto kernelFactory = elasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
                                     constitutive::NullModel,
