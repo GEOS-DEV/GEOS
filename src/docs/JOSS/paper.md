@@ -163,8 +163,8 @@ In cases where such tight coupling is not required, one may decompose the monoli
 +===================+============+=====================+
 -->
 
-| Nodes | Ranks | DoF/rank | $\Huge \frac{\text{Newton iter}}{\text{timestep}}$ | $\Huge \frac{\text{GMRES iter}}{\text{Newton iter}}$ | Setup <br/> [s]  | Solve <br/> [s] | Efficiency |
-| :---: | :---: | :------: |                    :-------------:                       |      :-------------:       | :-----:          | :---:           | ----------: |
+| Nodes | Ranks | DoF/rank |                 Newton iter / timestep | $\Huge \frac{\text{GMRES iter}}{\text{Newton iter}}$ | Setup <br/> [s]  | Solve <br/> [s] | Efficiency |
+| :---: | :---: | :------: |                 :--------------------:                       |      :-------------:       | :-----:          | :---:           | ----------: |
 | 2     | 72    | 226K     |                          7.5                             |           30.3             |  6,709           |  13,725         |      100%   |
 | 4     | 144   | 113K     |                          7.5                             |           30.9             |  3,816           |  7,479          |      90%    |
 | 8     | 288   | 56.6K    |                          7.6                             |           30.9             |  2,290           |  4,296          |      78%    |
