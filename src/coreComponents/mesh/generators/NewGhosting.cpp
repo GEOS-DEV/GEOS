@@ -47,7 +47,7 @@ namespace geos
 {
 
 template< typename OUTPUT, typename INPUT >
-inline LVARRAY_HOST_DEVICE
+inline GEOS_HOST_DEVICE
 OUTPUT intConv( INPUT input )
 {
   return LvArray::integerConversion< OUTPUT >( input );
@@ -1130,11 +1130,14 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
     {
       int const & index = extractedIndices[i];
       double const & val = extractedValues[i];
-      if( val > 0 and index < int( edgeOffset ) )
+      if( val > 0 and index >= int( cellOffset ) )
       {
-//        interest.push_back( index - cellOffset );
-        interest.push_back( index );
+        interest.push_back( index - cellOffset );
       }
+//      if( val > 0 and index < int( edgeOffset ) )
+//      {
+//        interest.push_back( index );
+//      }
     }
     GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
   }
