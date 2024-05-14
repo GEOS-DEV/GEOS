@@ -1034,6 +1034,7 @@ void CompositionalMultiphaseWell::assembleSystem( real64 const time,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         int numPhases = fluid.numFluidPhases();
         int numComponents = fluid.numFluidComponents();
+        WellControls const & wellControls = getWellControls( subRegion );
         if( isThermal() )
         {
 
@@ -1041,6 +1042,7 @@ void CompositionalMultiphaseWell::assembleSystem( real64 const time,
             ElementBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        numPhases,
+                                                       wellControls.isProducer(),
                                                        dofManager.rankOffset(),
                                                        m_useTotalMassEquation,
                                                        wellDofKey,
@@ -1055,6 +1057,7 @@ void CompositionalMultiphaseWell::assembleSystem( real64 const time,
             ElementBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                        numPhases,
+                                                       wellControls.isProducer(),
                                                        dofManager.rankOffset(),
                                                        m_useTotalMassEquation,
                                                        wellDofKey,
@@ -1793,7 +1796,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                        localSolution );
 
 
-        scalingFactor =  scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
+        scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
 
         maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
         maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
