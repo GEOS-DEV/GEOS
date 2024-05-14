@@ -165,20 +165,21 @@ In cases where such tight coupling is not required, one may decompose the monoli
 
 
 
-| Machine | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
-| :-----: | ---:  | ---:  |--------: | :-------: | :-------: | :-----: | -------: | -----: |
-|         | 2     | 72    | 226.3K   |    7.5    |    30.3   |  6,709  |  13,725  | 100%   |
-| Quartz  | 4     | 144   | 113.1K   |    7.5    |    30.9   |  3,816  |  7,479   | 90%    |
-|         | 8     | 288   | 56.6K    |    7.6    |    30.9   |  2,290  |  4,296   | 78%    |
-|         | 16    | 576   | 28.3K    |    7.6    |    31.2   |  1,699  |  2,234   | 65%    |
+|  Machine  | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
+| :-------: | ---:  | ---:  |--------: | :-------: | :-------: | :-----: | -------: | -----: |
+|           | 2     | 72    | 226.3K   |    7.5    |    30.3   |  6,709  |  13,725  | 100%   |
+| Quartz    | 4     | 144   | 113.1K   |    7.5    |    30.9   |  3,816  |  7,479   | 90%    |
+|           | 8     | 288   | 56.6K    |    7.6    |    30.9   |  2,290  |  4,296   | 78%    |
+|           | 16    | 576   | 28.3K    |    7.6    |    31.2   |  1,699  |  2,234   | 65%    |
 
 
-| Machine | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
-| :-----: | ---:  | ---:  |--------: | :-------: | :-------: | :-----: | -------: | -----: |
-|         | 4     | 16    | 1,018.3K |    7.7    |   44.3    |  2,830  |   4,364  | 100%   |
-| Lassen  | 8     | 32    | 509.2K   |    7.5    |   46.2    |  1,834  |   3,636  | 66%    |
-|         | 16    | 64    | 254.6K   |    7.5    |   45.6    |  1,473  |   3,775  | 3%     |
+|  Machine  | Nodes | Ranks | DoF/rank | Newton <br/> iterations <br/> per timestep <br/>  (avg.) | GMRES <br/> iterations <br/> per Newton <br/>  (avg.)  | Setup <br/> phase <br/> [s]  | Solve <br/> phase <br/> [s] | Efficiency |   
+| :-------: | ---:  | ---:  |--------: | :-------: | :-------: | :-----: | -------: | -----: |
+|           | 4     | 16    | 1,018.3K |    7.7    |   44.3    |  2,830  |   4,364  | 100%   |
+| Lassen    | 8     | 32    | 509.2K   |    7.5    |   46.2    |  1,834  |   3,636  | 66%    |
+|           | 16    | 64    | 254.6K   |    7.5    |   45.6    |  1,473  |   3,775  | 3%     |
 
+Table: Your Caption
 
 ![Scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF_Scaling}](GEOS_Frontier.pdf){ width=40% }
 
