@@ -23,7 +23,7 @@
 #include "mesh/generators/FaceBlock.hpp"
 #include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/generators/LineBlock.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PartitionDescriptor.hpp"
 

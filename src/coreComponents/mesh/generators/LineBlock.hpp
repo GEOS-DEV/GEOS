@@ -15,7 +15,7 @@
 #ifndef GEOSX_WELLBLOCK_HPP
 #define GEOSX_WELLBLOCK_HPP
 
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 
 namespace geos

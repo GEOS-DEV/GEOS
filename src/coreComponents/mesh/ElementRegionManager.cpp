@@ -26,7 +26,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 namespace geos
 {

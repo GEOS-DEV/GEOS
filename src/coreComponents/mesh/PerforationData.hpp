@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 namespace geos
 {

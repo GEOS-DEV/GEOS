@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace geos
+namespace geos // TODO Eventually add the `generators`
 {
 
 /**

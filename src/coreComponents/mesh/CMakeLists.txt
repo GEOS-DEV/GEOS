@@ -47,14 +47,13 @@ set( mesh_headers
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
      generators/LineBlock.hpp
-     generators/LineBlockABC.hpp
+     generators/include/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
-     generators/MeshBlockMappings.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
@@ -128,7 +127,6 @@ set( mesh_sources
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
-     generators/MeshBlockMappings.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
      generators/ParticleMeshGenerator.cpp
