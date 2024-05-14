@@ -479,6 +479,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
+                              integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
@@ -486,7 +487,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > const kernelFlags )
-    : Base( numPhases, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
+    : Base( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n()),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy()),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy())
@@ -605,18 +606,10 @@ public:
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
-    // Step 1: assemble the component mass balance equations and volume balance equations
+    // Assemble the component mass balance equations and volume balance equations
+    // Energy balance equation updates to solver matrices included in Base class
     Base::complete( ei, stack );
 
-
-    /* fix me tjb
-       // Step 2: assemble the energy equation
-       m_localRhs[stack.localRow + numEqn - 1] += stack.localResidual[numEqn - 1];
-       m_localMatrix.template addToRow<serialAtomic>(stack.localRow + numEqn - 1,
-                                                  stack.dofIndices,
-                                                  stack.localJacobian[numEqn - 1],
-                                                  numDof);
-     */
   }
 
 protected:
@@ -652,6 +645,7 @@ public:
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
+                   integer const isProducer,
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    string const dofKey,
@@ -671,7 +665,7 @@ public:
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
 
       ElementBasedAssemblyKernel< NUM_COMP >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
+      kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       ElementBasedAssemblyKernel< NUM_COMP >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP > >( subRegion.size(), kernel );
     } );
@@ -792,10 +786,24 @@ public:
   inline
   void complete( localIndex const iwelem, StackVariables & stack ) const
   {
+
     Base::complete ( iwelem, stack );
+
     using namespace compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
+      if( !m_isProducer )
+      {
+        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
+        // No other energy balance derivatives
+        // Assumption is iwelem =0 is top segment with fixed temp BC
+        for( integer i=0; i< CP_Deriv::nDer; i++ )
+        {
+          stack.localEnergyFluxJacobian[0][i] = 0.0;
+        }
+        stack.localEnergyFluxJacobian_dQ[0][0]=0;
+        stack.localEnergyFlux[0]=0;
+      }
       // Setup Jacobian global row indicies for energy equation
       globalIndex oneSidedEqnRowIndices  = stack.offsetUp + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
 
@@ -828,6 +836,17 @@ public:
     }
     else // if ( stack.numConnectedElems == 2 )
     {
+      if( iwelem == 1 && !m_isProducer )
+      {
+        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
+        // No upstream energy balance derivatives added to segment with control
+        // Assumption is iwelem =0 is top segment with fixed temp BC
+        for( integer i=0; i<CP_Deriv::nDer; i++ )
+          stack.localEnergyFluxJacobian[TAG::NEXT][i] = 0.0;
+        stack.localEnergyFluxJacobian_dQ[TAG::NEXT][0] =0;
+        stack.localEnergyFluxJacobian[TAG::CURRENT][CP_Deriv::dT] = 0.0;
+        stack.localEnergyFlux[TAG::NEXT] =0;
+      }
       // Setup Jacobian global row indicies
       // equations for COMPONENT  + ENERGY balances
       globalIndex eqnRowIndices[2]{};
@@ -870,6 +889,7 @@ public:
         }
       }
     }
+
   }
 
   /**
@@ -886,7 +906,8 @@ public:
   {
     Base::computeFlux ( iwelem, stack, [&] ( localIndex const & iwelemNext
                                              , localIndex const & iwelemUp
-                                             , real64 const & currentConnRate )
+                                             , real64 const & currentConnRate
+                                             , real64 const (&dCompFrac_dCompDens)[NC][NC] )
     {
 
     if( iwelemNext < 0 &&  !m_isProducer )    // exit connection, injector
@@ -897,6 +918,25 @@ public:
         {
           eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
+
+          stack.localEnergyFluxJacobian[0] [CP_Deriv::dP] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dP]
+                                                             +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dP]*m_phaseFraction[iwelemUp][0][ip];
+          stack.localEnergyFluxJacobian[0] [CP_Deriv::dT] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dT]
+                                                             +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dT]*m_phaseFraction[iwelemUp][0][ip];
+
+          real64 dProp1_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseEnthalpy[iwelemUp][0][ip], dProp1_dC, CP_Deriv::dC );
+          real64 dProp2_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseFraction[iwelemUp][0][ip], dProp2_dC, CP_Deriv::dC );
+          for( integer dof=0; dof < numComp; dof++ )
+          {
+            stack.localEnergyFluxJacobian[0] [CP_Deriv::dC+dof] += m_phaseEnthalpy[iwelemUp][0][ip]*dProp2_dC[dof]
+                                                                   + dProp1_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
+          }
+        }
+        for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
+        {
+          stack.localEnergyFluxJacobian[0] [dof] *= -m_dt*currentConnRate;
         }
       // Energy equation
         stack.localEnergyFlux[0]   =  -m_dt * eflux * currentConnRate;
@@ -910,19 +950,29 @@ public:
         {
         eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
-          for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
+          stack.localEnergyFluxJacobian[0] [CP_Deriv::dP] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dP]
+                                                             +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dP]*m_phaseFraction[iwelemUp][0][ip];
+          stack.localEnergyFluxJacobian[0] [CP_Deriv::dT] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dT]
+                                                             +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dT]*m_phaseFraction[iwelemUp][0][ip];
+
+          real64 dProp1_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseEnthalpy[iwelemUp][0][ip], dProp1_dC, CP_Deriv::dC );
+          real64 dProp2_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseFraction[iwelemUp][0][ip], dProp2_dC, CP_Deriv::dC );
+          for( integer dof=0; dof < numComp; dof++ )
           {
-            stack.localEnergyFluxJacobian[0] [dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
-                                                      +  m_dPhaseEnthalpy[iwelemUp][0][ip][dof]*m_phaseFraction[iwelemUp][0][ip];
+            stack.localEnergyFluxJacobian[0] [CP_Deriv::dC+dof] += m_phaseEnthalpy[iwelemUp][0][ip]*dProp2_dC[dof]
+                                                                   + dProp1_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
+          }
 
           }
+
+        for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
+        {
+          stack.localEnergyFluxJacobian[0][dof] *= -m_dt*currentConnRate;
         }
         stack.localEnergyFlux[0]   =  -m_dt * eflux * currentConnRate;
         stack.localEnergyFluxJacobian_dQ[0][0]  = -m_dt*eflux_dq;
-        for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
-        {
-          stack.localEnergyFluxJacobian[0][dof] = -m_dt*currentConnRate;
-        }
       }
       else
       {
@@ -932,12 +982,29 @@ public:
         {
         eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
-          for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
+
+          real64 dprop_dp = m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dP]
+                            +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dP]*m_phaseFraction[iwelemUp][0][ip];
+          real64 dprop_dt = m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dT]
+                            +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dT]*m_phaseFraction[iwelemUp][0][ip];
+
+          stack.localEnergyFluxJacobian[TAG::NEXT ] [CP_Deriv::dP] += dprop_dp;
+          stack.localEnergyFluxJacobian[TAG::NEXT] [CP_Deriv::dT] += dprop_dt;
+
+          stack.localEnergyFluxJacobian[TAG::CURRENT ] [CP_Deriv::dP] += dprop_dp;
+          stack.localEnergyFluxJacobian[TAG::CURRENT] [CP_Deriv::dT] += dprop_dt;
+
+          real64 dPE_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseEnthalpy[iwelemUp][0][ip], dPE_dC, CP_Deriv::dC );
+          real64 dPF_dC[numComp]{};
+          applyChainRule( numComp, dCompFrac_dCompDens, m_dPhaseFraction[iwelemUp][0][ip], dPF_dC, CP_Deriv::dC );
+
+          for( integer dof=0; dof < numComp; dof++ )
           {
-            stack.localEnergyFluxJacobian[TAG::NEXT   ][dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
-                                                                + m_dPhaseEnthalpy[iwelemUp][0][ip][dof]*m_phaseFraction[iwelemUp][0][ip];
-            stack.localEnergyFluxJacobian[TAG::CURRENT ][dof] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][dof]
-                                                                 + m_dPhaseEnthalpy[iwelemUp][0][ip][dof]*m_phaseFraction[iwelemUp][0][ip];
+            stack.localEnergyFluxJacobian[TAG::NEXT   ][dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
+                                                                +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
+            stack.localEnergyFluxJacobian[TAG::CURRENT ][dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
+                                                                 +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
           }
         }
         stack.localEnergyFlux[TAG::NEXT   ]   =  m_dt * eflux * currentConnRate;
