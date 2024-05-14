@@ -12,4 +12,4 @@
 	url = ../../GEOS-DEV/hdf5_interface.git
 [submodule "scripts/uberenv"]
 	path = scripts/uberenv
-	url = ../../LLNL/uberenv.git
+	url = git@github.com:LLNL/uberenv.git
