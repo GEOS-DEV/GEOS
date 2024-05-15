@@ -1148,8 +1148,8 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 }
 
 
-void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                       std::set< MpiRank > const & neighbors )
+std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                                                              std::set< MpiRank > const & neighbors )
 {
   // Now we exchange the data with our neighbors.
   MpiRank const curRank{ MpiWrapper::commRank() };
@@ -1220,10 +1220,12 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 //  }
 
   assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
+
+  return {};
 }
 
-void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                       std::set< int > const & neighbors )
+std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                                                              std::set< int > const & neighbors )
 {
   std::set< MpiRank > neighbors_;
   for( int const & rank: neighbors )

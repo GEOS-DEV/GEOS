@@ -22,6 +22,8 @@
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/NewGhosting.hpp"
+
+#include "include/MeshMappings.hpp"
 #include "common/DataTypes.hpp"
 
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -111,7 +113,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   if( m_useNewGhosting )
   {
     GEOS_LOG_RANK( "Here we go, new ghosting!" );
-    ghosting::doTheNewGhosting( m_vtkMesh, partition.getMetisNeighborList() );
+    std::unique_ptr< generators::MeshMappings > mm = ghosting::doTheNewGhosting( m_vtkMesh, partition.getMetisNeighborList() );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
