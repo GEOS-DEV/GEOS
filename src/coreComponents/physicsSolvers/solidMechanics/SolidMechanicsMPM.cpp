@@ -3253,7 +3253,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
       array3d< real64 > gridDAcceleration( gridAcceleration.size(0), gridAcceleration.size(1), gridAcceleration.size(2)); //CC: TODO Probably want to avoid allocating a lot of memory just for the dummy variable
       singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridDAcceleration, gridPosition, nodeSets );
     }
-    else if( m_boundaryConditionTypes[face] == 2 && ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1) )
+    else if( m_boundaryConditionTypes[face] == 2  && ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1) ) // Double check stress control (think we only need to check if stress control for the direction of faces are on not all them)
     {
       for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
       {
@@ -3261,7 +3261,6 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
         int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
         int dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
         int dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
-        int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
 
         // Enforce BCs on boundary nodes using F-table
         SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
@@ -3271,38 +3270,38 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                                                                                                                                              // enough loop
                                                                                                                                              // to warrant
                                                                                                                                              // parallelization
+        {
+          int const g = boundaryNodes[gg];
+
+          real64 prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
+          gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this, because it overrides the change in velocity that might have been written during enforceContact
+          real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
+          gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
+          gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
+          
+          if(m_enablePrescribedBoundaryTransverseVelocities == 1)
           {
-            int const g = boundaryNodes[gg];
+            real64 prescribedTransverseVelocity1 = m_prescribedBoundaryTransverseVelocities[face][0];
+            real64 prescribedTransverseVelocity2 = m_prescribedBoundaryTransverseVelocities[face][1];
 
-            real64 prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
-            gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this, because it overrides the change in velocity that might have been written during enforceContact
-            real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
-            gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
-            gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
+            gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
+            gridDVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
+
+            real64 accelerationForTransverseBC1 = gridDVelocity[g][fieldIndex][dir1] / dt; // acceleration needed to satisfy BC along transverse directions
+            real64 accelerationForTransverseBC2 = gridDVelocity[g][fieldIndex][dir2] / dt; // acceleration needed to satisfy BC along transverse directions
             
-            if(m_enablePrescribedBoundaryTransverseVelocities == 1)
-            {
-              real64 prescribedTransverseVelocity1 = m_prescribedBoundaryTransverseVelocities[face][0];
-              real64 prescribedTransverseVelocity2 = m_prescribedBoundaryTransverseVelocities[face][1];
-
-              gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
-              gridDVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
-
-              real64 accelerationForTransverseBC1 = gridDVelocity[g][fieldIndex][dir1] / dt; // acceleration needed to satisfy BC
-              real64 accelerationForTransverseBC2 = gridDVelocity[g][fieldIndex][dir2] / dt; // acceleration needed to satisfy BC
-              
-              gridVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1;
-              gridVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2;
-              
-              gridAcceleration[g][fieldIndex][dir1] += accelerationForTransverseBC1;
-              gridAcceleration[g][fieldIndex][dir2] += accelerationForTransverseBC2;
-            }            
+            gridVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1;
+            gridVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2;
             
-            if( gridGhostRank[g] <= -1 ) // so we don't double count reactions at partition boundaries
-            {
-              localFaceReactions[face] += accelerationForBC * gridMass[g][fieldIndex];
-            }
-          } );
+            gridAcceleration[g][fieldIndex][dir1] += accelerationForTransverseBC1;
+            gridAcceleration[g][fieldIndex][dir2] += accelerationForTransverseBC2;
+          }            
+          
+          if( gridGhostRank[g] <= -1 ) // so we don't double count reactions at partition boundaries
+          {
+            localFaceReactions[face] += accelerationForBC * gridMass[g][fieldIndex];
+          }
+        } );
 
         // Perform field reflection on buffer nodes - accounts for moving boundary effects
         SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
@@ -4987,7 +4986,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p], particleMaterialDirection[p]); 
+        LvArray::tensorOps::copy< 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p] ); 
       } );
     }
 
@@ -5048,11 +5047,11 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if(  constitutiveModel.hasWrapper( "jacobian" ) )
     {
       arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-      arrayView1d< real64 > const constitutiveJacobian = constitutiveModel.getReference< array1d< real64 > >( "jacobian" );
+      arrayView2d< real64 > const constitutiveJacobian = constitutiveModel.getReference< array2d< real64 > >( "jacobian" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        constitutiveJacobian[p] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] ); 
+        constitutiveJacobian[p][0] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] ); 
       } );
     }
   } );
@@ -8138,8 +8137,6 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       localIndex const p = activeParticleIndices[pp];
 
-      // GEOS_LOG_RANK( "(Before XPIC) p: " << p << ", pos: " << particlePosition[p] << ", v: " << particleVelocity[p]);
-
       // Zero velocity gradient
       for( int i=0; i < numDims; i++ )
       {
@@ -8187,7 +8184,6 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         }
       }
 
-      // GEOS_LOG_RANK( "(After XPIC) p: " << p << ", pos: " << particlePosition[p] << ", v: " << particleVelocity[p]);
     } );
     subRegionIndex++;
   } );
