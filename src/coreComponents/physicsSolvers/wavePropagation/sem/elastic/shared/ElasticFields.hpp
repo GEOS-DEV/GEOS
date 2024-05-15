@@ -108,7 +108,7 @@ DECLARE_FIELD( DivPsix,
                "divpsix",
                array2d< real32 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "x-component of memory variables for attenuation." );
 
@@ -116,7 +116,7 @@ DECLARE_FIELD( DivPsiy,
                "divpsiy",
                array2d< real32 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "y-component of memory variables for attenuation." );
 
@@ -124,7 +124,7 @@ DECLARE_FIELD( DivPsiz,
                "divpsiz",
                array2d< real32 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "z-component of memory variables for attenuation." );
 
