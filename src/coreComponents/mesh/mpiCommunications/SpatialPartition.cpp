@@ -630,11 +630,12 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter(); //CC: this particle center needs to be updated if crossing periodic boundary
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
+  int numOrphanedParticles = false;
   forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
     {
       if( particleRankAfter[p] == -1 )
       {
-        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+        
         indicesToErase.insert( p );
       }
       else if( particleRankAfter[p] != m_rank )
@@ -643,6 +644,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
       }
     } );
   subRegion.erase( indicesToErase );
+  GEOS_LOG_RANK_IF(numOrphanedParticles > 0, "Deleted " << numOrphanedParticles << " orphaned out-of-domain particle" << (numOrphanedParticles == 1 ? "s": "")  << " during repartition" );
 
   // Resize particle region owning this subregion
   ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
