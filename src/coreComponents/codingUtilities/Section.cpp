@@ -96,7 +96,7 @@ void Section::begin( std::ostream & oss )
 {
   string lineSection;
   string sectionToBeBuilt;
-  string titleToAdd = "Section : " + m_sectionTitle;
+  string const titleToAdd = "Section : " + m_sectionTitle;
 
   computeMaxRowSize( titleToAdd, m_vDescriptions );
   buildLineSection( lineSection );
