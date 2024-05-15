@@ -162,7 +162,7 @@ public:
   arrayView5d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
-  virtual arrayView1d< real64 const > getPhaseMinVolumeFraction() const = 0;
+  virtual arrayView2d< real64 const > getPhaseMinVolumeFraction() const = 0;
 
   std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
   /**

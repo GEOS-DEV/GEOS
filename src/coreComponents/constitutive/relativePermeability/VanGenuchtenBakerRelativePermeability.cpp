@@ -75,6 +75,7 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
 void VanGenuchtenBakerRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
+  m_volFracScale.resize( 3 /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model",
@@ -87,26 +88,29 @@ void VanGenuchtenBakerRelativePermeability::postProcessInput()
                                     attribute ),
                           InputError );
   };
-  checkInputSize( m_phaseMinVolumeFraction, numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString());
 
-  m_volFracScale = 1.0;
-  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    auto const errorMsg = [&]( auto const & attribute ) {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
-    };
-    GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
-                          InputError );
-    GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
-                          InputError );
-    m_volFracScale -= m_phaseMinVolumeFraction[ip];
-  }
+    checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString());
+    m_volFracScale[dir] = 1.0;
+    for( integer ip = 0; ip < numFluidPhases(); ++ip )
+    {
+      auto const errorMsg = [&]( auto const & attribute ) {
+        return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      };
+      GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[dir][ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
+                            InputError );
+      GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[dir][ip], 1.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
+                            InputError );
+      m_volFracScale[dir] -= m_phaseMinVolumeFraction[dir][ip];
+    }
 
-  GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),
-                        InputError );
+    GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
+                          GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),
+                          InputError );
+  }
 
   for( int dir = 0; dir < 3; ++dir )
   {
