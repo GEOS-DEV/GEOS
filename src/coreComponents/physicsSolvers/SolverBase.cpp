@@ -1353,7 +1353,7 @@ bool SolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSE
   return true;
 }
 
-void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // up to specific solver to save what is needed
   GEOS_ERROR( "Call to SolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );

@@ -93,7 +93,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate() { flowSolver()->enableFixedStressPoromechanicsUpdate(); }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override { flowSolver()->saveSequentialIterationState( domain ); }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override { flowSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

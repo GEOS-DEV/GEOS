@@ -699,10 +699,6 @@ protected:
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
-
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive

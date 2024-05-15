@@ -123,6 +123,12 @@ public:
                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
+  void assembleForceResidualPressureContribution( MeshLevel const & mesh,
+                                                  arrayView1d< string const > const & regionNames,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
   void assembleStabilization( MeshLevel const & mesh,
                               NumericalMethodsManager const & numericalMethodManager,
                               DofManager const & dofManager,

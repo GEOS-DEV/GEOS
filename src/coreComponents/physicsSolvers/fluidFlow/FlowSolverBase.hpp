@@ -101,7 +101,7 @@ public:
    * @brief Utility function to save the iteration state (useful for sequential simulations)
    * @param[in] domain the domain partition
    */
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -160,12 +160,6 @@ protected:
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
 
   /**
-   * @brief Utility function to save the state at the end of a sequential iteration
-   * @param[in] subRegion the element subRegion
-   */
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const;
-
-  /**
    * @brief Helper function to compute/report the elements with small pore volumes
    * @param[in] domain the domain partition
    */
@@ -196,9 +190,11 @@ protected:
   real64 m_maxAbsolutePresChange;
 
   /// maximum (absolute) pressure change in a sequential iteration
+  real64 m_sequentialPresChange;
   real64 m_maxSequentialPresChange;
 
   /// maximum (absolute) temperature change in a sequential iteration
+  real64 m_sequentialTempChange;
   real64 m_maxSequentialTempChange;
 
 private:

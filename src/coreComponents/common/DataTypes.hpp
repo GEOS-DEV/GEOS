@@ -53,17 +53,18 @@
 //#include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <string>
-#include <map>
 #include <unordered_map>
 #include <vector>
-#include <set>
-#include <string_view>
-#include <optional>
-/**
+
+/*
  * top level geosx namespace contains all code that is specific to GEOSX
  */
 namespace geos

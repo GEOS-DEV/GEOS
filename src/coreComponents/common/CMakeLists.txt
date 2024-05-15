@@ -15,6 +15,9 @@ set( common_headers
      Path.hpp
      Span.hpp
      Stopwatch.hpp
+     TableFormatter.hpp
+     TableData.hpp
+     TableLayout.hpp
      Timer.hpp
      Tensor.hpp
      TimingMacros.hpp
@@ -43,6 +46,9 @@ set( common_sources
      Logger.cpp
      MpiWrapper.cpp
      Path.cpp
+     TableFormatter.cpp
+     TableData.cpp
+     TableLayout.cpp 
      initializeEnvironment.cpp
      Units.cpp
    )
