@@ -143,10 +143,9 @@ Often these simulations involve coupling between compositional multiphase flow a
 
 As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at a large real-world storage site.
 Figure \ref{RW_mesh} illustrates the computational mesh and relevant problem size and physical dimensions.
-A strong scaling study is shown....maybe we just show a result image instead of a scaling study?
 
-![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=30% }
-![Results of a compositional flow simulation of a real world CO2 storage site.\label{RW_results}](RW_results2.png){ width=30% }
+![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=40% }
+![Results of a compositional flow simulation of a real world CO2 storage site.\label{RW_results}](RW_results2.png){ width=40% }
 
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory.
@@ -154,8 +153,8 @@ The results from the weak scaling study (Figure \ref{fig:Frontier_Mechanics}) sh
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is expected.
 The compositional flow study presented in Figure \ref{fig:Frontier_CMPF} shows similarly good weak scaling. 
 
-![Weak scaling results for mechanics on ORNL/Frontier.\label{fig:Frontier_Mechanics}](GEOS_Frontier_mechanics.pdf){ width=30% }
-![Weak scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF}](GEOS_Frontier_compositional.pdf){ width=30% }
+![Weak scaling results for mechanics on ORNL/Frontier.\label{fig:Frontier_Mechanics}](GEOS_Frontier_mechanics.pdf){ width=40% }
+![Weak scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF}](GEOS_Frontier_compositional.pdf){ width=40% }
 
 # Acknowledgements
 
