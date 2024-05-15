@@ -91,11 +91,11 @@ bibliography: paper.bib
 
 # Summary
 
-GEOS is a simulation framework focused on implementing tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
-The version of GEOS described here should be considered a separate work form the previous version of GEOS referred to in [@Settgast:2017].
+GEOS is a simulation framework focused on implementing solution methods for tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
 Specifically, GEOS provides implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar problems, and allows developers to easily extend or add new formulations to the suite of capabilities.
 The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures, and thermal effects.
 Extensive documentation for GEOS is available at https://geosx-geosx.readthedocs-hosted.com/en/latest. 
+Note that the version of GEOS described here should be considered a separate work form the previous version of GEOS referred to in [@Settgast:2017].
 
 # Statement of need
 
@@ -105,21 +105,21 @@ Given the 2050 net-zero GHG goals, CO2 storage capacities required to offset emi
 One factor in the evaluation of CO2 storage sites are the containment risks associated with the injection of liquefied CO2 in the subsurface.
 The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO2 is injected into a subsurface reservoir. 
 Thus, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
-Additionally GEOS provides the potential to estimate seismic events induced by CO2 injection.
 
 # C++ Infrastructure Components 
 
-The core c++17 infrastructure provides components to perform common computer science tasks typically required for solving differential equations using a spatially discrete method. 
+The core c++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method. 
 The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
 
-The data repository forms an object hierarchy through the definition of a `Wrapper` class and a `Group` class. 
-Drawing an analogy with a classical folder/file hierarchy, the `Group` is analogous to a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects, while the `Wrapper` is a container for any arbitrary object (e.g. scalar, array, class, etc.).
+The GEOS data repository forms an object hierarchy analogous with a classical folder/file hierarchy, where the "folder" is a `Group` object and the "file" is a `Wrapper` that is a container for any arbitrary object (e.g. scalar, array, class, etc.).
 The mesh data structure is built on top of the data repository as a collection of "object managers" for each mesh object type (e.g. node, edge, face, element).
 The management of distributed memory parallelism is done through a MPI, and the execution of distributed memory parallelism typically requires minimal consideration from the physics package developer.
 
 GEOS is intended to be a generic multi-physics simulation platform.
-As such, single physics packages are developed and tested independent of other physics packages. 
-When coupling one or more single physics capabilities together to create a couple physics package, the strategy can be described as a monolithic linear system with an underlying block structure corresponding where the row/col of the block corresponds with a set of constraint equations/degrees-of-freedom associated with a physics package.
+The physics package interface in GEOS is intended to encapsulate the application of a numerical method to the solution of a collection of governing equations.
+When implementing a package for a set of coupled physics equations, first each individual physics package is developed as a stand-alone capability. 
+Then the single physics capabilities together to create a couple physics package.
+The strategy can be described as a monolithic linear system with an underlying block structure corresponding where the row/col of the block corresponds with a set of constraint equations/degrees-of-freedom associated with a physics package.
 the diagonal blocks result from each single physics package contributions to its own boundary value problem.
 The off-diagonal blocks represent the coupling between physics packages and are typically filled through one of several options, such as through the coupled physics package, or through a callback mechanism in the single physics package which adds the off-diagonal contributions to the single-physics kernels.
 
@@ -144,32 +144,20 @@ Often these simulations involve coupling between compositional multiphase flow a
 The coupling strategy applied in GEOS is to require the capability of a tightly coupled monolithic system as a baseline capability.
 In cases where such tight coupling is not required, one may decompose the monolithic system into blocks and apply a sequential coupling approach.
 
-![Northern Lights computational mesh. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.](NL_volIntOne.png)
+As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at the Northern Lights site in Norway.
+Figure \ref{NL_mesh} illustrates the computational mesh and relevant problem size and physical dimensions.
+A strong scaling study is shown....maybe we just show a result image instead of a scaling study?
 
-<!--
-+-------------------+------------+----------+----------+
-| Header 1          | Header 2   | Header 3 | Header 4 |
-|                   |            |          |          |
-+:=================:+:==========:+:========:+:========:+
-| row 1, column 1   | column 2   | column 3 | column 4 |
-+-------------------+------------+----------+----------+
-| row 2             | cells span columns               |
-+-------------------+------------+---------------------+
-| row 3             | cells      | - body              |
-+-------------------+ span rows  | - elements          |
-| row 4             |            | - here              |
-+===================+============+=====================+
-| Footer                                               |
-+===================+============+=====================+
--->
+![Northern Lights computational mesh. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{NL_mesh}](NL_volIntOne.png)
 
+<!-- 
 | Nodes | Ranks | DoF/rank |                 Newton iter / timestep | $\Huge \frac{\text{GMRES iter}}{\text{Newton iter}}$ | Setup <br/> [s]  | Solve <br/> [s] | Efficiency |
 | :---: | :---: | :------: |                 :--------------------:                       |      :-------------:       | :-----:          | :---:           | ----------: |
 | 2     | 72    | 226K     |                          7.5                             |           30.3             |  6,709           |  13,725         |      100%   |
 | 4     | 144   | 113K     |                          7.5                             |           30.9             |  3,816           |  7,479          |      90%    |
 | 8     | 288   | 56.6K    |                          7.6                             |           30.9             |  2,290           |  4,296          |      78%    |
 | 16    | 576   | 28.3K    |                          7.6                             |           31.2             |  1,699           |  2,234          |      65%    |
-Table 1: Strong scaling on LLNL/Quartz (Intel Xeon E5-2695 v4)
+Table 1: Strong scaling of Northern Lights problem on LLNL/Quartz (Intel Xeon E5-2695 v4)
 
 
 | Nodes | Ranks | DoF/rank | $\Huge \frac{\text{Newton iter}}{\text{timestep}}$ | $\Huge \frac{\text{GMRES iter}}{\text{Newton iter}}$ | Setup <br/> [s]  | Solve <br/> [s] | Efficiency |
@@ -177,7 +165,12 @@ Table 1: Strong scaling on LLNL/Quartz (Intel Xeon E5-2695 v4)
 | 4     | 16    |   1,018K |    7.7    |   44.3    |  2,830  |  4,364  |      100%   |
 | 8     | 32    |   509K   |    7.5    |   46.2    |  1,834  |  3,636  |      66%    |
 | 16    | 64    |   255K   |    7.5    |   45.6    |  1,473  |  3,775  |      3%     |
-Table 2: Strong scaling on LLNL/Lassen (NVIDIA V100)
+Table 2: Strong scaling of Northern Lights problem on LLNL/Lassen (NVIDIA V100) 
+-->
+
+As an example of the weak scalability of GEOS on exascale systems, we present a weak scaling study of compositional flow on a simple wellbore geometry using the Frontier supercomputer located at Oak Ridge National Laboratory.
+The weak scaling study ranges from 4 ranks with 19.2M dof to 2048 ranks with 9.8B dof.
+The upper end of the study represents 1/8 the available resources on Frontier.
 
 ![Weak scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF_Scaling}](GEOS_Frontier.pdf){ width=80% }
 
