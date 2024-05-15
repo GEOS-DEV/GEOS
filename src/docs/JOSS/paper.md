@@ -144,8 +144,10 @@ Often these simulations involve coupling between compositional multiphase flow a
 As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at a large real-world storage site.
 Figure \ref{RW_mesh} illustrates the computational mesh and relevant problem size and physical dimensions.
 
-![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=40% } | ![Results of a compositional flow simulation of a real world CO2 storage site.\label{RW_results}](RW_results2.png){ width=40% }
-:-------------------------:|:-------------------------:
+![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=40% }
+
+![Results of a compositional flow simulation of a real world CO2 storage site.\label{RW_results}](RW_results2.png){ width=40% }
+
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory.
 The results from the weak scaling study (Figure \ref{fig:Frontier_Mechanics}) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
