@@ -39,7 +39,7 @@ LaplaceBaseH1::LaplaceBaseH1( const string & name,
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   this->registerWrapper( viewKeyStruct::fieldVarName(), &m_fieldName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of field variable" );
 

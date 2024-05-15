@@ -32,7 +32,7 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 

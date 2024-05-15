@@ -32,7 +32,7 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameArray ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );

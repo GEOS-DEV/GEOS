@@ -44,7 +44,7 @@ CompositeFunction::CompositeFunction( const string & name,
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
   registerWrapper( keys::variableNames, &m_variableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of variables in expression" );
 

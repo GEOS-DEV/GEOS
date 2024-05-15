@@ -64,7 +64,7 @@ SolverBase::SolverBase( string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
@@ -72,7 +72,7 @@ SolverBase::SolverBase( string const & name,
                     "discretization should be specified." );
 
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "

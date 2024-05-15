@@ -36,7 +36,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_elementType = ElementType::Line;
 
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef );
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt );
 
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::nextWellElementIndexString(), &m_nextWellElementIndex );

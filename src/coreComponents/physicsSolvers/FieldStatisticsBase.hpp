@@ -53,7 +53,7 @@ public:
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
-      setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+      setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
       setInputFlag( dataRepository::InputFlags::REQUIRED ).
       setDescription( "Name of the " + SOLVER::coupledSolverAttributePrefix() + " solver" );
 

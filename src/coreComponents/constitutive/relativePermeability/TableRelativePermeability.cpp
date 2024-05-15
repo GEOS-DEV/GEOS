@@ -33,7 +33,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
   : RelativePermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingRelPermTableNamesString(), &m_wettingNonWettingRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
@@ -45,7 +45,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::wettingIntermediateRelPermTableNamesString(), &m_wettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (wetting phase, intermediate phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
@@ -55,7 +55,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateRelPermTableNamesString(), &m_nonWettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
                     "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"

@@ -39,7 +39,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   // drainage table names
 
   registerWrapper( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString(), &m_drainageWettingNonWettingRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
@@ -51,7 +51,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(), &m_drainageWettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
@@ -61,7 +61,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(), &m_drainageNonWettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
                     "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
@@ -73,14 +73,14 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   // imbibition table names
 
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
                     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"

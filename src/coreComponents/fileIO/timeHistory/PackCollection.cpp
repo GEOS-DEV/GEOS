@@ -13,17 +13,17 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_initialized( false )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPathString(), &m_objectPath ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The name of the object from which to retrieve field values." );
 
   registerWrapper( PackCollection::viewKeysStruct::fieldNameString(), &m_fieldName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The name of the (packable) field associated with the specified object to retrieve data from" );
 
   registerWrapper( PackCollection::viewKeysStruct::setNamesString(), &m_setNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The set(s) for which to retrieve data." );
 

@@ -48,7 +48,7 @@ public:
       using SolverType = TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
       registerWrapper( key, &m_names[idx()] ).
-        setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+        setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );

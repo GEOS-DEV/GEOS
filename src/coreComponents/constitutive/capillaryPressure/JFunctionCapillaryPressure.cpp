@@ -38,7 +38,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
   m_nonWettingIntermediateSurfaceTension( -1 )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingJFuncTableNameString(), &m_wettingNonWettingJFuncTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (wetting phase, non-wetting phase)\n"
                     "Note that this input is only used for two-phase flow.\n"
@@ -49,7 +49,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     " to specify the table names." );
 
   registerWrapper( viewKeyStruct::wettingIntermediateJFuncTableNameString(), &m_wettingIntermediateJFuncTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
@@ -58,7 +58,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     " to specify the table names." );
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateJFuncTableNameString(), &m_nonWettingIntermediateJFuncTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "J-function table (dimensionless) for the pair (non-wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"

@@ -101,17 +101,19 @@ string rtTypes::getTypeName( std::type_index const key )
  *       axes are given as a comma-separated list enclosed in a curly brace.
  *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
  */
-string constructArrayRegex( string_view subPattern, integer dimension, bool topLevelCall = true )
+string constructArrayRegex( string_view subPattern, integer dimension, bool isEmpty, bool topLevelCall = true )
 {
   string subPatternStr = dimension > 1 ?
-                         constructArrayRegex( subPattern, dimension-1, false ) :
+                         constructArrayRegex( subPattern, dimension-1, isEmpty, false ) :
                          string( subPattern );
+
+  string optPattern = isEmpty ? "?" : "";
   // Add trailing space if is not already done
   if( !stringutilities::endsWith( subPatternStr, "\\s*" ) )
     subPatternStr+="\\s*";
   // Allow the bottom-level to be empty
   string const arrayRegex = dimension == 1 ?
-                            "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\}":
+                            "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")"+ optPattern + "\\}":
                             "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}";
   // accept spaces around surrounding braces at the top-level
   return topLevelCall ?
@@ -125,7 +127,7 @@ string constructArrayRegex( string_view subPattern, integer dimension, bool topL
  * @param dimension 1 = array1d, 2 = array2d...
  * @return
  */
-Regex constructArrayRegex( string_view subPattern, string_view description, integer dimension )
+Regex constructArrayRegex( string_view subPattern, string_view description, integer dimension, bool isEmpty = true )
 {
   std::ostringstream arrayDesc;
 
@@ -145,7 +147,7 @@ Regex constructArrayRegex( string_view subPattern, string_view description, inte
     arrayDesc << description.substr( description.find( " must " ) );
   }
 
-  return Regex( constructArrayRegex( subPattern, dimension ),
+  return Regex( constructArrayRegex( subPattern, dimension, isEmpty ),
                 arrayDesc.str() );
 }
 
@@ -184,10 +186,9 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string_view const pathERegex = "[^*?<>\\|:\";,\\s]*\\s*";
 
   string_view const groupNameDesc = "Input value must be a string that cannot be empty and contains only upper/lower letters, digits, and the characters  . - _";
-  string_view const groupNameRegex = "[a-zA-Z0-9.\\-_]+";
-  string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ /";
-  string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/]*";
-
+  string_view const groupNameRegex = "[a-zA-Z0-9.\\-_/]*";
+  string_view const groupNameOptDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ /";
+  string_view const groupNameOptRegex = "[a-zA-Z0-9.\\-_/]*";
 
   // Build master list of regexes
   RegexMapType regexMap =
@@ -224,8 +225,9 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
     { string( CustomTypes::mapPair ), Regex( strERegex, strEDesc ) },
     { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
     { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
-    { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
-    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
+    { string( CustomTypes::groupNameOpt ), Regex( groupNameOptRegex, groupNameOptDesc ) },
+    { string( CustomTypes::groupNameArray ), constructArrayRegex( groupNameRegex, groupNameDesc, 1, false ) },
+    { string( CustomTypes::groupNameOptArray ), constructArrayRegex( groupNameOptRegex, groupNameOptDesc, 1 ) }
   };
   return regexMap;
 }

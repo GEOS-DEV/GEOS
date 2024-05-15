@@ -83,7 +83,7 @@ PoromechanicsInitialization( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the poromechanics solver" );
 

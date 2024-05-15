@@ -33,12 +33,12 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
   this->registerGroup( viewKeyStruct::elementSubRegions() );
 
   registerWrapper( viewKeyStruct::materialListString(), &m_materialList ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOpt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Mesh body that contains this region" );

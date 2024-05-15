@@ -111,7 +111,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of component names" );
 
   this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameOptArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 

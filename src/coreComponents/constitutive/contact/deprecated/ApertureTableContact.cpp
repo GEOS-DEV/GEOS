@@ -46,7 +46,7 @@ ApertureTableContact::ApertureTableContact( string const & name,
                     "1/0 error." );
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the aperture table" );
 }

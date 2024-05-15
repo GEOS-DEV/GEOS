@@ -42,7 +42,7 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
   m_fracturesSolverName()
 {
   registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fractures solver to use in the fractured poroelastic solver" );
 

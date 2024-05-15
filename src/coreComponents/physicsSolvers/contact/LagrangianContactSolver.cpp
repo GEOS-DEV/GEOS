@@ -61,7 +61,7 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
   ContactSolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 

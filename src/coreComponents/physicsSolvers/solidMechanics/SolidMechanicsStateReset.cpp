@@ -37,7 +37,7 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid mechanics solver" );
 
