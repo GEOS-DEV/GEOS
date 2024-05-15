@@ -92,8 +92,6 @@ public:
       }
     }
 
-    bool kValueReset = true;
-    constexpr real64 boundsTolerance = MultiFluidConstants::SSITolerance;
     if( needInitialisation )
     {
       KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
@@ -103,9 +101,7 @@ public:
                                                           kVapourLiquid );
     }
 
-    vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
-    real64 const initialVapourFraction = vapourPhaseMoleFraction;
-
+    real64 kValueVariance = calculateVariance( presentComponents, kVapourLiquid );
     bool converged = false;
     for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
     {
@@ -132,24 +128,17 @@ public:
         break;
       }
 
-      // Update K-values
-      if( (vapourPhaseMoleFraction < -boundsTolerance || vapourPhaseMoleFraction > 1.0+boundsTolerance)
-          && 0.2 < LvArray::math::abs( vapourPhaseMoleFraction-initialVapourFraction )
-          && !kValueReset )
+      for( integer const ic : presentComponents )
       {
-        KValueInitialization::computeConstantLiquidKvalue( numComps,
-                                                           pressure,
-                                                           temperature,
-                                                           componentProperties,
-                                                           kVapourLiquid );
-        kValueReset =  true;
+        kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
       }
-      else
+
+      // Check of K-values have converged to single value
+      kValueVariance = calculateVariance( presentComponents, kVapourLiquid );
+      if( kValueVariance < MultiFluidConstants::newtonTolerance )
       {
-        for( integer const ic : presentComponents )
-        {
-          kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
-        }
+        converged = true;
+        break;
       }
     }
 
@@ -466,11 +455,33 @@ private:
                                  arraySlice1d< real64 > const & x )
   {
 #if defined(GEOS_DEVICE_COMPILE)
+GEOS_UNUSED_VAR( A, b, x );
     return false;
 #else
     BlasLapackLA::solveLinearSystem( A, b, x );
     return true;
 #endif
+  }
+
+  GEOS_HOST_DEVICE
+  static real64 calculateVariance( arraySlice1d< integer const > const & presentComponents,
+                                   arraySlice1d< real64 const > const & kValues )
+  {
+    integer const size = presentComponents.size();
+    real64 sum = 0.0;
+    for( integer const ic : presentComponents )
+    {
+      real64 const logK = LvArray::math::log( kValues[ic] );
+      sum += logK;
+    }
+    real64 const meanKValue = sum / size;
+    sum = 0.0;
+    for( integer const ic : presentComponents )
+    {
+      real64 const dLogK = LvArray::math::log( kValues[ic] ) - meanKValue;
+      sum += (dLogK*dLogK);
+    }
+    return sum/size;
   }
 };
 

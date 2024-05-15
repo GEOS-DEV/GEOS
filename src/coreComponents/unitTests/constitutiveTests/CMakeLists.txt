@@ -5,6 +5,7 @@ set( gtest_geosx_tests
      testCO2SpycherPruessModels.cpp
      testDamage.cpp
      testMultiFluidCompositionalMultiphase.cpp
+     testMultiFluidCompositionalMultiphasePVTPackage.cpp
      testMultiFluidDeadOil.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )
