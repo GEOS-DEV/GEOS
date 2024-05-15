@@ -39,8 +39,10 @@ public:
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
    * the subregion
    */
-  SinglePhaseConstantThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity )
-    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity )
+  SinglePhaseConstantThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                                R1Tensor const thermalConductivityComponents )
+    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity ),
+    m_thermalConductivityComponents(thermalConductivityComponents)
   {}
 
   GEOS_HOST_DEVICE
@@ -49,6 +51,20 @@ public:
                        real64 const & laggedPorosity ) const override
   { GEOS_UNUSED_VAR( k, q, laggedPorosity ); }
 
+  GEOS_HOST_DEVICE
+  virtual void updateFromTemperature( localIndex const k,
+                                      localIndex const q,
+                                      real64 const & temperature ) const
+  {  
+    m_effectiveConductivity[k][q][0] = m_thermalConductivityComponents[0] + 0.0*temperature;
+    m_effectiveConductivity[k][q][1] = m_thermalConductivityComponents[1] + 0.0*temperature;
+    m_effectiveConductivity[k][q][2] = m_thermalConductivityComponents[2] + 0.0*temperature;
+  }
+
+private:
+
+  /// default thermal conductivity in the subRegion
+  R1Tensor m_thermalConductivityComponents;
 };
 
 /**
@@ -76,11 +92,6 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
 
-  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
-
-  virtual void update( arrayView2d< real64 const > const & porosity ) const override final;
-
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseConstantThermalConductivityUpdate;
 
@@ -90,7 +101,8 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_effectiveConductivity );
+    return KernelWrapper( m_effectiveConductivity,
+                          m_thermalConductivityComponents );
   }
 
   struct viewKeyStruct : public SinglePhaseThermalConductivityBase::viewKeyStruct

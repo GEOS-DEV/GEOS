@@ -22,6 +22,7 @@
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {
@@ -46,8 +47,10 @@ public:
    */
   CompressibleSolidUpdates( NullModel const & solidModel,
                             PORO_TYPE const & porosityModel,
-                            PERM_TYPE const & permModel ):
-    CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
+                            PERM_TYPE const & permModel,
+                            SinglePhaseConstantThermalConductivity const & condModel ):
+    CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel ),
+    m_condUpdate( condModel.createKernelWrapper() )
   {}
 
   GEOS_HOST_DEVICE
@@ -63,6 +66,10 @@ public:
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
+
+    // update thermal conductivity of the solid phase w.r.t. temperature change
+    m_condUpdate.updateFromTemperature( k, q, temperature );
+    //m_condUpdate.update( k, q, temperature );
   }
 
   GEOS_HOST_DEVICE
@@ -97,6 +104,8 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
+protected:
+  typename SinglePhaseConstantThermalConductivity::KernelWrapper const m_condUpdate;
 };
 
 
@@ -159,13 +168,17 @@ public:
 
     return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( getSolidModel(),
                                                              getPorosityModel(),
-                                                             getPermModel() );
+                                                             getPermModel(),
+                                                             getCondModel() );
   }
 private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getSolidModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPermModel;
 
+protected:
+  SinglePhaseConstantThermalConductivity const & getCondModel() const
+  { return this->getParent().template getGroup< SinglePhaseConstantThermalConductivity >( "thermalCond" ); }
 };
 
 }
