@@ -14,7 +14,7 @@
 
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
-#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlockABC.hpp"
 
 namespace geos
 {

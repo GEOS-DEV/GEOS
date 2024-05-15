@@ -20,7 +20,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
-#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlockABC.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
 // special CMake-generated include

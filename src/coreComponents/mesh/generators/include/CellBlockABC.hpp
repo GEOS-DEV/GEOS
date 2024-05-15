@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace geos
+namespace geos  // TODO eventually add the `generators` namespace
 {
 
 /**

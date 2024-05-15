@@ -15,7 +15,7 @@
 #ifndef GEOS_FACEBLOCK_HPP
 #define GEOS_FACEBLOCK_HPP
 
-#include "FaceBlockABC.hpp"
+#include "mesh/generators/include/FaceBlockABC.hpp"
 
 namespace geos
 {

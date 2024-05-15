@@ -42,7 +42,7 @@ set( mesh_headers
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
-     generators/CellBlockABC.hpp
+     generators/include/CellBlockABC.hpp
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
@@ -50,7 +50,7 @@ set( mesh_headers
      generators/include/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
-     generators/FaceBlockABC.hpp
+     generators/include/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp

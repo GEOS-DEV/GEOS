@@ -20,7 +20,7 @@
 #define GEOS_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
-#include "mesh/generators/FaceBlockABC.hpp"
+#include "mesh/generators/include/FaceBlockABC.hpp"
 
 namespace geos
 {
