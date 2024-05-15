@@ -16,6 +16,7 @@
 #define GEOS_INDICES_HPP
 
 #include "common/GeosxMacros.hpp"
+#include "common/DataTypes.hpp"
 
 #include "LvArray/src/limits.hpp"
 
@@ -47,71 +48,101 @@ using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent:
 
 using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
 
-EdgeGlbIdx operator "" _egi( unsigned long long int i )
+inline NodeLocIdx operator "" _nli( unsigned long long int i )
+{
+  return NodeLocIdx{ NodeLocIdx::UnderlyingType( i ) };
+}
+
+inline EdgeLocIdx operator "" _eli( unsigned long long int i )
+{
+  return EdgeLocIdx{ EdgeLocIdx::UnderlyingType( i ) };
+}
+
+inline FaceLocIdx operator "" _fli( unsigned long long int i )
+{
+  return FaceLocIdx{ FaceLocIdx::UnderlyingType( i ) };
+}
+
+inline CellLocIdx operator "" _cli( unsigned long long int i )
+{
+  return CellLocIdx{ CellLocIdx::UnderlyingType( i ) };
+}
+
+inline NodeGlbIdx operator "" _ngi( unsigned long long int i )
+{
+  return NodeGlbIdx{ NodeGlbIdx::UnderlyingType( i ) };
+}
+
+inline EdgeGlbIdx operator "" _egi( unsigned long long int i )
 {
   return EdgeGlbIdx{ EdgeGlbIdx::UnderlyingType( i ) };
 }
 
-FaceGlbIdx operator "" _fgi( unsigned long long int i )
+inline FaceGlbIdx operator "" _fgi( unsigned long long int i )
 {
   return FaceGlbIdx{ FaceGlbIdx::UnderlyingType( i ) };
 }
 
-MpiRank operator "" _mpi( unsigned long long int i )
+inline CellGlbIdx operator "" _cgi( unsigned long long int i )
+{
+  return CellGlbIdx{ CellGlbIdx::UnderlyingType( i ) };
+}
+
+inline MpiRank operator "" _mpi( unsigned long long int i )
 {
   return MpiRank{ MpiRank::UnderlyingType( i ) };
 }
 
-void to_json( json & j,
-              const MpiRank & v )
+inline void to_json( json & j,
+                     const MpiRank & v )
 {
   j = v.get();
 }
 
-void from_json( const json & j,
-                MpiRank & v )
+inline void from_json( const json & j,
+                       MpiRank & v )
 {
   v = MpiRank{ j.get< MpiRank::UnderlyingType >() };  // TODO use a `traits` instead
 }
 
-void from_json( const json & j,
-                NodeGlbIdx & v )
+inline void from_json( const json & j,
+                       NodeGlbIdx & v )
 {
   v = NodeGlbIdx{ j.get< NodeGlbIdx::UnderlyingType >() };
 }
 
-void to_json( json & j,
-              const NodeGlbIdx & v )
+inline void to_json( json & j,
+                     const NodeGlbIdx & v )
 {
   j = v.get();
 }
 
-void to_json( json & j,
-              const EdgeGlbIdx & v )
+inline void to_json( json & j,
+                     const EdgeGlbIdx & v )
 {
   j = v.get();
 }
 
-void from_json( const json & j,
-                EdgeGlbIdx & v )
+inline void from_json( const json & j,
+                       EdgeGlbIdx & v )
 {
   v = EdgeGlbIdx{ j.get< EdgeGlbIdx::UnderlyingType >() };
 }
 
-void to_json( json & j,
-              const FaceGlbIdx & v )
+inline void to_json( json & j,
+                     const FaceGlbIdx & v )
 {
   j = v.get();
 }
 
-void from_json( const json & j,
-                FaceGlbIdx & v )
+inline void from_json( const json & j,
+                       FaceGlbIdx & v )
 {
   v = FaceGlbIdx{ j.get< FaceGlbIdx::UnderlyingType >() };
 }
 
-void to_json( json & j,
-              const CellGlbIdx & v )
+inline void to_json( json & j,
+                     const CellGlbIdx & v )
 {
   j = v.get();
 }

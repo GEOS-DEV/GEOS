@@ -18,6 +18,8 @@
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
+#include "Pods.hpp"
+
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 
@@ -1126,6 +1128,10 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 //  }
 
   assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
+
+  NodeMgrImpl const nodeMgr( 0_nli );
+  EdgeMgrImpl const edgeMgr( 0_eli );
+  FaceMgrImpl const faceMgr( 0_fli );
 
   return {};
 }

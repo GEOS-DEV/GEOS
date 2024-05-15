@@ -15,12 +15,70 @@
 #ifndef GEOS_PODS_HPP
 #define GEOS_PODS_HPP
 
+#include "Indices.hpp"
+
+#include "include/NodeMgr.hpp"
+#include "include/EdgeMgr.hpp"
+#include "include/FaceMgr.hpp"
+#include "include/CellMgr.hpp"
+
 namespace geos
 {
 
-class Pods
+class NodeMgrImpl : public generators::NodeMgr
 {
+public:
+  explicit NodeMgrImpl( NodeLocIdx const & numNodes );
 
+  localIndex numNodes() const override;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override;
+
+  ArrayOfArrays< localIndex > getNodeToEdges() const override;
+
+  ArrayOfArrays< localIndex > getNodeToFaces() const override;
+
+  ToCellRelation< ArrayOfArrays< localIndex>> getNodeToElements() const override;
+
+  array1d< globalIndex > getLocalToGlobal() const override;
+
+  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
+
+private:
+  NodeLocIdx m_numNodes;
+  std::map< string, SortedArray< localIndex > > m_todo;
+};
+
+class EdgeMgrImpl : public generators::EdgeMgr
+{
+public:
+  explicit EdgeMgrImpl( EdgeLocIdx const & numEdges );
+
+  virtual localIndex numEdges() const override;
+
+  virtual array2d< localIndex > getEdgeToNodes() const override;
+
+  virtual ArrayOfArrays< localIndex > getEdgeToFaces() const override;
+
+private:
+  EdgeLocIdx m_numEdges;
+};
+
+class FaceMgrImpl : public generators::FaceMgr
+{
+public:
+  explicit FaceMgrImpl( FaceLocIdx const & numFaces );
+
+  virtual localIndex numFaces() const override;
+
+  virtual ArrayOfArrays< localIndex > getFaceToNodes() const override;
+
+  virtual ArrayOfArrays< localIndex > getFaceToEdges() const override;
+
+  virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
+
+private:
+  FaceLocIdx m_numFaces;
 };
 
 } // geos
