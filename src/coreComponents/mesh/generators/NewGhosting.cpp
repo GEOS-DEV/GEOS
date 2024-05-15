@@ -28,8 +28,7 @@
 #include <EpetraExt_RowMatrixOut.h>
 #include <Epetra_RowMatrixTransposer.h>
 
-
-#include <NamedType/named_type.hpp>
+#include "Indices.hpp"
 
 #include <vtkCellData.h>
 #include <vtkPointData.h>
@@ -43,101 +42,8 @@ using json = nlohmann::json;
 #include <algorithm>
 #include <utility>
 
-namespace geos
-{
-
-template< typename OUTPUT, typename INPUT >
-inline GEOS_HOST_DEVICE
-OUTPUT intConv( INPUT input )
-{
-  return LvArray::integerConversion< OUTPUT >( input );
-}
-
-}  // end of namespace
-
-
 namespace geos::ghosting
 {
-
-using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
-using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
-using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
-using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
-
-using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
-
-EdgeGlbIdx operator "" _egi( unsigned long long int i )
-{
-  return EdgeGlbIdx{ EdgeGlbIdx::UnderlyingType( i ) };
-}
-
-FaceGlbIdx operator "" _fgi( unsigned long long int i )
-{
-  return FaceGlbIdx{ FaceGlbIdx::UnderlyingType( i ) };
-}
-
-MpiRank operator "" _mpi( unsigned long long int i )
-{
-  return MpiRank{ MpiRank::UnderlyingType( i ) };
-}
-
-void to_json( json & j,
-              const MpiRank & v )
-{
-  j = v.get();
-}
-
-void from_json( const json & j,
-                MpiRank & v )
-{
-  v = MpiRank{ j.get< MpiRank::UnderlyingType >() };  // TODO use a `traits` instead
-}
-
-void from_json( const json & j,
-                NodeGlbIdx & v )
-{
-  v = NodeGlbIdx{ j.get< NodeGlbIdx::UnderlyingType >() };
-}
-
-void to_json( json & j,
-              const NodeGlbIdx & v )
-{
-  j = v.get();
-}
-
-void to_json( json & j,
-              const EdgeGlbIdx & v )
-{
-  j = v.get();
-}
-
-void from_json( const json & j,
-                EdgeGlbIdx & v )
-{
-  v = EdgeGlbIdx{ j.get< EdgeGlbIdx::UnderlyingType >() };
-}
-
-void to_json( json & j,
-              const FaceGlbIdx & v )
-{
-  j = v.get();
-}
-
-void from_json( const json & j,
-                FaceGlbIdx & v )
-{
-  v = FaceGlbIdx{ j.get< FaceGlbIdx::UnderlyingType >() };
-}
-
-void to_json( json & j,
-              const CellGlbIdx & v )
-{
-  j = v.get();
-}
 
 using Edge = std::tuple< NodeGlbIdx, NodeGlbIdx >;
 using Face = std::vector< NodeGlbIdx >;
