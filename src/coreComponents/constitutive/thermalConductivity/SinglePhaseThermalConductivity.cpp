@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SinglePhaseConstantThermalConductivity.cpp
+ * @file SinglePhaseThermalConductivity.cpp
  */
 
-#include "SinglePhaseConstantThermalConductivity.hpp"
+#include "SinglePhaseThermalConductivity.hpp"
 
 namespace geos
 {
@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SinglePhaseConstantThermalConductivity::SinglePhaseConstantThermalConductivity( string const & name, Group * const parent ):
+SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & name, Group * const parent ):
   SinglePhaseThermalConductivityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::thermalConductivityComponentsString(), &m_thermalConductivityComponents ).
@@ -36,19 +36,19 @@ SinglePhaseConstantThermalConductivity::SinglePhaseConstantThermalConductivity( 
 }
 
 std::unique_ptr< ConstitutiveBase >
-SinglePhaseConstantThermalConductivity::deliverClone( string const & name,
+SinglePhaseThermalConductivity::deliverClone( string const & name,
                                                       Group * const parent ) const
 {
   return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
-void SinglePhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
+void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
                                                                        localIndex const numConstitutivePointsPerParentIndex )
 {
   SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void SinglePhaseConstantThermalConductivity::postProcessInput()
+void SinglePhaseThermalConductivity::postProcessInput()
 {
   GEOS_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
                  m_thermalConductivityComponents[1] <= 0 ||
@@ -58,7 +58,7 @@ void SinglePhaseConstantThermalConductivity::postProcessInput()
                  InputError );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, SinglePhaseConstantThermalConductivity, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, SinglePhaseThermalConductivity, string const &, Group * const )
 
 } // namespace constitutive
 

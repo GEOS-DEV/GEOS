@@ -22,7 +22,7 @@
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
-#include "constitutive/thermalConductivity/SinglePhaseConstantThermalConductivity.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
 
 namespace geos
 {
@@ -48,7 +48,7 @@ public:
   CompressibleSolidUpdates( NullModel const & solidModel,
                             PORO_TYPE const & porosityModel,
                             PERM_TYPE const & permModel,
-                            SinglePhaseConstantThermalConductivity const & condModel ):
+                            SinglePhaseThermalConductivity const & condModel ):
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_condUpdate( condModel.createKernelWrapper() )
   {}
@@ -105,7 +105,7 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
 protected:
-  typename SinglePhaseConstantThermalConductivity::KernelWrapper const m_condUpdate;
+  typename SinglePhaseThermalConductivity::KernelWrapper const m_condUpdate;
 };
 
 
@@ -177,8 +177,8 @@ private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPermModel;
 
 protected:
-  SinglePhaseConstantThermalConductivity const & getCondModel() const
-  { return this->getParent().template getGroup< SinglePhaseConstantThermalConductivity >( "thermalCond" ); }
+  SinglePhaseThermalConductivity const & getCondModel() const
+  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( "thermalCond" ); }
 };
 
 }

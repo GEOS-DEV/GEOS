@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhaseConstantThermalConductivity.hpp
+ * @file SinglePhaseThermalConductivity.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
-#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_CONSTANTTHERMALCONDUCTIVITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITY_HPP_
+#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITY_HPP_
 
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 
@@ -30,7 +30,7 @@ namespace constitutive
 /**
  * @brief The update class for constant thermal conductivity (does not do anything)
  */
-class SinglePhaseConstantThermalConductivityUpdate : public SinglePhaseThermalConductivityBaseUpdate
+class SinglePhaseThermalConductivityUpdate : public SinglePhaseThermalConductivityBaseUpdate
 {
 public:
 
@@ -39,7 +39,7 @@ public:
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
    * the subregion
    */
-  SinglePhaseConstantThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+  SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
                                                 R1Tensor const thermalConductivityComponents )
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity ),
     m_thermalConductivityComponents(thermalConductivityComponents)
@@ -70,7 +70,7 @@ private:
 /**
  * @brief The class for constant thermal conductivity
  */
-class SinglePhaseConstantThermalConductivity : public SinglePhaseThermalConductivityBase
+class SinglePhaseThermalConductivity : public SinglePhaseThermalConductivityBase
 {
 public:
 
@@ -79,7 +79,7 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  SinglePhaseConstantThermalConductivity( string const & name, Group * const parent );
+  SinglePhaseThermalConductivity( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -87,13 +87,13 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "SinglePhaseConstantThermalConductivity"; }
+  static string catalogName() { return "SinglePhaseThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = SinglePhaseConstantThermalConductivityUpdate;
+  using KernelWrapper = SinglePhaseThermalConductivityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
