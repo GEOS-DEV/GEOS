@@ -30,10 +30,10 @@ class BrooksCoreyRelativePermeabilityUpdate final : public RelativePermeabilityB
 {
 public:
 
-  BrooksCoreyRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
+  BrooksCoreyRelativePermeabilityUpdate( arrayView2d< real64 const > const & phaseMinVolumeFraction,
                                          arrayView2d< real64 const > const & phaseRelPermExponent,
                                          arrayView2d< real64 const > const & phaseRelPermMaxValue,
-                                         real64 const volFracScale,
+                                         arrayView1d< real64 const > const & volFracScale,
                                          arrayView1d< integer const > const & phaseTypes,
                                          arrayView1d< integer const > const & phaseOrder,
                                          arrayView4d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
@@ -69,10 +69,10 @@ public:
 
 private:
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
+  arrayView2d< real64 const > m_phaseMinVolumeFraction;
   arrayView2d< real64 const > m_phaseRelPermExponent;
   arrayView2d< real64 const > m_phaseRelPermMaxValue;
-  real64 m_volFracScale;
+  arrayView1d< real64 const > m_volFracScale;
 };
 
 class BrooksCoreyRelativePermeability : public RelativePermeabilityBase
@@ -105,18 +105,18 @@ public:
   } vieKeysBrooksCoreyRelativePermeability;
 //END_SPHINX_INCLUDE_01
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+  arrayView2d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
 protected:
 
   virtual void postProcessInput() override;
 
 //START_SPHINX_INCLUDE_02
-  array1d< real64 > m_phaseMinVolumeFraction;
+  array2d< real64 > m_phaseMinVolumeFraction;
   array2d< real64 > m_phaseRelPermExponent;
   array2d< real64 > m_phaseRelPermMaxValue;
 
-  real64 m_volFracScale;
+  array1d< real64 > m_volFracScale;
 //END_SPHINX_INCLUDE_02
 };
 
@@ -130,14 +130,14 @@ BrooksCoreyRelativePermeabilityUpdate::
 {
   LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
-  real64 const satScaleInv = 1.0 / m_volFracScale;
 
   for( int dir = 0; dir < 3; ++dir )
   {
+    real64 const satScaleInv = 1.0 / m_volFracScale[dir];
 
     for( localIndex ip = 0; ip < numPhases(); ++ip )
     {
-      real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
+      real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[dir][ip]) * satScaleInv;
       real64 const exponent  = m_phaseRelPermExponent[dir][ip];
       real64 const scale     = m_phaseRelPermMaxValue[dir][ip];
 
@@ -154,7 +154,7 @@ BrooksCoreyRelativePermeabilityUpdate::
         phaseRelPerm[ip][dir] = (satScaled <= 0.0) ? 0.0 : scale;
       }
 
-      phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
+      phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[dir][ip] );
 
     }
   }

@@ -67,7 +67,7 @@ public:
 public:
 
     KernelWrapper( arrayView2d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
-                   arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                   arrayView2d< real64 const > const & phaseMinVolumeFraction,
                    real64 const & waterOilPhaseMaxVolumeFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
@@ -117,7 +117,7 @@ private:
     arrayView2d< TableFunction::KernelWrapper const > m_relPermKernelWrappers;
 
     /// Minimum volume fraction for each phase (deduced from the table)
-    arrayView1d< real64 const > m_phaseMinVolumeFraction;
+    arrayView2d< real64 const > m_phaseMinVolumeFraction;
 
     real64 const m_waterOilRelPermMaxValue;
 
@@ -141,7 +141,7 @@ private:
     static constexpr char const * threePhaseInterpolatorString() { return "threePhaseInterpolator"; }
   };
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+  arrayView2d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
 private:
 
@@ -175,7 +175,7 @@ private:
   array2d< TableFunction::KernelWrapper > m_relPermKernelWrappers;
 
   /// Min phase volume fractions (deduced from the tables). With Baker, only the water phase entry is used
-  array1d< real64 > m_phaseMinVolumeFraction;
+  array2d< real64 > m_phaseMinVolumeFraction;
 
   real64 m_waterOilMaxRelPerm;
 
@@ -256,7 +256,7 @@ TableRelativePermeability::KernelWrapper::
     // 3) Compute the "three-phase" oil relperm
 
     // use saturation-weighted interpolation
-    real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[ipWetting]);
+    real64 const shiftedWettingVolFrac = (phaseVolFraction[ipWetting] - m_phaseMinVolumeFraction[dir][ipWetting]);
 
     if( m_threePhaseInterpolator == ThreePhaseInterpolator::BAKER )
     {
@@ -344,18 +344,22 @@ TableRelativePermeability::KernelWrapper::
                      dPhaseRelPerm_dPhaseVolFrac );
   }
 
-  // update trapped phase volume fraction
-  if( ipWater >= 0 )
+  for( int dir= 0; dir < 3; ++dir )
   {
-    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
-  }
-  if( ipGas >= 0 )
-  {
-    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
-  }
-  if( ipOil >= 0 )
-  {
-    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
+
+    // update trapped phase volume fraction
+    if( ipWater >= 0 )
+    {
+      phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[dir][ipWater] );
+    }
+    if( ipGas >= 0 )
+    {
+      phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[dir][ipGas] );
+    }
+    if( ipOil >= 0 )
+    {
+      phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[dir][ipOil] );
+    }
   }
 
 }

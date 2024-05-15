@@ -598,7 +598,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-      using Deriv = multifluid::DerivativeOffset;
+    using Deriv = multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -631,7 +631,7 @@ public:
                                                     stack.transmissibility[connectionIndex][1]};
 
         real64 const dTrans_dPres[numFluxSupportPoints] = { stack.dTrans[Deriv::dP][connectionIndex][0],
-                                                           stack.dTrans[Deriv::dP][connectionIndex][1] };
+                                                            stack.dTrans[Deriv::dP][connectionIndex][1] };
         //TODO (jafranc) extend this if needed
 
 

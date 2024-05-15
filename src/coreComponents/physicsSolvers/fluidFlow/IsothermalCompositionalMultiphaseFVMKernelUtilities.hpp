@@ -355,7 +355,7 @@ struct PPUPhaseFlux
     localIndex const ei_up = sei[k_up];
 
     real64 const mobility = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( phaseMob[er_up][esr_up][ei_up][ip], faceNormal ) )
-            /LvArray::math::abs(faceNormal[0] + faceNormal[1] + faceNormal[2] + 1e-25);
+                            /LvArray::math::abs( faceNormal[0] + faceNormal[1] + faceNormal[2] + 1e-25 );
 
 //      GEOS_LOG_RANK_0(GEOS_FMT("-----\n faceNormal: {}",faceNormal));
 //      GEOS_LOG_RANK_0(GEOS_FMT("phaseMob check [ip-tmob-pmob]: {} - {} - {}", ip, phaseMob[er_up][esr_up][ei_up][ip], mobility));

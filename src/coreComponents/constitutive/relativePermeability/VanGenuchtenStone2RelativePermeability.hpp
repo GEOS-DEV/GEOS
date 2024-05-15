@@ -31,12 +31,12 @@ class VanGenuchtenStone2RelativePermeabilityUpdate final : public RelativePermea
 {
 public:
 
-  VanGenuchtenStone2RelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
+  VanGenuchtenStone2RelativePermeabilityUpdate( arrayView2d< real64 const > const & phaseMinVolumeFraction,
                                                 arrayView2d< real64 const > const & waterOilRelPermExponentInv,
                                                 arrayView2d< real64 const > const & waterOilRelPermMaxValue,
                                                 arrayView2d< real64 const > const & gasOilRelPermExponentInv,
                                                 arrayView2d< real64 const > const & gasOilRelPermMaxValue,
-                                                real64 const volFracScale,
+                                                arrayView1d< real64 const > const & volFracScale,
                                                 arrayView1d< integer const > const & phaseTypes,
                                                 arrayView1d< integer const > const & phaseOrder,
                                                 arrayView4d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
@@ -97,7 +97,7 @@ private:
                                             real64 & relPerm,
                                             real64 & dRelPerm_dVolFrac );
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
+  arrayView2d< real64 const > m_phaseMinVolumeFraction;
 
   arrayView2d< real64 const > m_waterOilRelPermExponentInv;
   arrayView2d< real64 const > m_waterOilRelPermMaxValue;
@@ -105,7 +105,7 @@ private:
   arrayView2d< real64 const > m_gasOilRelPermExponentInv;
   arrayView2d< real64 const > m_gasOilRelPermMaxValue;
 
-  real64 m_volFracScale;
+  arrayView1d< real64 const > m_volFracScale;
 
 };
 
@@ -138,13 +138,13 @@ public:
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
   };
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+  arrayView2d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
 protected:
 
   virtual void postProcessInput() override;
 
-  array1d< real64 > m_phaseMinVolumeFraction;
+  array2d< real64 > m_phaseMinVolumeFraction;
 
   // water-oil data
   array2d< real64 > m_waterOilRelPermExponentInv;
@@ -154,7 +154,7 @@ protected:
   array2d< real64 > m_gasOilRelPermExponentInv;
   array2d< real64 > m_gasOilRelPermMaxValue;
 
-  real64 m_volFracScale;
+  array1d< real64 > m_volFracScale;
 };
 
 
@@ -172,7 +172,6 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   integer const ipWater = m_phaseOrder[PT::WATER];
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas  = m_phaseOrder[PT::GAS];
-  real64 const volFracScaleInv = 1.0 / m_volFracScale;
 
   real64 oilRelPerm_wo = 0.0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_wo_dOilVolFrac = 0.0; // derivative w.r.t to So
@@ -182,13 +181,14 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
   for( int dir=0; dir<3; ++dir )
   {
+    real64 const volFracScaleInv = 1.0 / m_volFracScale[dir];
     // 1) Water and oil phase relative permeabilities using water-oil data
     if( ipWater >= 0 )
     {
       real64 const scaledWaterVolFrac =
-        (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
+        (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[dir][ipWater]) * volFracScaleInv;
       real64 const scaledOilVolFrac =
-        (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+        (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[dir][ipOil]) * volFracScaleInv;
 
       using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
       real64 const waterExponentInv = m_waterOilRelPermExponentInv[dir][WOPT::WATER];
@@ -220,9 +220,9 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
     if( ipGas >= 0 )
     {
       real64 const scaledGasVolFrac =
-        (phaseVolFraction[ipGas] - m_phaseMinVolumeFraction[ipGas]) * volFracScaleInv;
+        (phaseVolFraction[ipGas] - m_phaseMinVolumeFraction[dir][ipGas]) * volFracScaleInv;
       real64 const scaledOilVolFrac =
-        (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
+        (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[dir][ipOil]) * volFracScaleInv;
 
       using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
       real64 const gasExponentInv = m_gasOilRelPermExponentInv[dir][GOPT::GAS];
@@ -268,7 +268,7 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
     // if water and oil and gas can be present, use saturation-weighted interpolation
     else
     {
-      real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
+      real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[dir][ipWater]);
 
 
       relpermInterpolators::Stone2::compute( shiftedWaterVolFrac,
@@ -286,20 +286,20 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
                                              phaseRelPerm[ipOil][dir],
                                              dPhaseRelPerm_dPhaseVolFrac[ipOil][dir] );
     }
-  }
 
-  if( ipWater >= 0 )
-  {
-    phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[ipWater] );
-  }
-  if( ipGas >= 0 )
-  {
-    phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[ipGas] );
-  }
-  if( ipOil >= 0 )
-  {
-    phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[ipOil] );
-  }
+    if( ipWater >= 0 )
+    {
+      phaseTrappedVolFrac[ipWater] = LvArray::math::min( phaseVolFraction[ipWater], m_phaseMinVolumeFraction[dir][ipWater] );
+    }
+    if( ipGas >= 0 )
+    {
+      phaseTrappedVolFrac[ipGas] = LvArray::math::min( phaseVolFraction[ipGas], m_phaseMinVolumeFraction[dir][ipGas] );
+    }
+    if( ipOil >= 0 )
+    {
+      phaseTrappedVolFrac[ipOil] = LvArray::math::min( phaseVolFraction[ipOil], m_phaseMinVolumeFraction[dir][ipOil] );
+    }
+  }//end dir loop
 }
 
 GEOS_HOST_DEVICE

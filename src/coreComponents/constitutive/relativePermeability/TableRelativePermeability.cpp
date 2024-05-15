@@ -153,7 +153,7 @@ void TableRelativePermeability::initializePreSubGroups()
   RelativePermeabilityBase::initializePreSubGroups();
 
   integer const numPhases = m_phaseNames.size();
-  m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
+  m_phaseMinVolumeFraction.resize( 3, MAX_NUM_PHASES );
 
 
   string const fullName = getFullName();
@@ -189,13 +189,13 @@ void TableRelativePermeability::initializePreSubGroups()
         {
           integer const ipWetting = (m_phaseOrder[PhaseType::WATER] >= 0) ? m_phaseOrder[PhaseType::WATER]
                                                                                     : m_phaseOrder[PhaseType::OIL];
-          m_phaseMinVolumeFraction[ipWetting] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][ipWetting] = phaseMinVolFrac;
         }
         else if( ip == 1 )          // non-wetting phase is either oil (for two-phase oil-water systems), or gas
         {
           integer const ipNonWetting = (m_phaseOrder[PhaseType::GAS] >= 0) ? m_phaseOrder[PhaseType::GAS]
                                                                                      : m_phaseOrder[PhaseType::OIL];
-          m_phaseMinVolumeFraction[ipNonWetting] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][ipNonWetting] = phaseMinVolFrac;
         }
       }
     }
@@ -220,11 +220,11 @@ void TableRelativePermeability::initializePreSubGroups()
 
         if( ip == 0 )        // wetting phase is water
         {
-          m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
         }
         else if( ip == 1 )          // intermediate phase is oil
         {
-          m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
           m_waterOilMaxRelPerm = phaseRelPermEndPoint;
         }
       }
@@ -246,11 +246,11 @@ void TableRelativePermeability::initializePreSubGroups()
 
         if( ip == 0 )        // non-wetting phase is gas
         {
-          m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::GAS]] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][m_phaseOrder[PhaseType::GAS]] = phaseMinVolFrac;
         }
         else if( ip == 1 )          // intermediate phase is oil
         {
-          m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
+          m_phaseMinVolumeFraction[dir][m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
         }
       }
     }
@@ -300,7 +300,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView2d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
-                 arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                 arrayView2d< real64 const > const & phaseMinVolumeFraction,
                  real64 const & waterPhaseMaxVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
