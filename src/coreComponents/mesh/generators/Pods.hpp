@@ -54,11 +54,13 @@ class EdgeMgrImpl : public generators::EdgeMgr
 public:
   explicit EdgeMgrImpl( EdgeLocIdx const & numEdges );
 
-  virtual localIndex numEdges() const override;
+  localIndex numEdges() const override;
 
-  virtual array2d< localIndex > getEdgeToNodes() const override;
+  array2d< localIndex > getEdgeToNodes() const override;
 
-  virtual ArrayOfArrays< localIndex > getEdgeToFaces() const override;
+  ArrayOfArrays< localIndex > getEdgeToFaces() const override;
+
+  array1d< integer > getGhostRank() const override;
 
 private:
   EdgeLocIdx m_numEdges;
@@ -69,13 +71,13 @@ class FaceMgrImpl : public generators::FaceMgr
 public:
   explicit FaceMgrImpl( FaceLocIdx const & numFaces );
 
-  virtual localIndex numFaces() const override;
+  localIndex numFaces() const override;
 
-  virtual ArrayOfArrays< localIndex > getFaceToNodes() const override;
+  ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  virtual ArrayOfArrays< localIndex > getFaceToEdges() const override;
+  ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
-  virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
+  ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
 private:
   FaceLocIdx m_numFaces;

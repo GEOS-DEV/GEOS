@@ -29,19 +29,19 @@ public:
    * @brief Total number of faces across all the cell blocks.
    * @return The total number of faces.
    */
-  virtual localIndex numFaces() const = 0;
+  [[nodiscard]] virtual localIndex numFaces() const = 0;
 
   /**
    * @brief Returns the face to nodes mapping.
    * @return The one to many relationship.
    */
-  virtual ArrayOfArrays< localIndex > getFaceToNodes() const = 0;
+  [[nodiscard]] virtual ArrayOfArrays< localIndex > getFaceToNodes() const = 0;
 
   /**
    * @brief Returns the face to edges mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfArrays< localIndex > getFaceToEdges() const = 0;
+  [[nodiscard]] virtual ArrayOfArrays< localIndex > getFaceToEdges() const = 0;
 
   /**
    * @brief Returns the face to elements mapping.
@@ -49,7 +49,7 @@ public:
    *
    * In case the face only belongs to one single element, the second value of the table is -1.
    */
-  virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
+  [[nodiscard]] virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
 };
 
 }

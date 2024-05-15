@@ -27,19 +27,25 @@ public:
    * @brief Total number of edges across all the cell blocks.
    * @return The total number of edges.
    */
-  virtual localIndex numEdges() const = 0;
+  [[nodiscard]] virtual localIndex numEdges() const = 0;
 
   /**
    * @brief Returns the edge to nodes mapping.
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
-  virtual array2d< localIndex > getEdgeToNodes() const = 0;
+  [[nodiscard]] virtual array2d< localIndex > getEdgeToNodes() const = 0;
 
   /**
    * @brief Returns the edge to faces mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfArrays< localIndex > getEdgeToFaces() const = 0;
+  [[nodiscard]] virtual ArrayOfArrays< localIndex > getEdgeToFaces() const = 0;
+
+  /**
+   * @brief Returns the ghost rank mapping. Index is an edge index local to the MPI rank.
+   * @return A @c numEdges length array.
+   */
+  [[nodiscard]] virtual array1d< integer > getGhostRank() const = 0;
 
   // TODO add the local -> global and the ghost rank. Use inheritance?
 };

@@ -75,6 +75,11 @@ ArrayOfArrays< localIndex > EdgeMgrImpl::getEdgeToFaces() const
   return {};
 }
 
+array1d< integer > EdgeMgrImpl::getGhostRank() const
+{
+  return {};
+}
+
 FaceMgrImpl::FaceMgrImpl( FaceLocIdx const & numFaces )
   : m_numFaces( numFaces )
 { }
