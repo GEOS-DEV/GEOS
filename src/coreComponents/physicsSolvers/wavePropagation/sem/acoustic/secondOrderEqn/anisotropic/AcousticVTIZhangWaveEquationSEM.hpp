@@ -173,9 +173,11 @@ private:
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
-
+  
+  /// Array of size the number of receivers and full of 0.5 (used for calculating the seismos)
+  array1d< real32 > m_seismoCoeff;
 };
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEM_HPP_ */

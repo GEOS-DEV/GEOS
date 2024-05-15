@@ -348,6 +348,8 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  m_seismoCoeff.resize(m_receiverIsLocal.size());
+  m_seismoCoeff.setValues< EXEC_POLICY >(0.5);
 }
 
 void AcousticVTIZhangWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
@@ -698,7 +700,8 @@ void AcousticVTIZhangWaveEquationSEM::synchronizeUnknowns( real64 const & time_n
   /// compute the seismic traces since last step.
   arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
 
-  computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+  computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers, m_seismoCoeff.toView(), false );
+  computeAllSeismoTraces( time_n, dt, q_np1, q_n, pReceivers, m_seismoCoeff.toView(), true );
   incrementIndexSeismoTrace( time_n );
 
   if( m_usePML )
@@ -744,8 +747,11 @@ void AcousticVTIZhangWaveEquationSEM::cleanup( real64 const time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const p_n = nodeManager.getField< acousticvtifields::Pressure_p_n >();
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< acousticvtifields::Pressure_p_np1 >();
+    arrayView1d< real32 const > const q_n = nodeManager.getField< acousticvtifields::Pressure_q_n >();
+    arrayView1d< real32 const > const q_np1 = nodeManager.getField< acousticvtifields::Pressure_q_np1 >();
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
+    computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers, m_seismoCoeff.toView(), false );
+    computeAllSeismoTraces( time_n, 0.0, q_np1, q_n, pReceivers, m_seismoCoeff.toView(), true );
 
     WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
