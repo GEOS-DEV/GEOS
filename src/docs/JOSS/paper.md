@@ -148,7 +148,7 @@ The results from the weak scaling study (Figure \ref{fig:Frontier_Mechanics}) sh
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is expected.
 The compositional flow study presented in Figure \ref{fig:Frontier_CMPF} shows similarly good weak scaling. 
 
-![Weak scaling results for mechanics on ORNL/Frontier.\label{fig:Frontier_Mechanics}](GEOS_Frontier_mechanics.pdf){ width=40% }
+![Weak scaling results for mechanics on ORNL/Frontier.\label{fig:Frontier_Mechanics}](GEOS_Frontier_mechanics.pdf){ width=50% }
 
 ![Weak scaling results for compositional flow on ORNL/Frontier.\label{fig:Frontier_CMPF}](GEOS_Frontier_compositional.pdf){ width=40% }
 
