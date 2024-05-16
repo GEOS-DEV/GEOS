@@ -136,13 +136,10 @@ To date GEOS has been used to simulate problems relevant to CO2 storage, enhance
 Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
 
 As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at a large real-world storage site.
-Figure \ref{RW_mesh} illustrates the computational mesh and Figure \ref{RW_results} show results after 25 years of injection.
+Figure \ref{RW_final}a illustrates the computational mesh and Figure \ref{RW_final}b shows results after 25 years of injection.
 Simulations such as these play a critical role in predicting the performance of potential CO2 storage sites.
 
-![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=80% }
-
-
-![Results of a compositional flow simulation of a real world CO2 storage site after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_results.pdf){ width=80% }
+![Real world CO2 storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation of a real world CO2 storage site after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_results.pdf){ width=1oo% }
 
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory.
