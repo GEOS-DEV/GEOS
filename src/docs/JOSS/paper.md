@@ -144,7 +144,7 @@ Simulations such as these play a critical role in predicting the performance of 
 
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
-The results from the weak scaling study (Figure \ref{fig:Frontier_Mechanics}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
+The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is expected.
 The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows similarly good weak scaling. 
 
