@@ -955,9 +955,6 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
     GEOS_ASSERT_EQ( indices[i].size(), std::size_t( numEntriesPerRow[i] ) );
   }
 
-//  GEOS_LOG_RANK( "n = " << n );
-//  GEOS_LOG_RANK( "ownedGlbIdcs = " << json( ownedGlbIdcs ) );
-
   Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
   Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
 
@@ -1006,7 +1003,6 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  GEOS_LOG_RANK("A");
   auto multiply = [&]()-> Epetra_CrsMatrix
   {
     // Upward (n -> e -> f -> c)
@@ -1077,35 +1073,55 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   GEOS_LOG_RANK( "extracted = " << extracted );
 
   std::map< NodeGlbIdx , MpiRank > nodes;
+  std::map< EdgeGlbIdx , MpiRank > edges;
+  std::map< FaceGlbIdx , MpiRank > faces;
+  std::map< CellGlbIdx , MpiRank > cells;
+  std::set< MpiRank > neighbors;
   {
     for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
     {
       int const & index = extractedIndices[i];
       MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
-      if( index < int( edgeOffset ) )  // This is a node to consider
+      neighbors.insert( owner );
+      if( index < int( edgeOffset ) )  // This is a node
       {
         NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
         nodes.emplace( ngi, owner );
       }
+      else if( int( edgeOffset ) <= index && index < int( faceOffset ) )
+      {
+        EdgeGlbIdx const egi = EdgeGlbIdx{ intConv< globalIndex >( index - edgeOffset ) };
+        edges.emplace( egi, owner );
+      }
+      else if( int( faceOffset ) <= index && index < int( cellOffset ) )
+      {
+        FaceGlbIdx const fgi = FaceGlbIdx{ intConv< globalIndex >( index - faceOffset ) };
+        faces.emplace( fgi, owner );
+      }
+      else
+      {
+        CellGlbIdx const cgi = CellGlbIdx{ intConv< globalIndex >( index - cellOffset ) };
+        cells.emplace( cgi, owner );
+      }
     }
   }
 
-  if( curRank == 2_mpi )
-  {
-    std::map< MpiRank, std::set< NodeGlbIdx > > tmp;
-    for( auto const & [node, rk]: nodes )
-    {
-      tmp[rk].insert( node );
-    }
-    for( auto const & [rk, nn]: tmp )
-    {
-      GEOS_LOG_RANK( "ghost nodes = " << rk << ": " << json( nn ) );
-    }
-  }
+//  if( curRank == 2_mpi )
+//  {
+//    std::map< MpiRank, std::set< CellGlbIdx > > tmp;
+//    for( auto const & [geom, rk]: cells )
+//    {
+//      tmp[rk].insert( geom );
+//    }
+//    for( auto const & [rk, geom]: tmp )
+//    {
+//      GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
+//    }
+//  }
+//  GEOS_LOG_RANK( "my final neighbors are " << json( neighbors ) );
 
   // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
   // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
-  GEOS_LOG_RANK("B");
 }
 
 
@@ -1151,7 +1167,8 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
   {
     // For the other ranks, the reduction operator will be called during the `Mpi_Scan` process.
     // So unlike for rank 0, we do not have to do it ourselves.
-    // In order to provide the `sizes` to the reduction operator, since `sizes` will only be used on the current ranl,
+    // In order to provide the `sizes` to the reduction operator,
+    // since `sizes` will only be used on the current rank,
     // we'll provide the information as a pointer to the instance.
     // The reduction operator will then compute the new offsets and send them to the following rank.
     std::uintptr_t const addr = reinterpret_cast<std::uintptr_t>(&sizes);
@@ -1197,6 +1214,7 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
   {
     neighbors_.insert( MpiRank{ rank } );
   }
+  GEOS_LOG_RANK( "my initial neighbors are " << json( neighbors_ ) );
 
   return doTheNewGhosting( mesh, neighbors_ );
 }
