@@ -75,11 +75,11 @@
       referenceInternalEnergy="0.99"/>
 	<!-- SPHINX_ThermalCompressibleSinglePhaseFluidEnd -->
 
-	<!-- SPHINX_SinglePhaseConstantThermalConductivity -->
-    <SinglePhaseConstantThermalConductivity
+	<!-- SPHINX_SinglePhaseThermalConductivity -->
+    <SinglePhaseThermalConductivity
       name="thermalCond"
       thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
-	<!-- SPHINX_SinglePhaseConstantThermalConductivityEnd -->    
+	<!-- SPHINX_SinglePhaseThermalConductivityEnd -->    
 	
   </Constitutive>
 
