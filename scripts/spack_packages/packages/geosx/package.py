@@ -333,6 +333,48 @@ class Geosx(CMakePackage, CudaPackage):
                 else:
                     cfg.write(cmake_cache_entry('MPIEXEC', 'jsrun'))
                     cfg.write(cmake_cache_list('MPIEXEC_NUMPROC_FLAG', ['-g1', '--bind', 'rs', '-n']))
+            else:
+                # Taken from cached_cmake class:
+                # https://github.com/spack/spack/blob/develop/lib/spack/spack/build_systems/cached_cmake.py#L180-234
+
+                # Check for slurm
+                using_slurm = False
+                slurm_checks = ["+slurm", "schedulers=slurm", "process_managers=slurm"]
+                if any(spec["mpi"].satisfies(variant) for variant in slurm_checks):
+                    using_slurm = True
+
+                # Determine MPIEXEC
+                if using_slurm:
+                    if spec["mpi"].external:
+                        # Heuristic until we have dependents on externals
+                        mpiexec = "/usr/bin/srun"
+                    else:
+                        mpiexec = os.path.join(spec["slurm"].prefix.bin, "srun")
+                elif hasattr(spec["mpi"].package, "mpiexec"):
+                    mpiexec = spec["mpi"].package.mpiexec
+                else:
+                    mpiexec = os.path.join(spec["mpi"].prefix.bin, "mpirun")
+                    if not os.path.exists(mpiexec):
+                        mpiexec = os.path.join(spec["mpi"].prefix.bin, "mpiexec")
+
+                if not os.path.exists(mpiexec):
+                    msg = "Unable to determine MPIEXEC, %s tests may fail" % self.pkg.name
+                    cfg.write("# {0}\n".format(msg))
+                    tty.warn(msg)
+                else:
+                    # starting with cmake 3.10, FindMPI expects MPIEXEC_EXECUTABLE
+                    # vs the older versions which expect MPIEXEC
+                    if spec["cmake"].satisfies("@3.10:"):
+                        cfg.write(cmake_cache_path("MPIEXEC_EXECUTABLE", mpiexec))
+                    else:
+                        cfg.write(cmake_cache_path("MPIEXEC", mpiexec))
+
+                # Determine MPIEXEC_NUMPROC_FLAG
+                if using_slurm:
+                    cfg.write(cmake_cache_string("MPIEXEC_NUMPROC_FLAG", "-n"))
+                else:
+                    cfg.write(cmake_cache_string("MPIEXEC_NUMPROC_FLAG", "-np"))
+
 
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# OpenMP\n")
