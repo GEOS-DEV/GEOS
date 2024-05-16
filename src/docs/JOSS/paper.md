@@ -123,7 +123,7 @@ The coupled physics package is often responsible for providing the specific cont
 
 To solve these linear systems, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@trilinos-website].
 Currently only the hypre interaface is actively maintained.
-For multi-physics problems involving the solution of a coupled linear system, GEOS exclusively relies on hypre's implementation a multi-grid reduction preconditioning strategy as presented by [@BUI:2020],[@BUI:2021114111].
+For multi-physics problems involving the solution of a coupled linear system, GEOS relies on hypre's implementation a multi-grid reduction preconditioning strategy as presented by [@BUI:2020;@BUI:2021114111].
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
