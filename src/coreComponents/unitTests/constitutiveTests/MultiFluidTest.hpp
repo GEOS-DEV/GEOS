@@ -77,6 +77,17 @@ struct MultiFluidTestData
                       real64 const temperature_,
                       arraySlice1d< real64 const > const & composition_ );
 
+  MultiFluidTestData( real64 const pressure_,
+                      real64 const temperature_,
+                      Feed< NUM_COMP > && composition_,
+                      real64 const totalDensity_,
+                      Feed< NUM_PHASE > && phaseFraction_,
+                      Feed< NUM_PHASE > && phaseDensity_,
+                      Feed< NUM_PHASE > && phaseMassDensity_,
+                      Feed< NUM_PHASE > && phaseViscosity_,
+                      Feed< NUM_PHASE > && phaseEnthalpy_,
+                      Feed< NUM_PHASE > && phaseInternalEnergy_ );
+
   real64 const pressure{0.0};
   real64 const temperature{0.0};
   Feed< NUM_COMP > composition{};
@@ -169,7 +180,8 @@ testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", parent );
+  string const fluidCopyName = fluid.getName() + "Copy";
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( fluidCopyName, parent );
   MultiFluidBase & fluidCopy = dynamicCast< MultiFluidBase & >( *fluidCopyPtr );
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
@@ -431,6 +443,8 @@ void MultiFluidTest< FLUID_TYPE, NUM_PHASE, NUM_COMP >::testValuesAgainstPreviou
     checkRelativeError( phaseDensity[0][0][ip], testData.phaseDensity[ip], relTol );
     checkRelativeError( phaseMassDensity[0][0][ip], testData.phaseMassDensity[ip], relTol );
     checkRelativeError( phaseViscosity[0][0][ip], testData.phaseViscosity[ip], relTol );
+    checkRelativeError( phaseEnthalpy[0][0][ip], testData.phaseEnthalpy[ip], relTol );
+    checkRelativeError( phaseInternalEnergy[0][0][ip], testData.phaseInternalEnergy[ip], relTol );
   }
 }
 
@@ -451,6 +465,60 @@ MultiFluidTestData< NUM_PHASE, NUM_COMP >::MultiFluidTestData( real64 const pres
   temperature( temperature_ )
 {
   copy< NUM_COMP >( composition_, composition );
+}
+
+template< integer NUM_PHASE, integer NUM_COMP >
+MultiFluidTestData< NUM_PHASE, NUM_COMP >::MultiFluidTestData( real64 const pressure_,
+                                                               real64 const temperature_,
+                                                               Feed< NUM_COMP > && composition_,
+                                                               real64 const totalDensity_,
+                                                               Feed< NUM_PHASE > && phaseFraction_,
+                                                               Feed< NUM_PHASE > && phaseDensity_,
+                                                               Feed< NUM_PHASE > && phaseMassDensity_,
+                                                               Feed< NUM_PHASE > && phaseViscosity_,
+                                                               Feed< NUM_PHASE > && phaseEnthalpy_,
+                                                               Feed< NUM_PHASE > && phaseInternalEnergy_ ):
+  pressure( pressure_ ),
+  temperature( temperature_ ),
+  composition( composition_ ),
+  totalDensity( totalDensity_ ),
+  phaseFraction( phaseFraction_ ),
+  phaseDensity( phaseDensity_ ),
+  phaseMassDensity( phaseMassDensity_ ),
+  phaseViscosity( phaseViscosity_ ),
+  phaseEnthalpy( phaseEnthalpy_ ),
+  phaseInternalEnergy( phaseInternalEnergy_ )
+{}
+
+template< integer N >
+inline ::std::ostream & PrintTo( string const & name, Feed< N > const & data, ::std::ostream & os )
+{
+  os << "  \"" << name << "\": [ " << data[0];
+  for( integer i = 1; i < N; i++ )
+  {
+    os << ", " << data[i];
+  }
+  os <<  " ]";
+  return os;
+}
+
+template< integer NUM_PHASE, integer NUM_COMP >
+inline void PrintTo( MultiFluidTestData< NUM_PHASE, NUM_COMP > const & data, ::std::ostream *s )
+{
+  std::ostream & os = *s;
+
+  os << "{\n";
+  os << "  \"pressure\": " << data.pressure << ",\n";
+  os << "  \"temperature\": " << data.temperature << ",\n";
+  PrintTo< NUM_COMP >( "composition", data.composition, os ) << ",\n";
+  os << "  \"totalDensity\": " << data.totalDensity << ",\n";
+  PrintTo< NUM_PHASE >( "phaseFraction", data.phaseFraction, os ) << ",\n";
+  PrintTo< NUM_PHASE >( "phaseDensity", data.phaseDensity, os ) << ",\n";
+  PrintTo< NUM_PHASE >( "phaseMassDensity", data.phaseMassDensity, os ) << ",\n";
+  PrintTo< NUM_PHASE >( "phaseViscosity", data.phaseViscosity, os ) << ",\n";
+  PrintTo< NUM_PHASE >( "phaseEnthalpy", data.phaseEnthalpy, os ) << ",\n";
+  PrintTo< NUM_PHASE >( "phaseInternalEnergy", data.phaseInternalEnergy, os ) << "\n";
+  os <<  "}";
 }
 
 } // namespace testing
