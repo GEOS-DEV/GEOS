@@ -175,10 +175,10 @@ private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getSolidModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPermModel;
-
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_singlePhaseThermalConductivityModelName;
 protected:
   SinglePhaseThermalConductivity const & getCondModel() const
-  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( "m_SinglePhaseThermalConductivityModelName" ); }
+  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( m_singlePhaseThermalConductivityModelName ); }
 };
 
 }

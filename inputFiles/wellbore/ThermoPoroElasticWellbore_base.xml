@@ -60,7 +60,8 @@
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      singlePhaseThermalConductivityModelName="rockThermalCond"/>
 
     <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity
@@ -87,7 +88,9 @@
     <!-- SPHINX_ThermalProperties -->
     <SinglePhaseThermalConductivity
       name="rockThermalCond"
-      thermalConductivityComponents="{ 6.6, 6.6, 6.6 }"/>
+      defaultThermalConductivityComponents="{ 6.6, 6.6, 6.6 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="0"/>
     <!-- SPHINX_ThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->

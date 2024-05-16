@@ -40,9 +40,13 @@ public:
    * the subregion
    */
   SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
-                                                R1Tensor const thermalConductivityComponents )
+                                                R1Tensor const defaultThermalConductivityComponents,
+                                                R1Tensor const thermalConductivityGradientComponents,
+                                                real64 const referenceTemperature )
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity ),
-    m_thermalConductivityComponents(thermalConductivityComponents)
+    m_defaultThermalConductivityComponents(defaultThermalConductivityComponents),
+    m_thermalConductivityGradientComponents(thermalConductivityGradientComponents),
+    m_referenceTemperature(referenceTemperature)
   {}
 
   GEOS_HOST_DEVICE
@@ -56,15 +60,23 @@ public:
                                       localIndex const q,
                                       real64 const & temperature ) const
   {  
-    m_effectiveConductivity[k][q][0] = m_thermalConductivityComponents[0] + 0.00001*temperature;
-    m_effectiveConductivity[k][q][1] = m_thermalConductivityComponents[1] + 0.00001*temperature;
-    m_effectiveConductivity[k][q][2] = m_thermalConductivityComponents[2] + 0.00001*temperature;
+    real64 const deltaTemperature = temperature - m_referenceTemperature;
+
+    m_effectiveConductivity[k][q][0] = m_defaultThermalConductivityComponents[0] + m_thermalConductivityGradientComponents[0] * deltaTemperature;
+    m_effectiveConductivity[k][q][1] = m_defaultThermalConductivityComponents[1] + m_thermalConductivityGradientComponents[1] * deltaTemperature;
+    m_effectiveConductivity[k][q][2] = m_defaultThermalConductivityComponents[2] + m_thermalConductivityGradientComponents[2] * deltaTemperature;
   }
 
 private:
 
-  /// default thermal conductivity in the subRegion
-  R1Tensor m_thermalConductivityComponents;
+  /// Default thermal conductivity components in the subRegion
+  R1Tensor m_defaultThermalConductivityComponents;
+
+  /// Thermal conductivity gradient components in the subRegion
+  R1Tensor m_thermalConductivityGradientComponents;
+
+  /// Reference temperature
+  real64 m_referenceTemperature;
 };
 
 /**
@@ -102,12 +114,16 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_effectiveConductivity,
-                          m_thermalConductivityComponents );
+                          m_defaultThermalConductivityComponents,
+                          m_thermalConductivityGradientComponents,
+                          m_referenceTemperature );
   }
 
   struct viewKeyStruct : public SinglePhaseThermalConductivityBase::viewKeyStruct
   {
-    static constexpr char const * thermalConductivityComponentsString() { return "thermalConductivityComponents"; }
+    static constexpr char const * defaultThermalConductivityComponentsString() { return "defaultThermalConductivityComponents"; }
+    static constexpr char const * thermalConductivityGradientComponentsString() { return "thermalConductivityGradientComponents"; }
+    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
   } viewKeys;
 
 protected:
@@ -116,8 +132,14 @@ protected:
 
 private:
 
-  /// default thermal conductivity in the subRegion
-  R1Tensor m_thermalConductivityComponents;
+  /// Default thermal conductivity components in the subRegion
+  R1Tensor m_defaultThermalConductivityComponents;
+
+  /// Thermal conductivity gradient components in the subRegion
+  R1Tensor m_thermalConductivityGradientComponents;
+
+  /// Reference temperature
+  real64 m_referenceTemperature;
 
 };
 

@@ -38,7 +38,8 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      singlePhaseThermalConductivityModelName="thermalCond"/>
 
     <NullModel
       name="nullSolid"/>
@@ -78,7 +79,9 @@
 	<!-- SPHINX_SinglePhaseThermalConductivity -->
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
+      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="0"/>
 	<!-- SPHINX_SinglePhaseThermalConductivityEnd -->    
 	
   </Constitutive>

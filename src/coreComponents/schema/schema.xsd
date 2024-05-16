@@ -5186,8 +5186,12 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseThermalConductivityType">
-		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
-		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
+		<!--defaultThermalConductivityComponents => xx, yy, and zz diagonal components of the default thermal conductivity tensor [J/(s.m.K)]-->
+		<xsd:attribute name="defaultThermalConductivityComponents" type="R1Tensor" use="required" />
+		<!--referenceTemperature => The reference temperature at which the conductivity components are equal to the default values-->
+		<xsd:attribute name="referenceTemperature" type="real64" use="required" />
+		<!--thermalConductivityGradientComponents => xx, yy, and zz diagonal components of the thermal conductivity gradient tensor w.r.t. temperature [J/(s.m.K^2)]-->
+		<xsd:attribute name="thermalConductivityGradientComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

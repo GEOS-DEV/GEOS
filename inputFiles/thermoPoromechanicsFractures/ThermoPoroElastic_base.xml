@@ -7,7 +7,8 @@
       solidModelName="rock"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      singlePhaseThermalConductivityModelName="thermalCond"/>
 
     <ElasticIsotropic
       name="rock"
@@ -33,7 +34,9 @@
 
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 1, 1, 1 }"/>
+      defaultThermalConductivityComponents="{ 1, 1, 1 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="0"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
@@ -51,7 +54,8 @@
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      singlePhaseThermalConductivityModelName="thermalCond"/>
 
     <NullModel
       name="nullSolid"/>

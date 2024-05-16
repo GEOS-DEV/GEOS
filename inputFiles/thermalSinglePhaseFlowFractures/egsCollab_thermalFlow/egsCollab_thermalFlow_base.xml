@@ -62,21 +62,25 @@
 
      <SinglePhaseThermalConductivity
        name="thermalCond"
-       thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
+       defaultThermalConductivityComponents="{ 3.81, 3.81, 3.81 }"
+       thermalConductivityGradientComponents="{ 0, 0, 0 }"
+       referenceTemperature="0"/>  
 
      <CompressibleSolidParallelPlatesPermeability
        name="fractureFilling"
        solidModelName="nullSolid"
        porosityModelName="fracturePorosity"
        permeabilityModelName="fracturePerm"
-       solidInternalEnergyModelName="rockInternalEnergy"/>
+       solidInternalEnergyModelName="rockInternalEnergy"
+       singlePhaseThermalConductivityModelName="thermalCond"/>
 
      <CompressibleSolidConstantPermeability
        name="rock"
        solidModelName="nullSolid"
        porosityModelName="rockPorosity"
        permeabilityModelName="rockPerm"
-       solidInternalEnergyModelName="rockInternalEnergy"/>
+       solidInternalEnergyModelName="rockInternalEnergy"
+       singlePhaseThermalConductivityModelName="thermalCond"/>
 
      <SolidInternalEnergy
        name="rockInternalEnergy"
