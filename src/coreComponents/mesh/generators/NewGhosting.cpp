@@ -984,9 +984,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   std::vector< double > const ones( n, 1. );
   indicator.InsertGlobalValues( curRank.get(), numOwned, ones.data(), ownedGlbIdcs.data() );
   indicator.InsertGlobalValues( curRank.get(), numOther, ones.data(), otherGlbIdcs.data() );
-
-  Epetra_Map const graphNodeMap( int( n ), 0, comm );  // Columns
-  indicator.FillComplete( graphNodeMap, mpiMap );
+  indicator.FillComplete( ownedMap, mpiMap );
 
   // TODO Could we use an Epetra_Vector as a diagonal matrix?
   std::vector< double > myRank( 1, curRank.get() );
@@ -995,7 +993,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   {
     ownership.InsertGlobalValues( i, 1, myRank.data(), &i );
   }
-  ownership.FillComplete( graphNodeMap, graphNodeMap );
+  ownership.FillComplete( ownedMap, ownedMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
 
   if( curRank == 0_mpi )
@@ -1015,34 +1013,35 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
     Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result_u0_0, false );
-    result_u0_0.FillComplete( mpiMap, graphNodeMap );
+    result_u0_0.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
     Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_0, false, result_u0_1, false );
-    result_u0_1.FillComplete( mpiMap, graphNodeMap );
+    result_u0_1.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
 
     Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_1, false, result_u0_2, false );
-    result_u0_2.FillComplete( mpiMap, graphNodeMap );
+    result_u0_2.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
     // Downward (c -> f -> e -> n)
+    auto tAdj = makeTranspose( adj );  // TODO check the algorithm to understand what's more relevant.
 
     Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result_u0_2, false, result_d0_0, false );
-    result_d0_0.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_u0_2, false, result_d0_0, false );
+    result_d0_0.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
 
     Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_0, false, result_d0_1, false );
-    result_d0_1.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_d0_0, false, result_d0_1, false );
+    result_d0_1.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
 
     Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_1, false, result_d0_2, false );
-    result_d0_2.FillComplete( mpiMap, graphNodeMap );
+    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_d0_1, false, result_d0_2, false );
+    result_d0_2.FillComplete( mpiMap, ownedMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
 
     return result_d0_2;
@@ -1050,7 +1049,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   Epetra_CrsMatrix ghosted( multiply() );
   ghosted.PutScalar( 1. );  // This can be done after the `FillComplete`.
-  ghosted.FillComplete( mpiMap, graphNodeMap );
+  ghosted.FillComplete( mpiMap, ownedMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
 
   if( curRank == 0_mpi )
@@ -1062,7 +1061,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   Epetra_CrsMatrix ghostInfo( Epetra_DataAccess::Copy, mpiMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( ghosted, true, ownership, false, ghostInfo, false );
-  ghostInfo.FillComplete( graphNodeMap, mpiMap );
+  ghostInfo.FillComplete( ownedMap, mpiMap );
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostInfo.NumGlobalCols() );
