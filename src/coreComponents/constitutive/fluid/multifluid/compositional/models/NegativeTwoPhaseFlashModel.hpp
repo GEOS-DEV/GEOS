@@ -62,14 +62,6 @@ public:
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
     integer const numDofs = 2 + m_numComponents;
-    std::cout
-      << std::fixed << std::setprecision( 5 )
-      << "V: "
-      << compFraction[0] << " "
-      << compFraction[1] << " "
-      << "| "
-      << kValues[0][0] << " "
-      << kValues[0][1] << "\n";
 
     // Iterative solve to converge flash
     NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
@@ -96,17 +88,6 @@ public:
       phaseFraction.derivs[m_vapourIndex],
       phaseCompFraction.derivs[m_liquidIndex],
       phaseCompFraction.derivs[m_vapourIndex] );
-
-    std::cout
-      << "| "
-      << kValues[0][0] << " "
-      << kValues[0][1] << " "
-      << "| "
-      << phaseFraction.value[m_vapourIndex] << " "
-      << "| "
-      << phaseFraction.derivs[m_vapourIndex][2] << " "
-      << phaseFraction.derivs[m_vapourIndex][3] << " "
-      << "\n";
 
     // Complete by calculating liquid phase fraction
     phaseFraction.value[m_liquidIndex] = 1.0 - phaseFraction.value[m_vapourIndex];

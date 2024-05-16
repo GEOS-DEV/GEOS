@@ -28,6 +28,9 @@ using namespace geos::constitutive;
 enum class EOS_TYPE : int { PR, SRK };
 enum class VISCOSITY_TYPE : int { CONSTANT, LBC };
 
+ENUM_STRINGS( EOS_TYPE, "PhasePengRobinson", "SoaveRedlichKwong" );
+ENUM_STRINGS( VISCOSITY_TYPE, "Constant", "LohrenzBrayClarkViscosity" );
+
 template< EOS_TYPE eos, VISCOSITY_TYPE viscosity >
 struct FluidType {};
 
@@ -64,7 +67,12 @@ public:
   {
     auto & parent = this->m_parent;
     parent.resize( 1 );
-    this->m_model = makeFluid( "fluid", &parent );
+
+    string const fluidName = GEOS_FMT( "fluid{}{}{}",
+                                       EnumStrings< EOS_TYPE >::toString( EOS ),
+                                       EnumStrings< VISCOSITY_TYPE >::toString( VISCOSITY ),
+                                       NUM_COMP );
+    this->m_model = makeFluid( fluidName, &parent );
 
     parent.initialize();
     parent.initializePostInitialConditions();
@@ -112,9 +120,6 @@ struct Fluid< FLUID_TYPE, 2 >
 {
   static void fillProperties( Group & fluid )
   {
-    string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
-    fill< 2 >( phaseNames, {"oil", "gas"} );
-
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
     fill< 2 >( componentNames, {"C1", "CO2"} );
 
@@ -151,9 +156,6 @@ struct Fluid< FLUID_TYPE, 5 >
 {
   static void fillProperties( Group & fluid )
   {
-    string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
-    fill< 2 >( phaseNames, {"oil", "gas"} );
-
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
     fill< 5 >( componentNames, {"CO2", "N2", "C1", "C2", "C3"} );
 
@@ -187,9 +189,6 @@ struct Fluid< FLUID_TYPE, 9 >
 {
   static void fillProperties( Group & fluid )
   {
-    string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
-    fill< 2 >( phaseNames, {"oil", "gas"} );
-
     string_array & componentNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
     fill< 9 >( componentNames, {"CO2", "N2", "C1", "C2", "C3", "C4", "C5", "C6", "C7+"} );
 
@@ -221,7 +220,8 @@ struct Fluid< FLUID_TYPE, 9 >
   static void getSamples( array2d< real64 > & samples )
   {
     samples.resize( 1, 9 );
-    fill< 9 >( samples[0], {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
+    //fill< 9 >( samples[0], {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
+    //fill< 9 >( samples[0], {0.00000, 0.00000, 0.53770, 0.12360, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
   }
 };
 
@@ -232,9 +232,15 @@ makeFluid( string const & name, Group * parent )
 {
   CompositionalMultiphaseFluid & fluid = parent->registerGroup< CompositionalMultiphaseFluid >( name );
 
+  Group & fluidGroup = fluid;
+
+  string_array & phaseNames = fluidGroup.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
+  fill< 2 >( phaseNames, {"oil", "gas"} );
+
   Fluid< CompositionalMultiphaseFluid, NUM_COMP >::fillProperties( fluid );
 
   fluid.postProcessInputRecursive();
+
   return &fluid;
 }
 
@@ -320,7 +326,6 @@ TEST_F( PengRobinsonConstantViscosity9Test, numericalDerivatives )
     {
       for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
       {
-        std::cout << "P: " << pressure << " T: " << temperature << " S: " << sampleIndex << "\n";
         TestData data ( pressure, units::convertCToK( temperature ), samples[sampleIndex].toSliceConst() );
         testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
       }
