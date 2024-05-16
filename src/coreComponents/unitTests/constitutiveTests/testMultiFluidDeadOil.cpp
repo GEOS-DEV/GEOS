@@ -82,7 +82,8 @@ public:
     }
 
     m_parent.resize( 1 );
-    m_model = makeDeadOilFluid( "fluid", &m_parent );
+    string const fluidName = GEOS_FMT( "fluid{}", (FROM_TABLE ? "Tables" : "Files"));
+    m_model = makeDeadOilFluid( fluidName, &m_parent );
 
     m_parent.initialize();
     m_parent.initializePostInitialConditions();
