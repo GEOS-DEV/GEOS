@@ -988,12 +988,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   Epetra_Map const graphNodeMap( int( n ), 0, comm );  // Columns
   indicator.FillComplete( graphNodeMap, mpiMap );
 
-//  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, mpiMap, numOwned, true );
-//  ownership.InsertGlobalValues( curRank.get(), numOwned, ones.data(), ownedGlbIdcs.data() );
-//  ownership.FillComplete( graphNodeMap, mpiMap );
-//  std::vector< double > myRank( numOwned, curRank.get() );
-//  Epetra_Vector ownership( Epetra_DataAccess::Copy, rowMap, myRank.data() );
-//  EpetraExt::VectorToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
+  // TODO Could we use an Epetra_Vector as a diagonal matrix?
   std::vector< double > myRank( 1, curRank.get() );
   Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, rowMap, 1, true );
   for( auto const & i: ownedGlbIdcs )
@@ -1001,15 +996,12 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
     ownership.InsertGlobalValues( i, 1, myRank.data(), &i );
   }
   ownership.FillComplete( graphNodeMap, graphNodeMap );
-//  ownership.FillComplete( rowMap, rowMap );
-//  ownership.FillComplete();
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
 
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
     GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
-//    GEOS_LOG_RANK( "ownership.GlobalLength() = " << ownership.GlobalLength() );
     GEOS_LOG_RANK( "ownership.NumGlobalCols() = " << ownership.NumGlobalCols() );
     GEOS_LOG_RANK( "ownership.NumGlobalRows() = " << ownership.NumGlobalRows() );
     GEOS_LOG_RANK( "ownership diag = " << std::boolalpha << ownership.LowerTriangular() and ownership.UpperTriangular()  );
@@ -1059,121 +1051,45 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   Epetra_CrsMatrix ghosted( multiply() );
   ghosted.PutScalar( 1. );  // This can be done after the `FillComplete`.
   ghosted.FillComplete( mpiMap, graphNodeMap );
-//  ghosted.FillComplete( mpiMap, rowMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
 
-  std::unique_ptr< Epetra_CrsMatrix > ptGhosted = makeTranspose( ghosted );
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghosted.NumGlobalCols() );
     GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghosted.NumGlobalRows() );
-    GEOS_LOG_RANK( "ptGhosted->NumGlobalCols() = " << ptGhosted->NumGlobalCols() );
-    GEOS_LOG_RANK( "ptGhosted->NumGlobalRows() = " << ptGhosted->NumGlobalRows() );
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted-after.mat", ghosted );
 
   Epetra_CrsMatrix ghostInfo( Epetra_DataAccess::Copy, mpiMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( ghosted, true, ownership, false, ghostInfo, false );
-//  ghostInfo.FillComplete( rowMap, mpiMap );
   ghostInfo.FillComplete( graphNodeMap, mpiMap );
-//  ghostInfo.FillComplete();
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostInfo.NumGlobalCols() );
     GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostInfo.NumGlobalRows() );
   }
 
-  int extracted3 = 0;
-  std::vector< double > extractedValues3( n );
-  std::vector< int > extractedIndices3( n );
-  ghostInfo.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted3, extractedValues3.data(), extractedIndices3.data() );
-  extractedValues3.resize( extracted3 );
-  extractedIndices3.resize( extracted3 );
-  GEOS_LOG_RANK( "extracted3 = " << extracted3 );
-//  GEOS_LOG_RANK( "extractedValues3 = " << json(extractedValues3) );
-//  GEOS_LOG_RANK( "extractedIndices3 = " << json(extractedIndices3) );
-
-
-  // My test says that `tGhosted` is filled here.
   int extracted = 0;
   std::vector< double > extractedValues( n );
   std::vector< int > extractedIndices( n );
-  ptGhosted->ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
+  ghostInfo.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
   extractedValues.resize( extracted );
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
 
-
-  std::unique_ptr< Epetra_CrsMatrix > ptIndicator = makeTranspose( indicator );
-  if( curRank == 0_mpi )
-  {
-    GEOS_LOG_RANK( "ptIndicator->NumGlobalCols() = " << ptIndicator->NumGlobalCols() );
-    GEOS_LOG_RANK( "ptIndicator->NumGlobalRows() = " << ptIndicator->NumGlobalRows() );
-  }
-
-  int extracted2 = 0;
-  std::vector< double > ranksValues( commSize ) ;
-  std::vector< int > ranksIndices( commSize ) ;
   std::map< NodeGlbIdx , MpiRank > nodes;
   {
-//    std::vector< int > interest;
-//    for( int i = 0; i < extracted; ++i )
-    for( int i = 0; i < extracted3; ++i )
+    for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
     {
-//      int const & index = extractedIndices[i];
-//      double const & val = extractedValues[i];
-      int const & index = extractedIndices3[i];
-      MpiRank const owner = MpiRank{ int( extractedValues3[i] ) };
+      int const & index = extractedIndices[i];
+      MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
       if( index < int( edgeOffset ) )  // This is a node to consider
       {
         NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
         nodes.emplace( ngi, owner );
       }
-
-//      if( !( val > 0 ) )  // Prevents against floating point exact comparison
-//      {
-//        continue;
-//      }
-//      if( val > 0 and int( edgeOffset ) <= index and index < int( faceOffset ) )  // This is an edge to consider
-
-//      if( index < int( edgeOffset ) )  // This is a node to consider
-//      {
-//        NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
-//        MpiRank owner = curRank;  // In case we own.
-//        if( graph.nodes.find( ngi ) == graph.nodes.cend() )
-//        {
-//          // TODO maybe I need the transposed of indicator?
-//          // We do not own the edge, so we have to get the actual owner
-//          ptIndicator->ExtractGlobalRowCopy( index, commSize, extracted2, ranksValues.data(), ranksIndices.data() );
-//          std::vector< int > tmp;
-//          if(extracted2 == 0)
-//          {
-////            GEOS_LOG_RANK("extracted2 = " << extracted2 );
-//            continue;
-//          }
-//          for( auto ii = 0; ii < extracted2; ++ii )
-//          {
-//            if( ranksValues[ii] > 0 )
-//            {
-//              tmp.emplace_back( ranksIndices[ii] );
-//            }
-//          }
-////          auto tmp = Span< int >( ranksIndices.data(), extracted2 );
-//          owner = MpiRank{ *std::min_element( std::cbegin( tmp ), std::cend( tmp ) ) }; // TODO check that there's at least one element or die.
-//        }
-//        nodes.emplace( ngi, owner );
-
-        //        interest.push_back( index - cellOffset );
-//      }
-//      if( val > 0 and index < int( edgeOffset ) )
-//      {
-//        interest.push_back( index );
-//      }
     }
-//    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
   }
-
-//  GEOS_LOG_RANK( "ghost nodes = " << json( nodes ) );
 
   if( curRank == 2_mpi )
   {
@@ -1187,21 +1103,10 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
       GEOS_LOG_RANK( "ghost nodes = " << rk << ": " << json( nn ) );
     }
   }
-//  {
-//    std::vector< NodeGlbIdx > interest;
-//    for( auto const & [ngi, _]: nodes )
-//    {
-//      interest.emplace_back( ngi );
-//    }
-//    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
-//  }
 
   // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
   // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
-
   GEOS_LOG_RANK("B");
-
-//  delete ptGhosted;
 }
 
 
