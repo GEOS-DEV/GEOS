@@ -36,6 +36,8 @@ authors:
     affiliation: 2
   - name: Andrea Franceschini
     affiliation: 3
+  - name: Matteo Frigo
+    affiliation: 3
   - name: Thomas Gazzola
     affiliation: 2
   - name: Herve Gross
