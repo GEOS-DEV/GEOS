@@ -86,10 +86,8 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n"
-                       "- Display informations about PVTDriver\n"
-                       "- Indicate at the end if the internal results are consistent" );
+  appendLogLevel( { "logLevel >= 1", "Display information about test" } );
+  appendLogLevel( { "logLevel >= 1", "Indicate at the end if the internal results are consistent" } );
 }
 
 void PVTDriver::postProcessInput()

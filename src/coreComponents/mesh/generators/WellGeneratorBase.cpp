@@ -73,8 +73,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n- Display informations about Internal wells and their perforations" );
+  appendLogLevel( { "logLevel >= 1", "Display informations about Internal wells and their perforations" } );
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )

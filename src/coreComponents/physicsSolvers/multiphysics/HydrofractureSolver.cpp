@@ -109,8 +109,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  Base::getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n- Display whether or not we Re-entering Newton Solve \n" );
+   Base::appendLogLevel( { "logLevel >= 1", "Display whether or not we Re-entering Newton Solve" } );
 
   m_numResolves[0] = 0;
 

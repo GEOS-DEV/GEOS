@@ -63,7 +63,7 @@ ReactiveBrineFluid< PHASE > ::
 ReactiveBrineFluid( string const & name, Group * const parent ):
   ReactiveMultiFluid( name, parent )
 {
- enableLogLevelInput();
+  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -82,8 +82,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n- Display phase PVT Table" );
+  appendLogLevel( { "logLevel >= 1", "Display phase PVT Table" } );
 }
 
 template< typename PHASE >

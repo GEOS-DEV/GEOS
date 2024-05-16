@@ -79,6 +79,33 @@ void Group::deregisterWrapper( string const & name )
   m_conduitNode.remove( name );
 }
 
+void Group::appendLogLevel( std::pair< const std::string, const std::string > log )
+{
+  // 1. register le wrapper
+
+  //TODO condition pour enable loglevel w description
+  //rajouter if wrapper existe pas
+
+  std::string const levelToAppend = "\n" + log.first + "\n";
+  std::string const descriptionToAppend = log.second;
+
+  string wrapperName = viewKeyStruct::logLevelString();
+  try
+  {
+    WrapperBase & wrapper = getWrapperBase( wrapperName );
+    wrapper.addEntrieLogLevel( levelToAppend, descriptionToAppend );
+    wrapper.buildDescription();
+  }catch( std::domain_error const & )
+  {
+    WrapperBase & wrapper = registerWrapper( wrapperName, &m_logLevel );
+    registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
+      setApplyDefaultValue( 1 ).
+      setInputFlag( InputFlags::OPTIONAL );
+    wrapper.addEntrieLogLevel( levelToAppend, descriptionToAppend );
+    wrapper.buildDescription();
+  }
+
+}
 
 void Group::resize( indexType const newSize )
 {
@@ -642,14 +669,13 @@ void Group::postRestartInitializationRecursive()
   postRestartInitialization();
 }
 
+//TODO ARN DELETE
 void Group::enableLogLevelInput()
 {
   // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
   registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
     setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Sets the level of information to write in the standard output (the console typically).\n"
-                    "A level of 0 outputs minimal information, higher levels require more." );
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 Group const & Group::getBaseGroupByPath( string const & path ) const

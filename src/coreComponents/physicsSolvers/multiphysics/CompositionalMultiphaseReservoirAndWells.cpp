@@ -78,9 +78,7 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
 {
   Base::enableLogLevelInput();
 
-  Base::getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 and if the well is injector and crossflow enbled:\n"
-                       "Display warnings about crossflow for injectors" );
+  Base::appendLogLevel( { "logLevel >= 1 and if the well is injector and crossflow enabled", "Display warnings about crossflow for injectors" } );
 }
 
 template< typename COMPOSITIONAL_RESERVOIR_SOLVER >

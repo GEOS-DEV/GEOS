@@ -854,6 +854,18 @@ public:
   ///@}
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
+  /** 
+   * @param logs 
+   */
+  void appendLogLevel( std::pair< const std::string, const std::string > log );
+
+  /**
+   * @return The log levels descriptions for a gtoup
+   */
+  std::string const & getLogLevelDescription();
+
+  void appendLogLevelDescription( std::string const & description );
+
   /**
    * @name Schema generation methods
    */
@@ -1606,6 +1618,9 @@ private:
 
   /// Verbosity flag for group logs
   integer m_logLevel;
+
+  std::string m_logLevelDescription;
+
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.

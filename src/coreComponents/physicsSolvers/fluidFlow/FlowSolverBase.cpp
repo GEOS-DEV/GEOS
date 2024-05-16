@@ -119,8 +119,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0.1 ).
     setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n- Display the boundary conditions" );
+  appendLogLevel( { "logLevel >= 1", "Display the boundary conditions" } );
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );

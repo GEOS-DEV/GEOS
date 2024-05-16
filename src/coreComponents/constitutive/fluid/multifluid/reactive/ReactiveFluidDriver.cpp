@@ -66,11 +66,9 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
-
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n"
-                       "- Print informations about ReactiveFluidDriver\n"
-                       "- Indicate at the end if the internal results are consistent" );
+    
+  appendLogLevel( { "logLevel >= 1", "Print informations about ReactiveFluidDriver" } );
+  appendLogLevel( { "logLevel >= 1", "Indicate at the end if the internal results are consistent" } );
 }
 
 

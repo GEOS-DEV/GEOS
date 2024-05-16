@@ -87,11 +87,8 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n"
-                       "- Display the residual values\n"
-                       "\n1: and non first nonlinear iteration\n"
-                       "- Display face boundary conditions log" );
+  appendLogLevel( { "logLevel >= 1", "Display the residual values" } );
+  appendLogLevel( { "logLevel >= 1 and non first nonlinear iteration", "Display face boundary conditions log" } );
 }
 
 void CompositionalMultiphaseFVM::postProcessInput()

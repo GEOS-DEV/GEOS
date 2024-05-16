@@ -515,9 +515,29 @@ public:
    */
   WrapperBase & appendDescription( string const & description )
   {
-    m_description += description;
+    m_description = description;
     return *this;
   }
+
+  void buildDescription()
+  {
+    string descriptionToBuild;
+    descriptionToBuild.append( "Sets the level of information to write in the standard output (the console typically).\n"
+                               "A level of 0 outputs minimal information, higher levels require more." );
+    for( auto const & [logLevel, logDescriptions] : m_logLevelsDescriptions )
+    {
+      descriptionToBuild.append( logLevel );
+      size_t idxDescription = 0;
+      for( const auto & description : logDescriptions )
+      {
+        idxDescription == logDescriptions.size() - 1 ? descriptionToBuild.append( " - " + description ) :
+        descriptionToBuild.append( " - " + description + "\n" );
+        idxDescription++;
+      }
+    }
+    appendDescription( descriptionToBuild );
+  }
+
 
   /**
    * @brief Get the description string of the wrapper.
@@ -526,6 +546,22 @@ public:
   string const & getDescription() const
   {
     return m_description;
+  }
+
+  /**
+   * @return The map of logs levels description
+   */
+  std::map< std::string, std::vector< std::string > > const & getlogLevelsDescriptions()
+  {
+    return m_logLevelsDescriptions;
+  }
+
+  /**
+   * @return Add a logLevel/description
+   */
+  void addEntrieLogLevel( std::string levelToAppend, std::string descriptionToAppend )
+  {
+    m_logLevelsDescriptions[levelToAppend].push_back( descriptionToAppend );
   }
 
   /**
@@ -706,6 +742,10 @@ protected:
   /// A string description of the wrapped object
   string m_description;
 
+  /// Map for building the log level string for each wrapper
+  /// key : logLevel, values : description(s) for a level
+  std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
+
   /// A string regex to validate the input values string to parse for the wrapped object
   string m_rtTypeName;
 
@@ -782,7 +822,7 @@ private:
                                              parallelDeviceEvents & events ) const = 0;
 };
 
-} /// namespace dataRepository
+}   /// namespace dataRepository
 } /// namespace geos
 
 #endif /* GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_ */

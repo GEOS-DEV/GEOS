@@ -89,14 +89,20 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n"
-                       "- Display information about line search\n"
-                       "- Display global solution scaling factor"
-                       "\n1 and step remaining :\n"
-                       "- Display informations about timestep"
-                       "\nonly with loglevel = 2 :\n"
-                       "- Display informations about linear algebra objects (matrices and vectors)" );
+  // getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
+  //   appendDescription( "\n1 :\n"
+  //                      "- 1: Display information about line search\n"
+  //                      "- 1: Display global solution scaling factor"
+  //                      "\n1:\n"
+  //                      "- 1 :  Display informations about timestep"
+  //                      "\n - 2 :\n"
+  //                      "- Display informations about linear algebra objects (matrices and vectors)"
+  //                      "\n- 3 :\n"
+  //                      "- Display informations about linear algebra objects (matrices and vectors)" );
+
+  appendLogLevel( { "logLevel >= 1", "Display information about test" } );
+  appendLogLevel( { "logLevel >= 2 and writeCSV = 1", "write a csv of internal data" } );
+  appendLogLevel( { "logLevel >= 1", "Display information about line search" } );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );

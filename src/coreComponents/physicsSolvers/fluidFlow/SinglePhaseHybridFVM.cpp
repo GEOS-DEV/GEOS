@@ -46,12 +46,9 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   SinglePhaseBase( name, parent ),
   m_areaRelTol( 1e-8 )
 {
-
-    getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription(  "\n 1 :\n"
-                         "- Display the residuals values\n"
-                         "\n1 : and first nonlinear iteration :\n"
-                         "- Display the face boundary conditions definied with pressure" );
+  
+  appendLogLevel( { "logLevel >= 1", "Display the residual values" } );
+  appendLogLevel( { "logLevel >= 1 and first nonlinear iteration", "Display the face boundary conditions definied with pressure" } );
 
   // one cell-centered dof per cell
   m_numDofPerCell = 1;

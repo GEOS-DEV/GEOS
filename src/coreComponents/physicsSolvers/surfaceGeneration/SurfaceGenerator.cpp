@@ -220,14 +220,10 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n1 :\n"
-                       "- Display informations about splitting node/edge/faces\n"
-                       "\n2 :\n"
-                       "- Display informations about all elements attached to the nodeID\n"
-                       "- Display informations about all faces on their element\n"
-                       "\n3 :\n"
-                       "- Display consistency checking of the maps" );
+  appendLogLevel( { "logLevel >= 1", "Display informations about splitting node/edge/faces" } );
+  appendLogLevel( { "logLevel >= 2", "Display informations about all elements attached to the nodeID" } );
+  appendLogLevel( { "logLevel >= 2", "Display informations about all faces on their element" } );
+  appendLogLevel( { "logLevel >= 3", "Display consistency checking of the maps" } );
 }
 
 void SurfaceGenerator::postProcessInput()

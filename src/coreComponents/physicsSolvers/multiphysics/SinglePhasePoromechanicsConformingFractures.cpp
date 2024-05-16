@@ -42,8 +42,7 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
 {
   enableLogLevelInput();
 
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
-    appendDescription( "\n3 :\n- Display the summary of declared fields and coupling.\n" );
+  appendLogLevel( { "logLevel >= 3", "Display the summary of declared fields and coupling" } );
 
   LinearSolverParameters & params = m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
