@@ -1077,32 +1077,30 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
   GEOS_LOG_RANK( "extracted = " << extracted );
 
   Ghost ghost;
+  for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
   {
-    for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
+    int const & index = extractedIndices[i];
+    MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
+    ghost.neighbors.insert( owner );
+    if( index < int( edgeOffset ) )  // This is a node
     {
-      int const & index = extractedIndices[i];
-      MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
-      ghost.neighbors.insert( owner );
-      if( index < int( edgeOffset ) )  // This is a node
-      {
-        NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
-        ghost.nodes.emplace( ngi, owner );
-      }
-      else if( int( edgeOffset ) <= index && index < int( faceOffset ) )
-      {
-        EdgeGlbIdx const egi = EdgeGlbIdx{ intConv< globalIndex >( index - edgeOffset ) };
-        ghost.edges.emplace( egi, owner );
-      }
-      else if( int( faceOffset ) <= index && index < int( cellOffset ) )
-      {
-        FaceGlbIdx const fgi = FaceGlbIdx{ intConv< globalIndex >( index - faceOffset ) };
-        ghost.faces.emplace( fgi, owner );
-      }
-      else
-      {
-        CellGlbIdx const cgi = CellGlbIdx{ intConv< globalIndex >( index - cellOffset ) };
-        ghost.cells.emplace( cgi, owner );
-      }
+      NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
+      ghost.nodes.emplace( ngi, owner );
+    }
+    else if( int( edgeOffset ) <= index && index < int( faceOffset ) )
+    {
+      EdgeGlbIdx const egi = EdgeGlbIdx{ intConv< globalIndex >( index - edgeOffset ) };
+      ghost.edges.emplace( egi, owner );
+    }
+    else if( int( faceOffset ) <= index && index < int( cellOffset ) )
+    {
+      FaceGlbIdx const fgi = FaceGlbIdx{ intConv< globalIndex >( index - faceOffset ) };
+      ghost.faces.emplace( fgi, owner );
+    }
+    else
+    {
+      CellGlbIdx const cgi = CellGlbIdx{ intConv< globalIndex >( index - cellOffset ) };
+      ghost.cells.emplace( cgi, owner );
     }
   }
 
@@ -1126,6 +1124,43 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
   // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
 }
 
+/**
+ * @brief
+ * @tparam GI A global index type
+ * @param m
+ * @return
+ */
+template< class GI >
+std::tuple< std::vector< MpiRank >, std::vector< GI > >
+buildGhostRankAndL2G( std::map< GI, MpiRank > const & m )
+{
+  std::size_t const size = std::size( m );
+
+  std::vector< MpiRank > ghostRank;
+  ghostRank.reserve( size );
+  std::vector< GI > l2g;
+  l2g.reserve( size );
+  for( auto const & [t, rank]: m )
+  {
+    ghostRank.emplace_back( rank );
+    l2g.emplace_back( t );
+  }
+
+  return std::make_tuple( ghostRank, l2g );
+}
+
+void buildPods( Ghost const & ghost )
+{
+  std::size_t const numNodes = std::size( ghost.nodes );
+  std::size_t const numEdges = std::size( ghost.edges );
+  std::size_t const numFaces = std::size( ghost.faces );
+
+  auto [ghostRank, l2g] = buildGhostRankAndL2G( ghost.edges );
+
+  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( numNodes ) } );
+  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( numEdges ) }, std::move( ghostRank ), std::move( l2g ) );
+  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( numFaces ) } );
+}
 
 std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                                                               std::set< MpiRank > const & neighbors )
@@ -1201,9 +1236,7 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 
   Ghost const ghost = assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
 
-  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( std::size( ghost.nodes ) ) } );
-  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( std::size( ghost.edges ) ) } );
-  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( std::size( ghost.faces ) ) } );
+  buildPods( ghost );
 
   return {};
 }

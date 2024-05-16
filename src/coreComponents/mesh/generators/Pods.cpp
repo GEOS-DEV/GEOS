@@ -56,8 +56,12 @@ std::map< string, SortedArray< localIndex > > const & NodeMgrImpl::getNodeSets()
   return m_todo;
 }
 
-EdgeMgrImpl::EdgeMgrImpl( EdgeLocIdx const & numEdges )
-  : m_numEdges( numEdges )
+EdgeMgrImpl::EdgeMgrImpl( EdgeLocIdx const & numEdges,
+                          std::vector< MpiRank > && ghostRank,
+                          std::vector< EdgeGlbIdx > && l2g )
+  : m_numEdges( numEdges ),
+    m_ghostRank( ghostRank ),
+    m_l2g( l2g )
 { }
 
 localIndex EdgeMgrImpl::numEdges() const
@@ -77,7 +81,24 @@ ArrayOfArrays< localIndex > EdgeMgrImpl::getEdgeToFaces() const
 
 array1d< integer > EdgeMgrImpl::getGhostRank() const
 {
-  return {};
+  array1d< integer > result;
+  result.reserve( std::size( m_ghostRank ) );
+  for( MpiRank const & rank: m_ghostRank )
+  {
+    result.emplace_back( rank.get() );
+  }
+  return result;
+}
+
+array1d< globalIndex > EdgeMgrImpl::getLocalToGlobal() const
+{
+  array1d< globalIndex > result;
+  result.reserve( std::size( m_l2g ) );
+  for( EdgeGlbIdx const & edge: m_l2g )
+  {
+    result.emplace_back( edge.get() );
+  }
+  return result;
 }
 
 FaceMgrImpl::FaceMgrImpl( FaceLocIdx const & numFaces )

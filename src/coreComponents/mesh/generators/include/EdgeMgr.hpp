@@ -47,7 +47,8 @@ public:
    */
   [[nodiscard]] virtual array1d< integer > getGhostRank() const = 0;
 
-  // TODO add the local -> global and the ghost rank. Use inheritance?
+  // TODO Use inheritance?
+  [[nodiscard]] virtual array1d< globalIndex > getLocalToGlobal() const = 0;
 };
 
 }
