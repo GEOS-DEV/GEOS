@@ -136,16 +136,14 @@ To date GEOS has been used to simulate problems relevant to CO2 storage, enhance
 Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
 
 As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at a large real-world storage site.
-Figure \ref{RW_mesh} illustrates the computational mesh and relevant problem size and physical dimensions. Results
+Figure \ref{RW_mesh} illustrates the computational mesh and Figure \ref{RW_results} show results after 25 years of injection.
+Simulations such as these play a critical role in predicting the performance of potential CO2 storage sites.
 
 ![Discrete mesh of a real world CO2 storage site. Transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir.\label{RW_mesh}](RW_mesh.png){ width=80% }
 
 
-![Results of a compositional flow simulation of a real world CO2 storage site after 25 years of CO2 injection.\label{RW_results}](RW_results.pdf){ width=80% }
+![Results of a compositional flow simulation of a real world CO2 storage site after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_results.pdf){ width=80% }
 
-A large, real, model after 25 years of CO2 injection. The CO2 plume is at the center of the
-model. Below the plume, colors indicate pressure changes. Above the plume, colors indicate the amount
-of vertical displacement caused by the injection. Color scales have been removed intentionally
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory.
 The results from the weak scaling study (Figure \ref{fig:Frontier_Mechanics}) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
