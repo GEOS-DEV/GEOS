@@ -8,6 +8,7 @@ set( gtest_geosx_tests
      testMultiFluidCompositionalMultiphase.cpp
      testMultiFluidCompositionalMultiphasePVTPackage.cpp
      testMultiFluidDeadOil.cpp
+     testMultiFluidLiveOil.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp )
 

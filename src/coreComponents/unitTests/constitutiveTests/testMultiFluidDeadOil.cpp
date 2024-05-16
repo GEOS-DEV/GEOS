@@ -114,7 +114,7 @@ void MultiFluidDeadOilTest< FROM_TABLE >::fillPhysicalProperties( DeadOilFluid &
   fill< 3 >( compNames, {"oil", "water", "gas"} );
 
   array1d< real64 > & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
-  fill< 3 >( molarWgt, {114e-3, 16e-3, 18e-3} );
+  fill< 3 >( molarWgt, {114e-3, 18e-3, 16e-3} );
 
   array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
   fill< 3 >( surfaceDens, {800.0, 1022.0, 0.9907} );
