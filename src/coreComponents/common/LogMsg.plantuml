@@ -1,0 +1,50 @@
+@startuml Logger Class
+
+set namespaceSeparator ::
+left to right direction
+
+
+
+enum LogLevel <<enum>> {
+  Silent
+  Important
+  Progress
+  Detailed
+  Trace
+  Debug
+  DebugTrace
+}
+enum LogMsgType <<enum>> {
+  Info
+  Warning
+  Error
+  Stats
+  Iteration
+  ...
+}
+struct LogMsgParams <<struct>> #text:Blue {
+  + string m_sourceFile
+  + int m_line
+}
+LogMsgParams *-- "1" LogMsgType
+LogMsgParams *-- "1" LogLevel
+
+
+struct LogMsg <<struct>> #text:OrangeRed {
+  + string m_text
+  + integer m_rankTimeStamp
+  + string m_groupName
+  + string m_dataContext
+  + string m_logSectionTitle
+  + real64 m_timeStepStart
+}
+LogMsg *--- "1" LogMsgParams
+
+
+class Logger {
+  - logMsg( <color:OrangeRed>LogMsg message</color> )
+}
+Logger .d.> LogMsg
+
+
+@enduml

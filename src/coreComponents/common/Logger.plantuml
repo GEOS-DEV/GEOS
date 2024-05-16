@@ -1,0 +1,63 @@
+@startuml Logger Class
+
+set namespaceSeparator ::
+
+
+
+class LoggingObject {
+  - int m_logLevel
+
+  + void setLogLevel( LogLevel objectLevel )
+  + void log( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
+  + void logIf( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
+  + void logRank0( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
+  + void logRank0If( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
+}
+
+
+class Logger {
+  - m_problemLogLevel : LogLevel
+  - m_rank : int
+  - m_ranksCount : int
+  - m_outStream : std::ostream *
+
+  + void setRankOutputToStream( std::ostream * stream )
+  + void setRankOutputToFile( string_view output_dir = "" )
+}
+LoggingObject <|-d- Logger
+
+
+class dataRepository::Group {
+  - <color:Red><s>int m_logLevel</s></color>
+}
+LoggingObject <|-d- dataRepository::Group
+
+
+enum LogLevel <<enum>> {
+  Silent
+  Important
+  Progress
+  Detailed
+  Trace
+  Debug
+  DebugTrace
+}
+enum LogMsgType <<enum>> {
+  Info
+  Warning
+  Error
+  Stats
+  Iteration
+  ...
+}
+struct LogMsgContext <<struct>> #text:Blue {
+  + string m_sourceFile
+  + int m_line
+}
+LogMsgContext *-l-- "1" LogMsgType
+LogMsgContext *-r-- "1" LogLevel
+
+Logger -d[hidden]-> LogMsgContext
+
+
+@enduml
