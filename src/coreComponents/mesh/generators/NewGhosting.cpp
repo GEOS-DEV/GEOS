@@ -959,9 +959,9 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 //  GEOS_LOG_RANK( "ownedGlbIdcs = " << json( ownedGlbIdcs ) );
 
   Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
-  Epetra_Map const rowMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
+  Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
 
-  Epetra_CrsMatrix adj( Epetra_DataAccess::Copy, rowMap, numEntriesPerRow.data(), true );
+  Epetra_CrsMatrix adj( Epetra_DataAccess::Copy, ownedMap, numEntriesPerRow.data(), true );
 
   for( std::size_t i = 0; i < numOwned; ++i )
   {
@@ -990,7 +990,7 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
 
   // TODO Could we use an Epetra_Vector as a diagonal matrix?
   std::vector< double > myRank( 1, curRank.get() );
-  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, rowMap, 1, true );
+  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, ownedMap, 1, true );
   for( auto const & i: ownedGlbIdcs )
   {
     ownership.InsertGlobalValues( i, 1, myRank.data(), &i );
@@ -1013,34 +1013,34 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   {
     // Upward (n -> e -> f -> c)
 
-    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result_u0_0, false );
     result_u0_0.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
-    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_0, false, result_u0_1, false );
     result_u0_1.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
 
-    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_1, false, result_u0_2, false );
     result_u0_2.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
     // Downward (c -> f -> e -> n)
 
-    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_u0_2, false, result_d0_0, false );
     result_d0_0.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
 
-    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_0, false, result_d0_1, false );
     result_d0_1.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
 
-    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, rowMap, commSize, false );
+    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_1, false, result_d0_2, false );
     result_d0_2.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
