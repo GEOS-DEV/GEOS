@@ -3894,8 +3894,6 @@ Local - Add stabilization only to interiors of macro elements.-->
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
-		<!--defaultBiotCoefficient => Default Biot coefficient. If not specified it will be homogeneous for the material.-->
-		<xsd:attribute name="defaultBiotCoefficient" type="real64" use="required" />
 		<!--defaultGrainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="defaultGrainBulkModulus" type="real64" use="required" />
 		<!--defaultPorosityTEC => Default thermal expansion coefficient-->

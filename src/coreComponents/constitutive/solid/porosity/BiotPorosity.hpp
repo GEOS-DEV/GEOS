@@ -254,7 +254,7 @@ public:
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
   } viewKeys;
 
-  void initializeBiotCoefficient( arrayView1d< real64 const> const bulkModulus ) const;
+  void initializeBiotCoefficient( arrayView1d< real64 const > const bulkModulus ) const;
 
   virtual void initializeState() const override final;
 

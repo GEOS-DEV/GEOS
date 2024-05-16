@@ -33,7 +33,7 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultGrainBulkModulusString(), &m_defaultGrainBulkModulus ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setApplyDefaultValue( -1.0 ).
     setDescription( "Grain bulk modulus" );
 
@@ -46,11 +46,6 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
-
-  registerWrapper( viewKeyStruct::defaultBiotCoefficientString(), &m_defaultBiotCoefficient ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).
-    setDescription( "Default Biot coefficient. If not specified it will be homogeneous for the material." );
 
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
     setApplyDefaultValue( -1.0 ).
@@ -87,18 +82,8 @@ void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
 
-  GEOS_ERROR_IF( (m_defaultBiotCoefficient > -1.0) & (m_defaultGrainBulkModulus > -1.0), 
-                 "Both the defaultBiotCoefficient and the defaultGrainBulkModulus were specified. Only one of them can be specified" ); 
-
-  GEOS_ERROR_IF( (m_defaultBiotCoefficient < 0.0) & (m_defaultGrainBulkModulus < 0.0), 
-                 "It seems that neither the defaultBiotCoefficient and the defaultGrainBulkModulus were not specified. One of them mus be specified" );                  
-
   getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
-
-  // set results as array default values
-  getWrapper< array1d< real64 > >( fields::porosity::biotCoefficient::key() ).
-    setApplyDefaultValue( m_defaultBiotCoefficient );
 
   // set results as array default values
   getWrapper< array1d< real64 > >( fields::porosity::grainBulkModulus::key() ).
@@ -126,7 +111,7 @@ void BiotPorosity::initializeState() const
   } );
 }
 
-void BiotPorosity::initializeBiotCoefficient( arrayView1d< real64 const> const bulkModulus ) const
+void BiotPorosity::initializeBiotCoefficient( arrayView1d< real64 const > const bulkModulus ) const
 {
   localIndex const numE = numElem();
 
@@ -137,14 +122,7 @@ void BiotPorosity::initializeBiotCoefficient( arrayView1d< real64 const> const b
   /// based on the solid model.
   forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
-    if ( grainBulkModulus[k] > -1.0 )
-    {
-      biotCoefficient[k] = 1 - bulkModulus[k] / grainBulkModulus[k];
-    }
-    else if ( biotCoefficient[k] > -1.0)
-    {
-      grainBulkModulus[k] = bulkModulus[k] / (1 - grainBulkModulus[k]);
-    }
+    biotCoefficient[k] = 1 - bulkModulus[k] / grainBulkModulus[k];
   } );
 }
 
