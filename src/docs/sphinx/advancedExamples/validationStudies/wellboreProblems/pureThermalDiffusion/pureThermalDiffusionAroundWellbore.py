@@ -55,7 +55,7 @@ def getLoadingFromXML(xmlFilePath):
 			if fsParam.get('setNames') == "{ rpos }":
 				Tout = float(fsParam.get('scale'))
             
-	thermalConductivity = float( extractDataFromXMLList( tree.find('Constitutive/SinglePhaseConstantThermalConductivity').get('thermalConductivityComponents') )[0] )
+	thermalConductivity = float( extractDataFromXMLList( tree.find('Constitutive/SinglePhaseThermalConductivity').get('thermalConductivityComponents') )[0] )
 
 	volumetricHeatCapacity = float( tree.find('Constitutive/SolidInternalEnergy').get('volumetricHeatCapacity') )
 	

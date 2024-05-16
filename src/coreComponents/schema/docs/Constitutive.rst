@@ -74,7 +74,7 @@ ProppantSlurryFluid                            node         :ref:`XML_ProppantSl
 ProppantSolidProppantPermeability              node         :ref:`XML_ProppantSolidProppantPermeability`              
 ReactiveBrine                                  node         :ref:`XML_ReactiveBrine`                                  
 ReactiveBrineThermal                           node         :ref:`XML_ReactiveBrineThermal`                           
-SinglePhaseConstantThermalConductivity         node         :ref:`XML_SinglePhaseConstantThermalConductivity`         
+SinglePhaseThermalConductivity                 node         :ref:`XML_SinglePhaseThermalConductivity`                 
 SlipDependentPermeability                      node         :ref:`XML_SlipDependentPermeability`                      
 SolidInternalEnergy                            node         :ref:`XML_SolidInternalEnergy`                            
 TableCapillaryPressure                         node         :ref:`XML_TableCapillaryPressure`                         
