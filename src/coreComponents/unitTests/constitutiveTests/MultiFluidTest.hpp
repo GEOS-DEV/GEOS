@@ -85,6 +85,8 @@ struct MultiFluidTestData
   Feed< NUM_PHASE > phaseDensity{};
   Feed< NUM_PHASE > phaseMassDensity{};
   Feed< NUM_PHASE > phaseViscosity{};
+  Feed< NUM_PHASE > phaseEnthalpy{};
+  Feed< NUM_PHASE > phaseInternalEnergy{};
 };
 
 template< typename FLUID_TYPE, integer NUM_PHASE, integer NUM_COMP >
@@ -153,6 +155,8 @@ testNumericalDerivatives( MultiFluidBase & fluid,
   integer const NP = fluid.numFluidPhases();
   integer const NDOF = NC+2;
 
+  bool const isThermal = fluid.isThermal();
+
   // Copy input values into an array with expected layout
   array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
   for( integer i = 0; i < NC; ++i )
@@ -190,6 +194,16 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseViscosity )
   };
 
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseEnthalpy {
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseEnthalpy ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseEnthalpy )
+  };
+
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseInternalEnergy {
+    GET_FLUID_DATA( fluid, fields::multifluid::phaseInternalEnergy ),
+    GET_FLUID_DATA( fluid, fields::multifluid::dPhaseInternalEnergy )
+  };
+
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseCompFraction ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseCompFraction )
@@ -203,10 +217,21 @@ testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseFraction );
   auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseDensity );
   auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseViscosity );
+  auto const & phaseEnthCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseEnthalpy );
+  auto const & phaseEnergyCopy   = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseInternalEnergy );
   auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, fields::multifluid::phaseCompFraction );
   auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, fields::multifluid::totalDensity );
 
 #undef GET_FLUID_DATA
+
+  // Enthalpy and internal energy values can be quite large and prone to round-off errors when
+  // performing finite difference derivatives. We will therefore scale the values using this
+  // reference enthalpy value to bring them to a more manageable scale.
+  real64 constexpr referenceEnthalpy = 5.0584e5;
+  auto const scaleEnthalpy = []( auto & arraySlice )
+  {
+    LvArray::forValuesInSlice( arraySlice, []( real64 & value ){ value /= referenceEnthalpy; } );
+  };
 
   real64 const pressure = testData.pressure;
   real64 const temperature = testData.temperature;
@@ -218,6 +243,14 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     fluidWrapper.update( 0, 0, pressure, temperature, composition );
   } );
 
+  if( isThermal )
+  {
+    scaleEnthalpy( phaseEnthalpy.value );
+    scaleEnthalpy( phaseEnthalpy.derivs );
+    scaleEnthalpy( phaseInternalEnergy.value );
+    scaleEnthalpy( phaseInternalEnergy.derivs );
+  }
+
   // now perturb variables and update the copied fluid's state
   constitutive::constitutiveUpdatePassThru( fluidCopy, [&] ( auto & castedFluid )
   {
@@ -227,6 +260,8 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     auto dPhaseFrac     = invertLayout( phaseFrac.derivs.toSliceConst(), NP, NDOF );
     auto dPhaseDens     = invertLayout( phaseDens.derivs.toSliceConst(), NP, NDOF );
     auto dPhaseVisc     = invertLayout( phaseVisc.derivs.toSliceConst(), NP, NDOF );
+    auto dPhaseEnth     = invertLayout( phaseEnthalpy.derivs.toSliceConst(), NP, NDOF );
+    auto dPhaseEnergy   = invertLayout( phaseInternalEnergy.derivs.toSliceConst(), NP, NDOF );
     auto dTotalDens     = invertLayout( totalDens.derivs.toSliceConst(), NDOF );
     auto dPhaseCompFrac = invertLayout( phaseCompFrac.derivs.toSliceConst(), NP, NC, NDOF );
 
@@ -246,6 +281,15 @@ testNumericalDerivatives( MultiFluidBase & fluid,
                        dP, relTol, absTol, "totalDens", "Pres" );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseCompFrac", "Pres", phases, components );
+      if( isThermal )
+      {
+        scaleEnthalpy( phaseEnthCopy );
+        scaleEnthalpy( phaseEnergyCopy );
+        checkDerivative( phaseEnthCopy.toSliceConst(), phaseEnthalpy.value.toSliceConst(), dPhaseEnth[Deriv::dP].toSliceConst(),
+                         dP, relTol, absTol, "phaseEnth", "Pres", phases );
+        checkDerivative( phaseEnergyCopy.toSliceConst(), phaseInternalEnergy.value.toSliceConst(), dPhaseEnergy[Deriv::dP].toSliceConst(),
+                         dP, relTol, absTol, "phaseEnergy", "Pres", phases );
+      }
     }
 
     // update temperature and check derivatives
@@ -264,6 +308,15 @@ testNumericalDerivatives( MultiFluidBase & fluid,
                        dT, relTol, absTol, "totalDens", "Temp" );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseCompFrac", "Temp", phases, components );
+      if( isThermal )
+      {
+        scaleEnthalpy( phaseEnthCopy );
+        scaleEnthalpy( phaseEnergyCopy );
+        checkDerivative( phaseEnthCopy.toSliceConst(), phaseEnthalpy.value.toSliceConst(), dPhaseEnth[Deriv::dT].toSliceConst(),
+                         dT, relTol, absTol, "phaseEnth", "Temp", phases );
+        checkDerivative( phaseEnergyCopy.toSliceConst(), phaseInternalEnergy.value.toSliceConst(), dPhaseEnergy[Deriv::dT].toSliceConst(),
+                         dT, relTol, absTol, "phaseEnergy", "Temp", phases );
+      }
     }
 
     array2d< real64, compflow::LAYOUT_COMP > compNew( 1, NC );
@@ -305,22 +358,24 @@ testNumericalDerivatives( MultiFluidBase & fluid,
 
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),
-                       dC, relTol, absTol, "phaseFrac", var, phases );/**
-                                                                         checkDerivative( phaseDensCopy.toSliceConst(),
-                                                                            phaseDens.value.toSliceConst(),
-                                                                            dPhaseDens[Deriv::dC+jc].toSliceConst(),
-                                                                         dC, relTol, absTol, "phaseDens", var, phases );
-                                                                         checkDerivative( phaseViscCopy.toSliceConst(),
-                                                                            phaseVisc.value.toSliceConst(),
-                                                                            dPhaseVisc[Deriv::dC+jc].toSliceConst(),
-                                                                         dC, relTol, absTol, "phaseVisc", var, phases );
-                                                                         checkDerivative( totalDensCopy, totalDens.value,
-                                                                            dTotalDens[Deriv::dC+jc],
-                                                                         dC, relTol, absTol, "totalDens", var );
-                                                                         checkDerivative( phaseCompFracCopy.toSliceConst(),
-                                                                            phaseCompFrac.value.toSliceConst(),
-                                                                            dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
-                                                                         dC, relTol, absTol, "phaseCompFrac", var, phases, components );**/
+                       dC, relTol, absTol, "phaseFrac", var, phases );
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dC+jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseDens", var, phases );
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC+jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseVisc", var, phases );
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC+jc],
+                       dC, relTol, absTol, "totalDens", var );
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseCompFrac", var, phases, components );
+      if( isThermal )
+      {
+        scaleEnthalpy( phaseEnthCopy );
+        scaleEnthalpy( phaseEnergyCopy );
+        checkDerivative( phaseEnthCopy.toSliceConst(), phaseEnthalpy.value.toSliceConst(), dPhaseEnth[Deriv::dC+jc].toSliceConst(),
+                         dC, relTol, absTol, "phaseEnth", var, phases );
+        checkDerivative( phaseEnergyCopy.toSliceConst(), phaseInternalEnergy.value.toSliceConst(), dPhaseEnergy[Deriv::dC+jc].toSliceConst(),
+                         dC, relTol, absTol, "phaseEnergy", var, phases );
+      }
     }
   } );
 }

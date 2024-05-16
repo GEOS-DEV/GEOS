@@ -69,7 +69,8 @@ template< bool FROM_TABLE >
 class MultiFluidDeadOilTest : public MultiFluidTest< DeadOilFluid, 3, 3 >
 {
 public:
-  static constexpr real64 relTol = 1e-4;
+  static constexpr real64 relTol = 1.0e-4;
+  static constexpr real64 absTol = 1.0e-4;
 public:
   MultiFluidDeadOilTest()
   {
@@ -213,7 +214,7 @@ TEST_F( MultiFluidDeadOilTestFromFiles, numericalDerivativesMolar )
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
     TestData data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol );
+    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
   }
 }
 
@@ -227,7 +228,7 @@ TEST_F( MultiFluidDeadOilTestFromFiles, numericalDerivativesMass )
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
     TestData data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol );
+    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
   }
 }
 
@@ -241,7 +242,7 @@ TEST_F( MultiFluidDeadOilTestFromTables, numericalDerivativesMolar )
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
     TestData data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol );
+    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
   }
 }
 
@@ -255,7 +256,7 @@ TEST_F( MultiFluidDeadOilTestFromTables, numericalDerivativesMass )
   for( real64 const pressure : { 1.24e7, 3.21e7, 5.01e7 } )
   {
     TestData data ( pressure, 297.15, { 0.1, 0.3, 0.6 } );
-    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol );
+    testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
   }
 }
 
