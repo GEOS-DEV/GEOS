@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 namespace geos
 {
@@ -156,6 +155,8 @@ public:
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,
                              DomainPartition & domain ) override;
+
+  virtual void updatePressureGradient( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
