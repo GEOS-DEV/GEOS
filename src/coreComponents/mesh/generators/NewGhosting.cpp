@@ -23,12 +23,14 @@
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 
+#include <EpetraExt_MatrixMatrix.h>
+#include <EpetraExt_RowMatrixOut.h>
+#include <EpetraExt_VectorOut.h>
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_Map.h>
 #include <Epetra_MpiComm.h>
-#include <EpetraExt_MatrixMatrix.h>
-#include <EpetraExt_RowMatrixOut.h>
 #include <Epetra_RowMatrixTransposer.h>
+#include <Epetra_Vector.h>
 
 #include "Indices.hpp"
 
@@ -837,6 +839,25 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
   return result;
 }
 
+std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
+                                                   bool makeDataContiguous = true )
+{
+  Epetra_RowMatrixTransposer transposer( &input );  // This process does not modify the original `ghosted` matrix.
+  Epetra_CrsMatrix * tr = nullptr;  // The transposer returns a pointer we must handle ourselves.
+  transposer.CreateTranspose( makeDataContiguous, tr );
+
+  std::unique_ptr< Epetra_CrsMatrix > ptr;
+  ptr.reset( tr );
+  return ptr;
+}
+
+/**
+ * Contains the full result of the ghosting
+ */
+struct Ghost
+{
+  std::map< EdgeGlbIdx, MpiRank > edges;
+};
 
 void assembleAdjacencyMatrix( MeshGraph const & graph,
                               MaxGlbIdcs const & gis,
@@ -953,9 +974,11 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   adj.FillComplete();
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", adj );
 
+  int const commSize( MpiWrapper::commSize() );
+
   // Now let's build the domain indicator matrix.
   // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
-  Epetra_Map const mpiMap( MpiWrapper::commSize(), 0, comm );  // Rows
+  Epetra_Map const mpiMap( commSize, 0, comm );  // Let the current rank get the appropriate index in this map.
   Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, mpiMap, numOwned + numOther, true );
 
   std::vector< double > const ones( n, 1. );
@@ -965,47 +988,67 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   Epetra_Map const graphNodeMap( int( n ), 0, comm );  // Columns
   indicator.FillComplete( graphNodeMap, mpiMap );
 
+//  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, mpiMap, numOwned, true );
+//  ownership.InsertGlobalValues( curRank.get(), numOwned, ones.data(), ownedGlbIdcs.data() );
+//  ownership.FillComplete( graphNodeMap, mpiMap );
+//  std::vector< double > myRank( numOwned, curRank.get() );
+//  Epetra_Vector ownership( Epetra_DataAccess::Copy, rowMap, myRank.data() );
+//  EpetraExt::VectorToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
+  std::vector< double > myRank( 1, curRank.get() );
+  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, rowMap, 1, true );
+  for( auto const & i: ownedGlbIdcs )
+  {
+    ownership.InsertGlobalValues( i, 1, myRank.data(), &i );
+  }
+  ownership.FillComplete( graphNodeMap, graphNodeMap );
+//  ownership.FillComplete( rowMap, rowMap );
+//  ownership.FillComplete();
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
+
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
     GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
+//    GEOS_LOG_RANK( "ownership.GlobalLength() = " << ownership.GlobalLength() );
+    GEOS_LOG_RANK( "ownership.NumGlobalCols() = " << ownership.NumGlobalCols() );
+    GEOS_LOG_RANK( "ownership.NumGlobalRows() = " << ownership.NumGlobalRows() );
+    GEOS_LOG_RANK( "ownership diag = " << std::boolalpha << ownership.LowerTriangular() and ownership.UpperTriangular()  );
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  int NN( MpiWrapper::commSize() );
   GEOS_LOG_RANK("A");
   auto multiply = [&]()-> Epetra_CrsMatrix
   {
     // Upward (n -> e -> f -> c)
 
-    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result_u0_0, false );
     result_u0_0.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
-    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_0, false, result_u0_1, false );
     result_u0_1.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
 
-    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_1, false, result_u0_2, false );
     result_u0_2.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
     // Downward (c -> f -> e -> n)
 
-    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_u0_2, false, result_d0_0, false );
     result_d0_0.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
 
-    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_0, false, result_d0_1, false );
     result_d0_1.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
 
-    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, rowMap, NN, false );
+    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, rowMap, commSize, false );
     EpetraExt::MatrixMatrix::Multiply( adj, true, result_d0_1, false, result_d0_2, false );
     result_d0_2.FillComplete( mpiMap, graphNodeMap );
     EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
@@ -1014,15 +1057,42 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   };
 
   Epetra_CrsMatrix ghosted( multiply() );
+  ghosted.PutScalar( 1. );  // This can be done after the `FillComplete`.
   ghosted.FillComplete( mpiMap, graphNodeMap );
+//  ghosted.FillComplete( mpiMap, rowMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
 
-  // Transposing in order to get easy access to the row...
-  Epetra_RowMatrixTransposer transposer( &ghosted );
-  Epetra_CrsMatrix * ptGhosted = nullptr;  // The transposer returns a pointer we must handle ourselves.
-  transposer.CreateTranspose( true, ptGhosted );
-  GEOS_LOG_RANK( "ptGhosted->NumGlobalCols() = " << ptGhosted->NumGlobalCols() );
-  GEOS_LOG_RANK( "ptGhosted->NumGlobalRows() = " << ptGhosted->NumGlobalRows() );
+  std::unique_ptr< Epetra_CrsMatrix > ptGhosted = makeTranspose( ghosted );
+  if( curRank == 0_mpi )
+  {
+    GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghosted.NumGlobalCols() );
+    GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghosted.NumGlobalRows() );
+    GEOS_LOG_RANK( "ptGhosted->NumGlobalCols() = " << ptGhosted->NumGlobalCols() );
+    GEOS_LOG_RANK( "ptGhosted->NumGlobalRows() = " << ptGhosted->NumGlobalRows() );
+  }
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted-after.mat", ghosted );
+
+  Epetra_CrsMatrix ghostInfo( Epetra_DataAccess::Copy, mpiMap, 1, false );
+  EpetraExt::MatrixMatrix::Multiply( ghosted, true, ownership, false, ghostInfo, false );
+//  ghostInfo.FillComplete( rowMap, mpiMap );
+  ghostInfo.FillComplete( graphNodeMap, mpiMap );
+//  ghostInfo.FillComplete();
+  if( curRank == 0_mpi )
+  {
+    GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostInfo.NumGlobalCols() );
+    GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostInfo.NumGlobalRows() );
+  }
+
+  int extracted3 = 0;
+  std::vector< double > extractedValues3( n );
+  std::vector< int > extractedIndices3( n );
+  ghostInfo.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted3, extractedValues3.data(), extractedIndices3.data() );
+  extractedValues3.resize( extracted3 );
+  extractedIndices3.resize( extracted3 );
+  GEOS_LOG_RANK( "extracted3 = " << extracted3 );
+//  GEOS_LOG_RANK( "extractedValues3 = " << json(extractedValues3) );
+//  GEOS_LOG_RANK( "extractedIndices3 = " << json(extractedIndices3) );
+
 
   // My test says that `tGhosted` is filled here.
   int extracted = 0;
@@ -1032,27 +1102,106 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   extractedValues.resize( extracted );
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
+
+
+  std::unique_ptr< Epetra_CrsMatrix > ptIndicator = makeTranspose( indicator );
+  if( curRank == 0_mpi )
   {
-    std::vector< int > interest;
-    for( int i = 0; i < extracted; ++i )
+    GEOS_LOG_RANK( "ptIndicator->NumGlobalCols() = " << ptIndicator->NumGlobalCols() );
+    GEOS_LOG_RANK( "ptIndicator->NumGlobalRows() = " << ptIndicator->NumGlobalRows() );
+  }
+
+  int extracted2 = 0;
+  std::vector< double > ranksValues( commSize ) ;
+  std::vector< int > ranksIndices( commSize ) ;
+  std::map< NodeGlbIdx , MpiRank > nodes;
+  {
+//    std::vector< int > interest;
+//    for( int i = 0; i < extracted; ++i )
+    for( int i = 0; i < extracted3; ++i )
     {
-      int const & index = extractedIndices[i];
-      double const & val = extractedValues[i];
-      if( val > 0 and index >= int( cellOffset ) )
+//      int const & index = extractedIndices[i];
+//      double const & val = extractedValues[i];
+      int const & index = extractedIndices3[i];
+      MpiRank const owner = MpiRank{ int( extractedValues3[i] ) };
+      if( index < int( edgeOffset ) )  // This is a node to consider
       {
-        interest.push_back( index - cellOffset );
+        NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
+        nodes.emplace( ngi, owner );
       }
+
+//      if( !( val > 0 ) )  // Prevents against floating point exact comparison
+//      {
+//        continue;
+//      }
+//      if( val > 0 and int( edgeOffset ) <= index and index < int( faceOffset ) )  // This is an edge to consider
+
+//      if( index < int( edgeOffset ) )  // This is a node to consider
+//      {
+//        NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
+//        MpiRank owner = curRank;  // In case we own.
+//        if( graph.nodes.find( ngi ) == graph.nodes.cend() )
+//        {
+//          // TODO maybe I need the transposed of indicator?
+//          // We do not own the edge, so we have to get the actual owner
+//          ptIndicator->ExtractGlobalRowCopy( index, commSize, extracted2, ranksValues.data(), ranksIndices.data() );
+//          std::vector< int > tmp;
+//          if(extracted2 == 0)
+//          {
+////            GEOS_LOG_RANK("extracted2 = " << extracted2 );
+//            continue;
+//          }
+//          for( auto ii = 0; ii < extracted2; ++ii )
+//          {
+//            if( ranksValues[ii] > 0 )
+//            {
+//              tmp.emplace_back( ranksIndices[ii] );
+//            }
+//          }
+////          auto tmp = Span< int >( ranksIndices.data(), extracted2 );
+//          owner = MpiRank{ *std::min_element( std::cbegin( tmp ), std::cend( tmp ) ) }; // TODO check that there's at least one element or die.
+//        }
+//        nodes.emplace( ngi, owner );
+
+        //        interest.push_back( index - cellOffset );
+//      }
 //      if( val > 0 and index < int( edgeOffset ) )
 //      {
 //        interest.push_back( index );
 //      }
     }
-    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
+//    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
   }
+
+//  GEOS_LOG_RANK( "ghost nodes = " << json( nodes ) );
+
+  if( curRank == 2_mpi )
+  {
+    std::map< MpiRank, std::set< NodeGlbIdx > > tmp;
+    for( auto const & [node, rk]: nodes )
+    {
+      tmp[rk].insert( node );
+    }
+    for( auto const & [rk, nn]: tmp )
+    {
+      GEOS_LOG_RANK( "ghost nodes = " << rk << ": " << json( nn ) );
+    }
+  }
+//  {
+//    std::vector< NodeGlbIdx > interest;
+//    for( auto const & [ngi, _]: nodes )
+//    {
+//      interest.emplace_back( ngi );
+//    }
+//    GEOS_LOG_RANK( "ghost interest = " << json( interest ) );
+//  }
+
+  // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
+  // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
 
   GEOS_LOG_RANK("B");
 
-  delete ptGhosted;
+//  delete ptGhosted;
 }
 
 
