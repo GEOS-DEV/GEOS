@@ -64,7 +64,8 @@ authors:
   - name: Chris S. Sherman
     affiliation: 1
   - name: Melvin Rey
-  - name: Hamdi Tchelepi
+    affiliation: 2
+  - name: Hamdi A. Tchelepi
     affiliation: 3
   - name: William R. Tobin
     affiliation: 1
@@ -72,7 +73,7 @@ authors:
     affiliation: 4
   - name: Lionel Untereiner
     orcid: 0000-0002-8025-2616
-  - name: Joshua White
+  - name: Joshua A. White
     affiliation: 1
 affiliations:
  - name: Lawrence Livermore National Laboratory, USA
