@@ -856,12 +856,16 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
  */
 struct Ghost
 {
-  std::map< EdgeGlbIdx, MpiRank > edges;
+  std::map< NodeGlbIdx , MpiRank > nodes;
+  std::map< EdgeGlbIdx , MpiRank > edges;
+  std::map< FaceGlbIdx , MpiRank > faces;
+  std::map< CellGlbIdx , MpiRank > cells;
+  std::set< MpiRank > neighbors;
 };
 
-void assembleAdjacencyMatrix( MeshGraph const & graph,
-                              MaxGlbIdcs const & gis,
-                              MpiRank curRank )
+Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
+                               MaxGlbIdcs const & gis,
+                               MpiRank curRank )
 {
   std::size_t const edgeOffset = gis.nodes.get() + 1;
   std::size_t const faceOffset = edgeOffset + gis.edges.get() + 1;
@@ -1072,39 +1076,37 @@ void assembleAdjacencyMatrix( MeshGraph const & graph,
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
 
-  std::map< NodeGlbIdx , MpiRank > nodes;
-  std::map< EdgeGlbIdx , MpiRank > edges;
-  std::map< FaceGlbIdx , MpiRank > faces;
-  std::map< CellGlbIdx , MpiRank > cells;
-  std::set< MpiRank > neighbors;
+  Ghost ghost;
   {
     for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
     {
       int const & index = extractedIndices[i];
       MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
-      neighbors.insert( owner );
+      ghost.neighbors.insert( owner );
       if( index < int( edgeOffset ) )  // This is a node
       {
         NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
-        nodes.emplace( ngi, owner );
+        ghost.nodes.emplace( ngi, owner );
       }
       else if( int( edgeOffset ) <= index && index < int( faceOffset ) )
       {
         EdgeGlbIdx const egi = EdgeGlbIdx{ intConv< globalIndex >( index - edgeOffset ) };
-        edges.emplace( egi, owner );
+        ghost.edges.emplace( egi, owner );
       }
       else if( int( faceOffset ) <= index && index < int( cellOffset ) )
       {
         FaceGlbIdx const fgi = FaceGlbIdx{ intConv< globalIndex >( index - faceOffset ) };
-        faces.emplace( fgi, owner );
+        ghost.faces.emplace( fgi, owner );
       }
       else
       {
         CellGlbIdx const cgi = CellGlbIdx{ intConv< globalIndex >( index - cellOffset ) };
-        cells.emplace( cgi, owner );
+        ghost.cells.emplace( cgi, owner );
       }
     }
   }
+
+  return ghost;
 
 //  if( curRank == 2_mpi )
 //  {
@@ -1197,11 +1199,11 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 //    std::cout << "My graph is " << json( graph ) << std::endl;
 //  }
 
-  assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
+  Ghost const ghost = assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
 
-  NodeMgrImpl const nodeMgr( 0_nli );
-  EdgeMgrImpl const edgeMgr( 0_eli );
-  FaceMgrImpl const faceMgr( 0_fli );
+  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( std::size( ghost.nodes ) ) } );
+  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( std::size( ghost.edges ) ) } );
+  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( std::size( ghost.faces ) ) } );
 
   return {};
 }
