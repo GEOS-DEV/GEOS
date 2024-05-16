@@ -16,6 +16,8 @@ authors:
     affiliation: 2
   - name: Andrea Borio
     affiliation: 5
+  - name: Thomas J. Byer
+    affiliation: 1
   - name: Nicola Castelletto
     affiliation: 1
   - name: Aurélien Citrain
