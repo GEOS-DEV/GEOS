@@ -30,19 +30,19 @@ class NodeMgrImpl : public generators::NodeMgr
 public:
   explicit NodeMgrImpl( NodeLocIdx const & numNodes );
 
-  localIndex numNodes() const override;
+  [[nodiscard]] localIndex numNodes() const override;
 
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override;
+  [[nodiscard]] array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override;
 
-  ArrayOfArrays< localIndex > getNodeToEdges() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToEdges() const override;
 
-  ArrayOfArrays< localIndex > getNodeToFaces() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToFaces() const override;
 
-  ToCellRelation< ArrayOfArrays< localIndex>> getNodeToElements() const override;
+  [[nodiscard]] ToCellRelation< ArrayOfArrays< localIndex>> getNodeToElements() const override;
 
-  array1d< globalIndex > getLocalToGlobal() const override;
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
 
-  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
+  [[nodiscard]] std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
 private:
   NodeLocIdx m_numNodes;
@@ -54,13 +54,13 @@ class EdgeMgrImpl : public generators::EdgeMgr
 public:
   explicit EdgeMgrImpl( EdgeLocIdx const & numEdges );
 
-  localIndex numEdges() const override;
+  [[nodiscard]] localIndex numEdges() const override;
 
-  array2d< localIndex > getEdgeToNodes() const override;
+  [[nodiscard]] array2d< localIndex > getEdgeToNodes() const override;
 
-  ArrayOfArrays< localIndex > getEdgeToFaces() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getEdgeToFaces() const override;
 
-  array1d< integer > getGhostRank() const override;
+  [[nodiscard]] array1d< integer > getGhostRank() const override;
 
 private:
   EdgeLocIdx m_numEdges;
@@ -71,13 +71,13 @@ class FaceMgrImpl : public generators::FaceMgr
 public:
   explicit FaceMgrImpl( FaceLocIdx const & numFaces );
 
-  localIndex numFaces() const override;
+  [[nodiscard]] localIndex numFaces() const override;
 
-  ArrayOfArrays< localIndex > getFaceToNodes() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  ArrayOfArrays< localIndex > getFaceToEdges() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
-  ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
+  [[nodiscard]] ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
 private:
   FaceLocIdx m_numFaces;
