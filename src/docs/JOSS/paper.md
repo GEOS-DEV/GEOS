@@ -60,6 +60,8 @@ authors:
     affiliation: 2
   - name: Victor A. P. Magri
     affiliation: 1
+  - name: Daniel Osei-Kuffuor
+    affiliation: 1
   - name: Stefan Povolny
     affiliation: 1
   - name: Shabnam J. Semnani
