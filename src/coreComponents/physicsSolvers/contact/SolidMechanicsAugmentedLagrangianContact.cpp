@@ -191,9 +191,9 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
                           solidMechanics::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem);
 
-  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                          solidMechanics::totalBubbleDisplacement::key(),
-                          DofManager::Connector::Elem);
+  //dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
+  //                        solidMechanics::totalBubbleDisplacement::key(),
+  //                        DofManager::Connector::Elem);
 
 }
 
@@ -211,7 +211,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( setSparsity );
   //SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, true );
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
+  //SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
   
   //this->m_faceTypesToFaceElements["Quadrilateral"] = quadList;
   //this->m_faceTypesToFaceElements["Quadrilateral"].toView()
@@ -380,8 +380,319 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   });
 
+  //SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
+
+  dofManager.setDomain( domain );
+  setupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  // Set the sparsity pattern without the Kwu and Kuw blocks.
+  SparsityPattern< globalIndex > patternDiag;
+  dofManager.setSparsityPattern( patternDiag );
+
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
+  }
+
+  // Add the number of nonzeros induced by coupling
+  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  SparsityPattern< globalIndex > pattern;
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+  // Finally, steal the pattern into a CRS matrix
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.setName( this->getName() + "/localMatrix" );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
 }
 
+void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPartition & domain,
+                                                                       DofManager & dofManager,
+                                                                       arrayView1d< localIndex > const & rowLengths ) const
+{
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    NodeManager const &          nodeManager = mesh.getNodeManager();
+    FaceManager const &          faceManager = mesh.getFaceManager();
+
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+    arrayView1d< globalIndex const > const dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion const & cellElementSubRegion )
+    {
+
+      arrayView1d< localIndex const > const bubbleElemsList = cellElementSubRegion.bubbleElementsList();
+      arrayView2d< localIndex const > const faceElemsList = cellElementSubRegion.faceElementsList();
+
+      localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+
+      //for( localIndex bi=0; bi<bubbleElemsList.size(); ++bi )
+      forAll< parallelDevicePolicy<> >( bubbleElemsList.size(), [&] GEOS_HOST_DEVICE ( localIndex const bi )
+      {
+        localIndex const cellIndex = bubbleElemsList[bi];
+        localIndex const k = faceElemsList[bi][0];
+
+        localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
+
+        if( localRow >= 0 && localRow < rowLengths.size() )
+        {
+          for( localIndex i=0; i<3; ++i )
+          {
+            //rowLengths[localRow + i] += numDispDof;
+            RAJA::atomicAdd<parallelDeviceAtomic>(&rowLengths[localRow + i], numDispDof);
+          }
+        }
+
+        for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+        {
+          const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
+          localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
+
+          if( localDispRow >= 0 && localDispRow < rowLengths.size() )
+          {
+            for( int d=0; d<3; ++d )
+            {
+              //rowLengths[localDispRow + d] += 3;
+              RAJA::atomicAdd<parallelDeviceAtomic>( &rowLengths[localDispRow + d], 3);
+            }
+          }
+        }
+      });
+
+    });
+
+    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    ArrayOfArraysView< localIndex const > const  elemsToFaces = subRegion.faceList().toViewConst();
+
+    forAll< parallelDevicePolicy<> > ( subRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const numDispDof = 3*numNodesPerFace;
+
+      for (int k=0; k<2; ++k)
+      {
+        localIndex const kf = elemsToFaces[kfe][k];
+     
+        localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[kf] - rankOffset );
+     
+        if( localRow >= 0 && localRow < rowLengths.size() )
+        {
+          for( localIndex i=0; i<3; ++i )
+          {
+            //rowLengths[localRow + i] += numDispDof;
+            RAJA::atomicAdd<parallelDeviceAtomic>(&rowLengths[localRow + i], numDispDof);
+          }
+        }
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          const localIndex & node = faceToNodeMap( kf, a );
+          localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
+
+          if( localDispRow >= 0 && localDispRow < rowLengths.size() )
+          {
+            for( int d=0; d<3; ++d )
+            {
+              //rowLengths[localDispRow + d] += 3;
+              RAJA::atomicAdd<parallelDeviceAtomic>( &rowLengths[localDispRow + d], 3);
+            }
+          }
+        }
+      }
+
+    });
+
+  });
+}
+
+void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( DomainPartition const & domain,
+                                                                           DofManager const & dofManager,
+                                                                           SparsityPatternView< globalIndex > const & pattern ) const
+{
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    NodeManager const &          nodeManager = mesh.getNodeManager();
+    FaceManager const &          faceManager = mesh.getFaceManager();
+
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+    arrayView1d< globalIndex const > const dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    static constexpr int maxNumDispDof = 3 * 8;
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion const & cellElementSubRegion )
+    {
+
+      arrayView1d< localIndex const > const bubbleElemsList = cellElementSubRegion.bubbleElementsList();
+      arrayView2d< localIndex const > const faceElemsList = cellElementSubRegion.faceElementsList();
+
+      localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+
+      // Can't I update the pattern atomically?
+      //forAll< parallelDevicePolicy<> >( bubbleElemsList.size(), [&] GEOS_HOST_DEVICE ( localIndex const bi )
+      for( localIndex bi=0; bi<bubbleElemsList.size(); ++bi )
+      {
+        localIndex const cellIndex = bubbleElemsList[bi];
+        localIndex const k = faceElemsList[bi][0];
+
+        // working arrays
+        stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( numDispDof );
+        stackArray1d< globalIndex, 3 > eqnRowIndicesBubble( 3 );
+        stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
+        stackArray1d< globalIndex, 3 > dofColIndicesBubble( 3 );
+      
+        for( localIndex idof = 0; idof < 3; ++idof )
+        {
+          eqnRowIndicesBubble[idof] = bubbleDofNumber[k] + idof - rankOffset;
+          dofColIndicesBubble[idof] = bubbleDofNumber[k] + idof;
+        }
+
+        for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+        {
+          const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
+          for( localIndex idof = 0; idof < 3; ++idof )
+          {
+            eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
+            dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
+          }
+        }
+
+        for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+        {
+          if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
+          {
+            for( localIndex j = 0; j < dofColIndicesBubble.size(); ++j )
+            {
+              pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesBubble[j] );
+            }
+          }
+        }
+
+        for( localIndex i = 0; i < eqnRowIndicesBubble.size(); ++i )
+        {
+          if( eqnRowIndicesBubble[i] >= 0 && eqnRowIndicesBubble[i] < pattern.numRows() )
+          {
+            for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+            {
+              pattern.insertNonZero( eqnRowIndicesBubble[i], dofColIndicesDisp[j] );
+            }
+          }
+        }
+
+      }
+
+    });
+
+    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    ArrayOfArraysView< localIndex const > const  elemsToFaces = subRegion.faceList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    static constexpr int maxNumDispFaceDof = 3 * 4;
+    // Can't I update the pattern atomically?
+    //forAll< parallelDevicePolicy<> > ( subRegion.size(), [&] GEOS_HOST_DEVICE ( localIndex const kfe )
+    for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
+    {
+
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const numDispDof = 3*numNodesPerFace;
+
+      for (int k=0; k<2; ++k)
+      {
+        localIndex const kf = elemsToFaces[kfe][k];
+        localIndex const kf_other = elemsToFaces[kfe][(1+k)%2];
+
+        // working arrays
+        stackArray1d< globalIndex, maxNumDispFaceDof > eqnRowIndicesDisp ( numDispDof );
+        stackArray1d< globalIndex, 3 > eqnRowIndicesBubble( 3 );
+        stackArray1d< globalIndex, maxNumDispFaceDof > dofColIndicesDisp ( numDispDof );
+        stackArray1d< globalIndex, 3 > dofColIndicesBubble( 3 );
+
+        for( localIndex idof = 0; idof < 3; ++idof )
+        {
+          eqnRowIndicesBubble[idof] = bubbleDofNumber[kf] + idof - rankOffset;
+          dofColIndicesBubble[idof] = bubbleDofNumber[kf] + idof;
+        }
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
+        {
+          const localIndex & node = faceToNodeMap( kf_other, a );
+          for( localIndex idof = 0; idof < 3; ++idof )
+          {
+            eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
+            dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
+          }
+        }
+
+        for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+        {
+          if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
+          {
+            for( localIndex j = 0; j < dofColIndicesBubble.size(); ++j )
+            {
+              pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesBubble[j] );
+            }
+          }
+        }
+
+        for( localIndex i = 0; i < eqnRowIndicesBubble.size(); ++i )
+        {
+          if( eqnRowIndicesBubble[i] >= 0 && eqnRowIndicesBubble[i] < pattern.numRows() )
+          {
+            for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+            {
+              pattern.insertNonZero( eqnRowIndicesBubble[i], dofColIndicesDisp[j] );
+            }
+          }
+        }
+
+      }
+    }
+  });
+
+}
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const & time_n,
                                                                   real64 const & dt,
@@ -474,6 +785,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   //ParallelMatrix parallel_matrix;
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   //parallel_matrix.write("mech.mtx");
+  //abort();
 
   // If specified as a b.c. apply traction
   //applyTractionBC( time, dt, domain );
@@ -520,7 +832,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                           dt,
                                                           faceElementList );
 
- 
+      //GEOS_UNUSED_VAR(kernelFactory, fractureRegionName, subRegionFE);
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
@@ -598,18 +910,19 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                          < parallelDevicePolicy< >,
                            constitutive::ElasticIsotropic,
                            CellElementSubRegion >( mesh,
-                                                   regionNames,
+                                                  regionNames,
                                                    getDiscretizationName(),
                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
+    //GEOS_UNUSED_VAR( regionNames );
 
   } );
   
   //ParallelMatrix parallel_matrix_1;
   //parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-  //parallel_matrix_1.write("amech.mtx");
+  //parallel_matrix_1.write("mech_bubble.mtx");
   //abort();
   //std::ofstream ofile;
   //ofile.open("amech.rhs");
@@ -782,10 +1095,92 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
   // Matrix residual
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
-  //abort();
-  
 
-  return solidResidualNorm;
+  string const bubbleDofKey = dofManager.getKey( solidMechanics::totalBubbleDisplacement::key() );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
+
+  // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
+  // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
+  real64 globalResidualNorm[2] = {0, 0};
+
+  // Bubble residual
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+
+    ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+
+    forAll< parallelDevicePolicy<> > ( subRegion.size(), [ elemsToFaces, localRhs, localSum, bubbleDofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+
+      for (int kk=0; kk<2; ++kk)
+      {
+        localIndex const k = elemsToFaces[kfe][kk];
+        if( ghostRank[k] < 0 )
+        {
+          localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
+          for( localIndex i = 0; i < 3; ++i )
+          {
+            localSum += localRhs[localRow + i] * localRhs[localRow + i];
+          }
+        }
+      }
+
+    });
+    std::cout << "localSum: " << localSum.get() << std::endl;
+    real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
+
+
+
+    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+    array1d< real64 > globalValues( numRanks * 2 );
+
+    // Everything is done on rank 0
+    MpiWrapper::gather( localResidualNorm,
+                        2,
+                        globalValues.data(),
+                        2,
+                        0,
+                        MPI_COMM_GEOSX );
+
+    if( rank==0 )
+    {
+      for( int r=0; r<numRanks; ++r )
+      {
+        // sum/max across all ranks
+        globalResidualNorm[0] += globalValues[r*2];
+        globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+      }
+    }
+
+    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
+  });
+
+  real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
+    // time-step when maxForce = 0;
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm );
+  }
+
+    return sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
+  //abort();
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager const & dofManager,
@@ -1038,12 +1433,17 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       });
       std::cout << "Computed traction_new" << std::endl;
 
+
       forAll< parallelDevicePolicy<> >( subRegion.size(), [&] ( localIndex const kfe )
       {
         //if( ghostRank[kfe] < 0 )
         //{
           if( traction_new[kfe][0] >= tol[3] )
           {
+            std::cout << "Traction_N: " << traction_new[kfe][0] << std::endl;
+            std::cout << "Disp:" << std::endl;
+            std::cout << kfe << " " << dispJump[kfe][0] << " " 
+                      << deltaDispJump[kfe][0] << " " << deltaDispJump[kfe][1] << std::endl;
             std::cout << "Open" << std::endl;
             abort();
           }
@@ -1064,6 +1464,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           }
         //}
       });
+      
     });
   });
 

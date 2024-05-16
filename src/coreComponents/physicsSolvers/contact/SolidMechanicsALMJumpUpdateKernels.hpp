@@ -187,7 +187,6 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOS_UNUSED_VAR( k );
 
     //real64 matRtAtu[3][stack.numUdofs];
     real64 matRtAtu[3][stack.numUdofs];
@@ -202,8 +201,12 @@ public:
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.deltaDispJumpLocal, matRtAtu, stack.duLocal );
 
+    //std::cout << "stack.jumpu: " << stack.dispJumpLocal[0] << std::endl;
+
     LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.dispJumpLocal, matRtAtb, stack.bLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.deltaDispJumpLocal, matRtAtb, stack.dbLocal );
+
+    //std::cout << "stack.jumpb+u: " << stack.dispJumpLocal[0] << std::endl;
 
     for( int i=0; i<3; ++i )
     {

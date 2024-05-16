@@ -22,6 +22,8 @@
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsALMKernelsHelper.hpp"
 
+#include "finiteElement/BilinearFormUtilities.hpp"
+
 namespace geos
 {
 
@@ -255,16 +257,20 @@ public:
     solidMechanicsALMKernelsHelper::assembleStrainOperator< 6, nBubbleUdof, numFacesPerElem >( strainBubbleMatrix, dBubbleNdX );
 
     // TODO: Use the following functions
-    //BilinearFormUtilities::compute< displacementTestSpace,
-    //                                displacementTrialSpace,
+    //using namespace PDEUtilities;
+    //constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    //constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
+    //real64 Abb_bilinear[nBubbleUdof][nBubbleUdof];
+    //BilinearFormUtilities::compute< displacementTrialSpace,
+    //                                displacementTestSpace,
     //                                DifferentialOperator::SymmetricGradient,
     //                                DifferentialOperator::SymmetricGradient >
     //(
-    //  stack.dLocalResidualMomentum_dDisplacement,
-    //  dNdX,
-    //  stack.stiffness, // fourth-order tensor handled via DiscretizationOps
-    //  dNdX,
-    //  -detJxW );
+    //  Abb_bilinear,
+    //  dBubbleNdX,
+    //  stack.constitutiveStiffness, // fourth-order tensor handled via DiscretizationOps
+    //  dBubbleNdX,
+    //  -detJ );
 
    
     //LinearFormUtilities::compute< displacementTestSpace,
@@ -310,6 +316,28 @@ public:
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nBubbleUdof >( stack.localAbb, Abb_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nUdof >( stack.localAbu, Abu_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nUdof, nBubbleUdof >( stack.localAub, Aub_gauss, -detJ );
+
+    /*std::cout << "Abb_gauss: " << std::endl;
+    for (int i=0; i<nBubbleUdof; ++i)
+    {
+      for (int j=0; j<nBubbleUdof; ++j)
+      {
+        std::cout << stack.localAbb[i][j] << " ";
+      }
+    std::cout << std::endl;
+    }
+    std::cout << "Abb_bilinear: " << std::endl;
+    for (int i=0; i<nBubbleUdof; ++i)
+    {
+      for (int j=0; j<nBubbleUdof; ++j)
+      {
+        std::cout << Abb_bilinear[i][j] << " ";
+      }
+    std::cout << std::endl;
+    }
+    abort();
+    */
+
   }
 
   GEOS_HOST_DEVICE
@@ -324,40 +352,40 @@ public:
 
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
 
+    //std::cout << "parentFaceIndex: " << parentFaceIndex << " " 
+    //          << stack.X[0][0] << " " << stack.X[1][0] << std::endl;
+
 
     real64 localAub[nUdof][3];
     real64 localAbu[3][nUdof];
     real64 localAbb[3][3];
     real64 localRb[3];
-    real64 localRu[nUdof];
     for( localIndex i = 0; i < 3; ++i )
     {
       for( localIndex j = 0; j < nUdof; ++j )
       {
-        localAub[j][i] = stack.localAub[parentFaceIndex*3+j][i];
+        localAub[j][i] = stack.localAub[j][parentFaceIndex*3+i];
       }
       for( localIndex j = 0; j < 3; ++j )
       {
-        localAbb[j][i] = stack.localAbu[parentFaceIndex*3+j][parentFaceIndex*3+i];
+        localAbb[j][i] = stack.localAbb[parentFaceIndex*3+j][parentFaceIndex*3+i];
       }
-      localRb[i] = stack.localRb[i];
+      localRb[i] = stack.localRb[parentFaceIndex*3+i];
     }
 
     for( localIndex j = 0; j < nUdof; ++j )
     {
       for( localIndex i = 0; i < 3; ++i )
       {
-        localAbu[i][j] = stack.localAbu[i][parentFaceIndex*3+j];
-
+        localAbu[i][j] = stack.localAbu[parentFaceIndex*3+i][j];
       }
-      localRu[j] = stack.localRu[j];
     }
 
 
     // Compute the local residuals
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( localRb, localAbb, stack.bLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( localRb, localAbu, stack.uLocal );
-    LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( localRu, localAub, stack.bLocal );
+    LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, localAub, stack.bLocal );
 
     //real64 localAub[nUdof][3];
     //for( localIndex i = 0; i < nUdof; ++i )
@@ -373,7 +401,7 @@ public:
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], localRu[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
       //real64 rowAub[3];
       ///for( localIndex j = 0; j < 3; ++j )

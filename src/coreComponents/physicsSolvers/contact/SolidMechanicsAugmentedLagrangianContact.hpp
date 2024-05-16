@@ -112,6 +112,20 @@ public:
 
 private:
 
+  void addCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
+
   // TODO To understand what variables are needed
   std::map< string, std::map< string, array1d< localIndex >>> m_faceTypesToFaceElements;
   std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;

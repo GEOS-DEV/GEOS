@@ -310,16 +310,21 @@ public:
     LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, dispJumpRb,  1 );
     LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, oldDispJumpRb, -1 );
                                                                           
-    //for (int i=0; i<stack.numUdofs; ++i)
-    //{
-    //  for (int j=0; j<stack.numUdofs; ++j)
-    //  {
-    //    std::cout << stack.localAutAtu[ i ] [ j ] << " ";
-    //  }
-    //  std::cout << std::endl;
-    //}
-    //std::cout << std::endl;
-    //abort();
+    if (abs(stack.X[2][2] - 100) < 1.e-13 )
+    {
+      std::cout << stack.X[2][0] << " " << stack.X[2][1] << " " << stack.X[2][2] << std::endl;
+      std::cout << stack.X[0][0] << " " << stack.X[0][1] << " " << stack.X[0][2] << std::endl;
+      for (int i=0; i<stack.numUdofs; ++i)
+      {
+        //for (int j=0; j<stack.numUdofs; ++j)
+        //{
+          std::cout << stack.localAutAtu[ i ] [ i ] << " ";
+        //}
+        std::cout << std::endl;
+      }
+      std::cout << std::endl;
+      abort();
+    }
 
     for( localIndex i=0; i < stack.numUdofs; ++i )
     {
