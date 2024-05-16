@@ -178,7 +178,7 @@ private:
 
 protected:
   SinglePhaseThermalConductivity const & getCondModel() const
-  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( "thermalCond" ); }
+  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( "m_SinglePhaseThermalConductivityModelName" ); }
 };
 
 }

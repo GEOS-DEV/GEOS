@@ -64,6 +64,11 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Name of the solid internal energy model." );
+
+  registerWrapper( viewKeyStruct::singlePhaseThermalConductivityModelNameString(), &m_singlePhaseThermalConductivityModelName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Name of the single phase thermal conductivity model." );
 }
 
 CoupledSolidBase::~CoupledSolidBase() = default;

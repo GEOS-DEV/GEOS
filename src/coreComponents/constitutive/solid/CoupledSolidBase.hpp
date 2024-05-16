@@ -25,6 +25,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
 
 namespace geos
 {
@@ -52,6 +53,7 @@ public:
     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
+    static constexpr char const * singlePhaseThermalConductivityModelNameString() { return "singlePhaseThermalConductivityModelName"; }
   };
 
   virtual std::vector< string > getSubRelationNames() const override final
@@ -63,6 +65,11 @@ public:
     if( !m_solidInternalEnergyModelName.empty() )
     {
       subRelationNames.push_back( m_solidInternalEnergyModelName );
+    }
+
+    if( !m_singlePhaseThermalConductivityModelName.empty() )
+    {
+      subRelationNames.push_back( m_singlePhaseThermalConductivityModelName );
     }
 
     return subRelationNames;
@@ -211,10 +218,16 @@ public:
   virtual void saveConvergedState() const override final
   {
     getBasePorosityModel().saveConvergedState();
+
     if( !m_solidInternalEnergyModelName.empty() )
     {
       /// If the name is provided it has to be saved as well.
       getSolidInternalEnergyModel().saveConvergedState();
+    }
+
+    if( !m_singlePhaseThermalConductivityModelName.empty() )
+    {
+      getSinglePhaseThermalConductivityModel().saveConvergedState();
     }
   }
 
@@ -232,6 +245,13 @@ public:
    */
   SolidInternalEnergy const & getSolidInternalEnergyModel() const
   { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
+
+  /**
+   * @brief get a constant reference to the solid thermal conductivity model
+   * return a constant SinglePhaseThermalConductivity reference to the solid thermal conductivity model
+   */
+  SinglePhaseThermalConductivity const & getSinglePhaseThermalConductivityModel() const
+  { return this->getParent().template getGroup< SinglePhaseThermalConductivity >( m_singlePhaseThermalConductivityModelName ); }
 
   /**
    * @brief get a PorosityBase constant reference to the porosity model
@@ -260,6 +280,9 @@ protected:
 
   /// the name of the solid internal energy model
   string m_solidInternalEnergyModelName;
+
+  /// the name of the single phase thermal conductivity model
+  string m_singlePhaseThermalConductivityModelName;
 
 private:
 

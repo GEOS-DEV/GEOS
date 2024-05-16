@@ -56,9 +56,9 @@ public:
                                       localIndex const q,
                                       real64 const & temperature ) const
   {  
-    m_effectiveConductivity[k][q][0] = m_thermalConductivityComponents[0] + 0.0*temperature;
-    m_effectiveConductivity[k][q][1] = m_thermalConductivityComponents[1] + 0.0*temperature;
-    m_effectiveConductivity[k][q][2] = m_thermalConductivityComponents[2] + 0.0*temperature;
+    m_effectiveConductivity[k][q][0] = m_thermalConductivityComponents[0] + 0.00001*temperature;
+    m_effectiveConductivity[k][q][1] = m_thermalConductivityComponents[1] + 0.00001*temperature;
+    m_effectiveConductivity[k][q][2] = m_thermalConductivityComponents[2] + 0.00001*temperature;
   }
 
 private:
