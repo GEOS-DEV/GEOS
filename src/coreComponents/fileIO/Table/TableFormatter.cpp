@@ -60,7 +60,7 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
 
   for( const auto & row : rowsValues )
   {
-    oss << stringutilities::join( row.cbegin(), row.cend(), ",") << "\n";
+    oss << stringutilities::join( row.cbegin(), row.cend(), "," ) << "\n";
   }
 
   return oss.str();
@@ -282,13 +282,12 @@ void TableTextFormatter::computeTableMaxLineLength( std::vector< TableLayout::Co
 
   if( !msgTableError.empty() )
   {
-    auto it = std::max_element( msgTableError.begin(), msgTableError.end(),
-                                []( const auto & a, const auto & b ) {
+    auto maxStringSize = *(std::max_element( msgTableError.begin(), msgTableError.end(),
+                                             []( const auto & a, const auto & b ) {
       return a.size() < b.size();
-    } );
-    string maxStringSize = *it;
+    } ));
 
-    msgTableErrorLength += maxStringSize.size() + 1; // for \n set later
+    msgTableErrorLength += maxStringSize.size() + 1; // +1 for \n set later
     maxTopLineLength = std::max( maxTopLineLength, msgTableErrorLength );
   }
 
@@ -310,25 +309,26 @@ void TableTextFormatter::buildTableSeparators( std::vector< TableLayout::Column 
   integer const columnMargin = m_tableLayout.getColumnMargin();
   integer const borderMargin = m_tableLayout.getBorderMargin();
 
-  std::vector< string > colStringLines;
+  std::vector< string > maxStringPerColumn;
 
   string const spaceBetweenColumns = GEOS_FMT( "{:-^{}}", verticalLine, columnMargin );
 
   sectionSeparator = GEOS_FMT( "{}{:-<{}}", verticalLine, "", borderMargin );
   for( auto const & col : columns )
   {
-    colStringLines.push_back( string( integer( col.m_maxStringSize.length()), '-' ));
+    maxStringPerColumn.push_back( string( integer( col.m_maxStringSize.length()), '-' ));
   }
 
-  sectionSeparator += colStringLines[0];
-  for( size_t i = 1; i < colStringLines.size(); i++ )
+  sectionSeparator += maxStringPerColumn[0];
+
+  for( size_t i = 1; i < maxStringPerColumn.size(); i++ )
   {
-    sectionSeparator += spaceBetweenColumns + colStringLines[i];
+    sectionSeparator += spaceBetweenColumns + maxStringPerColumn[i];
   }
 
   sectionSeparator += GEOS_FMT( "{:-<{}}{}", "", borderMargin, verticalLine );
 
-  // -2 for starting and ending char
+  // -2 because we can have this pattern +---+
   topSeparator = GEOS_FMT( "{}{:-<{}}{}", verticalLine, "", sectionSeparator.size() - 2, verticalLine );
 }
 
