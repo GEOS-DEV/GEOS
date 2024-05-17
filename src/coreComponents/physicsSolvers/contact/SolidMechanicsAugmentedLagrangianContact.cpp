@@ -16,6 +16,7 @@
  * SolidMechanicsAugmentedLagrangianContact.cpp
  */
 
+#include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/contact/SolidMechanicsALMKernels.hpp"
@@ -963,17 +964,17 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     forAll< parallelDevicePolicy<> > ( subRegion.size(), [ elemsToFaces, localRhs, localSum, bubbleDofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      for (int kk=0; kk<2; ++kk)
+      if( ghostRank[kfe] < 0 )
       {
-        localIndex const k = elemsToFaces[kfe][kk];
-        if( ghostRank[k] < 0 )
+        for (int kk=0; kk<2; ++kk)
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            localSum += localRhs[localRow + i] * localRhs[localRow + i];
+          localIndex const k = elemsToFaces[kfe][kk];
+            localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              localSum += localRhs[localRow + i] * localRhs[localRow + i];
+            }
           }
-        }
       }
 
     });
@@ -1013,6 +1014,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   }
 
   return sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
+  //return sqrt( solidResidualNorm * solidResidualNorm );
 
 }
 
