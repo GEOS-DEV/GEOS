@@ -69,7 +69,7 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
-#if !defined(GEOSX_DEVICE_COMPILE)
+#if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhasePengRobinsonLBCViscosity,
                                CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
