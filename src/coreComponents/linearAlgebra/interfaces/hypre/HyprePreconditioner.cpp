@@ -182,6 +182,7 @@ void createAMG( LinearSolverParameters const & params,
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumPaths( precond.ptr, params.amg.aggressiveNumPaths ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( precond.ptr, params.amg.aggressiveNumLevels ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( precond.ptr, aggInterpType ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( precond.ptr, params.amg.aggressiveInterpMaxNonZeros ) );
   }
 
   // Set coarsest level solver
