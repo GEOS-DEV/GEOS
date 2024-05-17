@@ -86,7 +86,7 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  appendLogLevel( { "logLevel >= 1", "Display information about test" } );
+  appendLogLevel( { "logLevel >= 1", "Informations about test" } );
   appendLogLevel( { "logLevel >= 1", "Indicate at the end if the internal results are consistent" } );
 }
 

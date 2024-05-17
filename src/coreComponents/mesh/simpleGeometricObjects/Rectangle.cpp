@@ -44,7 +44,7 @@ Rectangle::Rectangle( const string & name, Group * const parent ):
     setDescription( "Tolerance to determine if a point sits on the plane or not. "
                     "It is relative to the maximum dimension of the plane." );
 
-  appendLogLevel( { "logLevel >= 2", "Display informations about length and width of the bounded plane" } );
+  appendLogLevel( { "logLevel >= 2", "Infos about length and width of the bounded plane" } );
 
   m_points.resize( 4, 3 );
 }

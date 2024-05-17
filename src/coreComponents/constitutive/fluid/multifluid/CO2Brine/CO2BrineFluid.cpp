@@ -113,7 +113,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
 
-  appendLogLevel( { "logLevel >= 1", "Display PVT phase table" } );
+  appendLogLevel( { "logLevel >= 1", "Informations on PVT phase table" } );
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >

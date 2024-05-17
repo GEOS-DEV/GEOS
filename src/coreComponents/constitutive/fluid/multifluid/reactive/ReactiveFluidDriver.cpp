@@ -67,7 +67,7 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
     
-  appendLogLevel( { "logLevel >= 1", "Print informations about ReactiveFluidDriver" } );
+  appendLogLevel( { "logLevel >= 1", "Infos about ReactiveFluidDriver" } );
   appendLogLevel( { "logLevel >= 1", "Indicate at the end if the internal results are consistent" } );
 }
 

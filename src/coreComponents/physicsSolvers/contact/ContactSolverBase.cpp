@@ -50,7 +50,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
-  appendLogLevel( { "logLevel >= 1", "Display informations about number of elements for each fracture states" } );
+  appendLogLevel( { "logLevel >= 1", "Infos about number of elements for each fracture states" } );
 }
 
 void ContactSolverBase::postProcessInput()

@@ -53,7 +53,7 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  appendLogLevel( { "logLevel >= 1", "Print informations about ReactiveFluidDriver" } );
+  appendLogLevel( { "logLevel >= 1", "Infos about RelpermDriver" } );
   appendLogLevel( { "logLevel >= 1", "Indicate if the internal results are consistent" } );
 }
 
