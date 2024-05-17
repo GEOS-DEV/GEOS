@@ -6,7 +6,6 @@ set( gtest_geosx_tests
      testDamage.cpp
      testMultiFluidCO2Brine.cpp
      testMultiFluidCompositionalMultiphase.cpp
-     testMultiFluidCompositionalMultiphasePVTPackage.cpp
      testMultiFluidDeadOil.cpp
      testMultiFluidLiveOil.cpp
      testRelPerm.cpp
@@ -45,8 +44,7 @@ endif()
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testMultiFluid.cpp )
-
+          testMultiFluidCompositionalMultiphasePVTPackage.cpp )
     list( APPEND dependencyList PVTPackage )
 endif()
 

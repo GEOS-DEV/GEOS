@@ -219,9 +219,14 @@ struct Fluid< FLUID_TYPE, 9 >
 
   static void getSamples( array2d< real64 > & samples )
   {
-    samples.resize( 1, 9 );
-    //fill< 9 >( samples[0], {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
-    //fill< 9 >( samples[0], {0.00000, 0.00000, 0.53770, 0.12360, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
+    samples.resize( 7, 9 );
+    fill< 9 >( samples[0], {0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
+    fill< 9 >( samples[1], {0.00000, 0.00000, 0.53770, 0.12360, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920} );
+    fill< 9 >( samples[2], {1.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000} );
+    fill< 9 >( samples[3], {0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 1.00000} );
+    fill< 9 >( samples[4], {0.50000, 0.00000, 0.50000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000} );
+    fill< 9 >( samples[5], {0.50000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.50000} );
+    fill< 9 >( samples[6], {0.00001, 0.00000, 0.99999, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000} );
   }
 };
 
@@ -312,20 +317,25 @@ TEST_F( PengRobinsonConstantViscosity9Test, numericalDerivatives )
   auto & fluid = getFluid();
   array2d< real64 > samples;
   Fluid< CompositionalMultiphaseFluid, numComp >::getSamples( samples );
-  integer const sampleCount = samples.size( 0 );
+  //integer const sampleCount = samples.size( 0 );
 
-  real64 constexpr eps = 1.0e-5;
+  real64 constexpr eps = 1.0e-7;
 
   constexpr real64 pressures[] = { 1.0e5, 10.0e5, 100.0e5, 600.0e5 };
-  constexpr real64 temperatures[] = { 15.5, 25.0, 40.0, 80.0 };
+  constexpr real64 temperatures[] = { 15.5, 25.0, 40.0, 300.0 };
+  //constexpr real64 pressures[] = { 1.0e5 };
+  //constexpr real64 temperatures[] = { 15.5 };
 
   fluid.setMassFlag( false );
-  for( real64 const pressure : pressures )
+
+  //for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
+  for( integer sampleIndex : {2} )
   {
-    for( real64 const temperature : temperatures )
+    for( real64 const pressure : pressures )
     {
-      for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
+      for( real64 const temperature : temperatures )
       {
+        std::cout << "P: " << pressure << " T: " << temperature << " S: " << sampleIndex << "\n";
         TestData data ( pressure, units::convertCToK( temperature ), samples[sampleIndex].toSliceConst() );
         testNumericalDerivatives( fluid, &getParent(), data, eps, relTol, absTol );
       }
