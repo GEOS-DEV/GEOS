@@ -3,93 +3,72 @@
 <Problem>
   <Tasks>
     <PVTDriver
-      name="testLiveOilPR"
-      fluid="liveOilPR"
-      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
-      pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="100"
-      outputMassDensity="1"
-      outputCompressibility="1"
-      outputPhaseComposition="1"
-      baseline="testPVT_Compositional_liveOilPR.txt"
-      logLevel="1"/>
-    <PVTDriver
-      name="testLiveOilPRLBC"
+      name="testPR50"
       fluid="liveOilPRLBC"
       feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
       pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="1000"
+      temperatureControl="temp50"
+      steps="200"
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_Compositional_liveOilPRLBC.txt"
+      baseline="testPVT_Compositional_PR50.txt"
       logLevel="1"/>
     <PVTDriver
-      name="testLiveOilSRK"
-      fluid="liveOilSRK"
-      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
-      pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="100"
-      outputMassDensity="1"
-      outputCompressibility="1"
-      outputPhaseComposition="1"
-      baseline="testPVT_Compositional_liveOilSRK.txt"
-      logLevel="1"/>
-    <PVTDriver
-      name="testLiveOilSRKLBC"
+      name="testSRK50"
       fluid="liveOilSRKLBC"
       feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
       pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="1000"
+      temperatureControl="temp50"
+      steps="200"
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_Compositional_liveOilSRKLBC.txt"
+      baseline="testPVT_Compositional_SRK50.txt"
+      logLevel="1"/>
+    <PVTDriver
+      name="testPR300"
+      fluid="liveOilPRLBC"
+      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temp300"
+      steps="200"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      baseline="testPVT_Compositional_PR300.txt"
+      logLevel="1"/>
+    <PVTDriver
+      name="testSRK300"
+      fluid="liveOilSRKLBC"
+      feedComposition="{ 0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temp300"
+      steps="200"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      baseline="testPVT_Compositional_SRK300.txt"
       logLevel="1"/>
   </Tasks>
 
   <Events
     maxTime="1">
     <SoloEvent
-      name="eventLiveOilPR"
-      target="/Tasks/testLiveOilPR"/>
+      name="eventPR50"
+      target="/Tasks/testPR50" />
     <SoloEvent
-      name="eventLiveOilPRLBC"
-      target="/Tasks/testLiveOilPRLBC"/>
+      name="eventSRK50"
+      target="/Tasks/testSRK50" />
     <SoloEvent
-      name="eventLiveOilSRK"
-      target="/Tasks/testLiveOilSRK"/>
+      name="eventPR300"
+      target="/Tasks/testPR300" />
     <SoloEvent
-      name="eventLiveOilSRKLBC"
-      target="/Tasks/testLiveOilSRKLBC"/>
+      name="eventSRK300"
+      target="/Tasks/testSRK300" />
   </Events>
 
   <Constitutive>
-    <CompositionalTwoPhaseFluidPengRobinson
-      name="liveOilPR"
-      phaseNames="{ oil, gas }"
-      componentNames="{ CO2, N2, C1, C2, C3, C4, C5, C6, C7+ }"
-      componentCriticalPressure="{ 73.8659e5, 33.9439e5, 46.0421e5, 48.8387e5, 42.4552e5, 37.47e5, 33.5892e5, 30.1037e5, 20.549e5 }"
-      componentCriticalTemperature="{ 304.7, 126.2, 190.6, 305.43, 369.8, 419.5, 465.9, 507.5, 678.8 }"
-      componentCriticalVolume="{ 9.3999e-05, 9.0001e-05, 9.7999e-05, 1.4800e-04, 2.0000e-04, 2.5800e-04, 3.1000e-04, 3.5100e-04, 6.8243e-04 }"
-      componentAcentricFactor="{ 0.225, 0.04, 0.013, 0.0986, 0.1524, 0.1956, 0.2413, 0.299, 0.5618 }"
-      componentMolarWeight="{ 44.01e-3, 28.01e-3, 16.04e-3, 30.07e-3, 44.1e-3, 58.12e-3, 72.15e-3, 84e-3, 173e-3 }"
-      componentVolumeShift="{ -0.04958, -0.136012, -0.1486264, -0.10863408, -0.08349872, -0.06331568, -0.04196464, -0.0150072, 0.0000 }"
-      componentBinaryCoeff="{
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 1.0000e-02, 0.0000e+00, 3.7320e-03, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 0.0000e+00, 3.7320e-03, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 2.8000e-02, 4.5320e-02 },
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 1.0000e-02, 0.0000e+00, 2.8000e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 1.0000e-02, 0.0000e+00, 4.5320e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 }
-      }" />
     <CompositionalTwoPhaseFluidPengRobinsonLBC
       name="liveOilPRLBC"
       phaseNames="{ oil, gas }"
@@ -111,27 +90,6 @@
         { 1.0000e-02, 0.0000e+00, 2.8000e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
         { 1.0000e-02, 0.0000e+00, 4.5320e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 }
       }" />
-    <CompositionalTwoPhaseFluidSoaveRedlichKwong
-      name="liveOilSRK"
-      phaseNames="{ oil, gas }"
-      componentNames="{ CO2, N2, C1, C2, C3, C4, C5, C6, C7+ }"
-      componentCriticalPressure="{ 73.8659e5, 33.9439e5, 46.0421e5, 48.8387e5, 42.4552e5, 37.47e5, 33.5892e5, 30.1037e5, 20.549e5 }"
-      componentCriticalTemperature="{ 304.7, 126.2, 190.6, 305.43, 369.8, 419.5, 465.9, 507.5, 678.8 }"
-      componentCriticalVolume="{ 9.3999e-05, 9.0001e-05, 9.7999e-05, 1.4800e-04, 2.0000e-04, 2.5800e-04, 3.1000e-04, 3.5100e-04, 6.8243e-04 }"
-      componentAcentricFactor="{ 0.225, 0.04, 0.013, 0.0986, 0.1524, 0.1956, 0.2413, 0.299, 0.5618 }"
-      componentMolarWeight="{ 44.01e-3, 28.01e-3, 16.04e-3, 30.07e-3, 44.1e-3, 58.12e-3, 72.15e-3, 84e-3, 173e-3 }"
-      componentVolumeShift="{ -0.04958, -0.136012, -0.1486264, -0.10863408, -0.08349872, -0.06331568, -0.04196464, -0.0150072, 0.0000 }"
-      componentBinaryCoeff="{
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 1.0000e-02, 0.0000e+00, 3.7320e-03, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 0.0000e+00, 3.7320e-03, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 2.8000e-02, 4.5320e-02 },
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 0.0000e+00, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 1.0000e-02, 1.0000e-02 },
-        { 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 1.0000e-02, 0.0000e+00, 2.8000e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 },
-        { 1.0000e-02, 0.0000e+00, 4.5320e-02, 1.0000e-02, 1.0000e-02, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00 }
-      }" />      
     <CompositionalTwoPhaseFluidSoaveRedlichKwongLBC
       name="liveOilSRKLBC"
       phaseNames="{ oil, gas }"
@@ -158,15 +116,19 @@
     <TableFunction
       name="pressureFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 0.5, 1.0, 1.5, 2.0 }"
-      values="{ 3.5e+07, 1.0e+07, 1.0e+05, 1.0e+07, 3.5e+07 }"/>
+      coordinates="{ 0.0, 1.0, 2.0, 3.0 }"
+      values="{ 1.0e5, 10.0e5, 200.0e5, 700.0e5 }" />
 
     <TableFunction
-      name="temperatureFunction"
+      name="temp50"
       inputVarNames="{ time }"
-      interpolation="lower"
-      coordinates="{ 0.0, 1.0, 2.0 }"
-      values="{ 553.15, 583.15, 583.15 }"/>
+      coordinates="{ 0.0, 3.0 }"
+      values="{ 323.15, 323.15 }"  />
+    <TableFunction
+      name="temp300"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 3.0 }"
+      values="{ 573.15, 573.15 }"  />
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

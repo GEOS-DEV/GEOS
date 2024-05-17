@@ -334,7 +334,7 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     array2d< real64, compflow::LAYOUT_COMP > compNew( 1, NC );
     for( integer jc = 0; jc < NC; ++jc )
     {
-      real64 const dC = perturbParameter * ( composition[jc] + perturbParameter );
+      real64 const dC = LvArray::math::max( 1.0e-7, perturbParameter * ( composition[jc] + perturbParameter ) );
       for( integer ic = 0; ic < NC; ++ic )
       {
         compNew[0][ic] = composition[ic];

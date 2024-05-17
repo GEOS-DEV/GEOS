@@ -101,11 +101,12 @@ public:
                                                           kVapourLiquid );
     }
 
-    real64 kValueVariance = calculateVariance( presentComponents, kVapourLiquid );
     bool converged = false;
+    real64 fugacityError = LvArray::NumericLimits< real64 >::max;
+    real64 kValueVariance = LvArray::NumericLimits< real64 >::max;
     for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
     {
-      real64 const error = computeFugacityRatio< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+      fugacityError = computeFugacityRatio< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
         numComps,
         pressure,
         temperature,
@@ -120,26 +121,32 @@ public:
         logVapourFugacity.toSlice(),
         fugacityRatios.toSlice() );
 
-      // Compute fugacity ratios and check convergence
-      converged = (error < MultiFluidConstants::fugacityTolerance);
-
-      if( converged )
-      {
-        break;
-      }
-
       for( integer const ic : presentComponents )
       {
         kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
       }
 
-      // Check of K-values have converged to single value
-      kValueVariance = calculateVariance( presentComponents, kVapourLiquid );
-      if( kValueVariance < MultiFluidConstants::newtonTolerance )
+      // Calculate the variance of the k-values
+      kValueVariance = calculateVariance( presentComponents, kVapourLiquid.toSliceConst() );
+
+      // Convergence is when either
+      // 1. All the fugacity ratios are zero -> choose the phase according to the value of V (vapourPhaseMoleFraction)
+      // 2. All the k-values coalesce into a single value (zero variance) -> choose phase using Li correlation
+      if( fugacityError < MultiFluidConstants::fugacityTolerance || kValueVariance < MultiFluidConstants::newtonTolerance )
       {
         converged = true;
         break;
       }
+    }
+
+    // If the fugacity ratios haven't converged, use the Li correlation to simply label as a single phase
+    if( MultiFluidConstants::fugacityTolerance <= fugacityError )
+    {
+      vapourPhaseMoleFraction = calculateLiCorrelationLabel( numComps,
+                                                             pressure,
+                                                             temperature,
+                                                             composition,
+                                                             componentProperties );
     }
 
     // Retrieve physical bounds from negative flash values
@@ -455,7 +462,7 @@ private:
                                  arraySlice1d< real64 > const & x )
   {
 #if defined(GEOS_DEVICE_COMPILE)
-GEOS_UNUSED_VAR( A, b, x );
+    GEOS_UNUSED_VAR( A, b, x );
     return false;
 #else
     BlasLapackLA::solveLinearSystem( A, b, x );
@@ -463,9 +470,10 @@ GEOS_UNUSED_VAR( A, b, x );
 #endif
   }
 
+  template< integer USD >
   GEOS_HOST_DEVICE
   static real64 calculateVariance( arraySlice1d< integer const > const & presentComponents,
-                                   arraySlice1d< real64 const > const & kValues )
+                                   arraySlice1d< real64 const, USD > const & kValues )
   {
     integer const size = presentComponents.size();
     real64 sum = 0.0;
@@ -482,6 +490,42 @@ GEOS_UNUSED_VAR( A, b, x );
       sum += (dLogK*dLogK);
     }
     return sum/size;
+  }
+
+  /**
+   * @brief Calculate the label of a mixture using the Li correlation
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] composition composition of the mixture
+   * @param[in] componentProperties The compositional component properties
+   * @return an indicator of the label as a vapour fraction -ve if liquid and greater than 1 if vapour
+   */
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static real64 calculateLiCorrelationLabel( integer const numComps,
+                                             real64 const pressure,
+                                             real64 const temperature,
+                                             arraySlice1d< real64 const, USD > const & composition,
+                                             ComponentProperties::KernelWrapper const & componentProperties )
+  {
+    GEOS_UNUSED_VAR( pressure );
+
+    auto const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+    auto const & criticalVolume = componentProperties.m_componentCriticalVolume;
+
+    real64 sumTV = 0.0;
+    real64 sumV = 0.0;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      sumV += composition[ic] * criticalVolume[ic];
+      sumTV += composition[ic] * criticalVolume[ic] * criticalTemperature[ic];
+    }
+    real64 const temperatureLi = sumTV / sumV;
+
+    constexpr real64 eps = MultiFluidConstants::minForSpeciesPresence;
+    real64 const vapourFraction = (temperature < temperatureLi) ? -eps : 1.0 + eps;
+    return vapourFraction;
   }
 };
 
