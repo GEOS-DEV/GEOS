@@ -122,12 +122,9 @@ The components of the infrastructure provided by GEOS include a data hierarchy, 
 GEOS is intended to be a generic multi-physics simulation platform.
 The physics package interface in GEOS is intended to encapsulate the application of a numerical method to the solution of a collection of governing equations.
 When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability. 
-The single physics capabilities are then applied together in a coupled physics package.
-The strategy for coupled physics can be described in terms of a monolithic linear system with an underlying block structure corresponding where the row/col of the block corresponds with a set of constraint equations/degrees-of-freedom associated with a single physics package, with the row being the constraint equation, and the column corresponding to the degree-of-freedom.
-Using this representation, the diagonal blocks of the matrix contain contributions for each single physics package to its own boundary value problem, while the off-diagonal blocks represent the coupling between physics packages.
-The coupled physics package is often responsible for providing the specific contributions of the off-diagonal/coupling blocks.
+The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach. 
 
-To solve these linear systems, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@trilinos-website].
+To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@trilinos-website].
 Currently only the hypre interaface is actively maintained.
 For every multi-physics problems involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypreimplementation a multi-grid reduction preconditioning strategy as presented [@BUI:2020;@BUI:2021114111].
 
@@ -142,16 +139,16 @@ In addition to its c++ core, the the GEOS team provides a Python3 interface that
 To date GEOS has been used to simulate problems relevant to CO2 storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
 Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
 
-As an example of a field case where GEOS has been applied, we present a simulation of CO2 storage at a large real-world storage site.
+As an example of a field case where GEOS has been applied, we present a coupled compositional flow/mechanics simulation of CO2 injection and storage at a large real-world storage site.
 Figure \ref{RW_final}a illustrates the computational mesh and Figure \ref{RW_final}b shows results after 25 years of injection.
-Simulations such as these play a critical role in predicting the performance of potential CO2 storage sites.
+Simulations such as this will play a critical role in predicting the performance of potential CO2 storage sites.
 
 ![Real world CO2 storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
 The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
-There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is expected.
+There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is excellent.
 The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows similarly good weak scaling. 
 
 ![Weak scaling results on ORNL/Frontier: execution time per timestep vs number of cluster ranks for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](GEOS_Frontier_scaling.pdf){ width=100% }
