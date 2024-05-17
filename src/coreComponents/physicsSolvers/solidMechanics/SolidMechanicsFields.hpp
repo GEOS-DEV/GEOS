@@ -74,6 +74,14 @@ DECLARE_FIELD( incrementalDisplacement,
                WRITE_AND_READ,
                "Incremental displacements for the current time step on the nodes" );
 
+DECLARE_FIELD( incrementalBubbleDisplacement,
+               "incrementalBubbleDisplacement",
+               array2dLayoutIncrDisplacement,
+               0,
+               LEVEL_3,
+               WRITE_AND_READ,
+               "Incremental bubble displacements for the current time step on the nodes" );
+
 DECLARE_FIELD( velocity,
                "velocity",
                array2dLayoutVelocity,

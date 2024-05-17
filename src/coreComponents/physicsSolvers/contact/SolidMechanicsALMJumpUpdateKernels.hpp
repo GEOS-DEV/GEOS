@@ -79,6 +79,7 @@ public:
     m_displacement(nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
     m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >() ),
     m_incrDisp( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
+    m_incrBubbleDisp( faceManager.getField< fields::solidMechanics::incrementalBubbleDisplacement >() ),
     m_deltaDispJump( elementSubRegion.getField< fields::contact::deltaDispJump >().toView() )
   {}
 
@@ -173,6 +174,8 @@ public:
     {
       stack.bLocal[ i ] = m_bubbleDisp[ kf0 ][i];
       stack.bLocal[ 3 + i ] = m_bubbleDisp[ kf1 ][i];
+      stack.dbLocal[ i ] = m_incrBubbleDisp[ kf0 ][i];
+      stack.dbLocal[ 3 + i ] = m_incrBubbleDisp[ kf1 ][i];
     }
 
     //for( int i=0; i<stack.numTdofs; ++i )
@@ -226,6 +229,8 @@ protected:
 
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_incrDisp;
+
+  arrayView2d< real64 const > const m_incrBubbleDisp;
 
   arrayView2d< real64 > const m_deltaDispJump;
 

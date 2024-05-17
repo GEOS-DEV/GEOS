@@ -112,6 +112,10 @@ public:
 
 private:
 
+  void createFaceTypeList( DomainPartition const & domain );
+
+  void createBubbleCellList( DomainPartition & domain ) const;
+
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
