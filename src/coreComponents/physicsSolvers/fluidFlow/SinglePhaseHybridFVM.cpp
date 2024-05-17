@@ -365,8 +365,8 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                   this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       // next, we use the field specification functions to apply the boundary conditions to the system
@@ -619,6 +619,23 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     arrayView1d< real64 const > const & facePres_n =
       faceManager.getField< fields::flow::facePressure_n >();
     facePres.setValues< parallelDevicePolicy<> >( facePres_n );
+  } );
+}
+
+void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      singlePhaseHybridFVMKernels::AveragePressureGradientKernelFactory::createAndLaunch< parallelHostPolicy >( subRegion,
+                                                                                                                faceManager );
+    } );
   } );
 }
 
