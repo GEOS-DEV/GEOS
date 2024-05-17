@@ -65,8 +65,7 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxType[0]          = MGRFRelaxationType::jacobi;
-    m_levelFRelaxIters[0]         = 1;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::none;
     m_levelInterpType[0]          = MGRInterpolationType::injection;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::cprLikeBlockDiag;
