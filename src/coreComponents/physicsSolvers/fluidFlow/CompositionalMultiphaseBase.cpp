@@ -363,8 +363,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numPhases );
 
       subRegion.registerField< compAmount >( getName() ).
+        setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
       subRegion.registerField< compAmount_n >( getName() ).
+        setDimLabels( 1, fluid.componentNames() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
     } );

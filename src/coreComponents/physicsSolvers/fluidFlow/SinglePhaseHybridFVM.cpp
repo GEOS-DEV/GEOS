@@ -56,9 +56,25 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
 
 void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 {
+  using namespace fields::flow;
 
   // 1) Register the cell-centered data
   SinglePhaseBase::registerDataOnMesh( meshBodies );
+
+  // pressureGradient is specific for HybridFVM
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerField< pressureGradient >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+    } );
+  } );
 
   // 2) Register the face data
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
