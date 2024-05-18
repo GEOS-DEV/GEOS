@@ -120,6 +120,8 @@ private:
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
 
+  void computeTolerances( DomainPartition & domain ) const;
+
   /**
    * @Brief add the sparsity pattern induced by the coupling
    * @param domain the physical domain object
@@ -137,6 +139,12 @@ private:
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
   //  constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
+
+    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+
+    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+
+    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
   };
 
 };
