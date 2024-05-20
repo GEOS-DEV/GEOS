@@ -342,10 +342,12 @@ getWell( WellElementSubRegion const & subRegion,
  */
 static ElementData
 getSurface( FaceElementSubRegion const & subRegion,
-            NodeManager const & nodeManager )
+            NodeManager const & nodeManager,
+            FaceManager const & faceManager )
 {
   // Get unique node set composing the surface
-  auto & elemToNodes = subRegion.nodeList();
+  auto & elemToFaces = subRegion.faceList();
+  auto & faceToNodes = faceManager.nodeList();
 
   auto cellArray = vtkSmartPointer< vtkCellArray >::New();
   cellArray->SetNumberOfCells( subRegion.size() );
@@ -361,7 +363,9 @@ getSurface( FaceElementSubRegion const & subRegion,
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
-    auto const & nodes = elemToNodes[ei];
+    // we use the nodes of face 0
+    localIndex const faceIndex = elemToFaces(ei, 0);
+    auto const & nodes = faceToNodes[faceIndex];
     auto const numNodes = nodes.size();
 
     ElementType const elementType = subRegion.getElementType( ei );
@@ -1095,6 +1099,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
                                                              ElementRegionManager const & elemManager,
                                                              NodeManager const & nodeManager,
                                                              EmbeddedSurfaceNodeManager const & embSurfNodeManager,
+                                                             FaceManager const & faceManager,
                                                              string const & path ) const
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
@@ -1112,7 +1117,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
         case SurfaceElementRegion::SurfaceSubRegionType::faceElement:
           {
             auto const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-            return getSurface( subRegion, nodeManager );
+            return getSurface( subRegion, nodeManager, faceManager );
           }
         default:
           {
@@ -1314,6 +1319,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       ParticleManager const & particleManager = meshLevel.getParticleManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
+      FaceManager const & faceManager = meshLevel.getFaceManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
       string const & meshBodyName = meshBody.getName();
 
@@ -1339,7 +1345,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       }
       if( m_outputRegionType == VTKRegionTypes::SURFACE || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager, meshDir );
+        writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager, faceManager, meshDir );
       }
       if( m_outputRegionType == VTKRegionTypes::PARTICLE || m_outputRegionType == VTKRegionTypes::ALL )
       {

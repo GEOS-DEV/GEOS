@@ -36,6 +36,7 @@ class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
 class ParticleManager;
+class FaceManager;
 
 namespace vtk
 {
@@ -244,16 +245,17 @@ private:
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
-   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] meshLevelName the name of the MeshLevel containing the nodes and elements to be output
-   * @param[in] meshBodyName the name of the MeshBody containing the nodes and elements to be output
+   * @param[in] embSurfNodeManager the embedded surface node Manager.
+   * @param[in] faceManager the faceManager.
+   * @param[in] path the path to the output file.
    */
   void writeSurfaceElementRegions( real64 time,
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager,
+                                   FaceManager const & faceManager,
                                    string const & path ) const;
 
   /**
