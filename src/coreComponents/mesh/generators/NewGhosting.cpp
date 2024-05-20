@@ -1199,6 +1199,8 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
       {
         EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
         ghost.edges.emplace( egi, owner );
+        // TODO make all the following check in on time with sets comparison instead of "point-wise" comparisons.
+        // TODO same for the faces and cells...
         if( graph.e2n.find( egi ) == graph.e2n.cend() and graph.otherEdges.find( egi ) == graph.otherEdges.cend() )
         {
           missingIndices.emplace_back( index );
@@ -1251,7 +1253,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
   }
   missing.FillComplete( ownedMap, missingIndicesMap );
 
-  // TODO Don't put ones in downard: reassemble with the ordering (e.g. edges point to a first and last node)
+  // TODO Don't put ones in downward: reassemble with the ordering (e.g. edges point to a first and last node)
   Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
