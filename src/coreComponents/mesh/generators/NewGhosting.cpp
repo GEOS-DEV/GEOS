@@ -195,9 +195,9 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
       std::vector< NodeGlbIdx > nodes( pids->GetNumberOfIds() );
       for( std::size_t i = 0; i < nodes.size(); ++i )
       {
-        vtkIdType const lni = face->GetPointId( i );
-        vtkIdType const gni = globalPtIds[lni];
-        nodes[i] = NodeGlbIdx{ gni };
+        vtkIdType const nli = face->GetPointId( i );
+        vtkIdType const ngi = globalPtIds[nli];
+        nodes[i] = NodeGlbIdx{ ngi };
       }
       tmpFaces.emplace_back( reorderFaceNodes( nodes ) );
     }
@@ -826,9 +826,9 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
       std::vector< NodeGlbIdx > faceNodes( pids->GetNumberOfIds() );
       for( std::size_t i = 0; i < faceNodes.size(); ++i )
       {
-        vtkIdType const lni = face->GetPointId( i );
-        vtkIdType const gni = globalPtIds->GetValue( lni );
-        faceNodes[i] = NodeGlbIdx{ gni };
+        vtkIdType const nli = face->GetPointId( i );
+        vtkIdType const ngi = globalPtIds->GetValue( nli );
+        faceNodes[i] = NodeGlbIdx{ ngi };
       }
       std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes );
       result.c2f[gci].insert( n2f.at( reorderedFaceNodes ) );
