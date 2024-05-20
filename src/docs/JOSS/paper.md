@@ -28,6 +28,8 @@ authors:
     affiliation: 1
   - name: Philippe Cordier
     affiliation: 2
+  - name: Matthias A. Cremon
+    affiliation: 1
   - name: Cameron M. Crook
     affiliation: 1
   - name: Matteo Cusini
@@ -52,6 +54,8 @@ authors:
     affiliation: 1
   - name: Jian Huang
     affiliation: 2
+  - name: Tao Jin
+    affiliation: 1
   - name: Dickson Kachuma
     affiliation: 2
   - name: Mohammad Karimi-Fard
@@ -81,6 +85,8 @@ authors:
     orcid: 0000-0002-8025-2616
   - name: Joshua A. White
     affiliation: 1
+  - name: Hui Wu
+    affiliation: 1
 affiliations:
  - name: Lawrence Livermore National Laboratory, USA
    index: 1
@@ -99,18 +105,18 @@ bibliography: paper.bib
 
 # Summary
 
-GEOS is a simulation framework focused on implementing solution methods for tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
-Currently GEOS provides implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
-The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects.
-Extensive documentation for GEOS is available on Read the Docs [@GEOS_RTD].
-Note that the version of GEOS described here should be considered a separate work form the previous version of GEOS referred to in [@Settgast:2017].
+GEOS is a simulation framework focused solving tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
+Currently GEOS actively supports implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
+The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
+The GEOS repository is hosted GitHub [@GEOS:2024], and extensive documentation is available on Read the Docs [@GEOS_RTD].
+Note that the version of GEOS described here should be considered a separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
 
 # Statement of need
 
 The increasing threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
-Carbon Capture and Storage (CCS) of CO2 in subsurface reservoirs and saline aquifers is an important technology required to meet global climate goals. 
+Carbon Capture and Storage (CCS) of CO2 in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals. 
 Given the 2050 net-zero GHG goals, CO2 storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
-One factor in the evaluation of CO2 storage sites are the containment risks associated with the injection of liquefied CO2 in the subsurface.
+The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO2 in the subsurface in a reproducible and transparent manner is an important consideration when developing new storage sites.
 The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO2 is injected into a subsurface reservoir. 
 Thus, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
 
@@ -119,21 +125,21 @@ Thus, GEOS is freely available and focused on the simulation of reservoir integr
 The core c++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method. 
 The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
 
-GEOS is intended to be a generic multi-physics simulation platform.
-The physics package interface in GEOS is intended to encapsulate the application of a numerical method to the solution of a collection of governing equations.
+By design, GEOS is intended to be a generic multi-physics simulation platform.
+The physics package interface in GEOS is intended to encapsulate the development of numerical methods applied to the solution of governing equations relevant to a problem.
 When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability. 
 The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach. 
 
 To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@trilinos-website].
-Currently only the hypre interaface is actively maintained.
-For every multi-physics problems involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypreimplementation a multi-grid reduction preconditioning strategy as presented [@BUI:2020;@BUI:2021114111].
+Currently, in GEOS only the hypre interaface is actively maintained.
+For every multi-physics problems involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e. host memory and device memory).
 Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near optimal of performance.
 
-In addition to its c++ core, the the GEOS team provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
+In addition to its c++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 
 # Applications
 To date GEOS has been used to simulate problems relevant to CO2 storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
@@ -141,10 +147,9 @@ Often these simulations involve coupling between compositional multiphase flow a
 
 As an example of a field case where GEOS has been applied, we present a coupled compositional flow/mechanics simulation of CO2 injection and storage at a large real-world storage site.
 Figure \ref{RW_final}a illustrates the computational mesh and Figure \ref{RW_final}b shows results after 25 years of injection.
-Simulations such as this will play a critical role in predicting the performance of potential CO2 storage sites.
+Simulations such as this will play a critical role in predicting the viability of potential CO2 storage sites.
 
 ![Real world CO2 storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
-
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
 The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
