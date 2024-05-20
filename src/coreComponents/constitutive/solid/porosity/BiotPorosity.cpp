@@ -48,7 +48,7 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( -1.0 ).
+    setApplyDefaultValue( 1.0 ).
     setDescription( "Biot coefficient" );
 
   registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
