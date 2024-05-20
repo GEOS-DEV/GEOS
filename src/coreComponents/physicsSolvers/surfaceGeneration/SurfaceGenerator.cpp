@@ -725,8 +725,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
         localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
         for( localIndex a = 0; a < numNodesInFace; ++a )
         {
-          // localIndex const aa = a < 2 ? a : numNodesInFace - a + 1;
-          // localIndex const bb = aa == 0 ? aa : numNodesInFace - aa;
 
           // TODO HACK need to generalize to something other than quads
           //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
