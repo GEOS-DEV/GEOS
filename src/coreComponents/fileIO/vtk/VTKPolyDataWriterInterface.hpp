@@ -91,6 +91,15 @@ public:
   }
 
   /**
+   * @brief Defines whether in the vtk output facelements should be 2D or 3D
+   * @param writeFaceElementsAs3D The boolean flag.
+   */
+  void setWriteFaceElementsAs3D( bool writeFaceElementsAs3D )
+  {
+    m_writeFaceElementsAs3D = writeFaceElementsAs3D;
+  }
+
+  /**
    * @brief Sets the plot level
    * @details All fields have an associated plot level. If it is <= to \p plotLevel,
    * the field will be output.
@@ -339,6 +348,9 @@ private:
 
   /// Region output type, could be CELL, WELL, SURFACE, or ALL
   VTKRegionTypes m_outputRegionType;
+
+  /// Defines whether to plot a faceElement as a 3D volumetric element or not.
+  bool m_writeFaceElementsAs3D;
 };
 
 } // namespace vtk

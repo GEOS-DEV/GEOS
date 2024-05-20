@@ -54,7 +54,8 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_requireFieldRegistrationCheck( true ),
   m_previousCycle( -1 ),
   m_outputMode( VTKOutputMode::BINARY ),
-  m_outputRegionType( VTKRegionTypes::ALL )
+  m_outputRegionType( VTKRegionTypes::ALL ),
+  m_writeFaceElementsAs3D( false )
 {}
 
 static int
@@ -337,16 +338,19 @@ getWell( WellElementSubRegion const & subRegion,
  * @brief Gets the cell connectivities and the vertices coordinates as VTK objects for a specific FaceElementSubRegion.
  * @param[in] subRegion the FaceElementSubRegion to be output
  * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
+ * @param[in] faceManager the faceManager associated with the DomainPartition being written.
  * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
  * and a VTKCellArray (with the cell connectivities).
  */
 static ElementData
 getSurface( FaceElementSubRegion const & subRegion,
             NodeManager const & nodeManager,
-            FaceManager const & faceManager )
+            FaceManager const & faceManager,
+            bool const writeFaceElementsAs3D )
 {
   // Get unique node set composing the surface
   auto & elemToFaces = subRegion.faceList();
+  auto & elemToNodes = subRegion.nodeList();
   auto & faceToNodes = faceManager.nodeList();
 
   auto cellArray = vtkSmartPointer< vtkCellArray >::New();
@@ -364,15 +368,14 @@ getSurface( FaceElementSubRegion const & subRegion,
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
     // we use the nodes of face 0
-    localIndex const faceIndex = elemToFaces(ei, 0);
-    auto const & nodes = faceToNodes[faceIndex];
+    auto const & nodes = !writeFaceElementsAs3D ? faceToNodes[elemToFaces( ei, 0 )] : elemToNodes[ei];
     auto const numNodes = nodes.size();
 
     ElementType const elementType = subRegion.getElementType( ei );
     std::vector< int > vtkOrdering;
-    if( elementType == ElementType::Polygon )
+    if( elementType == ElementType::Polygon || writeFaceElementsAs3D )
     {
-      vtkOrdering.resize( nodes.size() );
+      vtkOrdering.resize( numNodes );
       std::iota( vtkOrdering.begin(), vtkOrdering.end(), 0 );
     }
     else
@@ -381,11 +384,16 @@ getSurface( FaceElementSubRegion const & subRegion,
     }
 
     connectivity.clear();
-    for( int const & ordering: vtkOrdering )
+    for( int const & ordering : vtkOrdering )
     {
       auto const & VTKIndexPos = geosx2VTKIndexing.find( nodes[ordering] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
       {
+        /// If the node is not found in the geosx2VTKIndexing map:
+        /// 1. we assign the current value of nodeIndexInVTK to this node in the map (geosx2VTKIndexing[nodes[ordering]] =
+        /// nodeIndexInVTK++).
+        /// 2. we increment nodeIndexInVTK to ensure the next new node gets a unique index.
+        /// 3. we add this new VTK node index to the connectivity vector (connectivity.push_back).
         connectivity.push_back( geosx2VTKIndexing[nodes[ordering]] = nodeIndexInVTK++ );
       }
       else
@@ -1117,7 +1125,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
         case SurfaceElementRegion::SurfaceSubRegionType::faceElement:
           {
             auto const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-            return getSurface( subRegion, nodeManager, faceManager );
+            return getSurface( subRegion, nodeManager, faceManager, m_writeFaceElementsAs3D );
           }
         default:
           {
