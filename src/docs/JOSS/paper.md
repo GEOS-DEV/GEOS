@@ -4,7 +4,7 @@ tags:
   - reservoir simulations
   - computational mechanics
   - multiphase flow
-  - c++
+  - C++
 authors:
   - name: Randolph R. Settgast
     orcid: 0000-0002-2536-7867
@@ -122,7 +122,7 @@ Thus, GEOS is freely available and focused on the simulation of reservoir integr
 
 # GEOS Components 
 
-The core c++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method. 
+The core C++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method. 
 The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
 
 By design, GEOS is intended to be a generic multi-physics simulation platform.
@@ -139,7 +139,7 @@ The RAJA performance portability layer provides portable kernel launching and wr
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e. host memory and device memory).
 Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near optimal of performance.
 
-In addition to its c++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
+In addition to its C++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 
 # Applications
 To date GEOS has been used to simulate problems relevant to CO<sub>2</sub> storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
