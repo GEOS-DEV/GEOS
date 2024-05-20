@@ -91,10 +91,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< dMobility_dTemperature >( getName() );
       }
-
-      subRegion.registerField< pressureGradient >( getName() ).
-        reference().resizeDimension< 1 >( 3 );
-
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
