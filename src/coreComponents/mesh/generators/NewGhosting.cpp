@@ -834,9 +834,7 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
   return ptr;
 }
 
-/**
- * Contains the full result of the ghosting
- */
+
 struct Ownerships
 {
   std::map< NodeGlbIdx, MpiRank > nodes;
