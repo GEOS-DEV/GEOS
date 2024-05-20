@@ -130,7 +130,7 @@ The physics package interface in GEOS is intended to encapsulate the development
 When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability. 
 The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach. 
 
-To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@trilinos-website].
+To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@Her_etal05].
 Currently, in GEOS only the hypre interaface is actively maintained.
 For every multi-physics problems involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
