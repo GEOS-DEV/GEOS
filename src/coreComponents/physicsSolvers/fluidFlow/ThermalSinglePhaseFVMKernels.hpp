@@ -134,7 +134,8 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ) // TODO to replace by dThermalCond_dT
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -157,9 +158,11 @@ public:
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
 
-    // Thermal transmissibility (for now, no derivatives)
-
+    // Thermal transmissibility
     real64 thermalTransmissibility[maxNumConns][2]{};
+
+    /// Derivatives of thermal transmissibility with respect to temperature
+    real64 dThermalTrans_dT[maxNumConns][2]{};
 
     // Energy fluxes and derivatives
 
@@ -329,9 +332,9 @@ public:
     // We follow how the thermal compositional multi-phase solver does to update the thermal transmissibility
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
+                                     m_dThermalCond_dT, 
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dThermalTrans_dT ); 
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -341,6 +344,7 @@ public:
       for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
       {
         real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
+        real64 const dThermalTrans_dT[2] = { stack.dThermalTrans_dT[connectionIndex][0], stack.dThermalTrans_dT[connectionIndex][1] };
 
         localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
@@ -354,7 +358,7 @@ public:
           localIndex const ei  = sei[ke];
 
           stack.energyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
-          stack.dEnergyFlux_dT[ke] += thermalTrans[ke];
+          stack.dEnergyFlux_dT[ke] += thermalTrans[ke] + dThermalTrans_dT[ke] * m_temp[er][esr][ei];
         }
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
@@ -420,6 +424,9 @@ protected:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+
+  /// View on derivatives of thermal conductivity w.r.t. temperature
+  ElementViewConst< arrayView3d< real64 const > > m_dThermalCond_dT;
 
 };
 
@@ -592,7 +599,8 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ) //TODO to repalce by dThermalCond_dT
   {}
 
 
@@ -683,14 +691,17 @@ public:
 
       // Contribution of energy conduction through the solid phase
       real64 thermalTrans = 0.0;
-      real64 dThermalTrans_dPerm[3]{}; // not used
+      real64 dThermalTrans_dThermalCond[3]{}; 
       m_stencilWrapper.computeWeights( iconn,
                                        m_thermalConductivity,
                                        thermalTrans,
-                                       dThermalTrans_dPerm );
+                                       dThermalTrans_dThermalCond );
 
-      stack.energyFlux += thermalTrans * ( m_temp[er][esr][ei] - m_faceTemp[kf] );
-      stack.dEnergyFlux_dT += thermalTrans;
+      real64 const dThermalTrans_dT = LvArray::tensorOps::AiBi< 3 >( dThermalTrans_dThermalCond, m_dThermalCond_dT[er][esr][ei][0] );
+ 
+      real64 const deltaT = m_temp[er][esr][ei] - m_faceTemp[kf];
+      stack.energyFlux += thermalTrans * deltaT;
+      stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;
 
       // Add energyFlux and its derivatives to localFlux and localFluxJacobian
       integer const localRowIndexEnergy = numEqn - 1;
@@ -744,6 +755,9 @@ protected:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+
+  /// View on derivatives of thermal conductivity w.r.t. temperature
+  ElementViewConst< arrayView3d< real64 const > > m_dThermalCond_dT;
 
 };
 
