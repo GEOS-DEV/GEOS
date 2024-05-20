@@ -14,6 +14,8 @@
 
 #include "NewGhosting.hpp"
 
+#include "NewGlobalNumbering.hpp"
+
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -1366,6 +1368,7 @@ void buildPods( MeshGraph const & owned,
 std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                                                               std::set< MpiRank > const & neighbors )
 {
+  doTheNewGlobalNumbering();
   // Now we exchange the data with our neighbors.
   MpiRank const curRank{ MpiWrapper::commRank() };
 

@@ -184,6 +184,7 @@ if( ENABLE_VTK )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/NewGhosting.hpp
+         generators/NewGlobalNumbering.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
@@ -193,6 +194,7 @@ if( ENABLE_VTK )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
          generators/NewGhosting.cpp
+         generators/NewGlobalNumbering.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
