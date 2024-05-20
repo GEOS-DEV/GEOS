@@ -159,7 +159,7 @@ The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b sho
 ![Weak scaling results on ORNL/Frontier: execution time per timestep vs number of cluster ranks for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](GEOS_Frontier_scaling.pdf){ width=100% }
 
 # Acknowledgements
-This work performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344
+This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344
 
 This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations - the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering and early testbed platforms, to support the nation's exascale computing imperative.
 
