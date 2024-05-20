@@ -837,7 +837,7 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
 /**
  * Contains the full result of the ghosting
  */
-struct Ghost
+struct Ownerships
 {
   std::map< NodeGlbIdx, MpiRank > nodes;
   std::map< EdgeGlbIdx, MpiRank > edges;
@@ -963,10 +963,10 @@ private:
 };
 
 
-Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
-                               MeshGraph const & present,
-                               MaxGlbIdcs const & gis,
-                               MpiRank curRank )
+std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & owned,
+                                                             MeshGraph const & present,
+                                                             MaxGlbIdcs const & gis,
+                                                             MpiRank curRank )
 {
   std::size_t const edgeOffset = gis.nodes.get() + 1;
   std::size_t const faceOffset = edgeOffset + gis.edges.get() + 1;
@@ -1160,7 +1160,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
   FindGeometricalType const getGeomType( edgeOffset, faceOffset, cellOffset );
   using Geom = FindGeometricalType::Geom;
 
-  Ghost ghost;
+  Ownerships ownerships;
   for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
   {
     int const & index = extractedIndices[i];
@@ -1168,7 +1168,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
     MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
     if( owner != curRank )
     {
-      ghost.neighbors.insert( owner );
+      ownerships.neighbors.insert( owner );
     }
 
     switch( getGeomType( index ) )
@@ -1176,13 +1176,13 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
       case Geom::NODE:
       {
         NodeGlbIdx const ngi = getGeomType.as< NodeGlbIdx >( index );
-        ghost.nodes.emplace( ngi, owner );
+        ownerships.nodes.emplace( ngi, owner );
         break;
       }
       case Geom::EDGE:
       {
         EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
-        ghost.edges.emplace( egi, owner );
+        ownerships.edges.emplace( egi, owner );
         // TODO make all the following check in on time with sets comparison instead of "point-wise" comparisons.
         // TODO same for the faces and cells...
         if( owned.e2n.find( egi ) == owned.e2n.cend() and present.e2n.find( egi ) == present.e2n.cend() )
@@ -1194,7 +1194,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
       case Geom::FACE:
       {
         FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
-        ghost.faces.emplace( fgi, owner );
+        ownerships.faces.emplace( fgi, owner );
         if( owned.f2e.find( fgi ) == owned.f2e.cend() and present.f2e.find( fgi ) == present.f2e.cend() )
         {
           missingIndices.emplace_back( index );
@@ -1204,7 +1204,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
       case Geom::CELL:
       {
         CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
-        ghost.cells.emplace( cgi, owner );
+        ownerships.cells.emplace( cgi, owner );
         if( owned.c2f.find( cgi ) == owned.c2f.cend() )
         {
           missingIndices.emplace_back( index );
@@ -1243,7 +1243,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingMappings );
 
-  MeshGraph neighboringConnexions;
+  MeshGraph ghosts;
 
   int ext = 0;
   std::vector< double > extValues( n );
@@ -1270,14 +1270,14 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
         EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
         NodeGlbIdx const ngi0 = getGeomType.as< NodeGlbIdx >( extIndices[0] );
         NodeGlbIdx const ngi1 = getGeomType.as< NodeGlbIdx >( extIndices[1] );
-        neighboringConnexions.e2n[egi] = std::minmax( { ngi0, ngi1 } );
+        ghosts.e2n[egi] = std::minmax( { ngi0, ngi1 } );
         break;
       }
       case Geom::FACE:
       {
         GEOS_ASSERT_EQ( ext, 4 );  // TODO temporary check for the dev
         FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
-        std::set< EdgeGlbIdx > & tmp = neighboringConnexions.f2e[fgi];
+        std::set< EdgeGlbIdx > & tmp = ghosts.f2e[fgi];
         for( int ii = 0; ii < ext; ++ii )
         {
           tmp.insert( EdgeGlbIdx{ intConv< globalIndex >( extIndices[ii] - edgeOffset ) } );
@@ -1288,7 +1288,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
       {
         GEOS_ASSERT_EQ( ext, 6 );  // TODO temporary check for the dev
         CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
-        std::set< FaceGlbIdx > & tmp = neighboringConnexions.c2f[cgi];
+        std::set< FaceGlbIdx > & tmp = ghosts.c2f[cgi];
         for( int ii = 0; ii < ext; ++ii )
         {
           tmp.insert( FaceGlbIdx{ intConv< globalIndex >( extIndices[ii] - faceOffset ) } );
@@ -1304,9 +1304,9 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
 
   if( curRank == 2_mpi )
   {
-    GEOS_LOG_RANK( "neighboringConnexions = " << json( neighboringConnexions ) );
+    GEOS_LOG_RANK( "neighboringConnexions = " << json( ghosts ) );
     std::map< MpiRank, std::set< CellGlbIdx > > tmp;
-    for( auto const & [geom, rk]: ghost.cells )
+    for( auto const & [geom, rk]: ownerships.cells )
     {
       tmp[rk].insert( geom );
     }
@@ -1315,9 +1315,9 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
       GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
     }
   }
-  GEOS_LOG_RANK( "my final neighbors are " << json( ghost.neighbors ) );
+  GEOS_LOG_RANK( "my final neighbors are " << json( ownerships.neighbors ) );
 
-  return ghost;
+  return { std::move( ghosts ), std::move( ownerships ) };
 
 
   // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
@@ -1349,13 +1349,16 @@ buildGhostRankAndL2G( std::map< GI, MpiRank > const & m )
   return std::make_tuple( ghostRank, l2g );
 }
 
-void buildPods( Ghost const & ghost )
+void buildPods( MeshGraph const & owned,
+                MeshGraph const & present,
+                MeshGraph const & ghosts,
+                Ownerships const & ownerships )
 {
-  std::size_t const numNodes = std::size( ghost.nodes );
-  std::size_t const numEdges = std::size( ghost.edges );
-  std::size_t const numFaces = std::size( ghost.faces );
+  std::size_t const numNodes = std::size( ownerships.nodes );
+  std::size_t const numEdges = std::size( ownerships.edges );
+  std::size_t const numFaces = std::size( ownerships.faces );
 
-  auto [ghostRank, l2g] = buildGhostRankAndL2G( ghost.edges );
+  auto [ghostRank, l2g] = buildGhostRankAndL2G( ownerships.edges );
 
   NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( numNodes ) } );
   EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( numEdges ) }, std::move( ghostRank ), std::move( l2g ) );
@@ -1436,9 +1439,9 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 //  }
 //  MpiWrapper::barrier();
 
-  Ghost const ghost = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
+  auto const [ghosts, ownerships] = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
 
-  buildPods( ghost );
+  buildPods( owned, present, ghosts, ownerships );
 
   return {};
 }
