@@ -181,11 +181,13 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void assignModuli( localIndex const k,
+  void updateBiotCoefficientAndAssignModuli( localIndex const k,
                      real64 const bulkModulus, real64 const shearModulus ) const
   {
     m_bulkModulus[k] = bulkModulus;
     m_shearModulus[k] = shearModulus;
+
+    m_biotCoefficient[k] =  1.0 - bulkModulus / m_grainBulkModulus[k];
   }
 
   GEOS_HOST_DEVICE
@@ -253,8 +255,6 @@ public:
 
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
   } viewKeys;
-
-  void initializeBiotCoefficient( arrayView1d< real64 const > const bulkModulus ) const;
 
   virtual void initializeState() const override final;
 

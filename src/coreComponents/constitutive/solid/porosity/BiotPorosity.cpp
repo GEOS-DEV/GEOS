@@ -111,21 +111,6 @@ void BiotPorosity::initializeState() const
   } );
 }
 
-void BiotPorosity::initializeBiotCoefficient( arrayView1d< real64 const > const bulkModulus ) const
-{
-  localIndex const numE = numElem();
-
-  arrayView1d< real64 >  biotCoefficient = m_biotCoefficient.toView();
-  arrayView1d< real64 >  grainBulkModulus = m_grainBulkModulus.toView();
-  /// Note: this only works for linearelasticity but since this assumption is made in many other places
-  /// we can do this for now. It will have to be removed / modified so that the biotcoefficient is always computed
-  /// based on the solid model.
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    biotCoefficient[k] = 1 - bulkModulus[k] / grainBulkModulus[k];
-  } );
-}
-
 void BiotPorosity::saveConvergedState() const
 {
   PorosityBase::saveConvergedState();

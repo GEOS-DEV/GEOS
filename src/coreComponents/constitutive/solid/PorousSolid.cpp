@@ -50,9 +50,6 @@ template< typename SOLID_TYPE >
 void PorousSolid< SOLID_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::initializeState();
-
-  arrayView1d< real64 const > const bulkModulus  = getSolidModel().getBulkModulus();
-  getPorosityModel().initializeBiotCoefficient( bulkModulus );
 }
 
 // Register all PorousSolid model types.
