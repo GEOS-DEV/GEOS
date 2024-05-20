@@ -28,6 +28,8 @@ authors:
     affiliation: 1
   - name: Philippe Cordier
     affiliation: 2
+  - name: Matthias A. Cremon
+    affiliation: 1
   - name: Cameron M. Crook
     affiliation: 1
   - name: Matteo Cusini
@@ -52,6 +54,8 @@ authors:
     affiliation: 1
   - name: Jian Huang
     affiliation: 2
+  - name: Tao Jin
+    affiliation: 1
   - name: Dickson Kachuma
     affiliation: 2
   - name: Mohammad Karimi-Fard
@@ -80,6 +84,8 @@ authors:
   - name: Lionel Untereiner
     orcid: 0000-0002-8025-2616
   - name: Joshua A. White
+    affiliation: 1
+  - name: Hui Wu
     affiliation: 1
 affiliations:
  - name: Lawrence Livermore National Laboratory, USA
