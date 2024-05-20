@@ -89,7 +89,7 @@ public:
     static constexpr auto plotFileRoot = "plotFileRoot";
     static constexpr auto writeFEMFaces = "writeFEMFaces";
     static constexpr auto writeGhostCells = "writeGhostCells";
-    static constexpr auto writeFaceElementsAs3D = "writeGhostCells";
+    static constexpr auto writeFaceElementsAs3D = "writeFaceElementsAs3D";
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto binaryString = "format";
     static constexpr auto outputRegionTypeString = "outputRegionType";
