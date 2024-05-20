@@ -460,6 +460,15 @@ void WellControls::postProcessInput()
   }
 }
 
+bool WellControls::isWellOpen() const
+{
+  return m_wellOpen;
+}
+
+void WellControls::setWellOpen(bool const & state)  
+{
+  m_wellOpen = state;
+}
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;

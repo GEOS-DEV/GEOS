@@ -158,15 +158,105 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                        real64 const & dt,
                                         DomainPartition & domain )
 {
   // Initialize the primary and secondary variables for the first time step
-  if( time_n <= 0.0 )
-  {
-    initializeWells( domain );
-  }
+
+  initializeWells( domain, time_n, dt );
 }
+
+bool WellSolverBase::isShutinWell( real64 const time_n,
+                                   real64 const dt,
+                                   DomainPartition const & domain )
+{
+  GEOS_MARK_FUNCTION;
+  bool well_status( true );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion const & subRegion )
+    {
+
+      // if the well is open, we don't have to do anything, so we just return
+      WellControls const & wellControls = getWellControls( subRegion );
+      std::cout << "Controls Name " << wellControls.getName() << std::endl;
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+        well_status = false;
+      }
+    } );
+  } );
+  std::cout << "Well status " << getName() << " " << well_status << std::endl;
+  return well_status;
+}
+
+void WellSolverBase::shutInWell( real64 const time_n,
+                                 real64 const dt,
+                                 DomainPartition const & domain,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion const & subRegion )
+    {
+
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      arrayView1d< integer const > const ghostRank =
+        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        globalIndex const dofIndex = dofNumber[ei];
+        localIndex const localRow = dofIndex - rankOffset;
+
+
+        real64 unity = 1.0;
+        for( integer i=0; i < m_numDofPerWellElement; i++ )
+        {
+          globalIndex const cindex =  dofNumber[ei] + i;
+          globalIndex const rindex = localRow+i;
+          localMatrix.template addToRow< serialAtomic >( rindex,
+                                                         &cindex,
+                                                         &unity,
+                                                         1 );
+          localRhs[cindex] = 0.0;
+        }
+
+      } );
+    } );
+  } );
+}
+
 
 void WellSolverBase::assembleSystem( real64 const time,
                                      real64 const dt,
@@ -175,23 +265,34 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
+
+ 
   // assemble the accumulation term in the mass balance equations
-  assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
+    assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
+    assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
-  assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
+    assembleVolumeBalanceTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then compute the perforation rates (later assembled by the coupled solver)
-  computePerforationRates( domain );
+    computePerforationRates( time, dt, domain );
+
+    // check again
+    //isShutin =  isShutinWell( time, dt, domain );
+ 
+
+  //if( isShutin )
+  //{
+  //  shutInWell( time, dt, domain, dofManager, localMatrix, localRhs );
+  //}
 
   // then apply a special treatment to the wells that are shut
-  shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
+  //shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -205,7 +306,12 @@ void WellSolverBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
+      WellControls const & wellControls = getWellControls( subRegion );
+      std::cout << "Controls Name " << wellControls.getName() << " " << wellControls.isWellOpen() << std::endl;
+      if( wellControls.isWellOpen() )
+      {
       updateSubRegionState( subRegion );
+      }
     } );
   } );
 }

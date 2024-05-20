@@ -627,6 +627,10 @@ PressureRelationKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
+  if ( ! wellControls.isWellOpen(timeAtEndOfStep) )
+  {
+    return;
+  }
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();

@@ -258,6 +258,15 @@ public:
   bool isWellOpen( real64 const & currentTime ) const;
 
   /**
+   * @brief Is the well open (or shut) at @p currentTime?
+   * @param[in] currentTime the current time
+   * @return a boolean
+   */
+  bool isWellOpen() const;
+
+  void setWellOpen(bool const & state);
+
+  /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
    */
@@ -413,6 +422,9 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  /// Current well status
+  bool m_wellOpen;
 };
 
 ENUM_STRINGS( WellControls::Type,

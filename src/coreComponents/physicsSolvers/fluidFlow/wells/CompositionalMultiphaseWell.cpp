@@ -906,7 +906,7 @@ void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & s
   // note: the perforation rates are updated separately
 }
 
-void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
+void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
 
@@ -930,7 +930,13 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      WellControls const & wellControls = getWellControls( subRegion );
+      WellControls  & wellControls = getWellControls( subRegion );
+      std::cout << "Controls Name " << wellControls.getName() << " " << wellControls.isWellOpen() << std::endl;
+      if( time_n <= 0.0 ||
+          ( !wellControls.isWellOpen( time_n ) && wellControls.isWellOpen( time_n + dt ) )    )
+      {
+        if ( wellControls.isWellOpen( time_n + dt ) )
+          wellControls.setWellOpen(true);
       PerforationData const & perforationData = *subRegion.getPerforationData();
 
       // get well primary variables on well elements
@@ -1015,12 +1021,18 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                 wellElemPhaseDens,
                 wellElemTotalDens,
                 connRate );
+      }
+      else
+      {
+        wellControls.setWellOpen(false);
+      }
     } );
 
   } );
 }
 
-void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
+void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time_n,
+                                                     real64 const & dt,
                                                      DomainPartition const & domain,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1040,6 +1052,10 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
                                                                    WellElementSubRegion const & subRegion )
     {
       WellControls const & wellControls = getWellControls( subRegion );
+      //WellControls & wellControls = getWellControls( subRegion );
+
+      if( wellControls.isWellOpen( time_n+ dt ) )
+      {
 
       // get a reference to the degree-of-freedom numbers
       string const wellDofKey = dofManager.getKey( wellElementDofName() );
@@ -1069,11 +1085,13 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
                                              dt,
                                              localMatrix,
                                              localRhs );
+      }
     } );
   } );
 }
 
-void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition const & domain,
+void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time_n,
+                                                             real64 const & dt, DomainPartition const & domain,
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
@@ -1099,6 +1117,11 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );
       arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
+      WellControls & wellControls = getWellControls( subRegion );
+
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+        wellControls.setWellOpen(true);
       // get the properties on the well element
       arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac =
         subRegion.getField< fields::well::phaseVolumeFraction >();
@@ -1143,12 +1166,41 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      wellElemPhaseCompFrac_n,
                                                      localMatrix,
                                                      localRhs );
+      }
+      else
+      {
+        wellControls.setWellOpen(false);
+        localIndex rank_offset = dofManager.rankOffset();
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+        {
+          if( wellElemGhostRank[ei] < 0 )
+          {
+
+            globalIndex const dofIndex = wellElemDofNumber[ei];
+            localIndex const localRow = dofIndex - rank_offset;
+
+
+            real64 unity = 1.0;
+            for( integer i=0; i < m_numDofPerWellElement; i++ )
+            {
+              globalIndex const rindex =  localRow+i;
+              globalIndex const cindex =dofIndex + i; 
+              localMatrix.template addToRow< serialAtomic >( rindex,
+                                                             &cindex,
+                                                             &unity,
+                                                             1 );
+              localRhs[cindex] = 0.0;
+            }
+          }
+        } );
+      }
     } );
   } );
 }
 
 
-void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition const & domain,
+void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( real64 const & time_n,
+                                                              real64 const & dt, DomainPartition const & domain,
                                                               DofManager const & dofManager,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
@@ -1168,6 +1220,10 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
+      WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+
       // get the degrees of freedom and ghosting info
       arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
       arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
@@ -1193,6 +1249,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
                                                       wellElemVolume,
                                                       localMatrix,
                                                       localRhs );
+      }
     } );
   } );
 }
@@ -1351,7 +1408,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & domain )
+void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n,
+                                                           real64 const & dt, DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1371,6 +1429,9 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
     {
 
       WellControls const & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+
       bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
 
       PerforationData * const perforationData = subRegion.getPerforationData();
@@ -1453,6 +1514,7 @@ void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & dom
                                                     compPerfRate,
                                                     dCompPerfRate_dPres,
                                                     dCompPerfRate_dComp );
+      }
 
     } );
   } );
