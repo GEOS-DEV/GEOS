@@ -856,12 +856,129 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
  */
 struct Ghost
 {
-  std::map< NodeGlbIdx , MpiRank > nodes;
-  std::map< EdgeGlbIdx , MpiRank > edges;
-  std::map< FaceGlbIdx , MpiRank > faces;
-  std::map< CellGlbIdx , MpiRank > cells;
+  std::map< NodeGlbIdx, MpiRank > nodes;
+  std::map< EdgeGlbIdx, MpiRank > edges;
+  std::map< FaceGlbIdx, MpiRank > faces;
+  std::map< CellGlbIdx, MpiRank > cells;
   std::set< MpiRank > neighbors;
 };
+
+
+Epetra_CrsMatrix multiply( int commSize,
+                           Epetra_CrsMatrix const & indicator,
+                           Epetra_CrsMatrix & upward )
+{
+  Epetra_Map const & ownedMap = upward.RowMap();
+  Epetra_Map const & mpiMap = indicator.RangeMap();
+
+  // Upward (n -> e -> f -> c)
+
+  Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( upward, false, indicator, true, result_u0_0, false );
+  result_u0_0.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
+
+  Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( upward, false, result_u0_0, false, result_u0_1, false );
+  result_u0_1.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
+
+  Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( upward, false, result_u0_1, false, result_u0_2, false );
+  result_u0_2.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
+
+  // Downward (c -> f -> e -> n)
+  auto tDownward = makeTranspose( upward );  // TODO check the algorithm to understand what's more relevant.
+
+  Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_u0_2, false, result_d0_0, false );
+  result_d0_0.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
+
+  Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_d0_0, false, result_d0_1, false );
+  result_d0_1.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
+
+  Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
+  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_d0_1, false, result_d0_2, false );
+  result_d0_2.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
+
+  return result_d0_2;
+}
+
+class FindGeometricalType
+{
+public:
+  enum Geom
+  {
+    NODE,
+    EDGE,
+    FACE,
+    CELL
+  };
+
+  FindGeometricalType( std::size_t const edgeOffset,
+                       std::size_t const faceOffset,
+                       std::size_t const cellOffset )
+    : m_edgeOffset( intConv< int >( edgeOffset ) ),
+      m_faceOffset( intConv< int >( faceOffset ) ),
+      m_cellOffset( intConv< int >( cellOffset ) )
+  { }
+
+  Geom operator()( int const & index ) const
+  {
+    if( index < m_edgeOffset )
+    {
+      return Geom::NODE;
+    }
+    else if( index < m_faceOffset )
+    {
+      return Geom::EDGE;
+    }
+    else if( index < m_cellOffset )
+    {
+      return Geom::FACE;
+    }
+    else
+    {
+      return Geom::CELL;
+    }
+  }
+
+  template< typename GLOBAL_INDEX >
+  [[nodiscard]] GLOBAL_INDEX as( int const & index ) const
+  {
+    if constexpr( std::is_same_v< GLOBAL_INDEX, NodeGlbIdx > )
+    {
+      return NodeGlbIdx{ intConv< NodeGlbIdx::UnderlyingType >( index ) };
+    }
+    else if constexpr( std::is_same_v< GLOBAL_INDEX, EdgeGlbIdx > )
+    {
+      return EdgeGlbIdx{ intConv< EdgeGlbIdx::UnderlyingType >( index - m_edgeOffset ) };
+    }
+    else if constexpr( std::is_same_v< GLOBAL_INDEX, FaceGlbIdx > )
+    {
+      return FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( index - m_faceOffset ) };
+    }
+    else if constexpr( std::is_same_v< GLOBAL_INDEX, CellGlbIdx > )
+    {
+      return CellGlbIdx{ intConv< CellGlbIdx::UnderlyingType >( index - m_cellOffset ) };
+    }
+    else
+    {
+      GEOS_ERROR( "Internal Error." );
+    }
+  }
+
+private:
+  int const m_edgeOffset;
+  int const m_faceOffset;
+  int const m_cellOffset;
+};
+
 
 Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
                                MaxGlbIdcs const & gis,
@@ -962,18 +1079,19 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
   Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
   Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
 
-  Epetra_CrsMatrix adj( Epetra_DataAccess::Copy, ownedMap, numEntriesPerRow.data(), true );
+  Epetra_CrsMatrix upward( Epetra_DataAccess::Copy, ownedMap, numEntriesPerRow.data(), true );
 
   for( std::size_t i = 0; i < numOwned; ++i )
   {
     std::vector< int > const & rowIndices = indices[i];
     std::vector< double > const rowValues( std::size( rowIndices ), 1. );
     GEOS_ASSERT_EQ( std::size( rowIndices ), std::size_t( numEntriesPerRow[i] ) );
-    adj.InsertGlobalValues( ownedGlbIdcs[i], std::size( rowIndices ), rowValues.data(), rowIndices.data() );
+    upward.InsertGlobalValues( ownedGlbIdcs[i], std::size( rowIndices ), rowValues.data(), rowIndices.data() );
   }
 
-  adj.FillComplete();
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", adj );
+//  upward.FillComplete();
+  upward.FillComplete( ownedMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", upward );
 
   int const commSize( MpiWrapper::commSize() );
 
@@ -1003,51 +1121,11 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
     GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
     GEOS_LOG_RANK( "ownership.NumGlobalCols() = " << ownership.NumGlobalCols() );
     GEOS_LOG_RANK( "ownership.NumGlobalRows() = " << ownership.NumGlobalRows() );
-    GEOS_LOG_RANK( "ownership diag = " << std::boolalpha << ownership.LowerTriangular() and ownership.UpperTriangular()  );
+    GEOS_LOG_RANK( "ownership diag = " << std::boolalpha << ownership.LowerTriangular() and ownership.UpperTriangular() );
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  auto multiply = [&]()-> Epetra_CrsMatrix
-  {
-    // Upward (n -> e -> f -> c)
-
-    Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, indicator, true, result_u0_0, false );
-    result_u0_0.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
-
-    Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_0, false, result_u0_1, false );
-    result_u0_1.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
-
-    Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( adj, false, result_u0_1, false, result_u0_2, false );
-    result_u0_2.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
-
-    // Downward (c -> f -> e -> n)
-    auto tAdj = makeTranspose( adj );  // TODO check the algorithm to understand what's more relevant.
-
-    Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_u0_2, false, result_d0_0, false );
-    result_d0_0.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
-
-    Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_d0_0, false, result_d0_1, false );
-    result_d0_1.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
-
-    Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-    EpetraExt::MatrixMatrix::Multiply( *tAdj, false, result_d0_1, false, result_d0_2, false );
-    result_d0_2.FillComplete( mpiMap, ownedMap );
-    EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
-
-    return result_d0_2;
-  };
-
-  Epetra_CrsMatrix ghosted( multiply() );
+  Epetra_CrsMatrix ghosted( multiply( commSize, indicator, upward ) );
   ghosted.PutScalar( 1. );  // This can be done after the `FillComplete`.
   ghosted.FillComplete( mpiMap, ownedMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
@@ -1068,6 +1146,19 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
     GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostInfo.NumGlobalRows() );
   }
 
+  Epetra_CrsMatrix identity( Epetra_DataAccess::Copy, ownedMap, 1, true );
+  for( int const & i: ownedGlbIdcs )
+  {
+    identity.InsertGlobalValues( i, 1, ones.data(), &i );
+  }
+  identity.FillComplete();
+
+  auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
+//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
+  Epetra_Vector const zeros( ownedMap, true );
+  tDownward->ReplaceDiagonalValues( zeros );  // TODO directly build zeros in the function call.
+//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-after.mat", *tDownward );
+
   int extracted = 0;
   std::vector< double > extractedValues( n );
   std::vector< int > extractedIndices( n );
@@ -1076,49 +1167,172 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
 
+  std::vector< int > missingIndices;
+  missingIndices.reserve( n );
+
+//  int extractedEdges = 0;
+//  std::vector< double > extractedEdgesValues( n );
+//  std::vector< int > extractedEdgesIndices( n );
+  FindGeometricalType const getGeomType( edgeOffset, faceOffset, cellOffset );
+  using Geom = FindGeometricalType::Geom;
+
   Ghost ghost;
   for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
   {
     int const & index = extractedIndices[i];
+
     MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
-    ghost.neighbors.insert( owner );
-    if( index < int( edgeOffset ) )  // This is a node
+    if( owner != curRank )
     {
-      NodeGlbIdx const ngi = NodeGlbIdx{ intConv< globalIndex >( index ) };
-      ghost.nodes.emplace( ngi, owner );
+      ghost.neighbors.insert( owner );
     }
-    else if( int( edgeOffset ) <= index && index < int( faceOffset ) )
+
+    switch( getGeomType( index ) )
     {
-      EdgeGlbIdx const egi = EdgeGlbIdx{ intConv< globalIndex >( index - edgeOffset ) };
-      ghost.edges.emplace( egi, owner );
-    }
-    else if( int( faceOffset ) <= index && index < int( cellOffset ) )
-    {
-      FaceGlbIdx const fgi = FaceGlbIdx{ intConv< globalIndex >( index - faceOffset ) };
-      ghost.faces.emplace( fgi, owner );
-    }
-    else
-    {
-      CellGlbIdx const cgi = CellGlbIdx{ intConv< globalIndex >( index - cellOffset ) };
-      ghost.cells.emplace( cgi, owner );
+      case Geom::NODE:
+      {
+        NodeGlbIdx const ngi = getGeomType.as< NodeGlbIdx >( index );
+        ghost.nodes.emplace( ngi, owner );
+        break;
+      }
+      case Geom::EDGE:
+      {
+        EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
+        ghost.edges.emplace( egi, owner );
+        if( graph.e2n.find( egi ) == graph.e2n.cend() and graph.otherEdges.find( egi ) == graph.otherEdges.cend() )
+        {
+          missingIndices.emplace_back( index );
+        }
+        break;
+      }
+      case Geom::FACE:
+      {
+        FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
+        ghost.faces.emplace( fgi, owner );
+        if( graph.f2e.find( fgi ) == graph.f2e.cend() and graph.otherFaces.find( fgi ) == graph.otherFaces.cend() )
+        {
+          missingIndices.emplace_back( index );
+        }
+        break;
+      }
+      case Geom::CELL:
+      {
+        CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
+        ghost.cells.emplace( cgi, owner );
+        if( graph.c2f.find( cgi ) == graph.c2f.cend() )
+        {
+          missingIndices.emplace_back( index );
+        }
+        break;
+      }
+      default:
+      {
+        GEOS_ERROR( "Internal error" );
+      }
     }
   }
 
+  GEOS_LOG( "Gathering the missing mappings." );
+
+  std::size_t const numMissingIndices = std::size( missingIndices );
+  std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );
+
+//  Epetra_Map const missingIndicesMap( intConv< long long int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
+  Epetra_Map const missingIndicesMap( intConv< int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
+
+//  std::size_t const offset = MpiWrapper::prefixSum< std::size_t >( numMissingIndices );
+  int const offset = *missingIndicesMap.MyGlobalElements();
+//  GEOS_LOG_RANK( "numMissingIndices, numGlobalMissingIndices, offset = " << numMissingIndices << ", " << numGlobalMissingIndices << ", " << offset );
+
+  Epetra_CrsMatrix missing( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
+  for( std::size_t i = 0; i < numMissingIndices; ++i )
+  {
+    missing.InsertGlobalValues( offset + i, 1, ones.data(), &missingIndices[i] );
+  }
+  missing.FillComplete( ownedMap, missingIndicesMap );
+
+  // TODO Don't put ones in downard: reassemble with the ordering (e.g. edges point to a first and last node)
+  Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
+  EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
+  missingMappings.FillComplete( ownedMap, missingIndicesMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingMappings );
+
+  MeshGraph neighboringConnexions;
+
+  int ext = 0;
+  std::vector< double > extValues( n );
+  std::vector< int > extIndices( n );
+//  double * extValues = nullptr;
+//  int * extIndices = nullptr;
+
+  for( int i = 0; i < int( numMissingIndices ); ++i )
+  {
+    missingMappings.ExtractGlobalRowCopy( offset + i, int( n ), ext, extValues.data(), extIndices.data() );
+//    missingMappings.ExtractGlobalRowView( intConv< int >( offset + i ), ext, extValues );
+//    missingMappings.ExtractGlobalRowView( intConv< int >( offset + i ), ext, extValues, extIndices );
+//    Span< double > const s0( extValues, ext );
+//    Span< int > const s1( extIndices, ext );
+//    GEOS_LOG( "ext 0 = " << std::size( s0 ) );
+//    GEOS_LOG( "ext 1 = " << std::size( s1 ) );
+//    GEOS_LOG_RANK( "ext = " << ext );
+    int const index = missingIndices[i];
+    switch( getGeomType( index ) )
+    {
+      case Geom::EDGE:
+      {
+        GEOS_ASSERT_EQ( ext, 2 );  // TODO check that val != 0?
+        EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
+        NodeGlbIdx const ngi0 = getGeomType.as< NodeGlbIdx >( extIndices[0] );
+        NodeGlbIdx const ngi1 = getGeomType.as< NodeGlbIdx >( extIndices[1] );
+        neighboringConnexions.e2n[egi] = std::minmax( { ngi0, ngi1 } );
+        break;
+      }
+      case Geom::FACE:
+      {
+        GEOS_ASSERT_EQ( ext, 4 );  // TODO temporary check for the dev
+        FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
+        std::set< EdgeGlbIdx > & tmp = neighboringConnexions.f2e[fgi];
+        for( int ii = 0; ii < ext; ++ii )
+        {
+          tmp.insert( EdgeGlbIdx{ intConv< globalIndex >( extIndices[ii] - edgeOffset ) } );
+        }
+        break;
+      }
+      case Geom::CELL:
+      {
+        GEOS_ASSERT_EQ( ext, 6 );  // TODO temporary check for the dev
+        CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
+        std::set< FaceGlbIdx > & tmp = neighboringConnexions.c2f[cgi];
+        for( int ii = 0; ii < ext; ++ii )
+        {
+          tmp.insert( FaceGlbIdx{ intConv< globalIndex >( extIndices[ii] - faceOffset ) } );
+        }
+        break;
+      }
+      default:
+      {
+        GEOS_ERROR( "Internal error." );
+      }
+    }
+  }
+
+  if( curRank == 2_mpi )
+  {
+    GEOS_LOG_RANK( "neighboringConnexions = " << json( neighboringConnexions ) );
+    std::map< MpiRank, std::set< CellGlbIdx > > tmp;
+    for( auto const & [geom, rk]: ghost.cells )
+    {
+      tmp[rk].insert( geom );
+    }
+    for( auto const & [rk, geom]: tmp )
+    {
+      GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
+    }
+  }
+  GEOS_LOG_RANK( "my final neighbors are " << json( ghost.neighbors ) );
+
   return ghost;
 
-//  if( curRank == 2_mpi )
-//  {
-//    std::map< MpiRank, std::set< CellGlbIdx > > tmp;
-//    for( auto const & [geom, rk]: cells )
-//    {
-//      tmp[rk].insert( geom );
-//    }
-//    for( auto const & [rk, geom]: tmp )
-//    {
-//      GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
-//    }
-//  }
-//  GEOS_LOG_RANK( "my final neighbors are " << json( neighbors ) );
 
   // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
   // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
