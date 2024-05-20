@@ -695,17 +695,12 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   return result;
 }
 
-struct MeshGraph  // TODO add the local <-> global mappings here?
+struct MeshGraph
 {
   std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
   std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
-  std::set< NodeGlbIdx > nodes;
-  std::set< FaceGlbIdx > otherFaces;  // Faces that are there but not owned.
-  std::set< EdgeGlbIdx > otherEdges;  // Edges that are there but not owned.
-  std::set< NodeGlbIdx > otherNodes;  // Nodes that are there but not owned.
-  // TODO add the nodes here?
-  // TODO add all types of connections here? How?
+  std::set< NodeGlbIdx > n;
 };
 
 void to_json( json & j,
@@ -713,9 +708,9 @@ void to_json( json & j,
 {
   j = json{ { "c2f", v.f2e },
             { "f2e", v.f2e },
-            { "e2n", v.e2n } };
+            { "e2n", v.e2n },
+            { "n", v.n } };
 }
-
 
 /**
  * @brief Builds the graph information for the owned elements only.
@@ -723,45 +718,44 @@ void to_json( json & j,
  * @param buckets
  * @param offsets
  * @param curRank
- * @return
+ * @return The tuple of first the owned geometrical quantities (ie keys are owned)
+ * and second the geometrical quantities that are present on the rank but not owned.
  */
-MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a sub-mesh?
-                          Buckets const & buckets,
-                          BucketOffsets const & offsets,
-                          MpiRank curRank )
+std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a sub-mesh?
+                                                   Buckets const & buckets,
+                                                   BucketOffsets const & offsets,
+                                                   MpiRank curRank )
 {
-  MeshGraph result;
+  MeshGraph owned, present;
 
   auto const isCurrentRankOwning = [&curRank]( std::set< MpiRank > const & ranks ) -> bool
   {
     return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
   };
 
-  for( auto const & [ranks, ns]: buckets.nodes )
+  for( auto const & [ranks, nodes]: buckets.nodes )
   {
-    std::set< NodeGlbIdx > & nodes = isCurrentRankOwning( ranks ) ? result.nodes : result.otherNodes;
-    nodes.insert( std::cbegin( ns ), std::cend( ns ) );
+    std::set< NodeGlbIdx > & n = isCurrentRankOwning( ranks ) ? owned.n : present.n;
+    n.insert( std::cbegin( nodes ), std::cend( nodes ) );
   }
 
+  for( auto const & [ranks, edges]: buckets.edges )
+  {
+    auto & e2n = isCurrentRankOwning( ranks ) ? owned.e2n : present.e2n;
+    EdgeGlbIdx egi = offsets.edges.at( ranks );  // TODO hack
+    for( Edge const & edge: edges )
+    {
+      e2n[egi] = edge;
+      ++egi;
+    }
+  }
   // The `e2n` is a mapping for all the geometrical entities, not only the one owned like `result.e2n`.
   // TODO check that it is really useful.
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n;
-  for( auto const & [ranks, edges]: buckets.edges )
+  for( auto const & m: { owned.e2n, present.e2n } )
   {
-    bool const isOwning = isCurrentRankOwning( ranks );
-    auto & m = isOwning ? result.e2n : e2n;
-    EdgeGlbIdx i = offsets.edges.at( ranks );  // TODO hack
-    for( Edge const & edge: edges )
-    {
-      m[i] = edge;
-      if( not isOwning )
-      {
-        result.otherEdges.insert( i );  // TODO use the keys of e2n instead?
-      }
-      ++i;
-    }
+    e2n.insert( std::cbegin( m ), std::cend( m ) );
   }
-  e2n.insert( std::cbegin( result.e2n ), std::cend( result.e2n ) );
 
   // Simple inversion
   std::map< std::tuple< NodeGlbIdx, NodeGlbIdx >, EdgeGlbIdx > n2e;
@@ -772,43 +766,32 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
 
   for( auto const & [ranks, faces]: buckets.faces )
   {
-    bool const isOwning = isCurrentRankOwning( ranks );
+    auto & f2e = isCurrentRankOwning( ranks ) ? owned.f2e : present.f2e;
 
-    if( isOwning )
+    FaceGlbIdx fgi = offsets.faces.at( ranks );
+    for( Face face: faces )  // Intentional copy for the future `emplace_back`.
     {
-      FaceGlbIdx i = offsets.faces.at( ranks );
-      for( Face face: faces )  // Intentional copy for the future `emplace_back`.
+      face.emplace_back( face.front() );  // Trick to build the edges.
+      for( std::size_t i = 0; i < face.size() - 1; ++i )
       {
-        face.emplace_back( face.front() );  // Trick to build the edges.
-        for( std::size_t ii = 0; ii < face.size() - 1; ++ii )
-        {
-          NodeGlbIdx const & n0 = face[ii], & n1 = face[ii + 1];
-          std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
-          std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
-          result.f2e[i].insert( n2e.at( p1 ) );
-          bool const flipped = p0 != p1;  // TODO store somewhere.
-        }
-        ++i;
+        NodeGlbIdx const & n0 = face[i], & n1 = face[i + 1];
+        std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
+        std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
+        f2e[fgi].insert( n2e.at( p1 ) );
+        bool const flipped = p0 != p1;  // TODO store somewhere.
       }
-    }
-    else
-    {
-      FaceGlbIdx const size = FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( std::size( faces ) ) };
-      for( FaceGlbIdx ii = offsets.faces.at( ranks ); ii < size; ++ii )
-      {
-        result.otherFaces.insert( ii );  // TODO insert iota
-      }
+      ++fgi;
     }
   }
 
   std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
   for( auto const & [ranks, faces]: buckets.faces )
   {
-    FaceGlbIdx i = offsets.faces.at( ranks );
+    FaceGlbIdx fgi = offsets.faces.at( ranks );
     for( Face const & face: faces )  // TODO hack
     {
-      n2f[face] = i;
-      ++i;
+      n2f[face] = fgi;
+      ++fgi;
     }
   }
 
@@ -831,12 +814,12 @@ MeshGraph buildMeshGraph( vtkSmartPointer< vtkDataSet > mesh,  // TODO give a su
         faceNodes[i] = NodeGlbIdx{ ngi };
       }
       std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes );
-      result.c2f[gci].insert( n2f.at( reorderedFaceNodes ) );
+      owned.c2f[gci].insert( n2f.at( reorderedFaceNodes ) );
       // TODO... bool const flipped = ... compare nodes and reorderedNodes. Or ask `reorderFaceNodes` to tell
     }
   }
 
-  return result;
+  return { std::move( owned ), std::move( present ) };
 }
 
 std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
@@ -980,7 +963,8 @@ private:
 };
 
 
-Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
+Ghost assembleAdjacencyMatrix( MeshGraph const & owned,
+                               MeshGraph const & present,
                                MaxGlbIdcs const & gis,
                                MpiRank curRank )
 {
@@ -990,15 +974,15 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
 
   std::size_t const n = cellOffset + gis.cells.get() + 1;  // Total number of entries in the graph.
 
-  std::size_t const numOwnedNodes = std::size( graph.nodes );
-  std::size_t const numOwnedEdges = std::size( graph.e2n );
-  std::size_t const numOwnedFaces = std::size( graph.f2e );
-  std::size_t const numOwnedCells = std::size( graph.c2f );
+  std::size_t const numOwnedNodes = std::size( owned.n );
+  std::size_t const numOwnedEdges = std::size( owned.e2n );
+  std::size_t const numOwnedFaces = std::size( owned.f2e );
+  std::size_t const numOwnedCells = std::size( owned.c2f );
   std::size_t const numOwned = numOwnedNodes + numOwnedEdges + numOwnedFaces + numOwnedCells;
 
-  std::size_t const numOtherNodes = std::size( graph.otherNodes );
-  std::size_t const numOtherEdges = std::size( graph.otherEdges );
-  std::size_t const numOtherFaces = std::size( graph.otherFaces );
+  std::size_t const numOtherNodes = std::size( present.n );
+  std::size_t const numOtherEdges = std::size( present.e2n );
+  std::size_t const numOtherFaces = std::size( present.f2e );
   std::size_t const numOther = numOtherNodes + numOtherEdges + numOtherFaces;
 
   std::vector< int > ownedGlbIdcs, numEntriesPerRow;  // TODO I couldn't use a vector of `std::size_t`
@@ -1009,21 +993,21 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
 
   std::vector< int > otherGlbIdcs;  // TODO I couldn't use a vector of `std::size_t`
   otherGlbIdcs.reserve( numOther );
-  for( NodeGlbIdx const & ngi: graph.otherNodes )
+  for( NodeGlbIdx const & ngi: present.n )
   {
     otherGlbIdcs.emplace_back( ngi.get() );
   }
-  for( EdgeGlbIdx const & egi: graph.otherEdges )
+  for( auto const & [egi, _]: present.e2n )
   {
     otherGlbIdcs.emplace_back( egi.get() + edgeOffset );
   }
-  for( FaceGlbIdx const & fgi: graph.otherFaces )
+  for( auto const & [fgi, _]: present.f2e )
   {
     otherGlbIdcs.emplace_back( fgi.get() + faceOffset );
   }
   GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
 
-  for( NodeGlbIdx const & ngi: graph.nodes )
+  for( NodeGlbIdx const & ngi: owned.n )
   {
     auto const i = ngi.get();
     ownedGlbIdcs.emplace_back( i );
@@ -1031,7 +1015,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
     std::vector< int > const tmp( 1, ownedGlbIdcs.back() );
     indices.emplace_back( tmp );
   }
-  for( auto const & [egi, nodes]: graph.e2n )
+  for( auto const & [egi, nodes]: owned.e2n )
   {
     auto const i = egi.get() + edgeOffset;
     ownedGlbIdcs.emplace_back( i );
@@ -1039,7 +1023,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
     std::vector< int > const tmp{ int( std::get< 0 >( nodes ).get() ), int( std::get< 1 >( nodes ).get() ), ownedGlbIdcs.back() };
     indices.emplace_back( tmp );
   }
-  for( auto const & [fgi, edges]: graph.f2e )
+  for( auto const & [fgi, edges]: owned.f2e )
   {
     auto const i = fgi.get() + faceOffset;
     ownedGlbIdcs.emplace_back( i );
@@ -1053,7 +1037,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
     tmp.emplace_back( ownedGlbIdcs.back() );
     indices.emplace_back( tmp );
   }
-  for( auto const & [cgi, faces]: graph.c2f )
+  for( auto const & [cgi, faces]: owned.c2f )
   {
     auto const i = cgi.get() + cellOffset;
     ownedGlbIdcs.emplace_back( i );
@@ -1201,7 +1185,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
         ghost.edges.emplace( egi, owner );
         // TODO make all the following check in on time with sets comparison instead of "point-wise" comparisons.
         // TODO same for the faces and cells...
-        if( graph.e2n.find( egi ) == graph.e2n.cend() and graph.otherEdges.find( egi ) == graph.otherEdges.cend() )
+        if( owned.e2n.find( egi ) == owned.e2n.cend() and present.e2n.find( egi ) == present.e2n.cend() )
         {
           missingIndices.emplace_back( index );
         }
@@ -1211,7 +1195,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
       {
         FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
         ghost.faces.emplace( fgi, owner );
-        if( graph.f2e.find( fgi ) == graph.f2e.cend() and graph.otherFaces.find( fgi ) == graph.otherFaces.cend() )
+        if( owned.f2e.find( fgi ) == owned.f2e.cend() and present.f2e.find( fgi ) == present.f2e.cend() )
         {
           missingIndices.emplace_back( index );
         }
@@ -1221,7 +1205,7 @@ Ghost assembleAdjacencyMatrix( MeshGraph const & graph,
       {
         CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
         ghost.cells.emplace( cgi, owner );
-        if( graph.c2f.find( cgi ) == graph.c2f.cend() )
+        if( owned.c2f.find( cgi ) == owned.c2f.cend() )
         {
           missingIndices.emplace_back( index );
         }
@@ -1444,13 +1428,15 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
   MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ) - 1_egi, offsets.faces.at( { nextRank } ) - 1_fgi );
   std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
 
-  MeshGraph const graph = buildMeshGraph( mesh, buckets, offsets, curRank );  // TODO change into buildOwnedMeshGraph?
-//  if( curRank == MpiRank{ 1 } )
+  auto const [owned, present] = buildMeshGraph( mesh, buckets, offsets, curRank );  // TODO change into buildOwnedMeshGraph?
+//  if( curRank == 1_mpi )
 //  {
-//    std::cout << "My graph is " << json( graph ) << std::endl;
+//    GEOS_LOG_RANK( "My owned is " << json( owned ) );
+//    GEOS_LOG_RANK( "My present is " << json( present ) );
 //  }
+//  MpiWrapper::barrier();
 
-  Ghost const ghost = assembleAdjacencyMatrix( graph, matrixOffsets, curRank );
+  Ghost const ghost = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
 
   buildPods( ghost );
 
