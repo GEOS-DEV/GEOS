@@ -114,10 +114,10 @@ Note that the version of GEOS described here should be considered a separate wor
 # Statement of need
 
 The increasing threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
-Carbon Capture and Storage (CCS) of CO<sub>2</sub> in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals. 
-Given the 2050 net-zero GHG goals, CO<sub>2</sub> storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
-The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO<sub>2</sub> in the subsurface in a reproducible and transparent manner is an important consideration when developing new storage sites.
-The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO<sub>2</sub> is injected into a subsurface reservoir. 
+Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals. 
+Given the 2050 net-zero GHG goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
+The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when developing new storage sites.
+The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir. 
 Thus, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
 
 # GEOS Components 
@@ -142,14 +142,14 @@ Through this strategy GEOS has been successfully run on platforms ranging from G
 In addition to its C++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
 
 # Applications
-To date GEOS has been used to simulate problems relevant to CO<sub>2</sub> storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
+To date GEOS has been used to simulate problems relevant to CO~2~ storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
 Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
 
-As an example of a field case where GEOS has been applied, we present a coupled compositional flow/mechanics simulation of CO<sub>2</sub> injection and storage at a large real-world storage site.
+As an example of a field case where GEOS has been applied, we present a coupled compositional flow/mechanics simulation of CO~2~ injection and storage at a large real-world storage site.
 Figure \ref{RW_results}a illustrates the computational mesh and Figure \ref{RW_results}b shows results after 25 years of injection.
-Simulations such as this will play a critical role in predicting the viability of potential CO<sub>2</sub> storage sites.
+Simulations such as this will play a critical role in predicting the viability of potential CO~2~ storage sites.
 
-![Real world CO<sub>2</sub> storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO<sub>2</sub> injection. The CO<sub>2</sub> plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
+![Real world CO~2~ storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO~2~ injection. The CO~2~ plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
 The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
