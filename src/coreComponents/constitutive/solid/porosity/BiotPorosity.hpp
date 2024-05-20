@@ -182,7 +182,7 @@ public:
 
   GEOS_HOST_DEVICE
   void updateBiotCoefficientAndAssignModuli( localIndex const k,
-                     real64 const bulkModulus, real64 const shearModulus ) const
+                                             real64 const bulkModulus, real64 const shearModulus ) const
   {
     m_bulkModulus[k] = bulkModulus;
     m_shearModulus[k] = shearModulus;
