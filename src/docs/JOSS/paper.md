@@ -108,7 +108,7 @@ bibliography: paper.bib
 GEOS is a simulation framework focused solving tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
 Currently GEOS actively supports implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
 The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
-The GEOS repository is hosted GitHub [@GEOS:2024], and extensive documentation is available on Read the Docs [@GEOS_RTD].
+The GEOS repository is hosted on GitHub [@GEOS:2024], and extensive documentation is available on Read the Docs [@GEOS_RTD].
 Note that the version of GEOS described here should be considered a separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
 
 # Statement of need
@@ -146,7 +146,7 @@ To date GEOS has been used to simulate problems relevant to CO2 storage, enhance
 Often these simulations involve coupling between compositional multiphase flow and transport, poroelasticity, thermal transport, and interactions with faults and fractures.
 
 As an example of a field case where GEOS has been applied, we present a coupled compositional flow/mechanics simulation of CO2 injection and storage at a large real-world storage site.
-Figure \ref{RW_final}a illustrates the computational mesh and Figure \ref{RW_final}b shows results after 25 years of injection.
+Figure \ref{RW_results}a illustrates the computational mesh and Figure \ref{RW_results}b shows results after 25 years of injection.
 Simulations such as this will play a critical role in predicting the viability of potential CO2 storage sites.
 
 ![Real world CO2 storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO2 injection. The CO2 plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
