@@ -545,13 +545,6 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
     GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostInfo.NumGlobalRows() );
   }
 
-  Epetra_CrsMatrix identity( Epetra_DataAccess::Copy, ownedMap, 1, true );
-  for( int const & i: ownedGlbIdcs )
-  {
-    identity.InsertGlobalValues( i, 1, ones.data(), &i );
-  }
-  identity.FillComplete();
-
   auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
 //  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
   Epetra_Vector const zeros( ownedMap, true );
