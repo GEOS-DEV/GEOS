@@ -42,7 +42,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
-  enableLogLevelInput();
+  
 
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );

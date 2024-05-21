@@ -40,7 +40,7 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
                                                                                           Group * const parent )
   : Base( name, parent )
 {
-  enableLogLevelInput();
+  
 
   appendLogLevel( { "logLevel >= 3", "The summary of declared fields and coupling" } );
 

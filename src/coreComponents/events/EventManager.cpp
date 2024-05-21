@@ -44,7 +44,6 @@ EventManager::EventManager( string const & name,
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  // This enables logLevel filtering
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).

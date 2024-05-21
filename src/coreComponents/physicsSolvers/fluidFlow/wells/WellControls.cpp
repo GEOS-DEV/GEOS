@@ -48,7 +48,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_statusTable( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
+  
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).

@@ -63,8 +63,6 @@ ReactiveBrineFluid< PHASE > ::
 ReactiveBrineFluid( string const & name, Group * const parent ):
   ReactiveMultiFluid( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).

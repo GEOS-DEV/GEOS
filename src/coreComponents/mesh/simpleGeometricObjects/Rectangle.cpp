@@ -28,8 +28,6 @@ Rectangle::Rectangle( const string & name, Group * const parent ):
   m_origin{ 0.0, 0.0, 0.0 },
   m_tolerance()
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::originString(), &m_origin ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );

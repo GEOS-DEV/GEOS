@@ -32,8 +32,6 @@ RelpermDriver::RelpermDriver( const geos::string & name,
   :
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::relpermNameString(), &m_relpermName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).

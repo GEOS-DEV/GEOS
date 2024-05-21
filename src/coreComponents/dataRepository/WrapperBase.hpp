@@ -519,7 +519,10 @@ public:
     return *this;
   }
 
-  void buildDescription()
+  /**
+   * @brief Construct the log level string description for a wrapper
+   */
+  void buildLogLevelDescription()
   {
     string descriptionToBuild;
     descriptionToBuild.append( "Sets the level of information to write in the standard output (the console typically).\n"
@@ -557,7 +560,9 @@ public:
   }
 
   /**
-   * @return Add a logLevel/description
+   * @brief Add an entry to the description map
+   * @param levelToAppend The log level key
+   * @param descriptionToAppend The log description value
    */
   void addEntrieLogLevel( std::string levelToAppend, std::string descriptionToAppend )
   {

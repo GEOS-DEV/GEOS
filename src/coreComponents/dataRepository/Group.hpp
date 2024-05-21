@@ -854,17 +854,11 @@ public:
   ///@}
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
-  /** 
-   * @param logs 
+  /**
+   * @brief Append a log level/description to the description of the wrapped object
+   * @param log An entry (log level/ log Description) to append
    */
   void appendLogLevel( std::pair< const std::string, const std::string > log );
-
-  /**
-   * @return The log levels descriptions for a gtoup
-   */
-  std::string const & getLogLevelDescription();
-
-  void appendLogLevelDescription( std::string const & description );
 
   /**
    * @name Schema generation methods

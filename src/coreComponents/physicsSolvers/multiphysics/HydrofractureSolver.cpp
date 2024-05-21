@@ -78,7 +78,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_isMatrixPoroelastic(),
   m_newFractureInitializationType()
 {
-  Base::enableLogLevelInput();
+  Base::
 
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).

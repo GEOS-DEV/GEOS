@@ -79,32 +79,28 @@ void Group::deregisterWrapper( string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::appendLogLevel( std::pair< const std::string, const std::string > log )
+void appendLogLevelToWrapper( WrapperBase & wrapper, std::pair< const std::string, const std::string > log )
 {
-  // 1. register le wrapper
-
-  //TODO condition pour enable loglevel w description
-  //rajouter if wrapper existe pas
-
-  std::string const levelToAppend = "\n" + log.first + "\n";
+  std::string const levelToAppend = "\n" + log.first + " :\n";
   std::string const descriptionToAppend = log.second;
 
-  string wrapperName = viewKeyStruct::logLevelString();
+  wrapper.addEntrieLogLevel( levelToAppend, descriptionToAppend );
+  wrapper.buildLogLevelDescription();
+}
+
+void Group::appendLogLevel( std::pair< const std::string, const std::string > log )
+{
+  string logLevelName = viewKeyStruct::logLevelString();
   try
   {
-    WrapperBase & wrapper = getWrapperBase( wrapperName );
-    wrapper.addEntrieLogLevel( levelToAppend, descriptionToAppend );
-    wrapper.buildDescription();
+    WrapperBase & wrapper = getWrapperBase( logLevelName );
+    appendLogLevelToWrapper( wrapper, log );
   }catch( std::domain_error const & )
   {
-    WrapperBase & wrapper = registerWrapper( wrapperName, &m_logLevel );
-    registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
-      setApplyDefaultValue( 1 ).
-      setInputFlag( InputFlags::OPTIONAL );
-    wrapper.addEntrieLogLevel( levelToAppend, descriptionToAppend );
-    wrapper.buildDescription();
+    WrapperBase & wrapper = registerWrapper( logLevelName, &m_logLevel );
+    enableLogLevelInput();
+    appendLogLevelToWrapper( wrapper, log );
   }
-
 }
 
 void Group::resize( indexType const newSize )
@@ -669,10 +665,8 @@ void Group::postRestartInitializationRecursive()
   postRestartInitialization();
 }
 
-//TODO ARN DELETE
 void Group::enableLogLevelInput()
 {
-  // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
   registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL );

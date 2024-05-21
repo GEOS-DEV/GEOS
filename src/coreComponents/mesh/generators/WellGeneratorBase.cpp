@@ -37,7 +37,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   , m_nDims( 3 )
   , m_polylineHeadNodeId( -1 )
 {
-  enableLogLevelInput();
+  
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

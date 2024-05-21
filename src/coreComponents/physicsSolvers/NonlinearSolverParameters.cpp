@@ -26,7 +26,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  // This enables logLevel filtering
   enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).

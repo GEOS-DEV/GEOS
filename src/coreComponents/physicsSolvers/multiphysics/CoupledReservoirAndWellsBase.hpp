@@ -101,7 +101,7 @@ public:
     : Base( name, parent ),
     m_isWellTransmissibilityComputed( false )
   {
-    // enableLogLevelInput();
+    // 
 
     this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );

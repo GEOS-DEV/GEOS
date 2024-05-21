@@ -34,8 +34,6 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : ExternalMeshGeneratorBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::regionAttributeString(), &m_attributeName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
