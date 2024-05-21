@@ -319,15 +319,22 @@ public:
     CELL
   };
 
-  FindGeometricalType( std::size_t const edgeOffset,
-                       std::size_t const faceOffset,
-                       std::size_t const cellOffset )
-    : m_edgeOffset( intConv< int >( edgeOffset ) ),
-      m_faceOffset( intConv< int >( faceOffset ) ),
-      m_cellOffset( intConv< int >( cellOffset ) )
+  FindGeometricalType( NodeGlbIdx const & maxNodeGlbIdx,
+                       EdgeGlbIdx const & maxEdgeGlbIdx,
+                       FaceGlbIdx const & maxFaceGlbIdx,
+                       CellGlbIdx const & maxCellGlbIdx )
+    : m_edgeOffset( intConv< int >( maxNodeGlbIdx.get() + 1 ) ),
+      m_faceOffset( intConv< int >( m_edgeOffset + maxEdgeGlbIdx.get() + 1 ) ),
+      m_cellOffset( intConv< int >( m_faceOffset + maxFaceGlbIdx.get() + 1 ) ),
+      m_numEntries( intConv< int >( m_cellOffset + maxCellGlbIdx.get() + 1 ) )
   { }
 
-  Geom operator()( int const & index ) const
+  [[nodiscard]] int numEntries() const
+  {
+    return m_numEntries;
+  }
+
+  [[nodiscard]] Geom getGeometricalType( int const & index ) const
   {
     if( index < m_edgeOffset )
     {
@@ -347,35 +354,51 @@ public:
     }
   }
 
-  template< typename GLOBAL_INDEX >
-  [[nodiscard]] GLOBAL_INDEX as( int const & index ) const
+  [[nodiscard]] NodeGlbIdx toNodeGlbIdx( int const & index ) const
   {
-    if constexpr( std::is_same_v< GLOBAL_INDEX, NodeGlbIdx > )
-    {
-      return NodeGlbIdx{ intConv< NodeGlbIdx::UnderlyingType >( index ) };
-    }
-    else if constexpr( std::is_same_v< GLOBAL_INDEX, EdgeGlbIdx > )
-    {
-      return EdgeGlbIdx{ intConv< EdgeGlbIdx::UnderlyingType >( index - m_edgeOffset ) };
-    }
-    else if constexpr( std::is_same_v< GLOBAL_INDEX, FaceGlbIdx > )
-    {
-      return FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( index - m_faceOffset ) };
-    }
-    else if constexpr( std::is_same_v< GLOBAL_INDEX, CellGlbIdx > )
-    {
-      return CellGlbIdx{ intConv< CellGlbIdx::UnderlyingType >( index - m_cellOffset ) };
-    }
-    else
-    {
-      GEOS_ERROR( "Internal Error." );
-    }
+    return NodeGlbIdx{ intConv< NodeGlbIdx::UnderlyingType >( index ) };
+  }
+
+  [[nodiscard]] EdgeGlbIdx toEdgeGlbIdx( int const & index ) const
+  {
+    return EdgeGlbIdx{ intConv< EdgeGlbIdx::UnderlyingType >( index - m_edgeOffset ) };
+  }
+
+  [[nodiscard]] FaceGlbIdx toFaceGlbIdx( int const & index ) const
+  {
+    return FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( index - m_faceOffset ) };
+  }
+
+  [[nodiscard]] CellGlbIdx toCellGlbIdx( int const & index ) const
+  {
+    return CellGlbIdx{ intConv< CellGlbIdx::UnderlyingType >( index - m_cellOffset ) };
+  }
+
+  [[nodiscard]] int fromNodeGlbIdx( NodeGlbIdx const & ngi ) const
+  {
+    return intConv< int >( ngi.get() );
+  }
+
+  [[nodiscard]] int fromEdgeGlbIdx( EdgeGlbIdx const & egi ) const
+  {
+    return intConv< int >( egi.get() + m_edgeOffset );
+  }
+
+  [[nodiscard]] int fromFaceGlbIdx( FaceGlbIdx const & fgi ) const
+  {
+    return intConv< int >( fgi.get() + m_faceOffset );
+  }
+
+  [[nodiscard]] int fromCellGlbIdx( CellGlbIdx const & cgi ) const
+  {
+    return intConv< int >( cgi.get() + m_cellOffset );
   }
 
 private:
   int const m_edgeOffset;
   int const m_faceOffset;
   int const m_cellOffset;
+  int const m_numEntries;
 };
 
 std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & owned,
@@ -383,11 +406,10 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
                                                              MaxGlbIdcs const & gis,
                                                              MpiRank curRank )
 {
-  std::size_t const edgeOffset = gis.nodes.get() + 1;
-  std::size_t const faceOffset = edgeOffset + gis.edges.get() + 1;
-  std::size_t const cellOffset = faceOffset + gis.faces.get() + 1;
+  FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
+  using Geom = FindGeometricalType::Geom;
 
-  std::size_t const n = cellOffset + gis.cells.get() + 1;  // Total number of entries in the graph.
+  std::size_t const n = convert.numEntries();  // Total number of entries in the graph.
 
   std::size_t const numOwnedNodes = std::size( owned.n );
   std::size_t const numOwnedEdges = std::size( owned.e2n );
@@ -410,21 +432,21 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   otherGlbIdcs.reserve( numOther );
   for( NodeGlbIdx const & ngi: present.n )
   {
-    otherGlbIdcs.emplace_back( ngi.get() );
+    otherGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
   }
   for( auto const & [egi, _]: present.e2n )
   {
-    otherGlbIdcs.emplace_back( egi.get() + edgeOffset );
+    otherGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
   }
   for( auto const & [fgi, _]: present.f2e )
   {
-    otherGlbIdcs.emplace_back( fgi.get() + faceOffset );
+    otherGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
   }
   GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
 
   for( NodeGlbIdx const & ngi: owned.n )
   {
-    auto const i = ngi.get();
+    int const i = convert.fromNodeGlbIdx( ngi );
     ownedGlbIdcs.emplace_back( i );
     numEntriesPerRow.emplace_back( 1 );
     std::vector< int > const tmp( 1, ownedGlbIdcs.back() );
@@ -432,7 +454,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   }
   for( auto const & [egi, nodes]: owned.e2n )
   {
-    auto const i = egi.get() + edgeOffset;
+    int const i = convert.fromEdgeGlbIdx( egi );
     ownedGlbIdcs.emplace_back( i );
     numEntriesPerRow.emplace_back( std::tuple_size_v< decltype( nodes ) > + 1 );  // `+1` comes from the identity
     std::vector< int > const tmp{ int( std::get< 0 >( nodes ).get() ), int( std::get< 1 >( nodes ).get() ), ownedGlbIdcs.back() };
@@ -440,28 +462,28 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   }
   for( auto const & [fgi, edges]: owned.f2e )
   {
-    auto const i = fgi.get() + faceOffset;
+    int const i = convert.fromFaceGlbIdx( fgi );
     ownedGlbIdcs.emplace_back( i );
     numEntriesPerRow.emplace_back( std::size( edges ) + 1 );  // `+1` comes from the identity
     std::vector< int > tmp;
     tmp.reserve( numEntriesPerRow.back() );
     for( EdgeGlbIdx const & egi: edges )
     {
-      tmp.emplace_back( egi.get() + edgeOffset );
+      tmp.emplace_back( convert.fromEdgeGlbIdx( egi ) );
     }
     tmp.emplace_back( ownedGlbIdcs.back() );
     indices.emplace_back( tmp );
   }
   for( auto const & [cgi, faces]: owned.c2f )
   {
-    auto const i = cgi.get() + cellOffset;
+    int const i = convert.fromCellGlbIdx( cgi );
     ownedGlbIdcs.emplace_back( i );
     numEntriesPerRow.emplace_back( std::size( faces ) + 1 );  // `+1` comes from the identity
     std::vector< int > tmp;
     tmp.reserve( numEntriesPerRow.back() );
     for( FaceGlbIdx const & fgi: faces )
     {
-      tmp.emplace_back( fgi.get() + faceOffset );
+      tmp.emplace_back( convert.fromFaceGlbIdx( fgi ) );
     }
     tmp.emplace_back( ownedGlbIdcs.back() );
     indices.emplace_back( tmp );
@@ -565,8 +587,6 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
 //  int extractedEdges = 0;
 //  std::vector< double > extractedEdgesValues( n );
 //  std::vector< int > extractedEdgesIndices( n );
-  FindGeometricalType const getGeomType( edgeOffset, faceOffset, cellOffset );
-  using Geom = FindGeometricalType::Geom;
 
   Ownerships ownerships;
   for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
@@ -579,17 +599,17 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
       ownerships.neighbors.insert( owner );
     }
 
-    switch( getGeomType( index ) )
+    switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
       {
-        NodeGlbIdx const ngi = getGeomType.as< NodeGlbIdx >( index );
+        NodeGlbIdx const ngi = convert.toNodeGlbIdx( index );
         ownerships.nodes.emplace( ngi, owner );
         break;
       }
       case Geom::EDGE:
       {
-        EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
+        EdgeGlbIdx const egi = convert.toEdgeGlbIdx( index );
         ownerships.edges.emplace( egi, owner );
         // TODO make all the following check in on time with sets comparison instead of "point-wise" comparisons.
         // TODO same for the faces and cells...
@@ -601,7 +621,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
       }
       case Geom::FACE:
       {
-        FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
+        FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
         ownerships.faces.emplace( fgi, owner );
         if( owned.f2e.find( fgi ) == owned.f2e.cend() and present.f2e.find( fgi ) == present.f2e.cend() )
         {
@@ -611,7 +631,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
       }
       case Geom::CELL:
       {
-        CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
+        CellGlbIdx const cgi = convert.toCellGlbIdx( index );
         ownerships.cells.emplace( cgi, owner );
         if( owned.c2f.find( cgi ) == owned.c2f.cend() )
         {
@@ -670,36 +690,36 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
 //    GEOS_LOG( "ext 1 = " << std::size( s1 ) );
 //    GEOS_LOG_RANK( "ext = " << ext );
     int const index = missingIndices[i];
-    switch( getGeomType( index ) )
+    switch( convert.getGeometricalType( index ) )
     {
       case Geom::EDGE:
       {
         GEOS_ASSERT_EQ( ext, 2 );  // TODO check that val != 0?
-        EdgeGlbIdx const egi = getGeomType.as< EdgeGlbIdx >( index );
-        NodeGlbIdx const ngi0 = getGeomType.as< NodeGlbIdx >( extIndices[0] );
-        NodeGlbIdx const ngi1 = getGeomType.as< NodeGlbIdx >( extIndices[1] );
+        EdgeGlbIdx const egi = convert.toEdgeGlbIdx( index );
+        NodeGlbIdx const ngi0 = convert.toNodeGlbIdx( extIndices[0] );
+        NodeGlbIdx const ngi1 = convert.toNodeGlbIdx( extIndices[1] );
         ghosts.e2n[egi] = std::minmax( { ngi0, ngi1 } );
         break;
       }
       case Geom::FACE:
       {
         GEOS_ASSERT_EQ( ext, 4 );  // TODO temporary check for the dev
-        FaceGlbIdx const fgi = getGeomType.as< FaceGlbIdx >( index );
+        FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
         std::set< EdgeGlbIdx > & tmp = ghosts.f2e[fgi];
         for( int ii = 0; ii < ext; ++ii )
         {
-          tmp.insert( EdgeGlbIdx{ intConv< globalIndex >( extIndices[ii] - edgeOffset ) } );
+          tmp.insert( convert.toEdgeGlbIdx( extIndices[ii] ) );
         }
         break;
       }
       case Geom::CELL:
       {
         GEOS_ASSERT_EQ( ext, 6 );  // TODO temporary check for the dev
-        CellGlbIdx const cgi = getGeomType.as< CellGlbIdx >( index );
+        CellGlbIdx const cgi = convert.toCellGlbIdx( index );
         std::set< FaceGlbIdx > & tmp = ghosts.c2f[cgi];
         for( int ii = 0; ii < ext; ++ii )
         {
-          tmp.insert( FaceGlbIdx{ intConv< globalIndex >( extIndices[ii] - faceOffset ) } );
+          tmp.insert( convert.toFaceGlbIdx( extIndices[ii] ) );
         }
         break;
       }
