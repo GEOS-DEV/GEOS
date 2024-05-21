@@ -27,6 +27,9 @@ namespace geos
 namespace solidMechanicsALMKernels
 {
 
+/**
+ * @copydoc geos::finiteElement::ImplicitKernelBase
+ */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ALM :
@@ -34,13 +37,15 @@ class ALM :
                          FE_TYPE >
 {
 public:
-  /// Alias for the base class;
+  /// Alias for the base class.
   using Base = ALMKernelsBase< CONSTITUTIVE_TYPE,
                                FE_TYPE >;
   
-  
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. 
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
+  /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   using Base::m_elemsToFaces;
@@ -51,15 +56,15 @@ public:
   using Base::m_X;
   using Base::m_rotationMatrix;
   using Base::m_penalty;
-  using Base::m_traction;
   using Base::m_dispJump;
   using Base::m_oldDispJump;
   using Base::m_matrix;
   using Base::m_rhs;
-/*
-  using Base::m_finiteElementSpace;
-  */
 
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::InterfaceKernelBase::InterfaceKernelBase
+   */
   ALM( NodeManager const & nodeManager,
        EdgeManager const & edgeManager,
        FaceManager const & faceManager,
@@ -87,38 +92,43 @@ public:
           inputMatrix,
           inputRhs,
           inputDt,
-          faceElementList )
+          faceElementList ),
+    m_traction(elementSubRegion.getField< fields::contact::traction >().toViewConst())
 {}
 
+  //***************************************************************************
+
+  /**
+   * @copydoc finiteElement::KernelBase::StackVariables
+   */
   struct StackVariables: public Base::StackVariables
   {
-  public:
 
-    GEOS_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables()
-    {}
-/*    /// The number of displacement dofs per element.
+    /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
     /// The number of lagrange multiplier dofs per element.
     static constexpr int numTdofs = 3;
 
+    /// The number of bubble dofs per element.
+    static constexpr int numBdofs = 3*2;
+
   public:
-  
+
     GEOS_HOST_DEVICE
     StackVariables():
+      Base::StackVariables(),
       dispEqnRowIndices{},
       dispColIndices{},
+      bEqnRowIndices{},
+      bColIndices{},
       localRu{},
+      localRb{},
       localAutAtu{{}},
-      localAtu{{}},
-      localRotationMatrix{{}},
-      localPenalty{{}},
-      tLocal{},
-      dispJumpLocal{},
-      oldDispJumpLocal{},
-      X{}
+      localAbtAtb{{}},
+      localAbtAtu{{}},
+      localAutAtb{{}},
+      tLocal{}
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -127,36 +137,38 @@ public:
     /// C-array storage for the element local column degrees of freedom.
     globalIndex dispColIndices[numUdofs];
 
+    /// C-array storage for the element local row degrees of freedom.
+    globalIndex bEqnRowIndices[numBdofs];
+
+    /// C-array storage for the element local column degrees of freedom.
+    globalIndex bColIndices[numBdofs];
+
     /// C-array storage for the element local Ru residual vector.
     real64 localRu[numUdofs];
+
+    /// C-array storage for the element local Rb residual vector.
+    real64 localRb[numBdofs];
 
     /// C-array storage for the element local AutAtu matrix.
     real64 localAutAtu[numUdofs][numUdofs];
 
-    /// C-array storage for the element local Atu matrix.
-    real64 localAtu[numTdofs][numUdofs];
+    /// C-array storage for the element local AbtAtb matrix.
+    real64 localAbtAtb[numBdofs][numBdofs];
 
-    /// C-array storage for rotation matrix
-    real64 localRotationMatrix[3][3];
+    /// C-array storage for the element local AbtAtu matrix.
+    real64 localAbtAtu[numBdofs][numUdofs];
 
-    /// C-array storage for penalty matrix
-    real64 localPenalty[3][3];
+    /// C-array storage for the element local AbtAtu matrix.
+    real64 localAutAtb[numUdofs][numBdofs];
 
     /// Stack storage for the element local lagrange multiplier vector
     real64 tLocal[numTdofs];
 
-    /// Stack storage for the element local displacement jump vector
-    real64 dispJumpLocal[numTdofs];
-
-    /// Stack storage for the element local old displacement jump vector
-    real64 oldDispJumpLocal[numTdofs];
-
-    /// local nodal coordinates
-    real64 X[ numNodesPerElem ][ 3 ];
-
-*/
   };
 
+  //***************************************************************************
+
+  //START_kernelLauncher
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
@@ -168,6 +180,10 @@ public:
   }
   //END_kernelLauncher
 
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc ::geos::finiteElement::InterfaceKernelBase::setup
+   */
   GEOS_HOST_DEVICE
   inline
   void setup( localIndex const k,
@@ -179,11 +195,9 @@ public:
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      //localIndex const kn0_p = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
       localIndex const kn0 = m_faceToNodes( kf0, a );
       localIndex const kn1 = m_faceToNodes( kf1, a );
 
-      //std::cout << kn0 << " " << kn1 << std::endl;
       for( int i=0; i<3; ++i )
       {
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
@@ -191,7 +205,6 @@ public:
         stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
         stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
         stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ] ) ][ i ];
-        //stack.X[ a ][ i ] = m_X[ kn0 ][ i ];
       }
     }
 
@@ -203,9 +216,7 @@ public:
        }
     }
 
-    //LvArray::tensorOps::fill< stack.numTdofs, stack.numUdofs >( stack.localAtu, 0.0 );  //make 0
-    //LvArray::tensorOps::fill< stack.numUdofs, stack.numUdofs >( stack.localAutAtu, 0.0 );  //make 0
-
+    // The minus sign is consistent with the sign of the Jacobian
     stack.localPenalty[0][0] = -m_penalty(k, 0);
     stack.localPenalty[1][1] = -m_penalty(k, 1);
     stack.localPenalty[2][2] = -m_penalty(k, 1);
@@ -234,7 +245,6 @@ public:
   {
     GEOS_UNUSED_VAR( k );
 
-    //real64 matRtAtu[3][stack.numUdofs];
     real64 matRRtAtu[3][stack.numUdofs], matDRtAtu[3][stack.numUdofs];
     real64 matRRtAtb[3][stack.numBdofs], matDRtAtb[3][stack.numBdofs];
 
@@ -248,51 +258,40 @@ public:
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
                                                                stack.localAtu );
+    // transp(R) * Atb
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix, 
                                                                stack.localAtb );
 
+    // Compute the traction contribute of the local residuals
     LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
     LvArray::tensorOps::Ri_eq_AjiBj< stack.numBdofs, 3 >( tractionRb, matRRtAtb, stack.tLocal );
-
-    //std::cout << "matrixAtu: " << std::endl;
-    //for (int i=0; i<3; ++i)
-    //{
-    //  for (int j=0; j<stack.numUdofs; ++j)
-    //  {
-    //    std::cout << matRRtAtu[ i ] [ j ] << " ";
-    //  }
-    //  std::cout << std::endl;
-    //}
-    //std::cout << std::endl;
-    //for( localIndex i=0; i < stack.numUdofs; ++i )
-    //{
-    //  localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
-    //  std::cout << dof << " ";
-    //}
-    //std::cout << std::endl;
-    //abort();
 
     // D*RtAtu 
     LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matDRtAtu, stack.localPenalty, 
                                                                matRRtAtu );
+    // D*RtAtb 
     LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numBdofs, 3 >( matDRtAtb, stack.localPenalty, 
                                                                matRRtAtb );
 
     // R*RtAtu 
     LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
                                                                matDRtAtu );
+    // R*RtAtb 
     LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix, 
                                                                matDRtAtb );
 
     // transp(Atu)*RRtAtu
     LvArray::tensorOps::Rij_eq_AkiBkj< stack.numUdofs, stack.numUdofs, 3 >( stack.localAutAtu, stack.localAtu, 
                                                                             matRRtAtu); 
+    // transp(Atb)*RRtAtb
     LvArray::tensorOps::Rij_eq_AkiBkj< stack.numBdofs, stack.numBdofs, 3 >( stack.localAbtAtb, stack.localAtb, 
                                                                             matRRtAtb); 
 
+    // transp(Atb)*RRtAtu
     LvArray::tensorOps::Rij_eq_AkiBkj< stack.numBdofs, stack.numUdofs, 3 >( stack.localAbtAtu, stack.localAtb, 
                                                                             matRRtAtu); 
 
+    // transp(Atu)*RRtAtb
     LvArray::tensorOps::Rij_eq_AkiBkj< stack.numUdofs, stack.numBdofs, 3 >( stack.localAutAtb, stack.localAtu, 
                                                                             matRRtAtb); 
 
@@ -310,37 +309,16 @@ public:
     LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, dispJumpRb,  1 );
     LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, oldDispJumpRb, -1 );
                                                                           
-    //if (abs(stack.X[2][2] - 100) < 1.e-13 )
-    //{
-    //  std::cout << stack.X[2][0] << " " << stack.X[2][1] << " " << stack.X[2][2] << std::endl;
-    //  std::cout << stack.X[0][0] << " " << stack.X[0][1] << " " << stack.X[0][2] << std::endl;
-    //  for (int i=0; i<stack.numUdofs; ++i)
-    //  {
-    //    //for (int j=0; j<stack.numUdofs; ++j)
-    //    //{
-    //      std::cout << stack.localAutAtu[ i ] [ i ] << " ";
-    //    //}
-    //    std::cout << std::endl;
-    //  }
-    //  std::cout << std::endl;
-    //  abort();
-    //}
-
     for( localIndex i=0; i < stack.numUdofs; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      // Is it needed?
+      // Is it necessary? Each row should be indepenedent
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
-      //if (k==1)
-      //  std::cout << "Add elements: " << dof << " "; 
-      //for( localIndex j=0; j < stack.numUdofs; ++j )
-      //  std::cout << stack.dispColIndices[j] << " "; 
-      //std::cout << std::endl;
-      // fill in matrix
+      // Fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.dispColIndices,
                                                                               stack.localAutAtu[i],
@@ -358,9 +336,10 @@ public:
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      // Is it needed?
+      // Is it necessary? Each row should be indepenedent
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRb[i] );
 
+      // Fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.bColIndices,
                                                                               stack.localAbtAtb[i],
@@ -377,8 +356,11 @@ public:
 
 protected:
 
+  arrayView2d< real64 const > const m_traction;
+
 };
 
+/// The factory used to construct the kernel.
 using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
                                                           arrayView1d< globalIndex const > const,
                                                           arrayView1d< globalIndex const > const,
@@ -389,8 +371,20 @@ using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
                                                           arrayView1d< localIndex const > const >;
 
 
+/**
+ * @brief A struct to compute rotation matrices
+ */
 struct ComputeRotationMatricesKernel
 {
+
+  /**
+   * @brief Launch the kernel function to comute rotation matrices
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @param[in] size the size of the subregion
+   * @param[in] faceNormal the array of array containing the face to nodes map
+   * @param[in] elemsToFaces the array of array containing the element to faces map
+   * @param[out] rotationMatrix the array containing the rotation matrices
+   */
   template< typename POLICY >
   static void
   launch( localIndex const size,
@@ -405,7 +399,6 @@ struct ComputeRotationMatricesKernel
       localIndex const & f0 = elemsToFaces[k][0];
       localIndex const & f1 = elemsToFaces[k][1];
 
-      //stackArray1d< real64, 3 > Nbar( 3 );
       real64 Nbar[3];
       Nbar[0] = faceNormal[f0][0] - faceNormal[f1][0];
       Nbar[1] = faceNormal[f0][1] - faceNormal[f1][1];

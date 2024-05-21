@@ -27,6 +27,9 @@ namespace geos
 namespace solidMechanicsALMKernels
 {
 
+/**
+ * @copydoc geos::finiteElement::ImplicitKernelBase
+ */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ALMJumpUpdate :
@@ -38,6 +41,8 @@ public:
   using Base = ALMKernelsBase< CONSTITUTIVE_TYPE,
                                FE_TYPE >;
 
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. 
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::m_X;
@@ -48,6 +53,10 @@ public:
   using Base::m_rotationMatrix;
   using Base::m_dispJump;
 
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::InterfaceKernelBase::InterfaceKernelBase
+   */
   ALMJumpUpdate( NodeManager const & nodeManager,
                  EdgeManager const & edgeManager,
                  FaceManager const & faceManager,
@@ -85,14 +94,19 @@ public:
 
   //***************************************************************************
 
+  /**
+   * @copydoc finiteElement::KernelBase::StackVariables
+   */
   struct StackVariables : public Base::StackVariables
   {
 
     /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
+    /// The number of bubble dofs per element.
     static constexpr int numBdofs = 3 * 2;
 
+    /// The number of lagrange multiplier dofs per element.
     static constexpr int numTdofs = 3;
 
   public:
@@ -107,19 +121,26 @@ public:
       deltaDispJumpLocal{}
     {}
 
+    /// Stack storage for the element local displacement vector
     real64 uLocal[numUdofs];
 
+    /// Stack storage for the element local bubble displacement vector
     real64 bLocal[numBdofs];
 
+    /// Stack storage for the element local incremental displacement vector
     real64 duLocal[numUdofs];
 
+    /// Stack storage for the element local incremental bubble displacement vector
     real64 dbLocal[numBdofs];
 
+    /// Stack storage for the element local delta displacement jump vector
     real64 deltaDispJumpLocal[numTdofs];
 
   };
+
   //***************************************************************************
 
+  //START_kernelLauncher
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
@@ -131,6 +152,10 @@ public:
   }
   //END_kernelLauncher
 
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc ::geos::finiteElement::InterfaceKernelBase::setup
+   */
   GEOS_HOST_DEVICE
   inline
   void setup( localIndex const k,
@@ -142,18 +167,11 @@ public:
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      //localIndex const kn0 = m_faceToNodes( kf0, FE_TYPE::permutation[ a ] );
-      //localIndex const kn1 = m_faceToNodes( kf1, FE_TYPE::permutation[ a ] );
       localIndex const kn0 = m_faceToNodes( kf0, a );
       localIndex const kn1 = m_faceToNodes( kf1, a );
 
-      //std::cout << kn0 << " " << kn1 << std::endl;
       for( int i=0; i<3; ++i )
       {
-        //stack.dispEqnRowIndices[a*3+i] = m_dofNumber[kn0]+i-m_dofRankOffset;
-        //stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
-        //stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
-        //stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
         stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ]) ][ i ];
         stack.uLocal[a*3+i] = m_displacement[kn0][i];
         stack.uLocal[shift + a*3+i] = m_displacement[kn1][i];
@@ -178,11 +196,6 @@ public:
       stack.dbLocal[ 3 + i ] = m_incrBubbleDisp[ kf1 ][i];
     }
 
-    //for( int i=0; i<stack.numTdofs; ++i )
-    //{
-    //  stack.dispJumpLocal[i] = m_dispJump(k, i);
-    //  stack.oldDispJumpLocal[i] = m_oldDispJump(k, i);
-    //}
   }
 
   GEOS_HOST_DEVICE
@@ -191,26 +204,25 @@ public:
                    StackVariables & stack ) const
   {
 
-    //real64 matRtAtu[3][stack.numUdofs];
     real64 matRtAtu[3][stack.numUdofs];
     real64 matRtAtb[3][stack.numBdofs];
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRtAtu, stack.localRotationMatrix, 
                                                                stack.localAtu );
+    // transp(R) * Atb
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numBdofs, 3 >( matRtAtb, stack.localRotationMatrix, 
                                                                stack.localAtb );
 
+    // Compute the node contribute of the displacement and delta displacement jump
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );
     LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.deltaDispJumpLocal, matRtAtu, stack.duLocal );
 
-    //std::cout << "stack.jumpu: " << stack.dispJumpLocal[0] << std::endl;
-
+    // Compute the bubble contribute of the displacement and delta displacement jump
     LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.dispJumpLocal, matRtAtb, stack.bLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.deltaDispJumpLocal, matRtAtb, stack.dbLocal );
 
-    //std::cout << "stack.jumpb+u: " << stack.dispJumpLocal[0] << std::endl;
-
+    // Store the results
     for( int i=0; i<3; ++i )
     {
       m_dispJump[ k ][ i ] = stack.dispJumpLocal[ i ];
@@ -225,13 +237,16 @@ protected:
   /// The rank-global displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_displacement;
 
+  /// The rank-global bubble displacement array.
   arrayView2d< real64 const > const m_bubbleDisp;
 
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_incrDisp;
 
+  /// The rank-global incremental bubble displacement array.
   arrayView2d< real64 const > const m_incrBubbleDisp;
 
+  /// The rank-global delta displacement jump array.
   arrayView2d< real64 > const m_deltaDispJump;
 
 };

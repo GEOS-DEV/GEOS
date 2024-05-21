@@ -38,7 +38,6 @@ void accumulateAtuLocalOperator( real64 ( & matrix )[I_SIZE][J_SIZE],
                                  int const ( & perm )[NUM_NODES],
                                  real64 const detJ )
 {
-  //LvArray::tensorOps::fill< I_SIZE, J_SIZE >( matrix, 0 );  //make 0
   for( int a=0; a < NUM_NODES; ++a )
   {
     for( int i=0; i < I_SIZE; ++i )
@@ -76,7 +75,7 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
   }
 }
 
-}
+} // solidMechanicsALMKernelsHelper
 
 } // geosx
 

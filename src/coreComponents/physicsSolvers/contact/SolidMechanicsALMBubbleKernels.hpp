@@ -22,7 +22,8 @@
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsALMKernelsHelper.hpp"
 
-#include "finiteElement/BilinearFormUtilities.hpp"
+// TODO: Use the bilinear form utilities
+//#include "finiteElement/BilinearFormUtilities.hpp"
 
 namespace geos
 {
@@ -30,6 +31,11 @@ namespace geos
 namespace solidMechanicsALMKernels
 {
 
+/**
+ * @brief Implements kernels for solving quasi-static equilibrium.
+ * @copydoc geos::finiteElement::ImplicitKernelBase
+ *
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
@@ -44,10 +50,14 @@ public:
                                                                                    CONSTITUTIVE_TYPE,
                                                                                    FE_TYPE >;
 
+  /// Number of nodes per element, which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
+  /// Compile time value for the number of faces per element.
   static constexpr int numFacesPerElem = FE_TYPE::numFaces;
 
+  /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   using Base::m_X;
@@ -60,6 +70,10 @@ public:
   using Base::m_rhs;
   using Base::m_disp;
 
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   */
   ALMBubbleKernels( NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
@@ -93,14 +107,23 @@ public:
     m_elemsToFaces(elementSubRegion.faceElementsList() )
   {}
 
-  struct StackVariables  // it's better not to inherit all the stack variable. There is a lot of unused ones.
+  //***************************************************************************
+
+  /**
+   * @copydoc finiteElement::ImplicitKernelBase::StackVariables
+   */
+  struct StackVariables  
   {
 public:
-
+    /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3;
 
+    /// The number of jump dofs per element.
     static constexpr int numBubbleUdofs = numFacesPerElem * 3;
 
+    /**
+     * Default constructor
+     */
     GEOS_HOST_DEVICE
     StackVariables():
       dispEqnRowIndices{},
@@ -159,6 +182,16 @@ public:
 
   };
 
+  //***************************************************************************
+
+  /**
+   * @copydoc ::geos::finiteElement::KernelBase::kernelLaunch
+   *
+   * @detail it uses the kernelLaunch interface of KernelBase but it only launches the kernel
+   * on the set of elements that have bubble dof within the subregion.
+   *
+   */
+  //START_kernelLauncher
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
@@ -188,6 +221,7 @@ public:
 
     return maxResidual.get();
   }
+  //END_kernelLauncher
 
   GEOS_HOST_DEVICE
   inline
@@ -195,7 +229,6 @@ public:
               StackVariables & stack ) const
   {
     GEOS_MARK_FUNCTION;
-    //std::cout << "Start Setup" << std::endl;
 
     localIndex k = m_bubbleElems[kk];
 
@@ -213,7 +246,6 @@ public:
     }
 
     localIndex const localFaceIndex = m_elemsToFaces[kk][0];
-    //std::cout << "localFaceIndex" << localFaceIndex << std::endl;
 
     for( int i=0; i<3; ++i )
     {
@@ -222,7 +254,6 @@ public:
       stack.bColIndices[i]    = m_bDofNumber[localFaceIndex] + i;
       stack.bLocal[ i ] = m_bubbleDisp[ localFaceIndex ][i];
     }
-    //std::cout << "End Setup" << std::endl;
   }
 
 
@@ -239,9 +270,8 @@ public:
     constexpr int nBubbleUdof = numFacesPerElem*3;
 
     real64 dBubbleNdX[ numFacesPerElem ][ 3 ];
-    // It is needed only because I inserted a placeholder for calcGradFaceBubbleN in some finite elements
+    // Next line is needed because I only inserted a placeholder for calcGradFaceBubbleN in some finite elements
     LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );  //make 0
-    //
 
     real64 detJ = m_finiteElementSpace.template calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
 
@@ -281,17 +311,6 @@ public:
     //stack.bodyForce,
     //detJxW );
 
-
-    //for (int i=0; i<6; ++i)
-    //{
-    //  for (int j=0; j<nBubbleUdof; ++j)
-    //  {
-    //    std::cout << strainBubbleMatrix[i][j] << " ";
-    //  }
-    //  std::cout << std::endl;
-    //}
-    //abort();
-
     real64 matBD[nBubbleUdof][6];
     real64 Abb_gauss[nBubbleUdof][nBubbleUdof], Abu_gauss[nBubbleUdof][nUdof], Aub_gauss[nUdof][nBubbleUdof];
 
@@ -307,36 +326,10 @@ public:
     // transp(B)DBb
     tensorOps::transpose< nUdof, nBubbleUdof >( Aub_gauss, Abu_gauss );
 
-    //GEOS_UNUSED_VAR(Aub_gauss, Abu_gauss, Abb_gauss, matBD, detJ);
-
-    //real64 strainInc[6] = {0};
-    //FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
-
     // multiply by determinant and add to element matrix
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nBubbleUdof >( stack.localAbb, Abb_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nBubbleUdof, nUdof >( stack.localAbu, Abu_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nUdof, nBubbleUdof >( stack.localAub, Aub_gauss, -detJ );
-
-    /*std::cout << "Abb_gauss: " << std::endl;
-    for (int i=0; i<nBubbleUdof; ++i)
-    {
-      for (int j=0; j<nBubbleUdof; ++j)
-      {
-        std::cout << stack.localAbb[i][j] << " ";
-      }
-    std::cout << std::endl;
-    }
-    std::cout << "Abb_bilinear: " << std::endl;
-    for (int i=0; i<nBubbleUdof; ++i)
-    {
-      for (int j=0; j<nBubbleUdof; ++j)
-      {
-        std::cout << Abb_bilinear[i][j] << " ";
-      }
-    std::cout << std::endl;
-    }
-    abort();
-    */
 
   }
 
@@ -352,10 +345,8 @@ public:
 
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
 
-    //std::cout << "parentFaceIndex: " << parentFaceIndex << " " 
-    //          << stack.X[0][0] << " " << stack.X[1][0] << std::endl;
-
-
+    // Extract only the submatrix and known term corresponding to the index of the local face 
+    // on which the bubble function was applied. 
     real64 localAub[nUdof][3];
     real64 localAbu[3][nUdof];
     real64 localAbb[3][3];
@@ -381,20 +372,10 @@ public:
       }
     }
 
-
     // Compute the local residuals
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( localRb, localAbb, stack.bLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( localRb, localAbu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, localAub, stack.bLocal );
-
-    //real64 localAub[nUdof][3];
-    //for( localIndex i = 0; i < nUdof; ++i )
-    //{
-    //  for( localIndex j = 0; j < 3; ++j )
-    //  {
-    //    localAub[i][j] = stack.localAub[i][parentFaceIndex*3+j];
-    //  }
-    //}
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -403,17 +384,11 @@ public:
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
-      //real64 rowAub[3];
-      ///for( localIndex j = 0; j < 3; ++j )
-      //{
-      //  rowAub[j] = stack.localAub[i][parentFaceIndex*3+j];
-      //}
-
+      // fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.bColIndices,
                                                                               localAub[i],
                                                                               3 );
-      //GEOS_UNUSED_VAR( rowAub, dof );
 
     }
 
@@ -424,14 +399,6 @@ public:
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], localRb[i] );
-
-      //real64 rowAbb[3];
-      //for( localIndex j = 0; j < 3; ++j )
-      //{
-      //  rowAbb[j] = stack.localAbb[parentFaceIndex*3+i][parentFaceIndex*3+j];
-      //}
-
-      //GEOS_UNUSED_VAR( rowAbb, dof );
 
       // fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
@@ -444,20 +411,24 @@ public:
                                                                               localAbu[i],
                                                                               numNodesPerElem*3 );
     }
-
     
     return maxForce;
   }
 
 protected:
 
+  /// The array containing the bubble displacement.
   arrayView2d< real64 const > const m_bubbleDisp;
 
   /// The global degree of freedom number of bubble
   arrayView1d< globalIndex const > const m_bDofNumber;
 
+  /// The array containing the list of bubble elements.
   arrayView1d< localIndex const > const m_bubbleElems;
 
+  /// The array containing the element to bubble face map.
+  /// The bubble face is the face of the element to which the bubble is applied. 
+  /// Both the local and global face index are stored in this array.
   arrayView2d< localIndex const > const  m_elemsToFaces;
 
 };

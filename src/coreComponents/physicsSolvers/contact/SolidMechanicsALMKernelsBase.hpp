@@ -28,6 +28,11 @@ namespace geos
 namespace solidMechanicsALMKernels
 {
 
+/**
+ * @brief Implements kernels for ALM.
+ * @copydoc geos::finiteElement::InterfaceKernelBase
+ *
+ */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ALMKernelsBase :
@@ -41,8 +46,11 @@ public:
                                                    FE_TYPE, 
                                                    3, 3 >;
 
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
+  /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   using Base::m_dofNumber;
@@ -51,6 +59,10 @@ public:
   using Base::m_matrix;
   using Base::m_rhs;
 
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::InterfaceKernelBase::InterfaceKernelBase
+   */
   ALMKernelsBase( NodeManager const & nodeManager,
                   EdgeManager const & edgeManager,
                   FaceManager const & faceManager,
@@ -83,12 +95,15 @@ public:
     m_faceElementList(faceElementList),
     m_bDofNumber( bDofNumber ),
     m_rotationMatrix(elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
-    m_traction(elementSubRegion.getField< fields::contact::traction >().toViewConst()),
     m_dispJump( elementSubRegion.getField< fields::contact::dispJump >().toView() ),
     m_oldDispJump( elementSubRegion.getField< fields::contact::oldDispJump >().toViewConst() ),
     m_penalty( elementSubRegion.getField< fields::contact::penalty >().toViewConst() )
 {}
 
+  //***************************************************************************
+  /**
+   * @copydoc finiteElement::InterfaceKernelBase::StackVariables
+   */
   struct StackVariables  
   {
     /// The number of displacement dofs per element.
@@ -104,55 +119,14 @@ public:
   
     GEOS_HOST_DEVICE
     StackVariables():
-      dispEqnRowIndices{},
-      dispColIndices{},
-      bEqnRowIndices{},
-      bColIndices{},
-      localRu{},
-      localRb{},
-      localAutAtu{{}},
-      localAbtAtb{{}},
-      localAbtAtu{{}},
-      localAutAtb{{}},
       localAtu{{}},
       localAtb{{}},
       localRotationMatrix{{}},
       localPenalty{{}},
-      tLocal{},
       dispJumpLocal{},
       oldDispJumpLocal{},
       X{{}}
     {}
-
-    /// C-array storage for the element local row degrees of freedom.
-    globalIndex dispEqnRowIndices[numUdofs];
-
-    /// C-array storage for the element local column degrees of freedom.
-    globalIndex dispColIndices[numUdofs];
-
-    /// C-array storage for the element local row degrees of freedom.
-    globalIndex bEqnRowIndices[numBdofs];
-
-    /// C-array storage for the element local column degrees of freedom.
-    globalIndex bColIndices[numBdofs];
-
-    /// C-array storage for the element local Ru residual vector.
-    real64 localRu[numUdofs];
-
-    /// C-array storage for the element local Rb residual vector.
-    real64 localRb[numBdofs];
-
-    /// C-array storage for the element local AutAtu matrix.
-    real64 localAutAtu[numUdofs][numUdofs];
-
-    /// C-array storage for the element local AbtAtb matrix.
-    real64 localAbtAtb[numBdofs][numBdofs];
-
-    /// C-array storage for the element local AbtAtu matrix.
-    real64 localAbtAtu[numBdofs][numUdofs];
-
-    /// C-array storage for the element local AbtAtu matrix.
-    real64 localAutAtb[numUdofs][numBdofs];
 
     /// C-array storage for the element local Atu matrix.
     real64 localAtu[numTdofs][numUdofs];
@@ -166,9 +140,6 @@ public:
     /// C-array storage for penalty matrix
     real64 localPenalty[3][3];
 
-    /// Stack storage for the element local lagrange multiplier vector
-    real64 tLocal[numTdofs];
-
     /// Stack storage for the element local displacement jump vector
     real64 dispJumpLocal[numTdofs];
 
@@ -180,6 +151,13 @@ public:
 
   };
 
+  //***************************************************************************
+
+  /**
+   * @copydoc ::geos::finiteElement::InterfaceKernelBase::kernelLaunch
+   *
+   */
+  //START_kernelLauncher
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
@@ -196,13 +174,9 @@ public:
     forAll< POLICY >( kernelComponent.m_faceElementList.size(),
                       [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      //std::cout << "# QuadPoints: " << numQuadraturePointsPerElem << std::endl;
-      //std::cout << "# NodesperElem: " << numNodesPerElem << std::endl;
 
       localIndex k = kernelComponent.m_faceElementList[i];
       typename KERNEL_TYPE::StackVariables stack;
-
-      //std::cout << i << " " << k << std::endl;
 
       kernelComponent.setup( k, stack );
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
@@ -225,17 +199,16 @@ public:
     GEOS_UNUSED_VAR( k );
     real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight( q, stack.X );
 
-    //std::cout << "detJ: " << detJ << std::endl;
-
     real64 N[ numNodesPerElem ]; 
     m_finiteElementSpace.template calcN( q, N );
 
     real64 BubbleN[1]; 
-    // It is needed only because I inserted a placeholder for calcBubbleN in some finite elements
+    // Next line is needed because I only inserted a placeholder for calcBubbleN in some finite elements
     BubbleN[0]=0.0;  //make 0
     constexpr int bperm[1] = {0};
     m_finiteElementSpace.template calcBubbleN( q, BubbleN );
 
+    // TODO: Try using bilinear utilities to perform these two operations
     solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
                                                                stack.numUdofs, 
                                                                numNodesPerElem>(stack.localAtu, 
@@ -256,67 +229,31 @@ protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
+  /// The array of array containing the face to node map.
   ArrayOfArraysView< localIndex const > const m_faceToNodes; 
 
+  /// The array of array containing the element to face map.
   ArrayOfArraysView< localIndex const > const m_elemsToFaces;
 
+  /// The array containing the list of face element of the same type.
   arrayView1d< localIndex const > const m_faceElementList;
 
-  /// The global degree of freedom number of bubble
+  /// The global degree of freedom number of bubble.
   arrayView1d< globalIndex const > const m_bDofNumber;
 
+  /// The array containing the rotation matrix for each element.
   arrayView3d< real64 const > const m_rotationMatrix;
 
-  arrayView2d< real64 const > const m_traction;
-
+  /// The array containing the displacement jump.
   arrayView2d< real64 > const m_dispJump;
 
+  /// The array containing the displacement jump of previus time step.
   arrayView2d< real64 const > const m_oldDispJump;
 
+  /// The array containing the penalty coefficients for each element.
   arrayView2d< real64 const > const m_penalty;
 
 };
-
-/*
-using ALMFactory = finiteElement::InterfaceKernelFactory< ALMKernelsBase,
-                                                          arrayView1d< globalIndex const > const,
-                                                          globalIndex const,
-                                                          CRSMatrixView< real64, globalIndex const > const,
-                                                          arrayView1d< real64 > const,
-                                                          real64 const, 
-                                                          arrayView1d< localIndex const > const >;
-
-
-struct ComputeRotationMatricesKernel
-{
-  template< typename POLICY >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const > const & faceNormal,
-          ArrayOfArraysView< localIndex const > const & elemsToFaces,
-          arrayView3d< real64 > const & rotationMatrix )
-  {
-
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-
-      localIndex const & f0 = elemsToFaces[k][0];
-      localIndex const & f1 = elemsToFaces[k][1];
-
-      //stackArray1d< real64, 3 > Nbar( 3 );
-      real64 Nbar[3];
-      Nbar[0] = faceNormal[f0][0] - faceNormal[f1][0];
-      Nbar[1] = faceNormal[f0][1] - faceNormal[f1][1];
-      Nbar[2] = faceNormal[f0][2] - faceNormal[f1][2];
-
-      LvArray::tensorOps::normalize< 3 >( Nbar );
-      computationalGeometry::RotationMatrix_3D( Nbar, rotationMatrix[k] );
-
-    } );
-  }
-
-};
-*/
 
 } // namespace SolidMechanicsALMKernels
 
