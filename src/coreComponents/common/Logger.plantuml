@@ -129,7 +129,7 @@ class Group {
   - <color:Red><s>int m_logLevel</s></color>
 }
 GroupLogger [Group] .u..|> LoggingObject : implements
-Group "m_group\n1" *-u-- "m_logger\n1" GroupLogger
+Group *-u--> "m_logger\n1" GroupLogger
 
 GroupLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
 GroupLogger ..r.> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"

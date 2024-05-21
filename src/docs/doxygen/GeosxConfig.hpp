@@ -30,10 +30,10 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOS_USE_CUDA
+/* #undef GEOS_USE_CUDA */
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
@@ -81,7 +81,7 @@
 /// Denotes HYPRE using HIP
 #define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
@@ -168,7 +168,7 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+#define Python3_VERSION 3.9.13
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
