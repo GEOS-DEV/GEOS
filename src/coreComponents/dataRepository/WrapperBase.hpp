@@ -522,12 +522,12 @@ public:
   /**
    * @brief Construct the log level string description for a wrapper
    */
-  void buildLogLevelDescription()
+  void buildLogLevelDescription( std::map< std::string, std::vector< std::string > > & logLevelsDescriptions )
   {
     string descriptionToBuild;
     descriptionToBuild.append( "Sets the level of information to write in the standard output (the console typically).\n"
                                "A level of 0 outputs minimal information, higher levels require more." );
-    for( auto const & [logLevel, logDescriptions] : m_logLevelsDescriptions )
+    for( auto const & [logLevel, logDescriptions] : logLevelsDescriptions )
     {
       descriptionToBuild.append( logLevel );
       size_t idxDescription = 0;
@@ -549,24 +549,6 @@ public:
   string const & getDescription() const
   {
     return m_description;
-  }
-
-  /**
-   * @return The map of logs levels description
-   */
-  std::map< std::string, std::vector< std::string > > const & getlogLevelsDescriptions()
-  {
-    return m_logLevelsDescriptions;
-  }
-
-  /**
-   * @brief Add an entry to the description map
-   * @param levelToAppend The log level key
-   * @param descriptionToAppend The log description value
-   */
-  void addEntrieLogLevel( std::string levelToAppend, std::string descriptionToAppend )
-  {
-    m_logLevelsDescriptions[levelToAppend].push_back( descriptionToAppend );
   }
 
   /**
@@ -746,10 +728,6 @@ protected:
 
   /// A string description of the wrapped object
   string m_description;
-
-  /// Map for building the log level string for each wrapper
-  /// key : logLevel, values : description(s) for a level
-  std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
 
   /// A string regex to validate the input values string to parse for the wrapped object
   string m_rtTypeName;

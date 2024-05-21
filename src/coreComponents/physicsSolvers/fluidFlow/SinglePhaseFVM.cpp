@@ -61,9 +61,9 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
 {
   SinglePhaseBase::enableLogLevelInput();
 
-  SinglePhaseBase::appendLogLevel( { "logLevel >= 1", "Infos on the residual values" } );
-  SinglePhaseBase::appendLogLevel( { "logLevel >= 1 and first nonlinear iteration", "Infos about the face boundary condition defined with pressure" } );
-  SinglePhaseBase::appendLogLevel( { "logLevel >= 1 and first nonlinear iteration", "Infos about the face boundary condition defined with temperature" } );
+  SinglePhaseBase::appendLogLevelDescription("logLevel >= 1", "Infos on the residual values");
+  SinglePhaseBase::appendLogLevelDescription("logLevel >= 1 and first nonlinear iteration", "Infos about the face boundary condition defined with pressure");
+  SinglePhaseBase::appendLogLevelDescription("logLevel >= 1 and first nonlinear iteration", "Infos about the face boundary condition defined with temperature");
 }
 
 template< typename BASE >

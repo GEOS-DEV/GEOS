@@ -87,8 +87,8 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 
-  appendLogLevel( { "logLevel >= 1", "Informations on the residual values" } );
-  appendLogLevel( { "logLevel >= 1 and non first nonlinear iteration", "Infos about the face boundary conditions log" } );
+  appendLogLevelDescription("logLevel >= 1", "Informations on the residual values");
+  appendLogLevelDescription("logLevel >= 1 and non first nonlinear iteration", "Infos about the face boundary conditions log");
 }
 
 void CompositionalMultiphaseFVM::postProcessInput()

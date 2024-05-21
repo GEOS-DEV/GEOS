@@ -855,10 +855,11 @@ public:
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
   /**
-   * @brief Append a log level/description to the description of the wrapped object
-   * @param log An entry (log level/ log Description) to append
+   * @brief Append a levelCondition and a log description to the description of the wrapped object
+   * @param levelCondition The level condition to append
+   * @param logDescription The log description to append
    */
-  void appendLogLevel( std::pair< const std::string, const std::string > log );
+  void appendLogLevelDescription( std::string levelCondition, std::string logDescription );
 
   /**
    * @name Schema generation methods
@@ -1489,6 +1490,13 @@ public:
   ///@}
 
   /**
+   * @brief Add an entry to the description map
+   * @param level The log level key
+   * @param description The log description value
+   */
+  void addEntrieLogLevel( std::string const & level, std::string const & description );
+
+  /**
    * @brief Performs re-initialization of certain variable depending on the solver being used.
    */
   virtual void reinit() {}
@@ -1613,7 +1621,9 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  std::string m_logLevelDescription;
+  /// Map for building the log level string for each wrapper
+  /// key : logLevel, values : description(s) for a level
+  std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
 
   //END_SPHINX_INCLUDE_02
 

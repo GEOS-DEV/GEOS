@@ -64,7 +64,7 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  appendLogLevel( { "logLevel >= 1", "Infos on risidual norm (Rdisplacement, Rtraction, Rtotal)" } );
+  appendLogLevelDescription("logLevel >= 1", "Infos on risidual norm (Rdisplacement, Rtraction, Rtotal)");
 
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;

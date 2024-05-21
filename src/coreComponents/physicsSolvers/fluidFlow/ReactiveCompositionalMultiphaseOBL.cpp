@@ -115,11 +115,11 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-  appendLogLevel( { "logLevel >= 1", "Informations on the residuals values" } );
-  appendLogLevel( { "logLevel >= 1 first nonlinear iteration", "Infos about the source flux boundary conditions" } );
-  appendLogLevel( { "logLevel >= 1 first nonlinear iteration", "Infos about the boundary conditions" } );
-  appendLogLevel( { "logLevel >= 1 first nonlinear iteration", "Infos about the Dirichlet pressure boundary conditions" } );
-  appendLogLevel( { "logLevel >= 1 first nonlinear iteration", "Infos about the Dirichlet temperature boundary conditions" } );
+  appendLogLevelDescription("logLevel >= 1", "Informations on the residuals values");
+  appendLogLevelDescription("logLevel >= 1 first nonlinear iteration", "Infos about the source flux boundary conditions");
+  appendLogLevelDescription("logLevel >= 1 first nonlinear iteration", "Infos about the boundary conditions");
+  appendLogLevelDescription("logLevel >= 1 first nonlinear iteration", "Infos about the Dirichlet pressure boundary conditions");
+  appendLogLevelDescription("logLevel >= 1 first nonlinear iteration", "Infos about the Dirichlet temperature boundary conditions");
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
 }

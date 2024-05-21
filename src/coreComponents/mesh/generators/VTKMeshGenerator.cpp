@@ -75,9 +75,9 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 
-  appendLogLevel( { "logLevel >= 1", "Infos about cell block names" } );             
-  appendLogLevel( { "logLevel >= 2", "Infos about node sets names" } );             
-  appendLogLevel( { "logLevel >= 5", "Infos about redistribution" } );             
+  appendLogLevelDescription("logLevel >= 1", "Infos about cell block names");             
+  appendLogLevelDescription("logLevel >= 2", "Infos about node sets names");             
+  appendLogLevelDescription("logLevel >= 5", "Infos about redistribution");             
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
