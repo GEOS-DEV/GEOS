@@ -859,7 +859,7 @@ public:
    * @param levelCondition The level condition to append
    * @param logDescription The log description to append
    */
-  void appendLogLevelDescription( std::string levelCondition, std::string logDescription );
+  void appendLogLevelDescription( string_view levelCondition, string_view logDescription );
 
   /**
    * @name Schema generation methods
@@ -1494,7 +1494,7 @@ public:
    * @param level The log level key
    * @param description The log description value
    */
-  void addEntrieLogLevel( std::string const & level, std::string const & description );
+  void addLogLevelEntry( string_view level, string_view description );
 
   /**
    * @brief Performs re-initialization of certain variable depending on the solver being used.

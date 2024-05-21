@@ -79,23 +79,22 @@ void Group::deregisterWrapper( string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::addEntrieLogLevel( std::string const & level, std::string const & description )
+void Group::addLogLevelEntry( string_view level, string_view description )
 {
-  m_logLevelsDescriptions[level].push_back( description );
+  m_logLevelsDescriptions[string(level)].push_back( string(description) );
 }
 
-void Group::appendLogLevelDescription( std::string levelCondition, std::string logDescription )
+void Group::appendLogLevelDescription( string_view levelCondition, string_view logDescription )
 {
-  string logLevelName = viewKeyStruct::logLevelString();
-  levelCondition.insert( 0, "\n" ).append( "\n" );
-  if( !hasWrapper( logLevelName ) )
+  Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
+  if( wrapper == nullptr )
   {
-    enableLogLevelInput();
+    wrapper = &registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel );
+    wrapper->setApplyDefaultValue( 0 );
+    wrapper->setInputFlag( InputFlags::OPTIONAL );
   }
-
-  WrapperBase & wrapper = getWrapperBase( logLevelName );
-  addEntrieLogLevel( levelCondition, logDescription );
-  wrapper.buildLogLevelDescription( m_logLevelsDescriptions );
+  addLogLevelEntry( levelCondition, logDescription );
+  wrapper->buildLogLevelDescription( m_logLevelsDescriptions );
 }
 
 void Group::resize( indexType const newSize )

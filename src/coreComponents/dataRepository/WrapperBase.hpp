@@ -522,19 +522,19 @@ public:
   /**
    * @brief Construct the log level string description for a wrapper
    */
-  void buildLogLevelDescription( std::map< std::string, std::vector< std::string > > & logLevelsDescriptions )
+  void buildLogLevelDescription( std::map< std::string, std::vector< std::string > > const & logLevelsDescriptions )
   {
     string descriptionToBuild;
     descriptionToBuild.append( "Sets the level of information to write in the standard output (the console typically).\n"
                                "A level of 0 outputs minimal information, higher levels require more." );
     for( auto const & [logLevel, logDescriptions] : logLevelsDescriptions )
     {
-      descriptionToBuild.append( logLevel );
+      descriptionToBuild.append( GEOS_FMT( "\n{}\n", logLevel ) );
       size_t idxDescription = 0;
       for( const auto & description : logDescriptions )
       {
         idxDescription == logDescriptions.size() - 1 ? descriptionToBuild.append( " - " + description ) :
-        descriptionToBuild.append( " - " + description + "\n" );
+        descriptionToBuild.append( GEOS_FMT( " - {}\n", description ) );
         idxDescription++;
       }
     }
