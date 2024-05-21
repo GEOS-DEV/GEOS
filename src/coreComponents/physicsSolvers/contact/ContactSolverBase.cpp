@@ -42,7 +42,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
-  
+
 
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
@@ -50,7 +50,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos about number of elements for each fracture states");
+  appendLogLevelDescription( "logLevel >= 1", "Infos about number of elements for each fracture states" );
 }
 
 void ContactSolverBase::postProcessInput()

@@ -80,7 +80,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
 {
   Base::
 
-  registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
+    registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the surface generator to use in the hydrofracture solver" );
@@ -109,7 +109,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  Base::appendLogLevelDescription("logLevel >= 1", "Output whether or not we Re-entering Newton Solve");
+  Base::appendLogLevelDescription( "logLevel >= 1", "Output whether or not we Re-entering Newton Solve" );
 
   m_numResolves[0] = 0;
 

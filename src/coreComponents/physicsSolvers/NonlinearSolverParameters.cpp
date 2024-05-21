@@ -164,7 +164,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos about NonLinearSolver parameters");
+  appendLogLevelDescription( "logLevel >= 1", "Infos about NonLinearSolver parameters" );
 
 }
 

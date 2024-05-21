@@ -49,7 +49,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
   CompositionalMultiphaseBase( name, parent ),
   m_lengthTolerance( 0 )
 {
-  appendLogLevelDescription("logLevel >= 1", "Infos on the residual values");
+  appendLogLevelDescription( "logLevel >= 1", "Infos on the residual values" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
 }

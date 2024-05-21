@@ -59,8 +59,8 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
 
-  appendLogLevelDescription("logLevel >= 1", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects");
-  appendLogLevelDescription("logLevel >= 1", "Infos about boundary conditions");
+  appendLogLevelDescription( "logLevel >= 1", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
+  appendLogLevelDescription( "logLevel >= 1", "Infos about boundary conditions" );
 }
 
 

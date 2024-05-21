@@ -51,7 +51,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos on residual norm for each fractures");
+  appendLogLevelDescription( "logLevel >= 1", "Infos on residual norm for each fractures" );
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()

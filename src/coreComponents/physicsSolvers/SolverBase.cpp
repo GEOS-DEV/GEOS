@@ -89,13 +89,13 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos on line search");
-  appendLogLevelDescription("logLevel >= 1", "Infos on global solution scaling factor");
-  appendLogLevelDescription("logLevel >= 1", "Output about the timestep");
-  appendLogLevelDescription("logLevel >= 2", "Output to screen the assembled linear system (matrices and vectors)");
-  appendLogLevelDescription("logLevel >= 2", "Output to screen the assembled linear solutions (matrices and vectors)");
-  appendLogLevelDescription("logLevel >= 3", "Output to file the assembled linear system (matrices and vectors)");
-  appendLogLevelDescription("logLevel >= 3", "Output to file the assembled linear solutions (matrices and vectors)");
+  appendLogLevelDescription( "logLevel >= 1", "Infos on line search" );
+  appendLogLevelDescription( "logLevel >= 1", "Infos on global solution scaling factor" );
+  appendLogLevelDescription( "logLevel >= 1", "Output about the timestep" );
+  appendLogLevelDescription( "logLevel >= 2", "Output to screen the assembled linear system (matrices and vectors)" );
+  appendLogLevelDescription( "logLevel >= 2", "Output to screen the assembled linear solutions (matrices and vectors)" );
+  appendLogLevelDescription( "logLevel >= 3", "Output to file the assembled linear system (matrices and vectors)" );
+  appendLogLevelDescription( "logLevel >= 3", "Output to file the assembled linear solutions (matrices and vectors)" );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );

@@ -37,7 +37,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   , m_nDims( 3 )
   , m_polylineHeadNodeId( -1 )
 {
-  
+
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -73,7 +73,7 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos about Internal wells and their perforations");
+  appendLogLevelDescription( "logLevel >= 1", "Infos about Internal wells and their perforations" );
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )

@@ -81,7 +81,7 @@ void Group::deregisterWrapper( string const & name )
 
 void Group::addLogLevelEntry( string_view level, string_view description )
 {
-  m_logLevelsDescriptions[string(level)].push_back( string(description) );
+  m_logLevelsDescriptions[string( level )].push_back( string( description ) );
 }
 
 void Group::appendLogLevelDescription( string_view levelCondition, string_view logDescription )

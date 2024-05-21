@@ -102,11 +102,11 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos on residual values");
-  appendLogLevelDescription("logLevel >= 1", "Output well rates to a simple csv file");
-  appendLogLevelDescription("logLevel >= 2", "Infos on the BHP pressure");
-  appendLogLevelDescription("logLevel >= 2", "Infos on the surface density");
-  appendLogLevelDescription("logLevel >= 2 and use surface conditions", "Infos about the phase and total density in the reference element");
+  appendLogLevelDescription( "logLevel >= 1", "Infos on residual values" );
+  appendLogLevelDescription( "logLevel >= 1", "Output well rates to a simple csv file" );
+  appendLogLevelDescription( "logLevel >= 2", "Infos on the BHP pressure" );
+  appendLogLevelDescription( "logLevel >= 2", "Infos on the surface density" );
+  appendLogLevelDescription( "logLevel >= 2 and use surface conditions", "Infos about the phase and total density in the reference element" );
 }
 
 void CompositionalMultiphaseWell::postProcessInput()

@@ -34,10 +34,10 @@ MeshManager::MeshManager( string const & name,
                           Group * const parent ):
   Group( name, parent )
 {
-  
+
   setInputFlags( InputFlags::REQUIRED );
 
-  appendLogLevelDescription("logLevel >= 1", "Infos about imported field name on region/subRegion");
+  appendLogLevelDescription( "logLevel >= 1", "Infos about imported field name on region/subRegion" );
 }
 
 MeshManager::~MeshManager()
