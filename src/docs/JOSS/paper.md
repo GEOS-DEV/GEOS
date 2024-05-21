@@ -38,6 +38,8 @@ authors:
     affiliation: 1
   - name: Stefano Frambati
     affiliation: 2
+  - name: Jacques Franc
+    affiliation: 3
   - name: Andrea Franceschini
     affiliation: 3
   - name: Matteo Frigo
