@@ -55,16 +55,18 @@ protected:
   /**
    * @brief Constructor for the class performing the thermal conductivity updates
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
-   * @param dEffectiveConductivity_dPhaseVolFrac the array of cell-wise derivatives of effective conductivities wrt phase vol fractions in
-   * the subregion
    */
-  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity )
-    : m_effectiveConductivity( effectiveConductivity )
+  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                            arrayView3d< real64 > const & dEffectiveConductivity_dT )
+    : m_effectiveConductivity( effectiveConductivity ),
+      m_dEffectiveConductivity_dT( dEffectiveConductivity_dT )
   {}
 
   /// View on the cell-wise effective conductivities
   arrayView3d< real64 > m_effectiveConductivity;
-
+  
+  /// View on the derivative of effective conductivities w.r.t. temperature
+  arrayView3d< real64 > m_dEffectiveConductivity_dT;
 private:
 
   /**
@@ -130,6 +132,12 @@ public:
    */
   arrayView3d< real64 const > effectiveConductivity() const { return m_effectiveConductivity; }
 
+  /**
+   * @brief Getter for the derivative of effective conductivities in the subRegion w.r.t. temperature
+   * @return an arrayView of derivative of effective conductivities w.r.t. temperature
+   */
+  arrayView3d< real64 const > dEffectiveConductivity_dT() const { return m_dEffectiveConductivity_dT; }
+
 private:
 
   /**
@@ -146,6 +154,8 @@ protected:
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;
 
+  /// Derivative of effective conductivities w.r.t. temperature
+  array3d< real64 > m_dEffectiveConductivity_dT;
 };
 
 } // namespace constitutive

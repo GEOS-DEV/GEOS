@@ -2706,6 +2706,8 @@
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseThermalConductivityType">
+		<!--dEffectiveConductivity_dT => Derivative of effective conductivity w.r.t. temperature-->
+		<xsd:attribute name="dEffectiveConductivity_dT" type="real64_array3d" />
 		<!--effectiveConductivity => Effective conductivity-->
 		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
 	</xsd:complexType>

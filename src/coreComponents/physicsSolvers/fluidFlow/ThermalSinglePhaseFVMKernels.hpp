@@ -90,7 +90,8 @@ public:
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity,
+                              fields::thermalconductivity::dEffectiveConductivity_dT >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -135,7 +136,7 @@ public:
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ) // TODO to replace by dThermalCond_dT
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -547,7 +548,8 @@ public:
 
   using ThermalConductivityAccessors =
     StencilMaterialAccessors< SinglePhaseThermalConductivityBase,
-                              fields::thermalconductivity::effectiveConductivity >;
+                              fields::thermalconductivity::effectiveConductivity,
+                              fields::thermalconductivity::dEffectiveConductivity_dT >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -600,7 +602,7 @@ public:
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ) //TODO to repalce by dThermalCond_dT
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) ) 
   {}
 
 
@@ -698,7 +700,7 @@ public:
                                        dThermalTrans_dThermalCond );
 
       real64 const dThermalTrans_dT = LvArray::tensorOps::AiBi< 3 >( dThermalTrans_dThermalCond, m_dThermalCond_dT[er][esr][ei][0] );
- 
+ std::cout << m_dThermalCond_dT[er][esr][ei][0][0] << std::endl;
       real64 const deltaT = m_temp[er][esr][ei] - m_faceTemp[kf];
       stack.energyFlux += thermalTrans * deltaT;
       stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;

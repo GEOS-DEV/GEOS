@@ -40,10 +40,12 @@ public:
    * the subregion
    */
   SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
-                                                R1Tensor const defaultThermalConductivityComponents,
-                                                R1Tensor const thermalConductivityGradientComponents,
-                                                real64 const referenceTemperature )
-    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity ),
+                                        arrayView3d< real64 > const & dEffectiveConductivity_dT,
+                                        R1Tensor const defaultThermalConductivityComponents,
+                                        R1Tensor const thermalConductivityGradientComponents,
+                                        real64 const referenceTemperature )
+    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity,
+                                                dEffectiveConductivity_dT ),
     m_defaultThermalConductivityComponents(defaultThermalConductivityComponents),
     m_thermalConductivityGradientComponents(thermalConductivityGradientComponents),
     m_referenceTemperature(referenceTemperature)
@@ -65,6 +67,10 @@ public:
     m_effectiveConductivity[k][q][0] = m_defaultThermalConductivityComponents[0] + m_thermalConductivityGradientComponents[0] * deltaTemperature;
     m_effectiveConductivity[k][q][1] = m_defaultThermalConductivityComponents[1] + m_thermalConductivityGradientComponents[1] * deltaTemperature;
     m_effectiveConductivity[k][q][2] = m_defaultThermalConductivityComponents[2] + m_thermalConductivityGradientComponents[2] * deltaTemperature;
+
+    m_dEffectiveConductivity_dT[k][q][0] = m_thermalConductivityGradientComponents[0];
+    m_dEffectiveConductivity_dT[k][q][1] = m_thermalConductivityGradientComponents[1];
+    m_dEffectiveConductivity_dT[k][q][2] = m_thermalConductivityGradientComponents[2];
   }
 
 private:
@@ -77,6 +83,7 @@ private:
 
   /// Reference temperature
   real64 m_referenceTemperature;
+
 };
 
 /**
@@ -114,6 +121,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_effectiveConductivity,
+                          m_dEffectiveConductivity_dT,
                           m_defaultThermalConductivityComponents,
                           m_thermalConductivityGradientComponents,
                           m_referenceTemperature );
