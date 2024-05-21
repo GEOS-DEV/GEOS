@@ -105,20 +105,20 @@ bibliography: paper.bib
 
 # Summary
 
-GEOS is a simulation framework focused solving tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
-Currently GEOS actively supports implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
+GEOS is a simulation framework focused on solving tightly-coupled multi-physics problems with an initial emphasis on subsurface reservoir applications.
+Currently GEOS actively supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
 The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
 Extensive documentation is available on Read the Docs [@GEOS_RTD].
-Note that the version of GEOS described here should be considered a separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
+Note that GEOS as described here is a completely separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
 
 # Statement of need
 
-The increasing threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
+The threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
 Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals. 
 Given the 2050 net-zero GHG goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
-The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when developing new storage sites.
+The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when evaluating new storage sites.
 The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir. 
-Thus, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
+To this end, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
 
 # GEOS Components 
 
