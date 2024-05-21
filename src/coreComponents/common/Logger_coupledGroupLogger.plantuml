@@ -1,0 +1,142 @@
+@startuml Logger Class
+
+set namespaceSeparator ::
+
+
+' Message Data Structure
+
+
+enum LogLevel <<enum>> {
+  Important = 0
+  Progress = 1
+  Detailed = 2
+  Trace = 3
+  Debug = 4
+  DebugTrace = 5
+
+  Silent = -1
+}
+
+enum LogMsgType <<enum>> {
+  Info
+  Warning
+  Error
+  Stats?
+  Iteration?
+  ...?
+}
+
+struct SourceFileLocation <<struct>> {
+  + string m_sourceFile
+  + int m_line
+}
+
+struct LogMsgParams <<struct>> #text:DarkGreen {
+}
+note left: Parameters of the log call.
+
+struct LogMsgContext <<struct>> #text:Blue {
+  -- General Context --
+  + integer m_rank
+  + SystemClock m_rankTimeStamp
+  + string m_logSectionTitle
+  + real64 m_timeStepStart
+  -- Sender Context --
+  + string m_senderName
+  + string m_senderDataContext
+}
+note bottom: Context data collected by the LoggingObject.\nData could be a map<string,string>
+
+struct LogMsg <<struct>> #text:OrangeRed {
+  + string m_text
+}
+note right: Message data structure.
+
+LogMsgParams *--> "1" SourceFileLocation
+LogMsgParams *--> "1" LogMsgType
+LogMsgParams *--> "1" LogLevel
+LogMsg *--> "1" LogMsgContext
+LogMsgContext *--> "1" LogMsgParams
+
+
+' Log outputs
+
+interface LogOutput <<interface>> #text:Purple {
+  + {static} LogOutput s_main
+  + void log( <color:OrangeRed>LogMsg message</color> )
+}
+<> LogOutputImplementations
+LogOutput <|.. LogOutputImplementations : implements
+
+class LogCompositeOutput {
+  + addOutput( <color:Purple>LogOutput logOutput</color> )
+}
+LogOutputImplementations .. LogCompositeOutput
+LogCompositeOutput *---> "1..n\nm_subOutputs" LogOutput #OrangeRed;text:OrangeRed : routes to
+
+class LogHDF5Output {
+  - hid_t file_id
+  - ...
+}
+LogOutputImplementations .. LogHDF5Output
+
+class LogTextOutput {
+  - std::ostream * m_outStream
+}
+LogOutputImplementations .. LogTextOutput
+
+LogTextOutput .l[hidden].. LogHDF5Output
+LogHDF5Output .l[hidden].. LogCompositeOutput
+
+
+' Message Producers
+
+interface LoggingObject <<interface>> {
+  + void setLogLevel( LogLevel objectLevel )
+  + void log( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logIf( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logRank0( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logRank0If( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + <color:Blue>LogMsgContext createMsgContext</color>( <color:DarkGreen>LogMsgParams msgParams</color> )
+}
+note right: Interface for producer of LogMsg structures.\nArguments are translated to text and concatenated.\nDefaultValue for logOutput is the main LogCompositeOutput.
+
+
+
+class GeneralLogger {
+  -- Global Variables --
+  + {static} GeneralLogger logger
+  -- General Logging --
+  - LogLevel m_generalLogLevel
+  -- General Context --
+  - int m_rank
+  - int m_ranksCount
+  - real64 m_timeStepStart
+  - string m_logSectionTitle
+}
+note bottom: "logger" is a global instance for general messages.\nGeneral context data could be pre-transformed to string.
+GeneralLogger ..u.|> LoggingObject : implements
+GeneralLogger ..d.> LogMsg : Produces
+GeneralLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
+
+
+class GroupLogger {
+  - LogLevel m_logLevel
+}
+class Group {
+  + string getName()
+  + string getDataContext()
+  - <color:Red><s>int m_logLevel</s></color>
+}
+GroupLogger .u..|> LoggingObject : implements
+Group "m_group\n1" *-u-- "m_logger\n1" GroupLogger
+
+GroupLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
+GroupLogger ..r.> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
+GroupLogger ..d.> LogMsg : Produces
+
+
+
+
+
+@enduml

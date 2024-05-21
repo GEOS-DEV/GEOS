@@ -91,13 +91,13 @@ LogHDF5Output .l[hidden].. LogCompositeOutput
 
 ' Message Producers
 
-interface LoggingObject<SUBJECT_TYPE> <<interface>> {
+interface LoggingObject<SUBJECT_T> <<interface>> {
   + void setLogLevel( LogLevel objectLevel )
   + void log( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
   + void logIf( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
   + void logRank0( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
   + void logRank0If( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
-  + <color:Blue>LogMsgContext createMsgContext</color>( <color:DarkGreen>LogMsgParams msgParams</color>, SUBJECT_TYPE subject )
+  + <color:Blue>LogMsgContext createMsgContext</color>( <color:DarkGreen>LogMsgParams msgParams</color>, SUBJECT_T subject )
 }
 note right: Interface for producer of LogMsg structures.\nArguments are translated to text and concatenated.\nDefaultValue for logOutput is the main LogCompositeOutput.
 
@@ -129,7 +129,7 @@ class Group {
   - <color:Red><s>int m_logLevel</s></color>
 }
 GroupLogger [Group] .u..|> LoggingObject : implements
-Group *-u--> "m_logger\n1" GroupLogger
+Group "m_group\n1" *-u-- "m_logger\n1" GroupLogger
 
 GroupLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
 GroupLogger ..r.> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
