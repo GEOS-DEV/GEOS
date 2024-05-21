@@ -3,34 +3,7 @@
 set namespaceSeparator ::
 
 
-
-class LoggingObject {
-  - int m_logLevel
-
-  + void setLogLevel( LogLevel objectLevel )
-  + void log( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
-  + void logIf( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
-  + void logRank0( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
-  + void logRank0If( <color:Blue>LogMsgContext msgCtx</color>, <color:OrangeRed>auto ... args</color> )
-}
-
-
-class Logger {
-  - m_problemLogLevel : LogLevel
-  - m_rank : int
-  - m_ranksCount : int
-  - m_outStream : std::ostream *
-
-  + void setRankOutputToStream( std::ostream * stream )
-  + void setRankOutputToFile( string_view output_dir = "" )
-}
-LoggingObject <|-d- Logger
-
-
-class dataRepository::Group {
-  - <color:Red><s>int m_logLevel</s></color>
-}
-LoggingObject <|-d- dataRepository::Group
+' Message Data Structure
 
 
 enum LogLevel <<enum>> {
@@ -42,22 +15,115 @@ enum LogLevel <<enum>> {
   Debug
   DebugTrace
 }
+
 enum LogMsgType <<enum>> {
   Info
   Warning
   Error
-  Stats
-  Iteration
-  ...
+  Stats?
+  Iteration?
+  ...?
 }
-struct LogMsgContext <<struct>> #text:Blue {
+
+struct SourceFileLocation <<struct>> {
   + string m_sourceFile
   + int m_line
 }
-LogMsgContext *-l-- "1" LogMsgType
-LogMsgContext *-r-- "1" LogLevel
 
-Logger -d[hidden]-> LogMsgContext
+struct LogMsgParams <<struct>> {
+}
+note left: Parameters of the log call.
+
+struct LogMsgContext <<struct>> #text:Blue {
+  -- General metadata --
+  - integer m_rank
+  + SystemClock m_rankTimeStamp
+  + string m_logSectionTitle
+  + real64 m_timeStepStart
+  -- Group metadata --
+  + string m_groupName
+  + string m_dataContext
+}
+note bottom: Context data collected by the LoggingObject.
+
+struct LogMsg <<struct>> #text:OrangeRed {
+  + string m_text
+}
+note left: Message data structure.
+
+LogMsgParams *-- "1" SourceFileLocation
+LogMsgParams *-- "1" LogMsgType
+LogMsgParams *-- "1" LogLevel
+LogMsg *-- "1" LogMsgContext
+LogMsgContext *-- "1" LogMsgParams
+
+
+' Log outputs
+
+
+interface LogOutput <<interface>> #text:Purple {
+  + {static} LogOutput s_main
+  + void log( <color:OrangeRed>LogMsg message</color> )
+}
+
+class LogCompositeOutput {
+  + addOutput( <color:Purple>LogOutput logOutput</color> )
+}
+LogOutput <|... LogCompositeOutput : implements
+LogCompositeOutput *--- "1..n" LogOutput #OrangeRed;text:OrangeRed : route messages to\nsub loggers
+
+class LogHDF5Output {
+  - hid_t file_id
+  - ...
+}
+LogOutput <|... LogHDF5Output : implements
+
+class LogTextOutput {
+  - std::ostream * m_outStream
+}
+LogOutput <|... LogTextOutput : implements
+
+
+' Message Producers
+
+interface LoggingObject <<interface>> {
+  + void setLogLevel( LogLevel objectLevel )
+  + <color:Blue>MsgContext</color> createMsgContext()
+  + void log( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logIf( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logRank0( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  + void logRank0If( <color:Blue>LogMsgContext msgCtx</color>, <color:DarkRed>auto ... arguments</color>, <color:Purple>LogOutput logOutput = <u>main</u></color> )
+  }
+note right: Interface for producer of LogMsg structures.\nArguments are translated to text and concatenated.\nDefaultValue for logOutput is the main LogCompositeOutput.
+
+
+
+class GeneralLogger {
+  - LogLevel m_generalLogLevel
+  - int m_rank
+  - int m_ranksCount
+}
+note top: Logger for general messages,\nRouter for other LoggingObject messages,\nSends the messages to the LoggerOutput objects.
+GeneralLogger ..u.|> LoggingObject : implements
+GeneralLogger .d.> LogMsg : Produces
+GeneralLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
+
+
+package dataRepository {
+  class GroupLogger {
+    - int m_logLevel
+  }
+  class Group {
+    - <color:Red><s>int m_logLevel</s></color>
+  }
+  GroupLogger ..u.|> LoggingObject : implements
+  Group *-r-- "1" GroupLogger
+}
+dataRepository::GroupLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
+dataRepository::GroupLogger .d.> LogMsg : Produces
+
+
+
 
 
 @enduml

@@ -69,6 +69,13 @@ struct LogMsgParams
   LogLevel m_logLevel;
 };
 
+struct LogMsgContext
+{
+  SourceCodeLocation m_location;
+  LogMsgType m_type;
+  LogLevel m_logLevel;
+};
+
 #define GEOS_LOG_MSG_CONTEXT( type, logLevel ) LogMsgParams( GEOS_SRCLOC(), type, logLevel )
 
 #define GEOS_INFO_IMPORTANT       GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Important )
@@ -97,15 +104,19 @@ struct LogMsgParams
 struct LogMsg
 {
   string m_text;
-  LogMsgParams m_params;
 
-  // message context info
+  // message metadata
+  LogMsgParams m_params;
+  integer m_rank;
   // TODO : SystemClock m_rankTimeStamp;
-  // TODO : string m_groupName;
-  // TODO : string m_dataContext; 
   // TODO : string m_logSectionTitle;
   // TODO : real64 m_timeStepStart;
-  // TODO : convergence info?
+  
+  // Group metadata
+  // TODO : string m_groupName;
+  // TODO : string m_dataContext; 
+  
+  // TODO : convergence metadata?
 };
 
 
