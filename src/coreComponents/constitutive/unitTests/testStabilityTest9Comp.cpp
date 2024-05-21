@@ -14,7 +14,7 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/StabilityFlash.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
@@ -36,16 +36,16 @@ using FlashData = std::tuple<
   >;
 
 template< typename EOS_TYPE >
-class StabilityFlashTest9CompFixture :  public ::testing::TestWithParam< FlashData >
+class StabilityTestTest9CompFixture :  public ::testing::TestWithParam< FlashData >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
 public:
-  StabilityFlashTest9CompFixture()
+  StabilityTestTest9CompFixture()
     : m_fluid( createFluid() )
   {}
 
-  ~StabilityFlashTest9CompFixture() = default;
+  ~StabilityTestTest9CompFixture() = default;
 
   void testFlash( FlashData const & data )
   {
@@ -58,7 +58,7 @@ public:
 
     real64 const expectedTangentPlaneDistance = std::get< 3 >( data );
 
-    real64 const tangentPlaneDistance = StabilityFlash::compute< EOS_TYPE >(
+    real64 const tangentPlaneDistance = StabilityTest::compute< EOS_TYPE >(
       numComps,
       pressure,
       temperature,
@@ -76,7 +76,7 @@ private:
 };
 
 template< typename EOS_TYPE >
-std::unique_ptr< TestFluid< numComps > > StabilityFlashTest9CompFixture< EOS_TYPE >::createFluid()
+std::unique_ptr< TestFluid< numComps > > StabilityTestTest9CompFixture< EOS_TYPE >::createFluid()
 {
   std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {0, 0, 0, 0, 0, 0, 0, 0, 0} );
   // Manually populate
@@ -99,13 +99,13 @@ std::unique_ptr< TestFluid< numComps > > StabilityFlashTest9CompFixture< EOS_TYP
   return fluid;
 }
 
-using PengRobinson = StabilityFlashTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
-using SoaveRedlichKwong = StabilityFlashTest9CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
-TEST_P( PengRobinson, testStabilityFlash )
+using PengRobinson = StabilityTestTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
+using SoaveRedlichKwong = StabilityTestTest9CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+TEST_P( PengRobinson, testStabilityTest )
 {
   testFlash( GetParam() );
 }
-TEST_P( SoaveRedlichKwong, testStabilityFlash )
+TEST_P( SoaveRedlichKwong, testStabilityTest )
 {
   testFlash( GetParam() );
 }
@@ -117,7 +117,7 @@ TEST_P( SoaveRedlichKwong, testStabilityFlash )
 /* UNCRUSTIFY-OFF */
 
 INSTANTIATE_TEST_SUITE_P(
-  StabilityFlash, PengRobinson,
+  StabilityTest, PengRobinson,
   ::testing::Values(
     FlashData(1.0000e+05, 2.8815e+02, {9.000e-03, 3.000e-03, 5.347e-01, 1.146e-01, 8.790e-02, 4.560e-02, 2.090e-02, 1.510e-02, 1.692e-01}, -2.66835962e+03),
     FlashData(1.0000e+05, 2.9715e+02, {9.000e-03, 3.000e-03, 5.347e-01, 1.146e-01, 8.790e-02, 4.560e-02, 2.090e-02, 1.510e-02, 1.692e-01}, -1.24587294e+03),
@@ -333,7 +333,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 INSTANTIATE_TEST_SUITE_P(
-  StabilityFlash, SoaveRedlichKwong,
+  StabilityTest, SoaveRedlichKwong,
   ::testing::Values(
     FlashData(1.0000e+05, 2.8815e+02, {9.000e-03, 3.000e-03, 5.347e-01, 1.146e-01, 8.790e-02, 4.560e-02, 2.090e-02, 1.510e-02, 1.692e-01}, -3.34095168e+03),
     FlashData(1.0000e+05, 2.9715e+02, {9.000e-03, 3.000e-03, 5.347e-01, 1.146e-01, 8.790e-02, 4.560e-02, 2.090e-02, 1.510e-02, 1.692e-01}, -1.52383746e+03),

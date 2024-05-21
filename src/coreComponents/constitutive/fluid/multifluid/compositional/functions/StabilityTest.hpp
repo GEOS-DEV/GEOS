@@ -13,11 +13,11 @@
  */
 
 /**
- * @file StabilityFlash.hpp
+ * @file StabilityTest.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYFLASH_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYFLASH_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_
 
 #include "KValueInitialization.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
@@ -33,12 +33,12 @@ namespace constitutive
 namespace compositional
 {
 
-struct StabilityFlash
+struct StabilityTest
 {
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 public:
   /**
-   * @brief Perform negative two-phase EOS flash
+   * @brief Perform a two-phase stability test
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
@@ -216,4 +216,4 @@ private:
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYFLASH_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_

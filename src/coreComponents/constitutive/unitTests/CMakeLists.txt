@@ -13,7 +13,7 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
-     testStabilityFlash9Comp.cpp
+     testStabilityTest9Comp.cpp
      testRachfordRice.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
