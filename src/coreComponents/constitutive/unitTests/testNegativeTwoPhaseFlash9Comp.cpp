@@ -16,6 +16,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/KValueInitialization.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
@@ -76,7 +77,13 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    // Initialise Wilson k-values
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
 
     bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
       numComps,
@@ -134,7 +141,6 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -155,6 +161,13 @@ public:
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
 
+      // Initialise Wilson k-values
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kValues[0] );
+
       NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
         numComps,
         p,
@@ -171,6 +184,13 @@ public:
         values[1+ic+numComps] = displacedVapourComposition[ic];
       }
     };
+
+    // Initialise Wilson k-values
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
 
     NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
       numComps,
@@ -311,7 +331,7 @@ INSTANTIATE_TEST_SUITE_P(
     FlashData( 1.500000e+07, 2.781500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.176058, {0.009422, 0.205086}, {0.007026, 0.001256} ),
     FlashData( 1.500000e+07, 2.781500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.009422, 0.205089}, {0.007026, 0.001256} ),
     FlashData( 5.000000e+07, 2.781500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
-    FlashData( 1.000000e+08, 2.781500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
+    FlashData( 1.000000e+08, 2.781500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 0.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
     FlashData( 1.000000e+05, 2.886500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.001168, {0.000348, 0.839991}, {0.013059, 0.000053} ),
     FlashData( 1.000000e+05, 2.886500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.805671, {0.000295, 0.870461}, {0.011100, 0.000055} ),
     FlashData( 1.000000e+05, 2.886500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 0.998750, {0.000187, 0.957531}, {0.007035, 0.000059} ),
@@ -411,7 +431,7 @@ INSTANTIATE_TEST_SUITE_P(
     FlashData( 1.013250e+05, 5.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
     FlashData( 1.000000e+06, 5.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.166124, {0.000103, 0.906268}, {0.001666, 0.501402} ),
     FlashData( 1.000000e+07, 5.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.947056, {0.004797, 0.541766}, {0.009235, 0.148372} ),
-    FlashData( 8.000000e+07, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 1.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
+    FlashData( 8.000000e+07, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 8.000000e+07, 8.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 1.000000, {0.009000, 0.169200}, {0.009000, 0.169200} ),
     FlashData( 8.000000e+07, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 1.000000, {0.009000, 0.169200}, {0.009000, 0.169200} ),
@@ -524,7 +544,7 @@ INSTANTIATE_TEST_SUITE_P(
     FlashData( 1.000000e+07, 5.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 1.000000e+07, 5.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.914262, {0.004869, 0.538035}, {0.009387, 0.134611} ),
     FlashData( 1.500000e+07, 5.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 0.986509, {0.007097, 0.343039}, {0.009026, 0.166823} ),
-    FlashData( 1.000000e+08, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 1.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
+    FlashData( 1.000000e+08, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 1.000000, {0.009000, 0.169200}, {0.009000, 0.169200} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} )
    )

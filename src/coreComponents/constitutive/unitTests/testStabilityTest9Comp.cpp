@@ -18,6 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/KValueInitialization.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
@@ -100,7 +101,12 @@ public:
                                         tangentPlaneDistance,
                                         kValues[0] );
 
-    // Now perform the nagative flash
+    // Now perform the negative flash using Wilson k-values
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
     real64 vapourFraction = -1.0;
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );

@@ -46,6 +46,7 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
+   * @param[in] kValues the initial k-values. Should be well initialised
    * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
    * @param[out] liquidComposition the calculated liquid phase composition
    * @param[out] vapourComposition the calculated vapour phase composition
@@ -81,26 +82,6 @@ public:
       vapourComposition[ic] = composition[ic];
     }
 
-    // Check if k-Values need to be initialised
-    bool needInitialisation = true;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
-      {
-        needInitialisation = true;
-        break;
-      }
-    }
-
-    if( needInitialisation )
-    {
-      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                          pressure,
-                                                          temperature,
-                                                          componentProperties,
-                                                          kVapourLiquid );
-    }
-
     bool converged = false;
     real64 fugacityError = LvArray::NumericLimits< real64 >::max;
     real64 kValueVariance = LvArray::NumericLimits< real64 >::max;
@@ -131,22 +112,12 @@ public:
 
       // Convergence is when either
       // 1. All the fugacity ratios are zero -> choose the phase according to the value of V (vapourPhaseMoleFraction)
-      // 2. All the k-values coalesce into a single value (zero variance) -> choose phase using Li correlation
+      // 2. All the k-values coalesce into a single value (zero variance) -> single phase: should go into "negative" flash
       if( fugacityError < MultiFluidConstants::fugacityTolerance || kValueVariance < MultiFluidConstants::newtonTolerance )
       {
         converged = true;
         break;
       }
-    }
-
-    // If the fugacity ratios haven't converged, use the Li correlation to simply label as a single phase
-    if( MultiFluidConstants::fugacityTolerance <= fugacityError )
-    {
-      vapourPhaseMoleFraction = calculateLiCorrelationLabel( numComps,
-                                                             pressure,
-                                                             temperature,
-                                                             composition,
-                                                             componentProperties );
     }
 
     // Retrieve physical bounds from negative flash values
@@ -490,42 +461,6 @@ private:
       sum += (dLogK*dLogK);
     }
     return sum/size;
-  }
-
-  /**
-   * @brief Calculate the label of a mixture using the Li correlation
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] componentProperties The compositional component properties
-   * @return an indicator of the label as a vapour fraction -ve if liquid and greater than 1 if vapour
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  static real64 calculateLiCorrelationLabel( integer const numComps,
-                                             real64 const pressure,
-                                             real64 const temperature,
-                                             arraySlice1d< real64 const, USD > const & composition,
-                                             ComponentProperties::KernelWrapper const & componentProperties )
-  {
-    GEOS_UNUSED_VAR( pressure );
-
-    auto const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-    auto const & criticalVolume = componentProperties.m_componentCriticalVolume;
-
-    real64 sumTV = 0.0;
-    real64 sumV = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      sumV += composition[ic] * criticalVolume[ic];
-      sumTV += composition[ic] * criticalVolume[ic] * criticalTemperature[ic];
-    }
-    real64 const temperatureLi = sumTV / sumV;
-
-    constexpr real64 eps = MultiFluidConstants::minForSpeciesPresence;
-    real64 const vapourFraction = (temperature < temperatureLi) ? -eps : 1.0 + eps;
-    return vapourFraction;
   }
 };
 
