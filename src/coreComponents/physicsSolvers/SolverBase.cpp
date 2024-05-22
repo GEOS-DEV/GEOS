@@ -827,6 +827,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
+    synchronizeNumNewtonIterations();
+
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     {

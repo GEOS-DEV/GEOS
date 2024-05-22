@@ -665,6 +665,15 @@ protected:
     } );
   }
 
+  virtual void
+  synchronizeNumNewtonIterations() override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters().m_numNewtonIterations = m_numNewtonIterations;
+    } );
+  }
+
   virtual void startSequentialIteration( integer const & iter,
                                          DomainPartition & domain )
   {

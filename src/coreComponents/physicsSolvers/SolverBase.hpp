@@ -665,6 +665,10 @@ public:
     return m_nonlinearSolverParameters;
   }
 
+  virtual void
+  synchronizeNumNewtonIterations()
+  { /* empty here, overriden in CoupledSolver */ }
+
   /**
    * @brief Get position of a given region within solver's target region list
    * @param regionName the region name to find
