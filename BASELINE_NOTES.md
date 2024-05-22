@@ -6,6 +6,19 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3125 (2024-05-16)
+=====================
+Remove field to store pressure gradient cell-wise for solvers that don't need it.
+
+PR #2110 (2024-05-13)
+=====================
+new field to store pressure gradient cell-wise.
+
+PR #3060 (2024-05-13)
+======================
+
+Rebaselined after addition of elastic VTI wave propagator. 
+
 PR #4950 (2024-05-10)
 ======================
 
