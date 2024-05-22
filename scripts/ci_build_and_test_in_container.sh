@@ -184,7 +184,6 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   python3 -m pip cache purge
 
-  pip config set global.cert $HOME/certs/ca-bundle.crt
 
   # # Attempt to download with wget
   # or_die apt-get update
