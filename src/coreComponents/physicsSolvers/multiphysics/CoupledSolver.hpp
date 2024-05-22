@@ -661,7 +661,7 @@ protected:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
+      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
     } );
   }
 
@@ -670,7 +670,7 @@ protected:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters().m_numNewtonIterations = m_numNewtonIterations;
+      solver->getNonlinearSolverParameters().m_numNewtonIterations = getNonlinearSolverParameters().m_numNewtonIterations;
     } );
   }
 
