@@ -184,6 +184,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   python3 -m pip cache purge
 
+  ls -l ${DOCKER_CERTS_DIR}/llnl
+
   # Attempt to download with wget
   or_die apt-get update
   or_die apt-get install -y wget
