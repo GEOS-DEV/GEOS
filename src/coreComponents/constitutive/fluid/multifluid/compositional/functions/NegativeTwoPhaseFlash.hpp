@@ -82,7 +82,7 @@ public:
     }
 
     // Check if k-Values need to be initialised
-    bool needInitialisation = false;
+    bool needInitialisation = true;
     for( integer ic = 0; ic < numComps; ++ic )
     {
       if( kVapourLiquid[ic] < MultiFluidConstants::epsilon )
@@ -136,10 +136,7 @@ public:
         logLiquidFugacity.toSlice(),
         logVapourFugacity.toSlice(),
         fugacityRatios.toSlice() );
-std::cout << std::setw(4) << iterationCount << " | "
-<< kVapourLiquid[0] << " " << kVapourLiquid[3] << " | "
-<< error << " (e) "
-<< "\n";
+
       // Compute fugacity ratios and check convergence
       converged = (error < MultiFluidConstants::fugacityTolerance);
 
