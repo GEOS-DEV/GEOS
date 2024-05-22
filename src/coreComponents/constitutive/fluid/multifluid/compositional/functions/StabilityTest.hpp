@@ -51,12 +51,12 @@ public:
   template< typename EOS_TYPE, integer USD1 >
   GEOS_HOST_DEVICE
   static bool compute( integer const numComps,
-                         real64 const pressure,
-                         real64 const temperature,
-                         arraySlice1d< real64 const, USD1 > const & composition,
-                         ComponentProperties::KernelWrapper const & componentProperties,
-                         real64 & tangentPlaneDistance,
-                         arraySlice1d< real64 > const & kValues )
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, USD1 > const & composition,
+                       ComponentProperties::KernelWrapper const & componentProperties,
+                       real64 & tangentPlaneDistance,
+                       arraySlice1d< real64 > const & kValues )
   {
     constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
     constexpr integer numTrials = 2;    // Trial compositions
@@ -157,14 +157,14 @@ public:
         }
       }
     }
-    if (2 <= numberOfStationaryPoints)
+    if( numberOfStationaryPoints == numTrials )
     {
-        for( integer const ic : presentComponents )
-        {
-            kValues[ic] = trialComposition( 1, ic ) / trialComposition( 0, ic );
-        }
+      for( integer const ic : presentComponents )
+      {
+        kValues[ic] = trialComposition( 1, ic ) / trialComposition( 0, ic );
+      }
     }
-    return 2 <= numberOfStationaryPoints;
+    return numberOfStationaryPoints == numTrials;
   }
 
 private:
