@@ -1622,7 +1622,7 @@ private:
   integer m_logLevel;
 
   /// Map for building the log level string for each wrapper
-  /// key : logLevel, values : description(s) for a level
+  /// key : a logLevel condition, values : a set of description for a corresponding loglevel
   std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
 
   //END_SPHINX_INCLUDE_02
