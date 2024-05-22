@@ -146,8 +146,7 @@ public:
   /**
    * @brief Calculate shape bubble functions values at a given point in the parent space.
    * @param pointCoord coordinates of the given point.
-   * @param N An array to pass back the shape function values for each support
-   *   face.
+   * @param N An array to pass back the shape function values.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -161,8 +160,7 @@ public:
    * @brief Calculate shape bubble functions values at a
    *   quadrature point.
    * @param q Index of the quadrature point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
+   * @param N An array to pass back the shape function values.
    */
   GEOS_HOST_DEVICE
   inline

@@ -148,32 +148,37 @@ public:
   /**
    * @brief Calculate shape bubble functions values at a given point in the parent space.
    * @param pointCoord coordinates of the given point.
-   * @param N An array to pass back the shape function values for each support
-   *   face.
+   * @param N An array to pass back the shape function values.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void calcBubbleN( real64 const (&pointCoord)[2],
                            real64 (& N)[1] )
   {
-    GEOS_UNUSED_VAR( pointCoord, N );
-    GEOS_ERROR("Unsupported bubble functions for triangle elements");
+
+    real64 const r  = pointCoord[0];
+    real64 const s  = pointCoord[1];
+
+    N[0] = (1.0 - r - s) * r * s;
+
   }
 
   /**
    * @brief Calculate shape bubble functions values at a
    *   quadrature point.
    * @param q Index of the quadrature point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
+   * @param N An array to pass back the shape function values.
    */
   GEOS_HOST_DEVICE
   inline
   static void calcBubbleN( localIndex const q,
                            real64 (& N)[1] )
   {
-    GEOS_UNUSED_VAR( q, N );
-    GEOS_ERROR("Unsupported bubble functions for triangle elements");
+    GEOS_UNUSED_VAR( q );
+
+    // single quadrature point (centroid), i.e.  r = s = 1/3
+    real64 const qCoords[2] = { 1.0 / 3.0 , 1.0 / 3.0};
+    calcBubbleN( qCoords, N );
   }
 
   /**
