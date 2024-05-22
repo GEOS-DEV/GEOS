@@ -700,7 +700,7 @@ public:
                                        dThermalTrans_dThermalCond );
 
       real64 const dThermalTrans_dT = LvArray::tensorOps::AiBi< 3 >( dThermalTrans_dThermalCond, m_dThermalCond_dT[er][esr][ei][0] );
- std::cout << m_dThermalCond_dT[er][esr][ei][0][0] << std::endl;
+ 
       real64 const deltaT = m_temp[er][esr][ei] - m_faceTemp[kf];
       stack.energyFlux += thermalTrans * deltaT;
       stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;
