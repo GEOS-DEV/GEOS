@@ -124,14 +124,7 @@ done
 
 # Attempt to download with wget
 FILENAME="baseline_integratedTests-pr3125-5101-7764ffb.tar.gz"
-WGET_STATUS = wget https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz -O $FILENAME
-if [ $WGET_STATUS -ne 0 ]; then
-    echo "wget failed"
-else
-    echo "Download successful with wget."
-fi
-
-
+or_die wget https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz -O $FILENAME
 
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
