@@ -44,15 +44,19 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
-   * @return the minimum tangent plane distance (TPD)
+   * @param[out] tangentPlaneDistance the minimum tangent plane distance (TPD)
+   * @param[out] kValues the k-values estimated from the stationary points
+   * @return a flag indicating that 2 stationary points have been found
    */
   template< typename EOS_TYPE, integer USD1 >
   GEOS_HOST_DEVICE
-  static real64 compute( integer const numComps,
+  static bool compute( integer const numComps,
                          real64 const pressure,
                          real64 const temperature,
                          arraySlice1d< real64 const, USD1 > const & composition,
-                         ComponentProperties::KernelWrapper const & componentProperties )
+                         ComponentProperties::KernelWrapper const & componentProperties,
+                         real64 & tangentPlaneDistance,
+                         arraySlice1d< real64 > const & kValues )
   {
     constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
     constexpr integer numTrials = 2;    // Trial compositions
@@ -86,15 +90,16 @@ public:
                                                         pressure,
                                                         temperature,
                                                         componentProperties,
-                                                        logFugacity.toSlice() );
+                                                        kValues );
 
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      trialComposition( 0, ic ) = composition[ic] / logFugacity[ic];
-      trialComposition( 1, ic ) = composition[ic] * logFugacity[ic];
+      trialComposition( 0, ic ) = composition[ic] / kValues[ic];
+      trialComposition( 1, ic ) = composition[ic] * kValues[ic];
     }
 
-    real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
+    integer numberOfStationaryPoints = 0;
+    tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     for( integer trialIndex = 0; trialIndex < numTrials; ++trialIndex )
     {
       for( integer ic = 0; ic < numComps; ++ic )
@@ -139,7 +144,6 @@ public:
         {
           // Calculate modified tangent plane distance (Michelsen, 1982b) of trial composition relative to input composition
           double tpd = 1.0;
-
           for( integer const ic : presentComponents )
           {
             tpd += trialComposition( trialIndex, ic ) * (logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic] - 1.0);
@@ -148,11 +152,19 @@ public:
           {
             tangentPlaneDistance = tpd;
           }
+          numberOfStationaryPoints++;
           break;
         }
       }
     }
-    return tangentPlaneDistance;
+    if (2 <= numberOfStationaryPoints)
+    {
+        for( integer const ic : presentComponents )
+        {
+            kValues[ic] = trialComposition( 1, ic ) / trialComposition( 0, ic );
+        }
+    }
+    return 2 <= numberOfStationaryPoints;
   }
 
 private:
