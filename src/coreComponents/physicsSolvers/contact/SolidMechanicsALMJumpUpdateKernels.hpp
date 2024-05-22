@@ -46,6 +46,7 @@ public:
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::m_X;
+  using Base::m_finiteElementSpace;
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_elemsToFaces;
@@ -163,6 +164,9 @@ public:
   {
     constexpr int shift = numNodesPerElem * 3;
 
+    int permutation[numNodesPerElem]; 
+    m_finiteElementSpace.template getPermutation( permutation );
+
     localIndex const kf0 = m_elemsToFaces[k][0];
     localIndex const kf1 = m_elemsToFaces[k][1];
     for( localIndex a=0; a<numNodesPerElem; ++a )
@@ -172,7 +176,7 @@ public:
 
       for( int i=0; i<3; ++i )
       {
-        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ]) ][ i ];
+        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, permutation[ a ]) ][ i ];
         stack.uLocal[a*3+i] = m_displacement[kn0][i];
         stack.uLocal[shift + a*3+i] = m_displacement[kn1][i];
         stack.duLocal[a*3+i] = m_incrDisp[kn0][i];

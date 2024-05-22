@@ -101,7 +101,7 @@ public:
           inputRhs,
           inputDt,
           inputGravityVector ),
-    m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >() ),
+    m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >().toViewConst() ),
     m_bDofNumber( bDofNumber ),
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
     m_elemsToFaces(elementSubRegion.faceElementsList() )
@@ -228,7 +228,6 @@ public:
   void setup( localIndex const kk,
               StackVariables & stack ) const
   {
-    GEOS_MARK_FUNCTION;
 
     localIndex k = m_bubbleElems[kk];
 
@@ -263,7 +262,6 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    GEOS_MARK_FUNCTION;
 
     localIndex k = m_bubbleElems[kk];
     constexpr int nUdof = numNodesPerElem*3;
@@ -338,7 +336,6 @@ public:
   real64 complete( localIndex const kk,
                    StackVariables & stack ) const
   {
-    GEOS_MARK_FUNCTION;
 
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;

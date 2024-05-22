@@ -50,6 +50,7 @@ public:
 
   using Base::m_elemsToFaces;
   using Base::m_faceToNodes;
+  using Base::m_finiteElementSpace;
   using Base::m_dofNumber;
   using Base::m_bDofNumber;
   using Base::m_dofRankOffset;
@@ -190,6 +191,9 @@ public:
               StackVariables & stack ) const
   {
     constexpr int shift = numNodesPerElem * 3;
+    
+    int permutation[numNodesPerElem]; 
+    m_finiteElementSpace.template getPermutation( permutation );
 
     localIndex const kf0 = m_elemsToFaces[k][0];
     localIndex const kf1 = m_elemsToFaces[k][1];
@@ -204,7 +208,7 @@ public:
         stack.dispEqnRowIndices[shift + a*3+i] = m_dofNumber[kn1]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i] = m_dofNumber[kn0]+i;
         stack.dispColIndices[shift + a*3+i] = m_dofNumber[kn1]+i;
-        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, FE_TYPE::permutation[ a ] ) ][ i ];
+        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, permutation[ a ] ) ][ i ];
       }
     }
 

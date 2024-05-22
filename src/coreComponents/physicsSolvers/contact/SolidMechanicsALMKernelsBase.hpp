@@ -208,12 +208,15 @@ public:
     constexpr int bperm[1] = {0};
     m_finiteElementSpace.template calcBubbleN( q, BubbleN );
 
+    int permutation[numNodesPerElem]; 
+    m_finiteElementSpace.template getPermutation( permutation );
+
     // TODO: Try using bilinear utilities to perform these two operations
     solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
                                                                stack.numUdofs, 
                                                                numNodesPerElem>(stack.localAtu, 
                                                                                 N, 
-                                                                                FE_TYPE::permutation,
+                                                                                permutation,
                                                                                 detJ);
 
     solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 

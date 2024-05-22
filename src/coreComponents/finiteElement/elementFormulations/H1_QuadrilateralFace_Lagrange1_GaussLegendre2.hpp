@@ -61,9 +61,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
-  /// Permutation
-  constexpr static localIndex permutation[numNodes] = { 0, 1, 3, 2};
-
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}
 
@@ -201,6 +198,21 @@ public:
                                         [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
                                         [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
                                         real64 const & scaleFactor );
+
+  /**
+   * @brief Calculate the node permutation between the parent element and the geometric element.
+   *   Note: The optimal location for this calculation is yet to be determined.
+   * @param permutation An array to return the node permutation.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  static void getPermutation( int (& permutation)[numNodes] )
+  {
+    permutation[0] = 0; 
+    permutation[1] = 1; 
+    permutation[2] = 3; 
+    permutation[3] = 2; 
+  }
 
 private:
   /// The area of the element in the parent configuration.
