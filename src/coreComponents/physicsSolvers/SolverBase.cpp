@@ -45,9 +45,6 @@ SolverBase::SolverBase( string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  // This enables logLevel filtering
-  enableLogLevelInput();
-
   // This sets a flag to indicate that this object is going to select the time step size
   this->setTimesteppingBehavior( ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize );
 

@@ -42,8 +42,6 @@ PoromechanicsInitialization( const string & name,
   m_solidMechanicsStatistics(),
   m_solidMechanicsStateResetTask( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -54,6 +52,9 @@ PoromechanicsInitialization( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics" );
+
+  appendLogLevelDescription( "logLevel >= 1 and reset displacements", "Inform about physics solver stress initialization" );
+  appendLogLevelDescription( "logLevel >= 1", "Indicate the physics solver completed stress initialization" );
 }
 
 template< typename POROMECHANICS_SOLVER >

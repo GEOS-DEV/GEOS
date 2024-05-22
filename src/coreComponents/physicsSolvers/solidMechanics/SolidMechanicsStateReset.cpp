@@ -35,7 +35,6 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   TaskBase( name, parent ),
   m_solidSolverName()
 {
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -51,6 +50,9 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable/disable inelastic behavior" );
+
+  appendLogLevelDescription( "logLevel >= 1 and reset displacements", "Inform about physics solver resetting total displacement and velocity to zero" );
+  appendLogLevelDescription( "logLevel >= 2", "Inform about solid model enable / disable inelastic behavior" );
 }
 
 SolidMechanicsStateReset::~SolidMechanicsStateReset()

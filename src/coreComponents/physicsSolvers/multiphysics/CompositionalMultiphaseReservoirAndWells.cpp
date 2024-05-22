@@ -43,8 +43,6 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
                                           Group * const parent )
   : Base( name, parent )
 {
-  Base::enableLogLevelInput();
-
   Base::appendLogLevelDescription( "logLevel >= 1 and if the well is injector and crossflow enabled", "Warnings about crossflow for injectors" );
 }
 

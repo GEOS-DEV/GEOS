@@ -26,8 +26,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  enableLogLevelInput();
-
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).
     setApplyDefaultValue( LineSearchAction::Attempt ).
     setInputFlag( InputFlags::OPTIONAL ).

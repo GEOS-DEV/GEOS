@@ -533,8 +533,8 @@ public:
       size_t idxDescription = 0;
       for( const auto & description : logDescriptions )
       {
-        idxDescription == logDescriptions.size() - 1 ? descriptionToBuild.append( " - " + description ) :
-        descriptionToBuild.append( GEOS_FMT( " - {}\n", description ) );
+        idxDescription == logDescriptions.size() - 1 ? descriptionToBuild.append( " - " + description ) 
+                                                     : descriptionToBuild.append( GEOS_FMT( " - {}\n", description ) );
         idxDescription++;
       }
     }

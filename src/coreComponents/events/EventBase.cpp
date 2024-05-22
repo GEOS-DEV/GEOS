@@ -52,8 +52,6 @@ EventBase::EventBase( const string & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::eventTargetString(), &m_eventTarget ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -105,6 +103,8 @@ EventBase::EventBase( const string & name,
 
   registerWrapper( viewKeyStruct::isTargetExecutingString(), &m_targetExecFlag ).
     setDescription( "Index of the current subevent" );
+
+  appendLogLevelDescription( "logLevel >= 1", "Log about sub-event" );
 }
 
 
