@@ -49,8 +49,6 @@ public:
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
 
-  static string catalogName() { return "SolverBase"; }
-
   /**
    * @return Get the final class Catalog name
    */

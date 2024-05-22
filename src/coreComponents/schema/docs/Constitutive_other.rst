@@ -25,6 +25,7 @@ CompressibleSolidCarmanKozenyPermeability      node :ref:`DATASTRUCTURE_Compress
 CompressibleSolidConstantPermeability          node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`          
 CompressibleSolidExponentialDecayPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability`  
 CompressibleSolidParallelPlatesPermeability    node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability`    
+CompressibleSolidPressurePermeability          node :ref:`DATASTRUCTURE_CompressibleSolidPressurePermeability`          
 CompressibleSolidSlipDependentPermeability     node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`     
 CompressibleSolidWillisRichardsPermeability    node :ref:`DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability`    
 ConstantDiffusion                              node :ref:`DATASTRUCTURE_ConstantDiffusion`                              
@@ -52,7 +53,6 @@ NullModel                                      node :ref:`DATASTRUCTURE_NullMode
 ParallelPlatesPermeability                     node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                     
 ParticleFluid                                  node :ref:`DATASTRUCTURE_ParticleFluid`                                  
 PerfectlyPlastic                               node :ref:`DATASTRUCTURE_PerfectlyPlastic`                               
-PermeabilityBase                               node :ref:`DATASTRUCTURE_PermeabilityBase`                               
 PorousDamageElasticIsotropic                   node :ref:`DATASTRUCTURE_PorousDamageElasticIsotropic`                   
 PorousDamageSpectralElasticIsotropic           node :ref:`DATASTRUCTURE_PorousDamageSpectralElasticIsotropic`           
 PorousDamageVolDevElasticIsotropic             node :ref:`DATASTRUCTURE_PorousDamageVolDevElasticIsotropic`             
@@ -66,6 +66,7 @@ PorousModifiedCamClay                          node :ref:`DATASTRUCTURE_PorousMo
 PorousViscoDruckerPrager                       node :ref:`DATASTRUCTURE_PorousViscoDruckerPrager`                       
 PorousViscoExtendedDruckerPrager               node :ref:`DATASTRUCTURE_PorousViscoExtendedDruckerPrager`               
 PorousViscoModifiedCamClay                     node :ref:`DATASTRUCTURE_PorousViscoModifiedCamClay`                     
+PressurePermeability                           node :ref:`DATASTRUCTURE_PressurePermeability`                           
 PressurePorosity                               node :ref:`DATASTRUCTURE_PressurePorosity`                               
 ProppantPermeability                           node :ref:`DATASTRUCTURE_ProppantPermeability`                           
 ProppantPorosity                               node :ref:`DATASTRUCTURE_ProppantPorosity`                               
