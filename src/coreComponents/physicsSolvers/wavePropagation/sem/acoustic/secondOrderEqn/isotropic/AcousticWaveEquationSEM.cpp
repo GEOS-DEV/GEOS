@@ -171,10 +171,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
 
-    arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
+   
 
     if (m_useTaper==1)
     {
+       arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
       TaperKernel::computeTaperCoeff< EXEC_POLICY > (elementSubRegion.size(),elemCenter,m_xMinTaper, m_xMaxTaper,m_thicknessMinXYZTaper,m_thicknessMaxXYZTaper,m_taperConstant,taperCoeff);
     }
 

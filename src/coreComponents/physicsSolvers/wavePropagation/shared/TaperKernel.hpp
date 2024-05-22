@@ -67,17 +67,17 @@ namespace geos
          real32 tmpYmin = (xMin[1]-elemCenter[1][k])/dMin[1];
          real32 tmpYmax = (elemCenter[1][k]-xMax[1])/dMax[1];
 
-         real32 tmpZmin = (xMin[0]-elemCenter[2][k])/dMin[2];
+         real32 tmpZmin = (xMin[2]-elemCenter[2][k])/dMin[2];
          real32 tmpZmax = (elemCenter[2][k]-xMax[2])/dMax[2];
 
          real32 dist = 0.0;
 
-         if (xMin[0]>elemCenter[0][k])
+         if (xMin[0]>elemCenter[k][0])
          {
-           if (xMin[2]>elemCenter[2][k])
+           if (xMin[2]>elemCenter[k][2])
            {
              dist = LvArray::math::min(tmpXmin,tmpZmin);
-             if (xMin[1]>elemCenter[1][k])
+             if (xMin[1]>elemCenter[k][1])
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
@@ -87,10 +87,10 @@ namespace geos
              }
           
            }
-           else if ( elemCenter[2][k] > xMax[2])
+           else if ( elemCenter[k][2] > xMax[2])
            {
              dist = LvArray::math::min(tmpXmin,tmpZmax);
-             if (xMin[1]>elemCenter[1][k])
+             if (xMin[1]>elemCenter[k][1])
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
@@ -107,10 +107,10 @@ namespace geos
          }
          else if (elemCenter[k][0]>xMin[0])
          {
-          if (xMin[2]>elemCenter[2][k])
+          if (xMin[2]>elemCenter[k][2])
           {
             dist = LvArray::math::min(tmpxMax,tmpZmin);
-            if (xMin[1]>elemCenter[1][k])
+            if (xMin[1]>elemCenter[k][1])
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
@@ -119,10 +119,10 @@ namespace geos
                 dist=LvArray::math::min(dist,tmpYmax);
              }
           }
-          else if ( elemCenter[2][k] > xMax[2])
+          else if ( elemCenter[k][2] > xMax[2])
            {
-             dist = LvArray::math::min(tmpXmin,tmpZmax);
-             if (xMin[1]>elemCenter[1][k])
+             dist = LvArray::math::min(tmpXmin,tmpZmax); //faux
+             if (xMin[1]>elemCenter[k][1])
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
@@ -137,9 +137,9 @@ namespace geos
             dist=tmpxMax;
            }      
          }
-         if (xMin[2]>elemCenter[2][k])
+         if (xMin[2]>elemCenter[k][2])
          {
-          if (xMin[1]>elemCenter[1][k])
+          if (xMin[1]>elemCenter[k][1])
           {
              dist= LvArray::math::min(tmpZmin,tmpYmin);
           }
@@ -153,9 +153,9 @@ namespace geos
           }
           
          }
-         else if ( elemCenter[2][k] > xMax[2])
+         else if ( elemCenter[k][2] > xMax[2])
          {
-            if (xMin[1]>elemCenter[1][k])
+            if (xMin[1]>elemCenter[k][1])
             {
               dist = LvArray::math::min(tmpZmax,tmpYmin);
             }
@@ -168,7 +168,7 @@ namespace geos
               dist=tmpZmax;
             }
          }
-         else if (xMin[1]>elemCenter[1][k])
+         else if (xMin[1]>elemCenter[k][1])
          {
            dist=tmpYmin;
          }
@@ -179,7 +179,8 @@ namespace geos
          }
          else 
          {
-          dist=0.0;
+          dist=1.0;
+
          }
          
          taperCoeff[k] = (taperConstant -1.0)*dist*dist+1.0;
