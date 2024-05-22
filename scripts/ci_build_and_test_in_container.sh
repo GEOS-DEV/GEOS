@@ -122,6 +122,25 @@ do
   esac
 done
 
+# Attempt to download with wget
+FILENAME="baseline_integratedTests-pr3125-5101-7764ffb.tar.gz"
+wget wget https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz -O $FILENAME
+if [ $? -ne 0 ]; then
+    echo "wget failed, trying curl..."
+    # Attempt to download with curl if wget fails
+    curl -O $URL
+    if [ $? -ne 0 ]; then
+        echo "Both wget and curl failed to download the file."
+        exit 1
+    else
+        echo "Download successful with curl."
+    fi
+else
+    echo "Download successful with wget."
+fi
+
+
+
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
