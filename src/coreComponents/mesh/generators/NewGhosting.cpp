@@ -500,6 +500,8 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
   Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
 
+  // The `upward` matrix offers a representation of the graph connections.
+  // The matrix is square. Each size being the number of geometrical entities.
   Epetra_CrsMatrix upward( Epetra_DataAccess::Copy, ownedMap, numEntriesPerRow.data(), true );
 
   for( std::size_t i = 0; i < numOwned; ++i )
@@ -517,7 +519,11 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   int const commSize( MpiWrapper::commSize() );
 
   // Now let's build the domain indicator matrix.
-  // It's rectangular, one dimension being the number of MPI ranks, the other the number of nodes in the mesh graph.
+  // It's rectangular, number of rows being the number of MPI ranks,
+  // number of columns being the number of nodes in the mesh graph,
+  // ie the number of geometrical entities in the mesh.
+  // It contains one for every time the geometrical entity is present on the rank.
+  // By present, we do not meant that the ranks owns it: just that it's already available on the rank.
   Epetra_Map const mpiMap( commSize, 0, comm );  // Let the current rank get the appropriate index in this map.
   Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, mpiMap, numOwned + numOther, true );
 
@@ -526,6 +532,10 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   indicator.InsertGlobalValues( curRank.get(), numOther, ones.data(), otherGlbIdcs.data() );
   indicator.FillComplete( ownedMap, mpiMap );
 
+  // The `ownership` matrix is a diagonal square matrix.
+  // Each size being the number of geometrical entities.
+  // The value of the diagonal term will be the owning rank.
+  // By means of matrices multiplications, it will be possible to exchange the ownerships information across the ranks.
   // TODO Could we use an Epetra_Vector as a diagonal matrix?
   std::vector< double > myRank( 1, curRank.get() );
   Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, ownedMap, 1, true );
@@ -546,32 +556,38 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  Epetra_CrsMatrix ghosted( multiply( commSize, indicator, upward ) );
-  ghosted.PutScalar( 1. );  // This can be done after the `FillComplete`.
-  ghosted.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted.mat", ghosted );
+  // The `ghostingFootprint` matrix is rectangular, number of columns being the number of MPI ranks,
+  // the number of rows being the number of nodes in the mesh graph.
+  // For any MPI rank (ie column), a non-zero entry means
+  // that the corresponding geometrical entry has to be eventually present onto the rank
+  // for the ghosting to be effective.
+  Epetra_CrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
+  ghostingFootprint.PutScalar( 1. );  // This can be done after the `FillComplete`.
+  ghostingFootprint.FillComplete( mpiMap, ownedMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostingFootprint.mat", ghostingFootprint );
+  // We put `1` everywhere there's a non-zero entry, so we'll be able to compose with the `ownership` matrix.
+
+  // FIXME TODO WARNING From `ghostingFootprint` extract where I have to send
+  // Then, perform the ghostingFootprint * ownership matrix multiplication,
+  // so I get to know from whom I'll receive.
 
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghosted.NumGlobalCols() );
-    GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghosted.NumGlobalRows() );
+    GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghostingFootprint.NumGlobalCols() );
+    GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghostingFootprint.NumGlobalRows() );
   }
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghosted-after.mat", ghosted );
 
-  Epetra_CrsMatrix ghostInfo( Epetra_DataAccess::Copy, mpiMap, 1, false );
-  EpetraExt::MatrixMatrix::Multiply( ghosted, true, ownership, false, ghostInfo, false );
-  ghostInfo.FillComplete( ownedMap, mpiMap );
+  Epetra_CrsMatrix ghostExchange( Epetra_DataAccess::Copy, mpiMap, 1, false );
+  EpetraExt::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
+  ghostExchange.FillComplete( ownedMap, mpiMap );
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostInfo.NumGlobalCols() );
-    GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostInfo.NumGlobalRows() );
+    GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostExchange.NumGlobalCols() );
+    GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostExchange.NumGlobalRows() );
   }
-
-  auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
-//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
-  Epetra_Vector const zeros( ownedMap, true );
-  tDownward->ReplaceDiagonalValues( zeros );  // TODO directly build zeros in the function call.
-//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-after.mat", *tDownward );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostInfo.mat", ghostingFootprint );
+  std::unique_ptr< Epetra_CrsMatrix > tGhostExchange = makeTranspose( ghostExchange );
+  tGhostExchange->FillComplete( mpiMap, ownedMap );
 
   int extracted = 0;
   std::vector< double > extractedValues( n );
@@ -581,8 +597,12 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   extractedIndices.resize( extracted );
   GEOS_LOG_RANK( "extracted = " << extracted );
 
-  std::vector< int > missingIndices;
-  missingIndices.reserve( n );
+  // The `notPresentIndices` container will hold all the graph nodes indices
+  // that are not already present on the current rank.
+  // For those indices, will have to gather some additional mapping information,
+  // since they were not provided through the vtk mesh.
+  std::vector< int > notPresentIndices;
+  notPresentIndices.reserve( n );
 
 //  int extractedEdges = 0;
 //  std::vector< double > extractedEdgesValues( n );
@@ -615,7 +635,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
         // TODO same for the faces and cells...
         if( owned.e2n.find( egi ) == owned.e2n.cend() and present.e2n.find( egi ) == present.e2n.cend() )
         {
-          missingIndices.emplace_back( index );
+          notPresentIndices.emplace_back( index );
         }
         break;
       }
@@ -625,7 +645,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
         ownerships.faces.emplace( fgi, owner );
         if( owned.f2e.find( fgi ) == owned.f2e.cend() and present.f2e.find( fgi ) == present.f2e.cend() )
         {
-          missingIndices.emplace_back( index );
+          notPresentIndices.emplace_back( index );
         }
         break;
       }
@@ -635,7 +655,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
         ownerships.cells.emplace( cgi, owner );
         if( owned.c2f.find( cgi ) == owned.c2f.cend() )
         {
-          missingIndices.emplace_back( index );
+          notPresentIndices.emplace_back( index );
         }
         break;
       }
@@ -648,7 +668,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
 
   GEOS_LOG( "Gathering the missing mappings." );
 
-  std::size_t const numMissingIndices = std::size( missingIndices );
+  std::size_t const numMissingIndices = std::size( notPresentIndices );
   std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );
 
 //  Epetra_Map const missingIndicesMap( intConv< long long int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
@@ -661,11 +681,17 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   Epetra_CrsMatrix missing( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
   for( std::size_t i = 0; i < numMissingIndices; ++i )
   {
-    missing.InsertGlobalValues( offset + i, 1, ones.data(), &missingIndices[i] );
+    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices[i] );
   }
   missing.FillComplete( ownedMap, missingIndicesMap );
 
   // TODO Don't put ones in downward: reassemble with the ordering (e.g. edges point to a first and last node)
+
+  auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
+//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
+  Epetra_Vector const zeros( ownedMap, true );
+  tDownward->ReplaceDiagonalValues( zeros );  // TODO directly build zeros in the function call.
+//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-after.mat", *tDownward );
   Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
@@ -689,7 +715,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
 //    GEOS_LOG( "ext 0 = " << std::size( s0 ) );
 //    GEOS_LOG( "ext 1 = " << std::size( s1 ) );
 //    GEOS_LOG_RANK( "ext = " << ext );
-    int const index = missingIndices[i];
+    int const index = notPresentIndices[i];
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::EDGE:

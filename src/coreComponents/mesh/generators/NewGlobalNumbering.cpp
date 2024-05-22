@@ -162,11 +162,11 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
     for( auto e = 0; e < cell->GetNumberOfEdges(); ++e )
     {
       vtkCell * edge = cell->GetEdge( e );
-      vtkIdType const ln0 = edge->GetPointId( 0 );
-      vtkIdType const ln1 = edge->GetPointId( 1 );
-      vtkIdType const gn0 = globalPtIds[ln0];
-      vtkIdType const gn1 = globalPtIds[ln1];
-      tmpEdges.emplace_back( std::minmax( { NodeGlbIdx{ gn0 }, NodeGlbIdx{ gn1 } } ) );
+      vtkIdType const nli0 = edge->GetPointId( 0 );
+      vtkIdType const nli1 = edge->GetPointId( 1 );
+      vtkIdType const ngi0 = globalPtIds[nli0];
+      vtkIdType const ngi1 = globalPtIds[nli1];
+      tmpEdges.emplace_back( std::minmax( { NodeGlbIdx{ ngi0 }, NodeGlbIdx{ ngi1 } } ) );
     }
 
     for( auto f = 0; f < cell->GetNumberOfFaces(); ++f )
