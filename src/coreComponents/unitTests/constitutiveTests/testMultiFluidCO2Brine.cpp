@@ -19,6 +19,7 @@
 #include "MultiFluidTest.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "common/GeosxConfig.hpp"
 
 using namespace geos;
 using namespace geos::testing;
@@ -107,9 +108,10 @@ public:
 
     auto & parent = this->m_parent;
     parent.resize( 1 );
-    string const fluidName = GEOS_FMT( "fluid{}{}",
+    string const fluidName = GEOS_FMT( "fluid{}{}{}",
                                        EnumStrings< BrineModelType >::toString( BRINE ),
-                                       EnumStrings< FlashType >::toString( FLASH ));
+                                       EnumStrings< FlashType >::toString( FLASH ),
+                                       (THERMAL ? "Thermal" : ""));
     this->m_model = makeCO2BrineFluid( fluidName, &parent );
 
     parent.initialize();
@@ -173,10 +175,10 @@ MultiFluidCO2BrineTest< BRINE, FLASH, THERMAL >::makeCO2BrineFluid( string const
   auto & molarWeight = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
   fill< 2 >( molarWeight, {44e-3, 18e-3} );
 
-  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrinePhillipsFluid::viewKeyStruct::phasePVTParaFilesString() );
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
   fill< 2 >( phasePVTParaFileNames, {pvtGasFileName, pvtLiquidFileName} );
 
-  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrinePhillipsFluid::viewKeyStruct::flashModelParaFileString() );
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = pvtFlashFileName;
 
   co2BrineFluid.postProcessInputRecursive();
@@ -196,6 +198,11 @@ using MultiFluidCO2BrineBrinePhillipsThermalTest = MultiFluidCO2BrineTest< Brine
 using MultiFluidCO2BrineBrinePhillipsSpycherPruessTest = MultiFluidCO2BrineTest< BrineModelType::Phillips,
                                                                                  FlashType::SpycherPruess,
                                                                                  false >;
+#if !defined(GEOS_DEVICE_COMPILE)
+using MultiFluidCO2BrineBrineEzrokhiThermalTest = MultiFluidCO2BrineTest< BrineModelType::Ezrokhi,
+                                                                          FlashType::DuanSun,
+                                                                          true >;
+#endif
 
 TEST_F( MultiFluidCO2BrineBrinePhillipsTest, numericalDerivativesMolar )
 {
@@ -223,6 +230,17 @@ TEST_F( MultiFluidCO2BrineBrinePhillipsThermalTest, numericalDerivativesMass )
 {
   testNumericalDerivatives( true );
 }
+
+#if !defined(GEOS_DEVICE_COMPILE)
+TEST_F( MultiFluidCO2BrineBrineEzrokhiThermalTest, numericalDerivativesMolar )
+{
+  testNumericalDerivatives( false );
+}
+TEST_F( MultiFluidCO2BrineBrineEzrokhiThermalTest, numericalDerivativesMass )
+{
+  testNumericalDerivatives( true );
+}
+#endif
 
 TEST_F( MultiFluidCO2BrineBrinePhillipsSpycherPruessTest, numericalDerivativesMolar )
 {

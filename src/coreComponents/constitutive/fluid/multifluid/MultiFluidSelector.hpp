@@ -50,9 +50,12 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
+// Including this in a CUDA build will lead to compiler segfault.
+// Need to split compilation units for all the options"
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
+#endif
                                CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -71,9 +74,12 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
+// Including this in a CUDA build will lead to compiler segfault.
+// Need to split compilation units for all the options"
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
+#endif
                                CO2BrinePhillipsThermalFluid
-                               //,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 

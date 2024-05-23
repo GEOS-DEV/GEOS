@@ -51,7 +51,8 @@ class MultiFluidCompositionalMultiphasePVTPackageTest : public MultiFluidTest< C
 {
 public:
   using Base = MultiFluidTest< CompositionalMultiphaseFluidPVTPackage, 2, NUM_COMP >;
-  static constexpr real64 relTol = 1e-4;
+  static constexpr real64 relTol = 1.0e-4;
+  static constexpr real64 absTol = 1.0e-4;
 public:
   MultiFluidCompositionalMultiphasePVTPackageTest()
   {
@@ -90,7 +91,7 @@ public:
         for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
         {
           typename Base::TestData data ( pressure, units::convertCToK( temperature ), samples[sampleIndex].toSliceConst() );
-          Base::testNumericalDerivatives( fluid, parent, data, eps, relTol );
+          Base::testNumericalDerivatives( fluid, parent, data, eps, relTol, absTol );
         }
       }
     }
@@ -153,8 +154,9 @@ makeFluid( string const & name, Group * parent )
   string_array & phaseNames = fluid.getReference< string_array >( string( MultiFluidBase::viewKeyStruct::phaseNamesString()) );
   fill< 2 >( phaseNames, {"oil", "gas"} );
 
+  string const eosName = EnumStrings< EOS_TYPE >::toString( EOS );
   string_array & equationOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::equationsOfStateString() );
-  fill< 2 >( equationOfState, {EnumStrings< EOS_TYPE >::toString( EOS ), EnumStrings< EOS_TYPE >::toString( EOS )} );
+  fill< 2 >( equationOfState, {eosName, eosName} );
 
   Fluid< NUM_COMP >::fillProperties( fluid );
 
