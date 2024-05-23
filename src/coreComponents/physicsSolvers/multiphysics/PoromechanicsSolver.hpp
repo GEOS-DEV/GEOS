@@ -110,7 +110,7 @@ public:
         porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );
         GEOS_THROW_IF( porosityModelName.empty(),
                        GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
-                                 this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                                 this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
         if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -170,7 +170,7 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override
   {
-    flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+    flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
     Base::implicitStepSetup( time_n, dt, domain );
   }
 
@@ -184,6 +184,25 @@ public:
     flowSolver()->setupDofs( domain, dofManager );
 
     this->setupCoupling( domain, dofManager );
+  }
+
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain ) override
+  {
+    // always force outer loop for initialization
+    auto & subcycling = this->getNonlinearSolverParameters().m_subcyclingOption;
+    auto const subcycling_orig = subcycling;
+    if( m_performStressInitialization )
+      subcycling = 1;
+
+    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+
+    // restore original
+    subcycling = subcycling_orig;
+
+    return isConverged;
   }
 
   /**
@@ -370,7 +389,8 @@ protected:
     }
 
     /// After the solid mechanics solver
-    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics )
+        && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
       // compute the average of the mean total stress increment over quadrature points
       averageMeanTotalStressIncrement( domain );
