@@ -83,7 +83,10 @@ private:
 class TableData2D
 {
 public:
+
+  /// Type real64 for a row
   using RowType = real64;
+  /// Type real64 for a column
   using ColumnType = real64;
 
   /// Struct containing conversion informations
