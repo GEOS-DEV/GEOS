@@ -174,7 +174,7 @@ public:
     GEOS_UNUSED_VAR( q );
 
     // single quadrature point (centroid), i.e.  r = s = 1/3
-    real64 const qCoords[2] = { 1.0 / 3.0 , 1.0 / 3.0};
+    real64 const qCoords[2] = { 1.0 / 3.0, 1.0 / 3.0};
     calcBubbleN( qCoords, N );
   }
 
@@ -216,9 +216,9 @@ public:
   inline
   static void getPermutation( int (& permutation)[numNodes] )
   {
-    permutation[0] = 0; 
-    permutation[1] = 1; 
-    permutation[2] = 2; 
+    permutation[0] = 0;
+    permutation[1] = 1;
+    permutation[2] = 2;
   }
 
 private:

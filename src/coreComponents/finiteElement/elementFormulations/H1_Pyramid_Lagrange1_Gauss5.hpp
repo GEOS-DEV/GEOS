@@ -184,7 +184,7 @@ public:
                                real64 (& N)[numFaces] )
   {
     GEOS_UNUSED_VAR( pointCoord, N );
-    GEOS_ERROR("Unsupported bubble functions for pyramid elements");
+    GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
   }
 
   /**
@@ -200,7 +200,7 @@ public:
                                real64 (& N)[numFaces] )
   {
     GEOS_UNUSED_VAR( q, N );
-    GEOS_ERROR("Unsupported bubble functions for pyramid elements");
+    GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
   }
 
   /**
@@ -616,7 +616,7 @@ H1_Pyramid_Lagrange1_Gauss5::calcGradFaceBubbleN( localIndex const q,
                                                   real64 (& gradN)[numFaces][3] )
 {
   GEOS_UNUSED_VAR( q, X, gradN );
-  GEOS_ERROR("Unsupported bubble functions for pyramid elements");
+  GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
   return 0.0;
 }
 

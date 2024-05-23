@@ -43,7 +43,7 @@ class ALMKernelsBase :
 public:
   /// Alias for the base class;
   using Base = finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
-                                                   FE_TYPE, 
+                                                   FE_TYPE,
                                                    3, 3 >;
 
   /// Number of nodes per element...which is equal to the
@@ -75,7 +75,7 @@ public:
                   globalIndex const rankOffset,
                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                   arrayView1d< real64 > const inputRhs,
-                  real64 const inputDt, 
+                  real64 const inputDt,
                   arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
@@ -90,21 +90,21 @@ public:
           inputRhs,
           inputDt ),
     m_X( nodeManager.referencePosition()),
-    m_faceToNodes(faceManager.nodeList().toViewConst()),
-    m_elemsToFaces(elementSubRegion.faceList().toViewConst()),
-    m_faceElementList(faceElementList),
+    m_faceToNodes( faceManager.nodeList().toViewConst()),
+    m_elemsToFaces( elementSubRegion.faceList().toViewConst()),
+    m_faceElementList( faceElementList ),
     m_bDofNumber( bDofNumber ),
-    m_rotationMatrix(elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
+    m_rotationMatrix( elementSubRegion.getField< fields::contact::rotationMatrix >().toViewConst()),
     m_dispJump( elementSubRegion.getField< fields::contact::dispJump >().toView() ),
     m_oldDispJump( elementSubRegion.getField< fields::contact::oldDispJump >().toViewConst() ),
     m_penalty( elementSubRegion.getField< fields::contact::penalty >().toViewConst() )
-{}
+  {}
 
   //***************************************************************************
   /**
    * @copydoc finiteElement::InterfaceKernelBase::StackVariables
    */
-  struct StackVariables  
+  struct StackVariables
   {
     /// The number of displacement dofs per element.
     static constexpr int numUdofs = numNodesPerElem * 3 * 2;
@@ -115,17 +115,17 @@ public:
     /// The number of bubble dofs per element.
     static constexpr int numBdofs = 3*2;
 
-  public:
-  
+public:
+
     GEOS_HOST_DEVICE
     StackVariables():
-      localAtu{{}},
-      localAtb{{}},
-      localRotationMatrix{{}},
-      localPenalty{{}},
+      localAtu{ {} },
+      localAtb{ {} },
+      localRotationMatrix{ {} },
+      localPenalty{ {} },
       dispJumpLocal{},
       oldDispJumpLocal{},
-      X{{}}
+      X{ {} }
     {}
 
     /// C-array storage for the element local Atu matrix.
@@ -197,34 +197,41 @@ public:
                               StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( k );
-    real64 const detJ = m_finiteElementSpace.template transformedQuadratureWeight( q, stack.X );
 
-    real64 N[ numNodesPerElem ]; 
-    m_finiteElementSpace.template calcN( q, N );
+    constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
-    real64 BubbleN[1]; 
+    constexpr int numTdofs = 3;
+
+    constexpr int numBdofs = 3*2;
+
+    real64 const detJ = m_finiteElementSpace.transformedQuadratureWeight( q, stack.X );
+
+    real64 N[ numNodesPerElem ];
+    m_finiteElementSpace.calcN( q, N );
+
+    real64 BubbleN[1];
     // Next line is needed because I only inserted a placeholder for calcBubbleN in some finite elements
     BubbleN[0]=0.0;  //make 0
     constexpr int bperm[1] = {0};
-    m_finiteElementSpace.template calcBubbleN( q, BubbleN );
+    m_finiteElementSpace.calcBubbleN( q, BubbleN );
 
-    int permutation[numNodesPerElem]; 
-    m_finiteElementSpace.template getPermutation( permutation );
+    int permutation[numNodesPerElem];
+    m_finiteElementSpace.getPermutation( permutation );
 
     // TODO: Try using bilinear utilities to perform these two operations
-    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
-                                                               stack.numUdofs, 
-                                                               numNodesPerElem>(stack.localAtu, 
-                                                                                N, 
-                                                                                permutation,
-                                                                                detJ);
+    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator< numTdofs,
+                                                                numUdofs,
+                                                                numNodesPerElem >( stack.localAtu,
+                                                                                   N,
+                                                                                   permutation,
+                                                                                   detJ );
 
-    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator<stack.numTdofs, 
-                                                               stack.numBdofs, 
-                                                               1>(stack.localAtb, 
-                                                                  BubbleN, 
-                                                                  bperm,
-                                                                  detJ);
+    solidMechanicsALMKernelsHelper::accumulateAtuLocalOperator< numTdofs,
+                                                                numBdofs,
+                                                                1 >( stack.localAtb,
+                                                                     BubbleN,
+                                                                     bperm,
+                                                                     detJ );
   }
 
 protected:
@@ -233,7 +240,7 @@ protected:
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array of array containing the face to node map.
-  ArrayOfArraysView< localIndex const > const m_faceToNodes; 
+  ArrayOfArraysView< localIndex const > const m_faceToNodes;
 
   /// The array of array containing the element to face map.
   ArrayOfArraysView< localIndex const > const m_elemsToFaces;

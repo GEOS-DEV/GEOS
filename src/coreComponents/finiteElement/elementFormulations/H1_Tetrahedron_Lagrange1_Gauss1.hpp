@@ -225,7 +225,7 @@ public:
     // single quadrature point (centroid), i.e.  r = s = t = 1/4
     real64 const pointCoord[3] = {0.25, 0.25, 0.25};
 
-    calcFaceBubbleN( pointCoord , N );
+    calcFaceBubbleN( pointCoord, N );
   }
 
   /**
@@ -459,28 +459,28 @@ H1_Tetrahedron_Lagrange1_Gauss1::calcGradFaceBubbleN( localIndex const q,
 
   real64 J[3][3] = {{0}};
 
-  J[0][0] = (-X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] ))*factor; 
+  J[0][0] = (-X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] ))*factor;
   J[0][1] = ( X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] ))*factor;
   J[0][2] = (-X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] ))*factor;
-            
+
   J[1][0] = ( X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] ))*factor;
   J[1][1] = (-X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] ))*factor;
   J[1][2] = ( X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] ))*factor;
-            
+
   J[2][0] = (-X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] ))*factor;
   J[2][1] = ( X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] ))*factor;
   J[2][2] = (-X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] ))*factor;
-            
+
   real64 dNdXi[numFaces][3] = {{0}};
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
   real64 const r = 1.0 / 4.0;
   real64 const s = 1.0 / 4.0;
   real64 const t = 1.0 / 4.0;
-  
+
   dNdXi[0][0] = ( 1 - 2 * r - s - t ) * t; // dN0/dr
   dNdXi[0][1] = -r * t;                    // dN0/ds
   dNdXi[0][2] = ( 1 - r - s - 2 * t ) * r; // dN0/dt
-  
+
   dNdXi[1][0] = ( 1 - 2 * r - s - t ) * s; // dN1/dr
   dNdXi[1][1] = ( 1 - r - 2 * s - t ) * r; // dN1/ds
   dNdXi[1][2] =  -r * s;                   // dN1/dt

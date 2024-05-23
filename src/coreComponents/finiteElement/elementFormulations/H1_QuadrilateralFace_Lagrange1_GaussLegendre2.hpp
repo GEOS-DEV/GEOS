@@ -208,10 +208,10 @@ public:
   inline
   static void getPermutation( int (& permutation)[numNodes] )
   {
-    permutation[0] = 0; 
-    permutation[1] = 1; 
-    permutation[2] = 3; 
-    permutation[3] = 2; 
+    permutation[0] = 0;
+    permutation[1] = 1;
+    permutation[2] = 3;
+    permutation[3] = 2;
   }
 
 private:

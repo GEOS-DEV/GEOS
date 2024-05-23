@@ -104,7 +104,7 @@ public:
     m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >().toViewConst() ),
     m_bDofNumber( bDofNumber ),
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
-    m_elemsToFaces(elementSubRegion.faceElementsList() )
+    m_elemsToFaces( elementSubRegion.faceElementsList() )
   {}
 
   //***************************************************************************
@@ -112,7 +112,7 @@ public:
   /**
    * @copydoc finiteElement::ImplicitKernelBase::StackVariables
    */
-  struct StackVariables  
+  struct StackVariables
   {
 public:
     /// The number of displacement dofs per element.
@@ -132,13 +132,13 @@ public:
       bColIndices{},
       localRu{},
       localRb{},
-      localAbb{{}},
-      localAbu{{}},
-      localAub{{}},
+      localAbb{ {} },
+      localAbu{ {} },
+      localAub{ {} },
       bLocal{},
       uLocal{},
-      X{{}},
-      constitutiveStiffness{{}}
+      X{ {} },
+      constitutiveStiffness{ {} }
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -271,10 +271,10 @@ public:
     // Next line is needed because I only inserted a placeholder for calcGradFaceBubbleN in some finite elements
     LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );  //make 0
 
-    real64 detJ = m_finiteElementSpace.template calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
+    real64 detJ = m_finiteElementSpace.calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
 
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    detJ = m_finiteElementSpace.template calcGradN( q, stack.X, dNdX );
+    detJ = m_finiteElementSpace.calcGradN( q, stack.X, dNdX );
 
     m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
@@ -300,7 +300,7 @@ public:
     //  dBubbleNdX,
     //  -detJ );
 
-   
+
     //LinearFormUtilities::compute< displacementTestSpace,
     //                            DifferentialOperator::Identity >
     //(
@@ -342,8 +342,8 @@ public:
 
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
 
-    // Extract only the submatrix and known term corresponding to the index of the local face 
-    // on which the bubble function was applied. 
+    // Extract only the submatrix and known term corresponding to the index of the local face
+    // on which the bubble function was applied.
     real64 localAub[nUdof][3];
     real64 localAbu[3][nUdof];
     real64 localAbb[3][3];
@@ -408,7 +408,7 @@ public:
                                                                               localAbu[i],
                                                                               numNodesPerElem*3 );
     }
-    
+
     return maxForce;
   }
 
@@ -424,9 +424,9 @@ protected:
   arrayView1d< localIndex const > const m_bubbleElems;
 
   /// The array containing the element to bubble face map.
-  /// The bubble face is the face of the element to which the bubble is applied. 
+  /// The bubble face is the face of the element to which the bubble is applied.
   /// Both the local and global face index are stored in this array.
-  arrayView2d< localIndex const > const  m_elemsToFaces;
+  arrayView2d< localIndex const > const m_elemsToFaces;
 
 };
 

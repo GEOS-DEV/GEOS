@@ -35,7 +35,7 @@ GEOS_HOST_DEVICE
 inline
 void accumulateAtuLocalOperator( real64 ( & matrix )[I_SIZE][J_SIZE],
                                  real64 ( & N )[NUM_NODES],
-                                 int const ( & perm )[NUM_NODES],
+                                 int const ( &perm )[NUM_NODES],
                                  real64 const detJ )
 {
   for( int a=0; a < NUM_NODES; ++a )

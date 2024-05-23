@@ -60,7 +60,7 @@ public:
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
-                                  DomainPartition & domain ) override final;                   
+                                  DomainPartition & domain ) override final;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
@@ -94,34 +94,34 @@ public:
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and 
+   * @param lambda The callback function. Take the finite element type name and
    * the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
 
-    std::map< string, 
-              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at(meshName); 
+    std::map< string,
+              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
-    for (const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements)
+    for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
       arrayView1d< localIndex const > const faceElemList = faceElementList.toViewConst();
-      lambda(finiteElementName, faceElemList);
+      lambda( finiteElementName, faceElemList );
     }
 
   }
 
   /**
-   * @brief Create the list of finite elements of the same type 
+   * @brief Create the list of finite elements of the same type
    *   for each FaceElementSubRegion (Triangle or Quadrilateral).
    * @param domain The physical domain object
    */
   void createFaceTypeList( DomainPartition const & domain );
 
   /**
-   * @brief Create the list of elements belonging to CellElementSubRegion 
-   *  that are enriched with the bubble basis functions 
+   * @brief Create the list of elements belonging to CellElementSubRegion
+   *  that are enriched with the bubble basis functions
    * @param domain The physical domain object
    */
   void createBubbleCellList( DomainPartition & domain ) const;
@@ -129,7 +129,7 @@ public:
 private:
 
   /**
-   * @brief add the number of non-zero elements induced by the coupling between 
+   * @brief add the number of non-zero elements induced by the coupling between
    *   nodal and bubble displacement.
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
@@ -152,7 +152,7 @@ private:
   void computeTolerances( DomainPartition & domain ) const;
 
   /// Finite element type to face element index map
-  std::map< string, std::map< string, array1d< localIndex >>> m_faceTypesToFaceElements;
+  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 
   /// Finite element type to finite element object map
   std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;

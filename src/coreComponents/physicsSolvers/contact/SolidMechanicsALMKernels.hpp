@@ -40,9 +40,9 @@ public:
   /// Alias for the base class.
   using Base = ALMKernelsBase< CONSTITUTIVE_TYPE,
                                FE_TYPE >;
-  
+
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. 
+  /// maxNumTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   /// Compile time value for the number of quadrature points per element.
@@ -78,7 +78,7 @@ public:
        globalIndex const rankOffset,
        CRSMatrixView< real64, globalIndex const > const inputMatrix,
        arrayView1d< real64 > const inputRhs,
-       real64 const inputDt, 
+       real64 const inputDt,
        arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
@@ -94,15 +94,15 @@ public:
           inputRhs,
           inputDt,
           faceElementList ),
-    m_traction(elementSubRegion.getField< fields::contact::traction >().toViewConst())
-{}
+    m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst())
+  {}
 
   //***************************************************************************
 
   /**
    * @copydoc finiteElement::KernelBase::StackVariables
    */
-  struct StackVariables: public Base::StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 
     /// The number of displacement dofs per element.
@@ -114,21 +114,21 @@ public:
     /// The number of bubble dofs per element.
     static constexpr int numBdofs = 3*2;
 
-  public:
+public:
 
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dispEqnRowIndices{},
-      dispColIndices{},
-      bEqnRowIndices{},
-      bColIndices{},
-      localRu{},
-      localRb{},
-      localAutAtu{{}},
-      localAbtAtb{{}},
-      localAbtAtu{{}},
-      localAutAtb{{}},
+            dispEqnRowIndices{},
+            dispColIndices{},
+            bEqnRowIndices{},
+            bColIndices{},
+            localRu{},
+            localRb{},
+            localAutAtu{ {} },
+      localAbtAtb{ {} },
+      localAbtAtu{ {} },
+      localAutAtb{ {} },
       tLocal{}
     {}
 
@@ -191,9 +191,11 @@ public:
               StackVariables & stack ) const
   {
     constexpr int shift = numNodesPerElem * 3;
-    
-    int permutation[numNodesPerElem]; 
-    m_finiteElementSpace.template getPermutation( permutation );
+
+    constexpr int numTdofs = 3;
+
+    int permutation[numNodesPerElem];
+    m_finiteElementSpace.getPermutation( permutation );
 
     localIndex const kf0 = m_elemsToFaces[k][0];
     localIndex const kf1 = m_elemsToFaces[k][1];
@@ -214,22 +216,22 @@ public:
 
     for( int j=0; j<3; ++j )
     {
-       for( int i=0; i<3; ++i )
-       {
-         stack.localRotationMatrix[ i ][ j ] = m_rotationMatrix( k, i, j );
-       }
+      for( int i=0; i<3; ++i )
+      {
+        stack.localRotationMatrix[ i ][ j ] = m_rotationMatrix( k, i, j );
+      }
     }
 
     // The minus sign is consistent with the sign of the Jacobian
-    stack.localPenalty[0][0] = -m_penalty(k, 0);
-    stack.localPenalty[1][1] = -m_penalty(k, 1);
-    stack.localPenalty[2][2] = -m_penalty(k, 1);
+    stack.localPenalty[0][0] = -m_penalty( k, 0 );
+    stack.localPenalty[1][1] = -m_penalty( k, 1 );
+    stack.localPenalty[2][2] = -m_penalty( k, 1 );
 
-    for( int i=0; i<stack.numTdofs; ++i )
+    for( int i=0; i<numTdofs; ++i )
     {
-      stack.tLocal[i] = m_traction(k, i);
-      stack.dispJumpLocal[i] = m_dispJump(k, i);
-      stack.oldDispJumpLocal[i] = m_oldDispJump(k, i);
+      stack.tLocal[i] = m_traction( k, i );
+      stack.dispJumpLocal[i] = m_dispJump( k, i );
+      stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
     }
 
     for( int i=0; i<3; ++i )
@@ -249,71 +251,75 @@ public:
   {
     GEOS_UNUSED_VAR( k );
 
-    real64 matRRtAtu[3][stack.numUdofs], matDRtAtu[3][stack.numUdofs];
-    real64 matRRtAtb[3][stack.numBdofs], matDRtAtb[3][stack.numBdofs];
+    constexpr int numUdofs = numNodesPerElem * 3 * 2;
 
-    real64 dispJumpR[stack.numUdofs];
-    real64 oldDispJumpR[stack.numUdofs];
-    real64 tractionR[stack.numUdofs];
-    real64 dispJumpRb[stack.numBdofs];
-    real64 oldDispJumpRb[stack.numBdofs];
-    real64 tractionRb[stack.numBdofs];
+    constexpr int numBdofs = 3*2;
+
+    real64 matRRtAtu[3][numUdofs], matDRtAtu[3][numUdofs];
+    real64 matRRtAtb[3][numBdofs], matDRtAtb[3][numBdofs];
+
+    real64 dispJumpR[numUdofs];
+    real64 oldDispJumpR[numUdofs];
+    real64 tractionR[numUdofs];
+    real64 dispJumpRb[numBdofs];
+    real64 oldDispJumpRb[numBdofs];
+    real64 tractionRb[numBdofs];
 
     // transp(R) * Atu
-    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
                                                                stack.localAtu );
     // transp(R) * Atb
-    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix, 
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix,
                                                                stack.localAtb );
 
     // Compute the traction contribute of the local residuals
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numBdofs, 3 >( tractionRb, matRRtAtb, stack.tLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( tractionRb, matRRtAtb, stack.tLocal );
 
-    // D*RtAtu 
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matDRtAtu, stack.localPenalty, 
+    // D*RtAtu
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, numUdofs, 3 >( matDRtAtu, stack.localPenalty,
                                                                matRRtAtu );
-    // D*RtAtb 
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numBdofs, 3 >( matDRtAtb, stack.localPenalty, 
+    // D*RtAtb
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, numBdofs, 3 >( matDRtAtb, stack.localPenalty,
                                                                matRRtAtb );
 
-    // R*RtAtu 
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix, 
+    // R*RtAtu
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
                                                                matDRtAtu );
-    // R*RtAtb 
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, stack.numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix, 
+    // R*RtAtb
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix,
                                                                matDRtAtb );
 
     // transp(Atu)*RRtAtu
-    LvArray::tensorOps::Rij_eq_AkiBkj< stack.numUdofs, stack.numUdofs, 3 >( stack.localAutAtu, stack.localAtu, 
-                                                                            matRRtAtu); 
+    LvArray::tensorOps::Rij_eq_AkiBkj< numUdofs, numUdofs, 3 >( stack.localAutAtu, stack.localAtu,
+                                                                            matRRtAtu );
     // transp(Atb)*RRtAtb
-    LvArray::tensorOps::Rij_eq_AkiBkj< stack.numBdofs, stack.numBdofs, 3 >( stack.localAbtAtb, stack.localAtb, 
-                                                                            matRRtAtb); 
+    LvArray::tensorOps::Rij_eq_AkiBkj< numBdofs, numBdofs, 3 >( stack.localAbtAtb, stack.localAtb,
+                                                                            matRRtAtb );
 
     // transp(Atb)*RRtAtu
-    LvArray::tensorOps::Rij_eq_AkiBkj< stack.numBdofs, stack.numUdofs, 3 >( stack.localAbtAtu, stack.localAtb, 
-                                                                            matRRtAtu); 
+    LvArray::tensorOps::Rij_eq_AkiBkj< numBdofs, numUdofs, 3 >( stack.localAbtAtu, stack.localAtb,
+                                                                            matRRtAtu );
 
     // transp(Atu)*RRtAtb
-    LvArray::tensorOps::Rij_eq_AkiBkj< stack.numUdofs, stack.numBdofs, 3 >( stack.localAutAtb, stack.localAtu, 
-                                                                            matRRtAtb); 
+    LvArray::tensorOps::Rij_eq_AkiBkj< numUdofs, numBdofs, 3 >( stack.localAutAtb, stack.localAtu,
+                                                                            matRRtAtb );
 
     // Compute the local residuals
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numBdofs, 3 >( dispJumpRb, matDRtAtb, stack.dispJumpLocal );
-    LvArray::tensorOps::Ri_eq_AjiBj< stack.numBdofs, 3 >( oldDispJumpRb, matDRtAtb, stack.oldDispJumpLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( oldDispJumpR, matDRtAtu, stack.oldDispJumpLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( dispJumpRb, matDRtAtb, stack.dispJumpLocal );
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( oldDispJumpRb, matDRtAtb, stack.oldDispJumpLocal );
 
-    LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, tractionR, -1 );
-    LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, dispJumpR,  1 );
-    LvArray::tensorOps::scaledAdd< stack.numUdofs >( stack.localRu, oldDispJumpR, -1 );
+    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, tractionR, -1 );
+    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, dispJumpR, 1 );
+    LvArray::tensorOps::scaledAdd< numUdofs >( stack.localRu, oldDispJumpR, -1 );
 
-    LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, tractionRb, -1 );
-    LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, dispJumpRb,  1 );
-    LvArray::tensorOps::scaledAdd< stack.numBdofs >( stack.localRb, oldDispJumpRb, -1 );
-                                                                          
-    for( localIndex i=0; i < stack.numUdofs; ++i )
+    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, tractionRb, -1 );
+    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, dispJumpRb, 1 );
+    LvArray::tensorOps::scaledAdd< numBdofs >( stack.localRb, oldDispJumpRb, -1 );
+
+    for( localIndex i=0; i < numUdofs; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
 
@@ -326,15 +332,15 @@ public:
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.dispColIndices,
                                                                               stack.localAutAtu[i],
-                                                                              stack.numUdofs );
+                                                                              numUdofs );
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.bColIndices,
                                                                               stack.localAutAtb[i],
-                                                                              stack.numBdofs );
+                                                                              numBdofs );
     }
 
-    for( localIndex i=0; i < stack.numBdofs; ++i )
+    for( localIndex i=0; i < numBdofs; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.bEqnRowIndices[ i ] );
 
@@ -347,14 +353,14 @@ public:
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.bColIndices,
                                                                               stack.localAbtAtb[i],
-                                                                              stack.numBdofs );
+                                                                              numBdofs );
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.dispColIndices,
                                                                               stack.localAbtAtu[i],
-                                                                              stack.numUdofs );
+                                                                              numUdofs );
     }
-   
+
     return 0.0;
   }
 
@@ -371,7 +377,7 @@ using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
                                                           globalIndex const,
                                                           CRSMatrixView< real64, globalIndex const > const,
                                                           arrayView1d< real64 > const,
-                                                          real64 const, 
+                                                          real64 const,
                                                           arrayView1d< localIndex const > const >;
 
 

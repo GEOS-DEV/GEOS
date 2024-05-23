@@ -42,7 +42,7 @@ public:
                                FE_TYPE >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. 
+  /// maxNumTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::m_X;
@@ -70,7 +70,7 @@ public:
                  globalIndex const rankOffset,
                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
                  arrayView1d< real64 > const inputRhs,
-                 real64 const inputDt, 
+                 real64 const inputDt,
                  arrayView1d< localIndex const > const & faceElementList ):
     Base( nodeManager,
           edgeManager,
@@ -86,7 +86,7 @@ public:
           inputRhs,
           inputDt,
           faceElementList ),
-    m_displacement(nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
+    m_displacement( nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
     m_bubbleDisp( faceManager.getField< fields::solidMechanics::totalBubbleDisplacement >() ),
     m_incrDisp( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_incrBubbleDisp( faceManager.getField< fields::solidMechanics::incrementalBubbleDisplacement >() ),
@@ -110,16 +110,16 @@ public:
     /// The number of lagrange multiplier dofs per element.
     static constexpr int numTdofs = 3;
 
-  public:
+public:
 
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      uLocal{},
-      bLocal{},
-      duLocal{},
-      dbLocal{},
-      deltaDispJumpLocal{}
+            uLocal{},
+            bLocal{},
+            duLocal{},
+            dbLocal{},
+            deltaDispJumpLocal{}
     {}
 
     /// Stack storage for the element local displacement vector
@@ -164,8 +164,8 @@ public:
   {
     constexpr int shift = numNodesPerElem * 3;
 
-    int permutation[numNodesPerElem]; 
-    m_finiteElementSpace.template getPermutation( permutation );
+    int permutation[numNodesPerElem];
+    m_finiteElementSpace.getPermutation( permutation );
 
     localIndex const kf0 = m_elemsToFaces[k][0];
     localIndex const kf1 = m_elemsToFaces[k][1];
@@ -176,7 +176,7 @@ public:
 
       for( int i=0; i<3; ++i )
       {
-        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, permutation[ a ]) ][ i ];
+        stack.X[ a ][ i ] = m_X[ m_faceToNodes( kf0, permutation[ a ] ) ][ i ];
         stack.uLocal[a*3+i] = m_displacement[kn0][i];
         stack.uLocal[shift + a*3+i] = m_displacement[kn1][i];
         stack.duLocal[a*3+i] = m_incrDisp[kn0][i];
@@ -186,10 +186,10 @@ public:
 
     for( int j=0; j<3; ++j )
     {
-       for( int i=0; i<3; ++i )
-       {
-         stack.localRotationMatrix[ i ][ j ] = m_rotationMatrix( k, i, j );
-       }
+      for( int i=0; i<3; ++i )
+      {
+        stack.localRotationMatrix[ i ][ j ] = m_rotationMatrix( k, i, j );
+      }
     }
 
     for( int i=0; i<3; ++i )
@@ -208,23 +208,27 @@ public:
                    StackVariables & stack ) const
   {
 
-    real64 matRtAtu[3][stack.numUdofs];
-    real64 matRtAtb[3][stack.numBdofs];
+    constexpr int numUdofs = numNodesPerElem * 3 * 2;
+
+    constexpr int numBdofs = 3 * 2;
+
+    real64 matRtAtu[3][numUdofs];
+    real64 matRtAtb[3][numBdofs];
 
     // transp(R) * Atu
-    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numUdofs, 3 >( matRtAtu, stack.localRotationMatrix, 
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRtAtu, stack.localRotationMatrix,
                                                                stack.localAtu );
     // transp(R) * Atb
-    LvArray::tensorOps::Rij_eq_AkiBkj< 3, stack.numBdofs, 3 >( matRtAtb, stack.localRotationMatrix, 
+    LvArray::tensorOps::Rij_eq_AkiBkj< 3, numBdofs, 3 >( matRtAtb, stack.localRotationMatrix,
                                                                stack.localAtb );
 
     // Compute the node contribute of the displacement and delta displacement jump
-    LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );
-    LvArray::tensorOps::Ri_eq_AijBj< 3, stack.numUdofs >( stack.deltaDispJumpLocal, matRtAtu, stack.duLocal );
+    LvArray::tensorOps::Ri_eq_AijBj< 3, numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );
+    LvArray::tensorOps::Ri_eq_AijBj< 3, numUdofs >( stack.deltaDispJumpLocal, matRtAtu, stack.duLocal );
 
     // Compute the bubble contribute of the displacement and delta displacement jump
-    LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.dispJumpLocal, matRtAtb, stack.bLocal );
-    LvArray::tensorOps::Ri_add_AijBj< 3, stack.numBdofs >( stack.deltaDispJumpLocal, matRtAtb, stack.dbLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, numBdofs >( stack.dispJumpLocal, matRtAtb, stack.bLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, numBdofs >( stack.deltaDispJumpLocal, matRtAtb, stack.dbLocal );
 
     // Store the results
     for( int i=0; i<3; ++i )
@@ -261,7 +265,7 @@ using ALMJumpUpdateFactory = finiteElement::InterfaceKernelFactory< ALMJumpUpdat
                                                                     globalIndex const,
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
-                                                                    real64 const, 
+                                                                    real64 const,
                                                                     arrayView1d< localIndex const > const >;
 
 } // namespace SolidMechanicsALMKernels

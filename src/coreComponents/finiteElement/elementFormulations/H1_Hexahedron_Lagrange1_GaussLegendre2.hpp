@@ -650,7 +650,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradFaceBubbleN( localIndex const q,
                               quadratureFactor * LagrangeBasis1::parentSupportCoord( qb ),
                               quadratureFactor * LagrangeBasis1::parentSupportCoord( qc ) };
 
-  LagrangeBasis1::TensorProduct3D::gradientFaceBubble( qCoords,dNdXi);
+  LagrangeBasis1::TensorProduct3D::gradientFaceBubble( qCoords, dNdXi );
 
   for( int fi=0; fi<numFaces; ++fi )
   {

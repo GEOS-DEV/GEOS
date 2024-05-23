@@ -202,7 +202,7 @@ public:
                                real64 (& N)[numFaces] )
   {
     GEOS_UNUSED_VAR( pointCoord, N );
-    GEOS_ERROR("Unsupported bubble functions for wedge elements");
+    GEOS_ERROR( "Unsupported bubble functions for wedge elements" );
   }
 
   /**
@@ -218,7 +218,7 @@ public:
                                real64 (& N)[numFaces] )
   {
     GEOS_UNUSED_VAR( q, N );
-    GEOS_ERROR("Unsupported bubble functions for wedge elements");
+    GEOS_ERROR( "Unsupported bubble functions for wedge elements" );
   }
 
   /**
@@ -609,7 +609,7 @@ H1_Wedge_Lagrange1_Gauss6::calcGradFaceBubbleN( localIndex const q,
                                                 real64 (& gradN)[numFaces][3] )
 {
   GEOS_UNUSED_VAR( q, X, gradN );
-  GEOS_ERROR("Unsupported bubble functions for wedge elements");
+  GEOS_ERROR( "Unsupported bubble functions for wedge elements" );
   return 0.0;
 }
 

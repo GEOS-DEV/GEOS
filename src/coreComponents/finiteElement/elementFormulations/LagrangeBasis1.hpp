@@ -116,7 +116,7 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 valueBubble( const real64 xi )
   {
-    return 1.0 - pow(xi,2);
+    return 1.0 - pow( xi, 2 );
   }
 
 
@@ -282,7 +282,7 @@ public:
     GEOS_HOST_DEVICE
     GEOS_FORCE_INLINE
     static void valueBubble( real64 const (&coords)[2],
-                                 real64 (& N)[1] )
+                             real64 (& N)[1] )
     {
       N[0] = LagrangeBasis1::valueBubble( coords[0] ) *
              LagrangeBasis1::valueBubble( coords[1] );
