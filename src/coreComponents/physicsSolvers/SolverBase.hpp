@@ -664,7 +664,7 @@ public:
   }
 
   virtual void
-  synchronizeNonLinearParameters()
+  synchronizeNonlinearSolverParameters()
   { /* empty here, overriden in CoupledSolver */ }
 
   /**
