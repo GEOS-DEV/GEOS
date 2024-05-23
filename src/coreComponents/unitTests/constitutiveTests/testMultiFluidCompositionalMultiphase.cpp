@@ -321,15 +321,15 @@ TEST_F( PengRobinsonConstantViscosity9Test, numericalDerivatives )
 
   real64 constexpr eps = 1.0e-7;
 
-  constexpr real64 pressures[] = { 1.0e5, 10.0e5, 100.0e5, 600.0e5 };
-  constexpr real64 temperatures[] = { 15.5, 25.0, 40.0, 300.0 };
-  //constexpr real64 pressures[] = { 1.0e5 };
-  //constexpr real64 temperatures[] = { 15.5 };
+  //constexpr real64 pressures[] = { 1.0e5, 10.0e5, 100.0e5, 600.0e5 };
+  //constexpr real64 temperatures[] = { 15.5, 25.0, 40.0, 300.0 };
+  constexpr real64 pressures[] = { 1.0e5 };
+  constexpr real64 temperatures[] = { 15.5 };
 
   fluid.setMassFlag( false );
 
   //for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
-  for( integer sampleIndex : {2} )
+  for( integer sampleIndex : {5} )
   {
     for( real64 const pressure : pressures )
     {

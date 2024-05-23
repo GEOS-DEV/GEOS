@@ -85,7 +85,6 @@ public:
     }
 
     // Initialise the trial compositions using Wilson k-Values
-    // Use fugacity space as temporary storage
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
                                                         temperature,
@@ -142,11 +141,12 @@ public:
 
         if( error < MultiFluidConstants::fugacityTolerance )
         {
-          // Calculate modified tangent plane distance (Michelsen, 1982b) of trial composition relative to input composition
-          double tpd = 1.0;
+          // Calculate modified tangent plane distance (Michelsen, 1982) of trial composition relative to input composition
+          double tpd = 0.0;
           for( integer const ic : presentComponents )
           {
-            tpd += trialComposition( trialIndex, ic ) * (logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic] - 1.0);
+            tpd += trialComposition( trialIndex, ic ) * (logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic] - 1.0) +
+                   composition[ic];
           }
           if( tpd < tangentPlaneDistance )
           {
