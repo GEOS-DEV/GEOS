@@ -75,7 +75,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geos::finiteElement::ImplictKernelBase::ImplictKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    */
   InterfaceKernelBase( NodeManager const & nodeManager,
                        EdgeManager const & edgeManager,
