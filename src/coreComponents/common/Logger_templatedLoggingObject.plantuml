@@ -1,5 +1,11 @@
 @startuml Logger Class
 
+<style>
+note {
+  MaximumWidth 350
+}
+</style>
+
 set namespaceSeparator ::
 
 
@@ -42,7 +48,7 @@ struct LogMsgGeneralContext <<struct>> #text:DarkCyan {
   + string m_logSectionTitle
   + real64 m_timeStepStart
 }
-note right: If more efficient, Values type could be changed to string to be pretransformed.
+note right: If more efficient, types could be changed to string.
 
 struct LogMsgTargetContext <<struct>> #text:DarkMagenta {
   + string m_targetName
@@ -57,7 +63,7 @@ note right: Context data collected by the LoggingObject.\nData could be a map<st
 struct LogMsg <<struct>> #text:OrangeRed {
   + string m_text
 }
-note right: Message data structure.
+note left: Message data structure.
 
 LogMsgCallParams *--> "1" SourceFileLocation
 LogMsgCallParams *--> "1" LogMsgType
@@ -80,8 +86,6 @@ LogMsgType -r[hidden]- SourceFileLocation
 
 
 interface LogOutput <<interface>> #text:DarkRed {
-  + {static} LogOutput s_main
-  + {static} void initMainOutput( Strategy strat )
   + void log( <color:OrangeRed>LogMsg message</color> )
 }
 <> LogOutputImplementations
@@ -108,6 +112,42 @@ LogTextOutput .l[hidden].. LogHDF5Output
 LogHDF5Output .l[hidden].. LogCompositeOutput
 
 
+class LogErrorHistory {
+  -- Settings --
+  - integer storeTimeStepsCount = 2
+  - bool storeOnlyRank0 = false
+  + void setTimeStepToKeep( integer value )
+  + void storeOnlyRank0( bool value )
+  -- Control --
+  + void flushOldMessages()
+  -- Internal data --
+  - real64 storedTimeSteps[]
+}
+note as LogErrorHistoryNote
+  Stores all messages, and when an error occurs, dump them all in the rank error trace file.
+
+  Settings should be configurable on Problem & command line.
+
+  "flushOldMessages()" should be called on each timesteps.
+end note
+LogErrorHistory .. LogErrorHistoryNote
+LogErrorHistory o--l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last timesteps
+
+
+class LogRouter #text:DarkRed {
+  -- Static Members --
+  + {static} LogOutput s_main
+  -- Instance Members --
+  - LogLevel errorHistoryMaxLevel = Debug
+  + void setFileOutput( LogOutput output )
+  + void setFileOutput( LoggingStrategy strat )
+  + void setErrorHistoryLogLevel( LogLevel errorHistoryMaxLevel )
+}
+note top: Filters the messages and send them in the LogOutput and / or in the LogErrorHistory
+LogRouter *-d-> "1" LogErrorHistory #OrangeRed;text:OrangeRed : "Filter & Sends messages to"
+LogRouter *-r-> "1" LogOutput #OrangeRed;text:OrangeRed : "Filter & Sends messages to"
+
+
 ' --------------------------
 ' Message Producers
 ' --------------------------
@@ -115,10 +155,10 @@ LogHDF5Output .l[hidden].. LogCompositeOutput
 
 interface LoggingObject<CONTEXT_T> <<interface>> {
   + void setLogLevel( LogLevel objectLevel )
-  + void log( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogOutput logOutput = <u>LogOutput::s_main</u></color> )
-  + void logIf( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogOutput logOutput = <u>LogOutput::s_main</u></color> )
-  + void logRank0( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogOutput logOutput = <u>LogOutput::s_main</u></color> )
-  + void logRank0If( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogOutput logOutput = <u>LogOutput::s_main</u></color> )
+  + void log( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
+  + void logIf( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
+  + void logRank0( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
+  + void logRank0If( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
   # <color:Blue>LogMsgContext</color> createMsgContext( <color:Green>LogMsgCallParams msgParams</color> )
   # <i>CONTEXT_T</i> getContext()
 }
@@ -142,10 +182,15 @@ class GeneralLogger {
   + void setTimeStepStart( real64 value )
   + void setLogSectionTitle( string value )
 }
-note bottom: "logger" is a global instance for general messages.\nThe global instance is allowed as long as there is only one Problem.\nGeneral context data could be pre-transformed to string.
-GeneralLogger [<i>CONTEXT_T</i> =\n<color:DarkCyan>LogMessageGeneralContext</color>] ..u.|> LoggingObject : implements
-GeneralLogger ..d.> LogMsg : Produces
-GeneralLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
+note as GeneralLoggerNote
+  "logger" is a global instance for general messages (this global is allowed as long as "Problem" is a singleton).
+
+  "m_generalLogLevel" should be configurable on Problem and in a command line parameter.
+end note
+GeneralLogger .d. GeneralLoggerNote
+GeneralLogger [<i>CONTEXT_T</i> =\n<color:DarkCyan>LogMessageGeneralContext</color>] ..u..|> LoggingObject : implements
+GeneralLogger .d..> LogMsg : Produces
+GeneralLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends messages to"
 
 
 class TargetedLogger {
@@ -156,20 +201,19 @@ class TargetedLogger {
   + void setTargetName( int value )
   + void setTargetDataContext( int value )
 }
-class Group {
-  + <color:Grey>string getName()</color>
-  + <color:Grey>string getDataContext()</color>
-  - <color:Red><s>int m_logLevel</s></color>
+package dataRepository {
+  class Group {
+    + <color:Grey>string getName()</color>
+    + <color:Grey>string getDataContext()</color>
+    - <color:Red><s>int m_logLevel</s></color>
+  }
 }
-TargetedLogger [<i>CONTEXT_T</i> =\n<color:DarkMagenta>LogMsgTargetContext</color>] .u..|> LoggingObject : implements
-Group *-u--> "m_logger\n1" TargetedLogger
+TargetedLogger [<i>CONTEXT_T</i> =\n<color:DarkMagenta>LogMsgTargetContext</color>] ..u..|> LoggingObject : implements
+Group *-u-> "m_logger\n1" TargetedLogger
 
-TargetedLogger ..r.> LogOutput #OrangeRed;text:OrangeRed : "Sends messages to"
-TargetedLogger ..r.> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
-TargetedLogger ..d.> LogMsg : Produces
-
-
-
+TargetedLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends messages to"
+TargetedLogger ..r..> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
+TargetedLogger .d..> LogMsg : Produces
 
 
 @enduml
