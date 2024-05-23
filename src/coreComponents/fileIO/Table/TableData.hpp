@@ -85,7 +85,7 @@ class TableData2D
 public:
   using RowType = real64;
   using ColumnType = real64;
-  
+
   /// Struct containing conversion informations
   struct Conversion1D
   {

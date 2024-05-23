@@ -28,7 +28,7 @@ void TableData::addRow( std::vector< string > const & row )
     string msg = "Remarks : some cells may be missing";
     if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
     {
-      addErrorMsg(msg);
+      addErrorMsg( msg );
     }
   }
   m_rows.push_back( row );
