@@ -658,7 +658,7 @@ protected:
   }
 
   virtual void
-  synchronizeNonlinearSolverParameters( bool const print ) override
+  synchronizeNonlinearSolverParameters() override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {

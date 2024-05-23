@@ -274,14 +274,14 @@ bool SolverBase::execute( real64 const time_n,
         {
           nextDt = dtRemaining / 2;
           if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-            GEOS_LOG_RANK_0( 1, GEOS_FMT( "{}: shortening time step to {} to cover ramaining time {} in two steps", getName(), nextDt, dtRemaining ));
+            GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to cover ramaining time {} in two steps", getName(), nextDt, dtRemaining ));
         }
       }
       else
       {
         nextDt = dtRemaining;
         if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-          GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: shortening time step to {} to match ramaining time", getName(), nextDt ));
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match ramaining time", getName(), nextDt ));
       }
     }
 
@@ -305,10 +305,10 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
 {
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
 
   if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
@@ -361,20 +361,20 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
     // Easy convergence, let's increase the time-step.
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepIncreaseFactor();
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: number of iterations {} is less than {}, next time step = {}", getName(), newtonIter, iterIncreaseLimit, nextDt ));
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations {} is less than {}, next time step = {}", getName(), newtonIter, iterIncreaseLimit, nextDt ));
   }
   else if( newtonIter > iterDecreaseLimit )
   {
     // Tough convergence let us make the time-step smaller!
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepDecreaseFactor();
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: number of iterations {} is more than {}, next time step = {}", getName(), newtonIter, iterDecreaseLimit, nextDt ));
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations {} is more than {}, next time step = {}", getName(), newtonIter, iterDecreaseLimit, nextDt ));
   }
   else
   {
     nextDt = currentDt;
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: number of iterations {} is between {} and {}, next time step = {} (no change)", getName(), newtonIter, iterIncreaseLimit, iterDecreaseLimit, nextDt ));
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations {} is between {} and {}, next time step = {} (no change)", getName(), newtonIter, iterIncreaseLimit, iterDecreaseLimit, nextDt ));
   }
   return nextDt;
 }
