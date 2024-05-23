@@ -152,8 +152,6 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
   solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  synchronizeNonLinearParameters();
-
   assembleElementBasedContributions( time_n,
                                      dt,
                                      domain,

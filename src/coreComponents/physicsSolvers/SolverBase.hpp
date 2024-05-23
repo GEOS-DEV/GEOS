@@ -664,7 +664,7 @@ public:
   }
 
   virtual void
-  synchronizeNumNewtonIterations()
+  synchronizeNonLinearParameters()
   { /* empty here, overriden in CoupledSolver */ }
 
   /**

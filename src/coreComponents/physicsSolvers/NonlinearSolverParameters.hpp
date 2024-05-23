@@ -83,6 +83,8 @@ public:
     m_timeStepCutFactor = params.m_timeStepCutFactor;
     m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
 
+    setLogLevel( params.getLogLevel());
+
     return *this;
   }
 
@@ -96,6 +98,8 @@ public:
   static string catalogName() { return "NonlinearSolverParameters"; }
 
   virtual void postProcessInput() override;
+
+  void print();
 
   struct viewKeysStruct
   {
