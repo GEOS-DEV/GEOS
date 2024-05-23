@@ -26,3 +26,5 @@ physics solvers to be included in the simulation.
    fluidFlow/docs/ProppantTransport
 
    wavePropagation/docs/AcousticVTIWaveSEM
+
+   wavePropagation/docs/AcousticTTIWaveSEM
