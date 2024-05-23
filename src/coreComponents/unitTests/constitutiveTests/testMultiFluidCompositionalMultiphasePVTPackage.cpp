@@ -52,7 +52,6 @@ class MultiFluidCompositionalMultiphasePVTPackageTest : public MultiFluidTest< C
 public:
   using Base = MultiFluidTest< CompositionalMultiphaseFluidPVTPackage, 2, NUM_COMP >;
   static constexpr real64 relTol = 1.0e-4;
-  static constexpr real64 absTol = 1.0e-4;
 public:
   MultiFluidCompositionalMultiphasePVTPackageTest()
   {
@@ -84,14 +83,14 @@ public:
     constexpr real64 pressures[] = { 1.0e5, 50.0e5, 100.0e5, 600.0e5 };
     constexpr real64 temperatures[] = { 15.5, 24.0, 40.0, 80.0 };
 
-    for( real64 const pressure : pressures )
+    for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
     {
-      for( real64 const temperature : temperatures )
+      for( real64 const pressure : pressures )
       {
-        for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
+        for( real64 const temperature : temperatures )
         {
           typename Base::TestData data ( pressure, units::convertCToK( temperature ), samples[sampleIndex].toSliceConst() );
-          Base::testNumericalDerivatives( fluid, parent, data, eps, relTol, absTol );
+          Base::testNumericalDerivatives( fluid, parent, data, eps, relTol );
         }
       }
     }
