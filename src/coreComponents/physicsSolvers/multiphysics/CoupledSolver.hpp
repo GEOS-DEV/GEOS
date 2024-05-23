@@ -429,9 +429,9 @@ protected:
       resetStateToBeginningOfStep( domain );
 
       integer & iter = solverParams.m_numNewtonIterations;
-      iter = 0;
+      
       /// Sequential coupling loop
-      while( iter < solverParams.m_maxIterNewton )
+      for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
         // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
@@ -468,6 +468,8 @@ protected:
 
         if( isConverged )
         {
+          // we still want to count current iteration
+          ++iter;
           // exit outer loop
           break;
         }
@@ -475,8 +477,6 @@ protected:
         {
           finishSequentialIteration( iter, domain );
         }
-
-        ++iter;
       }
 
       if( isConverged )
