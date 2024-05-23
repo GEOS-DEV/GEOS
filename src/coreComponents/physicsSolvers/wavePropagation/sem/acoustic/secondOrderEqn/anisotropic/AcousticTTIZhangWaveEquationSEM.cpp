@@ -658,7 +658,7 @@ void AcousticTTIZhangWaveEquationSEM::computeUnknowns( real64 const & GEOS_UNUSE
   else{
   //Adjoint
   GEOS_ERROR( "This option is not supported yet" );
-  auto kernelFactory = acousticTTIZhangAdjointWaveEquationSEMKernels::ExplicitAdjointAcousticTTIZhangSEMFactory( dt );
+/*  auto kernelFactory = acousticTTIZhangAdjointWaveEquationSEMKernels::ExplicitAdjointAcousticTTIZhangSEMFactory( dt );
 
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
@@ -668,6 +668,7 @@ void AcousticTTIZhangWaveEquationSEM::computeUnknowns( real64 const & GEOS_UNUSE
                                                           getDiscretizationName(),
                                                           "",
                                                           kernelFactory );
+                                                          */
   }
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
