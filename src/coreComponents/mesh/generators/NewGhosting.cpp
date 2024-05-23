@@ -661,11 +661,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   }
 
   int extracted = 0;
-  std::vector< double > extractedValues( n );
-  std::vector< int > extractedIndices( n );
-  ghostExchange.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
-  extractedValues.resize( extracted );
-  extractedIndices.resize( extracted );
+  int const length = ghostExchange.NumGlobalEntries( curRank.get() );
+  std::vector< double > extractedValues( length );
+  std::vector< int > extractedIndices( length );
+  ghostExchange.ExtractGlobalRowCopy( curRank.get(), length, extracted, extractedValues.data(), extractedIndices.data() );
+  GEOS_ASSERT_EQ( extracted, length );
 
   std::set< int > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
   std::set< int > receivedIndices;  // The indices my neighbors will send me.
@@ -788,6 +788,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
     int const index = notPresentIndices_[i];
     switch( convert.getGeometricalType( index ) )
     {
+      case Geom::NODE:
+      {
+        // Nothing to be done for nodes since they do not rely on any underlying information.
+        break;
+      }
       case Geom::EDGE:
       {
         GEOS_ASSERT_EQ( ext, 2 );  // TODO check that val != 0?
