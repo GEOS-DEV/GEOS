@@ -157,6 +157,8 @@ set( physicsSolvers_headers
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFields.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEM.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticFields.hpp
@@ -227,6 +229,7 @@ set( physicsSolvers_sources
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherWaveEquationSEM.cpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEM.cpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEM.cpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEM.cpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
 
