@@ -38,7 +38,7 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticTTIFletcherWaveEquationSEM( const std::string & name,
-                                   Group * const parent );
+                                      Group * const parent );
 
   virtual ~AcousticTTIFletcherWaveEquationSEM() override;
 
@@ -177,7 +177,7 @@ private:
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
-  
+
   /// Array of size the number of receivers and full of 0.5 (used for calculating the seismos)
   array1d< real32 > m_seismoCoeff;
 };

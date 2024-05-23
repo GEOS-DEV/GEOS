@@ -356,8 +356,8 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  m_seismoCoeff.resize(m_receiverIsLocal.size());
-  m_seismoCoeff.setValues< EXEC_POLICY >(0.5);
+  m_seismoCoeff.resize( m_receiverIsLocal.size());
+  m_seismoCoeff.setValues< EXEC_POLICY >( 0.5 );
 }
 
 void AcousticTTIZhangWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
@@ -642,7 +642,7 @@ void AcousticTTIZhangWaveEquationSEM::computeUnknowns( real64 const & GEOS_UNUSE
   arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< acousticvtifields::StiffnessVector_q >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
 
-  if(isForward)
+  if( isForward )
   {
     auto kernelFactory = acousticTTIZhangWaveEquationSEMKernels::ExplicitAcousticTTIZhangSEMFactory( dt );
 
@@ -655,12 +655,13 @@ void AcousticTTIZhangWaveEquationSEM::computeUnknowns( real64 const & GEOS_UNUSE
                                                             "",
                                                             kernelFactory );
   }
-  else{
-  //Adjoint
-  GEOS_ERROR( "This option is not supported yet" );
+  else
+  {
+    //Adjoint
+    GEOS_ERROR( "This option is not supported yet" );
 /*  auto kernelFactory = acousticTTIZhangAdjointWaveEquationSEMKernels::ExplicitAdjointAcousticTTIZhangSEMFactory( dt );
 
-  finiteElement::
+   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
                                   CellElementSubRegion >( mesh,
@@ -668,7 +669,7 @@ void AcousticTTIZhangWaveEquationSEM::computeUnknowns( real64 const & GEOS_UNUSE
                                                           getDiscretizationName(),
                                                           "",
                                                           kernelFactory );
-                                                          */
+ */
   }
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );

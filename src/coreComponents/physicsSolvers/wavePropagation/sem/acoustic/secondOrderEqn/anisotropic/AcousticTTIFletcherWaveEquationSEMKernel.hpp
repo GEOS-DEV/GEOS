@@ -56,10 +56,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticTTIFletcherSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                      CONSTITUTIVE_TYPE,
-                                                                      FE_TYPE,
-                                                                      1,
-                                                                      1 >
+                                                                         CONSTITUTIVE_TYPE,
+                                                                         FE_TYPE,
+                                                                         1,
+                                                                         1 >
 {
 public:
 
@@ -94,13 +94,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticTTIFletcherSEM( NodeManager & nodeManager,
-                               EdgeManager const & edgeManager,
-                               FaceManager const & faceManager,
-                               localIndex const targetRegionIndex,
-                               SUBREGION_TYPE const & elementSubRegion,
-                               FE_TYPE const & finiteElementSpace,
-                               CONSTITUTIVE_TYPE & inputConstitutiveType,
-                               real64 const dt ):
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -147,7 +147,7 @@ public:
     real32 vti_epsi; //  (1 + 2*epsilon)
     real32 vti_2delta; // 2*delta
     real32 vti_f; // f parameter
-    real32 tti_tilt; //TTI tilt angle 
+    real32 tti_tilt; //TTI tilt angle
     real32 tti_azimuth; //TTI azimuth angle
   };
   //***************************************************************************
@@ -308,7 +308,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitAcousticTTIFletcherSEMFactory = finiteElement::KernelFactory< ExplicitAcousticTTIFletcherSEM,
-                                                                         real64 >;
+                                                                            real64 >;
 
 
 } // namespace acousticTTIFletcherWaveEquationSEMKernels

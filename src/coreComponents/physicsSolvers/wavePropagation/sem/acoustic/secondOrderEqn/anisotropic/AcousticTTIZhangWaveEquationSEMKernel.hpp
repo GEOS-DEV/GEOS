@@ -145,7 +145,7 @@ public:
     real32 invDensity;
     real32 vti_epsi; // (1 + 2*epsilon)
     real32 vti_sqrtDelta; // sqrt(1 + 2*delta)
-    real32 tti_tilt; //TTI tilt angle 
+    real32 tti_tilt; //TTI tilt angle
     real32 tti_azimuth; //TTI azimuth angle
   };
   //***************************************************************************
