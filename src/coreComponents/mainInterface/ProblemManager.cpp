@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  registerGroup< TasksManager >( groupKeys.tasksManager );
+  m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
@@ -683,13 +683,21 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
+      ElementRegionManager & elementManager = meshLevel.getElemManager();
 
-      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
-      // because the ghosting ensures that the neighbor cells of the fracture elements are available.
-      // These neighbor cells are providing the node information to the fracture elements.
-      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        /// 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
+        // because the ghosting ensures that the neighbor cells of the fracture elements are available.
+        // These neighbor cells are providing the node information to the fracture elements.
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+        // 2. Reorder the face map based on global numbering of neighboring cells
+        subRegion.flipFaceMap( faceManager, elementManager );
+
+        // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
+        // direction of the fracture.
+        subRegion.fixNeighboringFacesNormals( faceManager, elementManager );
       } );
 
       faceManager.setIsExternal();

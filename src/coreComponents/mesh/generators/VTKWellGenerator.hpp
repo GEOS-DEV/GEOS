@@ -20,7 +20,6 @@
 #define GEOS_MESH_GENERATORS_VTKWELLGENERATOR_HPP
 
 #include "mesh/generators/WellGeneratorBase.hpp"
-#include "mesh/Perforation.hpp"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"

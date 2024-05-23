@@ -20,6 +20,7 @@
 #define GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
+
 #include "common/MpiWrapper.hpp"
 
 namespace geos

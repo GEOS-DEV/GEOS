@@ -15,11 +15,10 @@
 #ifndef GEOSX_MESH_PARTICLEBLOCK_HPP_
 #define GEOSX_MESH_PARTICLEBLOCK_HPP_
 
-#include "dataRepository/Group.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/ParticleBlockABC.hpp"
 #include "mesh/ParticleType.hpp"
+
+#include "dataRepository/Group.hpp"
 
 namespace geos
 {

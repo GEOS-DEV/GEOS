@@ -16,7 +16,6 @@
 #define GEOSX_WELLBLOCK_HPP
 
 #include "mesh/generators/LineBlockABC.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
 
 
 namespace geos
