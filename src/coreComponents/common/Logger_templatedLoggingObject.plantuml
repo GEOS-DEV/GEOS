@@ -65,9 +65,11 @@ struct LogMsg <<struct>> #text:OrangeRed {
 }
 note left: Message data structure.
 
-LogMsgCallParams *--> "1" SourceFileLocation
-LogMsgCallParams *--> "1" LogMsgType
-LogMsgCallParams *--> "1" LogLevel
+LogMsgCallParams *---> "1" SourceFileLocation
+LogMsgCallParams *---> "1" LogMsgType
+' LogMsgCallParams *--> "1 m_callLevel\n1 m_msgLevel" LogLevel
+LogMsgCallParams *-d--> "1\nm_msgLevel" LogLevel
+LogMsgCallParams *-d--> "1\nm_callLevel" LogLevel
 LogMsgContext *--> "1" LogMsgCallParams
 LogMsgContext *--> "1" LogMsgGeneralContext
 LogMsgContext *--> "1" LogMsgTargetContext
@@ -76,8 +78,14 @@ LogMsg *--> "1" LogMsgContext
 LogMsgCallParams -r[hidden]- LogMsgTargetContext
 LogMsgTargetContext -r[hidden]- LogMsgGeneralContext
 
-LogLevel -r[hidden]- LogMsgType
-LogMsgType -r[hidden]- SourceFileLocation
+LogLevel ---r[hidden]- LogMsgType
+LogMsgType ---r[hidden]- SourceFileLocation
+' SourceFileLocation --r[hidden]- LogLevel
+' LogLevel --r[hidden]- LogMsgType
+' LogMsgType --r[hidden]- LogLevel
+' LogLevel --r[hidden]- SourceFileLocation
+' SourceFileLocation --r[hidden]- LogMsgType
+' LogMsgType --r[hidden]- LogLevel
 
 
 ' --------------------------
