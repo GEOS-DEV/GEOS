@@ -4,6 +4,8 @@ set( gtest_geosx_tests
      testWavePropagationAcousticFirstOrder.cpp 
      testWavePropagationVTIFletcher.cpp
      testWavePropagationVTIZhang.cpp
+     testWavePropagationTTIFletcher.cpp
+     testWavePropagationTTIZhang.cpp
      testWavePropagationQ2.cpp
      testWavePropagationElasticFirstOrder.cpp
      testWavePropagationElasticVTI.cpp
