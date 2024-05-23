@@ -22,7 +22,7 @@
 namespace geos
 {
 
-  
+
   struct TaperKernel
   {
 
@@ -63,7 +63,7 @@ namespace geos
       {
          real32 tmpXmin = (xMin[0]-elemCenter[k][0])/dMin[0];
          real32 tmpxMax = (elemCenter[k][0]-xMax[0])/dMax[0];
-         
+
          real32 tmpYmin = (xMin[1]-elemCenter[k][1])/dMin[1];
          real32 tmpYmax = (elemCenter[k][1]-xMax[1])/dMax[1];
 
@@ -85,7 +85,7 @@ namespace geos
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
-          
+
            }
            else if ( elemCenter[k][2] > xMax[2])
            {
@@ -98,14 +98,14 @@ namespace geos
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
-             
+
            }
            else
            {
             dist=tmpXmin;
-           }         
+           }
          }
-         else if (elemCenter[k][0]>xMin[0])
+         else if (elemCenter[k][0]>xMax[0])
          {
           if (xMin[2]>elemCenter[k][2])
           {
@@ -130,12 +130,12 @@ namespace geos
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
-             
+
            }
            else
            {
             dist=tmpxMax;
-           }      
+           }
          }
          if (xMin[2]>elemCenter[k][2])
          {
@@ -151,7 +151,7 @@ namespace geos
           {
             dist=tmpZmin;
           }
-          
+
          }
          else if ( elemCenter[k][2] > xMax[2])
          {
@@ -172,19 +172,19 @@ namespace geos
          {
            dist=tmpYmin;
          }
-         
+
          else if (elemCenter[k][1] > xMax[1])
          {
            dist=tmpYmax;
          }
-         else 
+         else
          {
-          dist=1.0;
+          dist=0.0;
 
          }
-         
+
          taperCoeff[k] = (taperConstant -1.0)*dist*dist+1.0;
-      
+
       } );
     }
 
@@ -196,14 +196,14 @@ namespace geos
                          arrayView1d<real32 > const vector)
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      
+
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         for (localIndex i = 0; i < numNodesPerElem; ++i)
         {
           vector[elemsToNodes[k][i]] *= taperCoeff[k];
         }
-        
+
       } );
 
     }
