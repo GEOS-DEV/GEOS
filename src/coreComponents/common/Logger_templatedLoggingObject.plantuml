@@ -96,28 +96,17 @@ LogMsgType ---r[hidden]- SourceFileLocation
 interface LogOutput <<interface>> #text:DarkRed {
   + void log( <color:OrangeRed>LogMsg message</color> )
 }
-<> LogOutputImplementations
-LogOutput <|.. LogOutputImplementations : implements
-
-class LogCompositeOutput {
-  + addOutput( <color:DarkRed>LogOutput logOutput</color> )
-}
-LogOutputImplementations .. LogCompositeOutput
-LogCompositeOutput *---> "1..n\nm_subOutputs" LogOutput #OrangeRed;text:OrangeRed : routes to
 
 class LogHDF5Output {
   - hid_t file_id
   - ...
 }
-LogOutputImplementations .. LogHDF5Output
+LogOutput <|.d. LogHDF5Output  : implements
 
 class LogTextOutput {
   - std::ostream * m_outStream
 }
-LogOutputImplementations .. LogTextOutput
-
-LogTextOutput .l[hidden].. LogHDF5Output
-LogHDF5Output .l[hidden].. LogCompositeOutput
+LogOutput <|.d. LogTextOutput  : implements
 
 
 class LogErrorHistory {
@@ -139,7 +128,7 @@ note as LogErrorHistoryNote
   "flushOldMessages()" should be called on each timesteps.
 end note
 LogErrorHistory .. LogErrorHistoryNote
-LogErrorHistory o--l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last timesteps
+LogErrorHistory o--l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last timesteps LogMsgs
 
 
 class LogRouter #text:DarkRed {
@@ -152,8 +141,8 @@ class LogRouter #text:DarkRed {
   + void setErrorHistoryLogLevel( LogLevel errorHistoryMaxLevel )
 }
 note top: Filters the messages and send them in the LogOutput and / or in the LogErrorHistory
-LogRouter *-d-> "1" LogErrorHistory #OrangeRed;text:OrangeRed : "Filter & Sends messages to"
-LogRouter *-r-> "1" LogOutput #OrangeRed;text:OrangeRed : "Filter & Sends messages to"
+LogRouter *-r-> "0..n\nm_outputs" LogOutput #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
+LogRouter *-d-> "1" LogErrorHistory #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
 
 
 ' --------------------------
@@ -171,7 +160,6 @@ interface LoggingObject<CONTEXT_T> <<interface>> {
   # <i>CONTEXT_T</i> getContext()
 }
 note right: Interface for producer of LogMsg structures.\n\nDefaultValue for logOutput is the main LogCompositeOutput.\n\nIf there can be more that one Problem (-> more than one GeneralLogger),\nWe should add one more parameter, the GeneralLogger (with a default instance).
-
 
 
 class GeneralLogger {
@@ -198,7 +186,7 @@ end note
 GeneralLogger .d. GeneralLoggerNote
 GeneralLogger [<i>CONTEXT_T</i> =\n<color:DarkCyan>LogMessageGeneralContext</color>] ..u..|> LoggingObject : implements
 GeneralLogger .d..> LogMsg : Produces
-GeneralLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends messages to"
+GeneralLogger .r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
 
 
 class TargetedLogger {
@@ -217,10 +205,9 @@ package dataRepository {
   }
 }
 TargetedLogger [<i>CONTEXT_T</i> =\n<color:DarkMagenta>LogMsgTargetContext</color>] ..u..|> LoggingObject : implements
-Group *-u-> "m_logger\n1" TargetedLogger
-
-TargetedLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends messages to"
-TargetedLogger ..r..> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
+TargetedLogger "1\nm_logger" <-d-* Group
+TargetedLogger .r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
+TargetedLogger .r..> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
 TargetedLogger .d..> LogMsg : Produces
 
 
