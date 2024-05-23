@@ -122,6 +122,7 @@ do
   esac
 done
 
+#
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
@@ -161,6 +162,7 @@ EOT
       fi
     done
     ${DOCKER_CERTS_UPDATE_COMMAND}
+    openssl s_client -showcerts -connect storage.googleapis.com:443 </dev/null
   fi
 
   echo "sccache initial state"
@@ -183,6 +185,13 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 
   python3 -m pip cache purge
 
+
+  # # Attempt to download with wget
+  # or_die apt-get update
+  # or_die apt-get install -y wget
+  # FILENAME="baseline_integratedTests-pr3125-5101-7764ffb.tar.gz"
+  # or_die wget https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz -O $FILENAME
+
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
   echo "Setting up a temporary directory to hold tests and baselines: $tempdir"
@@ -190,8 +199,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
-  export ATS_FILTER="np<=32"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
+  export ATS_FILTER="np<=${NPROC}"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC}\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
 fi
 
 
