@@ -113,7 +113,7 @@ extensions = [
     'sphinxcontrib.bibtex'
 ]
 
-plantuml = "/usr/bin/plantuml"
+plantuml = "/usr/bin/java -Djava.awt.headless=true -jar /tmp/plantuml.jar"
 plantuml_output_format = "svg_img"
 
 plot_html_show_source_link = True
