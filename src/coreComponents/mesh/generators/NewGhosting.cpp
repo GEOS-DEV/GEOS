@@ -254,14 +254,40 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
   return ptr;
 }
 
-struct Ownerships
+struct GhostSend
+{
+  std::map< NodeGlbIdx, std::set< MpiRank > > nodes;
+  std::map< EdgeGlbIdx, std::set< MpiRank > > edges;
+  std::map< FaceGlbIdx, std::set< MpiRank > > faces;
+  std::map< CellGlbIdx, std::set< MpiRank > > cells;
+};
+
+void to_json( json & j,
+              const GhostSend & v )
+{
+  j = json{ { "nodes", v.nodes },
+            { "edges", v.edges },
+            { "faces", v.faces },
+            { "cells", v.cells } };
+}
+
+struct GhostRecv
 {
   std::map< NodeGlbIdx, MpiRank > nodes;
   std::map< EdgeGlbIdx, MpiRank > edges;
   std::map< FaceGlbIdx, MpiRank > faces;
   std::map< CellGlbIdx, MpiRank > cells;
-  std::set< MpiRank > neighbors;
 };
+
+void to_json( json & j,
+              const GhostRecv & v )
+{
+  j = json{ { "nodes", v.nodes },
+            { "edges", v.edges },
+            { "faces", v.faces },
+            { "cells", v.cells } };
+}
+
 
 Epetra_CrsMatrix multiply( int commSize,
                            Epetra_CrsMatrix const & indicator,
@@ -401,10 +427,10 @@ private:
   int const m_numEntries;
 };
 
-std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & owned,
-                                                             MeshGraph const & present,
-                                                             MaxGlbIdcs const & gis,
-                                                             MpiRank curRank )
+std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph const & owned,
+                                                                       MeshGraph const & present,
+                                                                       MaxGlbIdcs const & gis,
+                                                                       MpiRank curRank )
 {
   FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
   using Geom = FindGeometricalType::Geom;
@@ -442,6 +468,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   {
     otherGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
   }
+  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) );
   GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
 
   for( NodeGlbIdx const & ngi: owned.n )
@@ -488,6 +515,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
     tmp.emplace_back( ownedGlbIdcs.back() );
     indices.emplace_back( tmp );
   }
+  std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) );
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, std::size( numEntriesPerRow ) );
@@ -556,7 +584,8 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
 
-  // The `ghostingFootprint` matrix is rectangular, number of columns being the number of MPI ranks,
+  // The `ghostingFootprint` matrix is rectangular,
+  // the number of columns being the number of MPI ranks,
   // the number of rows being the number of nodes in the mesh graph.
   // For any MPI rank (ie column), a non-zero entry means
   // that the corresponding geometrical entry has to be eventually present onto the rank
@@ -580,108 +609,149 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   Epetra_CrsMatrix ghostExchange( Epetra_DataAccess::Copy, mpiMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
   ghostExchange.FillComplete( ownedMap, mpiMap );
+
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "ghostInfo->NumGlobalCols() = " << ghostExchange.NumGlobalCols() );
-    GEOS_LOG_RANK( "ghostInfo->NumGlobalRows() = " << ghostExchange.NumGlobalRows() );
+    GEOS_LOG_RANK( "ghostExchange->NumGlobalCols() = " << ghostExchange.NumGlobalCols() );
+    GEOS_LOG_RANK( "ghostExchange->NumGlobalRows() = " << ghostExchange.NumGlobalRows() );
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostInfo.mat", ghostingFootprint );
-  std::unique_ptr< Epetra_CrsMatrix > tGhostExchange = makeTranspose( ghostExchange );
-  tGhostExchange->FillComplete( mpiMap, ownedMap );
 
-  int extracted = 0;
-  std::vector< double > extractedValues( n );
-  std::vector< int > extractedIndices( n );
-  ghostInfo.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
-  extractedValues.resize( extracted );
-  extractedIndices.resize( extracted );
-  GEOS_LOG_RANK( "extracted = " << extracted );
+  int extracted2 = 0;
+  std::vector< double > extractedValues2( commSize );
+  std::vector< int > extractedIndices2( commSize );
 
-  // The `notPresentIndices` container will hold all the graph nodes indices
-  // that are not already present on the current rank.
-  // For those indices, will have to gather some additional mapping information,
-  // since they were not provided through the vtk mesh.
-  std::vector< int > notPresentIndices;
-  notPresentIndices.reserve( n );
-
-//  int extractedEdges = 0;
-//  std::vector< double > extractedEdgesValues( n );
-//  std::vector< int > extractedEdgesIndices( n );
-
-  Ownerships ownerships;
-  for( int i = 0; i < extracted; ++i )  // TODO Can we `zip` instead?
+  GhostSend send;
+  for( int const & index: ownedGlbIdcs )
   {
-    int const & index = extractedIndices[i];
-
-    MpiRank const owner = MpiRank{ int( extractedValues[i] ) };
-    if( owner != curRank )
-    {
-      ownerships.neighbors.insert( owner );
-    }
-
+    ghostingFootprint.ExtractGlobalRowCopy( index, commSize, extracted2, extractedValues2.data(), extractedIndices2.data() );
+    std::set< MpiRank > * sendingTo = nullptr;
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
       {
-        NodeGlbIdx const ngi = convert.toNodeGlbIdx( index );
-        ownerships.nodes.emplace( ngi, owner );
+        sendingTo = &send.nodes[convert.toNodeGlbIdx( index )];
         break;
       }
       case Geom::EDGE:
       {
-        EdgeGlbIdx const egi = convert.toEdgeGlbIdx( index );
-        ownerships.edges.emplace( egi, owner );
-        // TODO make all the following check in on time with sets comparison instead of "point-wise" comparisons.
-        // TODO same for the faces and cells...
-        if( owned.e2n.find( egi ) == owned.e2n.cend() and present.e2n.find( egi ) == present.e2n.cend() )
-        {
-          notPresentIndices.emplace_back( index );
-        }
+        sendingTo = &send.edges[convert.toEdgeGlbIdx( index )];
         break;
       }
       case Geom::FACE:
       {
-        FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
-        ownerships.faces.emplace( fgi, owner );
-        if( owned.f2e.find( fgi ) == owned.f2e.cend() and present.f2e.find( fgi ) == present.f2e.cend() )
-        {
-          notPresentIndices.emplace_back( index );
-        }
+        sendingTo = &send.faces[convert.toFaceGlbIdx( index )];
         break;
       }
       case Geom::CELL:
       {
-        CellGlbIdx const cgi = convert.toCellGlbIdx( index );
-        ownerships.cells.emplace( cgi, owner );
-        if( owned.c2f.find( cgi ) == owned.c2f.cend() )
-        {
-          notPresentIndices.emplace_back( index );
-        }
+        sendingTo = &send.cells[convert.toCellGlbIdx( index )];
         break;
       }
-      default:
+    }
+
+    for( int ii = 0; ii < extracted2; ++ii )
+    {
+      MpiRank const rank{ extractedIndices2[ii] };
+      if( rank != curRank )
       {
-        GEOS_ERROR( "Internal error" );
+        sendingTo->insert( rank );
       }
     }
   }
 
-  GEOS_LOG( "Gathering the missing mappings." );
+  int extracted = 0;
+  std::vector< double > extractedValues( n );
+  std::vector< int > extractedIndices( n );
+  ghostExchange.ExtractGlobalRowCopy( curRank.get(), int( n ), extracted, extractedValues.data(), extractedIndices.data() );
+  extractedValues.resize( extracted );
+  extractedIndices.resize( extracted );
 
-  std::size_t const numMissingIndices = std::size( notPresentIndices );
-  std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );
+  std::set< int > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
+  std::set< int > receivedIndices;  // The indices my neighbors will send me.
+  std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
+                       std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
+                       std::inserter( receivedIndices, std::end( receivedIndices ) ) );
+  std::vector< int > notPresentIndices_; // TODO remove _
+  std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
+                       std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
+                       std::back_inserter( notPresentIndices_ ) );
+//  {
+//    std::set< int > const tmp( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
+//    GEOS_LOG_RANK( "tmp = " << json( tmp ) );
+//    GEOS_LOG_RANK( "receivedIndices = " << json( receivedIndices ) );
+//    GEOS_ASSERT( tmp == receivedIndices );
+//  }
+//  GEOS_LOG_RANK( "extracted = " << extracted );
+//  if( curRank == 1_mpi )
+//  {
+//    GEOS_LOG_RANK( "extractedIndices = " << json( extractedIndices ) );
+////    GEOS_LOG_RANK( "extracted values = " << json( extractedValues ) );
+//    GEOS_LOG_RANK( "receivedIndices = " << json( receivedIndices ) );
+//  }
+  GhostRecv recv;
+  for( int i = 0; i < extracted; ++i )
+//  for( int const & receivedIndex: receivedIndices )
+  {
+    int const & index = extractedIndices[i];
+    if( receivedIndices.find( index ) == std::cend( receivedIndices ) )  // TODO make a map `receivedIndices -> mpi rank`
+    {
+      continue;
+    }
+
+    MpiRank const sender{ int( extractedValues[i] ) };
+    switch( convert.getGeometricalType( index ) )
+    {
+      case Geom::NODE:
+      {
+        recv.nodes[convert.toNodeGlbIdx( index )] = sender;
+        break;
+      }
+      case Geom::EDGE:
+      {
+        recv.edges[convert.toEdgeGlbIdx( index )] = sender;
+        break;
+      }
+      case Geom::FACE:
+      {
+        recv.faces[convert.toFaceGlbIdx( index )] = sender;
+        break;
+      }
+      case Geom::CELL:
+      {
+        recv.cells[convert.toCellGlbIdx( index )] = sender;
+        break;
+      }
+    }
+  }
+
+//  if( curRank == 1_mpi or curRank == 2_mpi )
+//  {
+//    GEOS_LOG_RANK( "recv.edges = " << json( recv.edges ) );
+//    GEOS_LOG_RANK( "send.edges = " << json( send.edges ) );
+//  }
+
+  // At this point, each rank knows what it has to send to and what it is going to receive from the other ranks.
+  // The remaining action is about retrieving the additional graph information
+  // for the new geometrical quantities that will be sent by the neighbors
+  std::size_t const numMissingIndices = std::size( notPresentIndices_ );
+  std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );  // A missing node can be missing on multiple ranks and that's OK.
 
 //  Epetra_Map const missingIndicesMap( intConv< long long int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
   Epetra_Map const missingIndicesMap( intConv< int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
 
 //  std::size_t const offset = MpiWrapper::prefixSum< std::size_t >( numMissingIndices );
-  int const offset = *missingIndicesMap.MyGlobalElements();
+  int const offset = *missingIndicesMap.MyGlobalElements();  // Needed to compute the global row
 //  GEOS_LOG_RANK( "numMissingIndices, numGlobalMissingIndices, offset = " << numMissingIndices << ", " << numGlobalMissingIndices << ", " << offset );
 
+  // The `missing` matrix is rectangular,
+  // the number of columns being the number of nodes in the mesh graph,
+  // the number of rows being the total number graph nodes that's missing on a rank.
+  // This matrix will
   Epetra_CrsMatrix missing( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
   for( std::size_t i = 0; i < numMissingIndices; ++i )
   {
-    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices[i] );
+    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices_[i] );
   }
   missing.FillComplete( ownedMap, missingIndicesMap );
 
@@ -697,7 +767,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingMappings );
 
-  MeshGraph ghosts;
+  MeshGraph ghosts;  // TODO most likely this will be wrong.
 
   int ext = 0;
   std::vector< double > extValues( n );
@@ -715,7 +785,7 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
 //    GEOS_LOG( "ext 0 = " << std::size( s0 ) );
 //    GEOS_LOG( "ext 1 = " << std::size( s1 ) );
 //    GEOS_LOG_RANK( "ext = " << ext );
-    int const index = notPresentIndices[i];
+    int const index = notPresentIndices_[i];
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::EDGE:
@@ -756,26 +826,22 @@ std::tuple< MeshGraph, Ownerships > assembleAdjacencyMatrix( MeshGraph const & o
     }
   }
 
-  if( curRank == 2_mpi )
-  {
-    GEOS_LOG_RANK( "neighboringConnexions = " << json( ghosts ) );
-    std::map< MpiRank, std::set< CellGlbIdx > > tmp;
-    for( auto const & [geom, rk]: ownerships.cells )
-    {
-      tmp[rk].insert( geom );
-    }
-    for( auto const & [rk, geom]: tmp )
-    {
-      GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
-    }
-  }
-  GEOS_LOG_RANK( "my final neighbors are " << json( ownerships.neighbors ) );
+//  if( curRank == 2_mpi )
+//  {
+//    GEOS_LOG_RANK( "neighboringConnexions = " << json( ghosts ) );
+//    std::map< MpiRank, std::set< CellGlbIdx > > tmp;
+//    for( auto const & [geom, rk]: ownerships.cells )
+//    {
+//      tmp[rk].insert( geom );
+//    }
+//    for( auto const & [rk, geom]: tmp )
+//    {
+//      GEOS_LOG_RANK( "ghost geom = " << rk << ": " << json( geom ) );
+//    }
+//  }
+//  GEOS_LOG_RANK( "my final neighbors are " << json( ownerships.neighbors ) );
 
-  return { std::move( ghosts ), std::move( ownerships ) };
-
-
-  // TODO to build the edges -> nodes map containing the all the ghost (i.e. the ghosted ones as well),
-  // Let's create a vector (or matrix?) full of ones where we have edges and multiply using the adjacency matrix.
+  return { std::move( ghosts ), std::move( recv ), std::move( send ) };
 }
 
 /**
@@ -806,17 +872,18 @@ buildGhostRankAndL2G( std::map< GI, MpiRank > const & m )
 void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
-                Ownerships const & ownerships )
+                GhostRecv const & recv,
+                GhostSend const & send )
 {
-  std::size_t const numNodes = std::size( ownerships.nodes );
-  std::size_t const numEdges = std::size( ownerships.edges );
-  std::size_t const numFaces = std::size( ownerships.faces );
-
-  auto [ghostRank, l2g] = buildGhostRankAndL2G( ownerships.edges );
-
-  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( numNodes ) } );
-  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( numEdges ) }, std::move( ghostRank ), std::move( l2g ) );
-  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( numFaces ) } );
+//  std::size_t const numNodes = std::size( ownerships.nodes );
+//  std::size_t const numEdges = std::size( ownerships.edges );
+//  std::size_t const numFaces = std::size( ownerships.faces );
+//
+//  auto [ghostRank, l2g] = buildGhostRankAndL2G( ownerships.edges );
+//
+//  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( numNodes ) } );
+//  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( numEdges ) }, std::move( ghostRank ), std::move( l2g ) );
+//  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( numFaces ) } );
 }
 
 std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
@@ -841,9 +908,9 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 //  }
 //  MpiWrapper::barrier();
 
-  auto const [ghosts, ownerships] = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
+  auto const [ghosts, recv, send] = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
 
-  buildPods( owned, present, ghosts, ownerships );
+  buildPods( owned, present, ghosts, recv, send );
 
   return {};
 }
