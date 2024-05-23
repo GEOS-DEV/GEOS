@@ -210,7 +210,7 @@ jobs:
 
         if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
           # Extract the 'baseline' value using grep and awk
-          ls -l ${GITHUB_WORKSPACE}
+          ls -la ${GITHUB_WORKSPACE}
           BASELINE_TAG=$(grep -A 1 'baselines:' "$.${GITHUB_WORKSPACE}/.integrated_test.yaml" | grep 'baseline:' | awk '{print $2}')
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_TAG}
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
