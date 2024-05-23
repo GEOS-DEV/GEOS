@@ -162,6 +162,7 @@ EOT
       fi
     done
     ${DOCKER_CERTS_UPDATE_COMMAND}
+    openssl s_client -showcerts -connect storage.googleapis.com:443 </dev/null
   fi
 
   echo "sccache initial state"
