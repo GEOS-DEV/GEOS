@@ -217,10 +217,10 @@ public:
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRtAtu, stack.localRotationMatrix,
-                                                               stack.localAtu );
+                                                         stack.localAtu );
     // transp(R) * Atb
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numBdofs, 3 >( matRtAtb, stack.localRotationMatrix,
-                                                               stack.localAtb );
+                                                         stack.localAtb );
 
     // Compute the node contribute of the displacement and delta displacement jump
     LvArray::tensorOps::Ri_eq_AijBj< 3, numUdofs >( stack.dispJumpLocal, matRtAtu, stack.uLocal );

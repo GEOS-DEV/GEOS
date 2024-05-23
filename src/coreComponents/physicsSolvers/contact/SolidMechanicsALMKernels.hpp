@@ -267,10 +267,10 @@ public:
 
     // transp(R) * Atu
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
-                                                               stack.localAtu );
+                                                         stack.localAtu );
     // transp(R) * Atb
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix,
-                                                               stack.localAtb );
+                                                         stack.localAtb );
 
     // Compute the traction contribute of the local residuals
     LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( tractionR, matRRtAtu, stack.tLocal );
@@ -278,32 +278,32 @@ public:
 
     // D*RtAtu
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numUdofs, 3 >( matDRtAtu, stack.localPenalty,
-                                                               matRRtAtu );
+                                                         matRRtAtu );
     // D*RtAtb
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numBdofs, 3 >( matDRtAtb, stack.localPenalty,
-                                                               matRRtAtb );
+                                                         matRRtAtb );
 
     // R*RtAtu
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numUdofs, 3 >( matRRtAtu, stack.localRotationMatrix,
-                                                               matDRtAtu );
+                                                         matDRtAtu );
     // R*RtAtb
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numBdofs, 3 >( matRRtAtb, stack.localRotationMatrix,
-                                                               matDRtAtb );
+                                                         matDRtAtb );
 
     // transp(Atu)*RRtAtu
     LvArray::tensorOps::Rij_eq_AkiBkj< numUdofs, numUdofs, 3 >( stack.localAutAtu, stack.localAtu,
-                                                                            matRRtAtu );
+                                                                matRRtAtu );
     // transp(Atb)*RRtAtb
     LvArray::tensorOps::Rij_eq_AkiBkj< numBdofs, numBdofs, 3 >( stack.localAbtAtb, stack.localAtb,
-                                                                            matRRtAtb );
+                                                                matRRtAtb );
 
     // transp(Atb)*RRtAtu
     LvArray::tensorOps::Rij_eq_AkiBkj< numBdofs, numUdofs, 3 >( stack.localAbtAtu, stack.localAtb,
-                                                                            matRRtAtu );
+                                                                matRRtAtu );
 
     // transp(Atu)*RRtAtb
     LvArray::tensorOps::Rij_eq_AkiBkj< numUdofs, numBdofs, 3 >( stack.localAutAtb, stack.localAtu,
-                                                                            matRRtAtb );
+                                                                matRRtAtb );
 
     // Compute the local residuals
     LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( dispJumpR, matDRtAtu, stack.dispJumpLocal );
