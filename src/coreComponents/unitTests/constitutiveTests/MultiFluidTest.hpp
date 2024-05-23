@@ -20,10 +20,13 @@
 #define GEOS_UNITTESTS_CONSTITUTIVETESTS_MULTIFLUIDTEST_HPP_
 
 #include "constitutiveTestHelpers.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
 using namespace geos::dataRepository;
+using namespace geos::constitutive;
+using namespace geos::constitutive::multifluid;
 
 namespace geos
 {
@@ -107,8 +110,6 @@ public:
   static constexpr integer numPhase = NUM_PHASE;
   static constexpr integer numComp = NUM_COMP;
   using TestData = MultiFluidTestData< numPhase, numComp >;
-  using PhaseFeed = Feed< numPhase >;
-  using CompositionFeed = Feed< numComp >;
 
 public:
   MultiFluidTest() = default;
@@ -136,11 +137,11 @@ protected:
     GEOS_UNUSED_VAR( fluid );
   }
 
-  static void writeTableToFile( string const & fileName, char const * str )
+  static void writeTableToFile( string const & fileName, char const * content )
   {
     std::ofstream os( fileName );
     ASSERT_TRUE( os.is_open() );
-    os << str;
+    os << content;
     os.close();
   }
 
