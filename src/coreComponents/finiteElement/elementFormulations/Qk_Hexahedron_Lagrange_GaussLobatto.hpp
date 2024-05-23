@@ -648,6 +648,99 @@ public:
                                      FUNC && func );
 
 /**
+ * @brief computes the matrix B for a rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_xy R J^{-1}/det(J),
+ *where J is the Jacobian matrix, A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1 and R a rotation matrix.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param theta Tilt angle
+ * @param phi Azimuth of the tilt
+ * @param X Array containing the coordinates of the support points.
+ * @param J Array to store the Jacobian
+ * @param B Array to store the matrix B, in Voigt notation
+ */
+  GEOS_HOST_DEVICE
+  static void computeRotatedBxyMatrix( int const qa,
+                                       int const qb,
+                                       int const qc,
+                                       real64 const theta,
+                                       real64 const phi,
+                                       real64 const (&X)[8][3],
+                                       real64 ( &J )[3][3],
+                                       real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
+   *superposition matrix of first derivatives in x and y of the shape functions. Warning, the matrix B is obtained by
+   *computeRotatedBxyMatrix instead of usual one.
+   * @param q The quadrature point index
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void computeRotatedStiffnessxyTerm( localIndex const q,
+                                             real64 const theta,
+                                             real64 const phi,
+                                             real64 const (&X)[8][3],
+                                             FUNC && func );
+
+  /**
+   * @brief computes the matrix B in the case of rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_z R
+   *J^{-1}/det(J), where J is the Jacobian matrix, A_z is a zero matrix except on A_z(3,3) = 1 and R is the rotation matrix.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian
+   * @param B Array to store the matrix B, in Voigt notation
+   */
+  GEOS_HOST_DEVICE
+  static void computeRotatedBzMatrix( int const qa,
+                                      int const qb,
+                                      int const qc,
+                                      real64 const theta,
+                                      real64 const phi,
+                                      real64 const (&X)[8][3],
+                                      real64 ( &J )[3][3],
+                                      real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
+   *superposition matrix of first derivatives in z only of the shape functions. Warning, the matrix B is obtained by computeRotatedBzMatrix
+   *instead of usual one.
+   * @param q The quadrature point index
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeRotatedStiffnesszTerm( localIndex const q,
+                                real64 const theta,
+                                real64 const phi,
+                                real64 const (&X)[8][3],
+                                FUNC && func );
+
+  /**
+   * @brief computes the transport of the rotation matrix for the tilt and azimuth angle respectively theta and phi.
+   * @param Rt Array of the transpose of the rotation matrix
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   */
+  GEOS_HOST_DEVICE
+  static void
+    computeTransposeRotationMatrix( real64 ( &Rt )[3][3],
+                                    real64 const theta,
+                                    real64 const phi );
+
+/**
  * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
  * function.
  * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -1094,6 +1187,27 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeTransposeRotationMatrix( real64 (& Rt)[3][3],
+                                real64 const theta,
+                                real64 const phi
+                                )
+{
+  Rt[0][0] = cos( phi )*cos( theta );
+  Rt[1][0] = sin( phi )*cos( theta );
+  Rt[2][0] = -sin( theta );
+  Rt[0][1] = -sin( phi );
+  Rt[1][1] = cos( phi );
+  Rt[2][1] = 0;
+  Rt[0][2] = cos( phi )*sin( theta );
+  Rt[1][2] = sin( phi )*sin( theta );
+  Rt[2][2] = cos( theta );
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeBMatrix( int const qa,
                 int const qb,
                 int const qc,
@@ -1168,6 +1282,63 @@ computeBxyMatrix( int const qa,
   B[3] = detJ*(Jinv[1][0]*Jinv[2][0] + Jinv[1][1]*Jinv[2][1]);
   B[4] = detJ*(Jinv[0][0]*Jinv[2][0] + Jinv[0][1]*Jinv[2][1]);
   B[5] = detJ*(Jinv[0][0]*Jinv[1][0] + Jinv[0][1]*Jinv[1][1]);
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedBzMatrix( int const qa,
+                        int const qb,
+                        int const qc,
+                        real64 const theta,
+                        real64 const phi,
+                        real64 const (&X)[8][3],
+                        real64 (& J)[3][3],
+                        real64 (& B)[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
+  real64 S[6] = {0};
+  real64 Az[6] = {0};
+  Az[2] = detJ;
+  real64 Rt[3][3];
+  computeTransposeRotationMatrix( Rt, theta, phi );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( S, Rt, Az ); // S = R^T.Axy.R
+  // B=det(J)*J^{-1}*R^T*Az*R*J^{-T}, using Voigt notation for B
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( B, Jinv, S );
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedBxyMatrix( int const qa,
+                         int const qb,
+                         int const qc,
+                         real64 const theta,
+                         real64 const phi,
+                         real64 const (&X)[8][3],
+                         real64 (& J)[3][3],
+                         real64 (& B)[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
+  real64 S[6] = {0};
+  real64 Axy[6] = {0};
+  Axy[0] = detJ;
+  Axy[1] = detJ;
+  real64 Rt[3][3];
+  computeTransposeRotationMatrix( Rt, theta, phi );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( S, Rt, Axy ); // S = R^T.Axy.R
+  // B=det(J)*J^{-1}*R^T*Axy*R*J^{-T}, using Voigt notation for B
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( B, Jinv, S );
 }
 
 template< typename GL_BASIS >
@@ -1253,6 +1424,46 @@ computeStiffnesszTerm( localIndex const q,
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
   computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedStiffnessxyTerm( localIndex const q,
+                               real64 const theta,
+                               real64 const phi,
+                               real64 const (&X)[8][3],
+                               FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeRotatedBxyMatrix( qa, qb, qc, theta, phi, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedStiffnesszTerm( localIndex const q,
+                              real64 const theta,
+                              real64 const phi,
+                              real64 const (&X)[8][3],
+                              FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeRotatedBzMatrix( qa, qb, qc, theta, phi, X, J, B );
   computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
