@@ -309,7 +309,7 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
       arrayView1d< real32 const > const vti_epsilon = elementSubRegion.getField< acousticvtifields::AcousticEpsilon >();
       arrayView1d< real32 const > const vti_delta = elementSubRegion.getField< acousticvtifields::AcousticDelta >();
 
-      /// Partial gradient if gradient as to be computed
+      /// Partial gradient if gradient has to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< acousticfields::PartialGradient >();
       grad.zero();
 
