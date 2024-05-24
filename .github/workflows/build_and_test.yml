@@ -210,6 +210,7 @@ jobs:
           ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
            
           # Define the path to the YAML file
+          ls -la ${GITHUB_WORKSPACE}
           YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_test.yaml"
 
           # Extract the baseline field 
