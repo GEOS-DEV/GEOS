@@ -212,9 +212,9 @@ jobs:
           # Extract the 'baseline' value 
           # need to extract the name wiht something like: 
           # BASELINE_TAG=$(grep -A 1 'baselines:' "$.${GITHUB_WORKSPACE}/.integrated_test.yaml" | grep 'baseline:' | awk '{print $2}')
-          ls -lR /home/settgast1/baselines
-
-          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125-5101-7764ffb
+          wget -P ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125 https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz 
+          ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
+          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
           docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
         fi
@@ -257,14 +257,13 @@ jobs:
             # if $UPLOAD_BASELINES; then
               if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
                 # 1. We copy the baselines to a local directory to store them 
-                LOCAL_BASELINE_DIR="${{ inputs.LOCAL_BASELINE_DIR }}"
-          
-                # 1.a Create the target directory to store the new baselines
-                TARGET_DIR="${LOCAL_BASELINE_DIR}/baseline_${DATA_BASENAME::-7}"
+                
+                # 1.a Create the new target directory to store the new baselines
+                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr-${{ github.event.number }}"
                 echo "Create folder ${TARGET_DIR}"
                 mkdir -p "${TARGET_DIR}"
           
-                # 1.b Copy the baseline file to the target directory
+                # 1.b We copy the new baselines to the new target directory
                 SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
                 echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
                 cp "${SOURCE_FILE}" "${TARGET_DIR}"
@@ -282,6 +281,7 @@ jobs:
         
         # manually remove the workspace to avoid issues with the next job when using self-hosted runners
         if [ -d "${GITHUB_WORKSPACE}/integratedTests" ]; then
+          # Matteo: IMO this is useless now.
           rm -rf ${GITHUB_WORKSPACE}/integratedTests
         fi
 
