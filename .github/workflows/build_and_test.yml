@@ -212,9 +212,7 @@ jobs:
           # Extract the 'baseline' value 
           # need to extract the name wiht something like: 
           # BASELINE_TAG=$(grep -A 1 'baselines:' "$.${GITHUB_WORKSPACE}/.integrated_test.yaml" | grep 'baseline:' | awk '{print $2}')
-          ls -l /home/settgast1
-          wget -P ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125-5101-7764ffb https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
-          ls -l /home/settgast1/baselines
+          ls -lR /home/settgast1/baselines
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125-5101-7764ffb
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
