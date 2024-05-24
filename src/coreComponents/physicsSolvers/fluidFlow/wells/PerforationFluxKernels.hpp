@@ -255,6 +255,8 @@ public:
     // b) get well variables
 
     pres[TAG::WELL] = m_wellElemPres[iwelem];
+    std::cout << "wrpres " << iwelem << " RES " << pres[TAG::RES] << " WELL " << pres[TAG::WELL]
+              << " dp " << pres[TAG::WELL]-pres[TAG::RES];
     dPres_dP[TAG::WELL] = 1.0;
     dPres[TAG::WELL][CP_Deriv::dP] = 1.0;
     multiplier[TAG::WELL] = -1.0;
@@ -295,7 +297,10 @@ public:
         dPotDiff[i][ic] += multiplier[i] * m_perfTrans[iperf] * dPres[i][ic];
       }
     }
-
+    std::cout << " WELLC " << pres[TAG::WELL]   << " dp " << pres[TAG::WELL]-pres[TAG::RES] <<
+      " " << m_wellElemCompDens[iwelem][0] << " " << m_wellElemCompDens[iwelem][1] << " "
+              << m_wellElemCompFrac[iwelem][0] << " " << m_wellElemCompFrac[iwelem][1];
+    std::cout << " potdiff " << potDiff << std::endl;
 
     // Step 4: upwinding based on the flow direction
 
@@ -692,7 +697,7 @@ bool const phaseExists = stack.m_wellElemPhaseVolFrac[iwelem][ip] > 0.0;
                                                                      +  pflux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dP];
           stack.m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy
                                                                      +  pflux * stack.m_dWellElemPhaseEnthalpy[iwelem][0][ip][Deriv::dT]
-                                                                     +   flux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dT];
+                                                                     +   pflux * wellelem_enthalpy *  stack.m_dPhaseVolFrac[iwelem][ip][Deriv::dT];
 
           //energy e
           real64 dPVF_dC[numComp]{};

@@ -172,12 +172,14 @@ void WellControls::switchToBHPControl( real64 const & val )
 {
   m_currentControl = Control::BHP;
   m_targetBHP = val;
+  std::cout << "Control BHP " << val << std::endl;
 }
 
 void WellControls::switchToTotalRateControl( real64 const & val )
 {
   m_currentControl = Control::TOTALVOLRATE;
   m_targetTotalRate = val;
+  std::cout << "Control TOTALVOLRATE " << val << std::endl;
 }
 
 void WellControls::switchToPhaseRateControl( real64 const & val )

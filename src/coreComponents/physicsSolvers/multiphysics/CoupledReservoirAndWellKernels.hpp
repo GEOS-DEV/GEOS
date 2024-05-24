@@ -244,7 +244,7 @@ public:
             RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
-    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices );
+    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
      
   }
 
@@ -413,6 +413,7 @@ public:
    * @param[in] kernelFlags flags packed together
    */
    ThermalCompositionalMultiPhaseFluxKernel( real64 const dt,
+                                            integer const isProducer,
                            globalIndex const rankOffset,
                            string const wellDofKey,
                            WellElementSubRegion const & subRegion,
@@ -436,6 +437,7 @@ public:
             detectCrossflow,
              numCrossFlowPerforations,
              kernelFlags ),
+    m_isProducer( isProducer ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >())
 
@@ -456,8 +458,14 @@ public:
   {
     Base::computeFlux( iperf, [&] ( globalIndex const & resOffset,
                                     globalIndex const & wellElemOffset,
-                                    stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices )
+                                    stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices,
+                                    localIndex const iwelem )
+    {
+      // No energy equation if top element and Injector
+      if( iwelem ==0 && !m_isProducer )
       {
+        return;
+      }
         // local working variables and arrays
       stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
 
@@ -531,6 +539,9 @@ public:
 
 protected:
 
+  /// Well type
+  integer const m_isProducer;
+
   /// Views on energy flux
   arrayView1d< real64 const > const m_energyPerfFlux;
   arrayView3d< real64 const > const m_dEnergyPerfFlux;
@@ -559,6 +570,7 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( integer const numComps,
+                   integer const isProducer,
                    real64 const dt,
                            globalIndex const rankOffset,
                            string const wellDofKey,
@@ -586,7 +598,7 @@ public:
       using kernelType = ThermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 1 >;
 
 
-      kernelType kernel( dt, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData, fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
+      kernelType kernel( dt, isProducer, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData, fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
 

@@ -277,6 +277,7 @@ struct LinearSolverParameters
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
       reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
       thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
+      thermalCompositionalMultiphaseReservoirFVM,///< finite volume thermal compositional multiphase flow
       multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
       multiphasePoromechanicsReservoirFVM,       ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
       thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
@@ -368,6 +369,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseReservoirHybridFVM",
               "reactiveCompositionalMultiphaseOBL",
               "thermalCompositionalMultiphaseFVM",
+              "thermalCompositionalMultiphaseReservoirFVM",
               "multiphasePoromechanics",
               "multiphasePoromechanicsReservoirFVM",
               "thermalMultiphasePoromechanics",

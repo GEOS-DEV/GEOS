@@ -1830,6 +1830,7 @@ public:
                                                                               stack.localFluxJacobian[i],
                                                                               CP_Deriv::nDer );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], stack.localFlux[i] );
+
         }
       }
     }
@@ -2300,7 +2301,6 @@ public:
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
-
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, 0 >;
 

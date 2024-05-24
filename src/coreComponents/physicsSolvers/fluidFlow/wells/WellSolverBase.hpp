@@ -196,7 +196,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleFluxTerms( real64 const dt,
+  virtual void assembleFluxTerms( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -209,7 +210,9 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleAccumulationTerms( DomainPartition const & domain,
+  virtual void assembleAccumulationTerms( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
@@ -221,7 +224,9 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
+  virtual void assembleVolumeBalanceTerms( real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) = 0;
@@ -241,6 +246,23 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
+
+
+  /**
+   * @brief apply a special treatment to the wells that are shut (set Aww=I , Awr=Arw=0)
+   * @param time_n the time at the previous converged time step
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void shutInWell( real64 const time_n,
+                   real64 const dt,
+                   DomainPartition const & domain,
+                   DofManager const & dofManager,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief apply a special treatment to the wells that are shut
@@ -274,7 +296,9 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void computePerforationRates( DomainPartition & domain ) = 0;
+  virtual void computePerforationRates( real64 const & time_n,
+                                        real64 const & dt,
+                                        DomainPartition & domain ) = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -304,7 +328,7 @@ protected:
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  virtual void initializeWells( DomainPartition & domain ) = 0;
+  virtual void initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,

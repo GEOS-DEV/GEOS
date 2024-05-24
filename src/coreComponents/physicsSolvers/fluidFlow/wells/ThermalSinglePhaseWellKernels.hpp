@@ -149,6 +149,7 @@ public:
       real64 const dFluidEnergy_dP =  stack.volume   * stack.dDensity_dPres  * m_internalEnergy[iwelem][0]
                                      + stack.volume   * stack.density  * m_dInternalEnergy_dPres[iwelem][0];
 
+
       real64 const dFluidEnergy_dT = stack.volume   * m_dWellElemDensity_dTemperature[iwelem][0] * m_internalEnergy[iwelem][0]
                                      + stack.volume  * stack.density  * m_dInternalEnergy_dTemp[iwelem][0];
 

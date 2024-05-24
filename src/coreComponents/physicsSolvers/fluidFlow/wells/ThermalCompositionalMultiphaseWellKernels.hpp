@@ -558,7 +558,7 @@ public:
       // Step 1: assemble the phase-dependent part of the accumulation term of the energy equation
 
       real64 const phaseEnergy = phaseAmount * phaseInternalEnergy[ip];
-      real64 const phaseEnergy_n = phaseAmount_n * phaseInternalEnergy_n[ip];
+      real64 const phaseEnergy_n =  phaseAmount_n * phaseInternalEnergy_n[ip];
       real64 const dPhaseEnergy_dP = dPhaseAmount[FLUID_PROP_COFFSET::dP] * phaseInternalEnergy[ip]
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount[FLUID_PROP_COFFSET::dT] * phaseInternalEnergy[ip]

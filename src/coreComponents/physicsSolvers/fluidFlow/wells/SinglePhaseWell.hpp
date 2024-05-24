@@ -159,7 +159,8 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void computePerforationRates( DomainPartition & domain ) override;
+  virtual void computePerforationRates( real64 const & time_n,
+                                        real64 const & dt, DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
@@ -176,8 +177,9 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleFluxTerms( real64 const dt,
-                          DomainPartition & domain,
+  void assembleFluxTerms( real64 const & time_n,
+                          real64 const & dt,
+                          DomainPartition  & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) override;
@@ -189,7 +191,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition const & domain,
+  void assembleAccumulationTerms( real64 const & time_n,
+                                  real64 const & dt, DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) override;
@@ -201,7 +204,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
+  virtual void assembleVolumeBalanceTerms( real64 const & time_n,
+                                           real64 const & dt, DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) override;
@@ -269,7 +273,7 @@ private:
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void initializeWells( DomainPartition & domain ) override;
+  void initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt ) override;
 
   /**
    * @brief Make sure that the well constraints are compatible

@@ -104,13 +104,18 @@ void
 CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM )
+   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
   }
+   else if( isThermal() )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM;
+ 
+  }
   else
   {
-    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
   }
 }
 
@@ -470,6 +475,7 @@ areWellsShut = 0;
           coupledReservoirAndWellKernels::
             ThermalCompositionalMultiPhaseFluxKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                       wellControls.isProducer(),
                                                        dt,
                                                        rankOffset,
                                                        wellDofKey,

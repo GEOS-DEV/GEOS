@@ -394,7 +394,7 @@ void SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   // note: the perforation rates are updated separately
 }
 
-void SinglePhaseWell::initializeWells( DomainPartition & domain )
+void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
 
@@ -410,6 +410,9 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
                                                                    WellElementSubRegion & subRegion )
     {
       WellControls const & wellControls = getWellControls( subRegion );
+      if( time_n <= 0.0 || ( !wellControls.isWellOpen( time_n ) && wellControls.isWellOpen( time_n + dt ) ) )
+      {
+
       PerforationData const & perforationData = *subRegion.getPerforationData();
 
       // get the info stored on well elements
@@ -471,14 +474,16 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
                                         0.0, // initialization done at t = 0
                                         wellElemDens,
                                         connRate );
+      }
 
     } );
 
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const dt,
-                                         DomainPartition & domain,
+void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
+                                         real64 const & dt,
+                                         DomainPartition  & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                          arrayView1d< real64 > const & localRhs )
@@ -498,6 +503,10 @@ void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
+      WellControls const & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
+
       // get a reference to the degree-of-freedom numbers
       string const wellDofKey = dofManager.getKey( wellElementDofName() );
       arrayView1d< globalIndex const > const & wellElemDofNumber =
@@ -517,6 +526,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                           dt,
                           localMatrix,
                           localRhs );
+      }
     } );
 
   } );
@@ -544,7 +554,10 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                                    WellElementSubRegion const & subRegion )
     {
 
+
       WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.isWellOpen( time_n + dt ) )
+      {
 
       // get the degrees of freedom numbers, depth, next well elem index
       string const wellDofKey = dofManager.getKey( wellElementDofName() );
@@ -601,12 +614,13 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                         << " from rate constraint to BHP constraint" );
         }
       }
-
+      }
     } );
   } );
 }
 
-void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
+void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
+                                                 real64 const & dt, DomainPartition const & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
@@ -677,6 +691,11 @@ if( 1 )
       arrayView1d< globalIndex const > const wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
       arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
 
+        WellControls & wellControls = getWellControls( subRegion );
+
+        if( wellControls.isWellOpen( time_n + dt ) )
+        {
+
       arrayView1d< real64 const > const wellElemVolume = subRegion.getElementVolume();
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -695,13 +714,43 @@ if( 1 )
                                   wellElemDensity_n,
                                   localMatrix,
                                   localRhs );
+        }
+        else
+        {
+          localIndex rank_offset = dofManager.rankOffset();
+          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+          {
+            if( wellElemGhostRank[ei] < 0 )
+            {
+
+              globalIndex const dofIndex = wellElemDofNumber[ei];
+              localIndex const localRow = dofIndex - rank_offset;
+
+
+              real64 unity = 1.0;
+              for( integer i=0; i < m_numDofPerWellElement; i++ )
+              {
+                globalIndex const rindex =  wellElemDofNumber[ei] + i;
+                globalIndex const cindex = localRow+1;
+                localMatrix.template addToRow< serialAtomic >( rindex,
+                                                               &cindex,
+                                                               &unity,
+                                                               1 );
+                localRhs[cindex] = 0.0;
+              }
+            }
+          } );
+
+        }
 
     } );
   } );
 }
 }
 
-void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+  void SinglePhaseWell::assembleVolumeBalanceTerms( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                    real64 const & GEOS_UNUSED_PARAM( dt ), 
+                                                    DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                                   CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                                   arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
@@ -786,7 +835,8 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
 }
 
 
-void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
+  void SinglePhaseWell::computePerforationRates( real64 const & time_n,
+                                                 real64 const & dt, DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -803,6 +853,10 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
+
+        WellControls const & wellControls = getWellControls( subRegion );
+        if( wellControls.isWellOpen( time_n + dt ) )
+        {
 
       // get the well data
       PerforationData * const perforationData = subRegion.getPerforationData();
@@ -863,6 +917,7 @@ void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
                                  resElementIndex,
                                  perfRate,
                                  dPerfRate_dPres );
+        }
     } );
   } );
 }
