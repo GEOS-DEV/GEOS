@@ -206,7 +206,7 @@ jobs:
       DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
       REQUIRED_LABEL: "ci: run integrated tests"
       UPLOAD_BASELINES: "ci: upload test baselines"
-      LOCAL_BASELINE_DIR: /home/runner/work/GEOS/baselines
+      LOCAL_BASELINE_DIR: /home/baselines
 
   baseline_log:
     needs: [is_not_draft_pull_request]
