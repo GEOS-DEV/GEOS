@@ -304,7 +304,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     integratedTests/geos_ats.sh -a rebaselinefailed
 
     echo "Packing baselines..."
-    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz -baselineCacheDir ${DATA_EXCHANGE_DIR}
+    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineDir ${DATA_EXCHANGE_DIR}
     INTEGRATED_TEST_EXIT_STATUS=1
   fi
 
