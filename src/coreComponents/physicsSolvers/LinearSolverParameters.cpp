@@ -200,7 +200,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
 
   appendLogLevelDescription( "logLevel >= 2", "Print information about symbolic and numeric factorization." );
   appendLogLevelDescription( "logLevel >= 2", "Set UMFPACK_PRL to 6" );
-  appendLogLevelDescription( "logLevel = 1", "Set UMFPACK_PRL to 1" );
+  appendLogLevelDescription( "logLevel == 1", "Set UMFPACK_PRL to 1" );
   appendLogLevelDescription( "logLevel >= 1 and incorrect final relative residual norm", "Warning about residual reduction" );
   appendLogLevelDescription( "logLevel >= 1", "Linear solver informations" );
   appendLogLevelDescription( "logLevel >= 1 and incorrect SuperLU residual reduction", "Warning about residual reduction" );

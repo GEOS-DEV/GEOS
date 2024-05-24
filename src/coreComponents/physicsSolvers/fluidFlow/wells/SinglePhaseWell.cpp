@@ -50,7 +50,7 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   appendLogLevelDescription( "logLevel >= 1", "Output well rates to a simple csv file" );
   appendLogLevelDescription( "logLevel >= 2", "Infos on BHP pressure" );
   appendLogLevelDescription( "logLevel >= 2", "Infos on surface density" );
-  appendLogLevelDescription( "logLevel >= 2 and use surface conditions", "Infos about the phase and total density in the reference element" );
+  appendLogLevelDescription( "logLevel >= 2 and use surface conditions", "Information on the phase and total density in the reference element" );
 
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;
