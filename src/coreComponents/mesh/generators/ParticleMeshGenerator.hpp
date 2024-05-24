@@ -123,6 +123,7 @@ protected:
     constexpr static char const * particleFilePathString() { return "particleFile"; }
     constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
+    constexpr static char const * particleMaterialNamesString() { return "particleMaterialNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
   };
   /// @endcond
@@ -149,8 +150,11 @@ private:
   /// String array of particle block names associated with the particle mesh
   array1d< string > m_blockNames;
 
+  /// String array of particle material names associated with the particle mesh
+  array1d< string > m_materialNames;
+
   /// String array listing the particle types present
-  array1d< string > m_particleType;
+  array1d< string > m_particleTypes;
 
 public:
 

@@ -79,8 +79,10 @@ public:
    */
   enum struct BoundaryConditionOption : integer
   {
-    OUTFLOW,    //!<Outflow
-    SYMMETRY    //!<Symmetry
+    Outflow,    //!<Outflow
+    Symmetry,   //!<Symmetry
+    Moving,     //!<Moving
+    Contact     //!<Contact
   };
 
   /**
@@ -732,6 +734,8 @@ protected:
 
   int m_prescribedBcTable;
   array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
+  array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
+  array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
   array2d< real64 > m_bcTable;
 
   int m_prescribedFTable;
@@ -930,7 +934,9 @@ ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
 
 ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
-              "Symmetry" );
+              "Symmetry",
+              "Moving",
+              "Contact" );
 
 ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
               "Linear",
