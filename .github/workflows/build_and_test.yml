@@ -210,11 +210,24 @@ jobs:
 
         if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
           # Extract the 'baseline' value 
-          # need to extract the name wiht something like: 
-          # BASELINE_TAG=$(grep -A 1 'baselines:' "$.${GITHUB_WORKSPACE}/.integrated_test.yaml" | grep 'baseline:' | awk '{print $2}')
-          wget -P ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125 https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz 
           ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
-          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr3125
+           
+          # Define the path to the YAML file
+          yaml_file="${GITHUB_WORKSPACE}/.integrated_test.yaml"
+
+          # Extract the baseline field using grep and awk 
+          BASELINE_TAG=$(grep -A 1 'baselines:' "$yaml_file" | grep 'baseline:' | awk '{print $2}')
+          echo "Baseline: $BASELINE_TAG"
+
+          # Extract the folder name
+          BASELINE_FOLDER_NAME=$(echo "$baseline_full" | cut -d'-' -f1-2)
+          echo "Baseline folder name: $BASELINE_FOLDER_NAME"
+
+          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}/${BASELINE_TAG}
+          
+          echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
+          
+          # We defined a mount point and mount it read-only inside the container.
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
           docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
         fi
