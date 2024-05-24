@@ -92,16 +92,32 @@ interface LogOutput <<interface>> #text:DarkRed {
   + void log( <color:OrangeRed>LogMsg message</color> )
 }
 
+class LogTextStreamOutput {
+  -- Public members --
+  + <<Create>>( std::ostream * outStream )
+  -- Private members --
+  - std::ostream * m_outStream
+}
+LogOutput <|.d. LogTextStreamOutput  : implements
+note bottom: Outputs to an already existing stream (typically, the console output).
+
+class LogTextFileOutput {
+  -- Public members --
+  + <<Create>>( string rankFilesDir, string fileNameFmt = "Rank{}_log.txt" )
+  -- Private members --
+  - std::ofstream m_rankFileStream
+}
+LogOutput <|.d. LogTextFileOutput  : implements
+note bottom: Outputs to a text file for this rank.
+
 class LogHDF5Output {
+  -- Public members --
+  + <<Create>>( string filePath )
+  -- Private members --
   - hid_t file_id
   - ...
 }
 LogOutput <|.d. LogHDF5Output  : implements
-
-class LogTextOutput {
-  - std::ostream * m_outStream
-}
-LogOutput <|.d. LogTextOutput  : implements
 
 
 class LogErrorHistory {
@@ -129,7 +145,7 @@ LogErrorHistory o--l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last ti
 
 class LogRouter #text:DarkRed {
   -- Static Members --
-  + {static} LogOutput s_main
+  + {static} LogOutput m_main
   -- Settings --
   - LogLevel errorHistoryMaxLevel = Debug
   + void setOutputs( LoggingStrategy strat )
@@ -150,10 +166,10 @@ LogRouter *-d-> "1" LogErrorHistory #OrangeRed;text:OrangeRed : "Filter & Sends 
 
 interface LoggingObject<CONTEXT_T> <<interface>> {
   + void setLogLevel( LogLevel objectLevel )
-  + void log( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
-  + void logIf( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
-  + void logRank0( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
-  + void logRank0If( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::s_main</u></color> )
+  + void log( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::m_main</u></color> )
+  + void logIf( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::m_main</u></color> )
+  + void logRank0( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::m_main</u></color> )
+  + void logRank0If( <color:Green>LogMsgCallParams msgCtx</color>, <color:OrangeRed>string msg</color>, <color:DarkRed>LogRouter router = <u>LogRouter::m_main</u></color> )
   # <color:Blue>LogMsgContext</color> createMsgContext( <color:Green>LogMsgCallParams msgParams</color> )
   # <i>CONTEXT_T</i> getContext()
 }
