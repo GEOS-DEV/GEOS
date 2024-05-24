@@ -46,8 +46,6 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_isMatrixPoroelastic(),
   m_newFractureInitializationType()
 {
-  Base::
-
     registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -78,6 +76,9 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setInputFlag( InputFlags::OPTIONAL );
 
   Base::appendLogLevelDescription( "logLevel >= 1", "Output whether or not we Re-entering Newton Solve" );
+  Base::appendLogLevelDescription( "logLevel >= 1", "Information on aperture and hydraulic aperture" );
+  Base::appendLogLevelDescription( "logLevel >= 3", "Print time stepping" );
+
 
   m_numResolves[0] = 0;
 
@@ -891,7 +892,6 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & cu
   {
     nextDt = m_surfaceGenerator->getTimestepRequest() < 1e99 ? m_surfaceGenerator->getTimestepRequest() : currentDt;
   }
-
   GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
   return nextDt;
 }

@@ -46,9 +46,7 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   SinglePhaseBase( name, parent ),
   m_areaRelTol( 1e-8 )
 {
-
-  appendLogLevelDescription( "logLevel >= 1", "Infos about the residual values" );
-  appendLogLevelDescription( "logLevel >= 1 and first nonlinear iteration", "Infos about the face boundary conditions definied with pressure" );
+  appendLogLevelDescription( "logLevel >= 1", "Print the residual norm values" );
 
   // one cell-centered dof per cell
   m_numDofPerCell = 1;

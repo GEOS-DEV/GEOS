@@ -659,13 +659,6 @@ void Group::postRestartInitializationRecursive()
   postRestartInitialization();
 }
 
-void Group::enableLogLevelInput()
-{
-  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL );
-}
-
 Group const & Group::getBaseGroupByPath( string const & path ) const
 {
   Group const * currentGroup = this;

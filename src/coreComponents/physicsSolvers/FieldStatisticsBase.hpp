@@ -49,8 +49,6 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
-    enableLogLevelInput();
-
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
       setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -61,6 +59,10 @@ public:
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "Write statistics into a CSV file" );
+
+    appendLogLevelDescription( "logLevel == 1 and pore volume is zero", "Display warning message" );
+    appendLogLevelDescription( "logLevel == 1 ", "Dipslay Indicative message" );
+
   }
 
   /**

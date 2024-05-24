@@ -74,7 +74,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
   }
-  if( params.logLevel >= 1024 )
+  if( params.logLevel >= 1 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
   }

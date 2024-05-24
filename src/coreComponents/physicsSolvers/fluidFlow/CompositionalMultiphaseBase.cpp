@@ -152,7 +152,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setDescription( "Maximum (absolute) component density change in a sequential iteration, used for outer loop convergence check" );
 
   appendLogLevelDescription( "logLevel >= 1", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
-  appendLogLevelDescription( "logLevel >= 1 and first nonlinear iteration", "Infos about boundary conditions" );
+  appendLogLevelDescription( "logLevel >= 1", "Information about pressure, phase, temperature during time step" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on density during outer iteration" );
+  appendLogLevelDescription( "logLevel >= 1 and thermal simulation", "Information on max relative temperature" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on volume frations" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on CFL number" );
 }
 
 void CompositionalMultiphaseBase::postProcessInput()

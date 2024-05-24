@@ -35,7 +35,9 @@ using namespace fields;
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
-{}
+{
+  appendLogLevelDescription( "logLevel >= 1", "Information on node statistics displacement" );
+}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {

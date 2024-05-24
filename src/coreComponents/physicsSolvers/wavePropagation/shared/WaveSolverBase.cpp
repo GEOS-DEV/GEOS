@@ -197,6 +197,8 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+  appendLogLevelDescription( "logLevel >= 1", "Information about linear DAS" );
 }
 
 WaveSolverBase::~WaveSolverBase()

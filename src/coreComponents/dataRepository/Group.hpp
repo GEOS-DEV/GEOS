@@ -1476,9 +1476,6 @@ public:
    */
   void loadFromConduit();
 
-  /// Enable verbosity input for object
-  void enableLogLevelInput();
-
   /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value

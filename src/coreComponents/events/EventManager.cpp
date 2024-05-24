@@ -44,8 +44,6 @@ EventManager::EventManager( string const & name,
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -81,6 +79,8 @@ EventManager::EventManager( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
+
+  appendLogLevelDescription( "logLevel >= 1", "Information about current sub-event" );
 }
 
 

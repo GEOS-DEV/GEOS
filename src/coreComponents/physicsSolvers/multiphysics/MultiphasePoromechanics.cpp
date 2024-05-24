@@ -59,6 +59,8 @@ MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & 
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Constant multiplier of stabilization strength." );
 
+  Base::appendLogLevelDescription( "logLevel >= 1", "Print phase volume fraction" );
+
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   linearSolverParameters.mgr.separateComponents = true;
@@ -289,7 +291,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
   } );
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
-
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}",
                                       this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }

@@ -75,9 +75,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Infos about cell block names" );
-  appendLogLevelDescription( "logLevel >= 2", "Infos about node sets names" );
-  appendLogLevelDescription( "logLevel >= 5", "Infos about redistribution" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on cell block names" );
+  appendLogLevelDescription( "logLevel >= 2", "Information on node sets names" );
+  appendLogLevelDescription( "logLevel >= 2", "Information on node sets names" );
+  appendLogLevelDescription( "logLevel >= 2", "Print the mesh generation step" );
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
@@ -88,7 +89,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   MPI_Comm const comm = MPI_COMM_GEOSX;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
-
+  
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );

@@ -104,7 +104,7 @@ EventBase::EventBase( const string & name,
   registerWrapper( viewKeyStruct::isTargetExecutingString(), &m_targetExecFlag ).
     setDescription( "Index of the current subevent" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Log about sub-event" );
+  appendLogLevelDescription( "logLevel >= 1", "Information about sub-event" );
 }
 
 

@@ -121,7 +121,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0.1 ).
     setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Infos about the boundary conditions" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on pressure and temperature" );
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
@@ -794,7 +794,6 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 
 bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
-
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
                                       getName(), fmt::format( "{:.{}f}", m_sequentialPresChange, 3 ) ) );
 

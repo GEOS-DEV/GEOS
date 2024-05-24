@@ -58,8 +58,8 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
-  appendLogLevelDescription( "logLevel >= 1", "Infos about boundary conditions" );
+  appendLogLevelDescription( "logLevel >= 1", "Print pressure change" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on negative pressure values" );
 }
 
 
@@ -1070,6 +1070,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         return;
       }
+
       if( !subRegion.hasWrapper( dofKey ) )
       {
         if( fs.getLogLevel() >= 1 )

@@ -28,7 +28,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solverTypeString(), &m_parameters.solverType ).
     setApplyDefaultValue( m_parameters.solverType ).
@@ -198,6 +197,30 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
+
+  appendLogLevelDescription( "logLevel >= 2", "Print information about symbolic factorization." );
+  appendLogLevelDescription( "logLevel >= 2", "Print information about numeric factorization." );
+  appendLogLevelDescription( "logLevel >= 2", "Set UMFPACK_PRL to 6" );
+  appendLogLevelDescription( "logLevel = 1", "Set UMFPACK_PRL to 1" );
+  appendLogLevelDescription( "logLevel >= 1 and incorrect final relative residual norm", "Warning about residual reduction" );
+  appendLogLevelDescription( "logLevel >= 1", "Linear solver informations" );
+  appendLogLevelDescription( "logLevel >= 1 and incorrect SuperLU residual reduction", "Warning about residual reduction" );
+  appendLogLevelDescription( "logLevel >= 1 and SuperLU solver", "Information about superLU result" );
+  appendLogLevelDescription( "logLevel >= 2 and SuperLU solver", "Print the statistics." );
+  appendLogLevelDescription( "logLevel >= 1 and SuperLU", "Print SuperLU_Dist environment parameters and options" );
+  appendLogLevelDescription( "logLevel >= 1 and HypreSolver", "Information about MGR preconditioner" );
+  appendLogLevelDescription( "logLevel == 2 or logLevel == 4 and HypreSolver", "Print amg solution info" );
+  appendLogLevelDescription( "logLevel >= 1 and HyprePreconditioner setup not existing", "Error about HyprePreconditioner setup failed" );
+  appendLogLevelDescription( "logLevel >= 3 and Hypre", "Print Hypre iterations info" );
+  appendLogLevelDescription( "logLevel >= 3 and Hypre", "Print convergence + iteration info" );
+  appendLogLevelDescription( "logLevel >= 3 and PetscSolver ", "Informations about the PetscSolver result" );
+  appendLogLevelDescription( "logLevel >= 1 and PetscSolver ", "Sets an ADDITIONAL function to be called at every iteration to monitor the residual/error etc" );
+  appendLogLevelDescription( "logLevel == 1 and TrilinosSover ", "Sets SetAztecOption to AZ_summary" );
+  appendLogLevelDescription( "logLevel == 2 and TrilinosSover ", "Sets SetAztecOption to AZ_all" );
+  appendLogLevelDescription( "logLevel >= 3 and TrilinosSover ", "Sets SetAztecOption to AZ_none" );
+  appendLogLevelDescription( "logLevel >= 2 and KrylovSolver ", "Print residual norms" );
+  appendLogLevelDescription( "logLevel >= 2 and KrylovSolver ", "Print the result success with nb iterations and solve time" );
+  appendLogLevelDescription( "logLevel >= 2 and value too close to zero. ", "Information about exit solver iteration" );
 }
 
 void LinearSolverParametersInput::postProcessInput()

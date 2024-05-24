@@ -80,6 +80,9 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable MPI consistent communication ordering" );
+
+  appendLogLevelDescription( "logLevel >= 2", "Print each cell index element fractured" );
+  appendLogLevelDescription( "logLevel >= 1", "Print number of embedded surface elements" );
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()

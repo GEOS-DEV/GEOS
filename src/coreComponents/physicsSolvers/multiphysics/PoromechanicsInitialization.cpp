@@ -53,8 +53,7 @@ PoromechanicsInitialization( const string & name,
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics" );
 
-  appendLogLevelDescription( "logLevel >= 1 and reset displacements", "Inform about physics solver stress initialization" );
-  appendLogLevelDescription( "logLevel >= 1", "Indicate the physics solver completed stress initialization" );
+  appendLogLevelDescription( "logLevel >= 1", "Information about physics solver stress initialization" );
 }
 
 template< typename POROMECHANICS_SOLVER >
