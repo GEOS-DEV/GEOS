@@ -314,17 +314,17 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
   {
     if( nextDtNewton > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: solver converged in less than {} iterations, time-step required will be increased.",
-                                          getName(), m_nonlinearSolverParameters.timeStepIncreaseIterLimit() ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
+                                          getName() ) );
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: solver converged in more than {} iterations, time-step required will be decreased.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
                                           getName(), m_nonlinearSolverParameters.timeStepDecreaseIterLimit() ) );
     }
     else
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: solver converged in {} iterations, time-step required will be kept the same.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on number of iterations.",
                                           getName(), m_nonlinearSolverParameters.m_numNewtonIterations ) );
     }
   }
@@ -332,17 +332,17 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
   {
     if( nextDtStateChange > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on state change.",
                                           getName()));
     }
     else if( nextDtStateChange < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on state change.",
                                           getName()));
     }
     else
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be kept the same based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
                                           getName()));
     }
   }
