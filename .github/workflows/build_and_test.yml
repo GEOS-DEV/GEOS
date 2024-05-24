@@ -54,9 +54,6 @@ on:
       RUNS_ON:
         required: true
         type: string
-      UPLOAD_BASELINES:
-        required: false
-        type: string
       USE_SCCACHE:
         required: false
         type: boolean
@@ -267,28 +264,26 @@ jobs:
               echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
             fi
 
-            # if $UPLOAD_BASELINES; then
-              if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
-                # 1. We copy the baselines to a local directory to store them 
+            if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
+              # 1. We copy the baselines to a local directory to store them 
                 
-                # 1.a Create the new target directory to store the new baselines
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr-${{ github.event.number }}"
-                echo "Create folder ${TARGET_DIR}"
-                mkdir -p "${TARGET_DIR}"
+              # 1.a Create the new target directory to store the new baselines
+              TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr-${{ github.event.number }}"
+              echo "Create folder ${TARGET_DIR}"
+              mkdir -p "${TARGET_DIR}"
           
-                # 1.b We copy the new baselines to the new target directory
-                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
-                cp "${SOURCE_FILE}" "${TARGET_DIR}"
+              # 1.b We copy the new baselines to the new target directory
+              SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
+              cp "${SOURCE_FILE}" "${TARGET_DIR}"
                 
-                # 2. We push the baselines to the cloud
-                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-                echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
-                echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
-              else
-                echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
-              fi
-            # fi
+              # 2. We push the baselines to the cloud
+              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
+              echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
+            else
+              echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
+            fi
           fi
         fi
         

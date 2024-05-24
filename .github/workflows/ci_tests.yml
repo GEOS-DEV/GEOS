@@ -205,7 +205,6 @@ jobs:
       DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
       DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
       REQUIRED_LABEL: "ci: run integrated tests"
-      UPLOAD_BASELINES: "ci: upload test baselines"
       LOCAL_BASELINE_DIR: /data/GEOS/baselines
 
   baseline_log:
