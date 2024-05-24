@@ -213,10 +213,10 @@ jobs:
           ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
            
           # Define the path to the YAML file
-          yaml_file="${GITHUB_WORKSPACE}/.integrated_test.yaml"
+          YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_test.yaml"
 
-          # Extract the baseline field using grep and awk 
-          BASELINE_TAG=$(grep -A 1 'baselines:' "$yaml_file" | grep 'baseline:' | awk '{print $2}')
+          # Extract the baseline field 
+          BASELINE_TAG=$(grep -A 1 'baselines:' "$YAML_FILE_PATH" | grep 'baseline:' | awk '{print $2}')
           echo "Baseline: $BASELINE_TAG"
 
           # Extract the folder name
