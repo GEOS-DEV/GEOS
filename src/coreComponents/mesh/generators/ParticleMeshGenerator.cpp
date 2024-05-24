@@ -51,7 +51,12 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
     setSizedFromParent( 0 ).
     setDescription( "Names of each particle block" );
 
-  registerWrapper( viewKeyStruct::particleTypesString(), &m_particleType ).
+  registerWrapper( viewKeyStruct::particleMaterialNamesString(), &m_materialNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Names of each particle material, index corresponds to material ID in particle file");
+
+  registerWrapper( viewKeyStruct::particleTypesString(), &m_particleTypes ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Particle types of each particle block" );
@@ -73,7 +78,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   for( auto & particleBlockName : m_blockNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( particleBlockName );
-    particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
+    particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleTypes[aa++] ) );
   }
 
   int numMaterials, numParticleTypes;
@@ -91,13 +96,17 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   std::string line; // initialize line variable
 
   // Read in number of materials and particle types
+  // TODO CC remove the header file, all of this should be read from the particle mesh generator xml block
   std::getline( headerFile, line ); // get a line
   std::istringstream iss1( line ); // turn the line into a stream
   iss1 >> numMaterials >> numParticleTypes;
   particleTypes.resize( numParticleTypes );
 
-  // GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
-  // GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
+  // numParticleTypes = m_particleTypes.size();
+  // numMaterials = m_materialNames.size(); // As read directly from XML block
+
+  GEOS_LOG_RANK_0( "Number of particle materials: " << numMaterials );
+  GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
 
   // Read in the material key
   for( int i=0; i<numMaterials; i++ )
