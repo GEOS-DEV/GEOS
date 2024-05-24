@@ -23,7 +23,7 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Format.hpp"
-#include "common/LogMessage.hpp"
+#include "common/LogMsg.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
@@ -445,7 +445,7 @@ namespace geos
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @todo deprecate when adding the error manager?
- */
+ */ 
 #define GEOS_ASSERT_GT( lhs, rhs ) GEOS_ASSERT_GT_MSG( lhs, rhs, "" )
 
 /**
@@ -507,174 +507,6 @@ namespace geos
 // this->getLogLevel() >=
 // minLevel, msg )
 
-/**
- * @brief Interface (impl contract) of any class that can send log messages (Logger, Group)
- */
-// TODO : adapt the new call convention everywhere
-// TODO : Group class should implement it to log contextualized messages (implement logMsg() as private)
-class LoggingObject
-{
-  /**
-   * @brief log one or more inputs, only from the rank 0, to the standard output (and to
-   * the rank 0 file stream if used).
-   * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-   * the message. As an exemple: "Rank 0: Hello World!"
-   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-   * is strictly higher than the current globalLogLevel value.
-   * @param inputs the inputs to log.
-   * @tparam INPUTS types of the inputs.
-   */
-  template< typename ... INPUTS >
-  virtual void logRank0( LogMsgParams loc, INPUTS ... inputs ) = 0;
-
-  template< typename ... INPUTS >
-  virtual void logRank0If( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
-
-
-  /**
-   * @brief log one or more inputs to the rank file stream if used, or to the standard
-   * output (the message is streamed repeatedly if it comes from multiple ranks).
-   * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-   * the message. As an exemple: "Rank 54: Hello World!"
-   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-   * is strictly higher than the current globalLogLevel value.
-   * @param input the inputs to log.
-   * @tparam INPUTS types of the inputs.
-   */
-  template< typename ... INPUTS >
-  virtual void log( LogMsgParams loc, INPUTS ... inputs ) = 0;
-
-  template< typename ... INPUTS >
-  virtual void logIf( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
-
-
-  // mergedLog has been excluded as the Logger should not do any MPI Barrier
-  // /**
-  //  * @brief Log a message to the rank file stream if used, or log it to the std::cout only once per
-  //  * form (and therefore does a MPI barrier).
-  //  * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
-  //  * the message. As an exemple, for a message that can be "Hello World!" or "Hello Folks!":
-  //  * Rank 0->54, 56, 60, 67->127: Hello World!
-  //  * Rank 55, 57->59, 61->66: Hello Folks!
-  //  * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-  //  * is strictly higher than the current globalLogLevel value.
-  //  * @param input the inputs to log.
-  //  * @tparam INPUTS types of the inputs.
-  //  */
-  // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
-  // void mergedLog( SrcCodeLoc loc, INPUTS ... inputs );
-  //
-  // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
-  // void mergedLogIf( bool cond, SrcCodeLoc loc, INPUTS ... inputs );
-
-
-  //TODO : document why commented and should not exist (bad perfs, workaround)
-  // logDevice( SrcCodeLoc loc, INPUTS ... inputs )
-
-private:
-
-  template< typename ... INPUT >
-  virtual void logMsg( std::ostream & stream, INPUT input ) = 0;
-
-};
-
-/**
- * @brief Class used to log messages in the standard output and rank log files.
- * A "logger" extern global is available for general use, but other instances can be created where
- * a specialized logger is needed.
- * Doesn't have any GPU logging capacities for now.
- */
-// TODO: adapt implementation
-class Logger : public LoggingObject
-{
-public:
-
-  /// @brief The default message log level when logging directly with the Logger
-  static constexpr LogLevel defaultMsgLogLevel = LogLevel::Debug;
-  // TODO :
-  static constexpr LogLevel defaultProblemLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
-  // TODO :
-  static constexpr LogLevel defaultGroupLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
-
-
-  /**
-   * @brief Construct the logger. Default output is the standard one.
-   */
-  Logger();
-  /**
-   * @brief Re-initialize the logger configuration. Close the potential file streams.
-   */
-  void reset();
-  /**
-   * @brief Initialize the logger in a parallel build. Must be called at least once, after the
-   * MPI_Init() call. Must not be called in a serial build.
-   * @param mpiComm global MPI communicator
-   */
-  void initMpi( MPI_Comm mpiComm );
-
-  /**
-   * @brief Change the logger output to the specified stream.
-   * Also close the potential previously opened file output stream.
-   * @param stream the stream to use when calling rankLog()
-   */
-  void setRankOutputToStream( std::ostream & stream );
-  /**
-   * @brief Change the logger output to a automatically created file in the specified folder.
-   * The file name is based on the rank number. The file extension is a ".out".
-   * @param output_dir optional output directory for rank log files to stream to when calling rankLog()
-   */
-  void setRankOutputToFile( const std::string & output_dir = "" );
-
-  /**
-   * @param param set the log level for global messages (ie. applied to simulation progress messages).
-   */
-  void setProblemLogLevel( LogLevel param );
-  /**
-   * @param param value to override all groups LogLevel and the problem LogLevel.
-   */
-  void enableLogLevelOverride( LogLevel param );
-  /**
-   * @param param set the maximal log level allowed for all messages. With a value of 2, all
-   * messages from level 3 and more will not be output. With a value of -1, the logger become silent.
-   * This value is prioritized over setMinLogLevel.
-   */
-  void disableLogLevelOverride();
-
-
-public://todo: private
-
-  /// @see setProblemLogLevel( LogLevel param )
-  LogLevel m_problemLogLevel;
-  /// @see enableLogLevelOverride( LogLevel param ) and disableLogLevelOverride()
-  std::optional< LogLevel > m_overrideLogLevel;
-
-  /// @brief MPI communicator
-  MPI_Comm m_comm;
-  /// @brief MPI rank id
-  int m_rank;
-  /// @brief MPI total ranks count
-  int m_ranksCount;
-  /// @brief prefix to add before a message that is specific to a rank. Empty in a serial build.
-  std::string m_rankMsgPrefix;
-
-  /// @brief Pointer to the rank output stream
-  std::ostream * m_outStream;
-  /// @brief Smart pointer to the active file output stream. Equals to nullptr if not outputing to a file.
-  std::unique_ptr< std::ostream > m_fileOutStream;
-
-  // TODO : expose it (only to) to LoggingObject ?
-  template< typename INPUT >
-  static void streamLog( std::ostream & stream, INPUT input );
-  // TODO : expose it (only to) to LoggingObject ?
-  template< typename INPUT, typename ... MORE_INPUTS >
-  static void streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs );
-
-  // TODO : implement logMsg() as private with the adding ot contextual info
-
-};
-/// main Logger instance for general purpose logging
-extern Logger logger;
-
 
 /**
  * @brief Exception class used to report errors in user input.
@@ -714,7 +546,176 @@ class NotAnError : public std::exception
 {};
 
 // TODO : WIP, methods old version to adapt
+////////////////////////////////////////////////////
 // 
+// /**
+//  * @brief Interface (impl contract) of any class that can send log messages (Logger, Group)
+//  */
+// // TODO : adapt the new call convention everywhere
+// // TODO : Group class should implement it to log contextualized messages (implement logMsg() as private)
+// class LoggingObject
+// {
+//   /**
+//    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
+//    * the rank 0 file stream if used).
+//    * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+//    * the message. As an exemple: "Rank 0: Hello World!"
+//    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+//    * is strictly higher than the current globalLogLevel value.
+//    * @param inputs the inputs to log.
+//    * @tparam INPUTS types of the inputs.
+//    */
+//   template< typename ... INPUTS >
+//   virtual void logRank0( LogMsgParams loc, INPUTS ... inputs ) = 0;
+// 
+//   template< typename ... INPUTS >
+//   virtual void logRank0If( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
+// 
+// 
+//   /**
+//    * @brief log one or more inputs to the rank file stream if used, or to the standard
+//    * output (the message is streamed repeatedly if it comes from multiple ranks).
+//    * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+//    * the message. As an exemple: "Rank 54: Hello World!"
+//    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+//    * is strictly higher than the current globalLogLevel value.
+//    * @param input the inputs to log.
+//    * @tparam INPUTS types of the inputs.
+//    */
+//   template< typename ... INPUTS >
+//   virtual void log( LogMsgParams loc, INPUTS ... inputs ) = 0;
+// 
+//   template< typename ... INPUTS >
+//   virtual void logIf( bool cond, LogMsgParams loc, INPUTS ... inputs ) = 0;
+// 
+// 
+//   // mergedLog has been excluded as the Logger should not do any MPI Barrier
+//   // /**
+//   //  * @brief Log a message to the rank file stream if used, or log it to the std::cout only once per
+//   //  * form (and therefore does a MPI barrier).
+//   //  * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+//   //  * the message. As an exemple, for a message that can be "Hello World!" or "Hello Folks!":
+//   //  * Rank 0->54, 56, 60, 67->127: Hello World!
+//   //  * Rank 55, 57->59, 61->66: Hello Folks!
+//   //  * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+//   //  * is strictly higher than the current globalLogLevel value.
+//   //  * @param input the inputs to log.
+//   //  * @tparam INPUTS types of the inputs.
+//   //  */
+//   // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+//   // void mergedLog( SrcCodeLoc loc, INPUTS ... inputs );
+//   //
+//   // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+//   // void mergedLogIf( bool cond, SrcCodeLoc loc, INPUTS ... inputs );
+// 
+// 
+//   //TODO : document why commented and should not exist (bad perfs, workaround)
+//   // logDevice( SrcCodeLoc loc, INPUTS ... inputs )
+// 
+// private:
+// 
+//   template< typename ... INPUT >
+//   virtual void logMsg( std::ostream & stream, INPUT input ) = 0;
+// 
+// };
+////////////////////////////////////////////////////
+// /**
+//  * @brief Class used to log messages in the standard output and rank log files.
+//  * A "logger" extern global is available for general use, but other instances can be created where
+//  * a specialized logger is needed.
+//  * Doesn't have any GPU logging capacities for now.
+//  */
+// // TODO: adapt implementation
+// class Logger : public LoggingObject
+// {
+// public:
+// 
+//   /// @brief The default message log level when logging directly with the Logger
+//   static constexpr LogLevel defaultMsgLogLevel = LogLevel::Debug;
+//   // TODO :
+//   static constexpr LogLevel defaultProblemLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
+//   // TODO :
+//   static constexpr LogLevel defaultGroupLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
+// 
+// 
+//   /**
+//    * @brief Construct the logger. Default output is the standard one.
+//    */
+//   Logger();
+//   /**
+//    * @brief Re-initialize the logger configuration. Close the potential file streams.
+//    */
+//   void reset();
+//   /**
+//    * @brief Initialize the logger in a parallel build. Must be called at least once, after the
+//    * MPI_Init() call. Must not be called in a serial build.
+//    * @param mpiComm global MPI communicator
+//    */
+//   void initMpi( MPI_Comm mpiComm );
+// 
+//   /**
+//    * @brief Change the logger output to the specified stream.
+//    * Also close the potential previously opened file output stream.
+//    * @param stream the stream to use when calling rankLog()
+//    */
+//   void setRankOutputToStream( std::ostream & stream );
+//   /**
+//    * @brief Change the logger output to a automatically created file in the specified folder.
+//    * The file name is based on the rank number. The file extension is a ".out".
+//    * @param output_dir optional output directory for rank log files to stream to when calling rankLog()
+//    */
+//   void setRankOutputToFile( const std::string & output_dir = "" );
+// 
+//   /**
+//    * @param param set the log level for global messages (ie. applied to simulation progress messages).
+//    */
+//   void setProblemLogLevel( LogLevel param );
+//   /**
+//    * @param param value to override all groups LogLevel and the problem LogLevel.
+//    */
+//   void enableLogLevelOverride( LogLevel param );
+//   /**
+//    * @param param set the maximal log level allowed for all messages. With a value of 2, all
+//    * messages from level 3 and more will not be output. With a value of -1, the logger become silent.
+//    * This value is prioritized over setMinLogLevel.
+//    */
+//   void disableLogLevelOverride();
+// 
+// 
+// public://todo: private
+// 
+//   /// @see setProblemLogLevel( LogLevel param )
+//   LogLevel m_problemLogLevel;
+//   /// @see enableLogLevelOverride( LogLevel param ) and disableLogLevelOverride()
+//   std::optional< LogLevel > m_overrideLogLevel;
+// 
+//   /// @brief MPI communicator
+//   MPI_Comm m_comm;
+//   /// @brief MPI rank id
+//   int m_rank;
+//   /// @brief MPI total ranks count
+//   int m_ranksCount;
+//   /// @brief prefix to add before a message that is specific to a rank. Empty in a serial build.
+//   std::string m_rankMsgPrefix;
+// 
+//   /// @brief Pointer to the rank output stream
+//   std::ostream * m_outStream;
+//   /// @brief Smart pointer to the active file output stream. Equals to nullptr if not outputing to a file.
+//   std::unique_ptr< std::ostream > m_fileOutStream;
+// 
+//   // TODO : expose it (only to) to LoggingObject ?
+//   template< typename INPUT >
+//   static void streamLog( std::ostream & stream, INPUT input );
+//   // TODO : expose it (only to) to LoggingObject ?
+//   template< typename INPUT, typename ... MORE_INPUTS >
+//   static void streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... moreInputs );
+// 
+//   // TODO : implement logMsg() as private with the adding ot contextual info
+// 
+// };
+// /// main Logger instance for general purpose logging
+// extern Logger logger;
+////////////////////////////////////////////////////
 // template< typename INPUT >
 // void Logger::streamLog( std::ostream & stream, INPUT input )
 // {

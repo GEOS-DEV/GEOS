@@ -2,7 +2,7 @@
 
 <style>
 note {
-  MaximumWidth 350
+  MaximumWidth 300
 }
 </style>
 
@@ -48,7 +48,7 @@ struct LogMsgGeneralContext <<struct>> #text:DarkCyan {
   + string m_logSectionTitle
   + real64 m_timeStepStart
 }
-note right: If more efficient, types could be changed to string.
+note bottom: If more efficient, types could be changed to string.
 
 struct LogMsgTargetContext <<struct>> #text:DarkMagenta {
   + string m_targetName
@@ -88,7 +88,7 @@ LogMsgType ---r[hidden]- SourceFileLocation
 ' --------------------------
 
 
-interface LogOutput <<interface>> #text:DarkRed {
+interface LogOutput <<interface>> {
   + void log( <color:OrangeRed>LogMsg message</color> )
 }
 
@@ -120,43 +120,46 @@ class LogHDF5Output {
 LogOutput <|.d. LogHDF5Output  : implements
 
 
-class LogErrorHistory {
+class LogHistory {
   -- Settings --
   - integer storeTimeStepsCount = 2
-  - bool storeOnlyRank0 = false
   + void setTimeStepToKeep( integer value )
-  + void storeOnlyRank0( bool value )
   -- MessageManaging --
-  + void submitMessage( LogMsg msg )
+  + void storeMessage( LogMsg msg )
   + void flushOldMessages()
   -- Internal data --
   - real64 storedTimeSteps[]
 }
-note as LogErrorHistoryNote
-  Stores all messages, and when an error occurs, dump them all in the rank error trace file.
+note as LogHistoryNote
+  Stores all messages so they will be available when an error occurs, in order to write them all in the rank error trace file.
 
   Settings should be configurable on Problem & command line.
 
   "flushOldMessages()" should be called on each timesteps.
 end note
-LogErrorHistory .. LogErrorHistoryNote
-LogErrorHistory o--l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last timesteps LogMsgs
+LogHistory .r. LogHistoryNote
+LogHistory o-l--> "0..n" LogMsg #OrangeRed;text:OrangeRed : Stores last timesteps LogMsgs
 
 
 class LogRouter #text:DarkRed {
   -- Static Members --
   + {static} LogOutput m_main
   -- Settings --
-  - LogLevel errorHistoryMaxLevel = Debug
+  - LogLevel historyMaxLevel = Debug
+  + void setTimeStepToKeep( integer value )
   + void setOutputs( LoggingStrategy strat )
   + void addOutput( LogOutput output )
   + void setErrorHistoryLogLevel( LogLevel errorHistoryMaxLevel )
-  -- Message managing --
+  -- Message Management --
   + void submitMessage( LogMsg msg )
 }
-note top: Filters the messages and send them in the LogOutput and / or in the LogErrorHistory
-LogRouter *-r-> "0..n\nm_outputs" LogOutput #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
-LogRouter *-d-> "1" LogErrorHistory #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
+note top: Filters the messages and send them in the LogOutput and / or in the LogHistory
+LogRouter *-d--> "0..n\nm_outputs" LogOutput #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
+LogRouter *-d--> "0..1" LogHistory #OrangeRed;text:OrangeRed : "Filter & Sends LogMsg to"
+
+
+LogTextStreamOutput .r[hidden] LogTextFileOutput
+LogTextFileOutput .r[hidden] LogHDF5Output
 
 
 ' --------------------------
@@ -200,7 +203,7 @@ end note
 GeneralLogger .d. GeneralLoggerNote
 GeneralLogger [<i>CONTEXT_T</i> =\n<color:DarkCyan>LogMessageGeneralContext</color>] ..u..|> LoggingObject : implements
 GeneralLogger .d..> LogMsg : Produces
-GeneralLogger .r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
+GeneralLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
 
 
 class TargetedLogger {
@@ -219,8 +222,8 @@ package dataRepository {
   }
 }
 TargetedLogger [<i>CONTEXT_T</i> =\n<color:DarkMagenta>LogMsgTargetContext</color>] ..u..|> LoggingObject : implements
-TargetedLogger "1\nm_logger" <-d-* Group
-TargetedLogger .r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
+TargetedLogger "1\nm_logger" <-d--* Group
+TargetedLogger ..r..> LogRouter #OrangeRed;text:OrangeRed : "Sends LogMsg to"
 TargetedLogger .r..> GeneralLogger #Blue;text:Blue : "Sub-calls logger.ceateMsgContext()"
 TargetedLogger .d..> LogMsg : Produces
 

@@ -21,8 +21,8 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOS_LOGMESSAGE_HPP
-#define GEOS_LOGMESSAGE_HPP
+#ifndef GEOS_COMMON_LOGMESSAGE_HPP
+#define GEOS_COMMON_LOGMESSAGE_HPP
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/EnumBimap.hpp"
@@ -35,7 +35,7 @@ namespace geos
 
 
 /// @brief Enumerate the logging levels from the most importants messages to the one that contain the more details.
-enum class LogLevel : int16_t
+enum class LogLevel
 {
   Silent = -1,    // Useful as a globalLogLevel for silencing the logger. shouldn't be used as a message level.
   Important = 0,  // Application level messages (help, almost blocking warnings, application informations & phases)
@@ -62,64 +62,67 @@ struct LogMsgType
   Error,
 };
 
-struct LogMsgParams
+
+struct LogMsgCallParams
 {
   SourceCodeLocation m_location;
   LogMsgType m_type;
   LogLevel m_logLevel;
 };
+
+#define GEOS_LOG_MSG_CTX( type, logLevel ) LogMsgParams( GEOS_SRCLOC(), type, logLevel )
+
+#define GEOS_INFO_IMPORTANT       GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Important )
+#define GEOS_INFO_PROGRESS        GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Progress )
+#define GEOS_INFO_DETAILED        GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Detailed )
+#define GEOS_INFO_TRACE           GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Trace )
+#define GEOS_INFO_DEBUG           GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Debug )
+#define GEOS_INFO_DEBUGTRACE      GEOS_LOG_MSG_PARAMS( LogMsgType::Info, LogLevel::Debugtrace )
+
+#define GEOS_WARNING_IMPORTANT    GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Important )
+#define GEOS_WARNING_PROGRESS     GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Progress )
+#define GEOS_WARNING_DETAILED     GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Detailed )
+#define GEOS_WARNING_TRACE        GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Trace )
+#define GEOS_WARNING_DEBUG        GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Debug )
+#define GEOS_WARNING_DEBUGTRACE   GEOS_LOG_MSG_PARAMS( LogMsgType::Warning, LogLevel::Debugtrace )
+
+#define GEOS_ERROR_IMPORTANT      GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Important )
+#define GEOS_ERROR_PROGRESS       GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Progress )
+#define GEOS_ERROR_DETAILED       GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Detailed )
+#define GEOS_ERROR_TRACE          GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Trace )
+#define GEOS_ERROR_DEBUG          GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Debug )
+#define GEOS_ERROR_DEBUGTRACE     GEOS_LOG_MSG_PARAMS( LogMsgType::Error, LogLevel::Debugtrace )
+
+
+
+struct LogMsgGeneralContext {
+  integer m_rank;
+  SystemClock m_rankTimeStamp;
+  string m_logSectionTitle;
+  real64 m_timeStepStart;
+};
+
+struct LogMsgTargetContext {
+  string m_targetName;
+  string m_targetDataContext;
+};
+
 
 struct LogMsgContext
 {
-  SourceCodeLocation m_location;
-  LogMsgType m_type;
-  LogLevel m_logLevel;
+  LogMsgParams m_params;
+  LogMsgGeneralContext m_generalContext
+  LogMsgTargetContext m_targetContext
 };
-
-#define GEOS_LOG_MSG_CONTEXT( type, logLevel ) LogMsgParams( GEOS_SRCLOC(), type, logLevel )
-
-#define GEOS_INFO_IMPORTANT       GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Important )
-#define GEOS_INFO_PROGRESS        GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Progress )
-#define GEOS_INFO_DETAILED        GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Detailed )
-#define GEOS_INFO_TRACE           GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Trace )
-#define GEOS_INFO_DEBUG           GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Debug )
-#define GEOS_INFO_DEBUGTRACE      GEOS_LOG_MSG_CONTEXT( LogMsgType::Info, LogLevel::Debugtrace )
-
-#define GEOS_WARNING_IMPORTANT    GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Important )
-#define GEOS_WARNING_PROGRESS     GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Progress )
-#define GEOS_WARNING_DETAILED     GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Detailed )
-#define GEOS_WARNING_TRACE        GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Trace )
-#define GEOS_WARNING_DEBUG        GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Debug )
-#define GEOS_WARNING_DEBUGTRACE   GEOS_LOG_MSG_CONTEXT( LogMsgType::Warning, LogLevel::Debugtrace )
-
-#define GEOS_ERROR_IMPORTANT      GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Important )
-#define GEOS_ERROR_PROGRESS       GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Progress )
-#define GEOS_ERROR_DETAILED       GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Detailed )
-#define GEOS_ERROR_TRACE          GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Trace )
-#define GEOS_ERROR_DEBUG          GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Debug )
-#define GEOS_ERROR_DEBUGTRACE     GEOS_LOG_MSG_CONTEXT( LogMsgType::Error, LogLevel::Debugtrace )
-
 
 
 struct LogMsg
 {
   string m_text;
-
-  // message metadata
-  LogMsgParams m_params;
-  integer m_rank;
-  // TODO : SystemClock m_rankTimeStamp;
-  // TODO : string m_logSectionTitle;
-  // TODO : real64 m_timeStepStart;
-  
-  // Group metadata
-  // TODO : string m_groupName;
-  // TODO : string m_dataContext; 
-  
-  // TODO : convergence metadata?
+  LogMsgContext m_context;
 };
 
 
 }
 
-#endif /* GEOS_LOGMESSAGE_HPP */
+#endif /* GEOS_COMMON_LOGMESSAGE_HPP */
