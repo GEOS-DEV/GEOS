@@ -211,7 +211,10 @@ jobs:
         if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
           # Extract the 'baseline' value using grep and awk
           ls -la ${GITHUB_WORKSPACE}
+          
+          # need to extract the name wiht something like: 
           # BASELINE_TAG=$(grep -A 1 'baselines:' "$.${GITHUB_WORKSPACE}/.integrated_test.yaml" | grep 'baseline:' | awk '{print $2}')
+          
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
           docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
@@ -254,15 +257,21 @@ jobs:
 
             # if $UPLOAD_BASELINES; then
               if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
+                # 1. We copy the baselines to a local directory to store them 
+                LOCAL_BASELINE_DIR="${{ inputs.LOCAL_BASELINE_DIR }}"
+          
+                # 1.a Create the target directory to store the new baselines
+                TARGET_DIR="${LOCAL_BASELINE_DIR}/baseline_${DATA_BASENAME::-7}"
+                echo "Create folder ${TARGET_DIR}"
+                mkdir -p "${TARGET_DIR}"
+          
+                # 1.b Copy the baseline file to the target directory
+                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
+                cp "${SOURCE_FILE}" "${TARGET_DIR}"
                 
-              # we store the baselines locally
-                echo "Create folder ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_${DATA_BASENAME::-7}"
-                mkdir ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_${DATA_BASENAME::-7}
-                echo "Copy baseline_${DATA_BASENAME} to  ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_${DATA_BASENAME::-7}"   
-                cp ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ${{ inputs.LOCAL_BASELINE_DIR }}/baseline_${DATA_BASENAME::-7}
-
-                # we push the baselines to the cloud
-                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+                # 2. We push the baselines to the cloud
+                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
                 echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
                 echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
               else
