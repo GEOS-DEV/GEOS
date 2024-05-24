@@ -286,6 +286,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # ls -lah ${DATA_EXCHANGE_DIR} | grep baseline
 
   echo "Running integrated tests..."
+  ls -l /tmp/geos/baselines
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines --baselineDir ${DATA_EXCHANGE_DIR}
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
 
