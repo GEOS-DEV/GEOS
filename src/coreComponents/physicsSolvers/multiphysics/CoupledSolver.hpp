@@ -429,7 +429,7 @@ protected:
       resetStateToBeginningOfStep( domain );
 
       integer & iter = solverParams.m_numNewtonIterations;
-      
+
       /// Sequential coupling loop
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
