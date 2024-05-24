@@ -92,7 +92,7 @@ public:
         EdgeManager const & edgeManager,
         FaceManager const & faceManager,
         localIndex const targetRegionIndex,
-        SUBREGION_TYPE const & elementSubRegion,
+        SUBREGION_TYPE & elementSubRegion,
         FE_TYPE const & finiteElementSpace,
         CONSTITUTIVE_TYPE & inputConstitutiveType,
         EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,

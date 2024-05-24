@@ -309,7 +309,7 @@ public:
     EdgeManager const & edgeManager,
     FaceManager const & faceManager,
     localIndex const targetRegionIndex,
-    SUBREGION_TYPE const & elementSubRegion,
+    SUBREGION_TYPE & elementSubRegion,
     FE_TYPE const & finiteElementSpace,
     CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
@@ -317,7 +317,7 @@ public:
                  EdgeManager const &,
                  FaceManager const &,
                  localIndex const,
-                 SUBREGION_TYPE const &,
+                 SUBREGION_TYPE &,
                  FE_TYPE const &,
                  CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
                                                       edgeManager,

@@ -87,7 +87,7 @@ public:
                               EdgeManager const & edgeManager,
                               FaceManager const & faceManager,
                               localIndex const targetRegionIndex,
-                              SUBREGION_TYPE const & elementSubRegion,
+                              SUBREGION_TYPE & elementSubRegion,
                               FE_TYPE const & finiteElementSpace,
                               CONSTITUTIVE_TYPE & inputConstitutiveType,
                               arrayView1d< globalIndex const > const & inputDofNumber,
@@ -99,7 +99,7 @@ public:
                               real64 const inputNewmarkGamma,
                               real64 const inputNewmarkBeta,
                               real64 const inputMassDamping,
-                              real64 const inputStiffnessDamping );
+                              real64 const inputStiffnessDamping);
 
   //***************************************************************************
   /**

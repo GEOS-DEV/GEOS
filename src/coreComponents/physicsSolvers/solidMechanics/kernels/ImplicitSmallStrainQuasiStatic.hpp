@@ -95,7 +95,7 @@ public:
                                   EdgeManager const & edgeManager,
                                   FaceManager const & faceManager,
                                   localIndex const targetRegionIndex,
-                                  SUBREGION_TYPE const & elementSubRegion,
+                                  SUBREGION_TYPE & elementSubRegion,
                                   FE_TYPE const & finiteElementSpace,
                                   CONSTITUTIVE_TYPE & inputConstitutiveType,
                                   arrayView1d< globalIndex const > const inputDofNumber,
@@ -103,7 +103,7 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   real64 const inputDt,
-                                  real64 const (&inputGravityVector)[3] );
+                                  real64 const (&inputGravityVector)[3]);
 
   //*****************************************************************************
   /**
