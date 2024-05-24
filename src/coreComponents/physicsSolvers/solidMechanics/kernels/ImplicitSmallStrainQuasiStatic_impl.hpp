@@ -60,10 +60,11 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
+  m_incStrain ( elementSubRegion.getField< fields::solidMechanics::incrementalStrain >() ),
+  m_elementVolume( elementSubRegion.getElementVolume() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
 {}
-
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -98,6 +99,7 @@ setup( localIndex const k,
       stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
     }
   }
+
   // Add stabilization to block diagonal parts of the local jacobian
   // (this is a no-operation with FEM classes)
   real64 const stabilizationScaling = computeStabilizationScaling( k );
@@ -127,6 +129,11 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+
+  for (int is = 0; is < 6; ++is)
+  {
+    m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
+  }
 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
 
