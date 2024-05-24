@@ -60,7 +60,6 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
                                                        string_view columnFmt ) const
 {
   TableData2D::Conversion1D tableData1D;
-  std::vector< real64 > headerValues;
   std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );
@@ -68,7 +67,6 @@ TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
   for( auto const & columnValue : m_columnValues )
   {
     tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
-    headerValues.push_back( columnValue );
   }
 
   // insert row value and row cell values
