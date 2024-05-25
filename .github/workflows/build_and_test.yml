@@ -221,7 +221,7 @@ jobs:
           fi
 
           # Extract the baseline field 
-          BASELINE_TAG=$(grep -A 1 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
+          BASELINE_TAG=$(grep -A 2 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
           echo "Baseline: ${BASELINE_TAG}"
 
           # Extract the folder name
