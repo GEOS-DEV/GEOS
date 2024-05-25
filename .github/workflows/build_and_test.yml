@@ -210,7 +210,6 @@ jobs:
           ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
            
           # Define the path to the YAML file
-          ls -la ${GITHUB_WORKSPACE}
           YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_tests.yaml"
           
           # Verify the YAML file path
@@ -236,9 +235,7 @@ jobs:
           wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
           
           echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
-
-          ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
-          
+                    
           # We defined a mount point and mount it read-only inside the container.
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
           docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
