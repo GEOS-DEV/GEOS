@@ -211,7 +211,7 @@ jobs:
            
           # Define the path to the YAML file
           ls -la ${GITHUB_WORKSPACE}
-          YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_test.yaml"
+          YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_tests.yaml"
           
           # Verify the YAML file path
           if [[ ! -f "${YAML_FILE_PATH}" ]]; then
