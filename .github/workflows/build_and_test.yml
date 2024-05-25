@@ -212,14 +212,22 @@ jobs:
           # Define the path to the YAML file
           ls -la ${GITHUB_WORKSPACE}
           YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_test.yaml"
+          
+          # Verify the YAML file path
+          if [[ ! -f "${YAML_FILE_PATH}" ]]; then
+            echo "Error: File $YAML_FILE_PATH does not exist."
+            exit 1
+          else
+            echo "Found integratedTests file: $YAML_FILE_PATH."
+          fi
 
           # Extract the baseline field 
-          BASELINE_TAG=$(grep -A 1 'baselines:' "$YAML_FILE_PATH" | grep 'baseline:' | awk '{print $2}')
-          echo "Baseline: $BASELINE_TAG"
+          BASELINE_TAG=$(grep -A 1 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
+          echo "Baseline: ${BASELINE_TAG}"
 
           # Extract the folder name
-          BASELINE_FOLDER_NAME=$(echo "$baseline_full" | cut -d'-' -f1-2)
-          echo "Baseline folder name: $BASELINE_FOLDER_NAME"
+          BASELINE_FOLDER_NAME=$(echo "${BASELINE_TAG}" | cut -d'-' -f1-2)
+          echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}/${BASELINE_TAG}
           
