@@ -227,10 +227,11 @@ jobs:
           echo "Baseline: ${BASELINE_TAG}"
 
           # Extract the folder name
-          BASELINE_FOLDER_NAME=$(echo "${BASELINE_TAG}" | cut -d'-' -f1-2)
+          BASELINE_FOLDER_NAME=$(echo "$BASELINE_TAG" | grep -o 'pr[0-9]*')
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
+          mkdir -p ${CURRENT_BASELINE_DIR}
 
           wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
           
