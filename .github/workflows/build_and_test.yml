@@ -222,7 +222,6 @@ jobs:
 
           # Extract the baseline field 
           BASELINE_FULL_PATH=$(grep -A 2 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
-          echo "Baseline: ${BASELINE_TAG}"
 
           # Remove the 'integratedTests/' prefix
           BASELINE_TAG=${BASELINE_FULL_PATH#integratedTests/}
@@ -232,7 +231,7 @@ jobs:
           BASELINE_FOLDER_NAME=$(echo "${BASELINE_TAG}" | cut -d'-' -f1-2)
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
-          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}/${BASELINE_TAG}
+          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
           
           echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
           
