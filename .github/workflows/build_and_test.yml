@@ -232,8 +232,12 @@ jobs:
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
+
+          wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
           
           echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
+
+          ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
           
           # We defined a mount point and mount it read-only inside the container.
           CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
