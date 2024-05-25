@@ -283,7 +283,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   echo "Available baselines:"
-  ls -l /tmp/geos/baselines
+  ls -lR /tmp/geos/baselines
 
   echo "Running integrated tests..."
   integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
