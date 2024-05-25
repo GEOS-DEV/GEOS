@@ -65,7 +65,9 @@ inline void from_json( const json & j,
 
 /**
  * @brief Order the nodes of the faces in a way that can be reproduced across the MPI ranks.
- * @param nodes The list of nodes as provided by the mesh.
+ * @param[in] nodes The list of nodes as provided by the mesh.
+ * @param[out] isFlipped If the input faces (provided through the @c nodes) is flipped w.r.t. the canonical face.
+ * @param[out] start At which index we need to start in the canonical face to get back to the original face (provided through the @c nodes).
  * @return A face with the nodes in the appropriate order
  * @details The nodes will be ordered in the following way.
  * First, we look for the lowest node index. It will become the first node.
@@ -80,7 +82,8 @@ inline void from_json( const json & j,
  * Except that edges having only two nodes, it's not necessary to implement a dedicated function
  * and <tt>std::minmax</tt> is enough.
  */
-Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes );
+Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes, bool & isFlipped, std::uint8_t & start );
+
 
 std::tuple< Buckets, BucketOffsets > doTheNewGlobalNumbering( vtkSmartPointer< vtkDataSet > mesh,
                                                               std::set< MpiRank > const & neighbors );

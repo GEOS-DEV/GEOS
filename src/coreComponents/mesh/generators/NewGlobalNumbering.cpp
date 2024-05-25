@@ -100,7 +100,7 @@ std::set< vtkIdType > extractBoundaryCells( vtkSmartPointer< vtkDataSet > mesh )
   return boundaryCellIdxs;
 }
 
-Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes )
+Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes, bool & isFlipped, std::uint8_t & start )  // TODO unit test
 {
   std::size_t const n = nodes.size();
 
@@ -118,10 +118,17 @@ Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes )
   Face f;
   f.reserve( n );
 
-  auto const it = std::min_element( nodes.cbegin(), nodes.cend() );
-  std::size_t const minIdx = std::distance( nodes.cbegin(), it );
-  int const increment = nodes[modulo( minIdx - 1 )] < nodes[modulo( minIdx + 1 )] ? -1 : 1;  // TODO based on increment, I can say if the face is flipped or not.
-  integer i = minIdx;
+  auto const cit = std::min_element( std::cbegin( nodes ), std::cend( nodes ) );
+  auto const minIdx = std::distance( std::cbegin( nodes ), cit );
+
+  std::size_t const prevIdx = modulo( intConv< integer >( minIdx - 1 ) );
+  std::size_t const nextIdx = modulo( intConv< integer >( minIdx + 1 ) );
+  int const increment = nodes[prevIdx] < nodes[nextIdx] ? -1 : 1;
+
+  start = intConv< std::uint8_t >( minIdx );
+  isFlipped = increment < 0;
+
+  integer i = intConv< integer >( minIdx );
   for( std::size_t count = 0; count < n; ++count, i = i + increment )
   {
     f.emplace_back( nodes.at( modulo( i ) ) );
@@ -180,7 +187,9 @@ Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
         vtkIdType const ngi = globalPtIds[nli];
         nodes[i] = NodeGlbIdx{ ngi };
       }
-      tmpFaces.emplace_back( reorderFaceNodes( nodes ) );
+      bool isFlipped;
+      std::uint8_t start;
+      tmpFaces.emplace_back( reorderFaceNodes( nodes, isFlipped, start ) );
     }
   }
 

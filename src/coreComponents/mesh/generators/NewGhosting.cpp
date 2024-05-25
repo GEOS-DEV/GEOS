@@ -115,10 +115,59 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   return result;
 }
 
+/**
+ * @brief Complete set of information when a face refers to an edge.
+ * @details When a face refers to an edge, w.r.t. the canonical ordering of the edge,
+ * there's one node that comes before the other.
+ * The @c start parameter (which will be equal to either 0 or 1) will hold this information.
+ */
+struct EdgeInfo
+{
+  /// The global index of the edge the face is referring to.
+  EdgeGlbIdx index;
+  /// Which nodes comes first (and therefore which comes second) in the original edge numbering in the cell.
+  std::uint8_t start; // Where the initial index in the canonical face ordering was in the initial face.
+};
+
+void to_json( json & j,
+              const EdgeInfo & v )  // For display
+{
+  j = json{ { "index", v.index },
+            { "start", v.start } };
+}
+
+/**
+ * @brief Complete set of information when a cell refers to a face.
+ * @details When a cell refers to a face, w.r.t. the canonical ordering of the face,
+ * the nodes of the face (in the cell) can be shifted,
+ * and travelled in a different direction (clockwise or counter-clockwise).
+ * The @c isFlipped parameter informs about the travel discrepancy.
+ * The @c start parameter informs about the shift.
+ * @note This class does not refer to how multiple faces are ordered by a cell,
+ * but to the precise information when refering to one given face.
+ */
+struct FaceInfo
+{
+  /// The global index of the face the cell is referring to.
+  FaceGlbIdx index;
+  /// Is the face travelled in the same direction as the canonical face.
+  bool isFlipped;
+  /// Where to start iterating over the nodes of the canonical faces to get back to the original face numbering in the cell.
+  std::uint8_t start;
+};
+
+void to_json( json & j,
+              const FaceInfo & v )  // For display
+{
+  j = json{ { "index",     v.index },
+            { "isFlipped", v.isFlipped },
+            { "start",     v.start } };
+}
+
 struct MeshGraph
 {
-  std::map< CellGlbIdx, std::set< FaceGlbIdx > > c2f;  // TODO What about the metadata (e.g. flip the face)
-  std::map< FaceGlbIdx, std::set< EdgeGlbIdx > > f2e;
+  std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;  // TODO What about the metadata (e.g. flip the face)
+  std::map< FaceGlbIdx, std::vector< EdgeInfo > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
   std::set< NodeGlbIdx > n;
 };
@@ -197,8 +246,8 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
         NodeGlbIdx const & n0 = face[i], & n1 = face[i + 1];
         std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
         std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
-        f2e[fgi].insert( n2e.at( p1 ) );
-        bool const flipped = p0 != p1;  // TODO store somewhere.
+        EdgeInfo const info = { n2e.at( p1 ), std::uint8_t{ p0 == p1 } };
+        f2e[fgi].emplace_back( info );
       }
       ++fgi;
     }
@@ -233,9 +282,10 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
         vtkIdType const ngi = globalPtIds->GetValue( nli );
         faceNodes[i] = NodeGlbIdx{ ngi };
       }
-      std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes );
-      owned.c2f[gci].insert( n2f.at( reorderedFaceNodes ) );
-      // TODO... bool const flipped = ... compare nodes and reorderedNodes. Or ask `reorderFaceNodes` to tell
+      bool isFlipped;
+      std::uint8_t start;
+      std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes, isFlipped, start );
+      owned.c2f[gci].emplace_back( FaceInfo{ n2f.at( reorderedFaceNodes ), isFlipped, start } );
     }
   }
 
@@ -427,6 +477,42 @@ private:
   int const m_numEntries;
 };
 
+template< std::uint8_t N >
+std::size_t encode( std::size_t const & basis,
+                    std::array< std::size_t, N > const & array )
+{
+  std::size_t result = 0;
+  for( auto i = 0; i < N; ++i )
+  {
+    result *= basis;
+    result += array[i];
+  }
+  return result;
+}
+
+template< std::uint8_t N >
+std::array< std::size_t, N > decode( std::size_t const & basis,
+                                     std::size_t const & input )
+{
+  std::array< std::size_t, N > result, pows;
+
+  for( std::size_t i = 0, j = N - 1, pow = 1; i < N; ++i, --j )
+  {
+    pows[j] = pow;
+    pow *= basis;
+  }
+
+  std::size_t dec = input;
+  for( auto i = 0; i < N; ++i )
+  {
+    std::lldiv_t const div = std::lldiv( dec, pows[i] );
+    result[i] = div.quot;
+    dec = div.rem;
+  }
+  return result;
+}
+
+
 std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph const & owned,
                                                                        MeshGraph const & present,
                                                                        MaxGlbIdcs const & gis,
@@ -450,8 +536,10 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
 
   std::vector< int > ownedGlbIdcs, numEntriesPerRow;  // TODO I couldn't use a vector of `std::size_t`
   std::vector< std::vector< int > > indices;
+  std::vector< std::vector< double > > values;
   ownedGlbIdcs.reserve( numOwned );
   numEntriesPerRow.reserve( numOwned );
+  indices.reserve( numOwned );
   indices.reserve( numOwned );
 
   std::vector< int > otherGlbIdcs;  // TODO I couldn't use a vector of `std::size_t`
@@ -473,53 +561,89 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
 
   for( NodeGlbIdx const & ngi: owned.n )
   {
-    int const i = convert.fromNodeGlbIdx( ngi );
-    ownedGlbIdcs.emplace_back( i );
-    numEntriesPerRow.emplace_back( 1 );
-    std::vector< int > const tmp( 1, ownedGlbIdcs.back() );
-    indices.emplace_back( tmp );
+    // Nodes depend on no other geometrical entity,
+    // so we only have one entry `1` in the diagonal of the matrix,
+    // because we add the identity to the adjacency matrix.
+    ownedGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
+    numEntriesPerRow.emplace_back( 0 + 1 );  // `+1` comes from the diagonal
+    indices.emplace_back( 1, ownedGlbIdcs.back() );
+    values.emplace_back( 1, ownedGlbIdcs.back() );
   }
   for( auto const & [egi, nodes]: owned.e2n )
   {
-    int const i = convert.fromEdgeGlbIdx( egi );
-    ownedGlbIdcs.emplace_back( i );
-    numEntriesPerRow.emplace_back( std::tuple_size_v< decltype( nodes ) > + 1 );  // `+1` comes from the identity
-    std::vector< int > const tmp{ int( std::get< 0 >( nodes ).get() ), int( std::get< 1 >( nodes ).get() ), ownedGlbIdcs.back() };
-    indices.emplace_back( tmp );
+    // Edges always depend on exactly 2 nodes, so this value can be hard coded.
+    // Also, edges have two different direction (starting from one point of the other).
+    // To keep the symmetry with the faces (see below),
+    // - we store the local index (0 or 1) to express this information.
+    // - we store the number of underlying nodes (2) on the diagonal.
+    size_t constexpr numNodes = std::tuple_size_v< decltype( nodes ) >;
+
+    ownedGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
+
+    numEntriesPerRow.emplace_back( numNodes + 1 );  // `+1` comes from the diagonal
+    indices.emplace_back( std::vector< int >{ convert.fromNodeGlbIdx( std::get< 0 >( nodes ) ),
+                                              convert.fromNodeGlbIdx( std::get< 1 >( nodes ) ),
+                                              ownedGlbIdcs.back() } );
+    // Note that when storing a value that can be `0`, we always add `1`,
+    // (for edges but also later for faces and cells),
+    // to be sure that there will always be some a noticeable figure where we need one.
+    values.emplace_back( std::vector< double >{ 0 + 1., 1 + 1., numNodes } );
   }
   for( auto const & [fgi, edges]: owned.f2e )
   {
-    int const i = convert.fromFaceGlbIdx( fgi );
-    ownedGlbIdcs.emplace_back( i );
-    numEntriesPerRow.emplace_back( std::size( edges ) + 1 );  // `+1` comes from the identity
-    std::vector< int > tmp;
-    tmp.reserve( numEntriesPerRow.back() );
-    for( EdgeGlbIdx const & egi: edges )
+    // Faces point to multiple edges, but their edges can be flipped w.r.t. the canonical edges
+    // (ie minimal node global index comes first).
+    // In order not to lose this information (held by an `EdgeInfo` instance), we serialise
+    // - the `EdgeInfo` instance,
+    // - plus the order in which the edges are appearing,
+    // as an integer and store it as an entry in the matrix.
+    // On the diagonal, we'll store the number of edges of the face.
+    std::size_t const numEdges = std::size( edges );
+
+    ownedGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
+
+    numEntriesPerRow.emplace_back( numEdges + 1 );  // `+1` comes from the diagonal
+    std::vector< int > & ind = indices.emplace_back( numEntriesPerRow.back() );
+    std::vector< double > & val = values.emplace_back( numEntriesPerRow.back() );
+    for( std::size_t i = 0; i < numEdges; ++i )
     {
-      tmp.emplace_back( convert.fromEdgeGlbIdx( egi ) );
+      EdgeInfo const & edgeInfo = edges[i];
+      ind[i] = convert.fromEdgeGlbIdx( edgeInfo.index );
+      std::size_t const v = 1 + encode< 2 >( numEdges, { edgeInfo.start, i } );
+      val[i] = double( v );
     }
-    tmp.emplace_back( ownedGlbIdcs.back() );
-    indices.emplace_back( tmp );
+    ind.back() = ownedGlbIdcs.back();
+    val.back() = double( numEdges );
   }
   for( auto const & [cgi, faces]: owned.c2f )
   {
-    int const i = convert.fromCellGlbIdx( cgi );
-    ownedGlbIdcs.emplace_back( i );
-    numEntriesPerRow.emplace_back( std::size( faces ) + 1 );  // `+1` comes from the identity
-    std::vector< int > tmp;
-    tmp.reserve( numEntriesPerRow.back() );
-    for( FaceGlbIdx const & fgi: faces )
+    // The same comment as for faces and edges applies for cells and faces (see above).
+    // The main differences being that
+    // - the `FaceInfo` as a little more information,
+    // - the diagonal stores the type of the cell which conveys the number of face, nodes, ordering...
+    std::size_t const numFaces = std::size( faces );
+
+    ownedGlbIdcs.emplace_back( convert.fromCellGlbIdx( cgi ) );
+
+    numEntriesPerRow.emplace_back( numFaces + 1 );  // `+1` comes from the diagonal
+    std::vector< int > & ind = indices.emplace_back( numEntriesPerRow.back() );
+    std::vector< double > & val = values.emplace_back( numEntriesPerRow.back() );
+    for( std::size_t i = 0; i < numFaces; ++i )
     {
-      tmp.emplace_back( convert.fromFaceGlbIdx( fgi ) );
+      FaceInfo const & faceInfo = faces[i];
+      ind[i] = convert.fromFaceGlbIdx( faceInfo.index );
+      std::size_t const v = 1 + encode< 3 >( numFaces, { faceInfo.isFlipped, faceInfo.start, i } );
+      val[i] = double( v );
     }
-    tmp.emplace_back( ownedGlbIdcs.back() );
-    indices.emplace_back( tmp );
+    ind.back() = ownedGlbIdcs.back();
+    val.back() = double( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
   std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) );
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, std::size( numEntriesPerRow ) );
   GEOS_ASSERT_EQ( numOwned, std::size( indices ) );
+  GEOS_ASSERT_EQ( numOwned, std::size( values ) );
   for( std::size_t i = 0; i < numOwned; ++i )
   {
     GEOS_ASSERT_EQ( indices[i].size(), std::size_t( numEntriesPerRow[i] ) );
@@ -535,12 +659,12 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   for( std::size_t i = 0; i < numOwned; ++i )
   {
     std::vector< int > const & rowIndices = indices[i];
-    std::vector< double > const rowValues( std::size( rowIndices ), 1. );
+    std::vector< double > const & rowValues = values[i];
     GEOS_ASSERT_EQ( std::size( rowIndices ), std::size_t( numEntriesPerRow[i] ) );
+    GEOS_ASSERT_EQ( std::size( rowValues ), std::size_t( numEntriesPerRow[i] ) );
     upward.InsertGlobalValues( ownedGlbIdcs[i], std::size( rowIndices ), rowValues.data(), rowIndices.data() );
   }
 
-//  upward.FillComplete();
   upward.FillComplete( ownedMap, ownedMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", upward );
 
@@ -587,9 +711,12 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   // The `ghostingFootprint` matrix is rectangular,
   // the number of columns being the number of MPI ranks,
   // the number of rows being the number of nodes in the mesh graph.
+  //
   // For any MPI rank (ie column), a non-zero entry means
   // that the corresponding geometrical entry has to be eventually present onto the rank
   // for the ghosting to be effective.
+  //
+  // From `ghostingFootprint` we can extract where the current rank has to send any owned graph node.
   Epetra_CrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
   ghostingFootprint.PutScalar( 1. );  // This can be done after the `FillComplete`.
   ghostingFootprint.FillComplete( mpiMap, ownedMap );
@@ -606,9 +733,20 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
     GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghostingFootprint.NumGlobalRows() );
   }
 
+  // The `ghostExchange` matrix is rectangular,
+  // the number of columns being the number of nodes in the mesh graph,
+  // the number of rows being the number of MPI ranks.
+  //
+  // As the result of the multiplication of the `ghostingFootprint` matrix and the `ownership`,
+  // for each row owned (ie at the current MPI rank index),
+  // the value of the matrix term will provide the actual owning rank for all the .
+  //
+  // From `ghostExchange` we can extract which other rank will send to the current rank any graph node.
   Epetra_CrsMatrix ghostExchange( Epetra_DataAccess::Copy, mpiMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
   ghostExchange.FillComplete( ownedMap, mpiMap );
+  // TODO Do I have to work with `ghostingFootprint` if I already have `ghostExchange` which may convey more information?
+  // TODO Maybe because of the ownership of the ranks: one is also the "scaled" transposed of the other.
 
   if( curRank == 0_mpi )
   {
@@ -618,7 +756,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostInfo.mat", ghostingFootprint );
 
   int extracted2 = 0;
-  std::vector< double > extractedValues2( commSize );
+  std::vector< double > extractedValues2( commSize );  // TODO improve with resize...
   std::vector< int > extractedIndices2( commSize );
 
   GhostSend send;
@@ -668,30 +806,17 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   GEOS_ASSERT_EQ( extracted, length );
 
   std::set< int > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
-  std::set< int > receivedIndices;  // The indices my neighbors will send me.
+  std::set< int > receivedIndices;  // The graph nodes that my neighbors will send me.
   std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
                        std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
                        std::inserter( receivedIndices, std::end( receivedIndices ) ) );
-  std::vector< int > notPresentIndices_; // TODO remove _
+  std::vector< int > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
-                       std::back_inserter( notPresentIndices_ ) );
-//  {
-//    std::set< int > const tmp( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
-//    GEOS_LOG_RANK( "tmp = " << json( tmp ) );
-//    GEOS_LOG_RANK( "receivedIndices = " << json( receivedIndices ) );
-//    GEOS_ASSERT( tmp == receivedIndices );
-//  }
-//  GEOS_LOG_RANK( "extracted = " << extracted );
-//  if( curRank == 1_mpi )
-//  {
-//    GEOS_LOG_RANK( "extractedIndices = " << json( extractedIndices ) );
-////    GEOS_LOG_RANK( "extracted values = " << json( extractedValues ) );
-//    GEOS_LOG_RANK( "receivedIndices = " << json( receivedIndices ) );
-//  }
+                       std::back_inserter( notPresentIndices ) );
+
   GhostRecv recv;
   for( int i = 0; i < extracted; ++i )
-//  for( int const & receivedIndex: receivedIndices )
   {
     int const & index = extractedIndices[i];
     if( receivedIndices.find( index ) == std::cend( receivedIndices ) )  // TODO make a map `receivedIndices -> mpi rank`
@@ -733,8 +858,17 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
 
   // At this point, each rank knows what it has to send to and what it is going to receive from the other ranks.
   // The remaining action is about retrieving the additional graph information
-  // for the new geometrical quantities that will be sent by the neighbors
-  std::size_t const numMissingIndices = std::size( notPresentIndices_ );
+  // for the new geometrical quantities that will be sent by the neighbors.
+  //
+  // In order to do that, we build the `missing` matrix, which is rectangular,
+  // - the number of columns being the number of nodes in the mesh graph,
+  // - the number of rows being the total number graph nodes that's missing on ranks.
+  // - all its terms will be `1`.
+  // Combined with the adjacency matrix which conveya a lot of connections information,
+  // we'll be able to create the final `missingMappings`.
+  // We also create `maps` with specific MPI ranks ownerships and offsets,
+  // so we'll be able to retrieve the information on the ranks that need it (nothing more, nothing less).
+  std::size_t const numMissingIndices = std::size( notPresentIndices );
   std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );  // A missing node can be missing on multiple ranks and that's OK.
 
 //  Epetra_Map const missingIndicesMap( intConv< long long int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
@@ -744,23 +878,16 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   int const offset = *missingIndicesMap.MyGlobalElements();  // Needed to compute the global row
 //  GEOS_LOG_RANK( "numMissingIndices, numGlobalMissingIndices, offset = " << numMissingIndices << ", " << numGlobalMissingIndices << ", " << offset );
 
-  // The `missing` matrix is rectangular,
-  // the number of columns being the number of nodes in the mesh graph,
-  // the number of rows being the total number graph nodes that's missing on a rank.
-  // This matrix will
   Epetra_CrsMatrix missing( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
   for( std::size_t i = 0; i < numMissingIndices; ++i )
   {
-    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices_[i] );
+    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices[i] );
   }
   missing.FillComplete( ownedMap, missingIndicesMap );
-
-  // TODO Don't put ones in downward: reassemble with the ordering (e.g. edges point to a first and last node)
 
   auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
 //  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
   Epetra_Vector const zeros( ownedMap, true );
-  tDownward->ReplaceDiagonalValues( zeros );  // TODO directly build zeros in the function call.
 //  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-after.mat", *tDownward );
   Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
@@ -770,22 +897,17 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   MeshGraph ghosts;  // TODO most likely this will be wrong.
 
   int ext = 0;
-  std::vector< double > extValues( n );
-  std::vector< int > extIndices( n );
-//  double * extValues = nullptr;
-//  int * extIndices = nullptr;
+  std::vector< double > extValues;
+  std::vector< int > extIndices;
 
   for( int i = 0; i < int( numMissingIndices ); ++i )
   {
-    missingMappings.ExtractGlobalRowCopy( offset + i, int( n ), ext, extValues.data(), extIndices.data() );
-//    missingMappings.ExtractGlobalRowView( intConv< int >( offset + i ), ext, extValues );
-//    missingMappings.ExtractGlobalRowView( intConv< int >( offset + i ), ext, extValues, extIndices );
-//    Span< double > const s0( extValues, ext );
-//    Span< int > const s1( extIndices, ext );
-//    GEOS_LOG( "ext 0 = " << std::size( s0 ) );
-//    GEOS_LOG( "ext 1 = " << std::size( s1 ) );
-//    GEOS_LOG_RANK( "ext = " << ext );
-    int const index = notPresentIndices_[i];
+    int const length2 = missingMappings.NumGlobalEntries( offset + i );
+    extValues.resize( length2 );
+    extIndices.resize( length2 );
+    missingMappings.ExtractGlobalRowCopy( offset + i, length2, ext, extValues.data(), extIndices.data() );
+    GEOS_ASSERT_EQ( ext, length2 );
+    int const index = notPresentIndices[i];
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
@@ -795,33 +917,89 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
       }
       case Geom::EDGE:
       {
-        GEOS_ASSERT_EQ( ext, 2 );  // TODO check that val != 0?
+        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
+        std::ptrdiff_t const numNodesIdx = std::distance( std::cbegin( extIndices ), cit );
+        int const numNodes = int( extValues[numNodesIdx] );
+        GEOS_ASSERT_EQ( ext, numNodes + 1 );
+        GEOS_ASSERT_EQ( numNodes, 2 );
+        std::array< NodeGlbIdx, 2 > order{};
+
+        for( int ii = 0; ii < ext; ++ii )
+        {
+          if( ii == numNodesIdx )
+          {
+            continue;
+          }
+
+          NodeGlbIdx const ngi = convert.toNodeGlbIdx( extIndices[ii] );
+          integer const ord = integer( extValues[ii] - 1 );
+          GEOS_ASSERT( ord == 0 or ord == 1 );
+          order[ord] = ngi;
+        }
+        GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numNodes ) );
         EdgeGlbIdx const egi = convert.toEdgeGlbIdx( index );
-        NodeGlbIdx const ngi0 = convert.toNodeGlbIdx( extIndices[0] );
-        NodeGlbIdx const ngi1 = convert.toNodeGlbIdx( extIndices[1] );
-        ghosts.e2n[egi] = std::minmax( { ngi0, ngi1 } );
+        std::tuple< NodeGlbIdx, NodeGlbIdx > & tmp = ghosts.e2n[egi];
+        std::get< 0 >( tmp ) = order[0];
+        std::get< 1 >( tmp ) = order[1];
         break;
       }
       case Geom::FACE:
       {
-        GEOS_ASSERT_EQ( ext, 4 );  // TODO temporary check for the dev
-        FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
-        std::set< EdgeGlbIdx > & tmp = ghosts.f2e[fgi];
+        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
+        std::ptrdiff_t const numEdgesIdx = std::distance( std::cbegin( extIndices ), cit );
+        int const numEdges = int( extValues[numEdgesIdx] );
+        GEOS_ASSERT_EQ( ext, numEdges + 1 );
+        std::map< integer, EdgeInfo > order;
         for( int ii = 0; ii < ext; ++ii )
         {
-          tmp.insert( convert.toEdgeGlbIdx( extIndices[ii] ) );
+          if( ii == numEdgesIdx )
+          {
+            continue;
+          }
+
+          EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extIndices[ii] );
+          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, std::size_t( extValues[ii] - 1 ) );
+          order[decoded[1]] = { egi, intConv< std::uint8_t >( decoded[0] ) };
+          GEOS_ASSERT( decoded[0] == 0 or decoded[0] == 1 );
         }
+        GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numEdges ) );
+        FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
+        std::vector< EdgeInfo > & tmp = ghosts.f2e[fgi];
+        tmp.resize( numEdges );
+        for( auto const & [ord, edgeInfo]: order )
+        {
+          tmp[ord] = edgeInfo;
+        }
+//        GEOS_LOG_RANK( "faces ; index, extIndices, extValues, order = " << index << " | " << json( extIndices ) << " | " << json( extValues ) << " | " << json( order ) );
         break;
       }
       case Geom::CELL:
       {
-        GEOS_ASSERT_EQ( ext, 6 );  // TODO temporary check for the dev
-        CellGlbIdx const cgi = convert.toCellGlbIdx( index );
-        std::set< FaceGlbIdx > & tmp = ghosts.c2f[cgi];
+        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
+        std::ptrdiff_t const numFacesIdx = std::distance( std::cbegin( extIndices ), cit );
+        int const numFaces = int( extValues[numFacesIdx] );  // TODO This should receive the cell type instead.
+        GEOS_ASSERT_EQ( ext, numFaces + 1 );
+        std::map< integer, FaceInfo > order;
         for( int ii = 0; ii < ext; ++ii )
         {
-          tmp.insert( convert.toFaceGlbIdx( extIndices[ii] ) );
+          if( ii == numFacesIdx )
+          {
+            continue;
+          }
+
+          FaceGlbIdx const fgi = convert.toFaceGlbIdx( extIndices[ii] );
+          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, std::size_t( extValues[ii] - 1 ) );
+          order[decoded[2]] = { fgi, intConv< bool >( decoded[0] ), intConv< std::uint8_t >( decoded[1] ) };
         }
+        GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numFaces ) );
+        CellGlbIdx const cgi = convert.toCellGlbIdx( index );
+        std::vector< FaceInfo > & tmp = ghosts.c2f[cgi];
+        tmp.resize( numFaces );
+        for( auto const & [ord, faceInfo]: order )
+        {
+          tmp[ord] = faceInfo;
+        }
+//        GEOS_LOG_RANK( "cells ; index, extIndices, extValues, order = " << index << " | " << json( extIndices ) << " | " << json( extValues ) << " | " << json( order ) );
         break;
       }
       default:
