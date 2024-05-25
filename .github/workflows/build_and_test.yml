@@ -221,7 +221,11 @@ jobs:
           fi
 
           # Extract the baseline field 
-          BASELINE_TAG=$(grep -A 2 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
+          BASELINE_FULL_PATH=$(grep -A 2 'baselines:' "${YAML_FILE_PATH}" | grep 'baseline:' | awk '{print $2}')
+          echo "Baseline: ${BASELINE_TAG}"
+
+          # Remove the 'integratedTests/' prefix
+          BASELINE_TAG=${BASELINE_FULL_PATH#integratedTests/}
           echo "Baseline: ${BASELINE_TAG}"
 
           # Extract the folder name
