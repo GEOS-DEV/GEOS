@@ -886,9 +886,6 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   missing.FillComplete( ownedMap, missingIndicesMap );
 
   auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
-//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-before.mat", *tDownward );
-  Epetra_Vector const zeros( ownedMap, true );
-//  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/tDownward-after.mat", *tDownward );
   Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
   EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
