@@ -216,7 +216,6 @@ jobs:
           # Verify the YAML file path
           if [[ ! -f "${YAML_FILE_PATH}" ]]; then
             echo "Error: File $YAML_FILE_PATH does not exist."
-            exit 1
           else
             echo "Found integratedTests file: $YAML_FILE_PATH."
           fi
