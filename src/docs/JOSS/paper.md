@@ -13,15 +13,17 @@ authors:
   - name: Ryan M. Aronson
     affiliation: 3
   - name: Julien R. Besset
-    affiliation: 2
+    affiliation: 8
   - name: Andrea Borio
     affiliation: 5
+  - name: Quan M. Bui
+    affiliation: 1
   - name: Thomas J. Byer
     affiliation: 1
   - name: Nicola Castelletto
     affiliation: 1
   - name: Aurélien Citrain
-    affiliation: 2
+    affiliation: 8
   - name: Benjamin C. Corbett
     affiliation: 1
   - name: James Corbett
@@ -37,13 +39,15 @@ authors:
   - name: Fan Fei
     affiliation: 1
   - name: Stefano Frambati
-    affiliation: 2
+    affiliation: 8
   - name: Jacques Franc
     affiliation: 3
   - name: Andrea Franceschini
     affiliation: 3
   - name: Matteo Frigo
     affiliation: 3
+  - name: Pengcheng Fu
+    affiliation: 1
   - name: Thomas Gazzola
     affiliation: 2
   - name: Herve Gross
@@ -52,31 +56,46 @@ authors:
     affiliation: 2
   - name: Brian M. Han
     affiliation: 1
+  - name: Rasim Hasanzade
+    affiliation: 3,4
   - name: Michael Homel
     affiliation: 1
   - name: Jian Huang
     affiliation: 2
+  - name: Jiamin Jiang
+    affiliation: 4
   - name: Tao Jin
     affiliation: 1
+  - name: Isaac Ju
+    affiliation: 3
   - name: Dickson Kachuma
     affiliation: 2
   - name: Mohammad Karimi-Fard
     affiliation: 3
+  - name: Taeho Kim
+    affiliation: 1
   - name: Sergey Klevtsov
     affiliation: 3
   - name: Alexandre Lapene
     affiliation: 2
   - name: Victor A. P. Magri
     affiliation: 1
+  - name: Antoine Mazuyer
+    affiliation: 2,3
+  - name: Mamadou N'diaye
+    affiliation: 3
   - name: Daniel Osei-Kuffuor
     affiliation: 1
   - name: Stefan Povolny
     affiliation: 1
+  - name: Guotong Ren
+    affiliation: 4
   - name: Shabnam J. Semnani
+    affiliation: 6
   - name: Chris S. Sherman
     affiliation: 1
   - name: Melvin Rey
-    affiliation: 2
+    affiliation: 7
   - name: Hamdi A. Tchelepi
     affiliation: 3
   - name: William R. Tobin
@@ -84,22 +103,34 @@ authors:
   - name: Pavel Tomin
     affiliation: 4
   - name: Lionel Untereiner
+    affiliation: 7
     orcid: 0000-0002-8025-2616
+  - name: Sohail Waziri
+    affiliation: 3,4
+  - name: Xianhuan Wen
+    affiliation: 4
   - name: Joshua A. White
     affiliation: 1
   - name: Hui Wu
     affiliation: 1
 affiliations:
- - name: Lawrence Livermore National Laboratory, USA
-   index: 1
- - name: TotalEnergies E&P Research & Technology, USA
-   index: 2
- - name: Stanford University, USA
-   index: 3
- - name: Chevron Technical Center, USA
-   index: 4
- - name: Politecnico di Torino, Italy
-   index: 5
+  - name: Lawrence Livermore National Laboratory, USA
+    index: 1
+  - name: TotalEnergies E&P Research & Technology, USA
+    index: 2
+  - name: Stanford University, USA
+    index: 3
+  - name: Chevron Technical Center, USA
+    index: 4
+  - name: Politecnico di Torino, Italy
+    index: 5
+  - name: University of California San Diego
+    index: 6
+  - name: Inria, Universite de Pau et des Pays de l’Adour
+    index: 8
+  - name: Independent
+    index: 7
+
 date: 15 December 2023
 bibliography: paper.bib
 
