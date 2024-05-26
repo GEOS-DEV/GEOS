@@ -37,6 +37,9 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkNew.h>
 #include <vtkPartitionedDataSet.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
 #include <vtkRedistributeDataSetFilter.h>
@@ -48,6 +51,8 @@
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLMultiBlockDataReader.h>
 #include <vtkXMLPImageDataReader.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkXMLPPolyDataReader.h>
 #include <vtkXMLPRectilinearGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
@@ -81,10 +86,12 @@ enum class VTKMeshExtension : integer
   vtr,  ///< XML serial vtkRectilinearGrid (structured)
   vts,  ///< XML serial vtkStructuredGrid (structured)
   vti,  ///< XML serial vtkImageData (structured)
+  vtp,  ///< XML serial vtkPolyData
   pvtu, ///< XML parallel vtkUnstructuredGrid (unstructured)
   pvtr, ///< XML parallel vtkRectilinearGrid (structured)
   pvts, ///< XML parallel vtkStructuredGrid (structured)
   pvti, ///< XML parallel vtkImageData (structured)
+  pvtp, ///< XML parallel vtkPolyData
 };
 
 /// Strings for VTKMeshGenerator::VTKMeshExtension enumeration
@@ -95,10 +102,12 @@ ENUM_STRINGS( VTKMeshExtension,
               "vtr",
               "vts",
               "vti",
+              "vtp",
               "pvtu",
               "pvtr",
               "pvts",
-              "pvti" );
+              "pvti",
+              "pvtp" );
 
 /**
  * @brief Supported VTK legacy dataset types
@@ -109,6 +118,7 @@ enum class VTKLegacyDatasetType : integer
   structuredGrid,   ///< Structured grid (structured)
   unstructuredGrid, ///< Unstructured grid (unstructured)
   rectilinearGrid,  ///< Rectilinear grid (structured)
+  polyData,         ///< PolyData
 };
 
 /// Strings for VTKMeshGenerator::VTKLegacyDatasetType enumeration
@@ -116,7 +126,8 @@ ENUM_STRINGS( VTKLegacyDatasetType,
               "structuredPoints",
               "structuredGrid",
               "unstructuredGrid",
-              "rectilinearGrid" );
+              "rectilinearGrid",
+              "polyData" );
 
 /**
  * @brief Gathers all the data from all ranks, merge them, sort them, and remove duplicates.
@@ -423,6 +434,10 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
   {
     return VTKLegacyDatasetType::rectilinearGrid;
   }
+  else if( vtkGridReader->IsFilePolyData())
+  {
+    return VTKLegacyDatasetType::polyData;
+  }
   else
   {
     GEOS_ERROR( "Unsupported legacy VTK dataset format.\nLegacy supported formats are: " <<
@@ -515,6 +530,7 @@ loadMesh( Path const & filePath,
         case VTKLegacyDatasetType::structuredGrid:   return serialRead( vtkSmartPointer< vtkStructuredGridReader >::New() );
         case VTKLegacyDatasetType::unstructuredGrid: return serialRead( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
         case VTKLegacyDatasetType::rectilinearGrid:  return serialRead( vtkSmartPointer< vtkRectilinearGridReader >::New() );
+        case VTKLegacyDatasetType::polyData:         return serialRead( vtkSmartPointer< vtkPolyDataReader >::New() );
       }
       break;
     }
@@ -522,6 +538,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::vtr: return serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
     case VTKMeshExtension::vts: return serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
     case VTKMeshExtension::vti: return serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+    case VTKMeshExtension::vtp: return serialRead( vtkSmartPointer< vtkXMLPolyDataReader >::New() );
     case VTKMeshExtension::pvtu:
     {
       return parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
@@ -532,6 +549,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvts: return parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
     case VTKMeshExtension::pvtr: return parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
     case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
+    case VTKMeshExtension::pvtp: return parallelRead( vtkSmartPointer< vtkXMLPPolyDataReader >::New() );
     default:
     {
       GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use ." << EnumStrings< VTKMeshExtension >::concat( ", ." ) );

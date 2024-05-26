@@ -257,6 +257,17 @@ ControlEquationHelper::
     if constexpr ( IS_THERMAL )
       dControlEqn[COFFSET_WJ::dT] = massDensity*dCurrentTotalVolRate[COFFSET_WJ::dT];
   }
+  // Total mass rate control
+  else if( currentControl == WellControls::Control::MASSRATE )
+  {
+    controlEqn = massDensity*currentTotalVolRate - targetMassRate;
+    dControlEqn_dPres = massDensity*dCurrentTotalVolRate_dPres;
+    dControlEqn_dRate = massDensity*dCurrentTotalVolRate_dRate;
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      dControlEqn_dComp[ic] = massDensity*dCurrentTotalVolRate_dCompDens[ic];
+    }
+  }
   else
   {
     GEOS_ERROR( "This constraint is not supported in CompositionalMultiphaseWell" );
@@ -2042,7 +2053,7 @@ PresTempCompFracInitializationKernel::
     {
       foundNegativeTemp.max( 1 );
     }
-    if( !isZero( sumCompFracForCheck - 1.0 ) )
+    if( !isZero( sumCompFracForCheck - 1.0, constitutive::MultiFluidConstants::minForSpeciesPresence ) )
     {
       foundInconsistentCompFrac.max( 1 );
     }

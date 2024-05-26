@@ -34,46 +34,15 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename SINGLEPHASE_RESERVOIR_SOLVER > class
-  SinglePhaseCatalogNames {};
-
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhaseFlow
-template<> class SinglePhaseCatalogNames< SinglePhaseBase >
-{
-public:
-  // TODO: find a way to use the catalog name here
-  static string name() { return "SinglePhaseReservoir"; }
-};
-// Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-string
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
-catalogName()
-{
-  return SinglePhaseCatalogNames< SINGLEPHASE_RESERVOIR_SOLVER >::name();
-}
-
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 SinglePhaseReservoirAndWells( const string & name,
                               Group * const parent )
   : Base( name, parent )
 {}
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+template< typename RESERVOIR_SOLVER >
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 ~SinglePhaseReservoirAndWells()
 {}
 
@@ -98,12 +67,14 @@ void
 SinglePhaseReservoirAndWells< SinglePhaseBase >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
   {
+    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
   }
   else
   {
+    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
   }
 }
@@ -113,19 +84,21 @@ void
 SinglePhaseReservoirAndWells< SinglePhasePoromechanics< SinglePhaseBase > >::
 setMGRStrategy()
 {
-  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
+  // flow solver here is indeed flow solver, not poromechanics solver
+  if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
   {
-    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    GEOS_LOG_RANK_0( "The poromechanics MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
+    // add Reservoir
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePreSubGroups()
 {
   Base::initializePreSubGroups();
@@ -133,18 +106,18 @@ initializePreSubGroups()
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
   setMGRStrategy();
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
@@ -237,9 +210,9 @@ geos::internal::kernelLaunchSelectorThermalSwitch( isThermal, [&] ( auto ISTHERM
 } );
 }
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
+template< typename RESERVOIR_SOLVER >
 void
-SinglePhaseReservoirAndWells< SINGLEPHASE_RESERVOIR_SOLVER >::
+SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,

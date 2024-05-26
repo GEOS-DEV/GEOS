@@ -564,7 +564,6 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  // set mass fraction flag on fluid models
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -843,8 +842,8 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       if( targetSet.size() == 0 )
@@ -1082,8 +1081,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
@@ -1122,8 +1121,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
@@ -1334,6 +1333,8 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 
 void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )

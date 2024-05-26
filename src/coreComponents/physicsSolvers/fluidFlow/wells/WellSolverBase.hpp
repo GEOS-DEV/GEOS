@@ -303,8 +303,8 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
-static constexpr char const * isThermalString() { return "isThermal"; }
-
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -352,6 +352,7 @@ protected:
   /// flag indicating whether thermal formulation is used
   integer m_isThermal;
 
+  integer m_writeCSV;
   string const m_ratesOutputDir;
 
 /// name of the fluid constitutive model used as a reference for component/phase description

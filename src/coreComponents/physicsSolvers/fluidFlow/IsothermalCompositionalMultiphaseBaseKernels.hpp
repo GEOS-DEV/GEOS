@@ -143,15 +143,15 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 
-/******************************** ComponentFractionKernel ********************************/
+/******************************** GlobalComponentFractionKernel ********************************/
 
 /**
- * @class ComponentFractionKernel
+ * @class GlobalComponentFractionKernel
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the update kernel in charge of computing the phase volume fractions
  */
 template< integer NUM_COMP >
-class ComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
+class GlobalComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
 public:
 
@@ -163,7 +163,7 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  ComponentFractionKernel( ObjectManagerBase & subRegion )
+  GlobalComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
     m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
@@ -223,9 +223,9 @@ protected:
 };
 
 /**
- * @class ComponentFractionKernelFactory
+ * @class GlobalComponentFractionKernelFactory
  */
-class ComponentFractionKernelFactory
+class GlobalComponentFractionKernelFactory
 {
 public:
 
@@ -244,8 +244,8 @@ public:
     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      ComponentFractionKernel< NUM_COMP > kernel( subRegion );
-      ComponentFractionKernel< NUM_COMP >::template launch< POLICY >( subRegion.size(), kernel );
+      GlobalComponentFractionKernel< NUM_COMP > kernel( subRegion );
+      GlobalComponentFractionKernel< NUM_COMP >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
@@ -591,21 +591,17 @@ public:
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
     m_porosity( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
     m_dCompFrac_dCompDens( subRegion.getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
-    m_phaseVolFrac_n( subRegion.getField< fields::flow::phaseVolumeFraction_n >() ),
     m_phaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac( subRegion.getField< fields::flow::dPhaseVolumeFraction >() ),
-    m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
-    m_phaseCompFrac_n( fluid.phaseCompFraction_n() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
-    m_compDens_n( subRegion.getField< fields::flow::globalCompDensity_n >() ),
+    m_compAmount_n( subRegion.getField< fields::flow::compAmount_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_kernelFlags( kernelFlags )
@@ -623,9 +619,6 @@ public:
 
     /// Pore volume at time n+1
     real64 poreVolume = 0.0;
-
-    /// Pore volume at the previous converged time step
-    real64 poreVolume_n = 0.0;
 
     /// Derivative of pore volume with respect to pressure
     real64 dPoreVolume_dPres = 0.0;
@@ -667,7 +660,6 @@ public:
   {
     // initialize the pore volume
     stack.poreVolume = m_volume[ei] * m_porosity[ei][0];
-    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
@@ -693,118 +685,99 @@ public:
   {
     if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
     {
-      computeAccumulationSimple( ei, stack );
-      return;
-    }
-
-    using Deriv = multifluid::DerivativeOffset;
-
-    // construct the slices for variables accessed multiple times
-    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
-
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac_n = m_phaseVolFrac_n[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
-
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens_n = m_phaseDens_n[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
-
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac_n = m_phaseCompFrac_n[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
-    arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
-
-    // temporary work arrays
-    real64 dPhaseAmount_dC[numComp]{};
-    real64 dPhaseCompFrac_dC[numComp]{};
-
-    // sum contributions to component accumulation from each phase
-    for( integer ip = 0; ip < m_numPhases; ++ip )
-    {
-      real64 const phaseAmount = stack.poreVolume * phaseVolFrac[ip] * phaseDens[ip];
-      real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
-
-      real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
-                                                            + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
-
-      // assemble density dependence
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dPhaseAmount_dC, Deriv::dC );
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
-        dPhaseAmount_dC[jc] *= stack.poreVolume;
-      }
-
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
-        real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
+        real64 const compAmount = stack.poreVolume * m_compDens[ei][ic];
+        real64 const compAmount_n = m_compAmount_n[ei][ic];
 
-        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                           + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
+        stack.localResidual[ic] += compAmount - compAmount_n;
 
-        stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
-        stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
+        // Pavel: commented below is some experiment, needs to be re-tested
+        //real64 const compDens = (ic == 0 && m_compDens[ei][ic] < 1e-6) ? 1e-3 : m_compDens[ei][ic];
+        real64 const dCompAmount_dP = stack.dPoreVolume_dPres * m_compDens[ei][ic];
+        stack.localJacobian[ic][0] += dCompAmount_dP;
 
-        // jc - index of component w.r.t. whose compositional var the derivative is being taken
-        // (i.e. col number in local matrix)
+        real64 const dCompAmount_dC = stack.poreVolume;
+        stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
+      }
+    }
+    else
+    {
+      using Deriv = multifluid::DerivativeOffset;
 
-        // assemble phase composition dependence
-        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dPhaseCompFrac_dC, Deriv::dC );
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
-                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+      // construct the slices for variables accessed multiple times
+      arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
 
-          stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
-        }
+      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
+      arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
+
+      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
+      arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
+
+      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
+      arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
+
+      // temporary work arrays
+      real64 dPhaseAmount_dC[numComp]{};
+      real64 dPhaseCompFrac_dC[numComp]{};
+
+      // start with old time step values
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        stack.localResidual[ic] = -m_compAmount_n[ei][ic];
       }
 
-      // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+      // sum contributions to component accumulation from each phase
+      for( integer ip = 0; ip < m_numPhases; ++ip )
+      {
+        real64 const phaseAmount = stack.poreVolume * phaseVolFrac[ip] * phaseDens[ip];
 
-    }
+        real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
+                                       + stack.poreVolume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
+                                                              + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
-    // check zero diagonal (works only in debug)
-    /*
-       for( integer ic = 0; ic < numComp; ++ic )
-       {
-       GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
-                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
-       }
-     */
-  }
+        // assemble density dependence
+        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dPhaseAmount_dC, Deriv::dC );
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
+                                + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + jc];
+          dPhaseAmount_dC[jc] *= stack.poreVolume;
+        }
 
-  template< typename FUNC = NoOpFunc >
-  GEOS_HOST_DEVICE
-  void computeAccumulationSimple( localIndex const ei,
-                                  StackVariables & stack ) const
-  {
-    // ic - index of component whose conservation equation is assembled
-    // (i.e. row number in local matrix)
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      real64 const compAmount = stack.poreVolume * m_compDens[ei][ic];
-      real64 const compAmount_n = stack.poreVolume_n * m_compDens_n[ei][ic];
+        // ic - index of component whose conservation equation is assembled
+        // (i.e. row number in local matrix)
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
 
-      stack.localResidual[ic] += compAmount - compAmount_n;
+          real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
+                                             + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-      // Pavel: commented below is some experiment, needs to be re-tested
-      //real64 const compDens = (ic == 0 && m_compDens[ei][ic] < 1e-6) ? 1e-3 : m_compDens[ei][ic];
-      real64 const dCompAmount_dP = stack.dPoreVolume_dPres * m_compDens[ei][ic];
-      GEOS_ASSERT_MSG( !(ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision),
-                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dP ) );
-      stack.localJacobian[ic][0] += dCompAmount_dP;
+          stack.localResidual[ic] += phaseCompAmount;
+          stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
-      real64 const dCompAmount_dC = stack.poreVolume;
-      GEOS_ASSERT_MSG( !(ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
-                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dC ) );
-      stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
+          // jc - index of component w.r.t. whose compositional var the derivative is being taken
+          // (i.e. col number in local matrix)
+
+          // assemble phase composition dependence
+          applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dPhaseCompFrac_dC, Deriv::dC );
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
+                                               + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+
+            stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
+          }
+        }
+
+        // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
+        // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
+        phaseAmountKernelOp( ip, phaseAmount, dPhaseAmount_dP, dPhaseAmount_dC );
+
+      }
     }
   }
 
@@ -935,7 +908,6 @@ protected:
   arrayView1d< real64 const > const m_volume;
 
   /// Views on the porosity
-  arrayView2d< real64 const > const m_porosity_n;
   arrayView2d< real64 const > const m_porosity;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
@@ -943,23 +915,22 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dCompFrac_dCompDens;
 
   /// Views on the phase volume fractions
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac_n;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac;
 
   /// Views on the phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens;
 
   /// Views on the phase component fraction
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac_n;
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
 
-  // Views on component densities
+  // View on component densities
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
-  arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
+
+  // View on component amount (mass/moles) from previous time step
+  arrayView2d< real64 const, compflow::USD_COMP > m_compAmount_n;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
