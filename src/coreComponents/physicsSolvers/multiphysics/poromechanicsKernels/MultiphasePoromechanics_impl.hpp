@@ -40,7 +40,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
                          EdgeManager const & edgeManager,
                          FaceManager const & faceManager,
                          localIndex const targetRegionIndex,
-                         SUBREGION_TYPE const & elementSubRegion,
+                         SUBREGION_TYPE & elementSubRegion,
                          FE_TYPE const & finiteElementSpace,
                          CONSTITUTIVE_TYPE & inputConstitutiveType,
                          arrayView1d< globalIndex const > const inputDispDofNumber,
@@ -641,6 +641,13 @@ quadraturePointKernel( localIndex const k,
   // Step 2: compute strain increment
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
+
+  for (int is = 0; is < 6; ++is)
+  {
+    m_incStrain[k][is] += stack.strainIncrement[is]*detJxW/m_elementVolume[k];
+  }
+  if (k == 0)
+  {std::cout << m_incStrain[k][2];}
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.

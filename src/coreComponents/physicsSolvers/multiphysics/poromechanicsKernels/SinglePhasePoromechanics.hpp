@@ -74,6 +74,8 @@ public:
   using Base::m_pressure_n;
   using Base::m_meshData;
   using Base::m_dt;
+  using Base::m_incStrain;
+  using Base::m_elementVolume;
 
   /**
    * @brief Constructor
@@ -84,7 +86,7 @@ public:
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             localIndex const targetRegionIndex,
-                            SUBREGION_TYPE const & elementSubRegion,
+                            SUBREGION_TYPE & elementSubRegion,
                             FE_TYPE const & finiteElementSpace,
                             CONSTITUTIVE_TYPE & inputConstitutiveType,
                             arrayView1d< globalIndex const > const inputDispDofNumber,
