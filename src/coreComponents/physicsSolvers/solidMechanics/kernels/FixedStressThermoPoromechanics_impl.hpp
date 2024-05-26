@@ -39,7 +39,7 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
                                 EdgeManager const & edgeManager,
                                 FaceManager const & faceManager,
                                 localIndex const targetRegionIndex,
-                                SUBREGION_TYPE const & elementSubRegion,
+                                SUBREGION_TYPE & elementSubRegion,
                                 FE_TYPE const & finiteElementSpace,
                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
                                 arrayView1d< globalIndex const > const inputDofNumber,
@@ -63,6 +63,8 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
+  m_incStrain( elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ),
+  m_elementVolume( elementSubRegion.template getElementVolume() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_bulkDensity( elementSubRegion.template getField< fields::poromechanics::bulkDensity >() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
@@ -133,6 +135,10 @@ quadraturePointKernel( localIndex const k,
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
+  for (int is = 0; is < 6; ++is)
+  {
+    m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
+  }
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)

@@ -646,8 +646,6 @@ quadraturePointKernel( localIndex const k,
   {
     m_incStrain[k][is] += stack.strainIncrement[is]*detJxW/m_elementVolume[k];
   }
-  if (k == 0)
-  {std::cout << m_incStrain[k][2];}
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
