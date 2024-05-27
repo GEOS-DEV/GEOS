@@ -77,7 +77,6 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 
   appendLogLevelDescription( "logLevel >= 1", "Information on cell block names" );
   appendLogLevelDescription( "logLevel >= 2", "Information on node sets names" );
-  appendLogLevelDescription( "logLevel >= 2", "Information on node sets names" );
   appendLogLevelDescription( "logLevel >= 2", "Print the mesh generation step" );
 }
 

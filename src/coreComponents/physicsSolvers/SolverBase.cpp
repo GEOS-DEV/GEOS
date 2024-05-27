@@ -88,13 +88,12 @@ SolverBase::SolverBase( string const & name,
 
   appendLogLevelDescription( "logLevel >= 1", "Information on line search" );
   appendLogLevelDescription( "logLevel >= 1", "Information on global solution scaling factor" );
-  appendLogLevelDescription( "logLevel >= 1", "Output the timestep" );
+  appendLogLevelDescription( "logLevel >= 1", "Information on the timestep" );
   appendLogLevelDescription( "logLevel >= 2", "Output to screen the assembled linear system and solutions (matrices and vectors)" );
   appendLogLevelDescription( "logLevel >= 3", "Output to file the assembled linear system and solutions (matrices and vectors)" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on time-step based on stateChange" );
   appendLogLevelDescription( "logLevel >= 1 and incorrect solution", "Information about line search failed" );
   appendLogLevelDescription( "logLevel >= 1", "Print residual norm" );
-  appendLogLevelDescription( "logLevel >= 1 and configuration didn't converge", "Information about testing new configuration and print the new step" );
+  appendLogLevelDescription( "logLevel >= 1 and configuration didn't converge", "Information about testing new configuration and print the time step" );
   appendLogLevelDescription( "logLevel >= 1 and non linear system", "Information on each newton Iteration " );
   appendLogLevelDescription( "logLevel >= 1 and linear system", "Information on number of iterations and residual reduction" );
   appendLogLevelDescription( "logLevel >= 1 and residual norm above the max allowed residual norm", "Indicate allowed residual norm" );
