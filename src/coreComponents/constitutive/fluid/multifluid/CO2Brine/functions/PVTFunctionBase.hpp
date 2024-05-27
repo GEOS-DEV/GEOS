@@ -146,7 +146,7 @@ public:
    * @param printInCsv Boolean for printing in CSV
    * @param printInLog Boolean for printing in Log
    */
-  void checkPrint ( TableFunction const * table, bool const printInCsv, bool const printInLog )
+  void checkTableOutput ( TableFunction const * table, bool const printInCsv, bool const printInLog )
   {
     if( printInCsv || ( printInLog && table->numDimensions() >= 3 ) )
     {

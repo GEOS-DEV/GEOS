@@ -53,8 +53,8 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
 
-  checkPrint( m_waterSatPressureTable, printInCsv, printInLog );
-  checkPrint( m_waterSatDensityTable, printInCsv, printInLog );
+  checkTableOutput( m_waterSatPressureTable, printInCsv, printInLog );
+  checkTableOutput( m_waterSatDensityTable, printInCsv, printInLog );
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )

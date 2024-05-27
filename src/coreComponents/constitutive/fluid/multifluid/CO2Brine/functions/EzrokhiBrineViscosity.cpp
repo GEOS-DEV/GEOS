@@ -52,7 +52,7 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
   makeCoefficients( inputPara );
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
 
-  checkPrint( m_waterViscosityTable, printInCsv, printInLog );
+  checkTableOutput( m_waterViscosityTable, printInCsv, printInLog );
 }
 
 void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )

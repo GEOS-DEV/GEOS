@@ -45,7 +45,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
   makeCoefficients( inputPara );
 
-  checkPrint( m_waterViscosityTable, printInCsv, printInLog );
+  checkTableOutput( m_waterViscosityTable, printInCsv, printInLog );
 }
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )

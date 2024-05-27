@@ -45,7 +45,7 @@ WaterDensity::WaterDensity( string const & name,
   GEOS_UNUSED_VAR( inputParams );
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
 
-  checkPrint( m_waterDensityTable, printInCsv, printInLog );
+  checkTableOutput( m_waterDensityTable, printInCsv, printInLog );
 }
 
 void WaterDensity::checkTablesParameters( real64 const pressure,
