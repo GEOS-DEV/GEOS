@@ -4,7 +4,6 @@ set( gtest_geosx_tests
      testFixedSizeDeque.cpp
      testTypeDispatch.cpp
      testLifoStorage.cpp
-     testTable.cpp 
      testUnits.cpp )
 
 if ( ENABLE_CALIPER )

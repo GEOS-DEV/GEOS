@@ -168,7 +168,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[m_p1Index], m_phasePVTParaFiles[m_p1Index] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -179,7 +180,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[m_p2Index], m_phasePVTParaFiles[m_p2Index] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -188,7 +190,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for flash phase (in table from \"{}\").\n",
+                                      m_flashModelParaFile );
     throw SimulationError( ex, errorMsg );
   }
 }
@@ -197,7 +200,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 {
-  GEOS_THROW_IF( this->catalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
+  GEOS_THROW_IF( this->getCatalogName() == CO2BrineEzrokhiThermalFluid::catalogName(),
                  GEOS_FMT( "The `{}` model is disabled for now. Please use the other thermal CO2-brine model instead: `{}`",
                            CO2BrineEzrokhiThermalFluid::catalogName(),
                            CO2BrinePhillipsThermalFluid::catalogName() ),

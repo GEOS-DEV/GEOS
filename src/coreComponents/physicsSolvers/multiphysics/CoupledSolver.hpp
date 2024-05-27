@@ -87,7 +87,7 @@ public:
                                getDataContext(),
                                solverName, solverType ),
                      InputError );
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->catalogName(), solverName ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->getCatalogName(), solverName ) );
     } );
   }
 
@@ -539,10 +539,10 @@ protected:
     GEOS_UNUSED_VAR( domain, solverType );
   }
 
-  bool checkSequentialConvergence( int const & iter,
-                                   real64 const & time_n,
-                                   real64 const & dt,
-                                   DomainPartition & domain )
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain )
   {
     NonlinearSolverParameters const & params = getNonlinearSolverParameters();
     bool isConverged = true;

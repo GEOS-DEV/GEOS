@@ -20,9 +20,9 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "common/TableLayout.hpp"
-#include "common/TableData.hpp"
-#include "common/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 
 
 #include <algorithm>
@@ -181,7 +181,10 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
                  GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
-                           getDataContext(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
+                           getDataContext(),
+                           units::formatValue( coord, getDimUnit( dim ) ),
+                           units::formatValue( lowerBound, getDimUnit( dim ) ),
+                           units::formatValue( upperBound, getDimUnit( dim ) ) ),
                  SimulationError );
 }
 
@@ -239,35 +242,32 @@ void TableFunction::printInCSV( string const & filename ) const
     arraySlice1d< real64 const > const coordsY = m_coordinates[1];
     integer const nX = coordsX.size();
     integer const nY = coordsY.size();
-    std::vector< string > columnNames;
 
     TableData2D tableData2D;
     for( integer i = 0; i < nX; i++ )
     {
       for( integer y = 0; y < nY; y++ )
       {
-        tableData2D.addCell( coordsX[i], y, m_values[ y*nX + i ] );
+        tableData2D.addCell( coordsX[i], coordsY[y], m_values[ y*nX + i ] );
       }
     }
+    string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
+    string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
+    TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
+                                                                                 rowFmt,
+                                                                                 columnFmt );
 
-    columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
-    for( integer idxY = 0; idxY < nY; idxY++ )
-    {
-      string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-      columnNames.push_back( description );
-    }
-    TableLayout const tableLayout( columnNames );
-
+    TableLayout const tableLayout( tableConverted.headerNames );
     TableCSVFormatter csvFormat( tableLayout );
+
     os << csvFormat.headerToString();
-    os << csvFormat.dataToString( tableData2D.buildTableData() );
+    os << csvFormat.dataToString( tableConverted.tableData );
   }
   os.close();
 }
 
 void TableFunction::printInLog( string const & title ) const
 {
-
   integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
 
   GEOS_LOG_RANK_0( GEOS_FMT( "Values in the table are represented by : {}", units::getDescription( m_valueUnit )));
@@ -305,7 +305,7 @@ void TableFunction::printInLog( string const & title ) const
     {
       for( integer j = 0; j < nY; j++ )
       {
-        tableData2D.addCell( coordsX[i], j, m_values[ j*nX + i ] );
+        tableData2D.addCell( coordsX[i], coordsY[j], m_values[ j*nX + i ] );
       }
       nbRows++;
     }
@@ -313,17 +313,16 @@ void TableFunction::printInLog( string const & title ) const
     if( nbRows <= 500 )
     {
       //2. format
-      columnNames.push_back( string( units::getDescription( getDimUnit( 0 ))));
-      for( integer idxY = 0; idxY < nY; idxY++ )
-      {
-        string description = string( units::getDescription( getDimUnit( 1 ))) + "=" + std::to_string( coordsY[idxY] );
-        columnNames.push_back( description );
-      }
-      TableLayout const tableLayout( columnNames, title );
+      string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
+      string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
+      TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
+                                                                                   rowFmt,
+                                                                                   columnFmt );
+      TableLayout const tableLayout( tableConverted.headerNames, filename );
 
       //3. log
       TableTextFormatter const table2DLog( tableLayout );
-      GEOS_LOG_RANK_0( table2DLog.toString( tableData2D.buildTableData() ));
+      GEOS_LOG_RANK_0( table2DLog.toString( tableConverted.tableData ));
     }
     else
     {

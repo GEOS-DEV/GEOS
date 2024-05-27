@@ -17,9 +17,9 @@
 #include "mesh/Perforation.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "common/TableLayout.hpp"
-#include "common/TableData.hpp"
-#include "common/TableFormatter.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/Format.hpp"
 namespace geos
 {
@@ -554,9 +554,9 @@ void WellGeneratorBase::logInternalWell() const
   string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
   TableLayout const tableWellLayout = TableLayout( {
       TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::center},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::center},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::right},
+      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
       TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
     }, wellTitle );
