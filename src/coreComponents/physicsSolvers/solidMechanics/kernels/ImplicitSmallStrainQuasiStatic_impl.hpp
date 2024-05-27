@@ -131,6 +131,8 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   for (int is = 0; is < 6; ++is)
   {
+    if (q == 0)
+    {m_incStrain[k][is] = 0.0;}
     m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
   }
 
