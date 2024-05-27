@@ -356,7 +356,7 @@ static void addUmpireHighWaterMarks()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
-{ 
+{
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();

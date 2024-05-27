@@ -26,19 +26,44 @@
 namespace geos
 {
 
+/**
+ * @class MemoryInfos
+ * @brief Class to fetch and store memory information for different resource types.
+ */
 class MemoryInfos
 {
 public:
+
+  /**
+   * @brief Constructor for MemoryInfos.
+   * @param resourceType The type of memory resource.
+   */
   MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceType );
 
+  /**
+   * @brief Get the total memory available for the resource type.
+   * @return Total memory in bytes.
+   */
   size_t getTotalMemory() const;
+
+  /**
+   * @brief Get the available memory for the resource type.
+   * @return Available memory in bytes.
+   */
   size_t getAvailableMemory() const;
 
+  /**
+   * @brief Check if physical memory is handled.
+   * @return True if physical memory is handled, false otherwise.
+   */
   bool isPhysicalMemoryHandled() const;
 private:
-  size_t m_totalMemory;
-  size_t m_availableMemory;
 
+  ///total memory available.
+  size_t m_totalMemory;
+  ///Available memory.
+  size_t m_availableMemory;
+  ///Flag indicating if physical memory is handled.
   bool m_physicalMemoryHandled;
 };
 
