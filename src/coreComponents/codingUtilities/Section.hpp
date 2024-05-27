@@ -80,14 +80,14 @@ private:
    * @param sectionToBeBuilt The current section being built
    * @param title The section name
    */
-  void addTitleRow( string & sectionToBeBuilt, string const & title );
+  void addTitleRow( string & sectionToBeBuilt, string_view title );
 
   /**
    * @brief Build and add the title to the last part of the section
    * @param sectionToBeBuilt The current section being built
    * @param title The section name
    */
-  void addEndSectionRow( string & sectionToBeBuilt, string const & title );
+  void addEndSectionRow( string & sectionToBeBuilt, string_view title );
 
   /**
    * @brief Build and add the descriptions to the first part of the section

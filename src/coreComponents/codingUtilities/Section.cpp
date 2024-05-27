@@ -74,12 +74,12 @@ void Section::buildLineSection( string & lineSection )
   lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_rowLength );
 }
 
-void Section::addTitleRow( string & sectionToBeBuilt, string const & title )
+void Section::addTitleRow( string & sectionToBeBuilt, string_view title )
 {
   sectionToBeBuilt += GEOS_FMT( "##{:^{}}##\n", title, m_rowLength - 4 );
 }
 
-void Section::addEndSectionRow( string & sectionToBeBuilt, string const & title )
+void Section::addEndSectionRow( string & sectionToBeBuilt, string_view title )
 {
   sectionToBeBuilt += GEOS_FMT( "##{:^{}}##\n", title, m_rowLength - 4 );
 }
@@ -96,13 +96,13 @@ void Section::begin( std::ostream & oss )
 {
   string lineSection;
   string sectionToBeBuilt;
-  string const titleToAdd = "Section : " + m_sectionTitle;
+  string const titleToDisplay = "Section : " + m_sectionTitle;
 
-  computeMaxRowSize( titleToAdd, m_vDescriptions );
+  computeMaxRowSize( titleToDisplay, m_vDescriptions );
   buildLineSection( lineSection );
 
   sectionToBeBuilt += '\n' + lineSection;
-  addTitleRow( sectionToBeBuilt, titleToAdd );
+  addTitleRow( sectionToBeBuilt, titleToDisplay );
   sectionToBeBuilt += lineSection;
   addDescriptionRows( sectionToBeBuilt, m_vDescriptions );
   sectionToBeBuilt += '\n';
@@ -114,12 +114,12 @@ void Section::end( std::ostream & oss )
 {
   string lineSection;
   string sectionToBeBuilt;
-  string titleToAdd = "End : " + m_sectionTitle;
+  string titleToDisplay = "End : " + m_sectionTitle;
 
   buildLineSection( lineSection );
 
   sectionToBeBuilt += '\n';
-  addTitleRow( sectionToBeBuilt, titleToAdd );
+  addTitleRow( sectionToBeBuilt, titleToDisplay );
   sectionToBeBuilt += lineSection;
   sectionToBeBuilt += '\n';
 
