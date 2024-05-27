@@ -318,7 +318,7 @@ void TableFunction::printInLog( string const & title ) const
       TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
                                                                                    rowFmt,
                                                                                    columnFmt );
-      TableLayout const tableLayout( tableConverted.headerNames, filename );
+      TableLayout const tableLayout( tableConverted.headerNames, title );
 
       //3. log
       TableTextFormatter const table2DLog( tableLayout );
