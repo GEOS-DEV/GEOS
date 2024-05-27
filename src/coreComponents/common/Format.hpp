@@ -108,10 +108,10 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
  */
 #if __cplusplus < 202002L
 template< class T >
-static constexpr bool has_formatter = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
 #else
 template< typename T >
-concept has_formatter = requires ( T& v, std::format_context ctx )
+concept has_formatter_v = requires ( T& v, std::format_context ctx )
 {
   std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
 };

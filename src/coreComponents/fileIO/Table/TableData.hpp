@@ -31,7 +31,6 @@ namespace geos
 class TableData
 {
 public:
-
   /**
    * @brief Add a row to the table.
    * The values passed to addRow (can be any type).
@@ -62,18 +61,19 @@ public:
    */
   std::vector< string > const & getErrorMsgs() const;
 
-  /**
-   * @brief Set an error message
-   * @param msg The error msg to vector
-   */
-  void addErrorMsgs( string const & msg );
-
 protected:
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
 
   /// store error if there are any inconsistencies related to the table
   std::vector< string > m_errorsMsg;
+
+private:
+  /**
+   * @brief Set an error message
+   * @param msg The error msg to vector
+   */
+  void addErrorMsg( string const & msg );
 
 };
 
@@ -83,6 +83,11 @@ protected:
 class TableData2D
 {
 public:
+
+  /// Type real64 for a row
+  using RowType = real64;
+  /// Type real64 for a column
+  using ColumnType = real64;
 
   /// Struct containing conversion informations
   struct Conversion1D
@@ -101,7 +106,7 @@ public:
    * @param columnValue The value of the column containing the cell.
    */
   template< typename T >
-  void addCell( real64 rowValue, real64 columnValue, T const & value );
+  void addCell( RowType rowValue, ColumnType columnValue, T const & value );
 
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
@@ -115,9 +120,6 @@ public:
   Conversion1D buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
-  using RowType = real64;
-  using ColumnType = real64;
-
   /// @brief all cell values by their [ row ][ column ]
   std::map< RowType, std::map< ColumnType, string > > m_data;
 
@@ -130,7 +132,7 @@ void TableData::addRow( Args const &... args )
 {
   std::vector< string > m_cellsValue;
   ( [&] {
-    static_assert( has_formatter< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
+    static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
     string const cellValue = GEOS_FMT( "{}", args );
     m_cellsValue.push_back( cellValue );
   } (), ...);
@@ -141,12 +143,10 @@ void TableData::addRow( Args const &... args )
 template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {
-  static_assert( has_formatter< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
+  static_assert( has_formatter_v< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   m_columnValues.insert( columnValue );
   m_data[rowValue][columnValue] = GEOS_FMT( "{}", value );
 }
 
-
 }
-
 #endif
