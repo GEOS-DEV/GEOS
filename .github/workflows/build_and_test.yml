@@ -231,9 +231,7 @@ jobs:
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
-          mkdir -p ${CURRENT_BASELINE_DIR}
 
-          wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
           
           echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
                     
@@ -281,7 +279,7 @@ jobs:
               # 1. We copy the baselines to a local directory to store them 
                 
               # 1.a Create the new target directory to store the new baselines
-              TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/baseline_integratedTests-pr-${{ github.event.number }}"
+              TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr-${{ github.event.number }}"
               echo "Create folder ${TARGET_DIR}"
               mkdir -p "${TARGET_DIR}"
           
