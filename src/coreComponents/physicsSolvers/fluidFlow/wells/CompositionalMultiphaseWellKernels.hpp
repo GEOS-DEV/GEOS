@@ -1977,6 +1977,13 @@ public:
 
     real64 dComp[NC][NC];
     real64 dCompFlux[NC][numDof]{};
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+    for( integer jc = 0; jc < NC; ++jc )
+    {
+      dComp[ic][jc]=0.0;
+    }
+    }
     // Step 1) decide the upwind well element
 
     /*  currentConnRate < 0 flow from iwelem to iwelemNext

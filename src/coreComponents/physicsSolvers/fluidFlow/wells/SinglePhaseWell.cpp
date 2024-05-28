@@ -627,7 +627,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-if( 1 )
+if( 0 )
   {
     string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

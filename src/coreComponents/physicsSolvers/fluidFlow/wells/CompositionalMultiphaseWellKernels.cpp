@@ -225,7 +225,7 @@ ControlEquationHelper::
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
-    if( targetTotalRate == 0.0 )
+    if( targetTotalRate <= 0.0 )
       std::cout << "Shutin " << std::endl;
     std::cout << "Current control - TOTALVOLRATE " <<  targetTotalRate << " "  <<  currentTotalVolRate << std::endl;
     controlEqn = currentTotalVolRate - targetTotalRate;
@@ -1127,7 +1127,7 @@ PerforationKernel::
       }
       for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
-        dRelPerm[CP_Deriv::dC+jc]=0;
+        dRelPerm[jc]=0;
       }
       for( integer jp = 0; jp < NP; ++jp )
       {
