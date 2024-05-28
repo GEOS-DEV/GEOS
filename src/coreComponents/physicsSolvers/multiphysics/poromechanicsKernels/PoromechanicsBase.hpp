@@ -112,7 +112,7 @@ public:
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
     m_incStrain( elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ),
-    m_elementVolume( elementSubRegion.template getElementVolume() ),
+    m_elementVolume( elementSubRegion.getElementVolume() ),
     m_gravityVector{ gravityVector[0], gravityVector[1], gravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( gravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),

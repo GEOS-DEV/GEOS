@@ -61,7 +61,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
   m_incStrain(elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ), 
-  m_elementVolume( elementSubRegion.template getElementVolume() ),
+  m_elementVolume( elementSubRegion.getElementVolume() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
 {}
