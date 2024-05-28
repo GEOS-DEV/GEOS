@@ -103,7 +103,7 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   real64 const inputDt,
-                                  real64 const (&inputGravityVector)[3]);
+                                  real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
   /**

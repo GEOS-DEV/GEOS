@@ -288,7 +288,7 @@ protected:
   /// The rank-global incremental strain array
   arrayView2d< real64, cells::STRAIN_USD > m_incStrain;
 
-  arrayView1d<real64 const> const m_elementVolume;
+  arrayView1d< real64 const > const m_elementVolume;
 
   /// The gravity vector.
   real64 const m_gravityVector[3]{};

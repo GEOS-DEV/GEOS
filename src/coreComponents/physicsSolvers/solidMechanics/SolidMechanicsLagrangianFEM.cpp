@@ -942,9 +942,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
       solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
-      for (localIndex k = 0; k < subRegion.size(); ++k)
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        for (int is = 0; is < 6; ++is)
+        for( int is = 0; is < 6; ++is )
         {
           strain[k][is] += incStrain[k][is];
         }

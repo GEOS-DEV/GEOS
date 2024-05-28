@@ -48,7 +48,7 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
                             real64 const inputNewmarkGamma,
                             real64 const inputNewmarkBeta,
                             real64 const inputMassDamping,
-                            real64 const inputStiffnessDamping):
+                            real64 const inputStiffnessDamping ):
   // real64 const inputDt ):
   Base( nodeManager,
         edgeManager,
@@ -62,7 +62,7 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
         inputMatrix,
         inputRhs,
         inputDt,
-        inputGravityVector),
+        inputGravityVector ),
   m_vtilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhattilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_newmarkGamma( inputNewmarkGamma ),

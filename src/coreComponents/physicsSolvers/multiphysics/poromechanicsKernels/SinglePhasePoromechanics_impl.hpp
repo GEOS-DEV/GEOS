@@ -373,10 +373,12 @@ quadraturePointKernel( localIndex const k,
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
-  for (int is = 0; is < 6; ++is)
+  for( int is = 0; is < 6; ++is )
   {
-    if (q == 0)
-    {m_incStrain[k][is] = 0.0;}
+    if( q == 0 )
+    {
+      m_incStrain[k][is] = 0.0;
+    }
     m_incStrain[k][is] += stack.strainIncrement[is]*detJxW/m_elementVolume[k];
   }
 

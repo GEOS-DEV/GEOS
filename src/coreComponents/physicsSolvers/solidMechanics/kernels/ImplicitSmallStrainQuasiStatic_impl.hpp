@@ -44,7 +44,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
-                                real64 const (&inputGravityVector)[3]):
+                                real64 const (&inputGravityVector)[3] ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -60,7 +60,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
-  m_incStrain(elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ), 
+  m_incStrain( elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ),
   m_elementVolume( elementSubRegion.getElementVolume() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
@@ -129,10 +129,12 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-  for (int is = 0; is < 6; ++is)
+  for( int is = 0; is < 6; ++is )
   {
-    if (q == 0)
-    {m_incStrain[k][is] = 0.0;}
+    if( q == 0 )
+    {
+      m_incStrain[k][is] = 0.0;
+    }
     m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
   }
 
