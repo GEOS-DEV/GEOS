@@ -280,7 +280,7 @@ jobs:
                 # 1. We copy the baselines to a local directory to store them 
                 
                 # 1.a Create the new target directory to store the new baselines
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr-${{ github.event.number }}"
+                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr${{ github.event.number }}"
                 echo "Create folder ${TARGET_DIR}"
                 mkdir -p "${TARGET_DIR}"
           
