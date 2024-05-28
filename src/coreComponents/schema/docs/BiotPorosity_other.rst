@@ -13,6 +13,7 @@ porosity                          real64_array2d Rock porosity
 porosity_n                        real64_array2d Rock porosity at the previous converged time step                                                
 referencePorosity                 real64_array   Reference porosity                                                                               
 solidBulkModulus                  real64_array   Solid bulk modulus                                                                               
+solidShearModulus                 real64_array   Solid shear modulus                                                                              
 thermalExpansionCoefficient       real64_array   Thermal expansion coefficient                                                                    
 ================================= ============== ================================================================================================ 
 

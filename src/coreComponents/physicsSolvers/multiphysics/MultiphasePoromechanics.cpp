@@ -22,9 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -38,35 +36,6 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 using namespace stabilization;
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename FLOW_SOLVER > class
-  MultiphaseCatalogNames {};
-// Class specialization for a FLOW_SOLVER set to CompositionalMultiphaseBase
-template<> class MultiphaseCatalogNames< CompositionalMultiphaseBase >
-{
-public:
-  static string name() { return "MultiphasePoromechanics"; }
-};
-// Class specialization for a FLOW_SOLVER set to CompositionalMultiphaseReservoirAndWells
-template<> class MultiphaseCatalogNames< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase >::catalogName() + "Poromechanics"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename FLOW_SOLVER >
-string
-MultiphasePoromechanics< FLOW_SOLVER >::
-catalogName()
-{
-  return MultiphaseCatalogNames< FLOW_SOLVER >::name();
-}
 
 template< typename FLOW_SOLVER >
 MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & name,
@@ -102,7 +71,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
 {
   Base::postProcessInput();
 
-  GEOS_ERROR_IF( this->flowSolver()->catalogName() == "CompositionalMultiphaseReservoir" &&
+  GEOS_ERROR_IF( this->flowSolver()->getCatalogName() == "CompositionalMultiphaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
                  GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
                            this->getDataContext(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
@@ -118,6 +87,12 @@ void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBod
   if( m_stabilizationType == StabilizationType::Global ||
       m_stabilizationType == StabilizationType::Local )
   {
+
+    if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      this->flowSolver()->enableJumpStabilization();
+    }
+
     this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                      MeshLevel & mesh,
                                                                      arrayView1d< string const > const & regionNames )
@@ -145,7 +120,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition cons
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time,
                                                              real64 const dt,
                                                              DomainPartition & domain,
                                                              DofManager const & dofManager,
@@ -153,6 +128,46 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
+
+  assembleElementBasedTerms( time,
+                             dt,
+                             domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
+
+  // step 3: compute the fluxes (face-based contributions)
+
+  if( m_stabilizationType == StabilizationType::Global ||
+      m_stabilizationType == StabilizationType::Local )
+  {
+    updateStabilizationParameters( domain );
+    this->flowSolver()->assembleStabilizedFluxTerms( dt,
+                                                     domain,
+                                                     dofManager,
+                                                     localMatrix,
+                                                     localRhs );
+  }
+  else
+  {
+    this->flowSolver()->assembleFluxTerms( dt,
+                                           domain,
+                                           dofManager,
+                                           localMatrix,
+                                           localRhs );
+  }
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 const time_n,
+                                                                        real64 const dt,
+                                                                        DomainPartition & domain,
+                                                                        DofManager const & dofManager,
+                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                        arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
@@ -184,6 +199,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
                                                                                                     this->flowSolver()->numFluidComponents(),
                                                                                                     this->flowSolver()->numFluidPhases(),
                                                                                                     this->flowSolver()->useTotalMassEquation(),
+                                                                                                    this->m_performStressInitialization,
                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
@@ -202,6 +218,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
                                                                                       this->flowSolver()->numFluidPhases(),
                                                                                       this->flowSolver()->useSimpleAccumulation(),
                                                                                       this->flowSolver()->useTotalMassEquation(),
+                                                                                      this->m_performStressInitialization,
                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
@@ -245,32 +262,13 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 
 
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-
-  // step 3: compute the fluxes (face-based contributions)
-
-  if( m_stabilizationType == StabilizationType::Global ||
-      m_stabilizationType == StabilizationType::Local )
-  {
-    updateStabilizationParameters( domain );
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
 }
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   real64 maxDeltaPhaseVolFrac = 0.0;
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
@@ -289,6 +287,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
       }
     } );
   } );
+
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}",
                                       this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
@@ -321,12 +321,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
                    InputError );
   }
 
-  integer & isFlowThermal = this->flowSolver()->isThermal();
-  GEOS_WARNING_IF( this->m_isThermal && !isFlowThermal,
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                             getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), this->flowSolver()->getName() ) );
-  isFlowThermal = this->m_isThermal;
-
   if( this->m_isThermal )
   {
     this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
@@ -342,6 +336,20 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                  this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                  ": Local stabilization has been disabled temporarily",
                  InputError );
+}
+
+template< typename FLOW_SOLVER >
+void MultiphasePoromechanics< FLOW_SOLVER >::implicitStepSetup( real64 const & time_n,
+                                                                real64 const & dt,
+                                                                DomainPartition & domain )
+{
+  Base::implicitStepSetup( time_n, dt, domain );
+  if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential &&
+      (this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local))
+  {
+    this->updateStabilizationParameters( domain );
+  }
+
 }
 
 template< typename FLOW_SOLVER >

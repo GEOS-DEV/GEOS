@@ -227,18 +227,32 @@ Element: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
 
 
-.. _XML_CompositonalTwoPhaseFluidPengRobinson:
+.. _XML_CompositionalTwoPhaseFluidPengRobinson:
 
-Element: CompositonalTwoPhaseFluidPengRobinson
-==============================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson.rst
+Element: CompositionalTwoPhaseFluidPengRobinson
+===============================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson.rst
 
 
-.. _XML_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+.. _XML_CompositionalTwoPhaseFluidPengRobinsonLBC:
 
-Element: CompositonalTwoPhaseFluidSoaveRedlichKwong
-===================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong.rst
+Element: CompositionalTwoPhaseFluidPengRobinsonLBC
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinsonLBC.rst
+
+
+.. _XML_CompositionalTwoPhaseFluidSoaveRedlichKwong:
+
+Element: CompositionalTwoPhaseFluidSoaveRedlichKwong
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong.rst
+
+
+.. _XML_CompositionalTwoPhaseFluidSoaveRedlichKwongLBC:
+
+Element: CompositionalTwoPhaseFluidSoaveRedlichKwongLBC
+=======================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwongLBC.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -274,6 +288,13 @@ Element: CompressibleSolidExponentialDecayPermeability
 Element: CompressibleSolidParallelPlatesPermeability
 ====================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
+
+
+.. _XML_CompressibleSolidPressurePermeability:
+
+Element: CompressibleSolidPressurePermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePermeability.rst
 
 
 .. _XML_CompressibleSolidSlipDependentPermeability:
@@ -598,13 +619,6 @@ Element: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
-.. _XML_LagrangianContact:
-
-Element: LagrangianContact
-==========================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact.rst
-
-
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -801,13 +815,6 @@ Element: PeriodicEvent
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent.rst
 
 
-.. _XML_PermeabilityBase:
-
-Element: PermeabilityBase
-=========================
-.. include:: ../../coreComponents/schema/docs/PermeabilityBase.rst
-
-
 .. _XML_PhaseFieldDamageFEM:
 
 Element: PhaseFieldDamageFEM
@@ -911,6 +918,13 @@ Element: PorousViscoExtendedDruckerPrager
 Element: PorousViscoModifiedCamClay
 ===================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay.rst
+
+
+.. _XML_PressurePermeability:
+
+Element: PressurePermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/PressurePermeability.rst
 
 
 .. _XML_PressurePorosity:
@@ -1023,6 +1037,13 @@ Element: Restart
 Element: Run
 ============
 .. include:: ../../coreComponents/schema/docs/Run.rst
+
+
+.. _XML_SeismicityRate:
+
+Element: SeismicityRate
+=======================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate.rst
 
 
 .. _XML_Silo:
@@ -1149,6 +1170,13 @@ Element: SolidInternalEnergy
 Element: SolidMechanicsEmbeddedFractures
 ========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures.rst
+
+
+.. _XML_SolidMechanicsLagrangeContact:
+
+Element: SolidMechanicsLagrangeContact
+======================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -1631,18 +1659,32 @@ Datastructure: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
 
 
-.. _DATASTRUCTURE_CompositonalTwoPhaseFluidPengRobinson:
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidPengRobinson:
 
-Datastructure: CompositonalTwoPhaseFluidPengRobinson
-====================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson_other.rst
+Datastructure: CompositionalTwoPhaseFluidPengRobinson
+=====================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson_other.rst
 
 
-.. _DATASTRUCTURE_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidPengRobinsonLBC:
 
-Datastructure: CompositonalTwoPhaseFluidSoaveRedlichKwong
-=========================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong_other.rst
+Datastructure: CompositionalTwoPhaseFluidPengRobinsonLBC
+========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinsonLBC_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidSoaveRedlichKwong:
+
+Datastructure: CompositionalTwoPhaseFluidSoaveRedlichKwong
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidSoaveRedlichKwongLBC:
+
+Datastructure: CompositionalTwoPhaseFluidSoaveRedlichKwongLBC
+=============================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwongLBC_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
@@ -1678,6 +1720,13 @@ Datastructure: CompressibleSolidExponentialDecayPermeability
 Datastructure: CompressibleSolidParallelPlatesPermeability
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidPressurePermeability:
+
+Datastructure: CompressibleSolidPressurePermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePermeability_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
@@ -2009,13 +2058,6 @@ Datastructure: JFunctionCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
-.. _DATASTRUCTURE_LagrangianContact:
-
-Datastructure: LagrangianContact
-================================
-.. include:: ../../coreComponents/schema/docs/LagrangianContact_other.rst
-
-
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -2226,13 +2268,6 @@ Datastructure: PeriodicEvent
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent_other.rst
 
 
-.. _DATASTRUCTURE_PermeabilityBase:
-
-Datastructure: PermeabilityBase
-===============================
-.. include:: ../../coreComponents/schema/docs/PermeabilityBase_other.rst
-
-
 .. _DATASTRUCTURE_PhaseFieldDamageFEM:
 
 Datastructure: PhaseFieldDamageFEM
@@ -2336,6 +2371,13 @@ Datastructure: PorousViscoExtendedDruckerPrager
 Datastructure: PorousViscoModifiedCamClay
 =========================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_PressurePermeability:
+
+Datastructure: PressurePermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/PressurePermeability_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
@@ -2448,6 +2490,13 @@ Datastructure: Restart
 Datastructure: Run
 ==================
 .. include:: ../../coreComponents/schema/docs/Run_other.rst
+
+
+.. _DATASTRUCTURE_SeismicityRate:
+
+Datastructure: SeismicityRate
+=============================
+.. include:: ../../coreComponents/schema/docs/SeismicityRate_other.rst
 
 
 .. _DATASTRUCTURE_Silo:
@@ -2574,6 +2623,13 @@ Datastructure: SolidInternalEnergy
 Datastructure: SolidMechanicsEmbeddedFractures
 ==============================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsLagrangeContact:
+
+Datastructure: SolidMechanicsLagrangeContact
+============================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsLagrangeContact_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:

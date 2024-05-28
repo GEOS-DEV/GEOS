@@ -18,7 +18,6 @@
 
 #include "InternalWellboreGenerator.hpp"
 
-#include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos

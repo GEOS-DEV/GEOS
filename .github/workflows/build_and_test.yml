@@ -9,6 +9,9 @@ on:
         required: false
         type: string
         default: build
+      DOCKER_CERTS_UPDATE_COMMAND:
+        required: false
+        type: string
       CMAKE_BUILD_TYPE:
         required: true
         type: string
@@ -16,11 +19,18 @@ on:
         required: false
         type: boolean
         default: false
+      DOCKER_CERTS_DIR:
+        required: false
+        type: string
+        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
       DOCKER_REPOSITORY:
         required: true
+        type: string
+      DOCKER_RUN_ARGS:
+        required: false
         type: string
       ENABLE_HYPRE:
         required: false
@@ -37,13 +47,23 @@ on:
       HOST_CONFIG:
         required: false
         type: string
+      NPROC:
+        required: false
+        type: string
+        default: ''
       RUNS_ON:
         required: true
+        type: string
+      UPLOAD_BASELINES:
+        required: false
         type: string
       USE_SCCACHE:
         required: false
         type: boolean
         default: true
+      REQUIRED_LABEL:
+        required: false
+        type: string
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -51,8 +71,28 @@ jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
     steps:
+    - name: does_pr_have_necessary_labels
+      if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
+      run: | 
+        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
+        echo " the labels are ${LABELS}"
+        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
+        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
+          exit 1
+        fi
+      
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
+
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.4
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -60,14 +100,14 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v1'
+      uses: 'google-github-actions/auth@v2.1.2'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
 
     - name: 'Set up Cloud SDK'
       if: inputs.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v1'
+      uses: 'google-github-actions/setup-gcloud@v2.1.0'
       with:
         version: '>= 363.0.0'
 
@@ -80,6 +120,23 @@ jobs:
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
+
+        if [[ -n "${{ inputs.DOCKER_CERTS_DIR }}" ]]; then
+          DOCKER_CERTS_DIR=${{ inputs.DOCKER_CERTS_DIR }}
+          docker_args+=(-e DOCKER_CERTS_DIR=${DOCKER_CERTS_DIR})
+        fi
+
+        if [[ -n "${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}" ]]; then
+          DOCKER_CERTS_UPDATE_COMMAND=${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}
+          docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
+        fi
+
+        if [[ -n "${{ inputs.NPROC }}" ]]; then
+          NPROC=${{ inputs.NPROC }}
+          script_args+=(--nproc ${NPROC})
+        fi
+
+        docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
@@ -96,8 +153,10 @@ jobs:
           
           script_args+=(--data-basename ${DATA_BASENAME})
 
-          DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
-          sudo mkdir -p ${DATA_EXCHANGE_DIR}
+          DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
+          if [ ! -d "${DATA_EXCHANGE_DIR}" ]; then
+            mkdir -p ${DATA_EXCHANGE_DIR}
+          fi
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
           docker_args+=(--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT})
           script_args+=(--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT})
@@ -126,14 +185,33 @@ jobs:
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
 
-        docker_args+=(--cap-add=SYS_PTRACE)
+        docker_args+=(--cap-add=SYS_PTRACE --rm)
 
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
+
+        DOCKER_REPOSITORY=${{ inputs.DOCKER_REPOSITORY }}
+        SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        echo "CONTAINER_NAME: ${CONTAINER_NAME}"
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        docker_args+=(--name ${CONTAINER_NAME})
+
+
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
         fi
+
+
+        echo running "docker run \
+          ${docker_args[@]} \
+          -h=`hostname` \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+          ${script_args[@]}"
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
@@ -142,9 +220,10 @@ jobs:
         set +e
         docker run \
           ${docker_args[@]} \
+          -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
-            ${script_args[@]}
+          ${script_args[@]}
         EXIT_STATUS=$?
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
@@ -152,17 +231,49 @@ jobs:
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-            echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+            if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
+              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+            fi
+
+            if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
+              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
+            fi
+
+            # if $UPLOAD_BASELINES; then
+              if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
+                CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+                echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
+                echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
+              else
+                echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
+              fi
+            # fi
           fi
         fi
+        
+        # manually remove the workspace to avoid issues with the next job when using self-hosted runners
+        if [ -d "${GITHUB_WORKSPACE}/integratedTests" ]; then
+          rm -rf ${GITHUB_WORKSPACE}/integratedTests
+        fi
+
         exit ${EXIT_STATUS}
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4.3.1
       with:
         files: geos_coverage.info.cleaned
         fail_ci_if_error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: 'Cleanup build folder'
+      run: |
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
