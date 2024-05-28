@@ -274,7 +274,7 @@ jobs:
               echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
             fi
 
-            if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
+            if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
 
               if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
                 # 1. We copy the baselines to a local directory to store them 
