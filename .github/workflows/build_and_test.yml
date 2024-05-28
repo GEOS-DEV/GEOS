@@ -232,7 +232,6 @@ jobs:
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
 
-          
           echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
                     
           # We defined a mount point and mount it read-only inside the container.
@@ -276,17 +275,20 @@ jobs:
             fi
 
             if [ -f ${DATA_EXCHANGE_DIR}/baselines/baseline_${DATA_BASENAME} ];then
-              # 1. We copy the baselines to a local directory to store them 
+
+              if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
+                # 1. We copy the baselines to a local directory to store them 
                 
-              # 1.a Create the new target directory to store the new baselines
-              TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr-${{ github.event.number }}"
-              echo "Create folder ${TARGET_DIR}"
-              mkdir -p "${TARGET_DIR}"
+                # 1.a Create the new target directory to store the new baselines
+                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr-${{ github.event.number }}"
+                echo "Create folder ${TARGET_DIR}"
+                mkdir -p "${TARGET_DIR}"
           
-              # 1.b We copy the new baselines to the new target directory
-              SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
-              echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
-              cp "${SOURCE_FILE}" "${TARGET_DIR}"
+                # 1.b We copy the new baselines to the new target directory
+                SOURCE_FILE="${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+                echo "Copy ${SOURCE_FILE} to ${TARGET_DIR}"
+                cp "${SOURCE_FILE}" "${TARGET_DIR}"
+              fi
                 
               # 2. We push the baselines to the cloud
               CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
