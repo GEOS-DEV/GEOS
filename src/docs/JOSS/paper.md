@@ -13,7 +13,7 @@ authors:
   - name: Ryan M. Aronson
     affiliation: 3
   - name: Julien R. Besset
-    affiliation: 8
+    affiliation: 7
   - name: Andrea Borio
     affiliation: 5
   - name: Quan M. Bui
@@ -23,7 +23,7 @@ authors:
   - name: Nicola Castelletto
     affiliation: 1
   - name: Aurélien Citrain
-    affiliation: 8
+    affiliation: 7
   - name: Benjamin C. Corbett
     affiliation: 1
   - name: James Corbett
@@ -39,7 +39,7 @@ authors:
   - name: Fan Fei
     affiliation: 1
   - name: Stefano Frambati
-    affiliation: 8
+    affiliation: 7
   - name: Jacques Franc
     affiliation: 3
   - name: Andrea Franceschini
@@ -62,8 +62,6 @@ authors:
     affiliation: 1
   - name: Jian Huang
     affiliation: 2
-  - name: Jiamin Jiang
-    affiliation: 4
   - name: Tao Jin
     affiliation: 1
   - name: Isaac Ju
@@ -73,7 +71,7 @@ authors:
   - name: Mohammad Karimi-Fard
     affiliation: 3
   - name: Taeho Kim
-    affiliation: 1
+    affiliation: 2
   - name: Sergey Klevtsov
     affiliation: 3
   - name: Alexandre Lapene
@@ -95,7 +93,7 @@ authors:
   - name: Chris S. Sherman
     affiliation: 1
   - name: Melvin Rey
-    affiliation: 7
+    affiliation: 8
   - name: Hamdi A. Tchelepi
     affiliation: 3
   - name: William R. Tobin
@@ -103,8 +101,7 @@ authors:
   - name: Pavel Tomin
     affiliation: 4
   - name: Lionel Untereiner
-    affiliation: 7
-    orcid: 0000-0002-8025-2616
+    affiliation: 8
   - name: Sohail Waziri
     affiliation: 3,4
   - name: Xianhuan Wen
@@ -127,11 +124,11 @@ affiliations:
   - name: University of California San Diego
     index: 6
   - name: Inria, Universite de Pau et des Pays de l’Adour
-    index: 8
-  - name: Independent
     index: 7
+  - name: Independent
+    index: 8
 
-date: 15 December 2023
+date: 28 May 2024
 bibliography: paper.bib
 
 ---
@@ -192,7 +189,7 @@ The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b sho
 ![Weak scaling results on ORNL/Frontier: execution time per timestep vs number of cluster ranks for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](GEOS_Frontier_scaling.pdf){ width=100% }
 
 # Acknowledgements
-This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344
+This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344. LLNL release number LLNL-JRNL-864747.
 
 This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations - the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering and early testbed platforms, to support the nation's exascale computing imperative.
 
