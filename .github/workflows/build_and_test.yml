@@ -233,8 +233,6 @@ jobs:
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
           echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
 
-          rm -r /data/GEOS/baselines/NEW_PR_BASELINE_FOLDER_NAME
-
           if [ -d ${CURRENT_BASELINE_DIR} ];then
             echo "Current baseline dir found."
             ls -l ${CURRENT_BASELINE_DIR}
