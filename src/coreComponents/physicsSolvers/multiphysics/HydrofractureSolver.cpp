@@ -203,7 +203,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 
-    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    if( time_n >= 0 && m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
       locallyFractured = 1;
     }
