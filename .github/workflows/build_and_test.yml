@@ -207,7 +207,6 @@ jobs:
 
         if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
           # Extract the 'baseline' value 
-          ls -lR ${{ inputs.LOCAL_BASELINE_DIR }}
            
           # Define the path to the YAML file
           YAML_FILE_PATH="${GITHUB_WORKSPACE}/.integrated_tests.yaml"
@@ -231,12 +230,18 @@ jobs:
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
+          echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
 
-          echo "Current baseline path: ${CURRENT_BASELINE_DIR}"
+          if [ -d ${CURRENT_BASELINE_DIR} ];then
+            echo "Current baseline dir found."
+            ls -l ${CURRENT_BASELINE_DIR}
                     
-          # We defined a mount point and mount it read-only inside the container.
-          CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
-          docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
+            # We defined a mount point and mount it read-only inside the container.
+            CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
+            docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
+          else
+            echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found"  
+          fi
         fi
 
         echo running "docker run \
