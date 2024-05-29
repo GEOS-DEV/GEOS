@@ -207,11 +207,11 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class AcousticTTIFletcherWaveEquationSEMTest: public ::testing::Test
+class AcousticTTIFletcherWaveEquationSEMTest : public ::testing::Test
 {
 public:
 
-  AcousticTTIFletcherWaveEquationSEMTest() :
+  AcousticTTIFletcherWaveEquationSEMTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
@@ -250,7 +250,7 @@ TEST_F( AcousticTTIFletcherWaveEquationSEMTest, SeismoTrace )
   propagator->cleanup( 1.0, 10, 0, 0, domain );
 
   // retrieve seismo
-  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 >>( AcousticTTIFletcherWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
+  arrayView2d< real32 > const pReceivers = propagator->getReference< array2d< real32 > >( AcousticTTIFletcherWaveEquationSEM::viewKeyStruct::pressureNp1AtReceiversString() ).toView();
 
   // move it to CPU, if needed
   pReceivers.move( hostMemorySpace, false );

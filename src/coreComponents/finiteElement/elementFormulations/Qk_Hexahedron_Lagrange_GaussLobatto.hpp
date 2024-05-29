@@ -649,7 +649,7 @@ public:
 
 /**
  * @brief computes the matrix B for a rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_xy R J^{-1}/det(J),
- *where J is the Jacobian matrix, A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1 and R a rotation matrix.
+ * where J is the Jacobian matrix, A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1 and R a rotation matrix.
  * @param qa The 1d quadrature point index in xi0 direction (0,1)
  * @param qb The 1d quadrature point index in xi1 direction (0,1)
  * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -671,8 +671,8 @@ public:
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
-   *superposition matrix of first derivatives in x and y of the shape functions. Warning, the matrix B is obtained by
-   *computeRotatedBxyMatrix instead of usual one.
+   * superposition matrix of first derivatives in x and y of the shape functions. Warning, the matrix B is obtained by
+   * computeRotatedBxyMatrix instead of usual one.
    * @param q The quadrature point index
    * @param theta Tilt angle
    * @param phi Azimuth of the tilt
@@ -689,7 +689,7 @@ public:
 
   /**
    * @brief computes the matrix B in the case of rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_z R
-   *J^{-1}/det(J), where J is the Jacobian matrix, A_z is a zero matrix except on A_z(3,3) = 1 and R is the rotation matrix.
+   * J^{-1}/det(J), where J is the Jacobian matrix, A_z is a zero matrix except on A_z(3,3) = 1 and R is the rotation matrix.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -711,8 +711,8 @@ public:
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
-   *superposition matrix of first derivatives in z only of the shape functions. Warning, the matrix B is obtained by computeRotatedBzMatrix
-   *instead of usual one.
+   * superposition matrix of first derivatives in z only of the shape functions. Warning, the matrix B is obtained by computeRotatedBzMatrix
+   * instead of usual one.
    * @param q The quadrature point index
    * @param theta Tilt angle
    * @param phi Azimuth of the tilt
