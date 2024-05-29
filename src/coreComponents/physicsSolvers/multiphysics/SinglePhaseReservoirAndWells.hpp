@@ -26,13 +26,14 @@
 namespace geos
 {
 
-template< typename SINGLEPHASE_RESERVOIR_SOLVER >
-class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
+/// @tparam RESERVOIR_SOLVER single-phase flow or single-phase poromechanics solver
+template< typename RESERVOIR_SOLVER >
+class SinglePhaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                                                           SinglePhaseWell >
 {
 public:
 
-  using Base = CoupledReservoirAndWellsBase< SINGLEPHASE_RESERVOIR_SOLVER,
+  using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
                                              SinglePhaseWell >;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
@@ -54,7 +55,18 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr (std::is_same_v< RESERVOIR_SOLVER, SinglePhaseBase > ) // special case
+    {
+      return "SinglePhaseReservoir";
+    }
+    else // default
+    {
+      return RESERVOIR_SOLVER::catalogName() + "Reservoir";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -79,8 +91,8 @@ public:
                      arrayView1d< real64 > const & localRhs ) const
   { flowSolver()->assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
 
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
   void updateFluidState( ElementSubRegionBase & subRegion ) const
   { flowSolver()->updateFluidState( subRegion ); }

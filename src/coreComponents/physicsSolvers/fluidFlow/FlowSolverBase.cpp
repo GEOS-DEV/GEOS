@@ -89,7 +89,9 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
-  m_isFixedStressPoromechanicsUpdate( false )
+  m_keepFlowVariablesConstantDuringInitStep( 0 ),
+  m_isFixedStressPoromechanicsUpdate( false ),
+  m_isJumpStabilized( false )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -287,6 +289,11 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
 {
   m_isFixedStressPoromechanicsUpdate = true;
+}
+
+void FlowSolverBase::enableJumpStabilization()
+{
+  m_isJumpStabilized = true;
 }
 
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
@@ -730,7 +737,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     if( bc.getLogLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
-                                 AquiferBoundaryCondition::catalogName(), bc.getName(),
+                                 bc.getCatalogName(), bc.getName(),
                                  time + dt, dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
