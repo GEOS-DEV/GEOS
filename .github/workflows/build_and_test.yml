@@ -242,7 +242,9 @@ jobs:
             docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
           else
             wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
-            echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found"  
+            echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found"
+            CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
+            docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)  
           fi
         fi
 
@@ -288,7 +290,7 @@ jobs:
                 
                 # 1.a Create the new target directory to store the new baselines
                 THIS_PR_NUMBER=pr${{ github.event.number }}
-                NEW_PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
+                NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
                 TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/NEW_PR_BASELINE_FOLDER_NAME"
                 echo "Create folder ${TARGET_DIR}"
                 mkdir -p "${TARGET_DIR}"
