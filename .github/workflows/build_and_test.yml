@@ -228,9 +228,9 @@ jobs:
           # Extract the folder name
           PR_NUMBER=$(echo "$BASELINE_TAG" | grep -o 'pr[0-9]*')
           PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
-          echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
+          echo "Baseline folder name: ${PR_BASELINE_FOLDER_NAME}"
 
-          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
+          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
           echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
 
           if [ -d ${CURRENT_BASELINE_DIR} ];then
