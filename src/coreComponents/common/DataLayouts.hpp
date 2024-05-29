@@ -154,6 +154,7 @@ namespace cells
 /// Cell node map permutation when using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
 
+/// Cell strain permutation when using cuda
 using STRAIN_PERM = RAJA::PERM_JI;
 
 #else
@@ -161,6 +162,7 @@ using STRAIN_PERM = RAJA::PERM_JI;
 /// Cell node map permutation when not using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
 
+/// Cell strain permutation when not using cuda
 using STRAIN_PERM = RAJA::PERM_IJ;
 
 #endif
@@ -168,6 +170,7 @@ using STRAIN_PERM = RAJA::PERM_IJ;
 /// Cell node map unit stride dimension.
 static constexpr int NODE_MAP_USD = LvArray::typeManipulation::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
 
+/// Cell strain unit stride dimension
 static constexpr int STRAIN_USD = LvArray::typeManipulation::getStrideOneDimension( STRAIN_PERM {} );
 
 } // namespace cells
