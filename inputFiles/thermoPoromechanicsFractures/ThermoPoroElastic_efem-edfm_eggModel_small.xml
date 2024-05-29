@@ -174,22 +174,22 @@
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
-      cellBlockAttributeValues="{ 1 }"
+      cellBlocks="{ 1_hexahedra }"
       materialList="{ porousRock, water, thermalCond }"/>
 
     <CellElementRegion
       name="Overburden"
-      cellBlockAttributeValues="{ 3 }"
+      cellBlocks="{ 3_hexahedra }"
       materialList="{ porousRock, water, thermalCond }"/> 
     
     <CellElementRegion
       name="Underburden"
-      cellBlockAttributeValues="{ 2 }"
+      cellBlocks="{ 2_hexahedra }"
       materialList="{ porousRock, water, thermalCond }"/>
       
     <CellElementRegion
       name="Sideburden"
-      cellBlockAttributeValues="{ 0 }"
+      cellBlocks="{ 0_hexahedra }"
       materialList="{ porousRock, water, thermalCond }"/>  
 
     <SurfaceElementRegion

@@ -118,7 +118,7 @@ char const * xmlInput =
     </NumericalMethods>
     <ElementRegions>
       <CellElementRegion name="Region1"
-                         cellBlocksMatch="{ * }"
+                         cellBlocks="{cb1}"
                          materialList="{fluid1, rock, relperm}"/>
       <WellElementRegion name="wellRegion1"
                          materialList="{fluid1, relperm}"/>
