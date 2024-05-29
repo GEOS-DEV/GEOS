@@ -167,14 +167,14 @@ char const * xmlInput =
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
         fieldName="acousticDipX"
-        scale="1"
+        scale="0.0"
         setNames="{ all }"/>
       <FieldSpecification
         name="acousticDipY"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
         fieldName="acousticDipY"
-        scale="1"
+        scale="0.0"
         setNames="{ all }"/>
         <FieldSpecification
         name="zposFreeSurface"
