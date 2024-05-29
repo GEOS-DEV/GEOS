@@ -218,11 +218,11 @@ For now, loaded regions has the following limitations:
 
 In GEOS, there are three different ways to select ``cellBlocks`` in a ``CellElementRegion``:
 - Using ``cellBlockAttributeValues``, a list of the desired ``regionAttribute`` values.
-  I.e. ``"{ 1, 2 }"`` selects the { 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... } cellBlocks.
+  I.e. ``"{ 1, 2 }"`` selects the ``{ 1_tetrahedra, 1_pyramid, 2_tetrahedra, 2_pyramid... }`` cellBlocks.
 - Using ``cellBlocks``, a list of the desired ``cellBlocks`` names from the mesh to contain in this
   CellElementRegion. Naming is detailed bellow.
 - Using ``cellBlocksMatch``, a list of `fnmatch patterns <https://metacpan.org/pod/File::FnMatch>`_ to match cellBlock names to add them in this CellElementRegion.
-  I.e. ``{ 1_* }`` selects the { 1_tetrahedra, 1_pyramid, 1_hexahedra... } cellBlocks, ``{ * }`` selects every elements.
+  I.e. ``{ 1_* }`` selects the ``{ 1_tetrahedra, 1_pyramid, 1_hexahedra... }`` cellBlocks, ``{ * }`` selects every elements.
 
 In the example presented above, the mesh is is composed of two regions. Each region contains 4 element types.
 
