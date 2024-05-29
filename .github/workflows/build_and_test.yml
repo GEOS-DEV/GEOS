@@ -226,7 +226,8 @@ jobs:
           echo "Baseline: ${BASELINE_TAG}"
 
           # Extract the folder name
-          BASELINE_FOLDER_NAME=$(echo "$BASELINE_TAG" | grep -o 'pr[0-9]*')
+          PR_NUMBER=$(echo "$BASELINE_TAG" | grep -o 'pr[0-9]*')
+          PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
           echo "Baseline folder name: ${BASELINE_FOLDER_NAME}"
 
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${BASELINE_FOLDER_NAME}
@@ -240,6 +241,7 @@ jobs:
             CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
             docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
           else
+            wget -P ${CURRENT_BASELINE_DIR} https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
             echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found"  
           fi
         fi
@@ -285,7 +287,9 @@ jobs:
                 # 1. We copy the baselines to a local directory to store them 
                 
                 # 1.a Create the new target directory to store the new baselines
-                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/pr${{ github.event.number }}"
+                THIS_PR_NUMBER=pr${{ github.event.number }}
+                NEW_PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
+                TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/NEW_PR_BASELINE_FOLDER_NAME"
                 echo "Create folder ${TARGET_DIR}"
                 mkdir -p "${TARGET_DIR}"
           
