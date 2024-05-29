@@ -5,15 +5,15 @@ Sphinx Documentation
 Generating the documentation
 ====================================
 
-- To generate the documentation files, you will need to install Sphinx using :
+- To generate the documentation files, you will need to install Sphinx using:
 
   .. code-block:: sh
 
-    pip install sphinx
-    pip install sphinx-design sphinx-argparse sphinxcontrib-plantuml sphinxcontrib.programoutput sphinx_rtd_theme
-    pip install scipy
+    pip -m install sphinx
+    pip -m install sphinx-design sphinx-argparse sphinxcontrib-plantuml sphinxcontrib.programoutput sphinx_rtd_theme
+    pip -m install scipy
 
-- Then you can generate the documentation files with the following command :
+- Then you can generate the documentation files with the following command:
 
   .. code-block:: sh
 
@@ -49,7 +49,7 @@ When modifying a ``Wrapper`` configuration, one should call ``make geosx_update_
 generate the tables, and should then include the updated / added tables in its PR, exactly the
 same way the ``schema.xsd`` is maintained with ``make geosx_generate_schema``.
 
-To make these commands work, the folowing line is needed in the host-config :
+To make these commands work, the following line is needed in the host-config:
 
   .. code-block:: sh
 
