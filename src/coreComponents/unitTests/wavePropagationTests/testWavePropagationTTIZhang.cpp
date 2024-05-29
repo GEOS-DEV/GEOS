@@ -166,14 +166,14 @@ char const * xmlInput =
         name="acousticDipX"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="acousticDipx"
+        fieldName="acousticDipX"
         scale="1"
         setNames="{ all }"/>
       <FieldSpecification
         name="acousticDipY"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="acousticDipy"
+        fieldName="acousticDipY"
         scale="1"
         setNames="{ all }"/>
         <FieldSpecification
