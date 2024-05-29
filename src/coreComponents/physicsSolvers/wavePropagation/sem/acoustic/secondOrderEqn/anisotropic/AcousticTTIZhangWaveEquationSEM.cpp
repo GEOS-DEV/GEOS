@@ -313,9 +313,6 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
       arrayView1d< real32 const > const vti_epsilon = elementSubRegion.getField< acousticvtifields::AcousticEpsilon >();
       arrayView1d< real32 const > const vti_delta = elementSubRegion.getField< acousticvtifields::AcousticDelta >();
 
-      arrayView1d< real32 const > const tti_dipx = elementSubRegion.getField< acousticttifields::AcousticDipX >();
-      arrayView1d< real32 const > const tti_dipy = elementSubRegion.getField< acousticttifields::AcousticDipY >();
-
       /// Partial gradient if gradient has to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< acousticfields::PartialGradient >();
       grad.zero();
