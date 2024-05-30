@@ -61,19 +61,18 @@ public:
    */
   std::vector< string > const & getErrorMsgs() const;
 
-protected:
-  /// vector containing all rows with cell values
-  std::vector< std::vector< string > > m_rows;
-
-  /// store error if there are any inconsistencies related to the table
-  std::vector< string > m_errorsMsg;
-
 private:
   /**
    * @brief Set an error message
    * @param msg The error msg to vector
    */
   void addErrorMsg( string const & msg );
+
+  /// vector containing all rows with cell values
+  std::vector< std::vector< string > > m_rows;
+
+  /// store error if there are any inconsistencies related to the table
+  std::vector< string > m_errorsMsg;
 
 };
 

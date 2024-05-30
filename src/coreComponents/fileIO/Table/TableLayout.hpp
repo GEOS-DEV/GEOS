@@ -122,12 +122,12 @@ public:
   string_view getTitle() const;
 
   /**
-   * @return The border margin
+   * @return The border margin, number of spaces at both left and right table sides
    */
   integer const & getBorderMargin() const;
 
   /**
-   * @return The column margin
+   * @return The column margin, numbers of spaces separating both left and right side from each column content
    */
   integer const & getColumnMargin() const;
 
@@ -137,7 +137,7 @@ public:
   integer const & getMarginTitle() const;
 
   /**
-   * @brief Set the minimal margin width between row content and borders.
+   * @brief Set the minimal margin width between cell content and borders.
    * @param marginValue The margin value
    */
   void setMargin( MarginValue marginValue );
@@ -148,7 +148,7 @@ private:
   string m_tableTitle;
   integer m_borderMargin;
   integer m_columnMargin;
-  integer m_marginTitle = 2;
+  integer m_titleMargin = 2;
 
 };
 }
