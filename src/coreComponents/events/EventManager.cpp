@@ -53,12 +53,12 @@ EventManager::EventManager( string const & name,
     setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
-    setApplyDefaultValue( std::numeric_limits< real64 >::max()).
+    setApplyDefaultValue( std::numeric_limits< real64 >::max() ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxCycleString(), &m_maxCycle ).
-    setApplyDefaultValue( std::numeric_limits< integer >::max()).
+    setApplyDefaultValue( std::numeric_limits< integer >::max() ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation cycle for the global event loop." );
 
@@ -227,15 +227,29 @@ bool EventManager::run( DomainPartition & domain )
 void EventManager::outputTime() const
 {
   // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( GEOS_FMT( "\n"
-                             "------------------- TIMESTEP START -------------------\n"
-                             "    - Time:       {}\n"
-                             "    - Delta Time: {}\n"
-                             "    - Cycle:      {}\n"
-                             "------------------------------------------------------\n\n",
-                             units::TimeFormatInfo::fromSeconds( m_time ),
-                             units::TimeFormatInfo::fromSeconds( m_dt ),
-                             m_cycle ));
+  GEOS_LOG_RANK_0( "\n------------------- TIMESTEP START -------------------" );
+  if( m_maxTime < std::numeric_limits< real64 >::max() )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {} out of {} ({}%)",
+                               units::TimeFormatInfo::fromSeconds( m_time ),
+                               units::TimeFormatInfo::fromSeconds( m_maxTime ),
+                               fmt::format( "{:.{}f}", 100.0 * m_time / m_maxTime, 0 ) ) );
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}", units::TimeFormatInfo::fromSeconds( m_time ) ) );
+  }
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
+  if( m_maxCycle < std::numeric_limits< integer >::max() )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {} out of {} ({}%)",
+                                m_cycle, m_maxCycle, fmt::format( "{:.{}f}", 100.0 * m_cycle / m_maxCycle, 0 ) ) );
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}", m_cycle ) );
+  }
+  GEOS_LOG_RANK_0( "------------------------------------------------------\n" );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )

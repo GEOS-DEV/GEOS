@@ -150,6 +150,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (absolute) component density change in a sequential iteration, used for outer loop convergence check" );
+
+  this->registerWrapper( viewKeyStruct::minScalingFactorString(), &m_minScalingFactor ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.01 ).
+    setDescription( "Minimum value for solution scaling factor" );
 }
 
 void CompositionalMultiphaseBase::postProcessInput()
