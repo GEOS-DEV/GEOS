@@ -348,8 +348,8 @@ void AcousticVTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  m_seismoCoeff.resize(m_receiverIsLocal.size());
-  m_seismoCoeff.setValues< EXEC_POLICY >(0.5);
+  m_seismoCoeff.resize( m_receiverIsLocal.size());
+  m_seismoCoeff.setValues< EXEC_POLICY >( 0.5 );
 }
 
 void AcousticVTIZhangWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
