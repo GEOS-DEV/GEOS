@@ -7,7 +7,8 @@ gravityVector                                 R1Tensor {0,0,-9.81} Gravity vecto
 AcousticElasticSEM                            node                 :ref:`XML_AcousticElasticSEM`                            
 AcousticFirstOrderSEM                         node                 :ref:`XML_AcousticFirstOrderSEM`                         
 AcousticSEM                                   node                 :ref:`XML_AcousticSEM`                                   
-AcousticVTISEM                                node                 :ref:`XML_AcousticVTISEM`                                
+AcousticVTIFletcherSEM                        node                 :ref:`XML_AcousticVTIFletcherSEM`                        
+AcousticVTIZhangSEM                           node                 :ref:`XML_AcousticVTIZhangSEM`                           
 CompositionalMultiphaseFVM                    node                 :ref:`XML_CompositionalMultiphaseFVM`                    
 CompositionalMultiphaseHybridFVM              node                 :ref:`XML_CompositionalMultiphaseHybridFVM`              
 CompositionalMultiphaseReservoir              node                 :ref:`XML_CompositionalMultiphaseReservoir`              
