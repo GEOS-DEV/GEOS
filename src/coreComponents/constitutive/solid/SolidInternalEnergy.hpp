@@ -53,7 +53,7 @@ public:
   {
     compute( temperature,
              m_internalEnergy[k][0],
-             m_dInternalEnergy_dTemperature[k][0]);
+             m_dInternalEnergy_dTemperature[k][0] );
   }
 
   GEOS_DEVICE
