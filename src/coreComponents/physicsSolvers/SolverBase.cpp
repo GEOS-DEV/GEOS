@@ -320,12 +320,12 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     else if( nextDtNewton < currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
-                                          getName(), m_nonlinearSolverParameters.timeStepDecreaseIterLimit() ) );
+                                          getName() ) );
     }
     else
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on number of iterations.",
-                                          getName(), m_nonlinearSolverParameters.m_numNewtonIterations ) );
+                                          getName() ) );
     }
   }
   else         // time step size decided based on state change
@@ -376,7 +376,7 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
     // Tough convergence let us make the time-step smaller!
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepDecreaseFactor();
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is more than {}, next time step = {}", getName(), newtonIter, iterDecreaseLimit, nextDt ));
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is more than {}, next time step = {} (decrease)", getName(), newtonIter, iterDecreaseLimit, nextDt ));
   }
   else
   {
