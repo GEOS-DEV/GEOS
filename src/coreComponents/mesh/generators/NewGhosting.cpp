@@ -718,7 +718,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   //
   // From `ghostingFootprint` we can extract where the current rank has to send any owned graph node.
   Epetra_CrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
-  ghostingFootprint.PutScalar( 1. );  // This can be done after the `FillComplete`.
+  ghostingFootprint.PutScalar( 1. );  // This can be done after the `FillComplete`, but not with Tpetra!
   ghostingFootprint.FillComplete( mpiMap, ownedMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostingFootprint.mat", ghostingFootprint );
   // We put `1` everywhere there's a non-zero entry, so we'll be able to compose with the `ownership` matrix.
@@ -905,25 +905,29 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
     missingMappings.ExtractGlobalRowCopy( offset + i, length2, ext, extValues.data(), extIndices.data() );
     GEOS_ASSERT_EQ( ext, length2 );
     int const index = notPresentIndices[i];
-    switch( convert.getGeometricalType( index ) )
+    Geom const geometricalType = convert.getGeometricalType( index );
+    if ( geometricalType == Geom::NODE )
     {
-      case Geom::NODE:
-      {
-        // Nothing to be done for nodes since they do not rely on any underlying information.
-        break;
-      }
+      // Nothing to be done for nodes since they do not rely on any underlying information.
+      continue;
+    }
+
+    auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
+    std::ptrdiff_t const numGeomQuantitiesIdx = std::distance( std::cbegin( extIndices ), cit );
+    int const numGeomQuantities = int( extValues[numGeomQuantitiesIdx] );
+    GEOS_ASSERT_EQ( ext, numGeomQuantities + 1 );
+
+    switch( geometricalType )
+    {
       case Geom::EDGE:
       {
-        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
-        std::ptrdiff_t const numNodesIdx = std::distance( std::cbegin( extIndices ), cit );
-        int const numNodes = int( extValues[numNodesIdx] );
-        GEOS_ASSERT_EQ( ext, numNodes + 1 );
+        int const & numNodes = numGeomQuantities;  // Alias
         GEOS_ASSERT_EQ( numNodes, 2 );
         std::array< NodeGlbIdx, 2 > order{};
 
         for( int ii = 0; ii < ext; ++ii )
         {
-          if( ii == numNodesIdx )
+          if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
@@ -942,14 +946,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
       }
       case Geom::FACE:
       {
-        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
-        std::ptrdiff_t const numEdgesIdx = std::distance( std::cbegin( extIndices ), cit );
-        int const numEdges = int( extValues[numEdgesIdx] );
-        GEOS_ASSERT_EQ( ext, numEdges + 1 );
+        int const & numEdges = numGeomQuantities;  // Alias
         std::map< integer, EdgeInfo > order;
         for( int ii = 0; ii < ext; ++ii )
         {
-          if( ii == numEdgesIdx )
+          if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
@@ -972,14 +973,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
       }
       case Geom::CELL:
       {
-        auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
-        std::ptrdiff_t const numFacesIdx = std::distance( std::cbegin( extIndices ), cit );
-        int const numFaces = int( extValues[numFacesIdx] );  // TODO This should receive the cell type instead.
-        GEOS_ASSERT_EQ( ext, numFaces + 1 );
+        int const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
         std::map< integer, FaceInfo > order;
         for( int ii = 0; ii < ext; ++ii )
         {
-          if( ii == numFacesIdx )
+          if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
