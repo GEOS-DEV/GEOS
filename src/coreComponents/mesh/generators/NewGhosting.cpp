@@ -16,6 +16,8 @@
 
 #include "NewGlobalNumbering.hpp"
 
+#include "BuildPods.hpp"
+
 #include "Pods.hpp"
 
 #include "common/MpiWrapper.hpp"
@@ -115,46 +117,12 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   return result;
 }
 
-/**
- * @brief Complete set of information when a face refers to an edge.
- * @details When a face refers to an edge, w.r.t. the canonical ordering of the edge,
- * there's one node that comes before the other.
- * The @c start parameter (which will be equal to either 0 or 1) will hold this information.
- */
-struct EdgeInfo
-{
-  /// The global index of the edge the face is referring to.
-  EdgeGlbIdx index;
-  /// Which nodes comes first (and therefore which comes second) in the original edge numbering in the cell.
-  std::uint8_t start; // Where the initial index in the canonical face ordering was in the initial face.
-};
-
 void to_json( json & j,
               const EdgeInfo & v )  // For display
 {
   j = json{ { "index", v.index },
             { "start", v.start } };
 }
-
-/**
- * @brief Complete set of information when a cell refers to a face.
- * @details When a cell refers to a face, w.r.t. the canonical ordering of the face,
- * the nodes of the face (in the cell) can be shifted,
- * and travelled in a different direction (clockwise or counter-clockwise).
- * The @c isFlipped parameter informs about the travel discrepancy.
- * The @c start parameter informs about the shift.
- * @note This class does not refer to how multiple faces are ordered by a cell,
- * but to the precise information when refering to one given face.
- */
-struct FaceInfo
-{
-  /// The global index of the face the cell is referring to.
-  FaceGlbIdx index;
-  /// Is the face travelled in the same direction as the canonical face.
-  bool isFlipped;
-  /// Where to start iterating over the nodes of the canonical faces to get back to the original face numbering in the cell.
-  std::uint8_t start;
-};
 
 void to_json( json & j,
               const FaceInfo & v )  // For display
@@ -163,14 +131,6 @@ void to_json( json & j,
             { "isFlipped", v.isFlipped },
             { "start",     v.start } };
 }
-
-struct MeshGraph
-{
-  std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;  // TODO What about the metadata (e.g. flip the face)
-  std::map< FaceGlbIdx, std::vector< EdgeInfo > > f2e;
-  std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
-  std::set< NodeGlbIdx > n;
-};
 
 void to_json( json & j,
               const MeshGraph & v )  // For display
@@ -304,14 +264,6 @@ std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
   return ptr;
 }
 
-struct GhostSend
-{
-  std::map< NodeGlbIdx, std::set< MpiRank > > nodes;
-  std::map< EdgeGlbIdx, std::set< MpiRank > > edges;
-  std::map< FaceGlbIdx, std::set< MpiRank > > faces;
-  std::map< CellGlbIdx, std::set< MpiRank > > cells;
-};
-
 void to_json( json & j,
               const GhostSend & v )
 {
@@ -320,14 +272,6 @@ void to_json( json & j,
             { "faces", v.faces },
             { "cells", v.cells } };
 }
-
-struct GhostRecv
-{
-  std::map< NodeGlbIdx, MpiRank > nodes;
-  std::map< EdgeGlbIdx, MpiRank > edges;
-  std::map< FaceGlbIdx, MpiRank > faces;
-  std::map< CellGlbIdx, MpiRank > cells;
-};
 
 void to_json( json & j,
               const GhostRecv & v )
@@ -1045,23 +989,6 @@ buildGhostRankAndL2G( std::map< GI, MpiRank > const & m )
   }
 
   return std::make_tuple( ghostRank, l2g );
-}
-
-void buildPods( MeshGraph const & owned,
-                MeshGraph const & present,
-                MeshGraph const & ghosts,
-                GhostRecv const & recv,
-                GhostSend const & send )
-{
-//  std::size_t const numNodes = std::size( ownerships.nodes );
-//  std::size_t const numEdges = std::size( ownerships.edges );
-//  std::size_t const numFaces = std::size( ownerships.faces );
-//
-//  auto [ghostRank, l2g] = buildGhostRankAndL2G( ownerships.edges );
-//
-//  NodeMgrImpl const nodeMgr( NodeLocIdx{ intConv< localIndex >( numNodes ) } );
-//  EdgeMgrImpl const edgeMgr( EdgeLocIdx{ intConv< localIndex >( numEdges ) }, std::move( ghostRank ), std::move( l2g ) );
-//  FaceMgrImpl const faceMgr( FaceLocIdx{ intConv< localIndex >( numFaces ) } );
 }
 
 std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,

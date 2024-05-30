@@ -182,6 +182,7 @@ list( APPEND dependencyList NamedType nlohmann_json::nlohmann_json trilinos )
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
+         generators/BuildPods.hpp
          generators/CollocatedNodes.hpp
          generators/NewGhosting.hpp
          generators/NewGlobalNumbering.hpp
@@ -192,6 +193,7 @@ if( ENABLE_VTK )
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
+         generators/BuildPods.cpp
          generators/CollocatedNodes.cpp
          generators/NewGhosting.cpp
          generators/NewGlobalNumbering.cpp
