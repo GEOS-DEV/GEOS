@@ -105,7 +105,8 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      format="binary"/>
+      format="binary"
+      plotFileRoot="sneddon_embFrac"/>
       
     <TimeHistory
       name="timeHistoryOutput"
