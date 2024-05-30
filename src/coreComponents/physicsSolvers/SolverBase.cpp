@@ -369,7 +369,7 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
     // Easy convergence, let's increase the time-step.
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepIncreaseFactor();
     if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is less than {}, next time step = {}", getName(), newtonIter, iterIncreaseLimit, nextDt ));
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is less than {}, next time step = {} (increase)", getName(), newtonIter, iterIncreaseLimit, nextDt ));
   }
   else if( newtonIter > iterDecreaseLimit )
   {
