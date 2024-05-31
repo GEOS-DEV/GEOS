@@ -56,49 +56,43 @@ std::map< string, SortedArray< localIndex > > const & NodeMgrImpl::getNodeSets()
   return m_todo;
 }
 
-EdgeMgrImpl::EdgeMgrImpl( EdgeLocIdx const & numEdges,
-                          std::vector< MpiRank > && ghostRank,
-                          std::vector< EdgeGlbIdx > && l2g )
+EdgeMgrImpl::EdgeMgrImpl( std::size_t numEdges,
+                          array1d< integer > && ghostRank,
+                          array2d< localIndex > && e2n,
+                          ArrayOfArrays< localIndex > && e2f,
+                          unordered_map< globalIndex, localIndex > && g2l,
+                          array1d< globalIndex > && l2g )
   : m_numEdges( numEdges ),
     m_ghostRank( ghostRank ),
+    m_e2n( e2n ),
+    m_e2f( e2f ),
+    m_g2l( g2l ),
     m_l2g( l2g )
 { }
 
 localIndex EdgeMgrImpl::numEdges() const
 {
-  return intConv< localIndex >( m_numEdges.get() );
+  return m_numEdges;
 }
 
 array2d< localIndex > EdgeMgrImpl::getEdgeToNodes() const
 {
-  return {};
+  return m_e2n;
 }
 
 ArrayOfArrays< localIndex > EdgeMgrImpl::getEdgeToFaces() const
 {
-  return {};
+  return m_e2f;
 }
 
 array1d< integer > EdgeMgrImpl::getGhostRank() const
 {
-  array1d< integer > result;
-  result.reserve( std::size( m_ghostRank ) );
-  for( MpiRank const & rank: m_ghostRank )
-  {
-    result.emplace_back( rank.get() );
-  }
-  return result;
+  return m_ghostRank;
 }
 
 array1d< globalIndex > EdgeMgrImpl::getLocalToGlobal() const
 {
-  array1d< globalIndex > result;
-  result.reserve( std::size( m_l2g ) );
-  for( EdgeGlbIdx const & edge: m_l2g )
-  {
-    result.emplace_back( edge.get() );
-  }
-  return result;
+  return m_l2g;
 }
 
 FaceMgrImpl::FaceMgrImpl( FaceLocIdx const & numFaces )

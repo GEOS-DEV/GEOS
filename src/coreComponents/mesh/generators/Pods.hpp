@@ -52,9 +52,12 @@ private:
 class EdgeMgrImpl : public generators::EdgeMgr
 {
 public:
-  EdgeMgrImpl( EdgeLocIdx const & numEdges,
-               std::vector< MpiRank > && ghostRank,
-               std::vector< EdgeGlbIdx > && l2g );
+  EdgeMgrImpl( std::size_t numEdges,
+               array1d< integer > && ghostRank,
+               array2d< localIndex > && e2n,
+               ArrayOfArrays< localIndex > && e2f,
+               unordered_map< globalIndex, localIndex > && g2l,
+               array1d< globalIndex > && l2g );
 
   [[nodiscard]] localIndex numEdges() const override;
 
@@ -67,9 +70,12 @@ public:
   [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
 
 private:
-  EdgeLocIdx m_numEdges;
-  std::vector< MpiRank > m_ghostRank;
-  std::vector< EdgeGlbIdx > m_l2g;
+  localIndex m_numEdges;
+  array1d< integer > m_ghostRank;
+  array2d< localIndex > m_e2n;
+  ArrayOfArrays< localIndex > m_e2f;
+  unordered_map< globalIndex, localIndex > m_g2l;
+  array1d< globalIndex > m_l2g;
 };
 
 class FaceMgrImpl : public generators::FaceMgr

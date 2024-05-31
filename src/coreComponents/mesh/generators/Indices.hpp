@@ -37,13 +37,13 @@ OUTPUT intConv( INPUT input )
   return LvArray::integerConversion< OUTPUT >( input );
 }
 
-using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable >;
+using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
 using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable >;
+using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
 using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable >;
+using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
 using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable >;
+using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
 using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
 
 using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
@@ -118,7 +118,18 @@ inline void to_json( json & j,
 }
 
 inline void to_json( json & j,
+                     const NodeLocIdx & v )
+{
+  j = v.get();
+}
+
+inline void to_json( json & j,
                      const EdgeGlbIdx & v )
+{
+  j = v.get();
+}
+inline void to_json( json & j,
+                     const EdgeLocIdx & v )
 {
   j = v.get();
 }
@@ -135,6 +146,12 @@ inline void to_json( json & j,
   j = v.get();
 }
 
+inline void to_json( json & j,
+                     const FaceLocIdx & v )
+{
+  j = v.get();
+}
+
 inline void from_json( const json & j,
                        FaceGlbIdx & v )
 {
@@ -143,6 +160,12 @@ inline void from_json( const json & j,
 
 inline void to_json( json & j,
                      const CellGlbIdx & v )
+{
+  j = v.get();
+}
+
+inline void to_json( json & j,
+                     const CellLocIdx & v )
 {
   j = v.get();
 }

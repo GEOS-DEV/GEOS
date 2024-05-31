@@ -850,9 +850,14 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
     GEOS_ASSERT_EQ( ext, length2 );
     int const index = notPresentIndices[i];
     Geom const geometricalType = convert.getGeometricalType( index );
-    if ( geometricalType == Geom::NODE )
+    if( geometricalType == Geom::NODE )
     {
-      // Nothing to be done for nodes since they do not rely on any underlying information.
+      // The case of nodes is a bit different from the other cases
+      // because nodes do not rely on other geometrical quantities.
+      // We simply have to extract and store their own index.
+      GEOS_ASSERT_EQ( length2, 1 );
+      GEOS_ASSERT_EQ( extIndices[0], int(extValues[0]) );
+      ghosts.n.insert( convert.toNodeGlbIdx( extIndices[0] ) );
       continue;
     }
 
@@ -964,31 +969,6 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
 //  GEOS_LOG_RANK( "my final neighbors are " << json( ownerships.neighbors ) );
 
   return { std::move( ghosts ), std::move( recv ), std::move( send ) };
-}
-
-/**
- * @brief
- * @tparam GI A global index type
- * @param m
- * @return
- */
-template< class GI >
-std::tuple< std::vector< MpiRank >, std::vector< GI > >
-buildGhostRankAndL2G( std::map< GI, MpiRank > const & m )
-{
-  std::size_t const size = std::size( m );
-
-  std::vector< MpiRank > ghostRank;
-  ghostRank.reserve( size );
-  std::vector< GI > l2g;
-  l2g.reserve( size );
-  for( auto const & [t, rank]: m )
-  {
-    ghostRank.emplace_back( rank );
-    l2g.emplace_back( t );
-  }
-
-  return std::make_tuple( ghostRank, l2g );
 }
 
 std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
