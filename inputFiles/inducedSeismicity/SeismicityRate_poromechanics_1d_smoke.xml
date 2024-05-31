@@ -143,7 +143,7 @@
 
     <BiotPorosity
       name="skeletonPorosity"
-      grainBulkModulus="4.5e4"
+      defaultGrainBulkModulus="4.5e4"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability
