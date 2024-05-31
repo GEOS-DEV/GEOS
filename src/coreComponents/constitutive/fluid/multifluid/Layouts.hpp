@@ -59,14 +59,14 @@ struct DerivativeOffset
 /// indices of pressure, temperature, and composition derivatives
 template< integer NC, integer IS_THERMAL >
 struct DerivativeOffsetC {};
- 
+
 template< integer NC >
 struct DerivativeOffsetC< NC, 1 >
 {
   /// index of derivative wrt pressure
   static integer constexpr dP = 0;
   /// index of derivative wrt temperature
-  static integer constexpr dT = dP + 1;   
+  static integer constexpr dT = dP + 1;
   /// index of first derivative wrt compositions
   static integer constexpr dC = dP+2;
   /// number of derivatives

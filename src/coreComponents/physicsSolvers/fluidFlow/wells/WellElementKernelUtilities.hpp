@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
- 
+
 
 
 namespace geos
@@ -44,78 +44,78 @@ struct PotGrad
   GEOS_HOST_DEVICE
   static void
   compute ( real64 const & gravCoef,
-           real64 const & gravCoefNext,
-           real64 const & pres,
-           real64 const & presNext,
-           real64 const & totalMassDens,
-           real64 const & totalMassDensNext,
-           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens,
-           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDensNext,
-           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
-           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
-           real64 & potDiff,
-           real64 ( & dPotDiff)[2][NC+1+IS_THERMAL] )
- 
-  {
-      // local working variables and arrays
-  real64 pres[2]{};
-  real64 dPres_dP[2]{};
-  real64 dPres_dC[2][NC]{};
-  real64 dFlux_dP[2]{};
-  real64 dFlux_dC[2][NC]{};
-  real64 dMult_dP[2]{};
-  real64 dMult_dC[2][NC]{};
-  real64 dPotDiff_dP[2]{};
-  real64 dPotDiff_dC[2][NC]{};
+            real64 const & gravCoefNext,
+            real64 const & pres,
+            real64 const & presNext,
+            real64 const & totalMassDens,
+            real64 const & totalMassDensNext,
+            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens,
+            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDensNext,
+            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
+            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
+            real64 & potDiff,
+            real64 ( & dPotDiff)[2][NC+1+IS_THERMAL] )
 
-  real64 multiplier[2]{};
-  multiplier[ElemTag::CURRENT] = 1.0;
-  multiplier[ElemTag::NEXT]    = -1.0;
-  
-  pres[ElemTag::CURRENT] = pres;
-  pres[ElemTag::NEXT]    = presNext;
+  {
+    // local working variables and arrays
+    real64 pres[2]{};
+    real64 dPres_dP[2]{};
+    real64 dPres_dC[2][NC]{};
+    real64 dFlux_dP[2]{};
+    real64 dFlux_dC[2][NC]{};
+    real64 dMult_dP[2]{};
+    real64 dMult_dC[2][NC]{};
+    real64 dPotDiff_dP[2]{};
+    real64 dPotDiff_dC[2][NC]{};
+
+    real64 multiplier[2]{};
+    multiplier[ElemTag::CURRENT] = 1.0;
+    multiplier[ElemTag::NEXT]    = -1.0;
+
+    pres[ElemTag::CURRENT] = pres;
+    pres[ElemTag::NEXT]    = presNext;
 
 
     // local working variables and arrays
-  real64 dAvgMassDens_dCompCurrent[NC]{};
-  real64 dAvgMassDens_dCompNext[NC]{};
+    real64 dAvgMassDens_dCompCurrent[NC]{};
+    real64 dAvgMassDens_dCompNext[NC]{};
 
-  // compute the average density at the interface between well elements
-  real64 const avgMassDens = 0.5 * ( totalMassDensNext + totalMassDens );
+    // compute the average density at the interface between well elements
+    real64 const avgMassDens = 0.5 * ( totalMassDensNext + totalMassDens );
 
-  real64 const gravD = gravCoefNext - gravCoef;
-  pres[0] += 
+    real64 const gravD = gravCoefNext - gravCoef;
+    pres[0] +=
 
-  real64 const dAvgMassDens_dPresNext    = 0.5 * dTotalMassDensNext[Deriv::dP];
-  real64 const dAvgMassDens_dPresCurrent = 0.5 * dTotalMassDens[Deriv::dP];
-  for( integer ic = 0; ic < NC; ++ic )
-  {
-    dAvgMassDens_dCompNext[ic]    = 0.5 * dTotalMassDensNext[Deriv::dC+ic];
-    dAvgMassDens_dCompCurrent[ic] = 0.5 * dTotalMassDens[Deriv::dC+ic];
-  }
+      real64 const dAvgMassDens_dPresNext    = 0.5 * dTotalMassDensNext[Deriv::dP];
+    real64 const dAvgMassDens_dPresCurrent = 0.5 * dTotalMassDens[Deriv::dP];
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      dAvgMassDens_dCompNext[ic]    = 0.5 * dTotalMassDensNext[Deriv::dC+ic];
+      dAvgMassDens_dCompCurrent[ic] = 0.5 * dTotalMassDens[Deriv::dC+ic];
+    }
 
-  // compute depth diff times acceleration
-  real64 const gravD = gravCoefNext - gravCoef;
+    // compute depth diff times acceleration
+    real64 const gravD = gravCoefNext - gravCoef;
 
-  potDiff  = presNext - pres  - avgMassDens * gravD;
-  
-  // TODO: add friction and acceleration terms
- 
-  /*
-  localPresRel = ( presNext - pres - avgMassDens * gravD );
-  dpot_dp_next = ( 1 - dAvgMassDens_dPresNext * gravD );
-  dpot_dp_cur  = ( -1 - dAvgMassDens_dPresCurrent * gravD );
-  for( integer ic = 0; ic < NC; ++ic )
-  {
-    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
-    localPresRelJacobian[TAG::CURRENT *(NC+1) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
-  }
-  if constexpr ( IS_THERMAL )
-  {
-    localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
-    localPresRelJacobian[TAG::CURRENT *(NC+1)+1] = 0.5 * dTotalMassDens[Deriv::dT];
-  }
-  */
+    potDiff  = presNext - pres  - avgMassDens * gravD;
+
+    // TODO: add friction and acceleration terms
+
+    /*
+       localPresRel = ( presNext - pres - avgMassDens * gravD );
+       dpot_dp_next = ( 1 - dAvgMassDens_dPresNext * gravD );
+       dpot_dp_cur  = ( -1 - dAvgMassDens_dPresCurrent * gravD );
+       for( integer ic = 0; ic < NC; ++ic )
+       {
+       localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
+       localPresRelJacobian[TAG::CURRENT *(NC+1) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
+       }
+       if constexpr ( IS_THERMAL )
+       {
+       localPresRelJacobian[TAG::NEXT *(NC+1+IS_THERMAL)+NC+1]    =  0.5 * dTotalMassDensNext[Deriv::dT];
+       localPresRelJacobian[TAG::CURRENT *(NC+1)+1] = 0.5 * dTotalMassDens[Deriv::dT];
+       }
+     */
   }
 
 };
@@ -137,7 +137,7 @@ struct WellElementPhaseFlux
    * @param dPhaseMassDens derivative of phase mass density wrt pressure, temperature, comp fraction
    * @param potGrad potential gradient for this phase
    * @param phaseFlux phase flux
-   * @param dPhaseFlux  derivatives of phase flux  
+   * @param dPhaseFlux  derivatives of phase flux
    */
   template< integer numComp, integer IS_THERMAL >
   GEOS_HOST_DEVICE
@@ -165,7 +165,7 @@ struct WellElementPhaseFlux
     real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
     real64 dGravHead_dP[numFluxSupportPoints]{};
     real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
-    PotGrad::compute< numComp, IS_THERMAL >( gravCoef 
+    PotGrad::compute< numComp, IS_THERMAL >( gravCoef
                                              , gravCoefNext
                                              , pres
                                              , presNext
@@ -178,7 +178,7 @@ struct WellElementPhaseFlux
 
     // gravity head
     real64 gravHead = gravCoef - gravCoefNext
-    for( integer i = 0; i < numFluxSupportPoints; i++ )
+                      for( integer i = 0; i < numFluxSupportPoints; i++ )
     {
       localIndex const er  = seri[i];
       localIndex const esr = sesri[i];

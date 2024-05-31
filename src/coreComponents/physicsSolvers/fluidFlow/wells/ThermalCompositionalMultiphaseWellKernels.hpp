@@ -46,8 +46,6 @@ public:
   using Base::m_dPhaseMassDens;
   using Base::m_dPhaseVolFrac;
   using Base::m_dTotalMassDens;
-  using Base::m_dTotalMassDens_dCompDens;
-  using Base::m_dTotalMassDens_dPres;
   using Base::m_phaseMassDens;
   using Base::m_phaseVolFrac;
   using Base::m_totalMassDens;
@@ -61,8 +59,7 @@ public:
    */
   TotalMassDensityKernel( ObjectManagerBase & subRegion,
                           MultiFluidBase const & fluid )
-    : Base( subRegion, fluid ),
-    m_dTotalMassDens_dTemp( subRegion.getField< fields::well::dTotalMassDensity_dTemperature >())
+    : Base( subRegion, fluid )
   {}
 
   /**
@@ -80,13 +77,11 @@ public:
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseMassDens = m_phaseMassDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens = m_dPhaseMassDens[ei][0];
 
-    real64 & dTotalMassDens_dTemp = m_dTotalMassDens_dTemp[ei];
     real64 & dTotalMassDens_dT = m_dTotalMassDens[ei][Deriv::dT];
 
     // Call the base compute the compute the total mass density and derivatives
     return Base::compute( ei, [&]( localIndex const ip )
     {
-      dTotalMassDens_dTemp += dPhaseVolFrac[ip][Deriv::dT] * phaseMassDens[ip] + phaseVolFrac[ip] * dPhaseMassDens[ip][Deriv::dT];
       dTotalMassDens_dT += dPhaseVolFrac[ip][Deriv::dT] * phaseMassDens[ip] + phaseVolFrac[ip] * dPhaseMassDens[ip][Deriv::dT];
     } );
   }
@@ -652,7 +647,7 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
-      
+
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
@@ -668,15 +663,15 @@ public:
 /**
  * @class FaceBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
-  * @brief Define the interface for the assembly kernel in charge of flux terms
+ * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NC >
 class FaceBasedAssemblyKernel : public compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, 1 >
 {
 public:
-static constexpr integer IS_THERMAL = 1;
+  static constexpr integer IS_THERMAL = 1;
   using Base  = compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, IS_THERMAL >;
-  
+
   // Well jacobian column and row indicies
   using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
@@ -723,18 +718,18 @@ static constexpr integer IS_THERMAL = 1;
                            string const wellDofKey,
                            WellControls const & wellControls,
                            ElementSubRegionBase const & subRegion,
-MultiFluidBase const & fluid,
+                           MultiFluidBase const & fluid,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
     : Base( dt
             , rankOffset
             , wellDofKey
-            , wellControls 
-      , subRegion 
-      , localMatrix
-      , localRhs
-      , kernelFlags ),
+            , wellControls
+            , subRegion
+            , localMatrix
+            , localRhs
+            , kernelFlags ),
     m_numPhases ( fluid.numFluidPhases()),
     m_phaseFraction( fluid.phaseFraction()),
     m_dPhaseFraction( fluid.dPhaseFraction()),
@@ -742,12 +737,12 @@ MultiFluidBase const & fluid,
     m_dPhaseEnthalpy( fluid.dPhaseEnthalpy())
   { }
 
-struct StackVariables : public Base::StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 public:
 
-  GEOS_HOST_DEVICE
-  StackVariables( localIndex const size )
+    GEOS_HOST_DEVICE
+    StackVariables( localIndex const size )
       : Base::StackVariables( size )
     {}
 
@@ -893,7 +888,7 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] compFluxKernelOp the function used to customize the computation of the component fluxes
    */
-  
+
   GEOS_HOST_DEVICE
   inline
   void computeFlux( localIndex const iwelem, StackVariables & stack ) const
@@ -904,9 +899,9 @@ public:
                                              , real64 const (&dCompFrac_dCompDens)[NC][NC] )
     {
 
-    if( iwelemNext < 0 &&  !m_isProducer )    // exit connection, injector
-    {
-      real64 eflux=0;
+      if( iwelemNext < 0 &&  !m_isProducer )  // exit connection, injector
+      {
+        real64 eflux=0;
         real64 eflux_dq=0;
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
@@ -932,7 +927,7 @@ public:
         {
           stack.localEnergyFluxJacobian[0] [dof] *= -m_dt*currentConnRate;
         }
-      // Energy equation
+        // Energy equation
         stack.localEnergyFlux[0]   =  -m_dt * eflux * currentConnRate;
         stack.localEnergyFluxJacobian_dQ[0][0]  = -m_dt * eflux_dq;
       }
@@ -942,7 +937,7 @@ public:
         real64 eflux_dq=0;
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-        eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
+          eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
           stack.localEnergyFluxJacobian[0] [CP_Deriv::dP] += m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dP]
                                                              +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dP]*m_phaseFraction[iwelemUp][0][ip];
@@ -959,7 +954,7 @@ public:
                                                                    + dProp1_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
           }
 
-          }
+        }
 
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
         {
@@ -974,7 +969,7 @@ public:
         real64 eflux_dq=0;
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
-        eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
+          eflux    += m_phaseEnthalpy[iwelemUp][0][ip]* m_phaseFraction[iwelemUp][0][ip];
           eflux_dq += m_phaseEnthalpy[iwelemUp][0][ip] * m_phaseFraction[iwelemUp][0][ip];
 
           real64 dprop_dp = m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dP]
@@ -1011,7 +1006,7 @@ public:
           stack.localEnergyFluxJacobian[TAG::CURRENT   ][dof]  *=  -m_dt*currentConnRate;
         }
       }
-    
+
     } );
 
   }
@@ -1059,7 +1054,7 @@ protected:
 /**
  * @class FaceBasedAssemblyKernelFactory
  */
-class FaceBasedAssemblyKernelFactory  
+class FaceBasedAssemblyKernelFactory
 {
 public:
 
@@ -1085,14 +1080,14 @@ public:
                    string const dofKey,
                    WellControls const & wellControls,
                    ElementSubRegionBase const & subRegion,
-MultiFluidBase const & fluid,
+                   MultiFluidBase const & fluid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      
+
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )

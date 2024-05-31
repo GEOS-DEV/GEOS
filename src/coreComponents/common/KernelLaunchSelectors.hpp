@@ -100,64 +100,64 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
   //constexpr T a = isThermal ? std::integral_constant< T, 1 >() : std::integral_constant< T, 0 >();
   if( n_phase == 1 )
   {
-      switch( value )
+    switch( value )
+    {
+      case 1:
       {
-        case 1:
-        {
-          lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 1 >() ); return;
-        }
-        case 2:
-        { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
-        case 3:
-        { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 1 >() ); return; }
-        case 4:
-        { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
-        case 5:
-        { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 1 >() ); return; }
-        default:
-        { GEOS_ERROR( "Unsupported number of components: " << value ); }
+        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 1 >() ); return;
       }
+      case 2:
+      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 1 >() ); return; }
+      case 3:
+      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 1 >() ); return; }
+      case 4:
+      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 1 >() ); return; }
+      case 5:
+      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 1 >() ); return; }
+      default:
+      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    }
   }
   else if( n_phase == 2 )
   {
-      switch( value )
+    switch( value )
+    {
+      case 1:
       {
-        case 1:
-        {
-          lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 2 >() ); return;
-        }
-        case 2:
-        { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 2 >() ); return; }
-        case 3:
-        { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 2 >() ); return; }
-        case 4:
-        { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 2 >() ); return; }
-        case 5:
-        { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 2 >() ); return; }
-        default:
-        { GEOS_ERROR( "Unsupported number of components: " << value ); }
+        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 2 >() ); return;
       }
+      case 2:
+      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 2 >() ); return; }
+      case 3:
+      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 2 >() ); return; }
+      case 4:
+      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 2 >() ); return; }
+      case 5:
+      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 2 >() ); return; }
+      default:
+      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    }
 
   }
   else if( n_phase == 3 )
   {
-      switch( value )
+    switch( value )
+    {
+      case 1:
       {
-        case 1:
-        {
-          lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 3 >()  ); return;
-        }
-        case 2:
-        { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 3 >()  ); return; }
-        case 3:
-        { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 3 >()  ); return; }
-        case 4:
-        { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 3 >() ); return; }
-        case 5:
-        { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 3 >() ); return; }
-        default:
-        { GEOS_ERROR( "Unsupported number of components: " << value ); }
+        lambda( std::integral_constant< T, 1 >(), std::integral_constant< T, 3 >()  ); return;
       }
+      case 2:
+      { lambda( std::integral_constant< T, 2 >(), std::integral_constant< T, 3 >()  ); return; }
+      case 3:
+      { lambda( std::integral_constant< T, 3 >(), std::integral_constant< T, 3 >()  ); return; }
+      case 4:
+      { lambda( std::integral_constant< T, 4 >(), std::integral_constant< T, 3 >() ); return; }
+      case 5:
+      { lambda( std::integral_constant< T, 5 >(), std::integral_constant< T, 3 >() ); return; }
+      default:
+      { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    }
   }
   else
   {
@@ -167,5 +167,5 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
 } // end namspace internal
 } // end namespace geos
 
- 
+
 #endif // GEOS_COMMON_KERNELLAUNCHSELECTORS_HPP

@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp" 
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellTags.hpp"
@@ -41,14 +41,14 @@ using namespace constitutive;
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NC, integer IS_THERMAL >
-class IsothermalCompositionalMultiPhaseFluxKernel 
+class IsothermalCompositionalMultiPhaseFluxKernel
 {
 public:
- 
-   /// Compile time value for the number of components
+
+  /// Compile time value for the number of components
   static constexpr integer numComp = NC;
   static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
- 
+
   // Well jacobian column and row indicies
   using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
@@ -83,25 +83,23 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   IsothermalCompositionalMultiPhaseFluxKernel( real64 const dt,
-                           globalIndex const rankOffset,
-                           string const wellDofKey,
-                           WellElementSubRegion const & subRegion,
-                           ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                           PerforationData const * const perforationData,
-                           MultiFluidBase const & fluid,
+                                               globalIndex const rankOffset,
+                                               string const wellDofKey,
+                                               WellElementSubRegion const & subRegion,
+                                               ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                               PerforationData const * const perforationData,
+                                               MultiFluidBase const & fluid,
 
-                           arrayView1d< real64 > const & localRhs,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d< real64 > const & localRhs,
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                bool const & detectCrossflow,
-                           integer & numCrossFlowPerforations,
-                           BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
+                                               integer & numCrossFlowPerforations,
+                                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
     :
     m_dt( dt ),
     m_numPhases ( fluid.numFluidPhases()),
     m_rankOffset( rankOffset ),
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >() ),
-    m_dCompPerfRate_dPres( perforationData->getField< fields::well::dCompPerforationRate_dPres >() ),
-    m_dCompPerfRate_dComp( perforationData->getField< fields::well::dCompPerforationRate_dComp >() ),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
@@ -116,7 +114,7 @@ public:
     m_useTotalMassEquation ( kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
   { }
 
- 
+
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
@@ -132,120 +130,97 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-        using namespace compositionalMultiphaseUtilities;
-        // local working variables and arrays
-        stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
-        stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
+    using namespace compositionalMultiphaseUtilities;
+    // local working variables and arrays
+    stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 * numComp );
+    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
 
-        stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
-        stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
+    stackArray1d< real64, 2 * numComp > localPerf( 2 * numComp );
+    stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2 * numComp, 2 * resNumDOF );
 
-        // get the reservoir (sub)region and element indices
-        localIndex const er  = m_resElementRegion[iperf];
-        localIndex const esr = m_resElementSubRegion[iperf];
-        localIndex const ei  = m_resElementIndex[iperf];
+    // get the reservoir (sub)region and element indices
+    localIndex const er  = m_resElementRegion[iperf];
+    localIndex const esr = m_resElementSubRegion[iperf];
+    localIndex const ei  = m_resElementIndex[iperf];
 
-        // get the well element index for this perforation
-        localIndex const iwelem = m_perfWellElemIndex[iperf];
-        globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
-        globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+    // get the well element index for this perforation
+    localIndex const iwelem = m_perfWellElemIndex[iperf];
+    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
+    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
 
-        for( integer ic = 0; ic < numComp; ++ic )
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
+      eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
+    }
+    // Note res and well have same col lineup for P and compdens
+    for( integer jdof = 0; jdof < NC+1; ++jdof )
+    {
+      dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
+      dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
+    }
+    // For temp its different
+    if constexpr ( IS_THERMAL )
+    {
+      dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1;
+      dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT;
+    }
+    // populate local flux vector and derivatives
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
+      localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
+
+      if( m_detectCrossflow )
+      {
+        if( m_compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
         {
-          eqnRowIndices[TAG::RES * numComp + ic] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset ) + ic;
-          eqnRowIndices[TAG::WELL * numComp + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL + ic;
+          m_numCrossFlowPerforations += 1;
         }
-        // Note res and well have same col lineup for P and compdens
-        for( integer jdof = 0; jdof < NC+1; ++jdof )
+      }
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        localIndex localDofIndexPres = ke * resNumDOF;
+
+        localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
+        for( integer jc = 0; jc < numComp; ++jc )
         {
-          dofColIndices[TAG::RES * resNumDOF + jdof] = resOffset + jdof;
-          dofColIndices[TAG::WELL * resNumDOF + jdof] = wellElemOffset + WJ_COFFSET::dP + jdof;
+          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+
+          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
+          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
         }
-        // For temp its different
-        if constexpr ( IS_THERMAL )  
+        if constexpr ( IS_THERMAL )
         {
-          dofColIndices[TAG::RES * resNumDOF + NC+1 ] = resOffset + NC+1; 
-          dofColIndices[TAG::WELL * resNumDOF + NC+1 ] = wellElemOffset + WJ_COFFSET::dT; 
+          localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
+          localPerfJacobian[TAG::RES * numComp + ic][localDofIndexTemp] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
+          localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
         }
-        // populate local flux vector and derivatives
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          localPerf[TAG::RES * numComp + ic] = m_dt * m_compPerfRate[iperf][ic];
-          localPerf[TAG::WELL * numComp + ic] = -m_dt * m_compPerfRate[iperf][ic];
+      }
+    }
 
-          if( m_detectCrossflow )
-          {
-            if( m_compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
-            {
-              m_numCrossFlowPerforations += 1;
-            }
-          }
-      if( 0 )
-          {
+    if( m_useTotalMassEquation )
+    {
+      // Apply equation/variable change transformation(s)
+      stackArray1d< real64, 2 * resNumDOF > work( 2 * resNumDOF );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
+    }
 
-          for( integer ke = 0; ke < 2; ++ke )
-          {
-            localIndex const localDofIndexPres = ke * resNumDOF;
-
-            localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt * m_dCompPerfRate_dPres[iperf][ke][ic];
-            localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt * m_dCompPerfRate_dPres[iperf][ke][ic];
-            assert( fabs( m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP] - m_dCompPerfRate_dPres[iperf][ke][ic] ) < FLT_EPSILON );
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-              assert( fabs( m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc] - m_dCompPerfRate_dComp[iperf][ke][ic][jc] ) < FLT_EPSILON );
-              localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate_dComp[iperf][ke][ic][jc];
-              localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate_dComp[iperf][ke][ic][jc];
-            }
-          }
-          }
-          else
-          {
-             for( integer ke = 0; ke < 2; ++ke )
-          {
-            localIndex localDofIndexPres = ke * resNumDOF;
-
-            localPerfJacobian[TAG::RES * numComp + ic][localDofIndexPres] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-            localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexPres] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP];
-            assert( fabs( m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dP] - m_dCompPerfRate_dPres[iperf][ke][ic] ) < FLT_EPSILON );
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-              assert( fabs( m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc] - m_dCompPerfRate_dComp[iperf][ke][ic][jc] ) < FLT_EPSILON );
-            localPerfJacobian[TAG::RES * numComp + ic][localDofIndexComp] = m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-            localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexComp] = -m_dt * m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dC+jc];
-            }
-            if constexpr ( IS_THERMAL )
-            {
-              localIndex localDofIndexTemp  = localDofIndexPres + NC + 1;
-              localPerfJacobian[TAG::RES * numComp + ic][localDofIndexTemp] = m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT];
-              localPerfJacobian[TAG::WELL * numComp + ic][localDofIndexTemp] = -m_dt *  m_dCompPerfRate[iperf][ke][ic][CP_Deriv::dT]; 
-            }
-          }
-          }
-        }
-
-        if( m_useTotalMassEquation )
-        {
-          // Apply equation/variable change transformation(s)
-          stackArray1d< real64, 2 * resNumDOF > work( 2 * resNumDOF );
-          shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numComp, resNumDOF * 2, 2, localPerfJacobian, work );
-          shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numComp, 2, localPerf );
-        }
-
-        for( localIndex i = 0; i < localPerf.size(); ++i )
-        {
-          if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
-          {
-            m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices.data(),
-                                                                              localPerfJacobian[i].dataIfContiguous(),
-                                                                              2 * resNumDOF );
-            RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-          }
-        }
+    for( localIndex i = 0; i < localPerf.size(); ++i )
+    {
+      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      {
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                            dofColIndices.data(),
+                                                                            localPerfJacobian[i].dataIfContiguous(),
+                                                                            2 * resNumDOF );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+      }
+    }
     compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
-     
+
   }
 
 
@@ -281,8 +256,6 @@ protected:
   globalIndex const m_rankOffset;
   // Perfoation variables
   arrayView2d< real64 const > const m_compPerfRate;
-  arrayView3d< real64 const > const m_dCompPerfRate_dPres;
-  arrayView4d< real64 const > const m_dCompPerfRate_dComp;
   arrayView4d< real64 const > const m_dCompPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
 
@@ -326,18 +299,18 @@ public:
   static void
   createAndLaunch( integer const numComps,
                    real64 const dt,
-                           globalIndex const rankOffset,
-                           string const wellDofKey,
-                           WellElementSubRegion const & subRegion,
-                           ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                           PerforationData const * const perforationData,
-                           MultiFluidBase const & fluid,
-                           integer const & useTotalMassEquation,
+                   globalIndex const rankOffset,
+                   string const wellDofKey,
+                   WellElementSubRegion const & subRegion,
+                   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                   PerforationData const * const perforationData,
+                   MultiFluidBase const & fluid,
+                   integer const & useTotalMassEquation,
                    bool const & detectCrossflow,
-                           integer & numCrossFlowPerforations,
-                           arrayView1d< real64 > const & localRhs,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix 
-                            )
+                   integer & numCrossFlowPerforations,
+                   arrayView1d< real64 > const & localRhs,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix
+                   )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
@@ -359,7 +332,7 @@ public:
   }
 };
 
- 
+
 /**
  * @class FaceBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
@@ -370,10 +343,10 @@ class ThermalCompositionalMultiPhaseFluxKernel : public IsothermalCompositionalM
 {
 public:
   using Base = IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL >;
-   /// Compile time value for the number of components
+  /// Compile time value for the number of components
   static constexpr integer numComp = NC;
   static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
- 
+
   // Well jacobian column and row indicies
   using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using WJ_ROFFSET = compositionalMultiphaseWellKernels::RowOffset_WellJac< NC, IS_THERMAL >;
@@ -389,8 +362,8 @@ public:
   using Base::m_localRhs;
   using Base::m_localMatrix;
   using Base::m_rankOffset;
- 
-  
+
+
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
@@ -412,38 +385,38 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-   ThermalCompositionalMultiPhaseFluxKernel( real64 const dt,
+  ThermalCompositionalMultiPhaseFluxKernel( real64 const dt,
                                             integer const isProducer,
-                           globalIndex const rankOffset,
-                           string const wellDofKey,
-                           WellElementSubRegion const & subRegion,
-                           ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                           PerforationData const * const perforationData,
-                           MultiFluidBase const & fluid,
-                           arrayView1d< real64 > const & localRhs,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            globalIndex const rankOffset,
+                                            string const wellDofKey,
+                                            WellElementSubRegion const & subRegion,
+                                            ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                                            PerforationData const * const perforationData,
+                                            MultiFluidBase const & fluid,
+                                            arrayView1d< real64 > const & localRhs,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             bool const & detectCrossflow,
-                           integer & numCrossFlowPerforations,
-                           BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
+                                            integer & numCrossFlowPerforations,
+                                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
     : Base( dt,
-             rankOffset,
-             wellDofKey,
-             subRegion,
-             resDofNumber,
-             perforationData,
-             fluid,
-             localRhs,
-             localMatrix,
+            rankOffset,
+            wellDofKey,
+            subRegion,
+            resDofNumber,
+            perforationData,
+            fluid,
+            localRhs,
+            localMatrix,
             detectCrossflow,
-             numCrossFlowPerforations,
-             kernelFlags ),
+            numCrossFlowPerforations,
+            kernelFlags ),
     m_isProducer( isProducer ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >())
 
   { }
 
- 
+
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
@@ -466,55 +439,55 @@ public:
       {
         return;
       }
-        // local working variables and arrays
+      // local working variables and arrays
       stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
 
       stackArray1d< real64, 2 * numComp > localPerf( 2 );
       stackArray2d< real64, 2 * resNumDOF * 2 * numComp > localPerfJacobian( 2, 2 * resNumDOF );
 
-   
-        // equantion offsets - note res and well have different equation lineups
-        eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )      + NC + 1;
-        eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
 
+      // equantion offsets - note res and well have different equation lineups
+      eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )      + NC + 1;
+      eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
+
+      // populate local flux vector and derivatives
+      localPerf[TAG::RES  ]   = m_dt * m_energyPerfFlux[iperf];
+      localPerf[TAG::WELL ]   = -m_dt * m_energyPerfFlux[iperf];
+
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        localIndex localDofIndexPres = ke * resNumDOF;
+        localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+        //localDofIndexPres += 1;
         // populate local flux vector and derivatives
-        localPerf[TAG::RES  ]   = m_dt * m_energyPerfFlux[iperf];
-        localPerf[TAG::WELL ]   = -m_dt * m_energyPerfFlux[iperf];
-
-        for( integer ke = 0; ke < 2; ++ke )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
-          localIndex localDofIndexPres = ke * resNumDOF;
-          localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-          localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-          //localDofIndexPres += 1;
-          // populate local flux vector and derivatives
-           for( integer ic = 0; ic < numComp; ++ic )
-           {
-            localIndex const localDofIndexComp = localDofIndexPres + ic + 1;
+          localIndex const localDofIndexComp = localDofIndexPres + ic + 1;
           localPerfJacobian[TAG::RES ][localDofIndexComp] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
           localPerfJacobian[TAG::WELL][localDofIndexComp] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
-           }
+        }
         localPerfJacobian[TAG::RES ][localDofIndexPres+NC+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
         localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
-        }          
-      
- 
-        for( localIndex i = 0; i < localPerf.size(); ++i )
+      }
+
+
+      for( localIndex i = 0; i < localPerf.size(); ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
-          if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
-          {
-            m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices.data(),
-                                                                              localPerfJacobian[i].dataIfContiguous(),
-                                                                              2 * resNumDOF );
-            RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
-          }
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                       dofColIndices.data(),
+                                                                                       localPerfJacobian[i].dataIfContiguous(),
+                                                                                       2 * resNumDOF );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
         }
+      }
     } );
- 
-     
+
+
   }
-   
+
 
   /**
    * @brief Performs the kernel launch
@@ -572,18 +545,18 @@ public:
   createAndLaunch( integer const numComps,
                    integer const isProducer,
                    real64 const dt,
-                           globalIndex const rankOffset,
-                           string const wellDofKey,
-                           WellElementSubRegion const & subRegion,
-                           ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
-                           PerforationData const * const perforationData,
-                           MultiFluidBase const & fluid,
-                           integer const & useTotalMassEquation,
+                   globalIndex const rankOffset,
+                   string const wellDofKey,
+                   WellElementSubRegion const & subRegion,
+                   ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
+                   PerforationData const * const perforationData,
+                   MultiFluidBase const & fluid,
+                   integer const & useTotalMassEquation,
                    bool const & detectCrossflow,
-                           integer & numCrossFlowPerforations,
-                           arrayView1d< real64 > const & localRhs,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix 
-                            )
+                   integer & numCrossFlowPerforations,
+                   arrayView1d< real64 > const & localRhs,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix
+                   )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {

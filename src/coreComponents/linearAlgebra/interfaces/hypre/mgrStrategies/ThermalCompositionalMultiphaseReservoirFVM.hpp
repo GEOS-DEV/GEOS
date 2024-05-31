@@ -56,7 +56,7 @@ public:
   explicit ThermalCompositionalMultiphaseReservoirFVM( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
-     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+    HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
 
     // Level 0: eliminate the well block
     m_labels[0].resize( numResLabels );

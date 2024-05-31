@@ -145,31 +145,6 @@ DECLARE_FIELD( dTotalMassDensity,
                NO_WRITE,
                "Derivative of total mass density with respect to pressure, temperature, and global component density" );
 
-//tjb - remove
-DECLARE_FIELD( dTotalMassDensity_dPressure,
-               "dTotalMassDensity_dPressure",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of total mass density with respect to pressure" );
-//tjb - remove
-DECLARE_FIELD( dTotalMassDensity_dTemperature,
-               "dTotalMassDensity_dTemperature",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of total mass density with respect to temperature" );
-
-//tjb - remove
-DECLARE_FIELD( dTotalMassDensity_dGlobalCompDensity,
-               "dTotalMassDensity_dComp", // to avoid a rebaseline
-               array2dLayoutFluid_dC,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of total mass density with respect to global component density" );
 
 DECLARE_FIELD( compPerforationRate,
                "compPerforationRate",
@@ -187,21 +162,7 @@ DECLARE_FIELD( dCompPerforationRate,
                NO_WRITE,
                "Derivative of component perforation rate with respect to pressure temperature and global component density" );
 
-DECLARE_FIELD( dCompPerforationRate_dPres,
-               "dCompPerforationRate_dPres",
-               array3d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of component perforation rate with respect to pressure" );
 
-DECLARE_FIELD( dCompPerforationRate_dComp,
-               "dCompPerforationRate_dComp",
-               array4d< real64 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "Derivative of component perforation rate with respect to global component density" );
 
 DECLARE_FIELD( globalCompDensityScalingFactor,
                "globalCompDensityScalingFactor",

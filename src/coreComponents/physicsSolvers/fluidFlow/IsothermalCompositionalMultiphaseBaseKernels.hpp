@@ -2436,45 +2436,45 @@ void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numP
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( isThermal )
   {
-  if( numPhase == 2 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    if( numPhase == 2 )
     {
-      KERNELWRAPPER::template launch< NC(), 2, 1 >( std::forward< ARGS >( args ) ... );
-    } );
-  }
-  else if( numPhase == 3 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        KERNELWRAPPER::template launch< NC(), 2, 1 >( std::forward< ARGS >( args ) ... );
+      } );
+    }
+    else if( numPhase == 3 )
     {
-      KERNELWRAPPER::template launch< NC(), 3, 1 >( std::forward< ARGS >( args ) ... );
-    } );
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        KERNELWRAPPER::template launch< NC(), 3, 1 >( std::forward< ARGS >( args ) ... );
+      } );
+    }
+    else
+    {
+      GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+    }
   }
   else
   {
-    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
-  }
-  }
-  else
-  {
-  if( numPhase == 2 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    if( numPhase == 2 )
     {
-      KERNELWRAPPER::template launch< NC(), 2, 0 >( std::forward< ARGS >( args ) ... );
-    } );
-  }
-  else if( numPhase == 3 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        KERNELWRAPPER::template launch< NC(), 2, 0 >( std::forward< ARGS >( args ) ... );
+      } );
+    }
+    else if( numPhase == 3 )
     {
-      KERNELWRAPPER::template launch< NC(), 3, 0 >( std::forward< ARGS >( args ) ... );
-    } );
-  }
-  else
-  {
-    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
-  }
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        KERNELWRAPPER::template launch< NC(), 3, 0 >( std::forward< ARGS >( args ) ... );
+      } );
+    }
+    else
+    {
+      GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+    }
   }
 }
 

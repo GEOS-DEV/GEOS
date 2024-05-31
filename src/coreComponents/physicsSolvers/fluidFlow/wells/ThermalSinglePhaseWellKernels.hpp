@@ -95,7 +95,7 @@ public:
    * @struct StackVariables
    * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
    */
-    struct StackVariables : public Base::StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 public:
     GEOS_HOST_DEVICE
@@ -111,7 +111,7 @@ public:
     using Base::StackVariables::density;
     using Base::StackVariables::density_n;
     using Base::StackVariables::dDensity_dPres;
- 
+
   };
   /**
    * @brief Getter for the ghost rank of an element
@@ -123,7 +123,7 @@ public:
   { return m_elemGhostRank( ei ); }
 
 
-  
+
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
@@ -157,13 +157,13 @@ public:
       stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
-     stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
+      stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
       stack.localJacobian[numEqn-1][numDof-1] = dFluidEnergy_dT;
-          } );
+    } );
   }
 
 
-  
+
   /**
    * @brief Performs the kernel launch
    * @tparam POLICY the policy used in the RAJA kernels
@@ -202,7 +202,7 @@ protected:
   arrayView2d< real64 const > const m_internalEnergy_n;
   arrayView2d< real64 const > const m_dInternalEnergy_dPres;
   arrayView2d< real64 const > const m_dInternalEnergy_dTemp;
- 
+
 };
 
 
@@ -231,12 +231,12 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-      integer constexpr NUM_DOF = 2;    
+    integer constexpr NUM_DOF = 2;
     ElementBasedAssemblyKernel< NUM_DOF >
-      kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
-      ElementBasedAssemblyKernel< NUM_DOF >::template
+    kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
+    ElementBasedAssemblyKernel< NUM_DOF >::template
     launch< POLICY, ElementBasedAssemblyKernel< NUM_DOF > >( subRegion.size(), kernel );
- 
+
   }
 };
 } // end namespace singlePhaseWellKernels

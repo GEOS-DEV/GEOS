@@ -168,6 +168,12 @@ public:
    */
   virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value
@@ -179,7 +185,7 @@ public:
    */
   void assembleFluxTerms( real64 const & time_n,
                           real64 const & dt,
-                          DomainPartition  & domain,
+                          DomainPartition & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) override;
@@ -192,23 +198,11 @@ public:
    * @param rhs the system right-hand side vector
    */
   void assembleAccumulationTerms( real64 const & time_n,
-                                  real64 const & dt, DomainPartition const & domain,
+                                  real64 const & dt, DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) override;
 
-  /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void assembleVolumeBalanceTerms( real64 const & time_n,
-                                           real64 const & dt, DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -249,11 +243,11 @@ public:
 
     // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
+    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
 
     static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
-static constexpr char const * dCurrentVolRateString() { return "dCurrentVolumetricRate"; }
+    static constexpr char const * dCurrentVolRateString() { return "dCurrentVolumetricRate"; }
     static constexpr char const * dCurrentVolRate_dPresString() { return "dCurrentVolumetricRate_dPres"; }
     static constexpr char const * dCurrentVolRate_dRateString() { return "dCurrentVolumetricRate_dRate"; }
 
