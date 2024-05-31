@@ -121,13 +121,13 @@ public:
 private:
 
   /// symbol for the extremity of a delemitor
-  static constexpr string_view sideCross = "+";
+  static constexpr char m_sideCross = '+';
   /// symbol to delimit a table column
-  static constexpr string_view innerCross = "+";
+  static constexpr char m_innerCross = '+';
   /// symbol for separator construction
-  static constexpr string_view verticalLine = "-";
+  static constexpr char m_verticalLine = '|';
   ///  for the extremity of a row
-  static constexpr string_view horizontalLine = "|";
+  static constexpr char m_horizontalLine = '-';
 
   /**F
    * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
