@@ -1,6 +1,6 @@
 baselines:
-  bucket: https://storage.googleapis.com/geosx
-  baseline: integratedTests/baseline_integratedTests-pr3125-5101-7764ffb.tar.gz
+  bucket: geosx
+  baseline: integratedTests/baseline_integratedTests-pr3125-5101-7764ffb
 
 allow_fail:
   all: ''
