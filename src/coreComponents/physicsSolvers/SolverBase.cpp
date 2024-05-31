@@ -281,7 +281,7 @@ bool SolverBase::execute( real64 const time_n,
       {
         nextDt = dtRemaining;
         if( m_nonlinearSolverParameters.getLogLevel() > 0 )
-          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match ramaining time", getName(), nextDt ));
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ));
       }
     }
 
