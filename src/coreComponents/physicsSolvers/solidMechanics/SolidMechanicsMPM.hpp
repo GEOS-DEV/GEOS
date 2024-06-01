@@ -792,14 +792,15 @@ protected:
   real64 m_characteristicTangentialDisplacement;
   real64 m_maxCohesiveNormalDisplacement;
   real64 m_maxCohesiveTangentialDisplacement;
+
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
   array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
   array2d< real64 > m_referenceCohesiveGridNodeAreas;
   array2d< real64 > m_referenceCohesiveGridNodePositions;
-  array2d< real64 > m_referenceCohesiveGridNodeDamages;
-  array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
   array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
   array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
+  array2d< real64 > m_cohesiveGridNodeDamages;
+  array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
