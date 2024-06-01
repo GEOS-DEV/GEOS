@@ -440,7 +440,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "enableCohesiveLaws", &m_enableCohesiveLaws ).
     setInputFlag( InputFlags::FALSE).
     setApplyDefaultValue( m_enableCohesiveLaws ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag to enable cohesive laws" );
 
   registerWrapper( "cohesiveLaw", &m_cohesiveLaw ).
@@ -508,6 +508,46 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Max cohesive tangential displacement value" );
+
+  registerWrapper( "cohesiveNodeGlobalIndices", &m_cohesiveNodeGlobalIndices ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Array of the global indices for cohesive grid nodes" );
+
+  registerWrapper( "referenceCohesiveGridNodePartitioningSurfaceNormals", &m_referenceCohesiveGridNodePartitioningSurfaceNormals ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference partitioning surface normal for cohesive grid nodes" );
+
+  registerWrapper( "referenceCohesiveGridNodeAreas", &m_referenceCohesiveGridNodeAreas ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node areas" );
+
+  registerWrapper( "referenceCohesiveGridNodePositions", &m_referenceCohesiveGridNodePositions ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node positions" );
+
+  registerWrapper( "cohesiveGridNodeDamages", &m_cohesiveGridNodeDamages ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Cohesive grid node damages" );
+
+  registerWrapper( "referenceCohesiveGridNodeSurfaceNormals", &m_referenceCohesiveGridNodeSurfaceNormals ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node surface normals" );
+
+  registerWrapper( "maxCohesiveGridNodeNormalDisplacement", &m_maxCohesiveGridNodeNormalDisplacement ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Max cohesive normal displacement for each cohesive grid node" );
+    
+  registerWrapper( "maxCohesiveGridNodeTangentialDisplacement", &m_maxCohesiveGridNodeTangentialDisplacement ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Max cohesive tangential displacement for each cohesive grid node" );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2213,7 +2253,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   populateMappingArrays( particleManager, nodeManager );
 
   //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_enableCohesiveLaws, "Compute reactions due to cohesive laws" );
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_enableCohesiveLaws == 1, "Compute reactions due to cohesive laws" );
   solverProfilingIf( "Compute reactions due to cohesive laws", m_enableCohesiveLaws == 1 );
   //#######################################################################################
   if( m_enableCohesiveLaws == 1 )
@@ -6435,7 +6475,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   } );
 
   m_referenceCohesiveGridNodeAreas.resize( numCohesiveNodes, m_numVelocityFields ); // This needs to be solver field
-  m_referenceCohesiveGridNodeDamages.resize( numCohesiveNodes, m_numVelocityFields ); // TODO: eventually this should account for pairings of velocity fields (e.g. multiple cohesive laws defined mapping to different field pairings)
+  m_cohesiveGridNodeDamages.resize( numCohesiveNodes, m_numVelocityFields ); // TODO: eventually this should account for pairings of velocity fields (e.g. multiple cohesive laws defined mapping to different field pairings)
   m_referenceCohesiveGridNodeSurfaceNormals.resize( numCohesiveNodes, m_numVelocityFields, 3 );
 
   m_maxCohesiveGridNodeNormalDisplacement.resize( numCohesiveNodes, m_numVelocityFields, m_numVelocityFields );
@@ -6454,7 +6494,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   }
 
   arrayView2d< real64 > const referenceCohesiveGridNodeAreas = m_referenceCohesiveGridNodeAreas;
-  arrayView2d< real64 > const referenceCohesiveGridNodeDamages = m_referenceCohesiveGridNodeDamages;
+  arrayView2d< real64 > const cohesiveGridNodeDamages = m_cohesiveGridNodeDamages;
   arrayView3d< real64 > const referenceCohesiveGridNodeSurfaceNormals = m_referenceCohesiveGridNodeSurfaceNormals;
 
   array2d< real64 > tempCohesiveGridNodeAreasLocal( numCohesiveNodes, m_numVelocityFields );
@@ -6466,7 +6506,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     for(int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++)
     {
       referenceCohesiveGridNodeAreas[g][fieldIndex] = 0.0; //Initialize this to zero
-      referenceCohesiveGridNodeDamages[g][fieldIndex] = 0.0; //Initialize this to zero
+      cohesiveGridNodeDamages[g][fieldIndex] = 0.0; //Initialize this to zero
 
       tempCohesiveGridNodeAreasLocal[g][fieldIndex] = 0.0;
       if( LvArray::tensorOps::l2Norm< 3 >( tempGridParticleSurfaceNormalGlobal[g][fieldIndex] ) < 1e-16)
@@ -6538,6 +6578,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           for(int i = 0; i < m_numDims; i++)
           {
             gridReferenceSurfacePosition[g][fieldIndex][i] = tempGridSurfacePositionGlobal[n][fieldIndex][i];
+            // GEOS_LOG_RANK("g: " <<  g << ", f: " << fieldIndex << ", A: " << referenceCohesiveGridNodeAreas[n][fieldIndex]);
             gridReferenceAreaVector[g][fieldIndex][i] = referenceCohesiveGridNodeAreas[n][fieldIndex] * referenceCohesiveGridNodeSurfaceNormals[n][fieldIndex][i];
           }
         }
@@ -7058,17 +7099,17 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
         }
         else
         {
-          m_referenceCohesiveGridNodeDamages[gg][A] = 1.0;
-          m_referenceCohesiveGridNodeDamages[gg][B] = 1.0;
+          m_cohesiveGridNodeDamages[gg][A] = 1.0;
+          m_cohesiveGridNodeDamages[gg][B] = 1.0;
         }
       }
     }
   } );
 
   // // Sync cohesive damage ( check if this is the reason some particles don't lose there cohesive flag after cohesive node is damaged)
-  // MpiWrapper::allReduce( m_referenceCohesiveGridNodeDamages.data(),
-  //                        m_referenceCohesiveGridNodeDamages.data(),
-  //                        m_referenceCohesiveGridNodeDamages.size(),
+  // MpiWrapper::allReduce( m_cohesiveGridNodeDamages.data(),
+  //                        m_cohesiveGridNodeDamages.data(),
+  //                        m_cohesiveGridNodeDamages.size(),
   //                        MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
   //                        MPI_COMM_GEOSX );      
 
@@ -7076,7 +7117,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
   // {
   //   for( int f = 0; f < m_numVelocityFields; f++ )
   //   {
-  //     // GEOS_LOG_RANK_0( "n: " << n << ", f: " << f << ", c_dmg: " << m_referenceCohesiveGridNodeDamages[n][f] << ", dn_max: " << << ", dt_max: " << ); 
+  //     // GEOS_LOG_RANK_0( "n: " << n << ", f: " << f << ", c_dmg: " << m_cohesiveGridNodeDamages[n][f] << ", dn_max: " << << ", dt_max: " << ); 
   //   }
   // }
 
@@ -7166,7 +7207,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
             // Should that node be marke as fully damaged?
             if( tempGridMassGlobal[nodeIndex][fieldIndex] > m_smallMass) // 1e-20 )
             {
-              if( m_enableCohesiveFailure == 0 || m_referenceCohesiveGridNodeDamages[nodeIndex][fieldIndex] < 1.0 )
+              if( m_enableCohesiveFailure == 0 || m_cohesiveGridNodeDamages[nodeIndex][fieldIndex] < 1.0 )
               {
                 for( int i=0; i < m_numDims; i++ )
                 {
@@ -7357,8 +7398,8 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
     if( ( m_maxCohesiveGridNodeNormalDisplacement[g][A][B] >= m_maxCohesiveNormalDisplacement ) || 
         ( m_maxCohesiveGridNodeTangentialDisplacement[g][A][B] >= m_maxCohesiveTangentialDisplacement ) )
     {
-      m_referenceCohesiveGridNodeDamages[g][A] = 1.0;
-      m_referenceCohesiveGridNodeDamages[g][B] = 1.0;
+      m_cohesiveGridNodeDamages[g][A] = 1.0;
+      m_cohesiveGridNodeDamages[g][B] = 1.0;
       return;
     }
   }
