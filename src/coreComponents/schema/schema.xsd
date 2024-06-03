@@ -4181,10 +4181,10 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMixingType => The type of viscosity to be used for component mixing. Valid options:
-* Herning-Zipperer
+* HerningZipperer
 * Wilke
 * Brokaw-->
-		<xsd:attribute name="componentMixingType" type="string" default="Herning-Zipperer" />
+		<xsd:attribute name="componentMixingType" type="string" default="HerningZipperer" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
@@ -4234,10 +4234,10 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMixingType => The type of viscosity to be used for component mixing. Valid options:
-* Herning-Zipperer
+* HerningZipperer
 * Wilke
 * Brokaw-->
-		<xsd:attribute name="componentMixingType" type="string" default="Herning-Zipperer" />
+		<xsd:attribute name="componentMixingType" type="string" default="HerningZipperer" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
