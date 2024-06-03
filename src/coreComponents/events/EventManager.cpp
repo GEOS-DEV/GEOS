@@ -230,10 +230,9 @@ void EventManager::outputTime() const
   GEOS_LOG_RANK_0( "\n------------------- TIMESTEP START -------------------" );
   if( m_maxTime < std::numeric_limits< real64 >::max() )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {} out of {} ({}%)",
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {} ({}% completed)",
                                units::TimeFormatInfo::fromSeconds( m_time ),
-                               units::TimeFormatInfo::fromSeconds( m_maxTime ),
-                               fmt::format( "{:.{}f}", 100.0 * m_time / m_maxTime, 0 ) ) );
+                               fmt::format( "{:.{}f}", 100.0 * (m_time - m_minTime) / ( m_maxTime - m_minTime ), 0 ) ) );
   }
   else
   {
@@ -242,7 +241,7 @@ void EventManager::outputTime() const
   GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
   if( m_maxCycle < std::numeric_limits< integer >::max() )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {} out of {} ({}%)",
+    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {} out of {} ({}% completed)",
                                 m_cycle, m_maxCycle, fmt::format( "{:.{}f}", 100.0 * m_cycle / m_maxCycle, 0 ) ) );
   }
   else
