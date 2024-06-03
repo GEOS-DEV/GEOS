@@ -206,7 +206,7 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
         NodeGlbIdx const & n0 = face[i], & n1 = face[i + 1];
         std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
         std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
-        EdgeInfo const info = { n2e.at( p1 ), std::uint8_t{ p0 == p1 } };
+        EdgeInfo const info = { n2e.at( p1 ), std::uint8_t{ p0 != p1 } };
         f2e[fgi].emplace_back( info );
       }
       ++fgi;
