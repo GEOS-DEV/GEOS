@@ -18,6 +18,7 @@
 
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 
 namespace geos
 {
@@ -31,8 +32,9 @@ namespace constitutive
 BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
+  registerWrapper( viewKeyStruct::defaultGrainBulkModulusString(), &m_defaultGrainBulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Grain bulk modulus" );
 
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
@@ -46,8 +48,12 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
-  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Biot coefficient" );
+
+  registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Grain Bulk modulus." );
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
@@ -78,6 +84,10 @@ void BiotPorosity::postProcessInput()
 
   getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+
+  // set results as array default values
+  getWrapper< array1d< real64 > >( fields::porosity::grainBulkModulus::key() ).
+    setApplyDefaultValue( m_defaultGrainBulkModulus );
 }
 
 void BiotPorosity::initializeState() const
