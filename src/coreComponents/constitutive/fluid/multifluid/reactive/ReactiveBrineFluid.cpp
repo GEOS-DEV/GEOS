@@ -209,7 +209,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
 
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       writeCSV, writeInLog);
+                                       writeCSV, writeInLog );
 }
 
 template< typename PHASE >

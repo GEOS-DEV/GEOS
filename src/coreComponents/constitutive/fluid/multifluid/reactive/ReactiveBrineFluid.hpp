@@ -160,14 +160,14 @@ protected:
 
 private:
 
-  void createPVTModels(bool isClone);
+  void createPVTModels( bool isClone );
 
   bool m_isClone = true;
 
   /// Names of the files defining the viscosity and density models
   path_array m_phasePVTParaFiles;
 
-  /// @brief 
+  /// @brief
   integer m_writeCSV;
 
   /// Brine constitutive models
