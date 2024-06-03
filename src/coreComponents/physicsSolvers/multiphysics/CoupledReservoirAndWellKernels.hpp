@@ -578,7 +578,7 @@ public:
   }
 };
 
-};   // end namespace coupledReservoirAndWellKernels
+} // end namespace coupledReservoirAndWellKernels
 
 } // end namespace geos
 
