@@ -161,6 +161,7 @@ public:
     } );
   }
 
+  // general version of assembleSystem function, keep in mind many solvers will override it
   virtual void
   assembleSystem( real64 const time_n,
                   real64 const dt,
@@ -171,18 +172,13 @@ public:
   {
     /// Fully-coupled assembly.
 
-    // 1. we sync the nonlinear convergence history. The coupled solver parameters are the one being
-    // used. We want to propagate the info to subsolvers. It can be important for solvers that
-    // have special treatment for specific iterations.
-    synchronizeNonLinearParameters();
-
-    // 2. Assemble matrix blocks of each individual solver
+    // 1. Assemble matrix blocks of each individual solver
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       solver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
 
-    // 3. Assemble coupling blocks
+    // 2. Assemble coupling blocks
     assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
@@ -433,9 +429,9 @@ protected:
       resetStateToBeginningOfStep( domain );
 
       integer & iter = solverParams.m_numNewtonIterations;
-      iter = 0;
+
       /// Sequential coupling loop
-      while( iter < solverParams.m_maxIterNewton )
+      for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
         // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
@@ -472,6 +468,8 @@ protected:
 
         if( isConverged )
         {
+          // we still want to count current iteration
+          ++iter;
           // exit outer loop
           break;
         }
@@ -479,8 +477,6 @@ protected:
         {
           finishSequentialIteration( iter, domain );
         }
-
-        ++iter;
       }
 
       if( isConverged )
@@ -643,6 +639,11 @@ protected:
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError );
 
+    if( !isSequential )
+    {
+      synchronizeNonlinearSolverParameters();
+    }
+
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
       validateNonlinearAcceleration();
   }
@@ -656,12 +657,12 @@ protected:
                  InputError );
   }
 
-  void
-  synchronizeNonLinearParameters()
+  virtual void
+  synchronizeNonlinearSolverParameters() override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
+      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
     } );
   }
 
