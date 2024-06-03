@@ -62,11 +62,6 @@ public:
   std::vector< string > const & getErrorMsgs() const;
 
 private:
-  /**
-   * @brief Set an error message
-   * @param msg The error msg to vector
-   */
-  void addErrorMsg( string const & msg );
 
   /// vector containing all rows with cell values
   std::vector< std::vector< string > > m_rows;
