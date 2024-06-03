@@ -28,7 +28,7 @@ void TableData::addRow( std::vector< string > const & row )
     string msg = "Remarks : some cells may be missing";
     if( std::find( m_errorsMsg.begin(), m_errorsMsg.end(), msg ) == m_errorsMsg.end())
     {
-      addErrorMsg( msg );
+      m_errorsMsg.push_back( msg );
     }
   }
   m_rows.push_back( row );
@@ -48,11 +48,6 @@ std::vector< std::vector< string > > const & TableData::getTableDataRows() const
 std::vector< string > const & TableData::getErrorMsgs() const
 {
   return m_errorsMsg;
-}
-
-void TableData::addErrorMsg( string const & msg )
-{
-  m_errorsMsg.push_back( msg );
 }
 
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,

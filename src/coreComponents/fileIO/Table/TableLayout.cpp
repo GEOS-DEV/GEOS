@@ -72,7 +72,7 @@ integer const & TableLayout::getColumnMargin() const
 
 integer const & TableLayout::getMarginTitle() const
 {
-  return m_marginTitle;
+  return m_titleMargin;
 }
 
 }
