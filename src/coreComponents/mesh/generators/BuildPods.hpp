@@ -59,7 +59,7 @@ struct EdgeInfo
 
 struct MeshGraph
 {
-  std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;  // TODO What about the metadata (e.g. flip the face)
+  std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;
   std::map< FaceGlbIdx, std::vector< EdgeInfo > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
   std::set< NodeGlbIdx > n;

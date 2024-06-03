@@ -835,7 +835,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   missingMappings.FillComplete( ownedMap, missingIndicesMap );
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingMappings );
 
-  MeshGraph ghosts;  // TODO most likely this will be wrong.
+  MeshGraph ghosts;
 
   int ext = 0;
   std::vector< double > extValues;

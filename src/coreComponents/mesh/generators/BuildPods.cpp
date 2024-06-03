@@ -41,9 +41,7 @@ struct GlobalNumberings
 
 
 template< class GI, class LI >
-void buildL2GMappings( std::set< GI > const & owned,
-                       std::set< GI > const & present,
-                       std::set< GI > const & ghosts,
+void buildL2GMappings( std::set< GI > const & gis,
                        std::map< GI, LI > & g2l,
                        std::map< LI, GI > & l2g ) // TODO we can make it a vector -> simple push_backs will be enough to build it
 {
@@ -51,22 +49,17 @@ void buildL2GMappings( std::set< GI > const & owned,
   l2g.clear();
 
   LI li{ 0 };
-  for( std::set< GI > const & gis: { owned, present, ghosts } )
+  for( GI const & gi: gis )
   {
-    for( GI const & gi: gis )
-    {
-      g2l.insert( { gi, li } );
-      l2g.insert( { li, gi } );
-      ++li;
-    }
+    g2l.insert( { gi, li } );
+    l2g.insert( { li, gi } );
+    ++li;
   }
 
   // TODO add a check to see if we have the full range of local indices.
 }
 
-GlobalNumberings buildL2GMappings( MeshGraph const & owned,
-                                   MeshGraph const & present,
-                                   MeshGraph const & ghosts )
+GlobalNumberings buildL2GMappings( MeshGraph const & graph )
 {
   GlobalNumberings result;
 
@@ -76,10 +69,10 @@ GlobalNumberings buildL2GMappings( MeshGraph const & owned,
     return mapKeys< std::set >( m );
   };
 
-  buildL2GMappings( owned.n, present.n, ghosts.n, result.ng2l, result.nl2g );
-  buildL2GMappings( keys( owned.e2n ), keys( present.e2n ), keys( ghosts.e2n ), result.eg2l, result.el2g );
-  buildL2GMappings( keys( owned.f2e ), keys( present.f2e ), keys( ghosts.f2e ), result.fg2l, result.fl2g );
-  buildL2GMappings( keys( owned.c2f ), keys( present.c2f ), keys( ghosts.c2f ), result.cg2l, result.cl2g );
+  buildL2GMappings( graph.n, result.ng2l, result.nl2g );
+  buildL2GMappings( keys( graph.e2n ), result.eg2l, result.el2g );
+  buildL2GMappings( keys( graph.f2e ), result.fg2l, result.fl2g );
+  buildL2GMappings( keys( graph.c2f ), result.cg2l, result.cl2g );
 
   return result;
 }
@@ -103,7 +96,7 @@ std::vector< integer > buildGhostRank( std::map< GI, LI > const & g2l,
   return ghostRank;
 }
 
-EdgeMgrImpl makeFlavorLessEdgeMgrImpl( std::size_t const & numEdges,
+EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
                                        std::vector< integer > const & ghostRank,
                                        std::map< EdgeLocIdx, std::tuple< NodeLocIdx, NodeLocIdx > > const & e2n,
                                        std::map< EdgeLocIdx, std::vector< FaceLocIdx > > const & e2f,
@@ -153,9 +146,7 @@ EdgeMgrImpl makeFlavorLessEdgeMgrImpl( std::size_t const & numEdges,
 }
 
 EdgeMgrImpl buildEdgeMgr( GlobalNumberings const & numberings,
-                          MeshGraph const & owned,
-                          MeshGraph const & present,
-                          MeshGraph const & ghosts,
+                          MeshGraph const & graph,
                           GhostRecv const & recv,
                           GhostSend const & send )
 {
@@ -167,30 +158,74 @@ EdgeMgrImpl buildEdgeMgr( GlobalNumberings const & numberings,
 
   // Building the edges to nodes mapping
   std::map< EdgeLocIdx, std::tuple< NodeLocIdx, NodeLocIdx > > e2n;
-  for( MeshGraph const & graph: { owned, present, ghosts } )
+  for( auto const & [egi, ngis]: graph.e2n )
   {
-    for( auto const & [egi, ngis]: graph.e2n )
-    {
-      NodeLocIdx const nli0 = numberings.ng2l.at( std::get< 0 >( ngis ) );
-      NodeLocIdx const nli1 = numberings.ng2l.at( std::get< 1 >( ngis ) );
-      e2n[numberings.eg2l.at( egi )] = { nli0, nli1 };
-    }
+    NodeLocIdx const nli0 = numberings.ng2l.at( std::get< 0 >( ngis ) );
+    NodeLocIdx const nli1 = numberings.ng2l.at( std::get< 1 >( ngis ) );
+    e2n[numberings.eg2l.at( egi )] = { nli0, nli1 };
   }
 
   // Building the edges to nodes mapping
   std::map< EdgeLocIdx, std::vector< FaceLocIdx > > e2f;
-  for( MeshGraph const & graph: { owned, present, ghosts } )
+  for( auto const & [fgi, edgeInfos]: graph.f2e )
   {
-    for( auto const & [fgi, edgeInfos]: graph.f2e )
+    for( EdgeInfo const & edgeInfo: edgeInfos )
     {
-      for( EdgeInfo const & edgeInfo: edgeInfos )
-      {
-        e2f[numberings.eg2l.at( edgeInfo.index )].emplace_back( numberings.fg2l.at( fgi ) );
-      }
+      e2f[numberings.eg2l.at( edgeInfo.index )].emplace_back( numberings.fg2l.at( fgi ) );
     }
   }
 
-  return makeFlavorLessEdgeMgrImpl( numEdges, ghostRank, e2n, e2f, numberings.eg2l, numberings.el2g );
+  return makeFlavorlessEdgeMgrImpl( numEdges, ghostRank, e2n, e2f, numberings.eg2l, numberings.el2g );
+}
+
+void buildFaceMgr( GlobalNumberings const & numberings,
+                   MeshGraph const & graph,
+                   GhostRecv const & recv,
+                   GhostSend const & send )
+{
+  // Total number of faces available in the rank (including the ghosted edges).
+  std::size_t const numFaces = std::size( numberings.fl2g );
+
+  // Building the ghost rank.
+  std::vector< integer > const ghostRank = buildGhostRank( numberings.fg2l, send.faces, recv.faces );
+
+  // Building the `f2n` and `f2e` mappings
+  std::map< FaceLocIdx, std::vector< NodeLocIdx > > f2n;
+  std::map< FaceLocIdx, std::vector< EdgeLocIdx > > f2e;
+  for( auto const & [fgi, edgeInfos]: graph.f2e )
+  {
+    FaceLocIdx const & fli = numberings.fg2l.at( fgi );
+
+    std::vector< NodeLocIdx > & nodes = f2n[fli];
+    std::vector< EdgeLocIdx > & edges = f2e[fli];
+
+    nodes.reserve( std::size( edgeInfos ) );
+    edges.reserve( std::size( edgeInfos ) );
+
+    for( EdgeInfo const & edgeInfo: edgeInfos )
+    {
+      std::tuple< NodeGlbIdx, NodeGlbIdx > const & ngis = graph.e2n.at( edgeInfo.index );
+      nodes.emplace_back( edgeInfo.start == 0 ? numberings.ng2l.at( std::get< 0 >( ngis ) ) : numberings.ng2l.at( std::get< 1 >( ngis ) ) );
+
+      edges.emplace_back( numberings.eg2l.at( edgeInfo.index ) );
+    }
+  }
+}
+
+
+MeshGraph mergeMeshGraph( MeshGraph const & owned,
+                          MeshGraph const & present,
+                          MeshGraph const & ghosts )
+{
+  MeshGraph result{ owned };
+  for( MeshGraph const & graph: { present, ghosts } )
+  {
+    result.c2f.insert( std::cbegin( graph.c2f ), std::cend( graph.c2f ) );
+    result.f2e.insert( std::cbegin( graph.f2e ), std::cend( graph.f2e ) );
+    result.e2n.insert( std::cbegin( graph.e2n ), std::cend( graph.e2n ) );
+    result.n.insert( std::cbegin( graph.n ), std::cend( graph.n ) );
+  }
+  return result;
 }
 
 void buildPods( MeshGraph const & owned,
@@ -199,7 +234,9 @@ void buildPods( MeshGraph const & owned,
                 GhostRecv const & recv,
                 GhostSend const & send )
 {
-  GlobalNumberings const numberings = buildL2GMappings( owned, present, ghosts );
+  MeshGraph const graph = mergeMeshGraph( owned, present, ghosts );
+
+  GlobalNumberings const numberings = buildL2GMappings( graph );
 //  GEOS_LOG_RANK( "numberings ng2l = " << json( numberings.ng2l ) );
 //  GEOS_LOG_RANK( "owned mesh graph nodes = " << json( owned.n ) );
 //  GEOS_LOG_RANK( "present mesh graph nodes = " << json( present.n ) );
@@ -211,7 +248,8 @@ void buildPods( MeshGraph const & owned,
 
 //  MpiWrapper::barrier();
 
-  buildEdgeMgr( numberings, owned, present, ghosts, recv, send );
+  buildEdgeMgr( numberings, graph, recv, send );
+  buildFaceMgr( numberings, graph, recv, send );
 }
 
 }
