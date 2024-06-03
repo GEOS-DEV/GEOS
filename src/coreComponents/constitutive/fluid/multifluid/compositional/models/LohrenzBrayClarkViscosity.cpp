@@ -33,19 +33,19 @@ namespace compositional
 {
 
 LohrenzBrayClarkViscosityUpdate::LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type,
-  arrayView1d<real64 const> const & componentCriticalVolume )
+                                                                  arrayView1d< real64 const > const & componentCriticalVolume )
   : m_mixing_type( mixing_type ),
-  m_componentCriticalVolume(componentCriticalVolume)
+  m_componentCriticalVolume( componentCriticalVolume )
 {}
 
 LohrenzBrayClarkViscosity::LohrenzBrayClarkViscosity( string const & name,
                                                       ComponentProperties const & componentProperties,
                                                       integer const phaseIndex,
-                             ModelParameters const & modelParameters ):
+                                                      ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties ),
-  m_parameters(dynamic_cast<Parameters const*>(&modelParameters))
+  m_parameters( dynamic_cast< Parameters const * >(&modelParameters))
 {
-    GEOS_UNUSED_VAR(phaseIndex);
+  GEOS_UNUSED_VAR( phaseIndex );
 }
 
 LohrenzBrayClarkViscosity::KernelWrapper
@@ -54,39 +54,39 @@ LohrenzBrayClarkViscosity::createKernelWrapper() const
   return KernelWrapper( m_mixing_type, m_parameters->m_componentCriticalVolume );
 }
 
-  void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
-  {
+void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
+{
   fluid->registerWrapper( viewKeyStruct::componentCriticalVolumeString(), &m_componentCriticalVolume ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Component critical volumnes" );
-  }
+}
 
-  void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
-  {
+void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
+{
   integer const numComponents = fluid->numFluidComponents();
-    
+
   if( m_componentCriticalVolume.empty() )
   {
-    using Fluid = CompositionalMultiphaseFluid<NullFlashModel,NullPhaseModel,NullPhaseModel>;
+    using Fluid = CompositionalMultiphaseFluid< NullFlashModel, NullPhaseModel, NullPhaseModel >;
     m_componentCriticalVolume.resize( numComponents );
 
-auto const & componentCriticalPressure = fluid->getWrapper< array1d<real64> >( Fluid::viewKeyStruct::componentCriticalPressureString() ).reference();
-auto const & componentCriticalTemperature = fluid->getWrapper< array1d<real64> >( Fluid::viewKeyStruct::componentCriticalTemperatureString() ).reference();
+    auto const & componentCriticalPressure = fluid->getWrapper< array1d< real64 > >( Fluid::viewKeyStruct::componentCriticalPressureString() ).reference();
+    auto const & componentCriticalTemperature = fluid->getWrapper< array1d< real64 > >( Fluid::viewKeyStruct::componentCriticalTemperatureString() ).reference();
 
     calculateCriticalVolume( numComponents,
-    componentCriticalPressure,
+                             componentCriticalPressure,
                              componentCriticalTemperature,
                              m_componentCriticalVolume );
   }
 
-GEOS_THROW_IF_NE_MSG( m_componentCriticalVolume.size(), numComponents,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(), 
-                          viewKeyStruct::componentCriticalVolumeString() ),
-                          InputError );
-  }
+  GEOS_THROW_IF_NE_MSG( m_componentCriticalVolume.size(), numComponents,
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
+                                  viewKeyStruct::componentCriticalVolumeString() ),
+                        InputError );
+}
 
 void LohrenzBrayClarkViscosity::Parameters::calculateCriticalVolume(
-    integer const numComponents,
+  integer const numComponents,
   arrayView1d< const real64 > const criticalPressure,
   arrayView1d< const real64 > const criticalTemperature,
   arrayView1d< real64 > const criticalVolume )

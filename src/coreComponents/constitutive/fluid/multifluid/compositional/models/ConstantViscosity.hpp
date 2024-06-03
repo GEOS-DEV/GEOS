@@ -33,7 +33,7 @@ namespace compositional
 class ConstantViscosityUpdate final : public FunctionBaseUpdate
 {
 public:
-  explicit ConstantViscosityUpdate(real64 const constantPhaseViscosity);
+  explicit ConstantViscosityUpdate( real64 const constantPhaseViscosity );
 
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -48,18 +48,18 @@ public:
                 bool useMass ) const;
 
 private:
-real64 const m_constantPhaseViscosity;
+  real64 const m_constantPhaseViscosity;
 };
 
 class ConstantViscosity : public FunctionBase
 {
-    public:
-    static constexpr real64 defaultViscosity = 0.001;
+public:
+  static constexpr real64 defaultViscosity = 0.001;
 public:
   ConstantViscosity( string const & name,
                      ComponentProperties const & componentProperties,
                      integer const phaseIndex,
-                             ModelParameters const & modelParameters );
+                     ModelParameters const & modelParameters );
 
   static string catalogName() { return ""; }
 
@@ -79,23 +79,23 @@ public:
 
   // Parameters for constant viscosity model
   class Parameters : public ModelParameters
-{
-public:
-  Parameters() = default;
-~Parameters() override = default;
-
-  void registerParameters( MultiFluidBase * fluid ) override;
-  void postProcessInput( MultiFluidBase const * fluid ) override;
-
-  struct viewKeyStruct
   {
-    static constexpr char const * constantPhaseViscosityString() { return "constantPhaseViscosity"; }
-  };
+public:
+    Parameters() = default;
+    ~Parameters() override = default;
 
-  array1d< real64 > m_constantPhaseViscosity;
-};
+    void registerParameters( MultiFluidBase * fluid ) override;
+    void postProcessInput( MultiFluidBase const * fluid ) override;
+
+    struct viewKeyStruct
+    {
+      static constexpr char const * constantPhaseViscosityString() { return "constantPhaseViscosity"; }
+    };
+
+    array1d< real64 > m_constantPhaseViscosity;
+  };
 private:
-real64 m_constantPhaseViscosity{defaultViscosity};
+  real64 m_constantPhaseViscosity{defaultViscosity};
 };
 
 template< integer USD1, integer USD2 >

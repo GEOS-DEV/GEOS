@@ -47,7 +47,7 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent ),
-  m_parameters( compositional::CompositionalModelParameters<FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters() )
+  m_parameters( compositional::CompositionalModelParameters< FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters() )
 {
   using InputFlags = dataRepository::InputFlags;
 

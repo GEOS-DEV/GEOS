@@ -31,11 +31,11 @@ namespace constitutive
 
 namespace compositional
 {
-    
+
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 struct CompositionalModelParameters
 {
-      static std::unique_ptr< ModelParameters > createModelParameters()
+  static std::unique_ptr< ModelParameters > createModelParameters()
   {
     return std::make_unique< ModelParameters >();
   }
@@ -47,26 +47,26 @@ struct CompositionalModelParameters<
   CompositionalTwoPhasePengRobinsonConstantViscosity::FlashModel,
   CompositionalTwoPhasePengRobinsonConstantViscosity::Phase1Model,
   CompositionalTwoPhasePengRobinsonConstantViscosity::Phase2Model,
-  CompositionalTwoPhasePengRobinsonConstantViscosity::Phase3Model>
-  {
-      static std::unique_ptr< ModelParameters > createModelParameters()
+  CompositionalTwoPhasePengRobinsonConstantViscosity::Phase3Model >
+{
+  static std::unique_ptr< ModelParameters > createModelParameters()
   {
     return std::make_unique< ConstantViscosity::Parameters >();
   }
-  };
+};
 
 template<>
 struct CompositionalModelParameters<
   CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity::FlashModel,
   CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity::Phase1Model,
   CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity::Phase2Model,
-  CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity::Phase3Model>
-  {
-      static std::unique_ptr< ModelParameters > createModelParameters()
+  CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity::Phase3Model >
+{
+  static std::unique_ptr< ModelParameters > createModelParameters()
   {
     return std::make_unique< ConstantViscosity::Parameters >();
   }
-  };
+};
 
 } // end namespace compositional
 

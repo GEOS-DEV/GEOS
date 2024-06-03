@@ -60,19 +60,19 @@ public:
 
   NullModel( string const & name,
              ComponentProperties const & componentProperties,
-                     integer const phaseIndex,
-                             ModelParameters const & modelParameters ):
+             integer const phaseIndex,
+             ModelParameters const & modelParameters ):
     FunctionBase( name, componentProperties )
   {
-    GEOS_UNUSED_VAR(phaseIndex, modelParameters);
+    GEOS_UNUSED_VAR( phaseIndex, modelParameters );
   }
 
   NullModel( string const & name,
              ComponentProperties const & componentProperties,
-                             ModelParameters const & modelParameters ):
+             ModelParameters const & modelParameters ):
     FunctionBase( name, componentProperties )
   {
-    GEOS_UNUSED_VAR(modelParameters);
+    GEOS_UNUSED_VAR( modelParameters );
   }
 
   virtual ~NullModel() override = default;

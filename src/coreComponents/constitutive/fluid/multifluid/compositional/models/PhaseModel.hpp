@@ -54,19 +54,19 @@ struct PhaseModel
   PhaseModel( string const & phaseModelName,
               ComponentProperties const & componentProperties,
               integer const phaseIndex,
-                             ModelParameters const & modelParameters ):
+              ModelParameters const & modelParameters ):
     density( phaseModelName + "_" + Density::catalogName(),
              componentProperties,
-               phaseIndex,
-               modelParameters ),
+             phaseIndex,
+             modelParameters ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
                componentProperties,
                phaseIndex,
                modelParameters ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
               componentProperties,
-               phaseIndex,
-               modelParameters )
+              phaseIndex,
+              modelParameters )
   {}
 
   /// The phase density model

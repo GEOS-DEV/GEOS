@@ -45,9 +45,9 @@ class NullFlashModel : public FunctionBase
 {
 public:
   NullFlashModel( string const & name,
-                              ComponentProperties const & componentProperties )
-                              :FunctionBase(name, componentProperties)
-                              {}
+                  ComponentProperties const & componentProperties )
+    : FunctionBase( name, componentProperties )
+  {}
 
   FunctionType functionType() const override
   {
@@ -61,7 +61,10 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper() const;
+  KernelWrapper createKernelWrapper() const
+  {
+    return KernelWrapper();
+  }
 };
 
 } // namespace compositional

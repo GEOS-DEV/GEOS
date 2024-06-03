@@ -112,7 +112,7 @@ class NegativeTwoPhaseFlashModel : public FunctionBase
 public:
   NegativeTwoPhaseFlashModel( string const & name,
                               ComponentProperties const & componentProperties,
-                             ModelParameters const & modelParameters );
+                              ModelParameters const & modelParameters );
 
   static string catalogName();
 

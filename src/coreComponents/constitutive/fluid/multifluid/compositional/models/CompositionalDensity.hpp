@@ -64,11 +64,11 @@ class CompositionalDensity : public FunctionBase
 public:
   CompositionalDensity( string const & name,
                         ComponentProperties const & componentProperties,
-                     integer const phaseIndex,
-                             ModelParameters const & modelParameters )
+                        integer const phaseIndex,
+                        ModelParameters const & modelParameters )
     : FunctionBase( name, componentProperties )
   {
-    GEOS_UNUSED_VAR(phaseIndex, modelParameters);
+    GEOS_UNUSED_VAR( phaseIndex, modelParameters );
     // Calculate the dimensional volume shift
     m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
     EOS_TYPE::calculateDimensionalVolumeShift( componentProperties,
