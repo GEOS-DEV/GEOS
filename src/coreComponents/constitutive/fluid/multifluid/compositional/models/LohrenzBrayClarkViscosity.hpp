@@ -290,7 +290,7 @@ public:
   class Parameters : public ModelParameters
   {
 public:
-    Parameters() = default;
+    Parameters();
     ~Parameters() override = default;
 
     void registerParameters( MultiFluidBase * fluid ) override;
@@ -299,8 +299,10 @@ public:
     struct viewKeyStruct
     {
       static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
+      static constexpr char const * componentMixingTypeString() { return "componentMixingType"; }
     };
 
+    string m_componentMixingType;
     array1d< real64 > m_componentCriticalVolume;
 
 private:
@@ -318,7 +320,6 @@ private:
                                          arrayView1d< real64 > const criticalVolume );
   };
 private:
-  LohrenzBrayClarkViscosityUpdate::MixingType m_mixing_type{LohrenzBrayClarkViscosityUpdate::MixingType::HERNING_ZIPPERER};
   Parameters const * m_parameters{};
 };
 

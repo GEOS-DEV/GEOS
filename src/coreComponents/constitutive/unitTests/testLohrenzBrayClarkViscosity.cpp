@@ -67,8 +67,11 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_density = std::make_unique< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > >( "PhaseDensity", componentProperties );
-    m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties );
+    m_parameters = std::make_unique< LohrenzBrayClarkViscosity::Parameters >();
+    auto * parameters = dynamic_cast< LohrenzBrayClarkViscosity::Parameters * >(m_parameters.get());
+    TestFluid< 9 >::populateArray( parameters->m_componentCriticalVolume, this->m_fluid->criticalVolume );
+    m_density = std::make_unique< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > >( "PhaseDensity", componentProperties, 0, *m_parameters );
+    m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties, 0, *m_parameters );
   }
 
   ~LohrenzBrayClarkViscosityTestFixture() = default;
@@ -212,6 +215,7 @@ protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
   std::unique_ptr< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > > m_density{};
   std::unique_ptr< LohrenzBrayClarkViscosity > m_viscosity{};
+  std::unique_ptr< ModelParameters > m_parameters{};
 };
 
 using LohrenzBrayClarkViscosity9 = LohrenzBrayClarkViscosityTestFixture< 9 >;

@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_PHASEMODEL_HPP_
 
 #include "NullModel.hpp"
-#include "ModelParameters.hpp"
 
 namespace geos
 {
@@ -30,6 +29,8 @@ namespace constitutive
 
 namespace compositional
 {
+
+class ModelParameters;
 
 /**
  * @brief Struct storing the submodels describing the fluid phase behavior.

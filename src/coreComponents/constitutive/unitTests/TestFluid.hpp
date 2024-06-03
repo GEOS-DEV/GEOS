@@ -104,7 +104,6 @@ public:
         molecularWeight,
         criticalPressure,
         criticalTemperature,
-        criticalVolume,
         acentricFactor,
         volumeShift,
         binaryCoeff );

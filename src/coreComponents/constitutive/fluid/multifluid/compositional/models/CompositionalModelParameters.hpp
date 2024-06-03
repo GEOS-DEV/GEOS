@@ -22,6 +22,7 @@
 #include "ModelParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 
 namespace geos
 {
@@ -65,6 +66,33 @@ struct CompositionalModelParameters<
   static std::unique_ptr< ModelParameters > createModelParameters()
   {
     return std::make_unique< ConstantViscosity::Parameters >();
+  }
+};
+
+// LBC viscosity parameters
+template<>
+struct CompositionalModelParameters<
+  CompositionalTwoPhasePengRobinsonLBCViscosity::FlashModel,
+  CompositionalTwoPhasePengRobinsonLBCViscosity::Phase1Model,
+  CompositionalTwoPhasePengRobinsonLBCViscosity::Phase2Model,
+  CompositionalTwoPhasePengRobinsonLBCViscosity::Phase3Model >
+{
+  static std::unique_ptr< ModelParameters > createModelParameters()
+  {
+    return std::make_unique< LohrenzBrayClarkViscosity::Parameters >();
+  }
+};
+
+template<>
+struct CompositionalModelParameters<
+  CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity::FlashModel,
+  CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity::Phase1Model,
+  CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity::Phase2Model,
+  CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity::Phase3Model >
+{
+  static std::unique_ptr< ModelParameters > createModelParameters()
+  {
+    return std::make_unique< LohrenzBrayClarkViscosity::Parameters >();
   }
 };
 

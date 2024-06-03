@@ -51,14 +51,27 @@ LohrenzBrayClarkViscosity::LohrenzBrayClarkViscosity( string const & name,
 LohrenzBrayClarkViscosity::KernelWrapper
 LohrenzBrayClarkViscosity::createKernelWrapper() const
 {
-  return KernelWrapper( m_mixing_type, m_parameters->m_componentCriticalVolume );
+  auto const mixingType = EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::fromString( m_parameters->m_componentMixingType );
+  return KernelWrapper( mixingType, m_parameters->m_componentCriticalVolume );
+}
+
+LohrenzBrayClarkViscosity::Parameters::Parameters()
+{
+  constexpr LohrenzBrayClarkViscosityUpdate::MixingType defaultMixing = LohrenzBrayClarkViscosityUpdate::MixingType::HERNING_ZIPPERER;
+  m_componentMixingType = EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::toString( defaultMixing );
 }
 
 void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
 {
   fluid->registerWrapper( viewKeyStruct::componentCriticalVolumeString(), &m_componentCriticalVolume ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Component critical volumnes" );
+    setDescription( "Component critical volumes" );
+
+  fluid->registerWrapper( viewKeyStruct::componentMixingTypeString(), &m_componentMixingType ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_componentMixingType ).
+    setDescription( "The type of viscosity to be used for component mixing. Valid options:\n* " +
+                    EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
 void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
@@ -83,6 +96,9 @@ void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase con
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
                                   viewKeyStruct::componentCriticalVolumeString() ),
                         InputError );
+
+  // If the value is invalid, this will throw
+  EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::fromString( m_componentMixingType );
 }
 
 void LohrenzBrayClarkViscosity::Parameters::calculateCriticalVolume(
