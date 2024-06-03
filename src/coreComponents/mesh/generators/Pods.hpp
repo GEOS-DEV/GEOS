@@ -21,6 +21,7 @@
 #include "include/EdgeMgr.hpp"
 #include "include/FaceMgr.hpp"
 #include "include/CellMgr.hpp"
+#include "include/CellBlockABC.hpp"
 
 namespace geos
 {
@@ -93,6 +94,31 @@ public:
 
 private:
   FaceLocIdx m_numFaces;
+};
+
+class CellBlockImpl: public CellBlockABC
+{
+public:
+  ElementType getElementType() const override;
+
+  localIndex numNodesPerElement() const override;
+
+  localIndex numEdgesPerElement() const override;
+
+  localIndex numFacesPerElement() const override;
+
+  localIndex numElements() const override;
+
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override;
+
+  array2d< localIndex > getElemToEdges() const override;
+
+  array2d< localIndex > getElemToFaces() const override;
+
+  array1d< globalIndex > localToGlobalMap() const override;
+
+private:
+  virtual std::list< dataRepository::WrapperBase const * > getExternalProperties() const override;
 };
 
 } // geos

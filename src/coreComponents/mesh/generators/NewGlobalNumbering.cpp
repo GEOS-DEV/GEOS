@@ -128,7 +128,7 @@ Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes, bool & isFlipped
   start = intConv< std::uint8_t >( minIdx );
   isFlipped = increment < 0;
 
-  integer i = intConv< integer >( minIdx );
+  integer i = intConv< integer >( minIdx );  // TODO use std::rotate/std::reverse instead.
   for( std::size_t count = 0; count < n; ++count, i = i + increment )
   {
     f.emplace_back( nodes.at( modulo( i ) ) );

@@ -119,4 +119,54 @@ ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
   return {};
 }
 
-} // geos
+ElementType CellBlockImpl::getElementType() const
+{
+  return ElementType::Hexahedron;
+}
+
+localIndex CellBlockImpl::numNodesPerElement() const
+{
+  return 0;
+}
+
+localIndex CellBlockImpl::numEdgesPerElement() const
+{
+  return 0;
+}
+
+localIndex CellBlockImpl::numFacesPerElement() const
+{
+  return 0;
+}
+
+localIndex CellBlockImpl::numElements() const
+{
+  return 0;
+}
+
+array2d< localIndex, cells::NODE_MAP_PERMUTATION > CellBlockImpl::getElemToNodes() const
+{
+  return {};
+}
+
+array2d< localIndex > CellBlockImpl::getElemToEdges() const
+{
+  return {};
+}
+
+array2d< localIndex > CellBlockImpl::getElemToFaces() const
+{
+  return {};
+}
+
+array1d< globalIndex > CellBlockImpl::localToGlobalMap() const
+{
+  return {};
+}
+
+std::list< dataRepository::WrapperBase const * > CellBlockImpl::getExternalProperties() const
+{
+  return {};
+}
+
+} // end of namespace

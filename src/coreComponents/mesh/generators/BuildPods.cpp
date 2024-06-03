@@ -24,6 +24,7 @@
 namespace geos::ghosting
 {
 
+// TODO Do we want 2 separated `g2l` and `l2g` structs?
 struct GlobalNumberings
 {
   std::map< NodeGlbIdx, NodeLocIdx > ng2l;
@@ -94,6 +95,22 @@ std::vector< integer > buildGhostRank( std::map< GI, LI > const & g2l,
   }
 
   return ghostRank;
+}
+
+
+MeshGraph mergeMeshGraph( MeshGraph const & owned,
+                          MeshGraph const & present,
+                          MeshGraph const & ghosts )
+{
+  MeshGraph result{ owned };
+  for( MeshGraph const & graph: { present, ghosts } )
+  {
+    result.c2f.insert( std::cbegin( graph.c2f ), std::cend( graph.c2f ) );
+    result.f2e.insert( std::cbegin( graph.f2e ), std::cend( graph.f2e ) );
+    result.e2n.insert( std::cbegin( graph.e2n ), std::cend( graph.e2n ) );
+    result.n.insert( std::cbegin( graph.n ), std::cend( graph.n ) );
+  }
+  return result;
 }
 
 EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
@@ -212,20 +229,78 @@ void buildFaceMgr( GlobalNumberings const & numberings,
   }
 }
 
-
-MeshGraph mergeMeshGraph( MeshGraph const & owned,
-                          MeshGraph const & present,
-                          MeshGraph const & ghosts )
+std::vector< NodeLocIdx > resetFaceNodes( std::vector< NodeLocIdx > const & nodes,
+                                          bool const & isFlipped,
+                                          std::uint8_t const & start )
 {
-  MeshGraph result{ owned };
-  for( MeshGraph const & graph: { present, ghosts } )
+  std::vector< NodeLocIdx > result( nodes );
+  std::rotate( std::begin( result ), std::begin( result ) + start, std::end( result ) );
+  if( isFlipped )  // TODO before or after?
   {
-    result.c2f.insert( std::cbegin( graph.c2f ), std::cend( graph.c2f ) );
-    result.f2e.insert( std::cbegin( graph.f2e ), std::cend( graph.f2e ) );
-    result.e2n.insert( std::cbegin( graph.e2n ), std::cend( graph.e2n ) );
-    result.n.insert( std::cbegin( graph.n ), std::cend( graph.n ) );
+    std::reverse( std::begin( result ), std::end( result ) );
   }
   return result;
+}
+
+void buildCellBlock( GlobalNumberings const & numberings,
+                     MeshGraph const & graph,
+                     GhostRecv const & recv,
+                     GhostSend const & send,
+                     std::map< FaceLocIdx, std::vector< EdgeLocIdx > > const & f2e,
+                     std::map< FaceLocIdx, std::vector< NodeLocIdx > > const & f2n )
+{
+  // TODO MISSING cell type. Should be OK, the information is conveyed.
+  // TODO MISSING get the cell -> numNodesPerElement... from the original CellBlock
+
+  // Total number of faces available in the rank (including the ghosted edges).
+  std::size_t const numElements = std::size( numberings.cg2l );
+
+  std::map< CellLocIdx, std::vector< FaceLocIdx > > c2f;
+  std::map< CellLocIdx, std::vector< EdgeLocIdx > > c2e;
+  std::map< CellLocIdx, std::vector< NodeLocIdx > > c2n;
+
+  for( auto const & [cgi, faceInfos]: graph.c2f )
+  {
+    CellLocIdx const & cli = numberings.cg2l.at( cgi );
+
+    std::vector< FaceLocIdx > & faces = c2f[cli];
+    std::vector< EdgeLocIdx > & edges = c2e[cli];
+//    std::vector< NodeLocIdx > & nodes = c2n[cli];
+
+    faces.reserve( std::size( faceInfos ) );
+    edges.reserve( std::size( faceInfos ) );
+//    nodes.reserve( std::size( faceInfos ) );
+
+    // c2f
+    for( FaceInfo const & faceInfo: faceInfos )
+    {
+      faces.emplace_back( numberings.fg2l.at( faceInfo.index ) );
+    }
+
+    // c2e
+    std::set< EdgeLocIdx > tmpEdges;
+    for( FaceLocIdx const & fli: faces )
+    {
+      std::vector< EdgeLocIdx > const & es = f2e.at( fli );
+      tmpEdges.insert( std::cbegin( es ), std::cend( es ) );
+    }
+    edges.assign( std::cbegin( tmpEdges ), std::cend( tmpEdges ) );
+
+    // c2n
+    FaceInfo const & bottomFace = faceInfos.at( 4 ); // (0, 3, 2, 1) // TODO depends on element type.
+    FaceInfo const & topFace = faceInfos.at( 5 ); // (4, 5, 6, 7)
+
+    std::vector< NodeLocIdx > const & bottomNodes = f2n.at( numberings.fg2l.at( bottomFace.index ) );
+    std::vector< NodeLocIdx > const & topNodes = f2n.at( numberings.fg2l.at( topFace.index ) );
+
+    std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
+    std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
+
+    // TODO carefully check the ordering...
+    c2n[cli] = { bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
+//    nodes.insert( std::end( nodes ), std::cbegin( bn ), std::cend( bn ) );
+//    nodes.insert( std::end( nodes ), std::cbegin( tn ), std::cend( tn ) );
+  }
 }
 
 void buildPods( MeshGraph const & owned,
@@ -247,7 +322,8 @@ void buildPods( MeshGraph const & owned,
 //  auto const EdgeMgr = buildEdgeMgr( owned, present, ghosts, recv, send );
 
 //  MpiWrapper::barrier();
-
+  std::map< FaceLocIdx, std::vector< NodeLocIdx > > const f2n;
+  std::map< FaceLocIdx, std::vector< EdgeLocIdx > > const f2e;
   buildEdgeMgr( numberings, graph, recv, send );
   buildFaceMgr( numberings, graph, recv, send );
 }
