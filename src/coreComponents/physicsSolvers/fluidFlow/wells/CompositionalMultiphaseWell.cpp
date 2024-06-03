@@ -854,15 +854,28 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
-
+  using Deriv = multifluid::DerivativeOffset;
   arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
   arrayView1d< real64 const > const & temp = subRegion.getField< fields::well::temperature >();
   arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
   arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
   arrayView2d< real64 const, compflow::USD_COMP > const & pvFrac = subRegion.getField< fields::well::phaseVolumeFraction >();
   arrayView2d< real64 const, compflow::USD_COMP > const & compDens = subRegion.getField< fields::well::globalCompDensity >();
+
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy=fluid.phaseInternalEnergy();
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseInternalEnergy=fluid.dPhaseInternalEnergy();
+  std::cout << subRegion.getName() << std::endl;
+
+  for( integer i=0; i<subRegion.size(); i++ )
+    std::cout << i << " tpupd0 " << temp[i] << " " <<  pres[i]   << " rate " << connRate[i] << " compfrac " << compFrac[i][0] << " " << compFrac[i][1] <<
+      " pvf " << pvFrac[i][0] << " " << pvFrac[i][1] << " compdens " << compDens[i][0] << " " << compDens[i][1] <<
+      " pie " << m_phaseInternalEnergy[i][0][0] <<  " " << m_phaseInternalEnergy[i][0][1] << " dpie " <<
+      m_dPhaseInternalEnergy[i][0][0][Deriv::dC ] << " " << m_dPhaseInternalEnergy[i][0][0][Deriv::dC +1] << " "<< m_dPhaseInternalEnergy[i][0][1][Deriv::dC ] << " " <<
+      m_dPhaseInternalEnergy[i][0][1][Deriv::dC +1]
+              << std::endl;
 
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
@@ -878,10 +891,15 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
                             temp,
                             compFrac );
   } );
-  std::cout << subRegion.getName();
+
   for( integer i=0; i<subRegion.size(); i++ )
-    std::cout << " tpupd " << temp[i] << " " <<  pres[i]   << " " << connRate[i] << " " << compFrac[i][0] << " " << compFrac[i][1] <<
-      " " << pvFrac[i][0] << " " << pvFrac[i][1] << " " << compDens[i][0] << " " << compDens[i][1] << std::endl;
+    std::cout << i<< " tpupd1 " << temp[i] << " " <<  pres[i]   << " rate " << connRate[i] << " compfrac " << compFrac[i][0] << " " << compFrac[i][1] <<
+      " pvf " << pvFrac[i][0] << " " << pvFrac[i][1] << " compdens " << compDens[i][0] << " " << compDens[i][1] <<
+      " pie " << m_phaseInternalEnergy[i][0][0] <<  " " << m_phaseInternalEnergy[i][0][1] << " dpie " <<
+      m_dPhaseInternalEnergy[i][0][0][Deriv::dC ] << " " << m_dPhaseInternalEnergy[i][0][0][Deriv::dC +1] << " "<< m_dPhaseInternalEnergy[i][0][1][Deriv::dC ] << " " <<
+      m_dPhaseInternalEnergy[i][0][1][Deriv::dC +1]
+              << std::endl;
+
 
 }
 
