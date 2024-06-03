@@ -325,7 +325,7 @@ private:
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LohrenzBrayClarkViscosityUpdate::MixingType,
-              "Herning-Zipperer",
+              "HerningZipperer",
               "Wilke",
               "Brokaw" );
 

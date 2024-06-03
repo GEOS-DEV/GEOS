@@ -69,6 +69,7 @@ public:
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
     m_parameters = std::make_unique< LohrenzBrayClarkViscosity::Parameters >();
     auto * parameters = dynamic_cast< LohrenzBrayClarkViscosity::Parameters * >(m_parameters.get());
+    parameters->m_componentCriticalVolume.resize( NC );
     TestFluid< 9 >::populateArray( parameters->m_componentCriticalVolume, this->m_fluid->criticalVolume );
     m_density = std::make_unique< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > >( "PhaseDensity", componentProperties, 0, *m_parameters );
     m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties, 0, *m_parameters );
