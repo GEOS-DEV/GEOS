@@ -59,10 +59,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setDescription( "Type of upwinding scheme. "
                     "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
 
-//  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
-//    setApplyDefaultValue( 1e-10 ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Tolerance for C1-PPU smoothing" );
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

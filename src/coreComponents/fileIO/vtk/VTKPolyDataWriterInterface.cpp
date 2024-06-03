@@ -143,7 +143,7 @@ static std::vector< int > getVtkConnectivity( ElementType const elementType, loc
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 3, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };
     case ElementType::Polygon:       return { };  // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };

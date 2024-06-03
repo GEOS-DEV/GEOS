@@ -20,14 +20,12 @@
 #define GEOS_MESH_GENERATORS_VTKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 
-#include <vtkSmartPointer.h>
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
+#include <vtkSmartPointer.h>
 
 #include <numeric>
 #include <unordered_set>
