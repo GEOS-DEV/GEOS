@@ -17,6 +17,7 @@
  */
 
 #include "ConstantViscosity.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -28,15 +29,50 @@ namespace compositional
 {
 
 ConstantViscosity::ConstantViscosity( string const & name,
-                                      ComponentProperties const & componentProperties ):
+                                      ComponentProperties const & componentProperties,
+                                      integer const phaseIndex,
+                             ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
-{}
+{
+    Parameters const* parameters = dynamic_cast<Parameters const*>(&modelParameters);
+    m_constantPhaseViscosity = parameters->m_constantPhaseViscosity[phaseIndex];
+}
+
+ConstantViscosityUpdate::ConstantViscosityUpdate(real64 const constantPhaseViscosity) :
+m_constantPhaseViscosity(constantPhaseViscosity)
+{
+}
 
 ConstantViscosity::KernelWrapper
 ConstantViscosity::createKernelWrapper() const
 {
-  return KernelWrapper( );
+  return KernelWrapper( m_constantPhaseViscosity );
 }
+
+  void ConstantViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
+  {
+  fluid->registerWrapper( viewKeyStruct::constantPhaseViscosityString(), &m_constantPhaseViscosity ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Constant phase viscosity" );
+  }
+
+  void ConstantViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
+  {
+  integer const numPhase = fluid->numFluidPhases();
+
+if( m_constantPhaseViscosity.empty() )
+  {
+    m_constantPhaseViscosity.resize( numPhase );
+    for (integer ip = 0; ip < numPhase; ++ip)
+    {
+        m_constantPhaseViscosity[ip] = ConstantViscosity::defaultViscosity;
+    }
+  }
+GEOS_THROW_IF_NE_MSG( m_constantPhaseViscosity.size(), numPhase,
+                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(), 
+                          viewKeyStruct::constantPhaseViscosityString() ),
+                          InputError );
+  }
 
 } // end namespace compositional
 

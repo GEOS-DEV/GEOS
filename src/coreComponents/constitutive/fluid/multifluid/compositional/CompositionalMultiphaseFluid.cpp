@@ -18,6 +18,7 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
+#include "constitutive/fluid/multifluid/compositional/models/CompositionalModelParameters.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -45,7 +46,8 @@ namespace constitutive
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
-  : MultiFluidBase( name, parent )
+  : MultiFluidBase( name, parent ),
+  m_parameters( compositional::CompositionalModelParameters<FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters() )
 {
   using InputFlags = dataRepository::InputFlags;
 
@@ -61,10 +63,6 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical temperatures" );
 
-  registerWrapper( viewKeyStruct::componentCriticalVolumeString(), &m_componentCriticalVolume ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component critical volumnes" );
-
   registerWrapper( viewKeyStruct::componentAcentricFactorString(), &m_componentAcentricFactor ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component acentric factors" );
@@ -78,6 +76,9 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setDescription( "Table of binary interaction coefficients" );
 
   registerField( fields::multifluid::kValues{}, &m_kValues );
+
+  // Link parameters specific to each model
+  m_parameters->registerParameters( this );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -138,15 +139,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
 
-  if( m_componentCriticalVolume.empty() )
-  {
-    m_componentCriticalVolume.resize( NC );
-    calculateCriticalVolume( m_componentCriticalPressure,
-                             m_componentCriticalTemperature,
-                             m_componentCriticalVolume );
-  }
-  checkInputSize( m_componentCriticalVolume, NC, viewKeyStruct::componentCriticalVolumeString() );
-
   if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
@@ -184,6 +176,8 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
                             InputError );
     }
   }
+
+  m_parameters->postProcessInput( this );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -243,35 +237,28 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
     m_componentMolarWeight,
     m_componentCriticalPressure,
     m_componentCriticalTemperature,
-    m_componentCriticalVolume,
     m_componentAcentricFactor,
     m_componentVolumeShift,
     m_componentBinaryCoeff );
 
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
-                                       *m_componentProperties );
+                                       *m_componentProperties,
+                                       *m_parameters );
 
   m_phase1 = std::make_unique< PHASE1 >( GEOS_FMT( "{}_PhaseModel1", getName() ),
-                                         *m_componentProperties );
+                                         *m_componentProperties,
+                                         0,
+                                         *m_parameters );
 
   m_phase2 = std::make_unique< PHASE2 >( GEOS_FMT( "{}_PhaseModel2", getName() ),
-                                         *m_componentProperties );
+                                         *m_componentProperties,
+                                         1,
+                                         *m_parameters );
 
   m_phase3 = std::make_unique< PHASE3 >( GEOS_FMT( "{}_PhaseModel3", getName() ),
-                                         *m_componentProperties );
-}
-
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::calculateCriticalVolume(
-  arrayView1d< const real64 > const criticalPressure,
-  arrayView1d< const real64 > const criticalTemperature,
-  arrayView1d< real64 > const criticalVolume ) const
-{
-  integer const numComponents = criticalPressure.size( 0 );
-  for( integer ic=0; ic<numComponents; ++ic )
-  {
-    criticalVolume[ic] = 2.215e-6 * criticalTemperature[ic] / (0.025 + 1e-6*criticalPressure[ic] );   // m^3/mol
-  }
+                                         *m_componentProperties,
+                                         2,
+                                         *m_parameters );
 }
 
 // Explicit instantiation of the model template.

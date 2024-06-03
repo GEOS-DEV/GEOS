@@ -45,7 +45,8 @@ public:
   };
 
 public:
-  explicit LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type );
+  LohrenzBrayClarkViscosityUpdate( MixingType const mixing_type,
+  arrayView1d<real64 const> const & componentCriticalVolume );
 
   template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
@@ -252,6 +253,7 @@ private:
 
 private:
   MixingType m_mixing_type;
+  arrayView1d<real64 const> m_componentCriticalVolume;
 
 private:
   // Conversion factor from cP to Pa.s
@@ -264,7 +266,9 @@ class LohrenzBrayClarkViscosity : public FunctionBase
 {
 public:
   LohrenzBrayClarkViscosity( string const & name,
-                             ComponentProperties const & componentProperties );
+                             ComponentProperties const & componentProperties,
+                             integer const phaseIndex,
+                             ModelParameters const & modelParameters );
 
   static string catalogName() { return "LBC"; }
 
@@ -282,8 +286,40 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
+  // Parameters for the LBC viscosity model
+  class Parameters : public ModelParameters
+{
+public:
+  Parameters() = default;
+~Parameters() override = default;
+
+  void registerParameters( MultiFluidBase * fluid ) override;
+  void postProcessInput( MultiFluidBase const * fluid ) override;
+
+  struct viewKeyStruct
+  {
+    static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
+  };
+
+  array1d< real64 > m_componentCriticalVolume;
+
+private:
+  /**
+   * @brief Estimate critical volumes using Ihmels' (2010) correlation
+   * @details reference: http://dx.doi.org/10.1021/je100167w
+   * @param[in] numComponents The number of components
+   * @param[in] criticalPressure The component critical pressures
+   * @param[in] criticalTemperature The component critical temperatures
+   * @param[in] criticalVolume The component critical volumes
+   */
+  static void calculateCriticalVolume( integer const numComponents,
+  arrayView1d< const real64 > const criticalPressure,
+                                arrayView1d< const real64 > const criticalTemperature,
+                                arrayView1d< real64 > const criticalVolume );
+};
 private:
   LohrenzBrayClarkViscosityUpdate::MixingType m_mixing_type{LohrenzBrayClarkViscosityUpdate::MixingType::HERNING_ZIPPERER};
+  Parameters const * m_parameters{};
 };
 
 /// Declare strings associated with enumeration values.

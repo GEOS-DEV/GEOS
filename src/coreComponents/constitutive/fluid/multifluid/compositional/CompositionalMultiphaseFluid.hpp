@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ModelParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
 
@@ -87,7 +88,6 @@ public:
   {
     static constexpr char const * componentCriticalPressureString() { return "componentCriticalPressure"; }
     static constexpr char const * componentCriticalTemperatureString() { return "componentCriticalTemperature"; }
-    static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
     static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
@@ -111,18 +111,6 @@ protected:
   virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
-  /**
-   * @brief Estimate critical volumes using Ihmels' (2010) correlation
-   * @details reference: http://dx.doi.org/10.1021/je100167w
-   * @param[in] criticalPressure The component critical pressures
-   * @param[in] criticalTemperature The component critical temperatures
-   * @param[in] criticalVolume The component critical volumes
-   */
-  void calculateCriticalVolume( arrayView1d< const real64 > const criticalPressure,
-                                arrayView1d< const real64 > const criticalTemperature,
-                                arrayView1d< real64 > const criticalVolume ) const;
-
-private:
   // Create the fluid models
   void createModels();
 
@@ -139,10 +127,12 @@ private:
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
   array1d< real64 > m_componentCriticalTemperature;
-  array1d< real64 > m_componentCriticalVolume;
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
+
+  // Extra parameters for specific to this model
+  std::unique_ptr< compositional::ModelParameters > m_parameters{};
 
   // backup data
   PhaseComp::ValueType m_kValues;

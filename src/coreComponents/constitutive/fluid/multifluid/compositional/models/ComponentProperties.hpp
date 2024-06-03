@@ -40,7 +40,6 @@ public:
                        array1d< real64 > const & componentMolarWeight,
                        array1d< real64 > const & componentCriticalPressure,
                        array1d< real64 > const & componentCriticalTemperature,
-                       array1d< real64 > const & componentCriticalVolume,
                        array1d< real64 > const & componentAcentricFactor,
                        array1d< real64 > const & componentVolumeShift,
                        array2d< real64 > const & componentBinaryCoeff ):
@@ -48,7 +47,6 @@ public:
     m_componentMolarWeight ( componentMolarWeight ),
     m_componentCriticalPressure ( componentCriticalPressure ),
     m_componentCriticalTemperature( componentCriticalTemperature ),
-    m_componentCriticalVolume( componentCriticalVolume ),
     m_componentAcentricFactor( componentAcentricFactor ),
     m_componentVolumeShift( componentVolumeShift ),
     m_componentBinaryCoeff( componentBinaryCoeff )
@@ -70,7 +68,6 @@ public:
   arrayView1d< real64 > const & getComponentMolarWeight() const { return m_componentMolarWeight; }
   arrayView1d< real64 > const & getComponentCriticalPressure() const { return m_componentCriticalPressure; }
   arrayView1d< real64 > const & getComponentCriticalTemperature() const { return m_componentCriticalTemperature; }
-  arrayView1d< real64 > const & getComponentCriticalVolume() const { return m_componentCriticalVolume; }
   arrayView1d< real64 > const & getComponentAcentricFactor() const { return m_componentAcentricFactor; }
   arrayView1d< real64 > const & getComponentVolumeShift() const { return m_componentVolumeShift; }
 
@@ -79,14 +76,12 @@ public:
     KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight,
                    arrayView1d< real64 const > const & componentCriticalPressure,
                    arrayView1d< real64 const > const & componentCriticalTemperature,
-                   arrayView1d< real64 const > const & componentCriticalVolume,
                    arrayView1d< real64 const > const & componentAcentricFactor,
                    arrayView1d< real64 const > const & componentVolumeShift,
                    arrayView2d< real64 const > const & componentBinaryCoeff ):
       m_componentMolarWeight ( componentMolarWeight ),
       m_componentCriticalPressure ( componentCriticalPressure ),
       m_componentCriticalTemperature( componentCriticalTemperature ),
-      m_componentCriticalVolume( componentCriticalVolume ),
       m_componentAcentricFactor( componentAcentricFactor ),
       m_componentVolumeShift( componentVolumeShift ),
       m_componentBinaryCoeff( componentBinaryCoeff )
@@ -104,7 +99,6 @@ public:
       m_componentMolarWeight.move( space, touch );
       m_componentCriticalPressure.move( space, touch );
       m_componentCriticalTemperature.move( space, touch );
-      m_componentCriticalVolume.move( space, touch );
       m_componentAcentricFactor.move( space, touch );
       m_componentVolumeShift.move( space, touch );
       m_componentBinaryCoeff.move( space, touch );
@@ -114,7 +108,6 @@ public:
     arrayView1d< real64 const > m_componentMolarWeight;
     arrayView1d< real64 const > m_componentCriticalPressure;
     arrayView1d< real64 const > m_componentCriticalTemperature;
-    arrayView1d< real64 const > m_componentCriticalVolume;
     arrayView1d< real64 const > m_componentAcentricFactor;
     arrayView1d< real64 const > m_componentVolumeShift;
     arrayView2d< real64 const > m_componentBinaryCoeff;
@@ -129,7 +122,6 @@ public:
     return KernelWrapper( m_componentMolarWeight,
                           m_componentCriticalPressure,
                           m_componentCriticalTemperature,
-                          m_componentCriticalVolume,
                           m_componentAcentricFactor,
                           m_componentVolumeShift,
                           m_componentBinaryCoeff );
@@ -141,7 +133,6 @@ private:
   array1d< real64 > const & m_componentMolarWeight;
   array1d< real64 > const & m_componentCriticalPressure;
   array1d< real64 > const & m_componentCriticalTemperature;
-  array1d< real64 > const & m_componentCriticalVolume;
   array1d< real64 > const & m_componentAcentricFactor;
   array1d< real64 > const & m_componentVolumeShift;
   array2d< real64 > const & m_componentBinaryCoeff;

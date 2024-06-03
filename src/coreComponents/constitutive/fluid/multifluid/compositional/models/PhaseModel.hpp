@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_PHASEMODEL_HPP_
 
 #include "NullModel.hpp"
+#include "ModelParameters.hpp"
 
 namespace geos
 {
@@ -51,13 +52,21 @@ struct PhaseModel
    * @param[in] componentProperties EOS parameters for components
    */
   PhaseModel( string const & phaseModelName,
-              ComponentProperties const & componentProperties ):
+              ComponentProperties const & componentProperties,
+              integer const phaseIndex,
+                             ModelParameters const & modelParameters ):
     density( phaseModelName + "_" + Density::catalogName(),
-             componentProperties ),
+             componentProperties,
+               phaseIndex,
+               modelParameters ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
-               componentProperties ),
+               componentProperties,
+               phaseIndex,
+               modelParameters ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
-              componentProperties )
+              componentProperties,
+               phaseIndex,
+               modelParameters )
   {}
 
   /// The phase density model
