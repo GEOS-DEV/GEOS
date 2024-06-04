@@ -64,6 +64,7 @@ public:
     m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
     m_lineSearchCutFactor = params.m_lineSearchCutFactor;
     m_lineSearchStartingIteration = params.m_lineSearchStartingIteration;
+    m_lineSearchResidualFactor = params.m_lineSearchResidualFactor;
 
     m_newtonTol = params.m_newtonTol;
     m_maxIterNewton = params.m_maxIterNewton;
@@ -103,6 +104,7 @@ public:
     static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
     static constexpr char const * lineSearchStartingIterationString() { return "lineSearchStartingIteration"; }
+    static constexpr char const * lineSearchResidualFactorString() { return "lineSearchResidualFactor"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
     static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
@@ -260,6 +262,9 @@ public:
 
   /// Iteration when line search starts
   integer m_lineSearchStartingIteration;
+
+  /// Factor to determine residual increase
+  real64 m_lineSearchResidualFactor;
 
   /// Norm used to check the nonlinear loop convergence
   solverBaseKernels::NormType m_normType;

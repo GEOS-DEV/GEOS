@@ -19,9 +19,9 @@
 #ifndef GEOS_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
 #define GEOS_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
 
-#include "codingUtilities/EnumStrings.hpp"
-#include "dataRepository/Group.hpp"
 #include "InternalMeshGenerator.hpp"
+#include "dataRepository/Group.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {
@@ -51,11 +51,10 @@ public:
 
 protected:
 
-  void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+  void reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
                                           integer ( &numNodes )[3] ) override final;
 
-  void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                               int ( & index )[3] ) override final;
+  void setNodeGlobalIndicesOnPeriodicBoundary( int ( & index )[3] ) override final;
 
   void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
                                              integer const ( &numNodesInDir )[3],

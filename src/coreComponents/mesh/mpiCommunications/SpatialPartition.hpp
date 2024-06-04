@@ -19,7 +19,7 @@
 #include "PartitionBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-
+#include <array>
 #include <map>
 
 constexpr int nsdof = 3;
@@ -138,8 +138,10 @@ public:
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
 
-  void setSizes( real64 const ( &min )[ 3 ],
-                 real64 const ( &max )[ 3 ] ) override;
+//  void setSizes( real64 const ( &min )[ 3 ],
+//                 real64 const ( &max )[ 3 ] ) override;
+
+  void initializeNeighbors();
 
   // real64 * getLocalMin()
   array1d< real64 > const & getLocalMin()
@@ -245,11 +247,43 @@ public:
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
-  void setMetisNeighborList( std::vector< int > const & metisNeighborList )
+  void setMetisNeighborList( std::set< int > const & metisNeighborList )
   {
-    m_metisNeighborList.clear();
-    m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
-  }  
+    m_metisNeighborList = metisNeighborList;
+  }
+
+  void setGrid( std::array< real64, 9 > const & grid )
+  {
+    m_gridSize[0] = grid[0];
+    m_gridSize[1] = grid[1];
+    m_gridSize[2] = grid[2];
+
+    m_gridMin[0] = grid[3];
+    m_gridMin[1] = grid[4];
+    m_gridMin[2] = grid[5];
+
+    m_gridMax[0] = grid[6];
+    m_gridMax[1] = grid[7];
+    m_gridMax[2] = grid[8];
+  }
+
+  void setBlockSize( std::array< real64, 3 > const & blockSize )
+  {
+    m_blockSize[0] = blockSize[0];
+    m_blockSize[1] = blockSize[1];
+    m_blockSize[2] = blockSize[2];
+  }
+
+  void setBoundingBox( std::array< real64, 6 > const & bb )
+  {
+    m_min[0] = bb[0];
+    m_min[1] = bb[1];
+    m_min[2] = bb[2];
+
+    m_max[0] = bb[3];
+    m_max[1] = bb[4];
+    m_max[2] = bb[5];
+  }
 
 private:
 

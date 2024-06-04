@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ParticleMeshGenerator.hpp
- */
+#ifndef GEOSX_MESH_PARTICLEGENERATORS_PARTICLEMESHGENERATOR_HPP
+#define GEOSX_MESH_PARTICLEGENERATORS_PARTICLEMESHGENERATOR_HPP
 
-#ifndef GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP
+#include "ParticleMeshGeneratorBase.hpp"
+#include "ParticleBlockManager.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
@@ -35,7 +35,7 @@ class SpatialPartition;
  * @class ParticleMeshGenerator
  * @brief The ParticleMeshGenerator class is a class handling import of particle data from an externel particle file.
  */
-class ParticleMeshGenerator : public MeshGeneratorBase
+class ParticleMeshGenerator : public ParticleMeshGeneratorBase
 {
 public:
 
@@ -107,15 +107,9 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
+private:
 
-  void importFieldOnArray( Block block,
-                           string const & blockName,
-                           string const & meshFieldName,
-                           bool isMaterialField,
-                           dataRepository::WrapperBase & wrapper ) const override;
-
-protected:
+  void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -129,17 +123,6 @@ protected:
   /// @endcond
 
   void postProcessInput() override;
-
-  /// Mesh number of dimension
-  int m_dim;
-
-  /// Minimum extent of particle coordinates
-  real64 m_min[3];
-
-  /// Maximum extent of particle coordinates
-  real64 m_max[3];
-
-private:
 
   /// Path to the particle file
   Path m_particleFilePath;
@@ -155,9 +138,6 @@ private:
 
   /// String array listing the particle types present
   array1d< string > m_particleTypes;
-
-public:
-
 };
 
 ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
@@ -199,4 +179,4 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_GENERATORS_PARTICLEMESHGENERATOR_HPP */
+#endif /* GEOSX_MESH_PARTICLEGENERATORS_PARTICLEMESHGENERATOR_HPP */

@@ -19,6 +19,7 @@
 #include "mesh/generators/CellBlockManager.hpp"
 
 #include <cmath>
+#include <string>
 
 namespace geos
 {
@@ -296,8 +297,22 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
   }
 }
 
-void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                 real64 const ( &max )[ 3 ] )
+//void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
+//                                 real64 const ( &max )[ 3 ] )
+//{
+//  // global values
+//  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+//  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+//  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+//  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+//
+//  // block values
+//  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+//
+//  initializeNeighbors();
+//}
+
+void SpatialPartition::initializeNeighbors()
 {
   {
     //get size of problem and decomposition
@@ -332,57 +347,57 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MpiWrapper::commFree( cartcomm );
   }
 
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+  // // global values
+  // LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+  // LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+  // LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+  // LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+  // // block values
+  // LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
-  LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < nsdof; ++i )
-  {
-    const int nloc = m_partitions( i ) - 1;
-    const localIndex nlocl = static_cast< localIndex >(nloc);
-    if( m_partitionLocations[i].empty() )
-    {
-      // the default "even" spacing
-      m_blockSize[ i ] /= m_partitions( i );
-      m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-      m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
+  // LvArray::tensorOps::copy< 3 >( m_min, min );
+  // for( int i = 0; i < nsdof; ++i )
+  // {
+  //   const int nloc = m_partitions( i ) - 1;
+  //   const localIndex nlocl = static_cast< localIndex >(nloc);
+  //   if( m_partitionLocations[i].empty() )
+  //   {
+  //     // the default "even" spacing
+  //     m_blockSize[ i ] /= m_partitions( i );
+  //     m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
+  //     m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
 
-      m_partitionLocations[i].resize( nlocl );
-      for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
-      {
-        m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
-      }
-    }
-    else if( nlocl == m_partitionLocations[i].size() )
-    {
-      const int parIndex = m_coords[i];
-      if( parIndex == 0 )
-      {
-        m_min[i] = min[i];
-        m_max[i] = m_partitionLocations[i][parIndex];
-      }
-      else if( parIndex == nloc )
-      {
-        m_min[i] = m_partitionLocations[i][parIndex-1];
-        m_max[i] = max[i];
-      }
-      else
-      {
-        m_min[i] = m_partitionLocations[i][parIndex-1];
-        m_max[i] = m_partitionLocations[i][parIndex];
-      }
-    }
-    else
-    {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-    }
-  }
+  //     m_partitionLocations[i].resize( nlocl );
+  //     for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
+  //     {
+  //       m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
+  //     }
+  //   }
+  //   else if( nlocl == m_partitionLocations[i].size() )
+  //   {
+  //     const int parIndex = m_coords[i];
+  //     if( parIndex == 0 )
+  //     {
+  //       m_min[i] = min[i];
+  //       m_max[i] = m_partitionLocations[i][parIndex];
+  //     }
+  //     else if( parIndex == nloc )
+  //     {
+  //       m_min[i] = m_partitionLocations[i][parIndex-1];
+  //       m_max[i] = max[i];
+  //     }
+  //     else
+  //     {
+  //       m_min[i] = m_partitionLocations[i][parIndex-1];
+  //       m_max[i] = m_partitionLocations[i][parIndex];
+  //     }
+  //   }
+  //   else
+  //   {
+  //     GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+  //   }
+  // }
 }
 
 bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir ) const
@@ -478,13 +493,14 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
   // should only happen if it has left the global domain (hopefully at an outflow b.c.).
 
+  arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
   arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
   arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
   array1d< R1Tensor > outOfDomainParticleCoordinates;
   std::vector< localIndex > outOfDomainParticleLocalIndices;
   unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
-  forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
+  forAll< serialPolicy >( subRegion.size(), [&, particleID, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
     {
       bool inPartition = true;
       R1Tensor p_x;
@@ -493,6 +509,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
         p_x[i] = particleCenter[pp][i];
         inPartition = inPartition && isCoordInPartition( p_x[i], i );
       }
+
       if( particleRank[pp]==this->m_rank && !inPartition )
       {
         outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
@@ -610,7 +627,6 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     subRegion.resize( newSize ); // TODO: Does this handle constitutive fields owned by the subRegion?
   }
 
-
   // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
 
   //int sizeBeforeParticleSend = subRegion.size(); // subregion size changes after this, so we need this here to use to size the deletion
@@ -626,23 +642,23 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   //     will still have Rank=-1. This should only happen if the particle has left the global domain.
   //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
   //     the global domain, print a warning.
-
-  arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter(); //CC: this particle center needs to be updated if crossing periodic boundary
+  arrayView1d< globalIndex const > const particleIDAfter = subRegion.getParticleID();
+  arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
-  int numOrphanedParticles = false;
-  forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  int numOrphanedParticles = 0;
+  forAll< serialPolicy >( subRegion.size(), [&, particleIDAfter, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  {
+    if( particleRankAfter[p] == -1 )
     {
-      if( particleRankAfter[p] == -1 )
-      {
-        
-        indicesToErase.insert( p );
-      }
-      else if( particleRankAfter[p] != m_rank )
-      {
-        indicesToErase.insert( p );
-      }
-    } );
+      
+      indicesToErase.insert( p );
+    }
+    else if( particleRankAfter[p] != m_rank )
+    {
+      indicesToErase.insert( p );
+    }
+  } );
   subRegion.erase( indicesToErase );
   GEOS_LOG_RANK_IF(numOrphanedParticles > 0, "Deleted " << numOrphanedParticles << " orphaned out-of-domain particle" << (numOrphanedParticles == 1 ? "s": "")  << " during repartition" );
 
@@ -820,7 +836,6 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     {
       subRegion.resize( newSize );   // TODO: Does this handle constitutive fields owned by the subregion's parent region?
     }
-
 
     // (7) Pack/Send/Receive/Unpack particles to be sent to each neighbor.
 
