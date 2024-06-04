@@ -19,6 +19,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/CellElementRegionSelector.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -97,13 +98,15 @@ TEST( FieldSpecification, Recursive )
     reg1Tet.setElementType( geos::ElementType::Tetrahedron );
     reg1Tet.resize( nbTetReg1 );
 
+    CellElementRegionSelector cellBlockSelector( cellBlockManager.getCellBlocks() );
+
     reg0.addCellBlockName( reg0Hex.getName() );
     reg0.addCellBlockName( reg0Tet.getName() );
-    reg0.generateMesh( cellBlockManager.getCellBlocks() );
+    reg0.generateMesh( cellBlockSelector );
 
     reg1.addCellBlockName( reg1Hex.getName() );
     reg1.addCellBlockName( reg1Tet.getName() );
-    reg1.generateMesh( cellBlockManager.getCellBlocks() );
+    reg1.generateMesh( cellBlockSelector );
 
     // The cell block manager should not be used anymore.
     domain.deregisterGroup( keys::cellManager );
