@@ -135,11 +135,11 @@ bibliography: paper.bib
 
 # Summary
 
-GEOS is a simulation framework focused on solving tightly-coupled multi-physics problems with an initial emphasis on subsurface reservoir applications.
-Currently GEOS actively supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
-The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
+GEOS is a simulation framework focused on solving tightly coupled multi-physics problems with an initial emphasis on subsurface reservoir applications.
+Currently, GEOS actively supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
+The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
 Extensive documentation is available on Read the Docs [@GEOS_RTD].
-Note that GEOS as described here is a completely separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
+Note that GEOS, as described here, is a completely separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
 
 # Statement of need
 
@@ -158,18 +158,18 @@ The components of the infrastructure provided by GEOS include a data hierarchy, 
 By design, GEOS is intended to be a generic multi-physics simulation platform.
 The physics package interface in GEOS is intended to encapsulate the development of numerical methods applied to the solution of governing equations relevant to a problem.
 When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability.
-The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach.
+The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system to a split operator approach.
 
 To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@Her_etal05].
-Currently, in GEOS only the hypre interaface is actively maintained.
-For every multi-physics problems involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
+Currently, in GEOS only the hypre interface is actively maintained.
+For every multi-physics problem involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
 The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
-The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e. host memory and device memory).
-Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near optimal of performance.
+The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e., host and device memory).
+Through this strategy, GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near-optimal of performance.
 
-In addition to its C++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows involving components unrelated to GEOS.
+In addition to its C++ core, the GEOS project provides a Python3 interface that allows for the integration of the simulation capabilities into complex Python workflows involving components unrelated to GEOS.
 
 # Applications
 To date GEOS has been used to simulate problems relevant to CO~2~ storage, enhanced geothermal systems, hydrogen storage, and both conventional and unconventional oil and gas extraction.
@@ -182,8 +182,8 @@ Simulations such as this will play a critical role in predicting the viability o
 ![Real world CO~2~ storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO~2~ injection. The CO~2~ plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
-The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
-There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is excellent.
+The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) show flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
+There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
 The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows similarly good weak scaling.
 
 ![Weak scaling results on ORNL/Frontier: average execution time per newton iteration vs number of GPUs for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](nearwell_scaling_frontier.pdf){ width=100% }
