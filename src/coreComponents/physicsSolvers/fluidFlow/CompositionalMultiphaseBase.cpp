@@ -2190,8 +2190,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & cu
 
   computeCFLNumbers( domain, currentDt, maxPhaseCFL, maxCompCFL );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << maxPhaseCFL );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << maxCompCFL );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max phase CFL number = {}", getName(), maxPhaseCFL ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max component CFL number = {} ", getName(), maxCompCFL ) );
 
   return std::min( m_targetFlowCFL*currentDt/maxCompCFL, m_targetFlowCFL*currentDt/maxPhaseCFL );
 
