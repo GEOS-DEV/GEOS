@@ -1185,12 +1185,6 @@ private:
    * @return reference to this object
    */
   ElementRegionManager & operator=( const ElementRegionManager & );
-
-  /**
-   * @brief Check that the loaded sub regions are all linked with a cellBlock.
-   */
-  void checkForNoOrphanCellBlocks( Group const & cellBlocks,
-                                   std::set< string > selectedCellBlocksNames );
 };
 
 

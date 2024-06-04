@@ -24,6 +24,10 @@
 namespace geos
 {
 
+// helper class for CellElementRegion to select cellBlocks
+class CellElementRegionSelector;
+
+
 /**
  * @class CellElementRegion
  *
@@ -114,18 +118,12 @@ public:
   }
 
   /**
-   * @brief register every entry of m_cellBlockNames that is in the provided list.
+   * @brief register every cellBlocks that is in the provided list.
    * After the call, the content of m_cellBlockNames no longer contain duplicates, and takes into account
    * m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
-   * @param cellBlocks the list of available cellBlocks.
-   * @param cellBlocksNames A set of all available cellBlock names.
-   * @param cellBlocksMatchers A map that link every cellBlock name to the CellElementRegion that references it.
-   *                           This map gets updated with the new referenced cellBlocks.
-   * @return the selected cellBlocks.
+   * @param cellBlockSelector the selector for this problem cell element regions.
    */
-  std::set< string > generateMesh( Group const & cellBlocks,
-                                   std::set< string > cellBlocksNames,
-                                   std::map< string, CellElementRegion const * > & cellBlocksMatchers );
+  void generateMesh( CellElementRegionSelector & cellBlockSelector );
 
   ///@}
 
@@ -157,14 +155,13 @@ public:
 
 private:
 
-  /// @brief List of regionAttribute values for which we want to add the cells
+  /// @brief List of user-requested regionAttribute values for which we want to add the cells
   integer_array m_cellBlockAttributeValues;
 
-  /// @brief List of fnmatch patterns to match cellBlocks names.
+  /// @brief List of user-requested fnmatch patterns to match mesh cellBlocks names.
   string_array m_cellBlockMatchPatterns;
 
-  /// @brief List of the desired cell-blocks from the mesh to contain. When generateMesh() is called, this list is filled
-  /// with the matched cellBlocks by m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
+  /// @brief List of user-requested mesh cellBlocks names.
   string_array m_cellBlockNames;
 
   /// @brief Coarsening ratio

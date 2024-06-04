@@ -27,6 +27,7 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/CellElementRegionSelector.hpp"
 
 namespace geos
 {
@@ -135,17 +136,21 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
 {
   // cellBlock loading
   {
-    std::set< string > cellBlockNames = getCellBlocksNamesSet( cellBlockManager );
-    std::set< string > selectedCellBlocks;
-    std::map< string, CellElementRegion const * > cellBlocksMatchers;
+    CellElementRegionSelector cellBlockSelector{ cellBlockManager.getCellBlocks() };
+    // std::set< string > cellBlockNames = getCellBlocksNamesSet( cellBlockManager );
+    // std::set< string > selectedCellBlocks;
+    // std::map< string, CellElementRegion const * > cellBlocksMatchers;
 
     this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
     {
-      std::set selected = elemRegion.generateMesh( cellBlockManager.getCellBlocks(),
-                                                   cellBlockNames, cellBlocksMatchers );
-      selectedCellBlocks.insert( selected.begin(), selected.end() );
+      // std::set selected = elemRegion.generateMesh( cellBlockManager.getCellBlocks(),
+      //                                              cellBlockNames, cellBlocksMatchers );
+      // selectedCellBlocks.insert( selected.begin(), selected.end() );
+      elemRegion.generateMesh( cellBlockSelector );
     } );
-    checkForNoOrphanCellBlocks( cellBlockManager.getCellBlocks(), selectedCellBlocks );
+
+    // selecting all cellblocks is mandatory
+    cellBlockSelector.checkForNoOrphanCellBlocks();
   }
 
 
@@ -174,47 +179,6 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
                                                                            tmp,
                                                                            relation );
   } );
-}
-
-void ElementRegionManager::checkForNoOrphanCellBlocks( Group const & cellBlocks,
-                                                       std::set< string > selectedCellBlocksNames )
-{
-  // checking if cellBlocks has not been referenced, and reporting which are missing.
-  std::vector< string > orphanCellBlocksNames;
-  std::set< string > orphanAttributeValues;
-  cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
-  {
-    string const cbName = cellBlock.getName();
-    if( selectedCellBlocksNames.count( cbName ) == 0 )
-    {
-      orphanCellBlocksNames.push_back( cbName );
-      string cbAttributeValue = CellElementRegion::getCellBlockAttributeValue( cbName );
-      if( !cbAttributeValue.empty() )
-      {
-        orphanAttributeValues.insert( cbAttributeValue );
-      }
-    }
-  } );
-
-  if( !orphanCellBlocksNames.empty() )
-  {
-    std::ostringstream oss;
-    if( !orphanAttributeValues.empty())
-    {
-      oss << GEOS_FMT( "The {} {{ {} }} has not been referenced in any region.\n",
-                       CellElementRegion::viewKeyStruct::cellBlockAttributeValuesString(),
-                       stringutilities::join( orphanAttributeValues, ", " ));
-    }
-    oss << GEOS_FMT( "The following {} has not been referenced in any region: {{ {} }}.\n",
-                     CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
-                     stringutilities::join( orphanCellBlocksNames, ", " ));
-    oss << GEOS_FMT( "Please add it in an existing {} (through {}, {} or {}), or consider creating a new one to describe your model.",
-                     CellElementRegion::catalogName(),
-                     CellElementRegion::viewKeyStruct::cellBlockAttributeValuesString(),
-                     CellElementRegion::viewKeyStruct::sourceCellBlockNamesString(),
-                     CellElementRegion::viewKeyStruct::cellBlockMatchPatternsString() );
-    GEOS_THROW( oss.str(), InputError );
-  }
 }
 
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
