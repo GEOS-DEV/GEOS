@@ -423,8 +423,8 @@ void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const
                                                                     arrayView1d< real64 > const & localRhs ) const
 {
   // stab not implemented
-  GEOS_UNUSED_VAR(dt, domain, dofManager, localMatrix, localRhs);
-  GEOS_ERROR("Stabilized flux not available for this flow solver");
+  GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
+  GEOS_ERROR( "Stabilized flux not available for this flow solver" );
 }
 
 real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition & domain,

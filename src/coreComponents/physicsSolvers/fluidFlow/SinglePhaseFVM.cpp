@@ -463,8 +463,8 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( rea
                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                              arrayView1d< real64 > const & localRhs )
 {
-  GEOS_UNUSED_VAR(dt, domain, dofManager, localMatrix, localRhs);
-  GEOS_ERROR("Stabilized flux not available with this flow solver");
+  GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
+  GEOS_ERROR( "Stabilized flux not available with this flow solver" );
 }
 
 template< typename BASE >

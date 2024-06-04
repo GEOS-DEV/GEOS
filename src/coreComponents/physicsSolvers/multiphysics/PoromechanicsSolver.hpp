@@ -225,12 +225,12 @@ public:
                                   DomainPartition & domain ) override
   {
     flowSolver()->setKeepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
-    
+
     if( this->m_stabilizationType == StabilizationType::Global || this->m_stabilizationType == StabilizationType::Local )
     {
       this->updateStabilizationParameters( domain );
     }
-    
+
     Base::implicitStepSetup( time_n, dt, domain );
   }
 
