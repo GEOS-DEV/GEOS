@@ -46,11 +46,6 @@ struct WaveSolverUtils
   {
     real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;
-    if( time_n <= -0.9 * delay || time_n >= 2.9 * delay )
-    {
-      return pulse;
-    }
-
     real32 const alpha = -pow( f0 * M_PI, 2 );
     real32 const time_d = time_n - delay;
     real32 const gaussian = exp( alpha * pow( time_d, 2 ));
