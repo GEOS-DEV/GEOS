@@ -15,6 +15,7 @@
 #include "mesh/CellElementRegionSelector.hpp"
 
 #include <fnmatch.h>
+#include <optional>
 
 
 namespace geos
