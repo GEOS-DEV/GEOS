@@ -120,10 +120,6 @@ public:
 
 private:
 
-  /// symbol for the extremity of a delemitor
-  static constexpr char m_sideCross = '+';
-  /// symbol to delimit a table column
-  static constexpr char m_innerCross = '+';
   /// symbol for separator construction
   static constexpr char m_verticalLine = '|';
   ///  for the extremity of a row
