@@ -564,7 +564,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
           sourceRegion,
           sourceValue,
           dt,
-          cycleNumber,
+          cycleForSource,
           stressxx,
           stressyy,
           stresszz,
