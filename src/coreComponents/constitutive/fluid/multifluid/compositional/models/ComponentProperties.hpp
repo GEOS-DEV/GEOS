@@ -37,19 +37,9 @@ class ComponentProperties final
 {
 public:
   ComponentProperties( string_array const & componentNames,
-                       array1d< real64 > const & componentMolarWeight,
-                       array1d< real64 > const & componentCriticalPressure,
-                       array1d< real64 > const & componentCriticalTemperature,
-                       array1d< real64 > const & componentAcentricFactor,
-                       array1d< real64 > const & componentVolumeShift,
-                       array2d< real64 > const & componentBinaryCoeff ):
+                       array1d< real64 > const & componentMolarWeight ):
     m_componentNames ( componentNames ),
-    m_componentMolarWeight ( componentMolarWeight ),
-    m_componentCriticalPressure ( componentCriticalPressure ),
-    m_componentCriticalTemperature( componentCriticalTemperature ),
-    m_componentAcentricFactor( componentAcentricFactor ),
-    m_componentVolumeShift( componentVolumeShift ),
-    m_componentBinaryCoeff( componentBinaryCoeff )
+    m_componentMolarWeight ( componentMolarWeight )
   {}
 
   ~ComponentProperties() = default;
@@ -127,15 +117,15 @@ public:
                           m_componentBinaryCoeff );
   }
 
-private:
+public:
   // Standard compositional input
   string_array const & m_componentNames;
   array1d< real64 > const & m_componentMolarWeight;
-  array1d< real64 > const & m_componentCriticalPressure;
-  array1d< real64 > const & m_componentCriticalTemperature;
-  array1d< real64 > const & m_componentAcentricFactor;
-  array1d< real64 > const & m_componentVolumeShift;
-  array2d< real64 > const & m_componentBinaryCoeff;
+  array1d< real64 > m_componentCriticalPressure;
+  array1d< real64 > m_componentCriticalTemperature;
+  array1d< real64 > m_componentAcentricFactor;
+  array1d< real64 > m_componentVolumeShift;
+  array2d< real64 > m_componentBinaryCoeff;
 };
 
 } // namespace compositional

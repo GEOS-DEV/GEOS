@@ -294,7 +294,7 @@ public:
     ~Parameters() override = default;
 
     void registerParameters( MultiFluidBase * fluid ) override;
-    void postProcessInput( MultiFluidBase const * fluid ) override;
+    void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
     struct viewKeyStruct
     {

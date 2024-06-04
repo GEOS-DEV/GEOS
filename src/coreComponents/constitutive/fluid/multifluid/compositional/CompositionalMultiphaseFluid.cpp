@@ -47,6 +47,7 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent ),
+  m_componentProperties( std::make_unique< compositional::ComponentProperties >( m_componentNames, m_componentMolarWeight ) ),
   m_parameters( compositional::CompositionalModelParameters< FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters() )
 {
   using InputFlags = dataRepository::InputFlags;
@@ -55,23 +56,23 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
+  registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentProperties->m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical pressures" );
 
-  registerWrapper( viewKeyStruct::componentCriticalTemperatureString(), &m_componentCriticalTemperature ).
+  registerWrapper( viewKeyStruct::componentCriticalTemperatureString(), &m_componentProperties->m_componentCriticalTemperature ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical temperatures" );
 
-  registerWrapper( viewKeyStruct::componentAcentricFactorString(), &m_componentAcentricFactor ).
+  registerWrapper( viewKeyStruct::componentAcentricFactorString(), &m_componentProperties->m_componentAcentricFactor ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component acentric factors" );
 
-  registerWrapper( viewKeyStruct::componentVolumeShiftString(), &m_componentVolumeShift ).
+  registerWrapper( viewKeyStruct::componentVolumeShiftString(), &m_componentProperties->m_componentVolumeShift ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Component volume shifts" );
 
-  registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentBinaryCoeff ).
+  registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentProperties->m_componentBinaryCoeff ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
@@ -135,49 +136,50 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
                           InputError );
 
   };
-  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
-  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
-  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
+  checkInputSize( m_componentProperties->m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
+  checkInputSize( m_componentProperties->m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
+  checkInputSize( m_componentProperties->m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
 
-  if( m_componentVolumeShift.empty() )
+  if( m_componentProperties->m_componentVolumeShift.empty() )
   {
-    m_componentVolumeShift.resize( NC );
-    m_componentVolumeShift.zero();
+    m_componentProperties->m_componentVolumeShift.resize( NC );
+    m_componentProperties->m_componentVolumeShift.zero();
   }
-  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() );
+  checkInputSize( m_componentProperties->m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() );
 
-  if( m_componentBinaryCoeff.empty() )
+  array2d< real64 > & componentBinaryCoeff = m_componentProperties->m_componentBinaryCoeff;
+  if( componentBinaryCoeff.empty() )
   {
-    m_componentBinaryCoeff.resize( NC, NC );
-    m_componentBinaryCoeff.zero();
+    componentBinaryCoeff.resize( NC, NC );
+    componentBinaryCoeff.zero();
   }
-  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
+  checkInputSize( componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 
   // Binary interaction coefficients should be symmetric and have zero diagonal
-  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 0 ), NC,
+  GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 0 ), NC,
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
                         InputError );
-  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 1 ), NC,
+  GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 1 ), NC,
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
                         InputError );
   for( integer ic = 0; ic < NC; ++ic )
   {
-    GEOS_THROW_IF_GT_MSG( LvArray::math::abs( m_componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
+    GEOS_THROW_IF_GT_MSG( LvArray::math::abs( componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
                           GEOS_FMT( "{}: {} entry at ({},{}) is {}: should be zero", getFullName(), viewKeyStruct::componentBinaryCoeffString(),
-                                    ic, ic, m_componentBinaryCoeff( ic, ic ) ),
+                                    ic, ic, componentBinaryCoeff( ic, ic ) ),
                           InputError );
     for( integer jc = ic + 1; jc < NC; ++jc )
     {
-      real64 const difference = LvArray::math::abs( m_componentBinaryCoeff( ic, jc )-m_componentBinaryCoeff( jc, ic ));
+      real64 const difference = LvArray::math::abs( componentBinaryCoeff( ic, jc )-componentBinaryCoeff( jc, ic ));
       GEOS_THROW_IF_GT_MSG( difference, MultiFluidConstants::epsilon,
                             GEOS_FMT( "{}: {} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
                                       getFullName(), viewKeyStruct::componentBinaryCoeffString(),
-                                      ic, jc, m_componentBinaryCoeff( ic, jc ), jc, ic, m_componentBinaryCoeff( jc, ic ) ),
+                                      ic, jc, componentBinaryCoeff( ic, jc ), jc, ic, componentBinaryCoeff( jc, ic ) ),
                             InputError );
     }
   }
 
-  m_parameters->postProcessInput( this );
+  m_parameters->postProcessInput( this, *m_componentProperties );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -232,15 +234,6 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels()
 {
-  m_componentProperties = std::make_unique< compositional::ComponentProperties >(
-    m_componentNames,
-    m_componentMolarWeight,
-    m_componentCriticalPressure,
-    m_componentCriticalTemperature,
-    m_componentAcentricFactor,
-    m_componentVolumeShift,
-    m_componentBinaryCoeff );
-
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                        *m_componentProperties,
                                        *m_parameters );

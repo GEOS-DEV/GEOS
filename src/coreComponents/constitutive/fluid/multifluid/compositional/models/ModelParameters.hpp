@@ -30,6 +30,8 @@ class MultiFluidBase;
 namespace compositional
 {
 
+class ComponentProperties;
+
 class ModelParameters
 {
 public:
@@ -41,9 +43,10 @@ public:
     GEOS_UNUSED_VAR( fluid );
   }
 
-  virtual void postProcessInput( MultiFluidBase const * fluid )
+  virtual void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
   {
     GEOS_UNUSED_VAR( fluid );
+    GEOS_UNUSED_VAR( componentProperties );
   }
 };
 

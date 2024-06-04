@@ -20,7 +20,6 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/NullFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
 
 namespace geos
@@ -74,17 +73,17 @@ void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase *
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
-void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
+void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid,
+                                                              ComponentProperties const & componentProperties )
 {
   integer const numComponents = fluid->numFluidComponents();
 
   if( m_componentCriticalVolume.empty() )
   {
-    using Fluid = CompositionalMultiphaseFluid< NullFlashModel, NullPhaseModel, NullPhaseModel >;
     m_componentCriticalVolume.resize( numComponents );
 
-    auto const & componentCriticalPressure = fluid->getWrapper< array1d< real64 > >( Fluid::viewKeyStruct::componentCriticalPressureString() ).reference();
-    auto const & componentCriticalTemperature = fluid->getWrapper< array1d< real64 > >( Fluid::viewKeyStruct::componentCriticalTemperatureString() ).reference();
+    arrayView1d< real64 > const & componentCriticalPressure = componentProperties.getComponentCriticalPressure();
+    arrayView1d< real64 > const & componentCriticalTemperature = componentProperties.getComponentCriticalTemperature();
 
     calculateCriticalVolume( numComponents,
                              componentCriticalPressure,

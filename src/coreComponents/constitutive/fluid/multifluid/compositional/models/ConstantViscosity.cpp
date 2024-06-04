@@ -55,8 +55,11 @@ void ConstantViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
     setDescription( "Constant phase viscosity" );
 }
 
-void ConstantViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid )
+void ConstantViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid,
+                                                      ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( componentProperties );
+
   integer const numPhase = fluid->numFluidPhases();
 
   if( m_constantPhaseViscosity.empty() )
