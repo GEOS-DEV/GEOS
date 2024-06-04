@@ -20,6 +20,8 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
+#include "ModelParameters.hpp"
+
 #include "codingUtilities/EnumStrings.hpp"
 
 namespace geos

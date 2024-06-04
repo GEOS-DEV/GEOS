@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_CONSTANTVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
+#include "ModelParameters.hpp"
 
 namespace geos
 {
