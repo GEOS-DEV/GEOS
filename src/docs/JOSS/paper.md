@@ -57,7 +57,7 @@ authors:
   - name: Brian M. Han
     affiliation: 1
   - name: Rasim Hasanzade
-    affiliation: 3,4
+    affiliation: "3,4"
   - name: Michael Homel
     affiliation: 1
   - name: Jian Huang
@@ -79,7 +79,7 @@ authors:
   - name: Victor A. P. Magri
     affiliation: 1
   - name: Antoine Mazuyer
-    affiliation: 2,3
+    affiliation: "2,3"
   - name: Mamadou N'diaye
     affiliation: 3
   - name: Daniel Osei-Kuffuor
@@ -103,7 +103,7 @@ authors:
   - name: Lionel Untereiner
     affiliation: 8
   - name: Sohail Waziri
-    affiliation: 3,4
+    affiliation: "3,4"
   - name: Xianhuan Wen
     affiliation: 4
   - name: Joshua A. White
