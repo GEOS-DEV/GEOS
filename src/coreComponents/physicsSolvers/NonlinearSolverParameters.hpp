@@ -99,7 +99,7 @@ public:
 
   virtual void postProcessInput() override;
 
-  void print();
+  void print() const;
 
   struct viewKeysStruct
   {

@@ -187,7 +187,7 @@ void NonlinearSolverParameters::postProcessInput()
   }
 }
 
-void NonlinearSolverParameters::print()
+void NonlinearSolverParameters::print() const
 {
   GEOS_LOG_RANK_0( "Nonlinear solver parameters:" );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Line search action = {}", EnumStrings< LineSearchAction >::toString( m_lineSearchAction ) ) );
