@@ -282,11 +282,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
-  # echo "Available baselines:"
-  # ls -lah ${DATA_EXCHANGE_DIR} | grep baseline
+  echo "Available baselines:"
+  ls -lR /tmp/geos/baselines
 
   echo "Running integrated tests..."
-  integratedTests/geos_ats.sh --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+  integratedTests/geos_ats.sh --baselineCacheDirectory /tmp/geos/baselines
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
 
   echo "Checking results..."
@@ -304,7 +304,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     integratedTests/geos_ats.sh -a rebaselinefailed
 
     echo "Packing baselines..."
-    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory ${DATA_EXCHANGE_DIR}
+    integratedTests/geos_ats.sh -a pack_baselines --baselineArchiveName ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz --baselineCacheDirectory /tmp/geos/baselines
     INTEGRATED_TEST_EXIT_STATUS=1
   fi
 
