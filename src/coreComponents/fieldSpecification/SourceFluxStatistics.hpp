@@ -21,6 +21,7 @@
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 namespace geos
