@@ -69,7 +69,6 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/RachfordRice.hpp
      fluid/multifluid/compositional/models/ComponentProperties.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
-     fluid/multifluid/compositional/models/CompositionalModelParameters.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
