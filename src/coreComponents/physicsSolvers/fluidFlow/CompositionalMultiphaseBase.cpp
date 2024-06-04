@@ -98,6 +98,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
     setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+  this->registerWrapper( viewKeyStruct::targetRelativeCompDensChangeString(), &m_targetRelativeCompDensChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setDescription( "Target (relative) change in component density in a time step" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -114,6 +119,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
     setDescription( "Maximum (relative) change in temperature in a Newton iteration" );
+  this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setDescription( "Maximum (relative) change in a component density in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -174,15 +184,21 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
                         ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+  GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
+                        ": The maximum relative change in component density in a Newton iteration must be larger than 0.0" );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
                         ": The target relative change in pressure in a time step must be larger than 0.0" );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) <<
-                        ": The target relative change in temperature in a time step must be larger than to 0.0" );
+                        ": The target relative change in temperature in a time step must be larger than 0.0" );
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
-                        ": The target change in phase volume fraction in a time step must be larger than to 0.0" );
+                        ": The target change in phase volume fraction in a time step must be larger than 0.0" );
+  GEOS_ERROR_IF_LE_MSG( m_targetRelativeCompDensChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
+                        ": The target change in component density in a time step must be larger than 0.0" );
 
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
@@ -2047,6 +2063,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 {
   if( m_targetRelativePresChange >= 1.0 &&
       m_targetPhaseVolFracChange >= 1.0 &&
+      m_targetRelativeCompDensChange >= 1.0 &&
       ( !m_isThermal || m_targetRelativeTempChange >= 1.0 ) )
   {
     return LvArray::NumericLimits< real64 >::max;
@@ -2055,8 +2072,10 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   real64 maxRelativePresChange = 0.0;
   real64 maxRelativeTempChange = 0.0;
   real64 maxAbsolutePhaseVolFracChange = 0.0;
+  real64 maxRelativeCompDensChange = 0.0;
 
-  real64 const numPhase = m_numPhases;
+  integer const numPhase = m_numPhases;
+  integer const numComp = m_numComponents;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -2076,21 +2095,30 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
         subRegion.getField< fields::flow::phaseVolumeFraction >();
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
         subRegion.getField< fields::flow::phaseVolumeFraction_n >();
+  arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+    subRegion.getField< fields::flow::globalCompDensity >();
+  arrayView2d< real64, compflow::USD_COMP > const compDens_n =
+    subRegion.getField< fields::flow::globalCompDensity_n >();
 
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPhaseVolFracChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] < 0 )
         {
-          // switch from relative to absolute when pressure less than 1
+          // switch from relative to absolute when values less than 1
           subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( LvArray::math::abs( pres_n[ei] ), 1.0 ) );
           subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( LvArray::math::abs( temp_n[ei] ), 1.0 ) );
           for( integer ip = 0; ip < numPhase; ++ip )
           {
             subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
+          }
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            subRegionMaxCompDensChange.max( LvArray::math::abs( compDens[ei][ic] - compDens_n[ei][ic] ) / LvArray::math::max( LvArray::math::abs( compDens_n[ei][ic] ), 1.0 ) );
           }
         }
       } );
@@ -2098,22 +2126,26 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       maxRelativePresChange = LvArray::math::max( maxRelativePresChange, subRegionMaxPresChange.get() );
       maxRelativeTempChange = LvArray::math::max( maxRelativeTempChange, subRegionMaxTempChange.get() );
       maxAbsolutePhaseVolFracChange = LvArray::math::max( maxAbsolutePhaseVolFracChange, subRegionMaxPhaseVolFracChange.get() );
+      maxRelativeCompDensChange = LvArray::math::max( maxRelativeCompDensChange, subRegionMaxCompDensChange.get() );
 
     } );
   } );
 
   maxRelativePresChange = MpiWrapper::max( maxRelativePresChange );
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
+  maxRelativeCompDensChange = MpiWrapper::max( maxRelativeCompDensChange );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative pressure change during time step: {} %",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max relative pressure change during time step = {} %",
                                       getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max absolute phase volume fraction change during time step: {}",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max absolute phase volume fraction change during time step = {}",
                                       getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max relative component density change during time step = {} %",
+                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeCompDensChange, 3 ) ) );
 
   if( m_isThermal )
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative temperature change during time step: {} %",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: max relative temperature change during time step = {} %",
                                         getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
   }
 
@@ -2127,6 +2159,14 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
                                     / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
   if( m_nonlinearSolverParameters.getLogLevel() > 0 )
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on phase volume fraction change = {}", getName(), nextDtPhaseVolFrac ));
+  real64 nextDtCompDens = LvArray::NumericLimits< real64 >::max;
+  if(m_targetRelativeCompDensChange < LvArray::NumericLimits< real64 >::max )
+  {
+    nextDtCompDens = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeCompDensChange
+                     / std::max( eps, maxRelativeCompDensChange + m_solutionChangeScalingFactor * m_targetRelativeCompDensChange );
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on component density change = {}", getName(), nextDtCompDens ));
+  }
   real64 nextDtTemperature = LvArray::NumericLimits< real64 >::max;
   if( m_isThermal )
   {
@@ -2136,7 +2176,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on temperature change = {}", getName(), nextDtPhaseVolFrac ));
   }
 
-  return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );
+  return std::min( std::min( nextDtPressure, std::min(nextDtPhaseVolFrac, nextDtCompDens) ), nextDtTemperature );
 }
 
 real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
