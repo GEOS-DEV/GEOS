@@ -232,8 +232,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-# message(WARNING "Temporarily changing the geosPythonBranch to feature/sherman/baselineStorage")
-# set(GEOS_PYTHON_PACKAGES_BRANCH "branch name" CACHE STRING "" FORCE)
+# message(WARNING "Temporarily changing the geosPythonBranch to cusini/fix-streak-cert-fail")
+# set(GEOS_PYTHON_PACKAGES_BRANCH "cusini/fix-streak-cert-fail" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )
