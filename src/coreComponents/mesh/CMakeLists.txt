@@ -60,6 +60,7 @@ set( mesh_headers
      generators/PrismUtilities.hpp
      generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
+     generators/include/CellBlk.hpp
      generators/include/CellBlockABC.hpp
      generators/include/FaceBlockABC.hpp
      generators/include/LineBlockABC.hpp

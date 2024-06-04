@@ -104,39 +104,44 @@ Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes, bool & isFlipped
 {
   std::size_t const n = nodes.size();
 
-  // Handles negative values of `i`.
-  auto const modulo = [n]( integer const & i ) -> std::size_t
-  {
-    integer mod = i % n;
-    if( mod < 0 )
-    {
-      mod += n;
-    }
-    return mod;
-  };
-
-  Face f;
-  f.reserve( n );
+  std::vector< NodeGlbIdx > f( nodes );
 
   auto const cit = std::min_element( std::cbegin( nodes ), std::cend( nodes ) );
   auto const minIdx = std::distance( std::cbegin( nodes ), cit );
 
-  std::size_t const prevIdx = modulo( intConv< integer >( minIdx - 1 ) );
-  std::size_t const nextIdx = modulo( intConv< integer >( minIdx + 1 ) );
-  int const increment = nodes[prevIdx] < nodes[nextIdx] ? -1 : 1;
+  std::size_t const prevIdx = minIdx == 0 ? n - 1 : minIdx - 1;
+  std::size_t const nextIdx = minIdx == intConv< int >( n ) - 1 ? 0 : minIdx + 1;
 
   start = intConv< std::uint8_t >( minIdx );
-  isFlipped = increment < 0;
+  isFlipped = nodes[prevIdx] < nodes[nextIdx];
 
-  integer i = intConv< integer >( minIdx );  // TODO use std::rotate/std::reverse instead.
-  for( std::size_t count = 0; count < n; ++count, i = i + increment )
+  std::size_t const pivot = isFlipped ? n - 1 - minIdx : minIdx;
+  if( isFlipped )
   {
-    f.emplace_back( nodes.at( modulo( i ) ) );
+    std::reverse( std::begin( f ), std::end( f ) );
   }
+  std::rotate( std::begin( f ), std::begin( f ) + pivot, std::end( f ) );
 
   return f;
 }
 
+std::vector< NodeLocIdx > resetFaceNodes( std::vector< NodeLocIdx > const & nodes,
+                                          bool const & isFlipped,
+                                          std::uint8_t const & start )
+{
+  std::vector< NodeLocIdx > result( nodes );
+  if( isFlipped )
+  {
+    std::reverse( std::begin( result ), std::end( result ) );
+    std::uint8_t const pivot = std::size( result ) - 1 - start;
+    std::rotate( std::begin( result ), std::begin( result ) + pivot, std::end( result ) );
+  }
+  else
+  {
+    std::rotate( std::rbegin( result ), std::rbegin( result ) + start, std::rend( result ) );
+  }
+  return result;
+}
 
 Exchange buildSpecificData( vtkSmartPointer< vtkDataSet > mesh,
                             std::set< vtkIdType > const & cellIds )

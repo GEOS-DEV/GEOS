@@ -17,38 +17,59 @@
 namespace geos
 {
 
-NodeMgrImpl::NodeMgrImpl( NodeLocIdx const & numNodes )
-  : m_numNodes( numNodes )
+NodeMgrImpl::NodeMgrImpl( localIndex numNodes,
+                          array1d< integer > && ghostRank,
+                          ArrayOfArrays< localIndex > const & n2e,
+                          ArrayOfArrays< localIndex > const & n2f,
+                          ArrayOfArrays< localIndex > const & n2c,
+                          array1d< globalIndex > const & l2g )
+  : m_numNodes( numNodes ),
+    m_ghostRank( ghostRank ),
+    m_n2e( n2e ),
+    m_n2f( n2f ),
+    m_n2c( n2c ),
+    m_l2g( l2g )
 { }
 
 localIndex NodeMgrImpl::numNodes() const
 {
-  return intConv< localIndex >( m_numNodes.get() );
+  return m_numNodes;
 }
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > NodeMgrImpl::getNodePositions() const
 {
-  return  {};
+  return {};
 }
 
 ArrayOfArrays< localIndex > NodeMgrImpl::getNodeToEdges() const
 {
-  return  {};
+  return m_n2e;
 }
 
 ArrayOfArrays< localIndex > NodeMgrImpl::getNodeToFaces() const
 {
-  return  {};
+  return m_n2f;
 }
 
 ToCellRelation< ArrayOfArrays< localIndex > > NodeMgrImpl::getNodeToElements() const
 {
-  return  {};
+  ArrayOfArrays< localIndex > toBlockIndex( m_n2c );  // TODO cheat in case there's one unique cell block!
+  for( int i = 0; i < toBlockIndex.size(); ++i )
+  {
+    for( int j = 0; j < toBlockIndex.sizeOfArray(i); ++j )
+    {
+      if( m_n2c( i, j ) > -1 )
+      {
+        toBlockIndex( i, j ) = 0;
+      }
+    }
+  }
+  return { std::move( toBlockIndex ), m_n2c };
 }
 
 array1d< globalIndex > NodeMgrImpl::getLocalToGlobal() const
 {
-  return  {};
+  return m_l2g;
 }
 
 std::map< string, SortedArray< localIndex > > const & NodeMgrImpl::getNodeSets() const
@@ -95,78 +116,125 @@ array1d< globalIndex > EdgeMgrImpl::getLocalToGlobal() const
   return m_l2g;
 }
 
-FaceMgrImpl::FaceMgrImpl( FaceLocIdx const & numFaces )
-  : m_numFaces( numFaces )
+FaceMgrImpl::FaceMgrImpl( std::size_t numFaces,
+                          array1d< integer > && ghostRank,
+                          ArrayOfArrays< localIndex > && f2n,
+                          ArrayOfArrays< localIndex > && f2e,
+                          array2d< localIndex > && f2c,
+                          unordered_map< globalIndex, localIndex > && g2l,
+                          array1d< globalIndex > && l2g )
+  : m_numFaces( numFaces ),
+    m_ghostRank( ghostRank ),
+    m_f2n( f2n ),
+    m_f2e( f2e ),
+    m_f2c( f2c ),
+    m_g2l( g2l ),
+    m_l2g( l2g )
 { }
 
 localIndex FaceMgrImpl::numFaces() const
 {
-  return intConv< localIndex >( m_numFaces.get() );
+  return intConv< localIndex >( m_numFaces );
 }
 
 ArrayOfArrays< localIndex > FaceMgrImpl::getFaceToNodes() const
 {
-  return {};
+  return m_f2n;
 }
 
 ArrayOfArrays< localIndex > FaceMgrImpl::getFaceToEdges() const
 {
-  return {};
+  return m_f2e;
 }
 
 ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
 {
-  return {};
+  array2d< localIndex > toBlockIndex( m_f2c );  // TODO cheat in case there's one unique cell block!
+  for( int i = 0; i < toBlockIndex.size( 0 ); ++i )
+  {
+    for( int j = 0; j < toBlockIndex.size( 1 ); ++j )
+    {
+      if( m_f2c( i, j ) > -1 )
+      {
+        toBlockIndex( i, j ) = 0;
+      }
+    }
+  }
+  return { std::move( toBlockIndex ), m_f2c };
 }
 
-ElementType CellBlockImpl::getElementType() const
+array1d< integer > FaceMgrImpl::getGhostRank() const
+{
+  return m_ghostRank;
+}
+
+array1d< globalIndex > FaceMgrImpl::getLocalToGlobal() const
+{
+  return m_l2g;
+}
+
+CellBlkImpl::CellBlkImpl( localIndex numCells,
+                          array1d< integer > const & ghostRank,
+                          array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
+                          array2d< localIndex > const & c2e,
+                          array2d< localIndex > const & c2f,
+                          array1d< globalIndex > const & l2g )
+  : m_numCells( numCells ),
+    m_ghostRank( ghostRank ),
+    m_c2n( c2n ),
+    m_c2e( c2e ),
+    m_c2f( c2f ),
+    m_l2g( l2g )
+{ }
+
+ElementType CellBlkImpl::getElementType() const
 {
   return ElementType::Hexahedron;
 }
 
-localIndex CellBlockImpl::numNodesPerElement() const
+localIndex CellBlkImpl::numNodesPerElement() const
 {
-  return 0;
+  return 8;
 }
 
-localIndex CellBlockImpl::numEdgesPerElement() const
+localIndex CellBlkImpl::numEdgesPerElement() const
 {
-  return 0;
+  return 12;
 }
 
-localIndex CellBlockImpl::numFacesPerElement() const
+localIndex CellBlkImpl::numFacesPerElement() const
 {
-  return 0;
+  return 6;
 }
 
-localIndex CellBlockImpl::numElements() const
+localIndex CellBlkImpl::numElements() const
 {
-  return 0;
+  return m_numCells;
 }
 
-array2d< localIndex, cells::NODE_MAP_PERMUTATION > CellBlockImpl::getElemToNodes() const
+array2d< localIndex, cells::NODE_MAP_PERMUTATION > CellBlkImpl::getElemToNodes() const
 {
-  return {};
+  return m_c2n;
 }
 
-array2d< localIndex > CellBlockImpl::getElemToEdges() const
+array2d< localIndex > CellBlkImpl::getElemToEdges() const
 {
-  return {};
+  return m_c2e;
 }
 
-array2d< localIndex > CellBlockImpl::getElemToFaces() const
+array2d< localIndex > CellBlkImpl::getElemToFaces() const
 {
-  return {};
+  return m_c2f;
 }
 
-array1d< globalIndex > CellBlockImpl::localToGlobalMap() const
+array1d< globalIndex > CellBlkImpl::localToGlobalMap() const
 {
-  return {};
+  return m_l2g;
 }
 
-std::list< dataRepository::WrapperBase const * > CellBlockImpl::getExternalProperties() const
-{
-  return {};
-}
+//std::list< dataRepository::WrapperBase const * > CellBlkImpl::getExternalProperties() const
+//{
+//  return {};
+//}
 
 } // end of namespace

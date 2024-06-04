@@ -21,7 +21,7 @@
 #include "include/EdgeMgr.hpp"
 #include "include/FaceMgr.hpp"
 #include "include/CellMgr.hpp"
-#include "include/CellBlockABC.hpp"
+#include "include/CellBlk.hpp"
 
 namespace geos
 {
@@ -29,7 +29,12 @@ namespace geos
 class NodeMgrImpl : public generators::NodeMgr
 {
 public:
-  explicit NodeMgrImpl( NodeLocIdx const & numNodes );
+  NodeMgrImpl( localIndex numNodes,
+               array1d< integer > && ghostRank,
+               ArrayOfArrays< localIndex > const & n2e,
+               ArrayOfArrays< localIndex > const & n2f,
+               ArrayOfArrays< localIndex > const & n2c,
+               array1d< globalIndex > const & l2g );
 
   [[nodiscard]] localIndex numNodes() const override;
 
@@ -46,7 +51,12 @@ public:
   [[nodiscard]] std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
 private:
-  NodeLocIdx m_numNodes;
+  localIndex m_numNodes;
+  array1d< integer > m_ghostRank;
+  ArrayOfArrays< localIndex > m_n2e;
+  ArrayOfArrays< localIndex > m_n2f;
+  ArrayOfArrays< localIndex > m_n2c;
+  array1d< globalIndex > m_l2g;
   std::map< string, SortedArray< localIndex > > m_todo;
 };
 
@@ -82,7 +92,13 @@ private:
 class FaceMgrImpl : public generators::FaceMgr
 {
 public:
-  explicit FaceMgrImpl( FaceLocIdx const & numFaces );
+  FaceMgrImpl( std::size_t numFaces,
+               array1d< integer > && ghostRank,
+               ArrayOfArrays< localIndex > && f2n,
+               ArrayOfArrays< localIndex > && f2e,
+               array2d< localIndex > && f2c,
+               unordered_map< globalIndex, localIndex > && g2l,
+               array1d< globalIndex > && l2g );
 
   [[nodiscard]] localIndex numFaces() const override;
 
@@ -92,33 +108,55 @@ public:
 
   [[nodiscard]] ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
+  [[nodiscard]] array1d< integer > getGhostRank() const override;
+
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
+
 private:
-  FaceLocIdx m_numFaces;
+  localIndex m_numFaces;
+  array1d< integer > m_ghostRank;
+  ArrayOfArrays< localIndex > m_f2n;
+  ArrayOfArrays< localIndex > m_f2e;
+  array2d< localIndex > m_f2c;
+  unordered_map< globalIndex, localIndex > m_g2l;
+  array1d< globalIndex > m_l2g;
 };
 
-class CellBlockImpl: public CellBlockABC
+class CellBlkImpl : public CellBlk
 {
 public:
-  ElementType getElementType() const override;
+  CellBlkImpl( localIndex numCells,
+               array1d< integer > const & ghostRank,
+               array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
+               array2d< localIndex > const & c2e,
+               array2d< localIndex > const & c2f,
+               array1d< globalIndex > const & l2g );
 
-  localIndex numNodesPerElement() const override;
+  [[nodiscard]] ElementType getElementType() const override;
 
-  localIndex numEdgesPerElement() const override;
+  [[nodiscard]] localIndex numNodesPerElement() const override;
 
-  localIndex numFacesPerElement() const override;
+  [[nodiscard]] localIndex numEdgesPerElement() const override;
 
-  localIndex numElements() const override;
+  [[nodiscard]] localIndex numFacesPerElement() const override;
 
-  array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override;
+  [[nodiscard]] localIndex numElements() const override;
 
-  array2d< localIndex > getElemToEdges() const override;
+  [[nodiscard]] array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override;
 
-  array2d< localIndex > getElemToFaces() const override;
+  [[nodiscard]] array2d< localIndex > getElemToEdges() const override;
 
-  array1d< globalIndex > localToGlobalMap() const override;
+  [[nodiscard]] array2d< localIndex > getElemToFaces() const override;
+
+  [[nodiscard]] array1d< globalIndex > localToGlobalMap() const override;
 
 private:
-  virtual std::list< dataRepository::WrapperBase const * > getExternalProperties() const override;
+  localIndex m_numCells;
+  array1d< integer > m_ghostRank;
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_c2n;
+  array2d< localIndex > m_c2e;
+  array2d< localIndex > m_c2f;
+  array1d< globalIndex > m_l2g;
 };
 
 } // geos

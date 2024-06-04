@@ -84,6 +84,9 @@ inline void from_json( const json & j,
  */
 Face reorderFaceNodes( std::vector< NodeGlbIdx > const & nodes, bool & isFlipped, std::uint8_t & start );
 
+std::vector< NodeLocIdx > resetFaceNodes( std::vector< NodeLocIdx > const & nodes,
+                                          bool const & isFlipped,
+                                          std::uint8_t const & start );
 
 std::tuple< Buckets, BucketOffsets > doTheNewGlobalNumbering( vtkSmartPointer< vtkDataSet > mesh,
                                                               std::set< MpiRank > const & neighbors );
