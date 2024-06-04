@@ -19,8 +19,9 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_FUNCTIONBASE_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_FUNCTIONBASE_HPP_
 
+#include "dataRepository/ObjectCatalog.hpp"
+
 #include "ComponentProperties.hpp"
-#include "ModelParameters.hpp"
 
 namespace geos
 {
@@ -81,11 +82,6 @@ public:
   string const & functionName() const { return m_functionName; }
 
   virtual FunctionType functionType() const = 0;
-
-  static std::unique_ptr< ModelParameters > createModelParameters()
-  {
-    return std::make_unique< ModelParameters >();
-  }
 
 protected:
   /// Name of the PVT function
