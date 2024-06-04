@@ -457,37 +457,38 @@ std::array< std::size_t, N > decode( std::size_t const & basis,
 }
 
 
-std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph const & owned,
-                                                                       MeshGraph const & present,
-                                                                       MaxGlbIdcs const & gis,
-                                                                       MpiRank curRank )
+struct Adjacency
 {
-  FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
-  using Geom = FindGeometricalType::Geom;
-
-  std::size_t const n = convert.numEntries();  // Total number of entries in the graph.
-
-  std::size_t const numOwnedNodes = std::size( owned.n );
-  std::size_t const numOwnedEdges = std::size( owned.e2n );
-  std::size_t const numOwnedFaces = std::size( owned.f2e );
-  std::size_t const numOwnedCells = std::size( owned.c2f );
-  std::size_t const numOwned = numOwnedNodes + numOwnedEdges + numOwnedFaces + numOwnedCells;
-
-  std::size_t const numOtherNodes = std::size( present.n );
-  std::size_t const numOtherEdges = std::size( present.e2n );
-  std::size_t const numOtherFaces = std::size( present.f2e );
-  std::size_t const numOther = numOtherNodes + numOtherEdges + numOtherFaces;
-
-  std::vector< int > ownedGlbIdcs, numEntriesPerRow;  // TODO I couldn't use a vector of `std::size_t`
+  std::vector< int > ownedGlbIdcs;  // TODO Use some strongly typed ints.
+  std::vector< int > otherGlbIdcs;  // TODO Use some strongly typed ints.
+  std::vector< int > numEntriesPerRow;
   std::vector< std::vector< int > > indices;
   std::vector< std::vector< double > > values;
+};
+
+
+Adjacency buildAdjacency( MeshGraph const & owned,
+                          MeshGraph const & present,
+                          FindGeometricalType const & convert )
+{
+  Adjacency adjacency;
+
+  std::size_t const numOwned = std::size( owned.n ) + std::size( owned.e2n ) + std::size( owned.f2e ) + std::size( owned.c2f );
+  std::size_t const numOther = std::size( present.n ) + std::size( present.e2n ) + std::size( present.f2e );
+
+  // Aliases
+  std::vector< int > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
+  std::vector< int > & otherGlbIdcs = adjacency.otherGlbIdcs;
+  std::vector< int > & numEntriesPerRow = adjacency.numEntriesPerRow;
+  std::vector< std::vector< int > > & indices = adjacency.indices;
+  std::vector< std::vector< double > > & values = adjacency.values;
+
   ownedGlbIdcs.reserve( numOwned );
+  otherGlbIdcs.reserve( numOther );
   numEntriesPerRow.reserve( numOwned );
   indices.reserve( numOwned );
-  indices.reserve( numOwned );
+  values.reserve( numOwned );
 
-  std::vector< int > otherGlbIdcs;  // TODO I couldn't use a vector of `std::size_t`
-  otherGlbIdcs.reserve( numOther );
   for( NodeGlbIdx const & ngi: present.n )
   {
     otherGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
@@ -592,6 +593,30 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   {
     GEOS_ASSERT_EQ( indices[i].size(), std::size_t( numEntriesPerRow[i] ) );
   }
+
+  return adjacency;
+}
+
+std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const & owned,
+                                                               MeshGraph const & present,
+                                                               MaxGlbIdcs const & gis,
+                                                               MpiRank curRank )
+{
+  FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
+  using Geom = FindGeometricalType::Geom;
+
+  std::size_t const n = convert.numEntries();  // Total number of entries in the graph.
+
+  Adjacency const adjacency = buildAdjacency( owned, present, convert );
+  std::size_t const numOwned = std::size( adjacency.ownedGlbIdcs );
+  std::size_t const numOther = std::size( adjacency.otherGlbIdcs );
+
+  // Aliases
+  std::vector< int > const & ownedGlbIdcs = adjacency.ownedGlbIdcs;
+  std::vector< int > const & otherGlbIdcs = adjacency.otherGlbIdcs;
+  std::vector< int > const & numEntriesPerRow = adjacency.numEntriesPerRow;
+  std::vector< std::vector< int > > const & indices = adjacency.indices;
+  std::vector< std::vector< double > > const  & values = adjacency.values;
 
   Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
   Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
@@ -808,7 +833,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > assembleAdjacencyMatrix( MeshGraph
   // - the number of columns being the number of nodes in the mesh graph,
   // - the number of rows being the total number graph nodes that's missing on ranks.
   // - all its terms will be `1`.
-  // Combined with the adjacency matrix which conveya a lot of connections information,
+  // Combined with the adjacency matrix which conveys a lot of connections information,
   // we'll be able to create the final `missingMappings`.
   // We also create `maps` with specific MPI ranks ownerships and offsets,
   // so we'll be able to retrieve the information on the ranks that need it (nothing more, nothing less).
@@ -993,7 +1018,7 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 //  }
 //  MpiWrapper::barrier();
 
-  auto const [ghosts, recv, send] = assembleAdjacencyMatrix( owned, present, matrixOffsets, curRank );
+  auto const [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
 
   buildPods( owned, present, ghosts, recv, send );
 
