@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3050 (2024-06-04)
+=====================
+Rebaselined after addition of the initialization of a poroElastic conformingFracture case with external mesh.
+
 PR #3050 (2024-05-20)
 =====================
 Spatially varying grain bulk modulus. Rebaseline of all poromechanics cases needed.
