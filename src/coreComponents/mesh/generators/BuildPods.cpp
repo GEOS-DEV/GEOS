@@ -26,22 +26,21 @@
 namespace geos::ghosting
 {
 
-// TODO Do we want 2 separated `g2l` and `l2g` structs?
-struct GlobalNumberings
+struct GlobalToLocal
 {
-  std::map< NodeGlbIdx, NodeLocIdx > ng2l;
-  std::map< NodeLocIdx, NodeGlbIdx > nl2g;
-
-  std::map< EdgeGlbIdx, EdgeLocIdx > eg2l;
-  std::map< EdgeLocIdx, EdgeGlbIdx > el2g;  // TODO Do we want to make this a vector already? It's surely the most efficient way to build it.
-
-  std::map< FaceGlbIdx, FaceLocIdx > fg2l;
-  std::map< FaceLocIdx, FaceGlbIdx > fl2g;
-
-  std::map< CellGlbIdx, CellLocIdx > cg2l;
-  std::map< CellLocIdx, CellGlbIdx > cl2g;
+  std::map< NodeGlbIdx, NodeLocIdx > nodes;
+  std::map< EdgeGlbIdx, EdgeLocIdx > edges;
+  std::map< FaceGlbIdx, FaceLocIdx > faces;
+  std::map< CellGlbIdx, CellLocIdx > cells;
 };
 
+struct LocalToGlobal
+{
+  std::map< NodeLocIdx, NodeGlbIdx > nodes;
+  std::map< EdgeLocIdx, EdgeGlbIdx > edges;  // TODO Do we want to make this a vector already? It's surely the most efficient way to build it.
+  std::map< FaceLocIdx, FaceGlbIdx > faces;
+  std::map< CellLocIdx, CellGlbIdx > cells;
+};
 
 template< class GI, class LI >
 void buildL2GMappings( std::set< GI > const & gis,
@@ -62,9 +61,10 @@ void buildL2GMappings( std::set< GI > const & gis,
   // TODO add a check to see if we have the full range of local indices.
 }
 
-GlobalNumberings buildL2GMappings( MeshGraph const & graph )
+std::tuple< GlobalToLocal, LocalToGlobal > buildL2GMappings( MeshGraph const & graph )
 {
-  GlobalNumberings result;
+  GlobalToLocal g2l;
+  LocalToGlobal l2g;
 
   // Use `std::ranges::views::keys` when switching to C++20
   auto const keys = []( auto const & m )
@@ -72,12 +72,12 @@ GlobalNumberings buildL2GMappings( MeshGraph const & graph )
     return mapKeys< std::set >( m );
   };
 
-  buildL2GMappings( graph.n, result.ng2l, result.nl2g );
-  buildL2GMappings( keys( graph.e2n ), result.eg2l, result.el2g );
-  buildL2GMappings( keys( graph.f2e ), result.fg2l, result.fl2g );
-  buildL2GMappings( keys( graph.c2f ), result.cg2l, result.cl2g );
+  buildL2GMappings( graph.n, g2l.nodes, l2g.nodes );
+  buildL2GMappings( keys( graph.e2n ), g2l.edges, l2g.edges );
+  buildL2GMappings( keys( graph.f2e ), g2l.faces, l2g.faces );
+  buildL2GMappings( keys( graph.c2f ), g2l.cells, l2g.cells );
 
-  return result;
+  return { g2l, l2g };
 }
 
 template< class GI, class LI >
@@ -282,25 +282,23 @@ CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
   return CellBlkImpl( intConv< localIndex >( numCells ), ghostRank_, convertToA2d( c2n, 8 ), convertToA2d( c2e, 12 ), convertToA2d( c2f, 6 ), std::move( l2g ) );
 }
 
-DownwardMappings buildDownwardMappings( GlobalNumberings const & numberings,
-                                        MeshGraph const & graph,
-                                        GhostRecv const & recv,
-                                        GhostSend const & send )
+DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
+                                        MeshGraph const & graph )
 {
   DownwardMappings res;
 
   // Building the `e2n` (edges to nodes) mapping
   for( auto const & [egi, ngis]: graph.e2n )
   {
-    NodeLocIdx const nli0 = numberings.ng2l.at( std::get< 0 >( ngis ) );
-    NodeLocIdx const nli1 = numberings.ng2l.at( std::get< 1 >( ngis ) );
-    res.e2n[numberings.eg2l.at( egi )] = { nli0, nli1 };
+    NodeLocIdx const nli0 = g2l.nodes.at( std::get< 0 >( ngis ) );
+    NodeLocIdx const nli1 = g2l.nodes.at( std::get< 1 >( ngis ) );
+    res.e2n[g2l.edges.at( egi )] = { nli0, nli1 };
   }
 
   // Building the `f2n` (face to nodes) and `f2e` (faces to edges) mappings
   for( auto const & [fgi, edgeInfos]: graph.f2e )
   {
-    FaceLocIdx const & fli = numberings.fg2l.at( fgi );
+    FaceLocIdx const & fli = g2l.faces.at( fgi );
 
     std::vector< NodeLocIdx > & nodes = res.f2n[fli];
     std::vector< EdgeLocIdx > & edges = res.f2e[fli];
@@ -311,16 +309,16 @@ DownwardMappings buildDownwardMappings( GlobalNumberings const & numberings,
     for( EdgeInfo const & edgeInfo: edgeInfos )
     {
       std::tuple< NodeGlbIdx, NodeGlbIdx > const & ngis = graph.e2n.at( edgeInfo.index );
-      nodes.emplace_back( edgeInfo.start == 0 ? numberings.ng2l.at( std::get< 0 >( ngis ) ) : numberings.ng2l.at( std::get< 1 >( ngis ) ) );
+      nodes.emplace_back( edgeInfo.start == 0 ? g2l.nodes.at( std::get< 0 >( ngis ) ) : g2l.nodes.at( std::get< 1 >( ngis ) ) );
 
-      edges.emplace_back( numberings.eg2l.at( edgeInfo.index ) );
+      edges.emplace_back( g2l.edges.at( edgeInfo.index ) );
     }
   }
 
   // Building the `c2n` (cell to nodes), `c2e` (cell to edges) and `c2f` (cell to faces) mappings
   for( auto const & [cgi, faceInfos]: graph.c2f )
   {
-    CellLocIdx const & cli = numberings.cg2l.at( cgi );
+    CellLocIdx const & cli = g2l.cells.at( cgi );
 
     std::vector< FaceLocIdx > & faces = res.c2f[cli];
     std::vector< EdgeLocIdx > & edges = res.c2e[cli];
@@ -331,7 +329,7 @@ DownwardMappings buildDownwardMappings( GlobalNumberings const & numberings,
     // c2f
     for( FaceInfo const & faceInfo: faceInfos )
     {
-      faces.emplace_back( numberings.fg2l.at( faceInfo.index ) );
+      faces.emplace_back( g2l.faces.at( faceInfo.index ) );
     }
 
     // c2e
@@ -347,8 +345,8 @@ DownwardMappings buildDownwardMappings( GlobalNumberings const & numberings,
     FaceInfo const & bottomFace = faceInfos.at( 4 ); // (0, 3, 2, 1) // TODO depends on element type.
     FaceInfo const & topFace = faceInfos.at( 5 ); // (4, 5, 6, 7)
 
-    std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( numberings.fg2l.at( bottomFace.index ) );
-    std::vector< NodeLocIdx > const & topNodes = res.f2n.at( numberings.fg2l.at( topFace.index ) );
+    std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( g2l.faces.at( bottomFace.index ) );
+    std::vector< NodeLocIdx > const & topNodes = res.f2n.at( g2l.faces.at( topFace.index ) );
 
     std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
     std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
@@ -425,7 +423,7 @@ void buildPods( MeshGraph const & owned,
 {
   MeshGraph const graph = mergeMeshGraph( owned, present, ghosts );
 
-  GlobalNumberings const numberings = buildL2GMappings( graph );
+  auto const [g2l, l2g] = buildL2GMappings( graph );
 //  GEOS_LOG_RANK( "numberings ng2l = " << json( numberings.ng2l ) );
 //  GEOS_LOG_RANK( "owned mesh graph nodes = " << json( owned.n ) );
 //  GEOS_LOG_RANK( "present mesh graph nodes = " << json( present.n ) );
@@ -437,39 +435,39 @@ void buildPods( MeshGraph const & owned,
 
 //  MpiWrapper::barrier();
 
-  DownwardMappings const downwardMappings = buildDownwardMappings( numberings, graph, recv, send );
+  DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
 
-  NodeMgrImpl const nodeMgr = makeFlavorlessNodeMgrImpl( std::size( numberings.ng2l ),
-                                                         buildGhostRank( numberings.ng2l, send.nodes, recv.nodes ),
+  NodeMgrImpl const nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
+                                                         buildGhostRank( g2l.nodes, send.nodes, recv.nodes ),
                                                          upwardMappings.n2e,
                                                          upwardMappings.n2f,
                                                          upwardMappings.n2c,
-                                                         numberings.ng2l,
-                                                         numberings.nl2g );
+                                                         g2l.nodes,
+                                                         l2g.nodes );
 
-  EdgeMgrImpl const edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( numberings.eg2l ),
-                                                         buildGhostRank( numberings.eg2l, send.edges, recv.edges ),
+  EdgeMgrImpl const edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
+                                                         buildGhostRank( g2l.edges, send.edges, recv.edges ),
                                                          downwardMappings.e2n,
                                                          upwardMappings.e2f,
-                                                         numberings.eg2l,
-                                                         numberings.el2g );
+                                                         g2l.edges,
+                                                         l2g.edges );
 
-  FaceMgrImpl const faceMgr = makeFlavorlessFaceMgrImpl( std::size( numberings.fg2l ),
-                                                         buildGhostRank( numberings.fg2l, send.faces, recv.faces ),
+  FaceMgrImpl const faceMgr = makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
+                                                         buildGhostRank( g2l.faces, send.faces, recv.faces ),
                                                          downwardMappings.f2n,
                                                          downwardMappings.f2e,
                                                          upwardMappings.f2c,
-                                                         numberings.fg2l,
-                                                         numberings.fl2g );
+                                                         g2l.faces,
+                                                         l2g.faces );
 
-  CellBlkImpl const cellBlock = makeFlavorlessCellBlkImpl( std::size( numberings.cg2l ),
-                                                               buildGhostRank( numberings.cg2l, send.cells, recv.cells ),
-                                                               downwardMappings.c2n,
-                                                               downwardMappings.c2e,
-                                                               downwardMappings.c2f,
-                                                               numberings.cg2l,
-                                                               numberings.cl2g );
+  CellBlkImpl const cellBlock = makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
+                                                           buildGhostRank( g2l.cells, send.cells, recv.cells ),
+                                                           downwardMappings.c2n,
+                                                           downwardMappings.c2e,
+                                                           downwardMappings.c2f,
+                                                           g2l.cells,
+                                                           l2g.cells );
 }
 
 }
