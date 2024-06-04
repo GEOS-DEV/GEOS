@@ -144,21 +144,21 @@ Note that GEOS as described here is a completely separate work form the previous
 # Statement of need
 
 The threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
-Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals. 
+Carbon Capture and Storage (CCS) of CO~2~ in subsurface reservoirs and saline aquifers is an important component in the strategy to meet global climate goals.
 Given the 2050 net-zero GHG goals, CO~2~ storage capacities required to offset emissions is orders of magnitude greater than current levels [@IPCC_2023].
 The ability to evaluate the reservoir performance and containment risks associated with the injection of liquefied CO~2~ in the subsurface in a reproducible and transparent manner is an important consideration when evaluating new storage sites.
-The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir. 
+The primary goal of GEOS is to provide the global community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO~2~ is injected into a subsurface reservoir.
 To this end, GEOS is freely available and focused on the simulation of reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
 
-# GEOS Components 
+# GEOS Components
 
-The core C++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method. 
+The core C++17 infrastructure provides common computer science capabilities typically required for solving differential equations using a spatially discrete method.
 The components of the infrastructure provided by GEOS include a data hierarchy, a discrete mesh data structure, a mesh based MPI communications interface, degree-of-freedom management, IO services, and a physics package interface.
 
 By design, GEOS is intended to be a generic multi-physics simulation platform.
 The physics package interface in GEOS is intended to encapsulate the development of numerical methods applied to the solution of governing equations relevant to a problem.
-When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability. 
-The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach. 
+When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability.
+The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system, to a split operator approach.
 
 To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@Her_etal05].
 Currently, in GEOS only the hypre interaface is actively maintained.
@@ -184,9 +184,9 @@ Simulations such as this will play a critical role in predicting the viability o
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
 The results from the weak scaling study (Figure \ref{fig:Frontier_scaling}a) shows flat scaling of the GEOS processes (assembly/field synchronization) up to 16,384 MPI ranks and 81.3e9 degrees-of-freedom (1/4 of Frontier).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms this level of scaling efficiency is excellent.
-The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows similarly good weak scaling. 
+The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows similarly good weak scaling.
 
-![Weak scaling results on ORNL/Frontier: execution time per timestep vs number of cluster ranks for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](GEOS_Frontier_scaling.pdf){ width=100% }
+![Weak scaling results on ORNL/Frontier: average execution time per newton iteration vs number of GPUs for a mechanics (a) and a compositional flow (b) simulation, respectively.\label{fig:Frontier_scaling}](nearwell_scaling_frontier.pdf){ width=100% }
 
 # Acknowledgements
 This work was performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344. LLNL release number LLNL-JRNL-864747.
