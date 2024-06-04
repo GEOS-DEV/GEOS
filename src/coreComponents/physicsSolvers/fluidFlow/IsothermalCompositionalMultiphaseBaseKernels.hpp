@@ -1404,23 +1404,23 @@ public:
         }
       }
 
-        // switch from relative to absolute when value is < 1.0
-        real64 const maxRelCompDensChange = m_maxRelativeCompDensChange * LvArray::math::max(m_compDens[ei][ic], 1.0);
-        if( absCompDensChange > maxRelCompDensChange && absCompDensChange > eps )
+      // switch from relative to absolute when value is < 1.0
+      real64 const maxRelCompDensChange = m_maxRelativeCompDensChange * LvArray::math::max( m_compDens[ei][ic], 1.0 );
+      if( absCompDensChange > maxRelCompDensChange && absCompDensChange > eps )
+      {
+        real64 const compScalingFactor = maxRelCompDensChange / absCompDensChange;
+        std::cout << ei << " " << ic << " compScalingFactor = " << compScalingFactor << " maxRelCompDensChange = " << maxRelCompDensChange
+                  << " absCompDensChange = " << absCompDensChange << " m_compDens[ei][ic] = " << m_compDens[ei][ic] << std::endl;
+        m_compDensScalingFactor[ei] = LvArray::math::min( m_compDensScalingFactor[ei], compScalingFactor );
+        if( stack.localMinVal > compScalingFactor )
         {
-          real64 const compScalingFactor = maxRelCompDensChange / absCompDensChange;
-          std::cout  << ei << " " << ic << " compScalingFactor = " << compScalingFactor << " maxRelCompDensChange = " << maxRelCompDensChange
-          << " absCompDensChange = " << absCompDensChange << " m_compDens[ei][ic] = " << m_compDens[ei][ic] << std::endl;
-          m_compDensScalingFactor[ei] = LvArray::math::min( m_compDensScalingFactor[ei], compScalingFactor );
-          if( stack.localMinVal > compScalingFactor )
-          {
-            stack.localMinVal = compScalingFactor;
-          }
-          if( stack.localMinCompDensScalingFactor > compScalingFactor )
-          {
-            stack.localMinCompDensScalingFactor = compScalingFactor;
-          }
+          stack.localMinVal = compScalingFactor;
         }
+        if( stack.localMinCompDensScalingFactor > compScalingFactor )
+        {
+          stack.localMinCompDensScalingFactor = compScalingFactor;
+        }
+      }
     }
 
     // compute the scaling factor for other vars, such as temperature

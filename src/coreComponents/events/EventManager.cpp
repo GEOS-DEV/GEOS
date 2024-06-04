@@ -243,7 +243,7 @@ void EventManager::outputTime() const
   if( m_maxCycle < std::numeric_limits< integer >::max() )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {} out of {} ({}%)",
-                                m_cycle, m_maxCycle, fmt::format( "{:.{}f}", 100.0 * m_cycle / m_maxCycle, 0 ) ) );
+                               m_cycle, m_maxCycle, fmt::format( "{:.{}f}", 100.0 * m_cycle / m_maxCycle, 0 ) ) );
   }
   else
   {
