@@ -93,27 +93,14 @@ public:
     }
 
     bool kValueReset = true;
-    constexpr real64 boundsTolerance = 1.0e-3;
+    constexpr real64 boundsTolerance = MultiFluidConstants::SSITolerance;
     if( needInitialisation )
     {
       KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                           pressure,
                                                           temperature,
                                                           componentProperties,
-                                                          kVapourLiquid );/**
-                                                                             vapourPhaseMoleFraction = RachfordRice::solve(
-                                                                                kVapourLiquid.toSliceConst(), composition, presentComponents
-                                                                                );
-                                                                             if( vapourPhaseMoleFraction < -boundsTolerance ||
-                                                                                vapourPhaseMoleFraction > 1.0 + boundsTolerance )
-                                                                             {
-                                                                             kValueReset = true;
-                                                                             KValueInitialization::computeConstantLiquidKvalue( numComps,
-                                                                             pressure,
-                                                                             temperature,
-                                                                             componentProperties,
-                                                                             kVapourLiquid );
-                                                                             }*/
+                                                          kVapourLiquid );
     }
 
     vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
@@ -164,20 +151,7 @@ public:
           kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
         }
       }
-//std::cout
-//<< std::setw(3) << iterationCount << " "
-//<< std::setw(12) << pressure << " "
-//<< std::setw(10) << temperature << " "
-//<< std::setw(15) << error << " "
-//<< std::setw(15) << vapourPhaseMoleFraction << " ";
-//for( integer const ic : {0,1,8} )
-//{
-//  std::cout << std::setw(15) << kVapourLiquid[ic] << " ";
-//}
-//std::cout
-//<< "\n";
     }
-//std::cout << "================================================================================\n";
 
     // Retrieve physical bounds from negative flash values
     if( vapourPhaseMoleFraction < MultiFluidConstants::epsilon )
