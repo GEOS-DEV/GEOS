@@ -262,6 +262,7 @@ public:
   }
 
   real64 & getMaxForce() { return m_maxForce; }
+  real64 const & getMaxForce() const { return m_maxForce; }
 
   arrayView1d< ParallelVector > const & getRigidBodyModes() const
   {

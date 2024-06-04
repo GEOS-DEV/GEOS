@@ -165,8 +165,6 @@ private:
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  real64 m_initialContactResidual = 0.0;
-
   real64 m_stabilitzationScalingCoefficient = 1.0;
 
   void createPreconditioner( DomainPartition const & domain );

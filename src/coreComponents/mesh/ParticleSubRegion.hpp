@@ -16,7 +16,7 @@
 #ifndef GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
 
-#include "mesh/generators/ParticleBlockABC.hpp"
+#include "particleGenerators/ParticleBlockABC.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ParticleSubRegionBase.hpp"
 
