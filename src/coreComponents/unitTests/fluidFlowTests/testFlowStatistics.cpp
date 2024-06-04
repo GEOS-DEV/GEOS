@@ -479,11 +479,9 @@ TestSet getTestSet()
 
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="0" />
     <SourceFluxStatistics name="wholeSimFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="0" />
 
@@ -726,11 +724,9 @@ TestSet getTestSet()
 
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="2" />
     <SourceFluxStatistics name="wholeSimFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="2" />
 
@@ -1000,11 +996,9 @@ TestSet getTestSet()
 
   <Tasks>
     <SourceFluxStatistics name="timeStepFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="2" />
     <SourceFluxStatistics name="wholeSimFluxStats"
-                          fluxNames="{ all }"
                           flowSolverName="testSolver"
                           logLevel="2" />
 

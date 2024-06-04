@@ -38,8 +38,9 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
 
   registerWrapper( viewKeyStruct::fluxNamesString().data(), &m_fluxNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
+    setDefaultValue( "*" ).
     setDescription( GEOS_FMT( "Name(s) array of the {0}(s) for which we want the statistics. "
                               "Use \"*\" to target all {0}.",
                               SourceFluxBoundaryCondition::catalogName() ) );
