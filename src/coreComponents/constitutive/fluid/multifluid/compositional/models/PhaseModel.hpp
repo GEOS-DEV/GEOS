@@ -132,6 +132,17 @@ struct PhaseModel
                           viscosity,
                           enthalpy );
   }
+
+  // Create parameters unique to this model
+  static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters )
+  {
+    std::unique_ptr< ModelParameters > phaseParameters = std::move( parameters );
+    phaseParameters = Density::createParameters( std::move( phaseParameters ) );
+    phaseParameters = Viscosity::createParameters( std::move( phaseParameters ) );
+    phaseParameters = Enthalpy::createParameters( std::move( phaseParameters ) );
+    return phaseParameters;
+  }
+
 };
 
 // A no-op phase model

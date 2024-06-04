@@ -42,7 +42,7 @@ LohrenzBrayClarkViscosity::LohrenzBrayClarkViscosity( string const & name,
                                                       integer const phaseIndex,
                                                       ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties ),
-  m_parameters( dynamic_cast< Parameters const * >(&modelParameters))
+  m_parameters( modelParameters.getParameters< Parameters >() )
 {
   GEOS_UNUSED_VAR( phaseIndex );
 }
@@ -54,13 +54,24 @@ LohrenzBrayClarkViscosity::createKernelWrapper() const
   return KernelWrapper( mixingType, m_parameters->m_componentCriticalVolume );
 }
 
-LohrenzBrayClarkViscosity::Parameters::Parameters()
+std::unique_ptr< ModelParameters >
+LohrenzBrayClarkViscosity::createParameters( std::unique_ptr< ModelParameters > parameters )
+{
+  if( parameters && parameters->getParameters< Parameters >() != nullptr )
+  {
+    return parameters;
+  }
+  return std::make_unique< Parameters >( std::move( parameters ) );
+}
+
+LohrenzBrayClarkViscosity::Parameters::Parameters( std::unique_ptr< ModelParameters > parameters ):
+  ModelParameters( std::move( parameters ) )
 {
   constexpr LohrenzBrayClarkViscosityUpdate::MixingType defaultMixing = LohrenzBrayClarkViscosityUpdate::MixingType::HERNING_ZIPPERER;
   m_componentMixingType = EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::toString( defaultMixing );
 }
 
-void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
+void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBase * fluid )
 {
   fluid->registerWrapper( viewKeyStruct::componentCriticalVolumeString(), &m_componentCriticalVolume ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -73,8 +84,8 @@ void LohrenzBrayClarkViscosity::Parameters::registerParameters( MultiFluidBase *
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
-void LohrenzBrayClarkViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid,
-                                                              ComponentProperties const & componentProperties )
+void LohrenzBrayClarkViscosity::Parameters::postProcessInputImpl( MultiFluidBase const * fluid,
+                                                                  ComponentProperties const & componentProperties )
 {
   integer const numComponents = fluid->numFluidComponents();
 

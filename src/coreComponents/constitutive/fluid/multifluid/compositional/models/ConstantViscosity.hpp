@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_CONSTANTVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
-#include "ModelParameters.hpp"
 
 namespace geos
 {
@@ -82,19 +81,24 @@ public:
   class Parameters : public ModelParameters
   {
 public:
-    Parameters() = default;
+    Parameters( std::unique_ptr< ModelParameters > parameters );
     ~Parameters() override = default;
 
-    void registerParameters( MultiFluidBase * fluid ) override;
-    void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
+    array1d< real64 > m_constantPhaseViscosity;
+
+private:
+    void registerParametersImpl( MultiFluidBase * fluid ) override;
+    void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
     struct viewKeyStruct
     {
       static constexpr char const * constantPhaseViscosityString() { return "constantPhaseViscosity"; }
     };
-
-    array1d< real64 > m_constantPhaseViscosity;
   };
+
+  // Create parameters unique to this model
+  static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
+
 private:
   real64 m_constantPhaseViscosity{defaultViscosity};
 };

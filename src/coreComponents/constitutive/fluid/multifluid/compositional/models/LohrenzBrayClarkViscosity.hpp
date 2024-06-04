@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
-#include "ModelParameters.hpp"
 
 #include "codingUtilities/EnumStrings.hpp"
 
@@ -292,11 +291,15 @@ public:
   class Parameters : public ModelParameters
   {
 public:
-    Parameters();
+    Parameters( std::unique_ptr< ModelParameters > parameters );
     ~Parameters() override = default;
 
-    void registerParameters( MultiFluidBase * fluid ) override;
-    void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
+    string m_componentMixingType;
+    array1d< real64 > m_componentCriticalVolume;
+
+private:
+    void registerParametersImpl( MultiFluidBase * fluid ) override;
+    void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
     struct viewKeyStruct
     {
@@ -304,10 +307,6 @@ public:
       static constexpr char const * componentMixingTypeString() { return "componentMixingType"; }
     };
 
-    string m_componentMixingType;
-    array1d< real64 > m_componentCriticalVolume;
-
-private:
     /**
      * @brief Estimate critical volumes using Ihmels' (2010) correlation
      * @details reference: http://dx.doi.org/10.1021/je100167w
@@ -321,6 +320,10 @@ private:
                                          arrayView1d< const real64 > const criticalTemperature,
                                          arrayView1d< real64 > const criticalVolume );
   };
+
+  // Create parameters unique to this model
+  static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
+
 private:
   Parameters const * m_parameters{};
 };

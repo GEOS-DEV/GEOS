@@ -18,7 +18,6 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
-#include "constitutive/fluid/multifluid/compositional/models/CompositionalModelParameters.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -48,7 +47,7 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent ),
   m_componentProperties( std::make_unique< compositional::ComponentProperties >( m_componentNames, m_componentMolarWeight ) ),
-  m_parameters( compositional::CompositionalModelParameters< FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters() )
+  m_parameters( createModelParameters() )
 {
   using InputFlags = dataRepository::InputFlags;
 
@@ -252,6 +251,19 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
                                          *m_componentProperties,
                                          2,
                                          *m_parameters );
+}
+
+// Create the fluid models
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+std::unique_ptr< compositional::ModelParameters >
+CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModelParameters()
+{
+  std::unique_ptr< compositional::ModelParameters > parameters;
+  parameters = FLASH::createParameters( std::move( parameters ));
+  parameters = PHASE1::createParameters( std::move( parameters ));
+  parameters = PHASE2::createParameters( std::move( parameters ));
+  parameters = PHASE3::createParameters( std::move( parameters ));
+  return parameters;
 }
 
 // Explicit instantiation of the model template.

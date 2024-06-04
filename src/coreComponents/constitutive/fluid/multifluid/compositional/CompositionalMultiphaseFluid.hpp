@@ -114,6 +114,8 @@ private:
   // Create the fluid models
   void createModels();
 
+  static std::unique_ptr< compositional::ModelParameters > createModelParameters();
+
   // Flash model
   std::unique_ptr< FLASH > m_flash{};
 

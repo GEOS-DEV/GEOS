@@ -35,19 +35,52 @@ class ComponentProperties;
 class ModelParameters
 {
 public:
-  ModelParameters() = default;
+  ModelParameters( std::unique_ptr< ModelParameters > parameters = nullptr ): baseParameters( std::move( parameters ) ) {}
   virtual ~ModelParameters() = default;
 
-  virtual void registerParameters( MultiFluidBase * fluid )
+  void registerParameters( MultiFluidBase * fluid )
+  {
+    registerParametersImpl( fluid );
+    if( baseParameters )
+    {
+      baseParameters->registerParameters( fluid );
+    }
+  }
+
+  void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
+  {
+    postProcessInputImpl( fluid, componentProperties );
+    if( baseParameters )
+    {
+      baseParameters->postProcessInput( fluid, componentProperties );
+    }
+  }
+
+  template< typename PARAMETERS >
+  PARAMETERS const * getParameters() const
+  {
+    PARAMETERS const * parameters = dynamic_cast< PARAMETERS const * >(this);
+    if( parameters == nullptr && baseParameters )
+    {
+      return baseParameters->getParameters< PARAMETERS >();
+    }
+    return parameters;
+  }
+
+private:
+  virtual void registerParametersImpl( MultiFluidBase * fluid )
   {
     GEOS_UNUSED_VAR( fluid );
   }
 
-  virtual void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
+  virtual void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
   {
     GEOS_UNUSED_VAR( fluid );
     GEOS_UNUSED_VAR( componentProperties );
   }
+
+private:
+  std::unique_ptr< ModelParameters > baseParameters{};
 };
 
 } // end namespace compositional

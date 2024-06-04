@@ -34,7 +34,7 @@ ConstantViscosity::ConstantViscosity( string const & name,
                                       ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
 {
-  Parameters const * parameters = dynamic_cast< Parameters const * >(&modelParameters);
+  Parameters const * parameters = modelParameters.getParameters< Parameters >();
   m_constantPhaseViscosity = parameters->m_constantPhaseViscosity[phaseIndex];
 }
 
@@ -48,15 +48,29 @@ ConstantViscosity::createKernelWrapper() const
   return KernelWrapper( m_constantPhaseViscosity );
 }
 
-void ConstantViscosity::Parameters::registerParameters( MultiFluidBase * fluid )
+std::unique_ptr< ModelParameters >
+ConstantViscosity::createParameters( std::unique_ptr< ModelParameters > parameters )
+{
+  if( parameters && parameters->getParameters< Parameters >() != nullptr )
+  {
+    return parameters;
+  }
+  return std::make_unique< Parameters >( std::move( parameters ) );
+}
+
+ConstantViscosity::Parameters::Parameters( std::unique_ptr< ModelParameters > parameters ):
+  ModelParameters( std::move( parameters ) )
+{}
+
+void ConstantViscosity::Parameters::registerParametersImpl( MultiFluidBase * fluid )
 {
   fluid->registerWrapper( viewKeyStruct::constantPhaseViscosityString(), &m_constantPhaseViscosity ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Constant phase viscosity" );
 }
 
-void ConstantViscosity::Parameters::postProcessInput( MultiFluidBase const * fluid,
-                                                      ComponentProperties const & componentProperties )
+void ConstantViscosity::Parameters::postProcessInputImpl( MultiFluidBase const * fluid,
+                                                          ComponentProperties const & componentProperties )
 {
   GEOS_UNUSED_VAR( componentProperties );
 
