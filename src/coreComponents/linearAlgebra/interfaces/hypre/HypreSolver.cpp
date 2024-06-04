@@ -77,7 +77,7 @@ void createHypreGMRES( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver.ptr, params.krylov.relTolerance ) );
 
   // Default for now
-  HYPRE_Int logLevel = (params.logLevel >= 3) ? 1 : 0;
+  HYPRE_Int logLevel = (params.logLevel >= 3) ? 2 : 0;
 
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver.ptr, logLevel ) ); // print iteration info
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver.ptr, 1 ) ); /* needed to get run info later */

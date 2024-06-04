@@ -23,9 +23,11 @@
 
 #ifdef GEOSX_USE_FMT
 #define FMT_HEADER_ONLY
-#include <fmt/core.h>
-#include <fmt/chrono.h>
-#include <fmt/ranges.h>
+// Differentiate between standalone fmt path and umpire's fmt path
+#include "../include/fmt/core.h"
+#include "../include/fmt/chrono.h"
+#include "../include/fmt/ranges.h"
+#include "../include/fmt/xchar.h"
 #define GEOS_FMT_NS fmt
 #else // use C++20's <format>
 #include <format>

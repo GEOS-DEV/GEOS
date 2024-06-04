@@ -94,6 +94,38 @@ you have suggestions for improving the guides below, please post an issue on our
 
             To the Advanced Examples
 
+    .. grid-item-card::
+
+        User Guide
+        ^^^^^^^^^^^^^^^^^^^
+
+        Detailed instructions on how to construct input files, configure problems, manage outputs, etc.
+
+        +++
+
+        .. button-ref:: UserGuide
+            :expand:
+            :color: info
+            :click-parent:
+
+            To the User Guide
+
+    .. grid-item-card::
+
+        Python Tools
+        ^^^^^^^^^^^^^^^^^^^
+
+        Documentation for the python packages distributed alongside GEOS used to manage xml files, condition numerical meshes, read outputs, etc.
+
+        +++
+
+        .. button-link:: https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/
+            :expand:
+            :color: info
+            :click-parent:
+
+            To the Python Tools Documentation
+
 
 ********************
 Table of Contents
@@ -115,8 +147,6 @@ Table of Contents
    docs/sphinx/developerGuide/Index
 
    docs/sphinx/Doxygen
-
-   docs/sphinx/pythonTools/pythonAPI
 
    docs/sphinx/buildGuide/Index
 

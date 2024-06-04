@@ -278,9 +278,10 @@ CellElementStencilTPFAWrapper::
                   real64 (& dWeight_dVar )[1][2] ) const
 {
 
-  GEOS_UNUSED_VAR( dCoeff_dVar );
 
+  GEOS_UNUSED_VAR( dCoeff_dVar );
   real64 halfWeight[2];
+  real64 dHalfWeight_dVar[2];
 
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
@@ -293,6 +294,7 @@ CellElementStencilTPFAWrapper::
 //        //TODO replace as Sergey LvArray gets merged
 //        // We are swapping ip phase index and direction to be able to slice properly
     auto coeffNested = coefficient[er][esr];
+
 
     LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
     dims[0] = coeffNested.dims()[2]; strides[0] = coeffNested.strides()[2];        //swap phase for cell
@@ -323,16 +325,26 @@ CellElementStencilTPFAWrapper::averageWeights( const localIndex iconn,
   real64 const harmonicWeight = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;
 
-  real64 const meanPermCoeff = 1.0;       //TODO make it a member if it is really necessary
+
+  real64 dHarmonicWeight_dVar[2];
+  real64 dArithmeticWeight_dVar[2];
+
+  dHarmonicWeight_dVar[0] = sum > 0 ? (dHalfWeight_dVar[0]*sum*halfWeight[1] - dHalfWeight_dVar[0]*halfWeight[0]*halfWeight[1]) / ( sum*sum ) : 0.0;
+  dHarmonicWeight_dVar[1] = sum > 0 ? (dHalfWeight_dVar[1]*sum*halfWeight[0] - dHalfWeight_dVar[1]*halfWeight[1]*halfWeight[0]) / ( sum*sum ) : 0.0;
+
+  dArithmeticWeight_dVar[0] = dHalfWeight_dVar[0] / 2;
+  dArithmeticWeight_dVar[1] = dHalfWeight_dVar[1] / 2;
+
+  real64 const meanPermCoeff = 1.0; //TODO make it a member if it is really necessary
 
   real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
   for( localIndex ke = 0; ke < 2; ++ke )
   {
     weight[0][ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
-  }
 
-  dWeight_dVar[0][0] = 0.0;
-  dWeight_dVar[0][1] = 0.0;
+    real64 const dValue_dVar = meanPermCoeff * dHarmonicWeight_dVar[ke] + (1 - meanPermCoeff) * dArithmeticWeight_dVar[ke];
+    dWeight_dVar[0][ke] = m_transMultiplier[iconn] * dValue_dVar;
+  }
 }
 
 GEOS_HOST_DEVICE
