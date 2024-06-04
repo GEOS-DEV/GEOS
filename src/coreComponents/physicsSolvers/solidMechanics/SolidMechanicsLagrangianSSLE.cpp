@@ -18,12 +18,6 @@
 
 #include "SolidMechanicsLagrangianSSLE.hpp"
 
-#include "codingUtilities/Utilities.hpp"
-#include "finiteElement/Kinematics.h"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
-
-
-
 namespace geos
 {
 

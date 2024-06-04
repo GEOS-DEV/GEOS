@@ -88,7 +88,7 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
 
     if( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE )
     {
-      GEOS_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
+      GEOS_THROW_IF_LE_MSG( m_phaseCapPressureExponentInv[ip], 0.0,
                             errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
                             InputError );
       GEOS_THROW_IF_LT_MSG( m_phaseEntryPressure[ip], 0.0,

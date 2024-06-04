@@ -15,8 +15,9 @@
 #ifndef GEOSX_PARTICLEBLOCKABC_HPP
 #define GEOSX_PARTICLEBLOCKABC_HPP
 
-#include "dataRepository/Group.hpp"
 #include "mesh/ParticleType.hpp"
+
+#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
 #include <vector>

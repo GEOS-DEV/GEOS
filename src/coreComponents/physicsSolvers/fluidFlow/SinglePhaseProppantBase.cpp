@@ -22,12 +22,9 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
-#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 

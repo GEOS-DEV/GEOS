@@ -16,8 +16,7 @@ set( subdirs
      fileIO
      physicsSolvers
      events
-     mainInterface
-     python )
+     mainInterface )
 
 unset( parallelDeps )
 
@@ -107,8 +106,7 @@ if ( TARGET geosx_core )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake
-                       src/coreComponents/constitutive/PVTPackage )
+                       EXCLUDES cmake constitutive/PVTPackage )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

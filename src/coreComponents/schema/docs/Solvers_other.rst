@@ -3,6 +3,7 @@
 ============================================= ==== ================================================================== 
 Name                                          Type Description                                                        
 ============================================= ==== ================================================================== 
+AcousticElasticSEM                            node :ref:`DATASTRUCTURE_AcousticElasticSEM`                            
 AcousticFirstOrderSEM                         node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                         
 AcousticSEM                                   node :ref:`DATASTRUCTURE_AcousticSEM`                                   
 AcousticVTISEM                                node :ref:`DATASTRUCTURE_AcousticVTISEM`                                
@@ -16,7 +17,6 @@ ElasticSEM                                    node :ref:`DATASTRUCTURE_ElasticSE
 EmbeddedSurfaceGenerator                      node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                      
 FlowProppantTransport                         node :ref:`DATASTRUCTURE_FlowProppantTransport`                         
 Hydrofracture                                 node :ref:`DATASTRUCTURE_Hydrofracture`                                 
-LagrangianContact                             node :ref:`DATASTRUCTURE_LagrangianContact`                             
 LaplaceFEM                                    node :ref:`DATASTRUCTURE_LaplaceFEM`                                    
 MultiphasePoromechanics                       node :ref:`DATASTRUCTURE_MultiphasePoromechanics`                       
 MultiphasePoromechanicsReservoir              node :ref:`DATASTRUCTURE_MultiphasePoromechanicsReservoir`              
@@ -24,6 +24,7 @@ PhaseFieldDamageFEM                           node :ref:`DATASTRUCTURE_PhaseFiel
 PhaseFieldFracture                            node :ref:`DATASTRUCTURE_PhaseFieldFracture`                            
 ProppantTransport                             node :ref:`DATASTRUCTURE_ProppantTransport`                             
 ReactiveCompositionalMultiphaseOBL            node :ref:`DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL`            
+SeismicityRate                                node :ref:`DATASTRUCTURE_SeismicityRate`                                
 SinglePhaseFVM                                node :ref:`DATASTRUCTURE_SinglePhaseFVM`                                
 SinglePhaseHybridFVM                          node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`                          
 SinglePhasePoromechanics                      node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                      
@@ -35,6 +36,7 @@ SinglePhaseReservoir                          node :ref:`DATASTRUCTURE_SinglePha
 SinglePhaseReservoirPoromechanics             node :ref:`DATASTRUCTURE_SinglePhaseReservoirPoromechanics`             
 SinglePhaseWell                               node :ref:`DATASTRUCTURE_SinglePhaseWell`                               
 SolidMechanicsEmbeddedFractures               node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`               
+SolidMechanicsLagrangeContact                 node :ref:`DATASTRUCTURE_SolidMechanicsLagrangeContact`                 
 SolidMechanicsLagrangianSSLE                  node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`                  
 SolidMechanics_LagrangianFEM                  node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`                  
 SolidMechanics_MPM                            node :ref:`DATASTRUCTURE_SolidMechanics_MPM`                            

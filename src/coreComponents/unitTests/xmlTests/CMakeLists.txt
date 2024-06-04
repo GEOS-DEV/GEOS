@@ -24,6 +24,14 @@ else()
   list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
+if (TARGET pugixml::pugixml)
+  set( dependencyList ${dependencyList} pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  set( dependencyList ${dependencyList} pugixml )
+endif()
+
 # create test executables
 foreach(test ${gtest_geosx_tests} ${gtest_tests_with_input})
     get_filename_component( test_name ${test} NAME_WE )
