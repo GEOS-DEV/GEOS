@@ -21,6 +21,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
@@ -32,15 +33,6 @@ namespace geos
 {
 
 using namespace dataRepository;
-
-// provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-PoromechanicsInitialization< POROMECHANICS_SOLVER >::
-catalogName()
-{
-  return POROMECHANICS_SOLVER::catalogName() + "Initialization";
-}
 
 template< typename POROMECHANICS_SOLVER >
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
@@ -141,10 +133,12 @@ typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMulti
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > > SinglePhaseReservoirPoromechanicsInitialization;
+typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > > HydrofractureInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, HydrofractureInitialization, string const &, Group * const )
 }
 
 } /* namespace geos */
