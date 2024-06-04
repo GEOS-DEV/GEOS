@@ -79,11 +79,10 @@ public:
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
-    m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
-    m_levelFRelaxIters[1]         = 1;
+    m_levelFRelaxType[1]          = MGRFRelaxationType::none;
     m_levelInterpType[1]          = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]        = MGRRestrictionType::blockColsum;
-    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::nonGalerkinRAI;
+    m_levelRestrictType[1]        = MGRRestrictionType::blockColLumped; // True-IMPES
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkinRAI;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
 
     // Level 2

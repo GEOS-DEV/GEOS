@@ -7,8 +7,8 @@
       name="fractureThermoPoroElasticSolver"
       targetRegions="{ casing, cement, rock, Fracture }"
       initialDt="1e-3"
-      LagrangianContactSolverName="lagrangiancontact"
-      poromechanicsSolverName="thermoElasticSolver"
+      flowSolverName="flowSolver"
+      solidSolverName="lagrangiancontact"
       logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
@@ -21,52 +21,22 @@
     </SinglePhasePoromechanicsConformingFractures>
     <!-- SPHINX_ContactTHMSolverEnd -->
 
-    <SinglePhasePoromechanics
-      name="thermoElasticSolver"
-      solidSolverName="solidMechSolver"
-      flowSolverName="flowSolver"
-      logLevel="1"
-      isThermal="1"
-      targetRegions="{ casing, cement, rock, Fracture }">
-      <NonlinearSolverParameters
-        couplingType="FullyImplicit"
-	    maxAllowedResidualNorm="1e19"
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanics>
-
-    <LagrangianContact
+    <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      solidSolverName="solidMechSolver"
-      stabilizationName="tpfaFlow"
+      timeIntegrationOption="QuasiStatic"
+      stabilizationName="contactStabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
-      contactRelationName="fractureContact"
-      fractureRegionName="Fracture"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="10"
-        />
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </LagrangianContact>
+    </SolidMechanicsLagrangeContact>
 
 
-    <SolidMechanicsLagrangianSSLE
-      name="solidMechSolver"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ casing, cement, rock }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
-   
     <SinglePhaseFVM
       name="flowSolver"
       logLevel="1"
@@ -96,8 +66,10 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation
+    <TwoPointFluxApproximation
         name="tpfaFlow"/>
+    <TwoPointFluxApproximation
+        name="contactStabilization"/>    
     </FiniteVolume>
   </NumericalMethods>
 
@@ -180,17 +152,17 @@
     <BiotPorosity
       name="casingPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="159.4202899e9"/>
+      defaultGrainBulkModulus="159.4202899e9"/>
 
     <BiotPorosity
       name="cementPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="2.298850575e9"/>
+      defaultGrainBulkModulus="2.298850575e9"/>
 
     <BiotPorosity
       name="rockPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="5.535714286e9"/>
+      defaultGrainBulkModulus="5.535714286e9"/>
     <!-- SPHINX_PoroElasticPropertiesEnd -->
 
     <!-- SPHINX_HeatCapacityProperties -->
@@ -256,7 +228,7 @@
       compressibility="5e-10"
       thermalExpansionCoeff="1e-10"
       viscosibility="0.0"
-      volumetricHeatCapacity="1"
+      specificHeatCapacity="1"
       referenceInternalEnergy="1"/>
     <!-- SPHINX_FluidPropertiesEnd -->
 

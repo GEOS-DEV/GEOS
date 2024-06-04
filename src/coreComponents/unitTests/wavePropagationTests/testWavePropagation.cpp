@@ -21,8 +21,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
@@ -124,14 +124,14 @@ char const * xmlInput =
         name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumVelocity"
+        fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumDensity"
+        fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
       <FieldSpecification

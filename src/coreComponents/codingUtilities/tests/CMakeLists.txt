@@ -2,7 +2,8 @@
 set( testSources
      testGeosxTraits.cpp
      testStringUtilities.cpp
-     testParsing.cpp )
+     testParsing.cpp
+     testUtilities.cpp )
 
 set( dependencyList gtest codingUtilities ${parallelDeps} )
 

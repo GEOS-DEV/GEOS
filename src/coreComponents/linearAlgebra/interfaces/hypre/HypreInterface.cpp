@@ -61,6 +61,8 @@ void HypreInterface::initialize()
   HYPRE_SetUmpireHostPoolName( "HYPRE_HOST" );
   HYPRE_SetUmpirePinnedPoolName( "HYPRE_PINNED" );
 #endif
+
+  HYPRE_SetPrintErrorMode( 1 );
 }
 
 void HypreInterface::finalize()

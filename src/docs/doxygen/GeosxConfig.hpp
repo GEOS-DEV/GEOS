@@ -126,10 +126,10 @@
 #define Conduit_VERSION 0.8.7
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.3.0
+#define RAJA_VERSION 2022.10.5
 
 /// Version information for umpire
-#define umpire_VERSION 2022.3.0
+#define umpire_VERSION 2022.10.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
@@ -147,7 +147,7 @@
 #define parmetis_VERSION 4.0.0
 
 /// Version information for scotch
-/* #undef scotch_VERSION */
+#define scotch_VERSION 6.0.9
 
 /// Version information for superlu_dist
 /* #undef superlu_dist_VERSION */
