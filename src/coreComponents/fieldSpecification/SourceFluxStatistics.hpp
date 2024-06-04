@@ -22,7 +22,6 @@
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
-class SourceFluxBoundaryCondition;
 
 namespace geos
 {
@@ -32,7 +31,7 @@ namespace geos
  *
  * Task class allowing for the computation of aggregate statistics of SourceFluxBoundaryCondition
  */
-class SourceFluxStatsAggregator : public FieldStatisticsBase< FlowSolverBase >
+class SourceFluxStatsAggregator final : public FieldStatisticsBase< FlowSolverBase >
 {
 public:
 
@@ -104,6 +103,7 @@ public:
     /**
      * @brief Finalize the period statistics of each timestep gathering and render data over all mpi ranks.
      * The result can be read by the data() assessor.
+     * @note This method must be synchronously called by all MPI ranks.
      */
     void finalizePeriod();
 
@@ -303,12 +303,6 @@ private:
     constexpr inline static string_view fluxSetWrapperString() { return "flux_set"; }
   };
 
-protected:
-
-  /**
-   * @copydoc Group::postProcessInput()
-   */
-  void postProcessInput() override;
 
 private:
   using Base = FieldStatisticsBase< FlowSolverBase >;
@@ -320,6 +314,11 @@ private:
    * @copydoc Group::registerDataOnMesh(Group &)
    */
   void registerDataOnMesh( Group & meshBodies ) override;
+
+  /**
+   * @copydoc Group::postProcessInput()
+   */
+  void postProcessInput() override;
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
                                                                   string_view fluxName,

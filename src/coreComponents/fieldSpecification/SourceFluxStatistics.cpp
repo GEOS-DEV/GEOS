@@ -41,7 +41,7 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( GEOS_FMT( "Name(s) array of the {0}(s) for which we want the statistics. "
-                              "Use \"all\" to target all {0}.",
+                              "Use \"*\" to target all {0}.",
                               SourceFluxBoundaryCondition::catalogName() ) );
 }
 
@@ -50,7 +50,7 @@ void SourceFluxStatsAggregator::postProcessInput()
   Base::postProcessInput();
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  if( m_fluxNames.size() == 1 && m_fluxNames[0] == "all" )
+  if( m_fluxNames.size() == 1 && m_fluxNames[0] == "*" )
   {
     m_fluxNames.clear();
     fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&]( SourceFluxBoundaryCondition & sourceFlux )

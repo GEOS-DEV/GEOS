@@ -3741,7 +3741,7 @@ For the energy balance equation, the mass flux is multipied by the enthalpy in t
 	<xsd:complexType name="SourceFluxStatisticsType">
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
-		<!--fluxNames => Name(s) array of the SourceFlux(s) for which we want the statistics. Use "all" to target all SourceFlux.-->
+		<!--fluxNames => Name(s) array of the SourceFlux(s) for which we want the statistics. Use "*" to target all SourceFlux.-->
 		<xsd:attribute name="fluxNames" type="groupNameRef_array" use="required" />
 		<!--logLevel => Log level
 - Log Level 1 outputs the sum of all SourceFlux(s) produced rate & mass,
