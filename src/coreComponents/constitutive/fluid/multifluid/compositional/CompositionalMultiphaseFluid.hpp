@@ -120,14 +120,14 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase models
-  std::unique_ptr< PHASE1 > m_phase1;
-  std::unique_ptr< PHASE2 > m_phase2;
-  std::unique_ptr< PHASE3 > m_phase3;
+  std::unique_ptr< PHASE1 > m_phase1{};
+  std::unique_ptr< PHASE2 > m_phase2{};
+  std::unique_ptr< PHASE3 > m_phase3{};
 
   // Standard EOS component input
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
 
-  // Extra parameters for specific to this model
+  // Extra parameters specific to this model
   std::unique_ptr< compositional::ModelParameters > m_parameters{};
 
   // backup data

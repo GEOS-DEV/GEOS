@@ -4180,7 +4180,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMixingType => The type of viscosity to be used for component mixing. Valid options:
+		<!--componentMixingType => The mixing rule to be used for phase viscosity computation. Valid options:
 * HerningZipperer
 * Wilke
 * Brokaw-->
@@ -4233,7 +4233,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMixingType => The type of viscosity to be used for component mixing. Valid options:
+		<!--componentMixingType => The mixing rule to be used for phase viscosity computation. Valid options:
 * HerningZipperer
 * Wilke
 * Brokaw-->

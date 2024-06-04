@@ -19,8 +19,7 @@
 #include "LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -80,7 +79,7 @@ void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBa
   fluid->registerWrapper( viewKeyStruct::componentMixingTypeString(), &m_componentMixingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_componentMixingType ).
-    setDescription( "The type of viscosity to be used for component mixing. Valid options:\n* " +
+    setDescription( "The mixing rule to be used for phase viscosity computation. Valid options:\n* " +
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
