@@ -41,7 +41,7 @@ LohrenzBrayClarkViscosity::LohrenzBrayClarkViscosity( string const & name,
                                                       integer const phaseIndex,
                                                       ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties ),
-  m_parameters( modelParameters.getParameters< Parameters >() )
+  m_parameters( modelParameters.get< Parameters >() )
 {
   GEOS_UNUSED_VAR( phaseIndex );
 }
@@ -56,7 +56,7 @@ LohrenzBrayClarkViscosity::createKernelWrapper() const
 std::unique_ptr< ModelParameters >
 LohrenzBrayClarkViscosity::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
-  if( parameters && parameters->getParameters< Parameters >() != nullptr )
+  if( parameters && parameters->get< Parameters >() != nullptr )
   {
     return parameters;
   }
