@@ -249,6 +249,7 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
+    static constexpr char const * pressurizedDamageFlagString() { return "pressurizedDamageFlag"; }
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
@@ -290,6 +291,7 @@ protected:
   integer m_maxNumResolves;
   integer m_strainTheory;
   MPI_iCommData m_iComm;
+  integer m_pressurizedDamageFlag;
   bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes

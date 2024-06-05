@@ -75,6 +75,7 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/MultiphasePoromechanics.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
+     multiphysics/PhaseFieldPoromechanicsSolver.hpp
      multiphysics/PoromechanicsInitialization.hpp
      multiphysics/PoromechanicsFields.hpp
      multiphysics/PoromechanicsInitialization.hpp
@@ -83,7 +84,9 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp  
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage_impl.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp     
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
@@ -105,6 +108,7 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
+     simplePDE/PhaseFieldPressurizedDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
@@ -198,6 +202,7 @@ set( physicsSolvers_sources
      multiphysics/HydrofractureSolver.cpp
      multiphysics/MultiphasePoromechanics.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
+     multiphysics/PhaseFieldPoromechanicsSolver.cpp
      multiphysics/PoromechanicsInitialization.cpp
      multiphysics/SinglePhasePoromechanics.cpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp

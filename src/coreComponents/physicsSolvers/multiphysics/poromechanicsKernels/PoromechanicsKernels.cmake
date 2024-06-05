@@ -2,6 +2,7 @@ set( kernelPath "coreComponents/physicsSolvers/multiphysics/poromechanicsKernels
 
 set( SinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( SinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
+set( SinglePhasePoromechanicsDamagePolicy "geos::parallelDevicePolicy<32>" )
 set( MultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ThermalMultiphasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
 set( ThermalSinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOSX_BLOCK_SIZE} >" )
@@ -12,6 +13,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/policies.hpp.in
                 ${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/policies.hpp )
 
 set( kernelNames PoromechanicsKernels )
+set( damageKernelNames PoromechanicsDamageKernels )
 set( subregionList CellElementSubRegion )
 set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<ModifiedCamClay>
@@ -27,6 +29,10 @@ set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<DuvautLionsSolid<DruckerPrager>>
                          PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
                          PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
+
+set( porousDamageSolidDispatch PorousDamageSolid<Damage<ElasticIsotropic>>
+                               PorousDamageSolid<DamageSpectral<ElasticIsotropic>>
+                               PorousDamageSolid<DamageVolDev<ElasticIsotropic>> )
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6
@@ -68,6 +74,25 @@ endif( )
     endforeach()
   endforeach()
 
+  foreach( KERNELNAME ${damageKernelNames} )
+    foreach( SUBREGION_TYPE  ${subregionList} )
+      foreach( CONSTITUTIVE_TYPE ${porousDamageSolidDispatch} )
+        foreach( FE_TYPE ${finiteElementDispatch} )
+
+        set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
+        string(REPLACE "<" "-" filename ${filename})
+        string(REPLACE ">" "-" filename ${filename})
+        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE " " "" filename ${filename})
+        message( " -- Generating file: ${filename}")
+        configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsDamageKernels.cpp.template
+                        ${filename} )
+
+          list( APPEND physicsSolvers_sources ${filename} )
+        endforeach()
+      endforeach()
+    endforeach()
+  endforeach()
 
 set( kernelNames PoromechanicsEFEMKernels )
 set( subregionList CellElementSubRegion )

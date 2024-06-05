@@ -5,6 +5,7 @@ Name                                                        Type Description
 =========================================================== ==== ================================================================================ 
 CompositionalMultiphaseReservoirPoromechanicsInitialization node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanicsInitialization` 
 CompositionalMultiphaseStatistics                           node :ref:`DATASTRUCTURE_CompositionalMultiphaseStatistics`                           
+HydrofractureInitialization                                 node :ref:`DATASTRUCTURE_HydrofractureInitialization`                                 
 MultiphasePoromechanicsInitialization                       node :ref:`DATASTRUCTURE_MultiphasePoromechanicsInitialization`                       
 PVTDriver                                                   node :ref:`DATASTRUCTURE_PVTDriver`                                                   
 PackCollection                                              node :ref:`DATASTRUCTURE_PackCollection`                                              

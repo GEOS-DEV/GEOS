@@ -100,6 +100,7 @@ set( constitutive_headers
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
+     permeability/DamagePermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
@@ -141,6 +142,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
+     solid/PorousDamageSolid.hpp
      solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
@@ -243,6 +245,7 @@ set( constitutive_sources
      fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
+     permeability/DamagePermeability.cpp
      permeability/ExponentialDecayPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
@@ -282,6 +285,7 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp

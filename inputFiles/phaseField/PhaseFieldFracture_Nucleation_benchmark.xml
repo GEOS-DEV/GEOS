@@ -56,18 +56,34 @@
       defaultBulkModulus="4.4144e3"
       defaultShearModulus="4.3363e3"
       lengthScale="0.2"
-      criticalFractureEnergy="9.1e-2"
+      defaultCriticalFractureEnergy="9.1e-2"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
-      tensileStrength="27.0"
+      defaultTensileStrength="27.0"
       compressiveStrength="77.0"
       deltaCoefficient="3.22"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="rock_criticalFractureEnergy"
+       scale="9.1e-2"/>
+
+    <FieldSpecification
+      name="tensileStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rock_tensileStrength"
+      scale="27.0"/>
+
+    <FieldSpecification
       name="yPosDisp"
-      fieldName="totalDisplacement"
+      fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
       scale="1.3737e-3"
@@ -76,7 +92,7 @@
 
     <FieldSpecification
       name="yNegDisp"
-      fieldName="totalDisplacement"
+      fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
       scale="-1.3737e-3"
@@ -85,7 +101,7 @@
 
     <FieldSpecification
       name="fixedY"
-      fieldName="totalDisplacement"
+      fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
       scale="0.0"
@@ -93,7 +109,7 @@
 
     <FieldSpecification
       name="fixedX"
-      fieldName="totalDisplacement"
+      fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
       scale="0.0"
@@ -101,7 +117,7 @@
 
     <FieldSpecification
       name="fixedZ"
-      fieldName="totalDisplacement"
+      fieldName="TotalDisplacement"
       component="2"
       objectPath="nodeManager"
       scale="0.0"

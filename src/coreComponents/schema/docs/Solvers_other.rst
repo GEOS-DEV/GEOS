@@ -22,6 +22,7 @@ MultiphasePoromechanics                       node :ref:`DATASTRUCTURE_Multiphas
 MultiphasePoromechanicsReservoir              node :ref:`DATASTRUCTURE_MultiphasePoromechanicsReservoir`              
 PhaseFieldDamageFEM                           node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`                           
 PhaseFieldFracture                            node :ref:`DATASTRUCTURE_PhaseFieldFracture`                            
+PhaseFieldPoromechanics                       node :ref:`DATASTRUCTURE_PhaseFieldPoromechanics`                       
 ProppantTransport                             node :ref:`DATASTRUCTURE_ProppantTransport`                             
 ReactiveCompositionalMultiphaseOBL            node :ref:`DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL`            
 SeismicityRate                                node :ref:`DATASTRUCTURE_SeismicityRate`                                

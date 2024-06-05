@@ -44,6 +44,7 @@
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
+#include "ElasticIsotropic.hpp"
 
 namespace geos
 {
@@ -68,21 +69,29 @@ class DamageUpdates : public UPDATE_BASE
 {
 public:
   template< typename ... PARAMS >
-  DamageUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageUpdates( arrayView2d< real64 > const & inputNewDamage,
+                 arrayView2d< real64 > const & inputOldDamage,
+                 arrayView3d< real64 > const & inputDamageGrad,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputVolumetricStrain,
                  arrayView2d< real64 > const & inputExtDrivingForce,
                  real64 const & inputLengthScale,
-                 real64 const & inputCriticalFractureEnergy,
+                 arrayView1d< real64 > const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
                  real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
-                 real64 const & inputTensileStrength,
+                 arrayView1d< real64 > const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
+                 real64 const & inputDamagePressure,
+                 arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_damage( inputDamage ),
+    m_newDamage( inputNewDamage ),
+    m_oldDamage( inputOldDamage ),
+    m_damageGrad( inputDamageGrad ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_volStrain( inputVolumetricStrain ),
     m_extDrivingForce ( inputExtDrivingForce ),
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
@@ -91,7 +100,9 @@ public:
     m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
     m_compressStrength( inputCompressStrength ),
-    m_deltaCoefficient( inputDeltaCoefficient )
+    m_deltaCoefficient( inputDeltaCoefficient ),
+    m_damagePressure( inputDamagePressure ),
+    m_biotCoefficient( inputBiotCoefficient )
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
@@ -115,11 +126,11 @@ public:
 
     if( m_extDrivingForceFlag )
     {
-      pf = fmax( fmin( 1.0, m_damage( k, q )), 0.0 );
+      pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
     }
     else
     {
-      pf = m_damage( k, q );
+      pf = m_newDamage( k, q );
     }
 
     // Set a lower bound tolerance for the degradation
@@ -131,19 +142,86 @@ public:
 
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationDerivative( real64 const d ) const
+  virtual real64 getDegradationDerivative( localIndex const k, real64 const d ) const
   {
+    GEOS_UNUSED_VAR( k );
+
     return -2*(1 - d);
   }
 
 
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const
+  virtual real64 getDegradationSecondDerivative( localIndex const k, real64 const d ) const
   {
-    GEOS_UNUSED_VAR( d );
+    GEOS_UNUSED_VAR( k, d );
 
     return 2.0;
+  }
+
+  //Damage dependence function on fluid pressure terms and its derivatives
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual real64 pressureDamageFunction( localIndex const k,
+                                         localIndex const q ) const
+  {
+    real64 pf = fmax( fmin( 1.0, m_newDamage( k, q )), 0.0 );
+
+    return 0.5*(1 + std::cos( M_PI*pf ));
+  }
+
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual real64 pressureDamageFunctionDerivative( real64 const d ) const
+  {
+    return -0.5*M_PI*std::sin( M_PI*d );
+  }
+
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual real64 pressureDamageFunctionSecondDerivative( real64 const d ) const
+  {
+    return -0.5*M_PI*M_PI*std::cos( M_PI*d );
+  }
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual real64 getDamage( localIndex const k,
+                            localIndex const q ) const
+  {
+    return m_newDamage( k, q );
+  }
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual real64 getOldDamage( localIndex const k,
+                               localIndex const q ) const
+  {
+    return m_oldDamage( k, q );
+  }
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual void getDamageGrad( localIndex const k,
+                              localIndex const q,
+                              real64 ( & damageGrad )[3] ) const
+  {
+    for( int dim=0; dim < 3; ++dim )
+    {
+      damageGrad[dim] = m_damageGrad[k][q][dim];
+    }
+
+  }
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  virtual void updateBiotCoefficient( localIndex const k,
+                                      real64 const biotCoefficient ) const
+  {
+    m_biotCoefficient[k] = biotCoefficient;
   }
 
   GEOS_HOST_DEVICE
@@ -163,6 +241,15 @@ public:
 
     real64 factor = getDegradationValue( k, q );
 
+    // compute volumetric and deviatoric strain invariants
+    real64 strain[6] = {0};
+
+    UPDATE_BASE::getElasticStrain( k, q, strain );
+
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+
+    m_volStrain( k, q ) = traceOfStrain;
+
     if( m_extDrivingForceFlag )
     {
       real64 stressP;
@@ -181,18 +268,21 @@ public:
       real64 I1 = factor * stressP * 3.;
       real64 sqrt_J2 = factor * stressQ / sqrt( 3. );
 
+      real64 const criticalFractureEnergy = m_criticalFractureEnergy[k];
+      real64 const tensileStrength = m_tensileStrength[k];
+
       // Calculate the external driving force according to Kumar et al.
-      real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale;
+      real64 beta0 = m_deltaCoefficient * 0.375 * criticalFractureEnergy / m_lengthScale;
 
-      real64 beta1 = -0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                     - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
-                     - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) - pow( m_tensileStrength, 3 ))*m_tensileStrength/18/(mu*mu)/(kappa*kappa));
+      real64 beta1 = -0.375 * criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - tensileStrength)/2./m_compressStrength/tensileStrength)
+                     - (8*mu + 24*kappa - 27*tensileStrength) * (m_compressStrength - tensileStrength) / 144. / mu / kappa
+                     - m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) - pow( tensileStrength, 3 ))*tensileStrength/18/(mu*mu)/(kappa*kappa));
 
-      real64 beta2 = -0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                     + (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
-                     + m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) + pow( m_tensileStrength, 3 ))*m_tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
+      real64 beta2 = -0.375 * criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + m_deltaCoefficient)*(m_compressStrength + tensileStrength)/2./m_compressStrength/tensileStrength)
+                     + (8*mu + 24*kappa - 27*tensileStrength)*(m_compressStrength + tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
+                     + m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) + pow( tensileStrength, 3 ))*tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
 
-      real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy;
+      real64 beta3 = m_lengthScale * (tensileStrength/mu/kappa) / criticalFractureEnergy;
 
       m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0);
     }
@@ -221,15 +311,29 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  virtual real64 getVolStrain( localIndex const k,
+                               localIndex const q ) const
+  {
+    return m_volStrain( k, q );
+  }
+
+
+  GEOS_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
   }
 
   GEOS_HOST_DEVICE
-  real64 getCriticalFractureEnergy() const
+  real64 getCriticalFractureEnergy( localIndex const k ) const
   {
-    return m_criticalFractureEnergy;
+    return m_criticalFractureEnergy[k];
+  }
+
+  GEOS_HOST_DEVICE
+  real64 getDamagePressure() const
+  {
+    return m_damagePressure;
   }
 
   GEOS_HOST_DEVICE
@@ -240,26 +344,46 @@ public:
     return m_criticalStrainEnergy;
     #else
     if( m_extDrivingForceFlag )
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
+      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
+      return 3*m_criticalFractureEnergy[k]/(16 * m_lengthScale);
 
     #endif
 
 
   }
 
-  arrayView2d< real64 > const m_damage;
+  GEOS_HOST_DEVICE
+  virtual real64 getBiotCoefficient( localIndex const k ) const
+  {
+    return m_biotCoefficient[k];
+  }
+
+  GEOS_HOST_DEVICE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+    m_oldDamage[k][q] = m_newDamage[k][q];
+  }
+
+  arrayView2d< real64 > const m_newDamage;
+  arrayView2d< real64 > const m_oldDamage;
+  arrayView3d< real64 > const m_damageGrad;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_volStrain;
   arrayView2d< real64 > const m_extDrivingForce;
   real64 const m_lengthScale;
-  real64 const m_criticalFractureEnergy;
+  arrayView1d< real64 > const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
   real64 const m_degradationLowerLimit;
   integer const m_extDrivingForceFlag;
-  real64 const m_tensileStrength;
+  arrayView1d< real64 > const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
+  real64 const m_damagePressure;
+
+  arrayView1d< real64 > const m_biotCoefficient;
 };
 
 
@@ -286,34 +410,46 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  virtual void saveConvergedState() const override;
   /// *** The interface to get member variables
-  arrayView2d< real64 const > getDamage() const { return m_damage; }
+  arrayView2d< real64 const > getNewDamage() const { return m_newDamage; }
+  arrayView2d< real64 const > getOldDamage() const { return m_oldDamage; }
 
   arrayView2d< real64 const > getExtDrivingForce() const { return m_extDrivingForce; }
 
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_oldDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
-                                                                       m_criticalFractureEnergy,
+                                                                       m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
-                                                                       m_tensileStrength,
+                                                                       m_tensileStrength.toView(),
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_damagePressure,
+                                                                       m_biotCoefficient.toView() );
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * newDamageString() { return "newDamage"; }
+    static constexpr char const * oldDamageString() { return "oldDamage"; }
+    static constexpr char const * damageGradString() { return "damageGrad"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
+    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
     static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
+    /// string/key for default Gc
+    static constexpr char const * defaultCriticalFractureEnergyString() { return "defaultCriticalFractureEnergy"; }
     /// string/key for Gc
     static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
@@ -322,27 +458,40 @@ public:
     static constexpr char const * degradationLowerLimitString() { return "degradationLowerLimit"; }
     // string/key for c_e switch
     static constexpr char const * extDrivingForceFlagString() { return "extDrivingForceFlag"; }
+    /// string/key for the default tensile strength
+    static constexpr char const * defaultTensileStrengthString() { return "defaultTensileStrength"; }
     /// string/key for the uniaxial tensile strength
     static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
     /// string/key for the uniaxial compressive strength
     static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
     /// string/key for a delta coefficient in computing the external driving force
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
+    /// string/key for the Biot coefficient
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
+    /// string/key for the uniform pressure inside the crack
+    static constexpr char const * damagePressureString() { return "damagePressure"; }
   };
 
 
 protected:
-  array2d< real64 > m_damage;
+  array2d< real64 > m_newDamage;
+  array2d< real64 > m_oldDamage;
+  array3d< real64 > m_damageGrad;
   array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_volStrain;
   array2d< real64 > m_extDrivingForce;
   real64 m_lengthScale;
-  real64 m_criticalFractureEnergy;
+  real64 m_defaultCriticalFractureEnergy;
   real64 m_criticalStrainEnergy;
   real64 m_degradationLowerLimit;
   integer m_extDrivingForceFlag;
-  real64 m_tensileStrength;
+  real64 m_defaultTensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
+  real64 m_damagePressure;
+  array1d< real64 > m_biotCoefficient;
+  array1d< real64 > m_criticalFractureEnergy;
+  array1d< real64 > m_tensileStrength;
 };
 
 }

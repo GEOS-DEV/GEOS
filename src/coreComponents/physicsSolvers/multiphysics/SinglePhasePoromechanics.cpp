@@ -21,9 +21,11 @@
 #include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/solid/PorousDamageSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -42,13 +44,19 @@ using namespace fields;
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                                      Group * const parent )
-  : Base( name, parent )
+  : Base( name, parent ),
+  m_damageFlag()
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   linearSolverParameters.dofsPerNode = 3;
+
+  this->registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether a damage solid model is used" );
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
@@ -179,7 +187,21 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
 
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
-    if( this->m_isThermal )
+    if( m_damageFlag )
+    {
+      poromechanicsMaxForce =
+        assemblyLaunch< constitutive::PorousDamageSolidBase,
+                        poromechanicsDamageKernels::SinglePhasePoromechanicsDamageKernelFactory >( mesh,
+                                                                                                   dofManager,
+                                                                                                   regionNames,
+                                                                                                   viewKeyStruct::porousMaterialNamesString(),
+                                                                                                   localMatrix,
+                                                                                                   localRhs,
+                                                                                                   dt,
+                                                                                                   flowDofKey,
+                                                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    }
+    else if( this->m_isThermal )
     {
       poromechanicsMaxForce =
         assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution

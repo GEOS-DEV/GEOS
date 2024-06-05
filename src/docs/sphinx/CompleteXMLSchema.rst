@@ -360,6 +360,13 @@ Element: DamageElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic.rst
 
 
+.. _XML_DamagePermeability:
+
+Element: DamagePermeability
+===========================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability.rst
+
+
 .. _XML_DamageSpectralElasticIsotropic:
 
 Element: DamageSpectralElasticIsotropic
@@ -575,6 +582,13 @@ Element: HybridMimeticDiscretization
 Element: Hydrofracture
 ======================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
+
+
+.. _XML_HydrofractureInitialization:
+
+Element: HydrofractureInitialization
+====================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization.rst
 
 
 .. _XML_HydrostaticEquilibrium:
@@ -827,6 +841,13 @@ Element: PhaseFieldDamageFEM
 Element: PhaseFieldFracture
 ===========================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
+
+
+.. _XML_PhaseFieldPoromechanics:
+
+Element: PhaseFieldPoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics.rst
 
 
 .. _XML_PorousDamageElasticIsotropic:
@@ -1799,6 +1820,13 @@ Datastructure: DamageElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/DamageElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_DamagePermeability:
+
+Datastructure: DamagePermeability
+=================================
+.. include:: ../../coreComponents/schema/docs/DamagePermeability_other.rst
+
+
 .. _DATASTRUCTURE_DamageSpectralElasticIsotropic:
 
 Datastructure: DamageSpectralElasticIsotropic
@@ -2014,6 +2042,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrofractureInitialization:
+
+Datastructure: HydrofractureInitialization
+==========================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization_other.rst
 
 
 .. _DATASTRUCTURE_HydrostaticEquilibrium:
@@ -2280,6 +2315,13 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldPoromechanics:
+
+Datastructure: PhaseFieldPoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/PhaseFieldPoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_PorousDamageElasticIsotropic:

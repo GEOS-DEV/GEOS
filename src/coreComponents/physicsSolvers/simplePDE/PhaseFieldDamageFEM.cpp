@@ -18,6 +18,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
+#include "PhaseFieldPressurizedDamageFEMKernels.hpp"
 #include <math.h>
 #include <vector>
 
@@ -55,7 +56,8 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_fieldName( "primaryField" ),
+  m_fracturePressureTermFlag( 0 )
 {
 
   registerWrapper< TimeIntegrationOption >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
@@ -80,6 +82,11 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
+
+  registerWrapper( viewKeyStruct::fracturePressureTermFlagString(), &m_fracturePressureTermFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -191,7 +198,7 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( 
 
 }
 
-void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
+void PhaseFieldDamageFEM::assembleSystem( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
@@ -215,23 +222,49 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
     auto const localDissipation = m_localDissipationOption == LocalDissipation::Linear ?
                                   PhaseFieldDamageKernelLocalDissipation::Linear :
                                   PhaseFieldDamageKernelLocalDissipation::Quadratic;
+    
+    if( m_fracturePressureTermFlag )
+    {
+      GEOS_UNUSED_VAR( time_n );
 
-    PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
-                                                 dofManager.rankOffset(),
-                                                 localMatrix,
-                                                 localRhs,
-                                                 dt,
-                                                 m_fieldName,
-                                                 localDissipation );
+      PhaseFieldPressurizedDamageKernelFactory kernelFactory( dofIndex,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              dt,
+                                                              m_fieldName,
+                                                              localDissipation );
 
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy<>,
-                                    constitutive::DamageBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            this->getDiscretizationName(),
-                                                            viewKeyStruct::solidModelNamesString(),
-                                                            kernelFactory );
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+    else
+    {
+      PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
+                                                   dofManager.rankOffset(),
+                                                   localMatrix,
+                                                   localRhs,
+                                                   dt,
+                                                   m_fieldName,
+                                                   localDissipation,
+                                                   time_n + dt );
+
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+
 #else // this has your changes to the old base code
     matrix.zero();
     rhs.zero();
@@ -629,7 +662,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                       rankOffSet,
                                                       localMatrix,
                                                       rhsContribution,
-                                                      damangeUpperBound,
+                                                      1.0,
                                                       damageAtNode );
 
           globalIndex const localRow = dof - rankOffSet;
