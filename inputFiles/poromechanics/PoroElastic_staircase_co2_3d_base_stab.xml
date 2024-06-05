@@ -98,7 +98,8 @@
       permeabilityComponents="{ 0.0, 0.0, 0.0 }"/>
     <BiotPorosity
       name="rockPorosityBarrier"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
+
       defaultReferencePorosity="0.05"/>
   </Constitutive>
 
