@@ -677,7 +677,7 @@ public:
   }
 };
 
-}; // end namespace isothermalPerforationFluxKernels
+} // end namespace isothermalPerforationFluxKernels
 
 namespace thermalPerforationFluxKernels
 {
