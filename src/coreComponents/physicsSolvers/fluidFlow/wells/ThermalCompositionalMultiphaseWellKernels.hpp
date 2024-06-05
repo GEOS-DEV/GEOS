@@ -1103,7 +1103,7 @@ public:
   }
 };
 
-};   // end namespace thermalCompositionalMultiphaseWellKernels
+}   // end namespace thermalCompositionalMultiphaseWellKernels
 
 } // end namespace geos
 
