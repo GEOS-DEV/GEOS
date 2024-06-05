@@ -17,7 +17,6 @@
  */
 
 #include "NegativeTwoPhaseFlashModel.hpp"
-#include "EquationOfState.hpp"
 
 namespace geos
 {
@@ -29,9 +28,9 @@ namespace compositional
 {
 
 // Naming conventions
-string NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::catalogName()
+string NegativeTwoPhaseFlashModel::catalogName()
 {
-  return EOS_TYPE_LIQUID::catalogName();
+  return "TwoPhase";
 }
 
 NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
@@ -39,7 +38,7 @@ NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
                                                         ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
 {
-  m_parameters = modelParameters->getParameters< EquationOfState >();
+  m_parameters = modelParameters.get< EquationOfState >();
 }
 
 NegativeTwoPhaseFlashModel::KernelWrapper

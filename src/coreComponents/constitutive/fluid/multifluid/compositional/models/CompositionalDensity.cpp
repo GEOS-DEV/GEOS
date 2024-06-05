@@ -31,7 +31,6 @@ void CompositionalDensity::calculateDimensionalVolumeShift( ComponentProperties 
                                                             EquationOfStateType const & equationOfState,
                                                             arraySlice1d< real64 > componentDimensionalVolumeShift )
 {
-  integer const eosType = equationOfState.getEquationOfStateType( m_phaseIndex );
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::calculateDimensionalVolumeShift( componentProperties,

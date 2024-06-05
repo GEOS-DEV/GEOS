@@ -20,10 +20,10 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_NEGATIVETWOPHASEFLASHMODEL_HPP_
 
 #include "FunctionBase.hpp"
+#include "EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
 namespace geos

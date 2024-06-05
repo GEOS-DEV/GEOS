@@ -20,6 +20,9 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_EQUATIONOFSTATE_HPP_
 
 #include "ModelParameters.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "dataRepository/InputFlags.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {
@@ -43,54 +46,53 @@ ENUM_STRINGS( EquationOfStateType,
 class EquationOfState : public ModelParameters
 {
 public:
-    EquationOfState( std::unique_ptr< ModelParameters > parameters ):
-  ModelParameters( std::move( parameters ) )
-{}
-    
-    ~EquationOfState() override = default;
+  EquationOfState( std::unique_ptr< ModelParameters > parameters ):
+    ModelParameters( std::move( parameters ) )
+  {}
+
+  ~EquationOfState() override = default;
 
   static std::unique_ptr< ModelParameters > create( std::unique_ptr< ModelParameters > parameters )
   {
-    if( parameters && parameters->getParameters< EquationOfState >() != nullptr )
-  {
-    return parameters;
-  }
-  return std::make_unique< EquationOfState >( std::move( parameters ) );
+    if( parameters && parameters->get< EquationOfState >() != nullptr )
+    {
+      return parameters;
+    }
+    return std::make_unique< EquationOfState >( std::move( parameters ) );
   }
 
-    string_array m_equationsOfStateNames;
+  string_array m_equationsOfStateNames;
 
 private:
-    void registerParametersImpl( MultiFluidBase * fluid ) override
-    {
-  fluid->registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfStateNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of equation of state types for each phase. Valid options:\n* " +
-                    EnumStrings< EquationOfStateType >::concat( "\n* " ) );
-    }
-
-    void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override
-{
-  GEOS_UNUSED_VAR( componentProperties );
-
-  integer const numPhase = fluid->numFluidPhases();
-
-  GEOS_THROW_IF_NE_MSG( m_equationsOfStateNames.size(), numPhase,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
-                                  viewKeyStruct::equationsOfStateString() ),
-                        InputError );
-
-  // If any value is invalid conversion will throw
-  for( string const & eos : m_equationsOfStateNames )
+  void registerParametersImpl( MultiFluidBase * fluid ) override
   {
-    EnumStrings< EquationOfStateType >::fromString( eos );
+    fluid->registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfStateNames ).
+      setInputFlag( dataRepository::InputFlags::REQUIRED ).
+      setDescription( "List of equation of state types for each phase. Valid options:\n* " +
+                      EnumStrings< EquationOfStateType >::concat( "\n* " ) );
   }
-}
 
-    struct viewKeyStruct
+  void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override
+  {
+    GEOS_UNUSED_VAR( componentProperties );
+
+    integer const numPhase = fluid->numFluidPhases();
+
+    GEOS_THROW_IF_NE_MSG( m_equationsOfStateNames.size(), numPhase,
+                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
+                                    viewKeyStruct::equationsOfStateString() ),
+                          InputError );
+
+    // If any value is invalid conversion will throw
+    for( string const & eos : m_equationsOfStateNames )
     {
-      static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
-    };
+      EnumStrings< EquationOfStateType >::fromString( eos );
+    }
+  }
+
+  struct viewKeyStruct
+  {
+    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
   };
 };
 

@@ -25,6 +25,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CompositionalProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 
 namespace geos
 {
@@ -38,8 +39,8 @@ namespace compositional
 class CompositionalDensityUpdate final : public FunctionBaseUpdate
 {
 public:
-  explicit CompositionalDensityUpdate( arrayView1d< real64 const > const & volumeShift,
-                                       EquationOfStateType const equationOfState )
+  CompositionalDensityUpdate( arrayView1d< real64 const > const & volumeShift,
+                              EquationOfStateType const equationOfState )
     : m_componentDimensionalVolumeShift( volumeShift ),
     m_equationOfState( equationOfState )
   {}
@@ -57,6 +58,18 @@ public:
                 bool useMass ) const;
 
 private:
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  void computeCompressibilityFactor( integer const numComps,
+                                     real64 const & pressure,
+                                     real64 const & temperature,
+                                     arraySlice1d< real64 const, USD > const & composition,
+                                     ComponentProperties::KernelWrapper const & componentProperties,
+                                     EquationOfStateType const equationOfState,
+                                     real64 & compressibilityFactor,
+                                     arraySlice1d< real64 > const & compressibilityFactorDerivs ) const;
+
+private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
   EquationOfStateType const m_equationOfState;
 };
@@ -70,7 +83,7 @@ public:
                         ModelParameters const & modelParameters )
     : FunctionBase( name, componentProperties )
   {
-    EquationOfState const * equationOfState = modelParameters->getParameters< EquationOfState >();
+    EquationOfState const * equationOfState = modelParameters.get< EquationOfState >();
     m_equationOfState = EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[phaseIndex] );
     // Calculate the dimensional volume shift
     m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
@@ -95,32 +108,31 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_componentDimensionalVolumeShift );
+    return KernelWrapper( m_componentDimensionalVolumeShift, m_equationOfState );
   }
 
 private:
   static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
-                                               EquationOfState const & equationOfState,
+                                               EquationOfStateType const & equationOfState,
                                                arraySlice1d< real64 > componentDimensionalVolumeShift );
 
 private:
   array1d< real64 > m_componentDimensionalVolumeShift;
-  EquationOfStateType const m_equationOfState;
+  EquationOfStateType m_equationOfState;
 };
 
-template< typename EOS_TYPE >
 template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
-void CompositionalDensityUpdate< EOS_TYPE >::
-compute( ComponentProperties::KernelWrapper const & componentProperties,
-         real64 const & pressure,
-         real64 const & temperature,
-         arraySlice1d< real64 const, USD1 > const & phaseComposition,
-         real64 & molarDensity,
-         arraySlice1d< real64, USD2 > const & dMolarDensity,
-         real64 & massDensity,
-         arraySlice1d< real64, USD2 > const & dMassDensity,
-         bool useMass ) const
+void CompositionalDensityUpdate::
+  compute( ComponentProperties::KernelWrapper const & componentProperties,
+           real64 const & pressure,
+           real64 const & temperature,
+           arraySlice1d< real64 const, USD1 > const & phaseComposition,
+           real64 & molarDensity,
+           arraySlice1d< real64, USD2 > const & dMolarDensity,
+           real64 & massDensity,
+           arraySlice1d< real64, USD2 > const & dMassDensity,
+           bool useMass ) const
 {
   GEOS_UNUSED_VAR( useMass );
 
@@ -130,13 +142,14 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
   real64 compressibilityFactor = 0.0;
   stackArray1d< real64, 2+MultiFluidConstants::MAX_NUM_COMPONENTS > tempDerivs( numDofs );
 
-  EOS_TYPE::computeCompressibilityFactor( numComps,
-                                          pressure,
-                                          temperature,
-                                          phaseComposition,
-                                          componentProperties,
-                                          compressibilityFactor,
-                                          tempDerivs.toSlice() );
+  computeCompressibilityFactor( numComps,
+                                pressure,
+                                temperature,
+                                phaseComposition,
+                                componentProperties,
+                                m_equationOfState,
+                                compressibilityFactor,
+                                tempDerivs.toSlice() );
 
   CompositionalProperties::computeMolarDensity( numComps,
                                                 pressure,
@@ -155,6 +168,41 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
                                                dMolarDensity.toSliceConst(),
                                                massDensity,
                                                dMassDensity );
+}
+
+template< integer USD >
+GEOS_HOST_DEVICE
+void CompositionalDensityUpdate::computeCompressibilityFactor( integer const numComps,
+                                                               real64 const & pressure,
+                                                               real64 const & temperature,
+                                                               arraySlice1d< real64 const, USD > const & composition,
+                                                               ComponentProperties::KernelWrapper const & componentProperties,
+                                                               EquationOfStateType const equationOfState,
+                                                               real64 & compressibilityFactor,
+                                                               arraySlice1d< real64 > const & compressibilityFactorDerivs ) const
+{
+  if( equationOfState == EquationOfStateType::PengRobinson )
+  {
+    CubicEOSPhaseModel< PengRobinsonEOS >::
+    computeCompressibilityFactor( numComps,
+                                  pressure,
+                                  temperature,
+                                  composition,
+                                  componentProperties,
+                                  compressibilityFactor,
+                                  compressibilityFactorDerivs );
+  }
+  else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
+  {
+    CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
+    computeCompressibilityFactor( numComps,
+                                  pressure,
+                                  temperature,
+                                  composition,
+                                  componentProperties,
+                                  compressibilityFactor,
+                                  compressibilityFactorDerivs );
+  }
 }
 
 } // end namespace compositional
