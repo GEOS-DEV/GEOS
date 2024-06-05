@@ -6,9 +6,15 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3075 (2024-06-05)
+=====================
+Introduce configuration tolerance. Rebaseline because of the new parameter in NonlinearSolverParameters.
+
+
 PR #3120 (2024-06-05)
 =====================
 Add missing compositionalMultiphaseFlow tests into ATS and adjust output naming. Rebaseline accordingly.
+
 
 PR #3113 (2024-06-05)
 =====================
