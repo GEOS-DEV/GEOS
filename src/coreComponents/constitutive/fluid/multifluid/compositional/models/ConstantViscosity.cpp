@@ -34,7 +34,7 @@ ConstantViscosity::ConstantViscosity( string const & name,
                                       ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
 {
-  Parameters const * parameters = modelParameters.getParameters< Parameters >();
+  Parameters const * parameters = modelParameters.get< Parameters >();
   m_constantPhaseViscosity = parameters->m_constantPhaseViscosity[phaseIndex];
 }
 
@@ -51,7 +51,7 @@ ConstantViscosity::createKernelWrapper() const
 std::unique_ptr< ModelParameters >
 ConstantViscosity::createParameters( std::unique_ptr< ModelParameters > parameters )
 {
-  if( parameters && parameters->getParameters< Parameters >() != nullptr )
+  if( parameters && parameters->get< Parameters >() != nullptr )
   {
     return parameters;
   }

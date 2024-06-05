@@ -57,12 +57,12 @@ public:
   }
 
   template< typename PARAMETERS >
-  PARAMETERS const * getParameters() const
+  PARAMETERS const * get() const
   {
     PARAMETERS const * parameters = dynamic_cast< PARAMETERS const * >(this);
     if( parameters == nullptr && baseParameters )
     {
-      return baseParameters->getParameters< PARAMETERS >();
+      return baseParameters->get< PARAMETERS >();
     }
     return parameters;
   }
