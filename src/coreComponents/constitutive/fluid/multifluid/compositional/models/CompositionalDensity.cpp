@@ -25,7 +25,26 @@ namespace constitutive
 {
 
 namespace compositional
-{} // namespace compositional
+{
+
+void CompositionalDensity::calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                                            EquationOfStateType const & equationOfState,
+                                                            arraySlice1d< real64 > componentDimensionalVolumeShift )
+{
+  integer const eosType = equationOfState.getEquationOfStateType( m_phaseIndex );
+  if( equationOfState == EquationOfStateType::PengRobinson )
+  {
+    CubicEOSPhaseModel< PengRobinsonEOS >::calculateDimensionalVolumeShift( componentProperties,
+                                                                            componentDimensionalVolumeShift );
+  }
+  else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
+  {
+    CubicEOSPhaseModel< SoaveRedlichKwongEOS >::calculateDimensionalVolumeShift( componentProperties,
+                                                                                 componentDimensionalVolumeShift );
+  }
+}
+
+} // namespace compositional
 
 } // namespace constitutive
 

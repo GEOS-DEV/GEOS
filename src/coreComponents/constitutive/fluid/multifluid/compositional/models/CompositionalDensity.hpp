@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_COMPOSITIONALDENSITY_HPP_
 
 #include "FunctionBase.hpp"
+#include "EquationOfState.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -34,12 +35,13 @@ namespace constitutive
 namespace compositional
 {
 
-template< typename EOS_TYPE >
 class CompositionalDensityUpdate final : public FunctionBaseUpdate
 {
 public:
-  explicit CompositionalDensityUpdate( arrayView1d< real64 const > const & volumeShift )
-    : m_componentDimensionalVolumeShift( volumeShift )
+  explicit CompositionalDensityUpdate( arrayView1d< real64 const > const & volumeShift,
+                                       EquationOfStateType const equationOfState )
+    : m_componentDimensionalVolumeShift( volumeShift ),
+    m_equationOfState( equationOfState )
   {}
 
   template< integer USD1, integer USD2 >
@@ -56,9 +58,9 @@ public:
 
 private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
+  EquationOfStateType const m_equationOfState;
 };
 
-template< typename EOS_TYPE >
 class CompositionalDensity : public FunctionBase
 {
 public:
@@ -68,11 +70,13 @@ public:
                         ModelParameters const & modelParameters )
     : FunctionBase( name, componentProperties )
   {
-    GEOS_UNUSED_VAR( phaseIndex, modelParameters );
+    EquationOfState const * equationOfState = modelParameters->getParameters< EquationOfState >();
+    m_equationOfState = EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[phaseIndex] );
     // Calculate the dimensional volume shift
     m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
-    EOS_TYPE::calculateDimensionalVolumeShift( componentProperties,
-                                               m_componentDimensionalVolumeShift );
+    calculateDimensionalVolumeShift( componentProperties,
+                                     m_equationOfState,
+                                     m_componentDimensionalVolumeShift );
   }
 
   static string catalogName() { return "CompositionalDensity"; }
@@ -83,7 +87,7 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = CompositionalDensityUpdate< EOS_TYPE >;
+  using KernelWrapper = CompositionalDensityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -95,7 +99,13 @@ public:
   }
 
 private:
+  static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                               EquationOfState const & equationOfState,
+                                               arraySlice1d< real64 > componentDimensionalVolumeShift );
+
+private:
   array1d< real64 > m_componentDimensionalVolumeShift;
+  EquationOfStateType const m_equationOfState;
 };
 
 template< typename EOS_TYPE >
