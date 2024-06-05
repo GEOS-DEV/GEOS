@@ -185,16 +185,16 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                  SimulationError );
 }
 
-void TableFunction::printCSVHeader( std::ofstream & os, integer const numDimensions ) const
+void TableFunction::printCSVHeader( std::ofstream & logStream, integer const numDimensions ) const
 {
   for( integer d = 0; d < numDimensions; d++ )
   {
-    os << units::getDescription( getDimUnit( d )) << ",";
+    logStream << units::getDescription( getDimUnit( d )) << ",";
   }
-  os << units::getDescription( m_valueUnit ) << "\n";
+  logStream << units::getDescription( m_valueUnit ) << "\n";
 }
 
-void TableFunction::printCSVValues( std::ofstream & os, integer const numDimensions ) const
+void TableFunction::printCSVValues( std::ofstream & logStream, integer const numDimensions ) const
 {
   // prepare dividers
   std::vector< integer > div( numDimensions );
@@ -215,13 +215,12 @@ void TableFunction::printCSVValues( std::ofstream & os, integer const numDimensi
       r = r % div[d];
     }
     // finally print out in right order
-
     for( integer d = 0; d < numDimensions; d++ )
     {
       arraySlice1d< real64 const > const coords = m_coordinates[d];
-      os << coords[idx[d]] << ",";
+      logStream << coords[idx[d]] << ",";
     }
-    os << m_values[v] << "\n";
+    logStream << m_values[v] << "\n";
   }
 }
 
@@ -229,7 +228,6 @@ void TableFunction::convertTable2D( TableData2D::Conversion1D & tableConverted )
 {
   TableData2D tableData2D;
   tableData2D.collect2DData( m_coordinates[0], m_coordinates[1], m_values );
-
   tableConverted = tableData2D.convert2DData( m_valueUnit,
                                               units::getDescription( getDimUnit( 0 ) ),
                                               units::getDescription( getDimUnit( 1 ) ));
@@ -237,7 +235,7 @@ void TableFunction::convertTable2D( TableData2D::Conversion1D & tableConverted )
 
 void TableFunction::printInCSV( string const & filename ) const
 {
-  std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+  std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
                              OutputBase::getOutputDirectory(),
                              filename ));
@@ -245,8 +243,8 @@ void TableFunction::printInCSV( string const & filename ) const
 
   if( numDimensions != 2 )
   {
-    printCSVHeader( os, numDimensions );
-    printCSVValues( os, numDimensions );
+    printCSVHeader( logStream, numDimensions );
+    printCSVValues( logStream, numDimensions );
   }
   else // numDimensions == 2
   {
@@ -257,9 +255,9 @@ void TableFunction::printInCSV( string const & filename ) const
     TableLayout tableLayout( tableConverted.headerNames );
     //3.
     TableCSVFormatter csvFormat( tableLayout );
-    os << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
+    logStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }
-  os.close();
+  logStream.close();
 }
 
 void TableFunction::printInLog( string const & title ) const
@@ -270,25 +268,24 @@ void TableFunction::printInLog( string const & title ) const
 
   if( numDimensions == 1 )
   {
+    //1.
     TableData tableData;
     arraySlice1d< real64 const > const coords = m_coordinates[0];
-
     for( integer idx = 0; idx < m_values.size(); idx++ )
     {
       tableData.addRow( coords[idx], m_values[idx] );
     }
-
+    //2.
     TableLayout const tableLayout( {
         string( units::getDescription( getDimUnit( 0 ))),
         string( units::getDescription( m_valueUnit ))
       }, title );
-
+    //3.
     TableTextFormatter const logTable( tableLayout );
     GEOS_LOG_RANK_0( logTable.toString( tableData ));
   }
   else if( numDimensions == 2 )
   {
-    TableData2D tableData2D;
     integer const nX = m_coordinates[0].size();
     integer const nY = m_coordinates[1].size();
     if( nX * nY <= 500 )

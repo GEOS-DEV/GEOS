@@ -241,9 +241,9 @@ private:
    */
   void checkCoord( real64 coord, localIndex dim ) const;
 
-  void printCSVHeader( std::ofstream & os, integer const numDimensions ) const;
+  void printCSVHeader( std::ofstream & logStream, integer const numDimensions ) const;
 
-  void printCSVValues( std::ofstream & os, integer const numDimensions ) const;
+  void printCSVValues( std::ofstream & logStream, integer const numDimensions ) const;
 
   void convertTable2D( TableData2D::Conversion1D & tableConverted ) const;
 
