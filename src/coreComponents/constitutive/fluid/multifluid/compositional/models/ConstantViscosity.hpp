@@ -86,7 +86,7 @@ public:
 
     array1d< real64 > m_constantPhaseViscosity;
 
-private:
+protected:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
     void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 

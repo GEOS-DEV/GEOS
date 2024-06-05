@@ -271,7 +271,7 @@ public:
                              integer const phaseIndex,
                              ModelParameters const & modelParameters );
 
-  static string catalogName() { return "LBC"; }
+  static string catalogName() { return "LohrenzBrayClark"; }
 
   FunctionType functionType() const override
   {
@@ -297,7 +297,7 @@ public:
     string m_componentMixingType;
     array1d< real64 > m_componentCriticalVolume;
 
-private:
+protected:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
     void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 

@@ -67,7 +67,7 @@ public:
     return parameters;
   }
 
-private:
+protected:
   virtual void registerParametersImpl( MultiFluidBase * fluid )
   {
     GEOS_UNUSED_VAR( fluid );

@@ -63,7 +63,7 @@ public:
 
   string_array m_equationsOfStateNames;
 
-private:
+protected:
   void registerParametersImpl( MultiFluidBase * fluid ) override
   {
     fluid->registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfStateNames ).

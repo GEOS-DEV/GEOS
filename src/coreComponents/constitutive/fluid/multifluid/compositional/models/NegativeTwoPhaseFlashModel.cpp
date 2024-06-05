@@ -44,8 +44,8 @@ NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
 NegativeTwoPhaseFlashModel::KernelWrapper
 NegativeTwoPhaseFlashModel::createKernelWrapper() const
 {
-  static constexpr integer liquidIndex = 0;
-  static constexpr integer vapourIndex = 1;
+  constexpr integer liquidIndex = 0;
+  constexpr integer vapourIndex = 1;
   EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( m_parameters->m_equationsOfStateNames[liquidIndex] );
   EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( m_parameters->m_equationsOfStateNames[vapourIndex] );
   return KernelWrapper( m_componentProperties.getNumberOfComponents(), liquidIndex, vapourIndex, liquidEos, vapourEos );

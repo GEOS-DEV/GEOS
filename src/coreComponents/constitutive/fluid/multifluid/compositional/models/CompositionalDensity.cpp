@@ -27,6 +27,18 @@ namespace constitutive
 namespace compositional
 {
 
+CompositionalDensity::KernelWrapper
+CompositionalDensity::createKernelWrapper() const
+{
+  return KernelWrapper( m_componentDimensionalVolumeShift, m_equationOfState );
+}
+
+std::unique_ptr< ModelParameters >
+CompositionalDensity::createParameters( std::unique_ptr< ModelParameters > parameters )
+{
+  return EquationOfState::create( std::move( parameters ) );
+}
+
 void CompositionalDensity::calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
                                                             EquationOfStateType const & equationOfState,
                                                             arraySlice1d< real64 > componentDimensionalVolumeShift )

@@ -106,10 +106,10 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper() const
-  {
-    return KernelWrapper( m_componentDimensionalVolumeShift, m_equationOfState );
-  }
+  KernelWrapper createKernelWrapper() const;
+
+  // Create parameters unique to this model
+  static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
 private:
   static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
