@@ -181,7 +181,7 @@ void NonlinearSolverParameters::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
                         getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
 
-  if( getLogLevel() > 0 )
+  //if( getLogLevel() > 0 )
   {
     print();
   }
@@ -189,7 +189,8 @@ void NonlinearSolverParameters::postProcessInput()
 
 void NonlinearSolverParameters::print() const
 {
-  GEOS_LOG_RANK_0( "Nonlinear solver parameters:" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: nonlinear solver parameters", getParent().getName() ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Log level = {}", getLogLevel() ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Line search action = {}", EnumStrings< LineSearchAction >::toString( m_lineSearchAction ) ) );
   if( m_lineSearchAction != LineSearchAction::None )
   {
