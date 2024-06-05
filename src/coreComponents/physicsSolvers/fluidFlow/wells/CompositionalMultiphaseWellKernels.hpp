@@ -1170,7 +1170,7 @@ public:
 
     integer const numRows = numComp+1+ IS_THERMAL;
 
-    if constexpr (IS_THERMAL)
+    if constexpr ( IS_THERMAL)
     {
       if( ei == 0 && !m_isProducer )
       {
@@ -1744,6 +1744,7 @@ public:
         for( integer jc = 0; jc < NC; ++jc )
         {
           dCompFlux[ic][WJ_COFFSET::dC+jc] = m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
+          dComp[ic][jc] =   m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
         }
       }
     }

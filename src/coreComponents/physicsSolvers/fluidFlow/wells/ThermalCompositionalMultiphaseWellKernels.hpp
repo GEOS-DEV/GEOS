@@ -566,8 +566,6 @@ public:
       stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
-      std::cout << ip << " tt " << dCompFrac_dCompDens[0][0] << " " << dCompFrac_dCompDens[0][1]<< " " << dCompFrac_dCompDens[1][0] << " " << dCompFrac_dCompDens[1][1] <<
-        " "  << dPhaseInternalEnergy[ip][Deriv::dC ] <<     " " << dPhaseInternalEnergy[ip][Deriv::dC+1] << std::endl;
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
@@ -992,9 +990,9 @@ public:
 
           for( integer dof=0; dof < numComp; dof++ )
           {
-            stack.localEnergyFluxJacobian[TAG::NEXT   ][dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
+            stack.localEnergyFluxJacobian[TAG::NEXT   ][CP_Deriv::dC+dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
                                                                 +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
-            stack.localEnergyFluxJacobian[TAG::CURRENT ][dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
+            stack.localEnergyFluxJacobian[TAG::CURRENT ][CP_Deriv::dC+dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
                                                                  +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
           }
         }

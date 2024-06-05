@@ -298,7 +298,7 @@ assembleCouplingTerms( real64 const time_n,
       string const wellDofKey = dofManager.getKey( Base::wellSolver()->wellElementDofName() );
       areWellsShut = 0;
 
-      integer useTotalMassEquation1=1;
+      integer useTotalMassEquation=Base::wellSolver()->useTotalMassEquation();
       integer numCrossflowPerforations=0;
       if( isThermal ( )  )
       {
@@ -313,7 +313,7 @@ assembleCouplingTerms( real64 const time_n,
                                                      resDofNumber,
                                                      perforationData,
                                                      fluid,
-                                                     useTotalMassEquation1,
+                                                     useTotalMassEquation,
                                                      detectCrossflow,
                                                      numCrossflowPerforations,
                                                      localRhs,
@@ -331,7 +331,7 @@ assembleCouplingTerms( real64 const time_n,
                                                      resDofNumber,
                                                      perforationData,
                                                      fluid,
-                                                     useTotalMassEquation1,
+                                                     useTotalMassEquation,
                                                      detectCrossflow,
                                                      numCrossflowPerforations,
                                                      localRhs,

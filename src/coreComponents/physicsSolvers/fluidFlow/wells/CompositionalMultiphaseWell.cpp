@@ -970,60 +970,9 @@ void CompositionalMultiphaseWell::assembleSystem( real64 const time,
 
   // then assemble the flux terms in the mass balance equations
   // get a reference to the degree-of-freedom numbers
-  if( 0 )
-  {
-    // then assemble the flux terms in the mass balance equations
-    assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
-  }
-  else
-  {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                                          [&]( localIndex const,
-                                                                               WellElementSubRegion & subRegion )
-      {
-        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
-        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-        int numComponents = fluid.numFluidComponents();
-        WellControls const & well_controls = getWellControls( subRegion );
-        if( well_controls.isWellOpen( time+ dt ) )
-        {
-          if( isThermal() )
-          {
-            thermalCompositionalMultiphaseWellKernels::
-              FaceBasedAssemblyKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( numComponents,
-                                                         dt,
-                                                         dofManager.rankOffset(),
-                                                         m_useTotalMassEquation,
-                                                         wellDofKey,
-                                                         well_controls,
-                                                         subRegion,
-                                                         fluid,
-                                                         localMatrix,
-                                                         localRhs );
-          }
-          else
-          {
-            compositionalMultiphaseWellKernels::
-              FaceBasedAssemblyKernelFactory::
-              createAndLaunch< parallelDevicePolicy<> >( numComponents,
-                                                         dt,
-                                                         dofManager.rankOffset(),
-                                                         m_useTotalMassEquation,
-                                                         wellDofKey,
-                                                         well_controls,
-                                                         subRegion,
-                                                         localMatrix,
-                                                         localRhs );
-          }
-        }
-      } );
-    } );
-  }
+  // then assemble the flux terms in the mass balance equations
+  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  
 
 
 }

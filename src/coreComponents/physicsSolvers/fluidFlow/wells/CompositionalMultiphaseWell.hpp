@@ -201,6 +201,8 @@ public:
 
   virtual localIndex numFluidPhases() const override { return m_numPhases; }
 
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
