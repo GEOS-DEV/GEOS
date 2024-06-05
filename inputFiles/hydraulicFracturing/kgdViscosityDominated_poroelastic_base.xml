@@ -65,7 +65,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -92,7 +92,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.2e11"
+      defaultGrainBulkModulus="1.2e11"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability

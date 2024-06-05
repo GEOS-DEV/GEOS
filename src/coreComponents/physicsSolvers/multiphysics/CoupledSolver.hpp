@@ -87,7 +87,7 @@ public:
                                getDataContext(),
                                solverName, solverType ),
                      InputError );
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->catalogName(), solverName ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->getCatalogName(), solverName ) );
     } );
   }
 
@@ -355,17 +355,6 @@ public:
     return isConverged;
   }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override
-  {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      if( solver->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
-      {
-        solver->saveSequentialIterationState( domain );
-      }
-    } );
-  }
-
 protected:
 
   /**
@@ -463,6 +452,12 @@ protected:
                                                            cycleNumber,
                                                            domain );
 
+          // save fields (e.g. pressure and temperature) after inner solve
+          if( solver->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+          {
+            solver->saveSequentialIterationState( domain );
+          }
+
           mapSolutionBetweenSolvers( domain, idx() );
 
           if( solverDt < stepDt ) // subsolver had to cut the time step
@@ -477,9 +472,6 @@ protected:
                                                   time_n,
                                                   stepDt,
                                                   domain );
-
-        // save fields (e.g. pressure and temperature) at the end of this iteration
-        saveSequentialIterationState( domain );
 
         if( isConverged )
         {
@@ -550,10 +542,10 @@ protected:
     GEOS_UNUSED_VAR( domain, solverType );
   }
 
-  bool checkSequentialConvergence( int const & iter,
-                                   real64 const & time_n,
-                                   real64 const & dt,
-                                   DomainPartition & domain )
+  virtual bool checkSequentialConvergence( int const & iter,
+                                           real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain )
   {
     NonlinearSolverParameters const & params = getNonlinearSolverParameters();
     bool isConverged = true;

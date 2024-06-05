@@ -25,6 +25,7 @@ PhaseFieldFracture                            node :ref:`DATASTRUCTURE_PhaseFiel
 PhaseFieldPoromechanics                       node :ref:`DATASTRUCTURE_PhaseFieldPoromechanics`                       
 ProppantTransport                             node :ref:`DATASTRUCTURE_ProppantTransport`                             
 ReactiveCompositionalMultiphaseOBL            node :ref:`DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL`            
+SeismicityRate                                node :ref:`DATASTRUCTURE_SeismicityRate`                                
 SinglePhaseFVM                                node :ref:`DATASTRUCTURE_SinglePhaseFVM`                                
 SinglePhaseHybridFVM                          node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`                          
 SinglePhasePoromechanics                      node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                      

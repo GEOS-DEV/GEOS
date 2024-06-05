@@ -77,6 +77,10 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  real64 calculateFractureResidualNorm( DomainPartition const & domain,
+                                        DofManager const & dofManager,
+                                        arrayView1d< real64 const > const & localRhs ) const;
+
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
@@ -106,8 +110,14 @@ public:
                         real64 const dt,
                         DomainPartition & domain );
 
-
   virtual bool updateConfiguration( DomainPartition & domain ) override final;
+
+  bool useStaticCondensation() const { return m_useStaticCondensation; }
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+  };
 
 protected:
 
@@ -124,10 +134,6 @@ private:
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
-  };
 };
 
 

@@ -54,6 +54,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
                          localIndex const numPhases,
                          integer const useSimpleAccumulation,
                          integer const useTotalMassEquation,
+                         integer const performStressInitialization,
                          string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -79,7 +80,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_numComponents( numComponents ),
   m_numPhases( numPhases ),
   m_useSimpleAccumulation( useSimpleAccumulation ),
-  m_useTotalMassEquation( useTotalMassEquation )
+  m_useTotalMassEquation( useTotalMassEquation ),
+  m_performStressInitialization( performStressInitialization )
 {
   GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
                         "MultiphasePoromechanics solver allows at most " <<
@@ -152,9 +154,9 @@ smallStrainUpdate( localIndex const k,
 
   // Step 1: call the constitutive model to evaluate the total stress and compute porosity
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
-                                                       m_pressure_n[k],
-                                                       m_pressure[k],
                                                        m_dt,
+                                                       m_pressure[k],
+                                                       m_pressure_n[k],
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
@@ -162,6 +164,7 @@ smallStrainUpdate( localIndex const k,
                                                        stack.dTotalStress_dPressure,
                                                        stack.dTotalStress_dTemperature,
                                                        stack.stiffness,
+                                                       m_performStressInitialization,
                                                        porosity,
                                                        porosity_n,
                                                        dPorosity_dVolStrain,

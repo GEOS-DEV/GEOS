@@ -19,12 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
-#include "common/DataLayouts.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
 {
@@ -138,6 +134,18 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update components mass/moles
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateCompAmount( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Update energy
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
@@ -149,11 +157,11 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override final;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -227,11 +235,9 @@ public:
 
     // inputs
 
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
@@ -322,14 +328,6 @@ public:
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
-
-  /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param[in] time current time
    * @param[in] dt time step
@@ -417,16 +415,11 @@ protected:
                         string const fieldKey,
                         string const boundaryFieldKey ) const;
 
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const override final;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
   /// the number of fluid components
   integer m_numComponents;
-
-  /// the input temperature
-  real64 m_inputTemperature;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -439,9 +432,6 @@ protected:
 
   /// flag to determine whether or not to apply dispersion
   integer m_hasDispersion;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
@@ -483,6 +473,7 @@ protected:
   string m_referenceFluidModelName;
 
   /// maximum (absolute) component density change in a sequential iteration
+  real64 m_sequentialCompDensChange;
   real64 m_maxSequentialCompDensChange;
 
   /// the targeted CFL for timestep
@@ -525,8 +516,8 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                 fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field

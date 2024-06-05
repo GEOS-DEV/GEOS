@@ -5,6 +5,7 @@
 #include "PySolver.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
 #include "PySolverType.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )

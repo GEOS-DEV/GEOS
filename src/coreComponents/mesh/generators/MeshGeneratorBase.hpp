@@ -20,7 +20,6 @@
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/generators/CellBlockManagerABC.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -53,12 +52,6 @@ public:
    */
   explicit MeshGeneratorBase( string const & name,
                               Group * const parent );
-
-  /**
-   * @brief Return the name of the MeshGenerator in object catalog.
-   * @return string that contains the catalog name of the MeshGenerator
-   */
-  static string catalogName() { return "MeshGeneratorBase"; }
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

@@ -116,7 +116,7 @@ public:
     updateMatrixPermeability( k );
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
-    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
 
   /**
@@ -144,12 +144,13 @@ private:
 
 
   GEOS_HOST_DEVICE
-  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k ) const
+  void updateBiotCoefficientAndAssignModuli( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const shearModulus = m_solidUpdate.getShearModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficientAndAssignBulkModulus( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignModuli( k, bulkModulus, shearModulus );
 
     // Update the Biot coefficient in the damage model
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
@@ -231,7 +232,7 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    updateBiotCoefficientAndAssignBulkModulus( k );
+    updateBiotCoefficientAndAssignModuli( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );

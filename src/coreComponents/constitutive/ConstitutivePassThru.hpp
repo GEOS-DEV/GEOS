@@ -46,6 +46,7 @@
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ExponentialDecayPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
+#include "permeability/PressurePermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
@@ -311,6 +312,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
                                  >::execute( constitutiveRelation,
@@ -324,6 +326,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >
                                  >::execute( constitutiveRelation,
@@ -368,6 +371,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
@@ -394,6 +398,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ExponentialDecayPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  PorousSolid< DruckerPragerExtended >,

@@ -70,7 +70,9 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
@@ -93,6 +95,8 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  void enableJumpStabilization();
+
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
@@ -101,7 +105,7 @@ public:
    * @brief Utility function to save the iteration state (useful for sequential simulations)
    * @param[in] domain the domain partition
    */
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -136,6 +140,14 @@ public:
    */
   void allowNegativePressure() { m_allowNegativePressure = 1; }
 
+  /**
+   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
+   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the initialization step
+   */
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
+
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
@@ -160,12 +172,6 @@ protected:
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
 
   /**
-   * @brief Utility function to save the state at the end of a sequential iteration
-   * @param[in] subRegion the element subRegion
-   */
-  virtual void saveSequentialIterationState( ElementSubRegionBase & subRegion ) const;
-
-  /**
    * @brief Helper function to compute/report the elements with small pore volumes
    * @param[in] domain the domain partition
    */
@@ -186,8 +192,17 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// the input temperature
+  real64 m_inputTemperature;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  integer m_keepFlowVariablesConstantDuringInitStep;
+
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  /// enable pressure jump stabilzation for fixed-stress poromechanics
+  bool m_isJumpStabilized;
 
   /// flag if negative pressure is allowed
   integer m_allowNegativePressure;
@@ -196,9 +211,11 @@ protected:
   real64 m_maxAbsolutePresChange;
 
   /// maximum (absolute) pressure change in a sequential iteration
+  real64 m_sequentialPresChange;
   real64 m_maxSequentialPresChange;
 
   /// maximum (absolute) temperature change in a sequential iteration
+  real64 m_sequentialTempChange;
   real64 m_maxSequentialTempChange;
 
 private:

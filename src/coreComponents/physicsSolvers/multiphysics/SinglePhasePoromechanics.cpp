@@ -25,8 +25,6 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
@@ -42,36 +40,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename FLOW_SOLVER > class
-  SinglePhaseCatalogNames {};
-
-// Class specialization for a FLOW_SOLVER set to SinglePhaseFlow
-template<> class SinglePhaseCatalogNames< SinglePhaseBase >
-{
-public:
-  static string name() { return "SinglePhasePoromechanics"; }
-};
-// Class specialization for a FLOW_SOLVER set to SinglePhaseReservoirAndWells
-template<> class SinglePhaseCatalogNames< SinglePhaseReservoirAndWells< SinglePhaseBase > >
-{
-public:
-  static string name() { return SinglePhaseReservoirAndWells< SinglePhaseBase >::catalogName() + "Poromechanics"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-string
-SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::
-catalogName()
-{
-  return SinglePhaseCatalogNames< FLOW_SOLVER >::name();
-}
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
@@ -96,7 +64,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postProcessInput
 {
   Base::postProcessInput();
 
-  GEOS_ERROR_IF( this->flowSolver()->catalogName() == "SinglePhaseReservoir" &&
+  GEOS_ERROR_IF( this->flowSolver()->getCatalogName() == "SinglePhaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
                  GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
                            this->getName(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
@@ -245,6 +213,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
                                                                                                      localRhs,
                                                                                                      dt,
                                                                                                      flowDofKey,
+                                                                                                     this->m_performStressInitialization,
                                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
@@ -259,6 +228,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
                                                                                        localRhs,
                                                                                        dt,
                                                                                        flowDofKey,
+                                                                                       this->m_performStressInitialization,
                                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
@@ -298,6 +268,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
                                                                                 dt );
   } );
 
+  this->solidMechanicsSolver()->applyContactConstraint( dofManager, domain, localMatrix, localRhs );
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 }
 

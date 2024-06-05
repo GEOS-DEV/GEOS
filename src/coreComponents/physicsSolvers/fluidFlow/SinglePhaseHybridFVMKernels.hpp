@@ -45,81 +45,6 @@ namespace geos
 namespace singlePhaseHybridFVMKernels
 {
 
-/******************************** PressureGradientKernel ********************************/
-
-struct PressureGradientKernel
-{
-  GEOS_FORCE_INLINE
-  static void
-  compute( localIndex elemIndex,
-           localIndex numFacesInElem,
-           arrayView2d< real64 const > const faceCenter,
-           real64 const elemCenter[3],
-           arraySlice1d< localIndex const > const & elemToFaces,
-           arrayView1d< real64 const > const facePressure,
-           real64 const pres,
-           arrayView2d< real64 > const & presGradient )
-  {
-    array2d< real64 > coordinates( numFacesInElem+1, 4 );
-    array1d< real64 > pressures( numFacesInElem + 1 );
-    array1d< real64 > presGradientLocal( 4 );
-
-    for( integer dim=0; dim<3; ++dim )
-    {
-      coordinates( 0, dim ) = elemCenter[dim];
-    }
-    coordinates( 0, 3 ) = 1.0;
-    pressures( 0 ) = pres;
-
-    for( integer fi=0; fi<numFacesInElem; ++fi )
-    {
-      localIndex const localFaceIndex = elemToFaces[fi];
-
-      real64 const facePresLocal = facePressure[localFaceIndex];
-
-      pressures( fi+1 ) = facePresLocal;
-
-      for( integer dim=0; dim<3; ++dim )
-      {
-        real64 const faceCenterXiLocal = faceCenter[localFaceIndex][dim];
-
-        coordinates( fi+1, dim ) = faceCenterXiLocal;
-      }
-      coordinates( fi+1, 3 ) = 1.0;
-    }
-
-    BlasLapackLA::matrixLeastSquaresSolutionSolve( coordinates, pressures, presGradientLocal );
-
-    for( integer dim=0; dim<3; ++dim )
-    {
-      presGradient( elemIndex, dim ) = presGradientLocal( dim );
-    }
-  }
-
-  template< typename POLICY >
-  static void launch( localIndex numFacesInElem,
-                      localIndex const subRegionSize,
-                      arrayView2d< real64 const > const faceCenter,
-                      arrayView2d< real64 const > const elemCenter,
-                      arrayView2d< localIndex const > const elemsToFaces,
-                      arrayView1d< real64 const > const facePressure,
-                      arrayView1d< real64 const > const pres,
-                      arrayView2d< real64 > const & presGradient )
-  {
-    forAll< POLICY >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      compute( ei,
-               numFacesInElem,
-               faceCenter,
-               elemCenter[ei],
-               elemsToFaces[ei],
-               facePressure,
-               pres[ei],
-               presGradient );
-    } );
-  }
-};
-
 /******************************** AssemblerKernelHelper ********************************/
 /******************************** Kernel switches ********************************/
 
@@ -158,6 +83,133 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 }
 
 } // namespace internal
+
+/******************************** AveragePressureGradientKernel ********************************/
+
+template< integer NUM_FACES >
+class AveragePressureGradientKernel
+{
+public:
+  AveragePressureGradientKernel( CellElementSubRegion & subRegion,
+                                 FaceManager const & faceManager )
+    :
+    // get the face-centered pressures
+    m_facePressure( faceManager.getField< fields::flow::facePressure >() ),
+    m_faceCenter( faceManager.faceCenter() ),
+    m_pres( subRegion.template getField< fields::flow::pressure >() ),
+    m_elemCenter( subRegion.getElementCenter() ),
+    m_elemsToFaces( subRegion.faceList() ),
+    m_presGradient( subRegion.template getField< fields::flow::pressureGradient >() )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+
+    GEOS_HOST_DEVICE
+    StackVariables():
+      coordinates( NUM_FACES+1, 4 ),
+      pressures( NUM_FACES+1 ),
+      presGradientLocal( 4 )
+    {}
+
+    stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates;
+    stackArray1d< real64, NUM_FACES + 1 > pressures;
+    stackArray1d< real64, 4 > presGradientLocal;
+  };
+
+
+  inline
+  void compute( localIndex const elemIndex,
+                StackVariables stack ) const
+  {
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      stack.coordinates( 0, dim ) = m_elemCenter( elemIndex, dim );
+    }
+    stack.coordinates( 0, 3 ) = 1.0;
+    stack.pressures[0] = m_pres[elemIndex];
+
+    for( integer fi=0; fi<NUM_FACES; ++fi )
+    {
+      localIndex const localFaceIndex = m_elemsToFaces( elemIndex, fi );
+
+      real64 const facePresLocal = m_facePressure[localFaceIndex];
+
+      stack.pressures[fi+1] = facePresLocal;
+
+      for( integer dim=0; dim<3; ++dim )
+      {
+        real64 const faceCenterXiLocal = m_faceCenter[localFaceIndex][dim];
+
+        stack.coordinates( fi+1, dim ) = faceCenterXiLocal;
+      }
+      stack.coordinates( fi+1, 3 ) = 1.0;
+    }
+
+    BlasLapackLA::matrixLeastSquaresSolutionSolve( stack.coordinates, stack.pressures, stack.presGradientLocal );
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      m_presGradient( elemIndex, dim ) = stack.presGradientLocal[dim];
+    }
+  }
+
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+
+    forAll< POLICY >( numElems, [=] ( localIndex const ei )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
+      kernelComponent.compute( ei, stack );
+    } );
+  }
+
+private:
+  /// face pressure
+  arrayView1d< real64 const > const m_facePressure;
+
+  ///  the face center coordinates
+  arrayView2d< real64 const > const m_faceCenter;
+
+  /// the cell-centered pressures
+  arrayView1d< real64 const > const m_pres;
+
+  ///  the cell center coordinates
+  arrayView2d< real64 const > const m_elemCenter;
+
+  ///  the elements to faces map
+  arrayView2d< localIndex const > const m_elemsToFaces;
+
+  /// pressure gradient in the cell
+  arrayView2d< real64 > const m_presGradient;
+
+};
+
+class AveragePressureGradientKernelFactory
+{
+public:
+
+  template< typename POLICY >
+  static void createAndLaunch( CellElementSubRegion & subRegion,
+                               FaceManager const & faceManager )
+  {
+    internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
+    {
+      AveragePressureGradientKernel< NUM_FACES > kernel( subRegion, faceManager );
+      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size(), kernel );
+    } );
+  }
+};
+
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
