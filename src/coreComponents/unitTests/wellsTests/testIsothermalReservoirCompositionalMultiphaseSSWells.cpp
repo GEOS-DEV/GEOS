@@ -603,7 +603,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   residual.zero();
   jacobian.zero();
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst());
+  //printCompareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst());
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
