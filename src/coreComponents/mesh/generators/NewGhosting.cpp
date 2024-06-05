@@ -724,14 +724,19 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   }
   EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostInfo.mat", ghostingFootprint );
 
-  int extracted2 = 0;
-  std::vector< double > extractedValues2( commSize );  // TODO improve with resize...
-  std::vector< int > extractedIndices2( commSize );
+  int extracted = 0;
+  std::vector< double > extractedValues;
+  std::vector< int > extractedIndices;
 
   GhostSend send;
   for( int const & index: ownedGlbIdcs )
   {
-    ghostingFootprint.ExtractGlobalRowCopy( index, commSize, extracted2, extractedValues2.data(), extractedIndices2.data() );
+    int const length = ghostingFootprint.NumGlobalEntries( index );
+    extractedValues.resize( length );
+    extractedIndices.resize( length );
+    ghostingFootprint.ExtractGlobalRowCopy( index, length, extracted, extractedValues.data(), extractedIndices.data() );
+    GEOS_ASSERT_EQ( extracted, length );
+
     std::set< MpiRank > * sendingTo = nullptr;
     switch( convert.getGeometricalType( index ) )
     {
@@ -755,11 +760,15 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
         sendingTo = &send.cells[convert.toCellGlbIdx( index )];
         break;
       }
+      default:
+      {
+        GEOS_ERROR( "Internal error" );
+      }
     }
 
-    for( int ii = 0; ii < extracted2; ++ii )
+    for( int ii = 0; ii < extracted; ++ii )
     {
-      MpiRank const rank{ extractedIndices2[ii] };
+      MpiRank const rank{ extractedIndices[ii] };
       if( rank != curRank )
       {
         sendingTo->insert( rank );
@@ -767,12 +776,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     }
   }
 
-  int extracted = 0;
-  int const length = ghostExchange.NumGlobalEntries( curRank.get() );
-  std::vector< double > extractedValues( length );
-  std::vector< int > extractedIndices( length );
-  ghostExchange.ExtractGlobalRowCopy( curRank.get(), length, extracted, extractedValues.data(), extractedIndices.data() );
-  GEOS_ASSERT_EQ( extracted, length );
+  int const numNeededIndices = ghostExchange.NumGlobalEntries( curRank.get() );
+  extractedValues.resize( numNeededIndices );
+  extractedIndices.resize( numNeededIndices );
+  ghostExchange.ExtractGlobalRowCopy( curRank.get(), numNeededIndices, extracted, extractedValues.data(), extractedIndices.data() );
+  GEOS_ASSERT_EQ( extracted, numNeededIndices );
 
   std::set< int > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
   std::set< int > receivedIndices;  // The graph nodes that my neighbors will send me.
@@ -783,6 +791,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
+  GEOS_ASSERT_EQ( intConv< int >( std::size( allNeededIndices ) ), numNeededIndices );
 
   GhostRecv recv;
   for( int i = 0; i < extracted; ++i )
@@ -862,17 +871,13 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
   MeshGraph ghosts;
 
-  int ext = 0;
-  std::vector< double > extValues;
-  std::vector< int > extIndices;
-
   for( int i = 0; i < int( numMissingIndices ); ++i )
   {
-    int const length2 = missingMappings.NumGlobalEntries( offset + i );
-    extValues.resize( length2 );
-    extIndices.resize( length2 );
-    missingMappings.ExtractGlobalRowCopy( offset + i, length2, ext, extValues.data(), extIndices.data() );
-    GEOS_ASSERT_EQ( ext, length2 );
+    int const length = missingMappings.NumGlobalEntries( offset + i );
+    extractedValues.resize( length );
+    extractedIndices.resize( length );
+    missingMappings.ExtractGlobalRowCopy( offset + i, length, extracted, extractedValues.data(), extractedIndices.data() );
+    GEOS_ASSERT_EQ( extracted, length );
     int const index = notPresentIndices[i];
     Geom const geometricalType = convert.getGeometricalType( index );
     if( geometricalType == Geom::NODE )
@@ -880,16 +885,16 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       // The case of nodes is a bit different from the other cases
       // because nodes do not rely on other geometrical quantities.
       // We simply have to extract and store their own index.
-      GEOS_ASSERT_EQ( length2, 1 );
-      GEOS_ASSERT_EQ( extIndices[0], int(extValues[0]) );
-      ghosts.n.insert( convert.toNodeGlbIdx( extIndices[0] ) );
+      GEOS_ASSERT_EQ( length, 1 );
+      GEOS_ASSERT_EQ( extractedIndices[0], int(extractedValues[0]) );
+      ghosts.n.insert( convert.toNodeGlbIdx( extractedIndices[0] ) );
       continue;
     }
 
-    auto const cit = std::find( std::cbegin( extIndices ), std::cend( extIndices ), index );
-    std::ptrdiff_t const numGeomQuantitiesIdx = std::distance( std::cbegin( extIndices ), cit );
-    int const numGeomQuantities = int( extValues[numGeomQuantitiesIdx] );
-    GEOS_ASSERT_EQ( ext, numGeomQuantities + 1 );
+    auto const cit = std::find( std::cbegin( extractedIndices ), std::cend( extractedIndices ), index );
+    std::ptrdiff_t const numGeomQuantitiesIdx = std::distance( std::cbegin( extractedIndices ), cit );
+    int const numGeomQuantities = int( extractedValues[numGeomQuantitiesIdx] );
+    GEOS_ASSERT_EQ( extracted, numGeomQuantities + 1 );
 
     switch( geometricalType )
     {
@@ -899,15 +904,15 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
         GEOS_ASSERT_EQ( numNodes, 2 );
         std::array< NodeGlbIdx, 2 > order{};
 
-        for( int ii = 0; ii < ext; ++ii )
+        for( int ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
-          NodeGlbIdx const ngi = convert.toNodeGlbIdx( extIndices[ii] );
-          integer const ord = integer( extValues[ii] - 1 );
+          NodeGlbIdx const ngi = convert.toNodeGlbIdx( extractedIndices[ii] );
+          integer const ord = integer( extractedValues[ii] - 1 );
           GEOS_ASSERT( ord == 0 or ord == 1 );
           order[ord] = ngi;
         }
@@ -922,15 +927,15 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       {
         int const & numEdges = numGeomQuantities;  // Alias
         std::map< integer, EdgeInfo > order;
-        for( int ii = 0; ii < ext; ++ii )
+        for( int ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
-          EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extIndices[ii] );
-          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, std::size_t( extValues[ii] - 1 ) );
+          EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extractedIndices[ii] );
+          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, std::size_t( extractedValues[ii] - 1 ) );
           order[decoded[1]] = { egi, intConv< std::uint8_t >( decoded[0] ) };
           GEOS_ASSERT( decoded[0] == 0 or decoded[0] == 1 );
         }
@@ -949,15 +954,15 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       {
         int const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
         std::map< integer, FaceInfo > order;
-        for( int ii = 0; ii < ext; ++ii )
+        for( int ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
-          FaceGlbIdx const fgi = convert.toFaceGlbIdx( extIndices[ii] );
-          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, std::size_t( extValues[ii] - 1 ) );
+          FaceGlbIdx const fgi = convert.toFaceGlbIdx( extractedIndices[ii] );
+          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, std::size_t( extractedValues[ii] - 1 ) );
           order[decoded[2]] = { fgi, intConv< bool >( decoded[0] ), intConv< std::uint8_t >( decoded[1] ) };
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numFaces ) );
