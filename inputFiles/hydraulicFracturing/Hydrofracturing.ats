@@ -1,3 +1,4 @@
+import copy
 from geos.ats.test_builder import generate_geos_tests, RestartcheckParameters, CurveCheckParameters, TestDeck
 
 # Define cases

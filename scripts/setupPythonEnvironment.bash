@@ -116,6 +116,10 @@ then
 fi
 
 
+# Updating pip
+echo "Updating pip"
+$PYTHON_TARGET -m pip install --upgrade pip
+
 # Install packages
 echo "Installing python packages..."
 for p in "${TARGET_PACKAGES[@]}"
