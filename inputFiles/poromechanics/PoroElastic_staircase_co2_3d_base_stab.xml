@@ -80,7 +80,8 @@
       permeabilityComponents="{ 9.8e-13, 9.8e-13, 9.8e-13 }"/>
     <BiotPorosity
       name="rockPorosityChannel"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
+
       defaultReferencePorosity="0.2"/>
 
     <PorousElasticIsotropic
