@@ -19,6 +19,7 @@
 #ifndef GEOS_COMMON_TableData_HPP
 #define GEOS_COMMON_TableData_HPP
 
+#include "common/Units.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Format.hpp"
 
@@ -101,6 +102,31 @@ public:
    */
   template< typename T >
   void addCell( RowType rowValue, ColumnType columnValue, T const & value );
+
+  /**
+   * @brief 
+   * 
+   * @param rowAxis 
+   * @param columnAxis 
+   * @param values 
+   */
+  void collect2DData( arraySlice1d< real64 const > const rowAxis,
+                      arraySlice1d< real64 const > const columnAxis,
+                      arrayView1d< real64 const > values );
+
+  /**
+   * @brief 
+   * 
+   * @param valueUnit 
+   * @param rowUnitDescription 
+   * @param columnUnitDescription 
+   * @return TableData2D::Conversion1D 
+   */
+  TableData2D::Conversion1D convert2DData( units::Unit valueUnit,
+                                           string_view rowUnitDescription,
+                                           string_view columnUnitDescription );
+
+  size_t getNbRows() const;
 
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table

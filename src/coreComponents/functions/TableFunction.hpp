@@ -23,6 +23,9 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableLayout.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -238,6 +241,24 @@ private:
    */
   void checkCoord( real64 coord, localIndex dim ) const;
 
+  void printCSVHeader( std::ofstream & os, integer const numDimensions ) const;
+
+  void printCSVValues( std::ofstream & os, integer const numDimensions ) const;
+
+  void convertTable2D( TableData2D::Conversion1D & tableConverted ) const;
+
+  /**
+   * @brief Print table into a CSV file
+   * @param filename Filename for output
+   */
+  void printInCSV( string const & filename ) const;
+
+  /**
+   * @brief Print table to the log (only 1d and 2d tables are supported).
+   * @param filename Filename for output
+   */
+  void printInLog( string const & filename ) const;
+
   /**
    * @brief @return Number of table dimensions
    */
@@ -276,7 +297,9 @@ private:
    * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
    */
   units::Unit getDimUnit( localIndex const dim ) const
-  { return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown; }
+  {
+    return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown;
+  }
 
   /**
    * @brief Set the interpolation method
@@ -316,18 +339,6 @@ private:
   {
     m_valueUnit = unit;
   }
-
-  /**
-   * @brief Print table into a CSV file
-   * @param filename Filename for output
-   */
-  void printInCSV( string const & filename ) const;
-
-  /**
-   * @brief Print table to the log (only 1d and 2d tables are supported).
-   * @param filename Filename for output
-   */
-  void printInLog( string const & filename ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper

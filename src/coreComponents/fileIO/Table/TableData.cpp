@@ -50,6 +50,40 @@ std::vector< string > const & TableData::getErrorMsgs() const
   return m_errorsMsg;
 }
 
+void TableData2D::collect2DData( arraySlice1d< real64 const > const rowAxis,
+                                 arraySlice1d< real64 const > const columnAxis,
+                                 arrayView1d< real64 const > values )
+{
+  arraySlice1d< real64 const > const coordsX = rowAxis;
+  arraySlice1d< real64 const > const coordsY = columnAxis;
+  integer const nX = coordsX.size();
+  integer const nY = coordsY.size();
+
+  for( integer i = 0; i < nX; i++ )
+  {
+    for( integer y = 0; y < nY; y++ )
+    {
+      addCell( rowAxis[i], columnAxis[y], values[ y*nX + i ] );
+    }
+  }
+}
+
+TableData2D::Conversion1D TableData2D::convert2DData( units::Unit valueUnit,
+                                                      string_view rowUnitDescription,
+                                                      string_view columnUnitDescription )
+{
+  string const rowFmt = GEOS_FMT( "{} = {{}}", rowUnitDescription );
+  string const columnFmt = GEOS_FMT( "{} = {{}}", columnUnitDescription );
+  return buildTableData( string( units::getDescription( valueUnit )),
+                         rowFmt,
+                         columnFmt );
+}
+
+size_t TableData2D::getNbRows() const
+{
+  return m_data.size();
+}
+
 TableData2D::Conversion1D TableData2D::buildTableData( string_view targetUnit,
                                                        string_view rowFmt,
                                                        string_view columnFmt ) const

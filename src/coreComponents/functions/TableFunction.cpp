@@ -20,9 +20,6 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "fileIO/Table/TableLayout.hpp"
-#include "fileIO/Table/TableData.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
 
 
 #include <algorithm>
@@ -188,6 +185,56 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                  SimulationError );
 }
 
+void TableFunction::printCSVHeader( std::ofstream & os, integer const numDimensions ) const
+{
+  for( integer d = 0; d < numDimensions; d++ )
+  {
+    os << units::getDescription( getDimUnit( d )) << ",";
+  }
+  os << units::getDescription( m_valueUnit ) << "\n";
+}
+
+void TableFunction::printCSVValues( std::ofstream & os, integer const numDimensions ) const
+{
+  // prepare dividers
+  std::vector< integer > div( numDimensions );
+  div[0] = 1;
+  for( integer d = 1; d < numDimensions; d++ )
+  {
+    div[d] = div[d-1] * m_coordinates[d-1].size();
+  }
+  // loop through all the values
+  for( integer v = 0; v < m_values.size(); v++ )
+  {
+    // find coords indices
+    std::vector< integer > idx( numDimensions );
+    integer r = v;
+    for( integer d = numDimensions-1; d >= 0; d-- )
+    {
+      idx[d] = r / div[d];
+      r = r % div[d];
+    }
+    // finally print out in right order
+
+    for( integer d = 0; d < numDimensions; d++ )
+    {
+      arraySlice1d< real64 const > const coords = m_coordinates[d];
+      os << coords[idx[d]] << ",";
+    }
+    os << m_values[v] << "\n";
+  }
+}
+
+void TableFunction::convertTable2D( TableData2D::Conversion1D & tableConverted ) const
+{
+  TableData2D tableData2D;
+  tableData2D.collect2DData( m_coordinates[0], m_coordinates[1], m_values );
+
+  tableConverted = tableData2D.convert2DData( m_valueUnit,
+                                              units::getDescription( getDimUnit( 0 ) ),
+                                              units::getDescription( getDimUnit( 1 ) ));
+}
+
 void TableFunction::printInCSV( string const & filename ) const
 {
   std::ofstream os( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
@@ -198,70 +245,19 @@ void TableFunction::printInCSV( string const & filename ) const
 
   if( numDimensions != 2 )
   {
-    // print header
-
-    for( integer d = 0; d < numDimensions; d++ )
-    {
-      os << units::getDescription( getDimUnit( d )) << ",";
-    }
-    os << units::getDescription( m_valueUnit ) << "\n";
-
-    // print values
-
-    // prepare dividers
-    std::vector< integer > div( numDimensions );
-    div[0] = 1;
-    for( integer d = 1; d < numDimensions; d++ )
-    {
-      div[d] = div[d-1] * m_coordinates[d-1].size();
-    }
-    // loop through all the values
-    for( integer v = 0; v < m_values.size(); v++ )
-    {
-      // find coords indices
-      std::vector< integer > idx( numDimensions );
-      integer r = v;
-      for( integer d = numDimensions-1; d >= 0; d-- )
-      {
-        idx[d] = r / div[d];
-        r = r % div[d];
-      }
-      // finally print out in right order
-
-      for( integer d = 0; d < numDimensions; d++ )
-      {
-        arraySlice1d< real64 const > const coords = m_coordinates[d];
-        os << coords[idx[d]] << ",";
-      }
-      os << m_values[v] << "\n";
-    }
+    printCSVHeader( os, numDimensions );
+    printCSVValues( os, numDimensions );
   }
   else // numDimensions == 2
   {
-    arraySlice1d< real64 const > const coordsX = m_coordinates[0];
-    arraySlice1d< real64 const > const coordsY = m_coordinates[1];
-    integer const nX = coordsX.size();
-    integer const nY = coordsY.size();
-
-    TableData2D tableData2D;
-    for( integer i = 0; i < nX; i++ )
-    {
-      for( integer y = 0; y < nY; y++ )
-      {
-        tableData2D.addCell( coordsX[i], coordsY[y], m_values[ y*nX + i ] );
-      }
-    }
-    string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
-    string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
-    TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
-                                                                                 rowFmt,
-                                                                                 columnFmt );
-
-    TableLayout const tableLayout( tableConverted.headerNames );
+    //1.
+    TableData2D::Conversion1D tableConverted;
+    convertTable2D( tableConverted );
+    //2.
+    TableLayout tableLayout( tableConverted.headerNames );
+    //3.
     TableCSVFormatter csvFormat( tableLayout );
-
-    os << csvFormat.headerToString();
-    os << csvFormat.dataToString( tableConverted.tableData );
+    os << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }
   os.close();
 }
@@ -292,45 +288,27 @@ void TableFunction::printInLog( string const & title ) const
   }
   else if( numDimensions == 2 )
   {
-    arraySlice1d< real64 const > const coordsX = m_coordinates[0];
-    arraySlice1d< real64 const > const coordsY = m_coordinates[1];
-    integer const nX = coordsX.size();
-    integer const nY = coordsY.size();
-    std::vector< string > columnNames;
-    integer nbRows = 0;
-
-    //1. collect
     TableData2D tableData2D;
-    for( integer i = 0; i < nX; i++ )
+    integer const nX = m_coordinates[0].size();
+    integer const nY = m_coordinates[1].size();
+    if( nX * nY <= 500 )
     {
-      for( integer j = 0; j < nY; j++ )
-      {
-        tableData2D.addCell( coordsX[i], coordsY[j], m_values[ j*nX + i ] );
-      }
-      nbRows++;
-    }
-
-    if( nbRows <= 500 )
-    {
-      //2. format
-      string const rowFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 0 ) ) );
-      string const columnFmt = GEOS_FMT( "{} = {{}}", units::getDescription( getDimUnit( 1 ) ) );
-      TableData2D::Conversion1D const tableConverted = tableData2D.buildTableData( string( units::getDescription( m_valueUnit )),
-                                                                                   rowFmt,
-                                                                                   columnFmt );
-      TableLayout const tableLayout( tableConverted.headerNames, title );
-
-      //3. log
+      // log table2D
+      //1.
+      TableData2D::Conversion1D tableConverted;
+      convertTable2D( tableConverted );
+      //2.
+      TableLayout tableLayout( tableConverted.headerNames, title );
+      //3.
       TableTextFormatter const table2DLog( tableLayout );
       GEOS_LOG_RANK_0( table2DLog.toString( tableConverted.tableData ));
     }
     else
     {
-      //2. format
+      // log informative
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", title );
       TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, title );
 
-      //3. log
       TableTextFormatter const tableLog( tableLayoutInfos );
       GEOS_LOG_RANK_0( tableLog.layoutToString() );
     }
