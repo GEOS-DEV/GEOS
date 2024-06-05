@@ -79,7 +79,7 @@ void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBa
   fluid->registerWrapper( viewKeyStruct::componentMixingTypeString(), &m_componentMixingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_componentMixingType ).
-    setDescription( "The mixing rule to be used for phase viscosity computation. Valid options:\n* " +
+    setDescription( "Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:\n* " +
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 

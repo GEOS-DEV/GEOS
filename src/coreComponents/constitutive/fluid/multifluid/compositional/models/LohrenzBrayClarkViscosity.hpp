@@ -304,7 +304,7 @@ private:
     struct viewKeyStruct
     {
       static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
-      static constexpr char const * componentMixingTypeString() { return "componentMixingType"; }
+      static constexpr char const * componentMixingTypeString() { return "viscosityMixingRule"; }
     };
 
     /**
