@@ -30,6 +30,7 @@ class NodeMgrImpl : public generators::NodeMgr
 {
 public:
   NodeMgrImpl( localIndex numNodes,
+               array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
                array1d< integer > && ghostRank,
                ArrayOfArrays< localIndex > const & n2e,
                ArrayOfArrays< localIndex > const & n2f,
@@ -52,6 +53,7 @@ public:
 
 private:
   localIndex m_numNodes;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_positions;
   array1d< integer > m_ghostRank;
   ArrayOfArrays< localIndex > m_n2e;
   ArrayOfArrays< localIndex > m_n2f;

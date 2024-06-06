@@ -202,6 +202,12 @@ EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
                                        std::map< EdgeGlbIdx, EdgeLocIdx > const & eg2l,
                                        std::map< EdgeLocIdx, EdgeGlbIdx > const & el2g )
 {
+  GEOS_ASSERT_EQ( numEdges, std::size( ghostRank ) );
+  GEOS_ASSERT_EQ( numEdges, std::size( e2n ) );
+  GEOS_ASSERT_EQ( numEdges, std::size( e2f ) );
+  GEOS_ASSERT_EQ( numEdges, std::size( eg2l ) );
+  GEOS_ASSERT_EQ( numEdges, std::size( el2g ) );
+
   array2d< localIndex > e2n_( numEdges, 2 );
   for( int i = 0; i < intConv< int >( numEdges ); ++i )
   {
@@ -229,6 +235,13 @@ FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
                                        std::map< FaceGlbIdx, FaceLocIdx > const & fg2l,
                                        std::map< FaceLocIdx, FaceGlbIdx > const & fl2g )
 {
+  GEOS_ASSERT_EQ( numFaces, std::size( ghostRank ) );
+  GEOS_ASSERT_EQ( numFaces, std::size( f2n ) );
+  GEOS_ASSERT_EQ( numFaces, std::size( f2e ) );
+  GEOS_ASSERT_EQ( numFaces, std::size( f2c ) );
+  GEOS_ASSERT_EQ( numFaces, std::size( fg2l ) );
+  GEOS_ASSERT_EQ( numFaces, std::size( fl2g ) );
+
   auto [l2g, g2l] = convertGlbLoc( fg2l );
 
   array1d< integer > ghostRank_( numFaces );
@@ -242,12 +255,21 @@ FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
 
 NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
                                        std::vector< integer > const & ghostRank,
+                                       std::map< NodeGlbIdx, std::array< double, 3 > > const & n2pos,
                                        std::map< NodeLocIdx, std::vector< EdgeLocIdx > > const & n2e,
                                        std::map< NodeLocIdx, std::vector< FaceLocIdx > > const & n2f,
                                        std::map< NodeLocIdx, std::vector< CellLocIdx > > const & n2c,
                                        std::map< NodeGlbIdx, NodeLocIdx > const & ng2l,
                                        std::map< NodeLocIdx, NodeGlbIdx > const & nl2g )
 {
+  GEOS_ASSERT_EQ( numNodes, std::size( ghostRank ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( n2pos ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( n2e ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( n2f ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( n2c ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( ng2l ) );
+  GEOS_ASSERT_EQ( numNodes, std::size( nl2g ) );
+
   // TODO MISSING cell type. Should be OK, the information is conveyed.
   // TODO MISSING get the cell -> numNodesPerElement... from the original CellBlock
   auto [l2g, g2l] = convertGlbLoc( ng2l );
@@ -258,7 +280,16 @@ NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
     ghostRank_.emplace_back( gr );
   }
 
-  return NodeMgrImpl( intConv< localIndex >( numNodes ), std::move( ghostRank_ ), convertToAoA( n2e ), convertToAoA( n2f ), convertToAoA( n2c ), std::move( l2g ) );
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > positions( numNodes, 3 );
+  for( auto const & [ngi, pos]: n2pos )
+  {
+    NodeLocIdx const nli = ng2l.at( ngi );
+    positions( nli.get(), 0 ) = pos[0];
+    positions( nli.get(), 1 ) = pos[2];
+    positions( nli.get(), 2 ) = pos[2];
+  }
+
+  return NodeMgrImpl( intConv< localIndex >( numNodes ), std::move( positions ), std::move( ghostRank_ ), convertToAoA( n2e ), convertToAoA( n2f ), convertToAoA( n2c ), std::move( l2g ) );
 }
 
 CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
@@ -269,6 +300,13 @@ CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
                                        std::map< CellGlbIdx, CellLocIdx > const & cg2l,
                                        std::map< CellLocIdx, CellGlbIdx > const & cl2g )
 {
+  GEOS_ASSERT_EQ( numCells, std::size( ghostRank ) );
+  GEOS_ASSERT_EQ( numCells, std::size( c2n ) );
+  GEOS_ASSERT_EQ( numCells, std::size( c2e ) );
+  GEOS_ASSERT_EQ( numCells, std::size( c2f ) );
+  GEOS_ASSERT_EQ( numCells, std::size( cg2l ) );
+  GEOS_ASSERT_EQ( numCells, std::size( cl2g ) );
+
   // TODO MISSING cell type. Should be OK, the information is conveyed.
   // TODO MISSING get the cell -> numNodesPerElement... from the original CellBlock
   auto [l2g, g2l] = convertGlbLoc( cg2l );
@@ -440,6 +478,7 @@ void buildPods( MeshGraph const & owned,
 
   NodeMgrImpl const nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
                                                          buildGhostRank( g2l.nodes, send.nodes, recv.nodes ),
+                                                         graph.n2pos,
                                                          upwardMappings.n2e,
                                                          upwardMappings.n2f,
                                                          upwardMappings.n2c,

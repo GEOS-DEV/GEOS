@@ -18,12 +18,14 @@ namespace geos
 {
 
 NodeMgrImpl::NodeMgrImpl( localIndex numNodes,
+                          array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
                           array1d< integer > && ghostRank,
                           ArrayOfArrays< localIndex > const & n2e,
                           ArrayOfArrays< localIndex > const & n2f,
                           ArrayOfArrays< localIndex > const & n2c,
                           array1d< globalIndex > const & l2g )
   : m_numNodes( numNodes ),
+    m_positions( positions ),
     m_ghostRank( ghostRank ),
     m_n2e( n2e ),
     m_n2f( n2f ),
@@ -38,7 +40,7 @@ localIndex NodeMgrImpl::numNodes() const
 
 array2d< real64, nodes::REFERENCE_POSITION_PERM > NodeMgrImpl::getNodePositions() const
 {
-  return {};
+  return m_positions;
 }
 
 ArrayOfArrays< localIndex > NodeMgrImpl::getNodeToEdges() const
