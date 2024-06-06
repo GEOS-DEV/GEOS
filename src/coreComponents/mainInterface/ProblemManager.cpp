@@ -40,6 +40,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -137,6 +138,11 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+  m_useNewGhosting = 1;
+//  registerWrapper( viewKeysStruct::useNewGhostingString(), &m_useNewGhosting ).
+//    setInputFlag( InputFlags::OPTIONAL ).
+//    setApplyDefaultValue( 0 ).
+//    setDescription( "Controls the use of the new ghosting implementation." );
 }
 
 ProblemManager::~ProblemManager()
@@ -566,6 +572,17 @@ void ProblemManager::initializationOrder( string_array & order )
 }
 
 
+void generateMeshLevelFreeFct( generators::MeshMappings const & meshMappings,
+                               MeshLevel & meshLevel )
+{
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+
+  GEOS_ERROR( "Implementation in progess" );
+}
+
 void ProblemManager::generateMesh()
 {
   GEOS_MARK_FUNCTION;
@@ -573,7 +590,8 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-  meshManager.generateMeshes( domain );
+  GEOS_LOG_RANK( "m_useNewGhosting = " << m_useNewGhosting );
+  meshManager.generateMeshes( m_useNewGhosting, domain );
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
@@ -596,15 +614,24 @@ void ProblemManager::generateMesh()
     }
     else
     {
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      if( m_useNewGhosting )
+      {
+        GEOS_LOG_RANK_0( "Generating the mesh levels for the new ghosting." );
+        generateMeshLevelFreeFct( meshBody.getMeshMappings(), baseMesh );
+        // TODO add wells
+      }
+      else
+      {
+        CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
-      this->generateMeshLevel( baseMesh,
-                               cellBlockManager,
-                               nullptr,
-                               junk.toViewConst() );
+        this->generateMeshLevel( baseMesh,
+                                 cellBlockManager,
+                                 nullptr,
+                                 junk.toViewConst() );
 
-      ElementRegionManager & elemManager = baseMesh.getElemManager();
-      elemManager.generateWells( cellBlockManager, baseMesh );
+        ElementRegionManager & elemManager = baseMesh.getElemManager();
+        elemManager.generateWells( cellBlockManager, baseMesh );
+      }
     }
   } );
 
@@ -630,14 +657,13 @@ void ProblemManager::generateMesh()
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
-        CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
-
+          CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
                                    feDiscretization,

@@ -71,7 +71,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
   meshManager.postProcessInputRecursive();
   DomainPartition domain( "domain", &root );
-  meshManager.generateMeshes( domain );
+  meshManager.generateMeshes( false, domain );
 
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
 

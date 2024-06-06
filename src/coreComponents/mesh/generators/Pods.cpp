@@ -239,4 +239,29 @@ array1d< globalIndex > CellBlkImpl::localToGlobalMap() const
 //  return {};
 //}
 
+generators::CellMgr const & MeshMappingImpl::getCellMgr() const
+{
+  return m_cellMgr;
+}
+
+generators::EdgeMgr const & MeshMappingImpl::getEdgeMgr() const
+{
+  return m_edgeMgr;
+}
+
+generators::FaceMgr const & MeshMappingImpl::getFaceMgr() const
+{
+  return m_faceMgr;
+}
+
+generators::NodeMgr const & MeshMappingImpl::getNodeMgr() const
+{
+  return m_nodeMgr;
+}
+
+std::list< CellBlk const * > CellMgrImpl::getCellBlks() const
+{
+  return { &m_cellBlk };
+}
+
 } // end of namespace

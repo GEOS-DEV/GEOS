@@ -16,6 +16,7 @@
 #define GEOS_NEWGHOSTING_HPP
 
 #include "include/MeshMappings.hpp"
+#include "Pods.hpp"
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -25,8 +26,9 @@
 namespace geos::ghosting
 {
 
-std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                                                              std::set< int > const & neighbors );
+void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                       std::set< int > const & neighbors,
+                       MeshMappingImpl & meshMappings );
 
 }  // end of namespace ghosting
 

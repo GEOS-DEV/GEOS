@@ -523,7 +523,7 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
   DomainPartition & domain = problemManager.getDomainPartition();
   MeshBody & meshBody = domain.getMeshBody( 0 );
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager.generateMeshes( domain );
+  meshManager.generateMeshes( false, domain );
   for( int order = minOrder; order < maxOrder; order++ )
   {
     MeshLevel & meshLevel = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(), GEOS_FMT( "TestLevel{}", order ), order );

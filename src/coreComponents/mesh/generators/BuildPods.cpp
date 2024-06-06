@@ -457,21 +457,12 @@ void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
                 GhostRecv const & recv,
-                GhostSend const & send )
+                GhostSend const & send,
+                MeshMappingImpl & meshMappings )
 {
   MeshGraph const graph = mergeMeshGraph( owned, present, ghosts );
 
   auto const [g2l, l2g] = buildL2GMappings( graph );
-//  GEOS_LOG_RANK( "numberings ng2l = " << json( numberings.ng2l ) );
-//  GEOS_LOG_RANK( "owned mesh graph nodes = " << json( owned.n ) );
-//  GEOS_LOG_RANK( "present mesh graph nodes = " << json( present.n ) );
-//  GEOS_LOG_RANK( "ghosts mesh graph nodes = " << json( ghosts.n ) );
-//  GEOS_LOG_RANK( "owned mesh graph e2n = " << json( owned.e2n ) );
-//  GEOS_LOG_RANK( "present mesh graph e2n = " << json( present.e2n ) );
-//  GEOS_LOG_RANK( "ghosts mesh graph e2n = " << json( ghosts.e2n ) );
-//  auto const EdgeMgr = buildEdgeMgr( owned, present, ghosts, recv, send );
-
-//  MpiWrapper::barrier();
 
   DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
@@ -507,6 +498,13 @@ void buildPods( MeshGraph const & owned,
                                                            downwardMappings.c2f,
                                                            g2l.cells,
                                                            l2g.cells );
+
+  CellMgrImpl const cellMgr( cellBlock );
+
+  meshMappings.setCellMgr( cellMgr );
+  meshMappings.setEdgeMgr( edgeMgr );
+  meshMappings.setFaceMgr( faceMgr );
+  meshMappings.setNodeMgr( nodeMgr );
 }
 
 }

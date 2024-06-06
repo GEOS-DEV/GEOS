@@ -98,6 +98,8 @@ public:
   virtual void freeResources() override;
 
 private:
+  void fillMeshMappings( MeshMappingImpl & meshMappings,
+                         SpatialPartition & partition ) override;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -109,7 +111,6 @@ private:
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
-    constexpr static char const * useNewGhostingString() { return "useNewGhosting"; }
   };
   /// @endcond
 
@@ -149,9 +150,6 @@ private:
 
   /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;
-
-  // Whether we should use the new ghosting implementation.
-  integer m_useNewGhosting = 0;
 
   /// Method (library) used to partition the mesh
   vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;

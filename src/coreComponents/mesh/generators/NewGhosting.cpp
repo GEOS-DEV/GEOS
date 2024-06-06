@@ -1110,8 +1110,9 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   return { std::move( ghosts ), std::move( recv ), std::move( send ) };
 }
 
-std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                                                              std::set< MpiRank > const & neighbors )
+void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                       std::set< MpiRank > const & neighbors,
+                       MeshMappingImpl & meshMappings )
 {
   auto const [buckets, offsets] = doTheNewGlobalNumbering( mesh, neighbors );
 
@@ -1134,13 +1135,12 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
 
   auto const [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
 
-  buildPods( owned, present, ghosts, recv, send );
-
-  return {};
+  buildPods( owned, present, ghosts, recv, send, meshMappings );
 }
 
-std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
-                                                              std::set< int > const & neighbors )
+void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
+                       std::set< int > const & neighbors,
+                       MeshMappingImpl & meshMappings )
 {
   std::set< MpiRank > neighbors_;
   for( int const & rank: neighbors )
@@ -1149,7 +1149,7 @@ std::unique_ptr< generators::MeshMappings > doTheNewGhosting( vtkSmartPointer< v
   }
   GEOS_LOG_RANK( "my initial neighbors are " << json( neighbors_ ) );
 
-  return doTheNewGhosting( mesh, neighbors_ );
+  return doTheNewGhosting( mesh, neighbors_, meshMappings );
 }
 
 }  // end of namespace geos::ghosting

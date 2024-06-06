@@ -17,6 +17,9 @@
 
 #include "Indices.hpp"
 
+#include "include/MeshMappings.hpp"
+#include "Pods.hpp"
+
 #include <array>
 #include <map>
 #include <set>
@@ -86,7 +89,8 @@ void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
                 GhostRecv const & recv,
-                GhostSend const & send );
+                GhostSend const & send,
+                MeshMappingImpl & meshMappings );
 
 }
 

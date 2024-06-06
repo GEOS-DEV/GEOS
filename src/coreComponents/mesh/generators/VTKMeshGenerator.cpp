@@ -77,11 +77,37 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise."
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
+}
 
-  registerWrapper( viewKeyStruct::useNewGhostingString(), &m_useNewGhosting ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Controls the use of the new ghosting implementation." );
+void VTKMeshGenerator::fillMeshMappings( MeshMappingImpl & meshMappings,
+                                         SpatialPartition & partition )
+{
+  // TODO duplicated from `fillCellBlockManager`.
+  MPI_Comm const comm = MPI_COMM_GEOSX;
+  vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
+  vtkMultiProcessController::SetGlobalController( controller );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
+  {
+
+    GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
+    vtk::AllMeshes redistributedMeshes =
+      vtk::redistributeMeshes( getLogLevel(), allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_vtkMesh = redistributedMeshes.getMainMesh();
+    m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
+    GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
+    std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
+    std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    partition.setMetisNeighborList( std::move( neighbors ) );
+    GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
+  }
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
+
+
+  GEOS_LOG_RANK( "Here we go, new ghosting!" );
+  ghosting::doTheNewGhosting( m_vtkMesh, partition.getMetisNeighborList(), meshMappings );
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
@@ -109,12 +135,6 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
-
-  if( m_useNewGhosting )
-  {
-    GEOS_LOG_RANK( "Here we go, new ghosting!" );
-    std::unique_ptr< generators::MeshMappings > mm = ghosting::doTheNewGhosting( m_vtkMesh, partition.getMetisNeighborList() );
-  }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  preprocessing..." );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );

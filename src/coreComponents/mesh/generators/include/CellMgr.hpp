@@ -16,6 +16,7 @@
 #define GEOS_CELLMGR_HPP
 
 #include "LineBlockABC.hpp"
+#include "CellBlk.hpp"
 
 #include "dataRepository/Group.hpp"
 
@@ -28,40 +29,42 @@ namespace geos::generators
 class CellMgr
 {
 public:
-  /**
-   * @brief Returns a group containing the cell blocks as @p CellBlockABC instances.
-   * @return Mutable reference to the cell blocks group.
-   *
-   * @note It should probably be better not to expose a non-const accessor here.
-   */
-  virtual dataRepository::Group & getCellBlocks() = 0;
-
-  /**
-   * @brief Returns a group containing the face blocks as @p FaceBlockABC instances.
-   * @return Mutable reference to the face blocks group.
-   *
-   * @note It should probably be better not to expose a non-const accessor here.
-   */
-  virtual dataRepository::Group & getFaceBlocks() = 0;
-
-  /**
-   * @brief Returns LineBlockABC corresponding to the given identifier
-   * @param name the name of the required LineBlockABC
-   * @return The LineBlockABC associated with the given name
-   */
-  virtual LineBlockABC const & getLineBlock( string name ) const = 0;
-
-  /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return Const reference to the Group instance.
-   */
-  virtual const dataRepository::Group & getCellBlocks() const = 0;
-
-  /**
-   * @brief Returns a group containing the face blocks as FaceBlockABC instances
-   * @return Const reference to the Group instance.
-   */
-  virtual const dataRepository::Group & getFaceBlocks() const = 0;
+  virtual std::list< CellBlk const * > getCellBlks() const = 0;
+//
+//  /**
+//   * @brief Returns a group containing the cell blocks as @p CellBlockABC instances.
+//   * @return Mutable reference to the cell blocks group.
+//   *
+//   * @note It should probably be better not to expose a non-const accessor here.
+//   */
+//  virtual dataRepository::Group & getCellBlocks() = 0;
+//
+//  /**
+//   * @brief Returns a group containing the face blocks as @p FaceBlockABC instances.
+//   * @return Mutable reference to the face blocks group.
+//   *
+//   * @note It should probably be better not to expose a non-const accessor here.
+//   */
+//  virtual dataRepository::Group & getFaceBlocks() = 0;
+//
+//  /**
+//   * @brief Returns LineBlockABC corresponding to the given identifier
+//   * @param name the name of the required LineBlockABC
+//   * @return The LineBlockABC associated with the given name
+//   */
+//  virtual LineBlockABC const & getLineBlock( string name ) const = 0;
+//
+//  /**
+//   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+//   * @return Const reference to the Group instance.
+//   */
+//  virtual const dataRepository::Group & getCellBlocks() const = 0;
+//
+//  /**
+//   * @brief Returns a group containing the face blocks as FaceBlockABC instances
+//   * @return Const reference to the Group instance.
+//   */
+//  virtual const dataRepository::Group & getFaceBlocks() const = 0;
 };
 
 }

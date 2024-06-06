@@ -229,8 +229,10 @@ public:
     dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
-                                                                                     ///< memory key
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned memory key
+    constexpr static char const * useNewGhostingString()
+    { return "useNewGhosting"; }
+
   } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys
@@ -383,6 +385,9 @@ private:
 
   /// The FieldSpecificationManager
   FieldSpecificationManager * m_fieldSpecificationManager;
+
+  /// Whether we should use the new ghosting implementation.
+  integer m_useNewGhosting = 0;
 };
 
 } /* namespace geos */

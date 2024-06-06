@@ -22,6 +22,7 @@
 #include "include/FaceMgr.hpp"
 #include "include/CellMgr.hpp"
 #include "include/CellBlk.hpp"
+#include "include/MeshMappings.hpp"
 
 namespace geos
 {
@@ -29,6 +30,9 @@ namespace geos
 class NodeMgrImpl : public generators::NodeMgr
 {
 public:
+  NodeMgrImpl()
+  { }
+
   NodeMgrImpl( localIndex numNodes,
                array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
                array1d< integer > && ghostRank,
@@ -65,6 +69,9 @@ private:
 class EdgeMgrImpl : public generators::EdgeMgr
 {
 public:
+  EdgeMgrImpl()
+  { }
+
   EdgeMgrImpl( std::size_t numEdges,
                array1d< integer > && ghostRank,
                array2d< localIndex > && e2n,
@@ -94,6 +101,9 @@ private:
 class FaceMgrImpl : public generators::FaceMgr
 {
 public:
+  FaceMgrImpl()
+  { }
+
   FaceMgrImpl( std::size_t numFaces,
                array1d< integer > && ghostRank,
                ArrayOfArrays< localIndex > && f2n,
@@ -127,6 +137,9 @@ private:
 class CellBlkImpl : public CellBlk
 {
 public:
+  CellBlkImpl()
+  { }
+
   CellBlkImpl( localIndex numCells,
                array1d< integer > const & ghostRank,
                array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
@@ -159,6 +172,66 @@ private:
   array2d< localIndex > m_c2e;
   array2d< localIndex > m_c2f;
   array1d< globalIndex > m_l2g;
+};
+
+class CellMgrImpl : public generators::CellMgr
+{
+public:
+  CellMgrImpl()
+  { }
+
+  CellMgrImpl( CellBlkImpl const & cellBlks )
+    :
+    m_cellBlk( cellBlks )
+  { }
+
+  [[nodiscard]] std::list< CellBlk const * > getCellBlks() const override;
+
+private:
+  CellBlkImpl m_cellBlk;
+};
+
+class MeshMappingImpl : public generators::MeshMappings
+{
+public:
+  MeshMappingImpl( string const & name,
+                   Group * const parent )
+    : MeshMappings( name, parent )
+  { }
+
+  [[nodiscard]] generators::CellMgr const & getCellMgr() const override;
+
+  [[nodiscard]] generators::EdgeMgr const & getEdgeMgr() const override;
+
+  [[nodiscard]] generators::FaceMgr const & getFaceMgr() const override;
+
+  [[nodiscard]] generators::NodeMgr const & getNodeMgr() const override;
+
+  void setCellMgr( CellMgrImpl const & cellMgr )
+  {
+    m_cellMgr = cellMgr;
+  }
+
+  void setEdgeMgr( EdgeMgrImpl const & edgeMgr )
+  {
+    m_edgeMgr = edgeMgr;
+  }
+
+  void setFaceMgr( FaceMgrImpl const & faceMgr )
+  {
+    m_faceMgr = faceMgr;
+  }
+
+  void setNodeMgr( NodeMgrImpl const & nodeMgr )
+  {
+    m_nodeMgr = nodeMgr;
+  }
+
+private:
+  CellMgrImpl m_cellMgr;
+  EdgeMgrImpl m_edgeMgr;
+  FaceMgrImpl m_faceMgr;
+  NodeMgrImpl m_nodeMgr;
 };
 
 } // geos

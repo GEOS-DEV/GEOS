@@ -60,7 +60,7 @@ public:
    * @brief Generate the meshes of the physical DomainPartition.
    * @param[in] domain a reference to the physical domain
    */
-  void generateMeshes( DomainPartition & domain );
+  void generateMeshes( bool useNewGhosting, DomainPartition & domain );
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
