@@ -72,7 +72,7 @@ std::tuple< GlobalToLocal, LocalToGlobal > buildL2GMappings( MeshGraph const & g
     return mapKeys< std::set >( m );
   };
 
-  buildL2GMappings( graph.n, g2l.nodes, l2g.nodes );
+  buildL2GMappings( keys( graph.n2pos ), g2l.nodes, l2g.nodes );
   buildL2GMappings( keys( graph.e2n ), g2l.edges, l2g.edges );
   buildL2GMappings( keys( graph.f2e ), g2l.faces, l2g.faces );
   buildL2GMappings( keys( graph.c2f ), g2l.cells, l2g.cells );
@@ -110,7 +110,7 @@ MeshGraph mergeMeshGraph( MeshGraph const & owned,
     result.c2f.insert( std::cbegin( graph.c2f ), std::cend( graph.c2f ) );
     result.f2e.insert( std::cbegin( graph.f2e ), std::cend( graph.f2e ) );
     result.e2n.insert( std::cbegin( graph.e2n ), std::cend( graph.e2n ) );
-    result.n.insert( std::cbegin( graph.n ), std::cend( graph.n ) );
+    result.n2pos.insert( std::cbegin( graph.n2pos ), std::cend( graph.n2pos ) );
   }
   return result;
 }

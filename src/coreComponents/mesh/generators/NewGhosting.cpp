@@ -138,7 +138,22 @@ void to_json( json & j,
   j = json{ { "c2f", v.f2e },
             { "f2e", v.f2e },
             { "e2n", v.e2n },
-            { "n", v.n } };
+            { "n2pos", v.n2pos } };
+}
+
+
+std::map< NodeGlbIdx, vtkIdType > buildNgiToVtk( vtkSmartPointer< vtkDataSet > mesh )
+{
+  std::map< NodeGlbIdx, vtkIdType > res;
+
+  vtkIdTypeArray const * globalPtIds = vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+
+  for( vtkIdType i = 0; i < mesh->GetNumberOfPoints(); ++i )
+  {
+    res[NodeGlbIdx{ globalPtIds->GetValue( i ) }] = i;
+  }
+
+  return res;
 }
 
 /**
@@ -162,10 +177,15 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
     return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
   };
 
+  std::map< NodeGlbIdx, vtkIdType > const n2vtk = buildNgiToVtk( mesh );
   for( auto const & [ranks, nodes]: buckets.nodes )
   {
-    std::set< NodeGlbIdx > & n = isCurrentRankOwning( ranks ) ? owned.n : present.n;
-    n.insert( std::cbegin( nodes ), std::cend( nodes ) );
+    std::map< NodeGlbIdx, std::array< double, 3 > > & n2pos = isCurrentRankOwning( ranks ) ? owned.n2pos : present.n2pos;
+    for( NodeGlbIdx const & ngi: nodes )
+    {
+      double const * pos = mesh->GetPoint( n2vtk.at( ngi ) );
+      n2pos[ngi] = { pos[0], pos[1], pos[2] };
+    }
   }
 
   for( auto const & [ranks, edges]: buckets.edges )
@@ -309,6 +329,7 @@ Epetra_CrsMatrix multiply( int commSize,
 
   // Downward (c -> f -> e -> n)
   auto tDownward = makeTranspose( upward );  // TODO check the algorithm to understand what's more relevant.
+  // TODO why do we have to perform the transposition ourselves instead of using the flag from `EpetraExt::MatrixMatrix::Multiply`.
 
   Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
   EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_u0_2, false, result_d0_0, false );
@@ -456,9 +477,9 @@ std::array< std::size_t, N > decode( std::size_t const & basis,
   return result;
 }
 
-
 struct Adjacency
 {
+  std::vector< int > ownedNodesIdcs;  // TODO Use some strongly typed ints.
   std::vector< int > ownedGlbIdcs;  // TODO Use some strongly typed ints.
   std::vector< int > otherGlbIdcs;  // TODO Use some strongly typed ints.
   std::vector< int > numEntriesPerRow;
@@ -466,30 +487,31 @@ struct Adjacency
   std::vector< std::vector< double > > values;
 };
 
-
 Adjacency buildAdjacency( MeshGraph const & owned,
                           MeshGraph const & present,
                           FindGeometricalType const & convert )
 {
   Adjacency adjacency;
 
-  std::size_t const numOwned = std::size( owned.n ) + std::size( owned.e2n ) + std::size( owned.f2e ) + std::size( owned.c2f );
-  std::size_t const numOther = std::size( present.n ) + std::size( present.e2n ) + std::size( present.f2e );
+  std::size_t const numOwned = std::size( owned.n2pos ) + std::size( owned.e2n ) + std::size( owned.f2e ) + std::size( owned.c2f );
+  std::size_t const numOther = std::size( present.n2pos ) + std::size( present.e2n ) + std::size( present.f2e );
 
   // Aliases
+  std::vector< int > & ownedNodesIdcs = adjacency.ownedNodesIdcs;
   std::vector< int > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
   std::vector< int > & otherGlbIdcs = adjacency.otherGlbIdcs;
   std::vector< int > & numEntriesPerRow = adjacency.numEntriesPerRow;
   std::vector< std::vector< int > > & indices = adjacency.indices;
   std::vector< std::vector< double > > & values = adjacency.values;
 
+  ownedNodesIdcs.reserve( std::size( owned.n2pos ) );
   ownedGlbIdcs.reserve( numOwned );
   otherGlbIdcs.reserve( numOther );
   numEntriesPerRow.reserve( numOwned );
   indices.reserve( numOwned );
   values.reserve( numOwned );
 
-  for( NodeGlbIdx const & ngi: present.n )
+  for( auto const & [ngi, _]: present.n2pos )
   {
     otherGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
   }
@@ -504,12 +526,14 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) );
   GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
 
-  for( NodeGlbIdx const & ngi: owned.n )
+  for( auto const & [ngi, _]: owned.n2pos )
   {
     // Nodes depend on no other geometrical entity,
     // so we only have one entry `1` in the diagonal of the matrix,
     // because we add the identity to the adjacency matrix.
-    ownedGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
+    int const i = convert.fromNodeGlbIdx( ngi );
+    ownedNodesIdcs.emplace_back( i );
+    ownedGlbIdcs.emplace_back( i );
     numEntriesPerRow.emplace_back( 0 + 1 );  // `+1` comes from the diagonal
     indices.emplace_back( 1, ownedGlbIdcs.back() );
     values.emplace_back( 1, ownedGlbIdcs.back() );
@@ -612,6 +636,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::size_t const numOther = std::size( adjacency.otherGlbIdcs );
 
   // Aliases
+  std::vector< int > const & ownedNodesIdcs = adjacency.ownedNodesIdcs;
   std::vector< int > const & ownedGlbIdcs = adjacency.ownedGlbIdcs;
   std::vector< int > const & otherGlbIdcs = adjacency.otherGlbIdcs;
   std::vector< int > const & numEntriesPerRow = adjacency.numEntriesPerRow;
@@ -791,6 +816,12 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
+  std::vector< int > notPresentNodes;
+  std::copy_if( std::cbegin( notPresentIndices ), std::cend( notPresentIndices ),
+                std::back_inserter( notPresentNodes ), [&]( int const & i )
+                {
+                  return convert.getGeometricalType( i ) == Geom::NODE;
+                } );
   GEOS_ASSERT_EQ( intConv< int >( std::size( allNeededIndices ) ), numNeededIndices );
 
   GhostRecv recv;
@@ -825,6 +856,10 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
         recv.cells[convert.toCellGlbIdx( index )] = sender;
         break;
       }
+      default:
+      {
+        GEOS_ERROR( "Internal error" );
+      }
     }
   }
 
@@ -835,59 +870,128 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 //  }
 
   // At this point, each rank knows what it has to send to and what it is going to receive from the other ranks.
-  // The remaining action is about retrieving the additional graph information
-  // for the new geometrical quantities that will be sent by the neighbors.
   //
-  // In order to do that, we build the `missing` matrix, which is rectangular,
-  // - the number of columns being the number of nodes in the mesh graph,
-  // - the number of rows being the total number graph nodes that's missing on ranks.
-  // - all its terms will be `1`.
-  // Combined with the adjacency matrix which conveys a lot of connections information,
-  // we'll be able to create the final `missingMappings`.
-  // We also create `maps` with specific MPI ranks ownerships and offsets,
-  // so we'll be able to retrieve the information on the ranks that need it (nothing more, nothing less).
-  std::size_t const numMissingIndices = std::size( notPresentIndices );
-  std::size_t const numGlobalMissingIndices = MpiWrapper::sum( numMissingIndices );  // A missing node can be missing on multiple ranks and that's OK.
+  // The remaining action is about
+  // - retrieving the additional graph information
+  //   for the new geometrical quantities that will be sent by the neighbors.
+  // - retrieving the positions of the ghosted nodes:
+  //   knowing the index of the nodes is not enough.
+  //
+  // In order to do that, we build the `missingIndicator` matrix, which is rectangular:
+  // - The number of columns is the number of graph nodes in the mesh graph.
+  // - The number of rows is the total number of graph nodes that are missing on ranks.
+  //   Note that the same quantity can be missing on multiple ranks, and that's handled.
+  // - The non-zero terms equal `1`, meaning that a given quantity (column) is missing on a given rank (row).
+  //
+  // Combining `missingIndicator` with the adjacency matrix which conveys a lot of connections information,
+  // we'll be able to create the final `missingIndices` matrix,
+  // with `range` and `domain` maps (MPI ranks ownerships and offsets) appropriately defined
+  // such that the rows will be available to any ranks that need them (nothing more, nothing less).
+  //
+  // To get the `missingNodePos` matrix which will convey the ghosted nodes positions that are missing on the rank,
+  // we first create a specific `missingNodesIndicator` matrix, which is alike `missingIndicator` but only for the nodes.
+  // We could have used `missingIndicator` and ditched the superfluous information,
+  // but the node positions are reals, where the connections are integers.
+  // As long as we're using `Epetra`, where the type of matrix term is `double`, this makes no critical difference.
+  // But when we switch to `Tpetra`, where we can select the type of the matrix term (and therefore use integers where we need integers),
+  // this may have become an issue.
+  // So the work has been done to separate `missingIndicator` and `missingNodesIndicator`.
+  //
+  // `missingNodesIndicator` is a rectangular like `missingIndicator`:
+  // - The number of columns is the number of graph nodes in the mesh graph
+  //   that actually are physical nodes in the mesh.
+  // - The number of rows is the total number of graph nodes (that actually are physical nodes in the mesh) that are missing on ranks.
+  // - The non-zero terms equal `1`, meaning that a given quantity (column) is missing on a given rank (row).
+  std::size_t const numLocMissingCompound[2] = { std::size( notPresentIndices ), std::size( notPresentNodes ) };
+  std::size_t numGlbMissingCompound[2] = { 0, 0 };
+  MpiWrapper::allReduce( numLocMissingCompound, numGlbMissingCompound, 2, MPI_SUM );
+  std::size_t const & numLocMissingIndices = numLocMissingCompound[0];
+  std::size_t const & numLocMissingNodes = numLocMissingCompound[1];
+  std::size_t const & numGlbMissingIndices = numGlbMissingCompound[0];
+  std::size_t const & numGlbMissingNodes = numGlbMissingCompound[1];
 
-//  Epetra_Map const missingIndicesMap( intConv< long long int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
-  Epetra_Map const missingIndicesMap( intConv< int >( numGlobalMissingIndices ), intConv< int >( numMissingIndices ), 0, comm );
+  std::size_t const numGlbNodes = gis.nodes.get() + 1;
+  std::size_t const numOwnedNodes = std::size( ownedNodesIdcs );
 
-//  std::size_t const offset = MpiWrapper::prefixSum< std::size_t >( numMissingIndices );
-  int const offset = *missingIndicesMap.MyGlobalElements();  // Needed to compute the global row
-//  GEOS_LOG_RANK( "numMissingIndices, numGlobalMissingIndices, offset = " << numMissingIndices << ", " << numGlobalMissingIndices << ", " << offset );
+  Epetra_Map const missingIndicesMap( intConv< int >( numGlbMissingIndices ), intConv< int >( numLocMissingIndices ), 0, comm );
+  Epetra_Map const missingNodesMap( intConv< int >( numGlbMissingNodes ), intConv< int >( numLocMissingNodes ), 0, comm );
 
-  Epetra_CrsMatrix missing( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
-  for( std::size_t i = 0; i < numMissingIndices; ++i )
+  // Following information is needed to compute the global row.
+  int const missingIndicesOffset = *missingIndicesMap.MyGlobalElements();
+  int const missingNodesOffset = *missingNodesMap.MyGlobalElements();
+
+  // Indicator matrix for the all the missing quantities (nodes, edges, faces and cells).
+  Epetra_CrsMatrix missingIndicator( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
+  for( std::size_t i = 0; i < numLocMissingIndices; ++i )
   {
-    missing.InsertGlobalValues( offset + i, 1, ones.data(), &notPresentIndices[i] );
+    missingIndicator.InsertGlobalValues( missingIndicesOffset + i, 1, ones.data(), &notPresentIndices[i] );
   }
-  missing.FillComplete( ownedMap, missingIndicesMap );
+  missingIndicator.FillComplete( ownedMap, missingIndicesMap );
 
+  // Indicator matrix only for the nodes.
+  Epetra_CrsMatrix missingNodesIndicator( Epetra_DataAccess::Copy, missingNodesMap, 1, true );
+  for( int i = 0; i < intConv< int >( numLocMissingNodes ); ++i )
+  {
+    missingNodesIndicator.InsertGlobalValues( missingNodesOffset + i, 1, ones.data(), &notPresentNodes[i] );
+  }
+  Epetra_Map const ownedNodesMap( numGlbNodes, numOwnedNodes, ownedNodesIdcs.data(), 0, comm );
+  missingNodesIndicator.FillComplete( ownedNodesMap, missingNodesMap );
+
+  // The `nodePositions` matrix is rectangular.
+  // - Its number of rows is the total number of nodes in the mesh.
+  // - Its number of columns is 3: the x, y, and z coordinates of the nodes.
+  Epetra_CrsMatrix nodePositions( Epetra_DataAccess::Copy, ownedNodesMap, 3, true );
+  std::vector< int > const zot{ 0, 1, 2 };  // zot: zero, one, two.
+  for( auto const & [ngi, pos]: owned.n2pos )
+  {
+    nodePositions.InsertGlobalValues( convert.fromNodeGlbIdx( ngi ), 3, pos.data(), zot.data() );
+  }
+  Epetra_Map const threeMap = Epetra_Map( 3, 0, comm );
+  nodePositions.FillComplete( threeMap, ownedNodesMap );
+
+  // `missingIndices` will contain the missing connectivity information.
   auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
-  Epetra_CrsMatrix missingMappings( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
-  EpetraExt::MatrixMatrix::Multiply( missing, false, *tDownward, true, missingMappings, false );
-  missingMappings.FillComplete( ownedMap, missingIndicesMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingMappings );
+  Epetra_CrsMatrix missingIndices( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
+  EpetraExt::MatrixMatrix::Multiply( missingIndicator, false, *tDownward, true, missingIndices, false );
+  missingIndices.FillComplete( ownedMap, missingIndicesMap );
+  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingIndices );
+
+  // `missingNodePos` will contain the missing node positions.
+  Epetra_CrsMatrix missingNodePos( Epetra_DataAccess::Copy, missingNodesMap, 1, false );
+  EpetraExt::MatrixMatrix::Multiply( missingNodesIndicator, false, nodePositions, false, missingNodePos, false );
+  missingNodePos.FillComplete( threeMap, missingNodesMap );
 
   MeshGraph ghosts;
 
-  for( int i = 0; i < int( numMissingIndices ); ++i )
+  for( int i = 0; i < int( numLocMissingIndices ); ++i )
   {
-    int const length = missingMappings.NumGlobalEntries( offset + i );
-    extractedValues.resize( length );
-    extractedIndices.resize( length );
-    missingMappings.ExtractGlobalRowCopy( offset + i, length, extracted, extractedValues.data(), extractedIndices.data() );
-    GEOS_ASSERT_EQ( extracted, length );
     int const index = notPresentIndices[i];
     Geom const geometricalType = convert.getGeometricalType( index );
+
+    int const length = missingIndices.NumGlobalEntries( missingIndicesOffset + i );
+    extractedValues.resize( length );
+    extractedIndices.resize( length );
+    missingIndices.ExtractGlobalRowCopy( missingIndicesOffset + i, length, extracted, extractedValues.data(), extractedIndices.data() );
+    GEOS_ASSERT_EQ( extracted, length );
     if( geometricalType == Geom::NODE )
     {
-      // The case of nodes is a bit different from the other cases
-      // because nodes do not rely on other geometrical quantities.
-      // We simply have to extract and store their own index.
+      // The case of nodes is a bit different from the other cases,
+      // because nodes do not rely on other geometrical quantities,
+      // but we need to extract the position of the node instead.
+      // In order to extract these positions, we use the other matrix `missingNodePos`.
       GEOS_ASSERT_EQ( length, 1 );
-      GEOS_ASSERT_EQ( extractedIndices[0], int(extractedValues[0]) );
-      ghosts.n.insert( convert.toNodeGlbIdx( extractedIndices[0] ) );
+      int const lengthPos = missingNodePos.NumGlobalEntries( missingNodesOffset + i );
+      extractedValues.resize( lengthPos );
+      extractedIndices.resize( lengthPos );
+      missingNodePos.ExtractGlobalRowCopy( missingNodesOffset + i, lengthPos, extracted, extractedValues.data(), extractedIndices.data() );
+      GEOS_ASSERT_EQ( extracted, lengthPos );
+      GEOS_ASSERT_EQ( lengthPos, 3 );
+      GEOS_ASSERT_EQ( index, notPresentNodes[i] );
+      std::array< double, 3 > & pos = ghosts.n2pos[convert.toNodeGlbIdx( index )];
+      for( auto dim = 0; dim < 3; ++dim )
+      {
+        pos[extractedIndices[dim]] = extractedValues[dim];
+      }
       continue;
     }
 
@@ -997,6 +1101,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 //    }
 //  }
 //  GEOS_LOG_RANK( "my final neighbors are " << json( ownerships.neighbors ) );
+
+//  if( curRank == 1_mpi )
+//  {
+//    GEOS_LOG_RANK( "ghosts_n2ps = " << json( ghosts.n2pos ) );
+//  }
 
   return { std::move( ghosts ), std::move( recv ), std::move( send ) };
 }

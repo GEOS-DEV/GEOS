@@ -17,6 +17,7 @@
 
 #include "Indices.hpp"
 
+#include <array>
 #include <map>
 #include <set>
 
@@ -62,7 +63,7 @@ struct MeshGraph
   std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;
   std::map< FaceGlbIdx, std::vector< EdgeInfo > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
-  std::set< NodeGlbIdx > n;
+  std::map< NodeGlbIdx, std::array< double, 3 > > n2pos;
 };
 
 struct GhostSend
