@@ -188,7 +188,8 @@
 
   <Outputs>
     <VTK
-        name="vtkOutput"/>
+        name="vtkOutput"
+        plotFileRoot="2ph_cap_1d_ihu"/>
 
     <Restart
         name="restartOutput"/>
