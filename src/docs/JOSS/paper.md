@@ -182,7 +182,7 @@ Simulations such as this will play a critical role in predicting the viability o
 ![Real world CO~2~ storage site: (a) discrete mesh, transparency is used for the overburden region to reveal the complex faulted structure of the storage reservoir; (b) results of a compositional flow simulation after 25 years of CO~2~ injection. The CO~2~ plume is shown in white near the bottom of the well. Colors in the reservoir layer indicate changes in fluid pressure, and the colors in the overburden indicate vertical displacement resulting from the injection. Note that color scales have been removed intentionally.\label{RW_results}](RW_final.pdf){ width=100% }
 
 As an example of the weak scalability of GEOS on exascale systems, we present two weak scaling studies on a simple wellbore geometry using the exascale Frontier supercomputer located at Oak Ridge National Laboratory (ORNL).
-The results (Figure \ref{fig:Frontier_scaling}a) show nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 MPI ranks and \(81.3 \times 10^9\) degrees-of-freedom (close to 1/2 of Frontier).
+The results (Figure \ref{fig:Frontier_scaling}a) show nearly flat scaling of the GEOS processes (assembly/field synchronization) up to 32,768 MPI ranks and $\(81.3 \times 10^9\)$ degrees-of-freedom (close to 1/2 of Frontier).
 There is a moderate decrease in efficiency with the application of the hypre preconditioner setup and solve, but given the complexity of those algorithms, this level of scaling efficiency is excellent.
 The compositional flow study presented in Figure \ref{fig:Frontier_scaling}b shows slightly better weak scaling.
 
