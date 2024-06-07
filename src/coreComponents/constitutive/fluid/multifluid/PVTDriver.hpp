@@ -90,6 +90,7 @@ private:
     constexpr static char const * outputString() { return "output"; }
     constexpr static char const * baselineString() { return "baseline"; }
     constexpr static char const * feedString() { return "feedComposition"; }
+    constexpr static char const * outputMassDensityString() { return "outputMassDensity"; }
     constexpr static char const * outputCompressibilityString() { return "outputCompressibility"; }
     constexpr static char const * outputPhaseCompositionString() { return "outputPhaseComposition"; }
   };
@@ -102,6 +103,7 @@ private:
   string m_pressureFunctionName;        ///< Time-dependent function controlling pressure
   string m_temperatureFunctionName;     ///< Time-dependent function controlling temperature
   string m_outputFile;                  ///< Output file (optional, no output if not specified)
+  integer m_outputMassDensity{0};       ///< Flag to indicate that the mass density of each phase should be output
   integer m_outputCompressibility{0};   ///< Flag to indicate that the total compressibility should be output
   integer m_outputPhaseComposition{0};  ///< Flag to indicate that phase compositions should be output
 
