@@ -57,14 +57,14 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
   evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
-  result[0] = 0.0;    // min
+  result[0] = 1e10;   // min
   result[1] = 0.0;    // avg
-  result[2] = 0.0;    // max
+  result[2] = -1e10;  // max
   for( localIndex ii=0; ii<N; ii++ )
   {
-    result[0] = ii ? std::min(result[0], sub[ii]) : sub[0];
+    result[0] = std::min( result[0], sub[ii] );
     result[1] += sub[ii];
-    result[2] = ii ? std::max(result[2], sub[ii]) : sub[0];
+    result[2] = std::max( result[2], sub[ii] );
   }
   result[1] /= N;
 
