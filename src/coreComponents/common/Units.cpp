@@ -37,8 +37,7 @@ TimeFormatInfo::TimeFormatInfo( double const totalSeconds, int const years, int 
 string TimeFormatInfo::toString() const
 {
   std::ostringstream oss;
-  constexpr double negativeTime = -1.0 + LvArray::NumericLimits< double >::epsilon;
-  if( m_totalSeconds < negativeTime )
+  if( m_totalSeconds < 0.0 )
   {
     oss << "-(";
   }
@@ -51,7 +50,7 @@ string TimeFormatInfo::toString() const
     oss << m_days << "d, ";
   }
   oss << GEOS_FMT( "{:0>2}h{:0>2}m{:0>2}s", m_hours, m_minutes, m_seconds );
-  if( m_totalSeconds < negativeTime )
+  if( m_totalSeconds < 0.0 )
   {
     oss << ")";
   }

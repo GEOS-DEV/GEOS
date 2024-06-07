@@ -113,7 +113,7 @@ TEST( Units, SystemDurationFormatTest )
       Years( 5500 ) + Days( 20 ) + hours( 12 ) + seconds( 145 ) ),
 
     DurationCase(
-      "00h00m00s (-1.11e-07 s)",
+      "-(00h00m00s) (-1.11e-07 s)",
       -nanoseconds( 111 ) ),
 
     DurationCase(
