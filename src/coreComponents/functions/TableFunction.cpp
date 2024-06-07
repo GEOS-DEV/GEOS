@@ -205,7 +205,7 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
   m_values( values )
 {}
 
-void collectHeader( std::ostringstream & formatterStream,
+void collectHeaders( std::ostringstream & formatterStream,
                     TableFunction const & tableFunction,
                     integer const numDimensions,
                     units::Unit const valueUnit )
@@ -261,10 +261,10 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   if( numDimensions != 2 )
   {
-    collectHeader( formatterStream, tableFunction, numDimensions, valueUnit );
+    collectHeaders( formatterStream, tableFunction, numDimensions, valueUnit );
     collectValues( formatterStream, numDimensions, coordinates, values );
   }
-  else // numDimensions == 2
+  else
   {
     //1.
     TableData2D tableData2D;
@@ -335,7 +335,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     }
     else
     {
-      // log informative
       string log = GEOS_FMT( "The {} PVT table exceeding 500 rows.\nTo visualize the tables, go to the generated csv \n", filename );
       TableLayout const tableLayoutInfos( {TableLayout::ColumnParam{{log}, TableLayout::Alignment::left}}, filename );
       TableTextFormatter const tableLog( tableLayoutInfos );
@@ -344,7 +343,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   }
   return logOutput;
 }
-
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
