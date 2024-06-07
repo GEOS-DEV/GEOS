@@ -136,10 +136,11 @@ bibliography: paper.bib
 # Summary
 
 GEOS is a simulation framework focused on solving tightly coupled multi-physics problems with an initial emphasis on subsurface reservoir applications.
-Currently, GEOS actively supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and similar subsurface applications.
-The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly coupled compositional flow, poromechanics, faults and fractures slip, and thermal effects, etc.
+Currently, GEOS supports capabilities for studying carbon sequestration, geothermal energy, hydrogen storage, and related subsurface applications.
+The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to simulate tightly coupled compositional flow, poromechanics, fault slip, fracture propagation, and thermal effects, etc.
 Extensive documentation is available on Read the Docs [@GEOS_RTD].
-Note that GEOS, as described here, is a completely separate work form the previous incarnation of GEOS referred to in [@Settgast:2017].
+Note that GEOS, as presented here, is a complete rewrite of the previous incarnation of the GEOS referred to in [@Settgast:2017].
+<!--Additionally, this project has no relation to the computational geometry tool bearing the same name [@libgeos].-->
 
 # Statement of need
 
@@ -160,11 +161,11 @@ The physics package interface in GEOS is intended to encapsulate the development
 When implementing a physics package for a set of coupled physics equations, each individual physics package is first developed as a stand-alone capability.
 The single physics capabilities are then applied together in a coupled physics package and solved through a flexible strategy ranging from solving the fully monolithic system to a split operator approach.
 
-To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc[@petsc-web-page], and Trilinos[@Her_etal05].
+To solve the linear systems that arise from the boundary value problem, GEOS maintains a generic linear algebra interface (LAI) capable of wrapping various linear algebra packages such as hypre [@hypre], PETSc [@petsc-web-page], and Trilinos [@Her_etal05].
 Currently, in GEOS only the hypre interface is actively maintained.
 For every multi-physics problem involving the solution of a coupled linear system, GEOS currently relies on a multigrid reduction preconditioning strategy available in hypre as presented by [@BUI:2020;@BUI:2021114111].
 
-The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
+The performance portability strategy utilized by GEOS applies LLNL's suite of portability tools RAJA [@Beckingsale:2019], CHAI [@CHAI:2023], and Umpire [@Beckingsale:2020].
 The RAJA performance portability layer provides portable kernel launching and wrappers for reductions, atomics, and local/shared memory to achieve performance on both CPU and GPU hardware.
 The combination of CHAI/Umpire provides memory motion management for platforms with heterogeneous memory spaces (i.e., host and device memory).
 Through this strategy, GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems to CPU-based laptops with near-optimal of performance.
