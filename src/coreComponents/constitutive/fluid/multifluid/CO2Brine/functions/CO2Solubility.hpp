@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -130,20 +131,27 @@ public:
 
   /**
    * @brief Check whether we print to screen or to a csv file
-   * @param table
+   * @param tableData
    * @param printInCsv
    * @param printInLog
    */
-  void checkTableOutput( TableFunction const * table, bool const printInCsv, bool const printInLog
-                         )
+  void checkTableOutput( TableFunction const * tableData, bool const printInCsv, bool const printInLog )
   {
-    if( printInLog &&  table->numDimensions() <= 2 )
+    if( printInLog &&  tableData->numDimensions() <= 2 )
     {
-      table->printInLog( table->getName() );
+      TableTextFormatter textFormatter;
+      GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
     }
-    if( printInCsv || ( printInLog && table->numDimensions() >= 3 ) )
+    if( printInCsv || ( printInLog && tableData->numDimensions() >= 3 ) )
     {
-      table->printInCSV( table->getName() );
+      string const filename = tableData->getName();
+      std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
+                                 OutputBase::getOutputDirectory(),
+                                 filename ));
+
+      TableCSVFormatter csvFormatter;
+      logStream << csvFormatter.toString( *tableData );
     }
   }
 

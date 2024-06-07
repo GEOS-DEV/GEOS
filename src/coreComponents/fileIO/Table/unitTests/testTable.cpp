@@ -210,7 +210,7 @@ TEST( testTable, table2DTable )
   //convert
   string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
   string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-  TableData2D::Conversion1D tableconverted = tableData.buildTableData( "Viscosity kg*s",
+  TableData2D::TableDataConversion tableconverted = tableData.buildTableData( "Viscosity kg*s",
                                                                        rowFmt,
                                                                        columnFmt );
 
@@ -248,7 +248,7 @@ TEST( testTable, table2DColumnMismatch )
     //convert
     string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
     string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
-    TableData2D::Conversion1D tableConverted = tableData.buildTableData( "Viscosity kg*s",
+    TableData2D::TableDataConversion tableConverted = tableData.buildTableData( "Viscosity kg*s",
                                                                          rowFmt,
                                                                          columnFmt );
 

@@ -241,23 +241,17 @@ private:
    */
   void checkCoord( real64 coord, localIndex dim ) const;
 
-  void printCSVHeader( std::ofstream & logStream, integer const numDimensions ) const;
+  // /**
+  //  * @brief Print table into a CSV file
+  //  * @param filename Filename for output
+  //  */
+  // void printInCSV( string const & filename ) const;
 
-  void printCSVValues( std::ofstream & logStream, integer const numDimensions ) const;
-
-  void convertTable2D( TableData2D::Conversion1D & tableConverted ) const;
-
-  /**
-   * @brief Print table into a CSV file
-   * @param filename Filename for output
-   */
-  void printInCSV( string const & filename ) const;
-
-  /**
-   * @brief Print table to the log (only 1d and 2d tables are supported).
-   * @param filename Filename for output
-   */
-  void printInLog( string const & filename ) const;
+  // /**
+  //  * @brief Print table to the log (only 1d and 2d tables are supported).
+  //  * @param filename Filename for output
+  //  */
+  // void printInLog( string const & filename ) const;
 
   /**
    * @brief @return Number of table dimensions
@@ -338,6 +332,15 @@ private:
   void setValueUnits( units::Unit unit )
   {
     m_valueUnit = unit;
+  }
+
+  /**
+   * @brief Set the table value units
+   * @param unit The unit of the values
+   */
+  units::Unit getValueUnit() const
+  {
+    return m_valueUnit;
   }
 
   /**
@@ -689,6 +692,12 @@ ENUM_STRINGS( TableFunction::InterpolationType,
               "nearest",
               "upper",
               "lower" );
+
+template<>
+string TableTextFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
+
+template<>
+string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
 
 } /* namespace geos */
 

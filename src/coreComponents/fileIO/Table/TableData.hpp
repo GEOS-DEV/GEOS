@@ -85,7 +85,7 @@ public:
   using ColumnType = real64;
 
   /// Struct containing conversion informations
-  struct Conversion1D
+  struct TableDataConversion
   {
     /// Vector containing all columns names
     std::vector< string > headerNames;
@@ -103,28 +103,15 @@ public:
   template< typename T >
   void addCell( RowType rowValue, ColumnType columnValue, T const & value );
 
-  /**
-   * @brief 
-   * 
-   * @param rowAxis 
-   * @param columnAxis 
-   * @param values 
-   */
-  void collect2DData( arraySlice1d< real64 const > const rowAxis,
-                      arraySlice1d< real64 const > const columnAxis,
+  void collect2DData( arraySlice1d< real64 const > rowAxis,
+                      arraySlice1d< real64 const > columnAxis,
                       arrayView1d< real64 const > values );
 
-  /**
-   * @brief 
-   * 
-   * @param valueUnit 
-   * @param rowUnitDescription 
-   * @param columnUnitDescription 
-   * @return TableData2D::Conversion1D 
-   */
-  TableData2D::Conversion1D convert2DData( units::Unit valueUnit,
-                                           string_view rowUnitDescription,
-                                           string_view columnUnitDescription );
+  TableData2D::TableDataConversion convertTable2D( arrayView1d< real64 const > const values,
+                                            units::Unit valueUnit,
+                                            ArrayOfArraysView< real64 const > coordinates,
+                                            string_view rowAxisDescription,
+                                            string_view columnAxisDescription );
 
   size_t getNbRows() const;
 
@@ -137,7 +124,7 @@ public:
    * By default it displays the axis value.
    * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  Conversion1D buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
+  TableDataConversion buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   /// @brief all cell values by their [ row ][ column ]
