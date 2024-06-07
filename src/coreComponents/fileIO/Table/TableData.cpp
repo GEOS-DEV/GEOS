@@ -50,32 +50,32 @@ std::vector< string > const & TableData::getErrorMsgs() const
   return m_errorsMsg;
 }
 
-void TableData2D::collect2DData( arraySlice1d< real64 const > rowAxis,
-                                 arraySlice1d< real64 const > columnAxis,
-                                 arrayView1d< real64 const > values )
+void TableData2D::collectTableValues( arraySlice1d< real64 const > rowAxisValues,
+                                      arraySlice1d< real64 const > columnAxisValues,
+                                      arrayView1d< real64 const > values )
 {
-  integer const nX = rowAxis.size();
-  integer const nY = columnAxis.size();
+  integer const nX = rowAxisValues.size();
+  integer const nY = columnAxisValues.size();
 
   for( integer i = 0; i < nX; i++ )
   {
     for( integer y = 0; y < nY; y++ )
     {
-      addCell( rowAxis[i], columnAxis[y], values[ y*nX + i ] );
+      addCell( rowAxisValues[i], columnAxisValues[y], values[ y*nX + i ] );
     }
   }
 }
 
-TableData2D::TableDataConversion TableData2D::convertTable2D( arrayView1d< real64 const > const values,
-                                                       units::Unit valueUnit,
-                                                       ArrayOfArraysView< real64 const > coordinates,
-                                                       string_view rowAxisDescription,
-                                                       string_view columnAxisDescription )
+TableData2D::TableConversionData TableData2D::convertTable2D( arrayView1d< real64 const > const values,
+                                                              units::Unit const valueUnit,
+                                                              ArrayOfArraysView< real64 const > const coordinates,
+                                                              string_view rowAxisDescription,
+                                                              string_view columnAxisDescription )
 {
   string const rowFmt = GEOS_FMT( "{} = {{}}", rowAxisDescription );
   string const columnFmt = GEOS_FMT( "{} = {{}}", columnAxisDescription );
 
-  collect2DData( coordinates[0], coordinates[1], values );
+  collectTableValues( coordinates[0], coordinates[1], values );
   return buildTableData( string( units::getDescription( valueUnit )),
                          rowFmt,
                          columnFmt );
@@ -86,11 +86,11 @@ size_t TableData2D::getNbRows() const
   return m_data.size();
 }
 
-TableData2D::TableDataConversion TableData2D::buildTableData( string_view targetUnit,
-                                                       string_view rowFmt,
-                                                       string_view columnFmt ) const
+TableData2D::TableConversionData TableData2D::buildTableData( string_view targetUnit,
+                                                              string_view rowFmt,
+                                                              string_view columnFmt ) const
 {
-  TableData2D::TableDataConversion tableData1D;
+  TableData2D::TableConversionData tableData1D;
   std::vector< size_t > rowsLength;
 
   tableData1D.headerNames.push_back( string( targetUnit ) );

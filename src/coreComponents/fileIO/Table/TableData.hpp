@@ -85,9 +85,10 @@ public:
   using ColumnType = real64;
 
   /// Struct containing conversion informations
-  struct TableDataConversion
+  struct TableConversionData
   {
     /// Vector containing all columns names
+    /// A header value is presented as "pressure [K] = {}"
     std::vector< string > headerNames;
     /// TableData to be built
     TableData tableData;
@@ -103,15 +104,29 @@ public:
   template< typename T >
   void addCell( RowType rowValue, ColumnType columnValue, T const & value );
 
-  void collect2DData( arraySlice1d< real64 const > rowAxis,
-                      arraySlice1d< real64 const > columnAxis,
-                      arrayView1d< real64 const > values );
+  /**
+   * @brief Collects all the values needed to build the table
+   * @param rowAxisValues Vector containing all row axis values
+   * @param columnAxisValues Vector containing all column axis values
+   * @param values Vector containing all table values 
+   */
+  void collectTableValues( arraySlice1d< real64 const > rowAxisValues,
+                           arraySlice1d< real64 const > columnAxisValues,
+                           arrayView1d< real64 const > values );
 
-  TableData2D::TableDataConversion convertTable2D( arrayView1d< real64 const > const values,
-                                            units::Unit valueUnit,
-                                            ArrayOfArraysView< real64 const > coordinates,
-                                            string_view rowAxisDescription,
-                                            string_view columnAxisDescription );
+  /**
+   * @param values Vector containing all table values 
+   * @param valueUnit The table unit value
+   * @param coordinates Array containing row/column axis values
+   * @param rowAxisDescription The description for a row unit value
+   * @param columnAxisDescription The description for a column unit value
+   * @return A struct containing the tableData converted and all header values ;
+   */
+  TableData2D::TableConversionData convertTable2D( arrayView1d< real64 const > const values,
+                                                   units::Unit const valueUnit,
+                                                   ArrayOfArraysView< real64 const > const coordinates,
+                                                   string_view rowAxisDescription,
+                                                   string_view columnAxisDescription );
 
   size_t getNbRows() const;
 
@@ -124,7 +139,7 @@ public:
    * By default it displays the axis value.
    * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  TableDataConversion buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
+  TableConversionData buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   /// @brief all cell values by their [ row ][ column ]

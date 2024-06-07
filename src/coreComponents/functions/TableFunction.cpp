@@ -17,9 +17,10 @@
  */
 
 #include "TableFunction.hpp"
+#include "fileIO/Table/TableData.hpp"
+#include "fileIO/Table/TableLayout.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
-#include "fileIO/Outputs/OutputBase.hpp"
 #include <algorithm>
 
 namespace geos
@@ -206,7 +207,8 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 void collectHeader( std::ostringstream & formatterStream,
                     TableFunction const & tableFunction,
-                    integer const numDimensions )
+                    integer const numDimensions,
+                    units::Unit const valueUnit )
 {
   for( integer d = 0; d < numDimensions; d++ )
   {
@@ -217,7 +219,7 @@ void collectHeader( std::ostringstream & formatterStream,
 
 void collectValues( std::ostringstream & formatterStream,
                     integer const numDimensions,
-                    ArrayOfArraysView< real64 const > coordinates,
+                    ArrayOfArraysView< real64 const > const coordinates,
                     arrayView1d< real64 const > const values )
 {
   // prepare dividers
@@ -251,24 +253,22 @@ void collectValues( std::ostringstream & formatterStream,
 template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
-  ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
+  ArrayOfArraysView< real64 const > const coordinates = tableFunction.getCoordinates();
   arrayView1d< real64 const > const values = tableFunction.getValues();
-  units::Unit valueUnit = tableFunction.getValueUnits();
+  units::Unit const valueUnit = tableFunction.getValueUnit();
   std::ostringstream formatterStream;
 
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   if( numDimensions != 2 )
   {
-    collectHeader( std::ostringstream & formatterStream,
-                   TableFunction const & tableFunction,
-                   integer const numDimensions );
+    collectHeader( formatterStream, tableFunction, numDimensions, valueUnit );
     collectValues( formatterStream, numDimensions, coordinates, values );
   }
   else // numDimensions == 2
   {
     //1.
     TableData2D tableData2D;
-    TableData2D::TableDataConversion tableConverted;
+    TableData2D::TableConversionData  tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
                                                  valueUnit,
                                                  coordinates,
@@ -287,7 +287,7 @@ template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableFunction ) const
 {
   ArrayOfArraysView< real64 const > coordinates = tableFunction.getCoordinates();
-  units::Unit valueUnit = tableFunction.getValueUnits();
+  units::Unit const valueUnit = tableFunction.getValueUnit();
   arrayView1d< real64 const > const values = tableFunction.getValues();
   integer const numDimensions = LvArray::integerConversion< integer >( coordinates.size() );
   string const filename = tableFunction.getName();

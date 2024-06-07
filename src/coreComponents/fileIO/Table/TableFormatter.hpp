@@ -24,7 +24,6 @@
 #include "common/Units.hpp"
 #include <numeric>
 #include "codingUtilities/StringUtilities.hpp"
-#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {

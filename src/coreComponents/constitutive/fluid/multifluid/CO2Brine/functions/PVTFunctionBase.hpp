@@ -20,7 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
