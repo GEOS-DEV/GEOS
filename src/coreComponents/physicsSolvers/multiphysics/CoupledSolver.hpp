@@ -355,6 +355,42 @@ public:
     return isConverged;
   }
 
+  virtual bool updateConfiguration( DomainPartition & domain ) override
+  {
+    bool result = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      result &= solver->updateConfiguration( domain );
+    } );
+    return result;
+  }
+
+  virtual void outputConfigurationStatistics( DomainPartition const & domain ) const override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->outputConfigurationStatistics( domain );
+    } );
+  }
+
+  virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->resetConfigurationToBeginningOfStep( domain );
+    } );
+  }
+
+  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const override
+  {
+    bool result = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      result &= solver->resetConfigurationToDefault( domain );
+    } );
+    return result;
+  }
+
 protected:
 
   /**
