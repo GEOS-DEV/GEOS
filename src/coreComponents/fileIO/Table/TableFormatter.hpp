@@ -120,14 +120,10 @@ public:
 
 private:
 
-  /// symbol for the extremity of a delemitor
-  static constexpr string_view sideCross = "+";
-  /// symbol to delimit a table column
-  static constexpr string_view innerCross = "+";
   /// symbol for separator construction
-  static constexpr string_view verticalLine = "-";
+  static constexpr char m_verticalLine = '|';
   ///  for the extremity of a row
-  static constexpr string_view horizontalLine = "|";
+  static constexpr char m_horizontalLine = '-';
 
   /**F
    * @brief Fill the vector (m_column) in tableData with values from rows stored in tableData.
@@ -142,12 +138,12 @@ private:
    * @param tableOutput The output stream
    * @param columns The vector containing all table columns
    * @param msgTableError A vector containg all error related to the table
-   * @param sectionSeparator An empty string for building the section separator
+   * @param sectionSeparatingLine An empty string for building the section separator
    */
   void outputLayout( std::ostringstream & tableOutput,
                      std::vector< TableLayout::Column > & columns,
                      std::vector< string > const & msgTableError,
-                     string & sectionSeparator ) const;
+                     string & sectionSeparatingLine ) const;
 
   /**
    * @brief Split all header names by detecting the newline \\n character. and
@@ -175,22 +171,23 @@ private:
                             integer const extraCharacters ) const;
 
   /**
-   * @brief Compute the max table line length
+   * @brief Compute the max table line length, taking into account the length of : title, error, columns header and content
+   * Increase the size of the columns if necessary
    * @param columns Vector of column containing containing the largest string for each column
    * @param msgTableError Vector containing all error messages
    */
-  void computeTableMaxLineLength( std::vector< TableLayout::Column > & columns,
-                                  std::vector< string > const & msgTableError ) const;
+  void computeTableWidth( std::vector< TableLayout::Column > & columns,
+                          std::vector< string > const & msgTableError ) const;
 
   /**
-   * @brief Build all separator needed from length information contained in columns vector
+   * @brief Build all separators needed from content length contained in the columns vector
    * @param columns Vector containing all table columns
    * @param topSeparator Top separator to be built
-   * @param sectionSeparator section separator to be built
+   * @param sectionSeparatingLine Line section separator to be built
    */
   void buildTableSeparators( std::vector< TableLayout::Column > const & columns,
                              string & topSeparator,
-                             string & sectionSeparator ) const;
+                             string & sectionSeparatingLine ) const;
 
   /**
    * @brief Add a row on top of the table
@@ -207,14 +204,14 @@ private:
   /**
    * @brief Output a section by specifying it's type ( header or section )
    * @param columns Vector containing all table columns
-   * @param sectionSeparator Line separator between sections
+   * @param sectionSeparatingLine Line separator between sections
    * @param rows A section row
    * @param nbRows Indicates the number of lines in a section
    * @param section The section to be built
    * @note Add the ending line if there are one or more rows
    */
   void outputSectionRows( std::vector< TableLayout::Column > const & columns,
-                          string_view sectionSeparator,
+                          string_view sectionSeparatingLine,
                           std::ostringstream & rows,
                           integer const nbRows,
                           TableLayout::Section const section ) const;
