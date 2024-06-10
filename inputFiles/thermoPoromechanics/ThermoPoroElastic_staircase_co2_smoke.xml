@@ -189,7 +189,6 @@
     <SolidInternalEnergy
       name="rockInternalEnergy"
       referenceVolumetricHeatCapacity="1.95e6"
-      dVolumetricHeatCapacity_dTemperature="0"
       referenceTemperature="353.15"
       referenceInternalEnergy="0"/>
 

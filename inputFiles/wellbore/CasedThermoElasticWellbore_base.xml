@@ -111,21 +111,18 @@
     <SolidInternalEnergy
       name="casingInternalEnergy"
       referenceVolumetricHeatCapacity="1.375e6"
-      dVolumetricHeatCapacity_dTemperature="0"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
 
     <SolidInternalEnergy
       name="cementInternalEnergy"
       referenceVolumetricHeatCapacity="4.2e6"
-      dVolumetricHeatCapacity_dTemperature="0"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
       referenceVolumetricHeatCapacity="4.56e6"
-      dVolumetricHeatCapacity_dTemperature="0"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
     <!-- SPHINX_HeatCapacityPropertiesEnd -->

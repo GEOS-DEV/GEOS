@@ -95,7 +95,6 @@ char const * xmlInput =
                         compressibility="1.0e-9" />
       <SolidInternalEnergy name="rockInternalEnergy"
                            referenceVolumetricHeatCapacity="1.95e6"
-                           dVolumetricHeatCapacity_dTemperature="0"
                            referenceTemperature="368.15"
                            referenceInternalEnergy="0" />
       <ConstantPermeability name="rockPerm"

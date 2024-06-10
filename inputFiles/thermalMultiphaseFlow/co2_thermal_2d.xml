@@ -105,7 +105,6 @@
     <SolidInternalEnergy
       name="rockInternalEnergy"
       referenceVolumetricHeatCapacity="1.95e6"
-      dVolumetricHeatCapacity_dTemperature="0"
       referenceTemperature="368.15"
       referenceInternalEnergy="0"/>
     <ConstantPermeability
