@@ -81,11 +81,6 @@ TableData2D::TableConversionData TableData2D::convertTable2D( arrayView1d< real6
                          columnFmt );
 }
 
-size_t TableData2D::getNbRows() const
-{
-  return m_data.size();
-}
-
 TableData2D::TableConversionData TableData2D::buildTableData( string_view targetUnit,
                                                               string_view rowFmt,
                                                               string_view columnFmt ) const

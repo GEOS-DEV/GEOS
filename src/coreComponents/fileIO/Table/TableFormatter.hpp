@@ -141,7 +141,6 @@ public:
   /**
    * @brief Convert a data source to a table string.
    * @param tableData The data source to convert.
-   * @param tableData The data source to convert
    * @return The table string representation of the TableData.
    */
   template< typename DATASOURCE >

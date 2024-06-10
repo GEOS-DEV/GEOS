@@ -128,8 +128,6 @@ public:
                                                    string_view rowAxisDescription,
                                                    string_view columnAxisDescription );
 
-  size_t getNbRows() const;
-
   /**
    * @return Convert and return a struct containing a 1D Table, the column names list from a TableData2D and any errors related to the table
    * @param dataDescription The table dataDescription shown at the top left side
