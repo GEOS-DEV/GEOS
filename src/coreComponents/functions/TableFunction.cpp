@@ -205,10 +205,17 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
   m_values( values )
 {}
 
+/**
+ * @brief Retrieve all data headers from a table function
+ * @param formatterStream The stream who contains the csv table string
+ * @param tableFunction The table function to be process
+ * @param numDimensions Numbers of axes in the table
+ * @param valueUnit The table unit value
+ */
 void collectHeaders( std::ostringstream & formatterStream,
-                    TableFunction const & tableFunction,
-                    integer const numDimensions,
-                    units::Unit const valueUnit )
+                     TableFunction const & tableFunction,
+                     integer const numDimensions,
+                     units::Unit const valueUnit )
 {
   for( integer d = 0; d < numDimensions; d++ )
   {
@@ -217,6 +224,13 @@ void collectHeaders( std::ostringstream & formatterStream,
   formatterStream << units::getDescription( valueUnit ) << "\n";
 }
 
+/**
+ * @brief Retrieve all data values
+ * @param formatterStream  The stream who contains the csv table string
+ * @param numDimensions Numbers of axes in the table
+ * @param coordinates The tables axis values
+ * @param values The table values to be retrived
+ */
 void collectValues( std::ostringstream & formatterStream,
                     integer const numDimensions,
                     ArrayOfArraysView< real64 const > const coordinates,
@@ -268,7 +282,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   {
     //1.
     TableData2D tableData2D;
-    TableData2D::TableConversionData  tableConverted;
+    TableData2D::TableConversionData tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
                                                  valueUnit,
                                                  coordinates,
