@@ -53,6 +53,7 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Reference solid volumetric heat capacity [J/(kg.K)]" );
 
   registerWrapper( viewKeyStruct::dVolumetricHeatCapacity_dTemperatureString(), &m_dVolumetricHeatCapacity_dTemperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Derivative of the solid volumetric heat capacity w.r.t. temperature [J/(m^3.K^2)]" );
 
