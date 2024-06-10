@@ -332,10 +332,9 @@ private:
     m_valueUnit = unit;
   }
 
-  /**
-   * @brief Set the table value units
-   * @param unit The unit of the values
-   */
+/**
+ * @return The unit of the table values
+ */
   units::Unit getValueUnit() const
   {
     return m_valueUnit;
@@ -691,9 +690,19 @@ ENUM_STRINGS( TableFunction::InterpolationType,
               "upper",
               "lower" );
 
+/**
+ * @brief Template specialisation to convert a TableFunction to a CSV string.
+ * @param tableData The TableFunction object to convert.
+ * @return The CSV string representation of the TableFunction.
+ */
 template<>
 string TableTextFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
 
+/**
+ * @brief Template specialisation to convert a TableFunction to a table string.
+ * @param tableData The TableFunction object to convert.
+ * @return The table string representation of the TableFunction.
+ */
 template<>
 string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
 

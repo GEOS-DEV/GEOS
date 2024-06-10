@@ -90,7 +90,8 @@ public:
 
   /**
    * @brief Convert a data source to a CSV string.
-   * @tparam DATASOURCE The soruce to convert
+   * @tparam DATASOURCE The source to convert
+   * @param tableData The data source to convert
    * @return The CSV string representation of a data source.
    */
   template< typename DATASOURCE >
@@ -99,7 +100,7 @@ public:
 };
 
 /**
- * @brief Convert the TableData to a table string.
+ * @brief Convert the TableData to a CSV string.
  * @param tableData The TableData to convert.
  * @return The CSV string representation of the TableData.
  */
@@ -140,6 +141,7 @@ public:
   /**
    * @brief Convert a data source to a table string.
    * @param tableData The data source to convert.
+   * @param tableData The data source to convert
    * @return The table string representation of the TableData.
    */
   template< typename DATASOURCE >

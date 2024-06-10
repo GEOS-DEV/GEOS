@@ -108,14 +108,14 @@ public:
    * @brief Collects all the values needed to build the table
    * @param rowAxisValues Vector containing all row axis values
    * @param columnAxisValues Vector containing all column axis values
-   * @param values Vector containing all table values 
+   * @param values Vector containing all table values
    */
   void collectTableValues( arraySlice1d< real64 const > rowAxisValues,
                            arraySlice1d< real64 const > columnAxisValues,
                            arrayView1d< real64 const > values );
 
   /**
-   * @param values Vector containing all table values 
+   * @param values Vector containing all table values
    * @param valueUnit The table unit value
    * @param coordinates Array containing row/column axis values
    * @param rowAxisDescription The description for a row unit value
