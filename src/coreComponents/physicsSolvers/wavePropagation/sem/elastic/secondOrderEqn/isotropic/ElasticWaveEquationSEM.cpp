@@ -19,6 +19,7 @@
 
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -91,6 +92,13 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setApplyDefaultValue( { 1.0, 1.0, 1.0, 0.0, 0.0, 0.0 } ).
     setDescription( "Moment of the source: 6 real values describing a symmetric tensor in Voigt notation."
                     "The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion)." );
+
+
+  registerWrapper( viewKeyStruct::useVtiString(), &m_useVTI ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply VTI anisotropy. The default is to use isotropic physic." );
 }
 
 ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
@@ -158,6 +166,14 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< elasticfields::ElasticVelocityVp >( getName() );
       subRegion.registerField< elasticfields::ElasticVelocityVs >( getName() );
       subRegion.registerField< elasticfields::ElasticDensity >( getName() );
+
+      if( m_useVTI )
+      {
+        subRegion.registerField< elasticvtifields::Gamma >( getName() );
+        subRegion.registerField< elasticvtifields::Epsilon >( getName() );
+        subRegion.registerField< elasticvtifields::Delta >( getName() );
+      }
+
     } );
 
   } );
@@ -168,34 +184,6 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void ElasticWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
-
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
-
-  if( m_dtSeismoTrace > 0 )
-  {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace ) + 1;
-  }
-  else
-  {
-    m_nsamplesSeismoTrace = 0;
-  }
-  localIndex const nsamples = int( maxTime / dt ) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
   if( m_useDAS == WaveSolverUtils::DASType::none )
   {
@@ -562,19 +550,39 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
 
-  auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+  if( m_useVTI )
+  {
+    auto kernelFactory = ElasticVTIWaveEquationSEMKernels::ExplicitElasticVTISEMFactory( dt );
 
-  finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
+  }
+  else
+  {
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
+  }
 
-  addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
+  //Modification of cycleNember useful when minTime < 0
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
+
+  addSourceToRightHandSide( cycleForSource, rhsx, rhsy, rhsz );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
