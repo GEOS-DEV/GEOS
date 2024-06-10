@@ -36,6 +36,10 @@ TimeFormatInfo::TimeFormatInfo( double const totalSeconds, int const years, int 
 
 string TimeFormatInfo::toString() const
 {
+  return GEOS_FMT( "{} ({})", toUnfoldedString(), toSecondsString() );
+}
+string TimeFormatInfo::toUnfoldedString() const
+{
   std::ostringstream oss;
   if( m_totalSeconds < 0.0 )
   {
@@ -54,8 +58,11 @@ string TimeFormatInfo::toString() const
   {
     oss << ")";
   }
-  oss << GEOS_FMT( " ({} s)", m_totalSeconds );
   return oss.str();
+}
+string TimeFormatInfo::toSecondsString() const
+{
+  return GEOS_FMT( "{} s", m_totalSeconds );
 }
 
 std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )

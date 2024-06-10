@@ -215,9 +215,19 @@ struct TimeFormatInfo
   friend std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & ctx );
 
   /**
-   * @return a user friendly string representation of this structure.
+   * @return a comprehensive string representation of this structure.
    */
   string toString() const;
+
+  /**
+   * @return a user friendly string representation of this structure (YDHMS format, without subsecond details).
+   */
+  string toUnfoldedString() const;
+
+  /**
+   * @return a precise string representation of this structure (decimal seconds).
+   */
+  string toSecondsString() const;
 };
 
 
