@@ -922,9 +922,9 @@
 		</xsd:choice>
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxCycle => Maximum simulation cycle for the global event loop.-->
+		<!--maxCycle => Maximum simulation cycle for the global event loop. Disabled by default.-->
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
-		<!--maxTime => Maximum simulation time for the global event loop.-->
+		<!--maxTime => Maximum simulation time for the global event loop. Disabled by default.-->
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
 		<!--minTime => Start simulation time for the global event loop.-->
 		<xsd:attribute name="minTime" type="real64" default="0" />
