@@ -121,6 +121,9 @@ void VTKOutput::postProcessInput()
                         "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
                         catalogName(), getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+
+  GEOS_ERROR_IF( m_writeFaceElementsAs3D ), GEOS_FMT( "{} `{}`: 3D vtk plot of faceElements is not yet supported.",
+                                                      catalogName(), getDataContext() );
 }
 
 
