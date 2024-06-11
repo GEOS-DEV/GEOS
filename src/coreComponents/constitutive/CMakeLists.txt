@@ -157,6 +157,7 @@ set( constitutive_headers
      solid/StrainHardeningPolymer.hpp
      solid/VonMisesJ.hpp
      solid/CeramicDamage.hpp
+     solid/Geomechanics.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
@@ -295,6 +296,7 @@ set( constitutive_sources
      solid/StrainHardeningPolymer.cpp
      solid/VonMisesJ.cpp
      solid/CeramicDamage.cpp
+     solid/Geomechanics.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
