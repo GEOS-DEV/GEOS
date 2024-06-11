@@ -63,6 +63,8 @@ public:
     m_lineSearchInterpType = params.m_lineSearchInterpType;
     m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
     m_lineSearchCutFactor = params.m_lineSearchCutFactor;
+    m_lineSearchStartingIteration = params.m_lineSearchStartingIteration;
+    m_lineSearchResidualFactor = params.m_lineSearchResidualFactor;
 
     m_newtonTol = params.m_newtonTol;
     m_maxIterNewton = params.m_maxIterNewton;
@@ -80,6 +82,7 @@ public:
     m_maxTimeStepCuts = params.m_maxTimeStepCuts;
     m_timeStepCutFactor = params.m_timeStepCutFactor;
     m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
+    m_configurationTolerance = params.m_configurationTolerance;
 
     return *this;
   }
@@ -101,6 +104,8 @@ public:
     static constexpr char const * lineSearchMaxCutsString()       { return "lineSearchMaxCuts"; }
     static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
+    static constexpr char const * lineSearchStartingIterationString() { return "lineSearchStartingIteration"; }
+    static constexpr char const * lineSearchResidualFactorString() { return "lineSearchResidualFactor"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
     static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
@@ -118,16 +123,16 @@ public:
 
     static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
     static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
-    static constexpr char const * minNumNewtonIterationsString()  { return "minNumberOfNewtonIterations"; }
     static constexpr char const * timeStepCutFactorString()       { return "timeStepCutFactor"; }
     static constexpr char const * maxAllowedResidualNormString()  { return "maxAllowedResidualNorm"; }
 
-    static constexpr char const * numConfigurationAttemptsString()    { return "numConfigurationAttempts"; }
     static constexpr char const * maxNumConfigurationAttemptsString() { return "maxNumConfigurationAttempts"; }
+    static constexpr char const * configurationToleranceString() { return "configurationTolerance"; }
 
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+    static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
   } viewKeys;
 
   /**
@@ -164,7 +169,17 @@ public:
   enum class SequentialConvergenceCriterion : integer
   {
     ResidualNorm, ///< convergence achieved when the residual drops below a given norm
-    NumberOfNonlinearIterations ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+    NumberOfNonlinearIterations, ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+    SolutionIncrements ///< convergence achieved when the solution increments are small enough
+  };
+
+  /**
+   * @brief Nonlinear acceleration type
+   */
+  enum class NonlinearAccelerationType : integer
+  {
+    None, ///< no acceleration
+    Aitken ///< Aitken acceleration
   };
 
   /**
@@ -236,7 +251,7 @@ public:
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
-  /// Flag to pick the type of linesearch
+  /// Flag to pick the type of line search
   LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
@@ -244,6 +259,12 @@ public:
 
   /// The reduction factor for each line search cut.
   real64 m_lineSearchCutFactor;
+
+  /// Iteration when line search starts
+  integer m_lineSearchStartingIteration;
+
+  /// Factor to determine residual increase
+  real64 m_lineSearchResidualFactor;
 
   /// Norm used to check the nonlinear loop convergence
   solverBaseKernels::NormType m_normType;
@@ -296,6 +317,9 @@ public:
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
 
+  /// Configuration tolerance
+  double m_configurationTolerance;
+
   /// Type of coupling
   CouplingType m_couplingType;
 
@@ -304,6 +328,9 @@ public:
 
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
+
+  /// Type of nonlinear acceleration for sequential solver
+  NonlinearAccelerationType m_nonlinearAccelerationType;
 
   /// Value used to make sure that residual normalizers are not too small when computing residual norm
   real64 m_minNormalizer = 1e-12;
@@ -324,7 +351,12 @@ ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
 
 ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
               "ResidualNorm",
-              "NumberOfNonlinearIterations" );
+              "NumberOfNonlinearIterations",
+              "SolutionIncrements" );
+
+ENUM_STRINGS( NonlinearSolverParameters::NonlinearAccelerationType,
+              "None",
+              "Aitken" );
 
 } /* namespace geos */
 

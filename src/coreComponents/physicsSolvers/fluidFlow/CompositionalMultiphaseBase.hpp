@@ -19,12 +19,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
-#include "common/DataLayouts.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
 {
@@ -108,10 +104,10 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
+  void updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -138,6 +134,18 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update components mass/moles
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateCompAmount( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Update energy
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
@@ -149,13 +157,11 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
-  virtual void saveIterationState( DomainPartition & domain ) const override final;
-
-  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const override final;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -229,11 +235,9 @@ public:
 
     // inputs
 
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
@@ -244,6 +248,8 @@ public:
     static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
     static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
     static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+    static constexpr char const * targetFlowCFLString() { return "targetFlowCFL"; }
+
 
     // nonlinear solver parameters
 
@@ -254,6 +260,7 @@ public:
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
+    static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
 
   };
 
@@ -265,7 +272,7 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
+  void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, arrayView1d< string const > const & regionNames );
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -321,14 +328,6 @@ public:
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
-
-  /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
    * @param[in] time current time
    * @param[in] dt time step
@@ -356,15 +355,34 @@ public:
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;
 
+  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentDt,
+                    DomainPartition & domain ) override;
+
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
+
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
 
 protected:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
+
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
@@ -403,9 +421,6 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the input temperature
-  real64 m_inputTemperature;
-
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
@@ -417,9 +432,6 @@ protected:
 
   /// flag to determine whether or not to apply dispersion
   integer m_hasDispersion;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
@@ -460,6 +472,13 @@ protected:
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
 
+  /// maximum (absolute) component density change in a sequential iteration
+  real64 m_sequentialCompDensChange;
+  real64 m_maxSequentialCompDensChange;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
+
 private:
 
   /**
@@ -497,8 +516,8 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                 fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field

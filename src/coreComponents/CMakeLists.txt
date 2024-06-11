@@ -16,8 +16,7 @@ set( subdirs
      fileIO
      physicsSolvers
      events
-     mainInterface
-     python )
+     mainInterface )
 
 unset( parallelDeps )
 
@@ -29,7 +28,7 @@ if ( ENABLE_CUDA )
   list( APPEND parallelDeps cuda )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND parallelDeps CUDA::nvToolsExt )
 endif()
 
@@ -107,8 +106,7 @@ if ( TARGET geosx_core )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake
-                       src/coreComponents/constitutive/PVTPackage )
+                       EXCLUDES cmake constitutive/PVTPackage )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

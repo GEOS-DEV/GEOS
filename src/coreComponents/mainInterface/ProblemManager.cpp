@@ -79,7 +79,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  registerGroup< TasksManager >( groupKeys.tasksManager );
+  m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
@@ -186,6 +186,13 @@ void ProblemManager::parseCommandLineInput()
   OutputBase::setOutputDirectory( outputDirectory );
 
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+
+  for( string const & xmlFile : opts.inputFileNames )
+  {
+    string const absPath = getAbsolutePath( xmlFile );
+    GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
+  }
+
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
@@ -198,7 +205,7 @@ void ProblemManager::parseCommandLineInput()
   if( schemaName.empty())
   {
     inputFileName = getAbsolutePath( inputFileName );
-    Path::pathPrefix() = splitPath( inputFileName ).first;
+    Path::setPathPrefix( splitPath( inputFileName ).first );
   }
 
   if( opts.traceDataMigration )
@@ -676,13 +683,21 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
+      ElementRegionManager & elementManager = meshLevel.getElemManager();
 
-      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
-      // because the ghosting ensures that the neighbor cells of the fracture elements are available.
-      // These neighbor cells are providing the node information to the fracture elements.
-      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        /// 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
+        // because the ghosting ensures that the neighbor cells of the fracture elements are available.
+        // These neighbor cells are providing the node information to the fracture elements.
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+        // 2. Reorder the face map based on global numbering of neighboring cells
+        subRegion.flipFaceMap( faceManager, elementManager );
+
+        // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
+        // direction of the fracture.
+        subRegion.fixNeighboringFacesNormals( faceManager, elementManager );
       } );
 
       faceManager.setIsExternal();
@@ -925,7 +940,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
             if( feDiscretization != nullptr )
             {
-              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
@@ -960,6 +975,20 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
+              } );
+
+              // For now SurfaceElementSubRegion do not have a FE type associated with them. They don't need one for now and
+              // it would have to be a heterogeneous one coz they are usually heterogeneous subregions.
+              elemRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
+              {
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            meshLevel.getName(),
+                                                                                            regionName,
+                                                                                            subRegion.getName() ) ];
+
+                localIndex const numQuadraturePoints = 1;
+
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
               } );
             }
             else   //if( fvFluxApprox != nullptr )

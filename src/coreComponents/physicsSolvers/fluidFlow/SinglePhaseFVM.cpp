@@ -150,13 +150,13 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       string const & fluidName = subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-      string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
       // step 1: compute the norm in the subRegion
 
       if( m_isThermal )
       {
+        string const & solidName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() );
+        CoupledSolidBase const & solid = SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
         string const & solidInternalEnergyName = subRegion.template getReference< string >( BASE::viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = SolverBase::getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
 
@@ -185,8 +185,6 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                      dofKey,
                                                      localRhs,
                                                      subRegion,
-                                                     fluid,
-                                                     solid,
                                                      m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionFlowResidualNorm,
                                                      subRegionFlowResidualNormalizer );
@@ -671,8 +669,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )
@@ -705,8 +703,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )
@@ -774,8 +772,8 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                     setName, targetGroup.getName(), numTargetFaces ) );
         }
 
         if( stencil.size() == 0 )

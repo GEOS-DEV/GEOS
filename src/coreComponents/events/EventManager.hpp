@@ -126,15 +126,6 @@ public:
     full
   };
 
-  /// seconds in a minute
-  static constexpr integer MINUTE = 60;
-  /// seconds in a hour
-  static constexpr integer HOUR   = 60 * MINUTE;
-  /// seconds in a day
-  static constexpr integer DAY    = 24 * HOUR;
-  /// seconds in a year
-  static constexpr integer YEAR   = 365 * DAY;
-
 private:
 
 

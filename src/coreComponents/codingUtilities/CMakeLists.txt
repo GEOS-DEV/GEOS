@@ -16,7 +16,8 @@ set( codingUtilities_headers
 #
 set( codingUtilities_sources
      Parsing.cpp
-     StringUtilities.cpp )
+     StringUtilities.cpp
+     )
 
 set( dependencyList ${parallelDeps} common fast_float )
 
@@ -31,8 +32,6 @@ blt_add_library( NAME       codingUtilities
 set_source_files_properties( Parsing.cpp PROPERTIES LANGUAGE CXX )
 
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-
-geosx_add_code_checks(PREFIX codingUtilities )
 
 
 if( GEOS_ENABLE_TESTS )

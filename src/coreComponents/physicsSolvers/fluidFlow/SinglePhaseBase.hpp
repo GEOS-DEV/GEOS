@@ -209,11 +209,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr char const * elemDofFieldString() { return "primaryVariables"; }
-
-    // inputs
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * elemDofFieldString() { return "singlePhaseVariables"; }
   };
 
   /**
@@ -272,10 +268,10 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
+   * @param subRegion subregion that contains the fields
    */
   void
-  updateFluidState( ObjectManagerBase & subRegion ) const;
+  updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
   /**
@@ -284,6 +280,20 @@ public:
    */
   virtual void
   updateFluidModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateMass( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Function to update energy
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateEnergy( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Update all relevant solid internal energy models using current values of temperature
@@ -314,12 +324,12 @@ public:
   void computeHydrostaticEquilibrium();
 
   /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
+   * @brief Update the cell-wise pressure gradient
    */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
+  virtual void updatePressureGradient( DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( domain );
+  }
 
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
@@ -354,6 +364,11 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -390,12 +405,6 @@ protected:
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
   virtual ThermalFluidPropViews getThermalFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
-
-  /// the input temperature
-  real64 m_inputTemperature;
-
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

@@ -9,20 +9,20 @@ set( physicsSolvers_headers
      FieldStatisticsBase.hpp
      contact/ContactSolverBase.hpp
      contact/ContactFields.hpp
-     contact/LagrangianContactSolver.hpp
      contact/SolidMechanicsEFEMKernelsBase.hpp
      contact/SolidMechanicsEFEMKernels.hpp
      contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
      contact/SolidMechanicsEFEMKernelsHelper.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
+     contact/SolidMechanicsLagrangeContact.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp 
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp    
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -32,7 +32,7 @@ set( physicsSolvers_headers
      fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseFields.hpp
-     fluidFlow/FlowSolverBaseKernels.hpp     
+     fluidFlow/FlowSolverBaseKernels.hpp
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
@@ -63,9 +63,13 @@ set( physicsSolvers_headers
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
      fluidFlow/wells/WellSolverBaseFields.hpp
+     inducedSeismicity/inducedSeismicityFields.hpp
+     inducedSeismicity/SeismicityRate.hpp
+     inducedSeismicity/SeismicityRateKernels.hpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
      multiphysics/CoupledReservoirAndWellsBase.hpp
      multiphysics/CoupledSolver.hpp
+     multiphysics/PoromechanicsSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
@@ -79,11 +83,11 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
@@ -125,19 +129,35 @@ set( physicsSolvers_headers
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/SurfaceGeneratorFields.hpp
-     wavePropagation/WaveSolverBase.hpp
-     wavePropagation/WaveSolverUtils.hpp
-     wavePropagation/WaveSolverBaseFields.hpp
-     wavePropagation/AcousticWaveEquationSEM.hpp
-     wavePropagation/AcousticWaveEquationSEMKernel.hpp
-     wavePropagation/ElasticWaveEquationSEM.hpp
-     wavePropagation/ElasticWaveEquationSEMKernel.hpp
-     wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
-     wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
-     wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
-     wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
-     wavePropagation/AcousticVTIWaveEquationSEM.hpp
-     wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp )
+     surfaceGeneration/kernels/surfaceGenerationKernels.hpp
+     surfaceGeneration/kernels/surfaceGenerationKernelsHelpers.hpp
+     wavePropagation/shared/WaveSolverBase.hpp
+     wavePropagation/shared/WaveSolverUtils.hpp
+     wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp
+     wavePropagation/sem/acoustic/shared/AcousticFields.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEMKernel.hpp
+     wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp
+     wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticPMLSEMKernel.hpp
+     wavePropagation/sem/elastic/shared/ElasticFields.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp
+     wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.hpp
+     wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEMKernel.hpp
+     wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp
+     wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEMKernel.hpp
+     wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIFields.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticFields.hpp
+     wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticTimeSchemeSEMKernel.hpp
+     wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
+     wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEMKernel.hpp )
 
 # Specify solver sources
 set( physicsSolvers_sources
@@ -147,8 +167,8 @@ set( physicsSolvers_sources
      SolverBase.cpp
      SolverStatistics.cpp
      contact/ContactSolverBase.cpp
-     contact/LagrangianContactSolver.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
+     contact/SolidMechanicsLagrangeContact.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp
@@ -171,6 +191,7 @@ set( physicsSolvers_sources
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
+     inducedSeismicity/SeismicityRate.cpp
      multiphysics/CompositionalMultiphaseReservoirAndWells.cpp
      multiphysics/CoupledReservoirAndWellsBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
@@ -194,12 +215,13 @@ set( physicsSolvers_sources
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
-     wavePropagation/WaveSolverBase.cpp
-     wavePropagation/AcousticWaveEquationSEM.cpp
-     wavePropagation/ElasticWaveEquationSEM.cpp
-     wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
-     wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-     wavePropagation/AcousticVTIWaveEquationSEM.cpp )
+     wavePropagation/shared/WaveSolverBase.cpp
+     wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
+     wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp
+     wavePropagation/sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.cpp
+     wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.cpp
+     wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
+     wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
@@ -225,5 +247,4 @@ if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
-geosx_add_code_checks( PREFIX physicsSolvers )
 

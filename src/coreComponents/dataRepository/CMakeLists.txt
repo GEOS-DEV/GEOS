@@ -59,8 +59,6 @@ blt_add_library( NAME       dataRepository
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX dataRepository )
-
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )

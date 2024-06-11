@@ -6,6 +6,9 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     Table/TableLayout.hpp
+     Table/TableFormatter.hpp
+     Table/TableData.hpp
      Outputs/TimeHistoryOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
@@ -22,6 +25,9 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     Table/TableLayout.cpp
+     Table/TableFormatter.cpp
+     Table/TableData.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
@@ -75,7 +81,7 @@ if( ENABLE_VTK )
     list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
@@ -88,5 +94,9 @@ blt_add_library( NAME       fileIO
 
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks(PREFIX fileIO )
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( Table/unitTests )
+endif()
+
+
 

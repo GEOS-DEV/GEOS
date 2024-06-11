@@ -19,12 +19,9 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-
 
 namespace geos
 {
@@ -45,25 +42,16 @@ ENUM_STRINGS( StabilizationType,
 }
 
 template< typename FLOW_SOLVER >
-class MultiphasePoromechanics : public CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Flow = 0,
-    SolidMechanics = 1
-  };
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for MultiphasePoromechanics Objects
@@ -80,29 +68,22 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )   // special case
+    {
+      return "MultiphasePoromechanics";
+    }
+    else   // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
-
-  /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
-   */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
-   */
-  FLOW_SOLVER * flowSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
-  }
 
   /**
    * @defgroup Solver Interface Functions
@@ -118,13 +99,6 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
 
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
-
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain ) override;
-
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -132,7 +106,18 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  void assembleElementBasedTerms( real64 const time,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
+
   virtual void updateState( DomainPartition & domain ) override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -142,15 +127,6 @@ public:
    */
   void updateStabilizationParameters( DomainPartition & domain ) const;
 
-  /*
-   * @brief Utility function to set the stress initialization flag
-   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
-   */
-  void setStressInitialization( integer const performStressInitialization )
-  { m_performStressInitialization = performStressInitialization; }
-
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
-
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -159,9 +135,6 @@ protected:
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    /// Names of the porous materials
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-
     /// Type of stabilization used in the simulation
     constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
 
@@ -170,13 +143,6 @@ protected:
 
     /// Multiplier on stabilization
     constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
-
-    /// Flag to determine whether or not this is aa thermal simulation
-    constexpr static char const * isThermalString() { return "isThermal"; }
-
-    /// Flag to indicate that the solver is going to perform stress initialization
-    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
-
   };
 
 private:
@@ -185,13 +151,7 @@ private:
    * @brief Helper function to recompute the bulk density
    * @param[in] subRegion the element subRegion
    */
-  void updateBulkDensity( ElementSubRegionBase & subRegion );
-
-  /**
-   * @brief Helper function to average the mean stress increment over quadrature points
-   * @param[in] domain the domain partition
-   */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
@@ -213,12 +173,6 @@ private:
 
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
-
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
 
 };
 
@@ -257,7 +211,7 @@ real64 MultiphasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,
-                                                                 solidMechanicsSolver()->getDiscretizationName(),
+                                                                 this->solidMechanicsSolver()->getDiscretizationName(),
                                                                  materialNamesString,
                                                                  kernelWrapper );
 }

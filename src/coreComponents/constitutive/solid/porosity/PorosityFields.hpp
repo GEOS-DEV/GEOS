@@ -82,7 +82,7 @@ DECLARE_FIELD( biotCoefficient,
                "biotCoefficient",
                array1d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Biot coefficient" );
 
@@ -94,21 +94,29 @@ DECLARE_FIELD( thermalExpansionCoefficient,
                WRITE_AND_READ,
                "Thermal expansion coefficient" );
 
-DECLARE_FIELD( meanEffectiveStressIncrement_k,
-               "meanEffectiveStressIncrement_k",
+DECLARE_FIELD( meanTotalStressIncrement_k,
+               "meanTotalStressIncrement_k",
                array2d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,
-               "Mean effective stress increment at quadrature points at the previous sequential iteration" );
+               "Mean total stress increment at quadrature points at the previous sequential iteration" );
 
-DECLARE_FIELD( averageMeanEffectiveStressIncrement_k,
-               "averageMeanEffectiveStressIncrement_k",
+DECLARE_FIELD( averageMeanTotalStressIncrement_k,
+               "averageMeanTotalStressIncrement_k",
                array1d< real64 >,
                0,
                NOPLOT,
                NO_WRITE,
-               "Mean effective stress increment averaged over quadrature points at the previous sequential iteration" );
+               "Mean total stress increment averaged over quadrature points at the previous sequential iteration" );
+
+DECLARE_FIELD( grainBulkModulus,
+               "grainBulkModulus",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Biot coefficient" );
 
 
 

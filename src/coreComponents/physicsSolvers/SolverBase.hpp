@@ -21,12 +21,10 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-
 
 #include <limits>
 
@@ -50,8 +48,6 @@ public:
   SolverBase( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
-
-  static string catalogName() { return "SolverBase"; }
 
   /**
    * @return Get the final class Catalog name
@@ -153,7 +149,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -163,6 +159,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -615,6 +622,10 @@ public:
    *       {0.0,0.0,-9.81}
    */
   R1Tensor const gravityVector() const;
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
+
+  virtual void saveSequentialIterationState( DomainPartition & domain );
 
   /**
    * @brief accessor for the linear solver parameters.
