@@ -84,6 +84,8 @@ public:
     m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
     m_configurationTolerance = params.m_configurationTolerance;
 
+    setLogLevel( params.getLogLevel());
+
     return *this;
   }
 
@@ -97,6 +99,8 @@ public:
   static string catalogName() { return "NonlinearSolverParameters"; }
 
   virtual void postProcessInput() override;
+
+  void print() const;
 
   struct viewKeysStruct
   {
