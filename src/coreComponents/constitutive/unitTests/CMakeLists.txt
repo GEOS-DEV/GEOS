@@ -17,7 +17,7 @@ set( gtest_geosx_tests
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
