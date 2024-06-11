@@ -60,16 +60,6 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
                           DofManager::Connector::Elem );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
-{
-  return solidMechanicsSolver()->updateConfiguration( domain );
-}
-
-bool SinglePhasePoromechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
-{
-  return solidMechanicsSolver()->resetConfigurationToDefault( domain );
-}
-
 void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition & domain,
                                                                DofManager & dofManager,
                                                                CRSMatrix< real64, globalIndex > & localMatrix,
@@ -754,12 +744,6 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
       } );
     } );
   } );
-}
-
-
-void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
-{
-  solidMechanicsSolver()->outputConfigurationStatistics( domain );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )

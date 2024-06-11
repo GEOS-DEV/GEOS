@@ -1857,7 +1857,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
   using namespace fields::contact;
 
-  int hasConfigurationConverged = true;
+  real64 changedArea = 0;
+  real64 totalArea = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1875,13 +1876,15 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
 
       arrayView1d< real64 const > const & normalTractionTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
       arrayView1d< real64 const > const & normalDisplacementTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
 
-      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > changed( 0 );
+      RAJA::ReduceSum< parallelHostReduce, real64 > total( 0 );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -1941,27 +1944,28 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                 fractureState[kfe] = contact::FractureState::Stick;
               }
             }
-            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+
+            changed += faceArea[kfe] * !compareFractureStates( originalFractureState, fractureState[kfe] );
+            total += faceArea[kfe];
           }
         } );
       } );
 
-      hasConfigurationConverged &= checkActiveSetSub.get();
+      changedArea += changed.get();
+      totalArea += total.get();
     } );
   } );
 
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 
-  // Compute if globally the fracture state has changed
-  int hasConfigurationConvergedGlobally;
-  MpiWrapper::allReduce( &hasConfigurationConverged,
-                         &hasConfigurationConvergedGlobally,
-                         1,
-                         MPI_LAND,
-                         MPI_COMM_GEOSX );
+  // Compute global area of changed elements
+  changedArea = MpiWrapper::sum( changedArea );
+  // and total area of fracture elements
+  totalArea = MpiWrapper::sum( totalArea );
 
-  return hasConfigurationConvergedGlobally;
+  // Assume converged if changed area is below certain fraction of total area
+  return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
 }
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const

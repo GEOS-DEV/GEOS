@@ -185,34 +185,6 @@ void ElasticWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
 
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-  real64 dt = 0;
-  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
-  {
-    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + getName() )
-    {
-      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
-    }
-  }
-
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
-
-  if( m_dtSeismoTrace > 0 )
-  {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace ) + 1;
-  }
-  else
-  {
-    m_nsamplesSeismoTrace = 0;
-  }
-  localIndex const nsamples = int( maxTime / dt ) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
-  m_sourceValue.resize( nsamples, numSourcesGlobal );
-
   if( m_useDAS == WaveSolverUtils::DASType::none )
   {
     localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
@@ -605,7 +577,12 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                                             kernelFactory );
   }
 
-  addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
+  //Modification of cycleNember useful when minTime < 0
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+  integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
+
+  addSourceToRightHandSide( cycleForSource, rhsx, rhsy, rhsz );
 
   SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
   ElasticTimeSchemeSEM::LeapFrog( dt, ux_np1, ux_n, ux_nm1, uy_np1, uy_n, uy_nm1, uz_np1, uz_n, uz_nm1,
