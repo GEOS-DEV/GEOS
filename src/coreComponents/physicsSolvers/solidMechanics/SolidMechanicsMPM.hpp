@@ -284,6 +284,8 @@ public:
     static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
+    static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
+    static constexpr char const * gridNumMappedParticlesString() { return "gridNumMappedParticles"; }
     static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
     static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
 
@@ -835,6 +837,7 @@ protected:
   int m_cpdiDomainScaling;
   int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
+  int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
 
   real64 m_smallMass;
 
@@ -871,11 +874,6 @@ protected:
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
 
-  // //Initial grid parameters
-  // array1d< real64 > m_hEl0;
-  // array1d< real64 > m_xLocalMin0;
-  // array1d< real64 > m_xLocalMax0;
-
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
   int m_useEvents;                   // Events flag
@@ -889,6 +887,8 @@ protected:
   real64 m_xProfileWriteInterval;
   real64 m_nextXProfileWriteTime;
   real64 m_xProfileVx0;
+
+  real64 m_implicitContinuumFluidPressure; // Borehole collapse
 
 private:
   struct BinKey

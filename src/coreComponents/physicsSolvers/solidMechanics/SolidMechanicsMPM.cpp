@@ -68,30 +68,6 @@ bool compareFloat( real64 a, real64 b, real64 epsilon){
   return std::fabs( a - b ) < epsilon;
 }
 
-// template< typename T >
-// void generateCombinationsUtil( std::vector<std::vector<T>>& result, 
-//                                std::vector<T>& current,
-//                                std::vector<std::vector<T>>& arrays, int depth) {
-//     if (depth == arrays.size()) {
-//         result.push_back(current);
-//         return;
-//     }
-
-//     for (int i = 0; i < arrays[depth].size(); ++i) {
-//         current.push_back(arrays[depth][i]);
-//         generateCombinationsUtil(result, current, arrays, depth + 1);
-//         current.pop_back();
-//     }
-// }
-
-// template< typename T >
-// vector<vector<T>> generateCombinations(std::vector<std::vector<T>>& arrays) {
-//     std::vector<std::vector<T>> result;
-//     std::vector<T> current;
-//     generateCombinationsUtil(result, current, arrays, 0);
-//     return result;
-// }
-
 // Flattened combinations function to avoid performance hit from recursive calls
 GEOS_HOST_DEVICE
 array2d< int > generateCombinations(array1d< array1d< int > > sets)
@@ -201,6 +177,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_cpdiDomainScaling( 0 ),
   m_subdivideParticles( 0 ),
   m_disableSurfaceNormalsAndPositionsOnCPDIScaling( 0 ),
+  m_disableSurfaceNormalsAndPositionsOnDamage( 0 ),
   m_smallMass( DBL_MAX ),
   m_numContactGroups( 0 ),
   m_numContactFlags(),
@@ -692,6 +669,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for disabling explicit surface normals and positions when a particle has severely deformed" );
 
+  registerWrapper( "disableSurfaceNormalsAndPositionsOnDamage", &m_disableSurfaceNormalsAndPositionsOnDamage ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_disableSurfaceNormalsAndPositionsOnDamage ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Option for disabling explicit surface normals and positions when a particle has been severely damaged" );
+
   registerWrapper( "generalizedVortexMMS", &m_generalizedVortexMMS ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_generalizedVortexMMS ).
@@ -909,6 +892,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "number of elements along partition directions" );
   
+  registerWrapper( "implicitContinuumFluidPressure", &m_implicitContinuumFluidPressure).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Pressure of implicit continuum fluid" );
+
   m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
 }
 
@@ -1280,182 +1269,192 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
     }
     else // Background grid field registration
     {
-      NodeManager & nodes = meshLevel.getNodeManager();
+      NodeManager & nodeManager = meshLevel.getNodeManager();
 
-      nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::gridCohesiveNodeString() ).
+      nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridCohesiveNodeString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the flag for whether node is part of a cohesive zone" );
 
       // CC: debug, currently using to check mappings of surface normals*******************************
-      nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() ).
+      nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the mass for partitioning cohesive particles" );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the mass of surface particles for each field" );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the surface normal for partitioning cohesive particles" );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the surface normal corresponding to the particle with the largest ID" );
 
-      nodes.registerWrapper< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() ).
+      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds flag for whether a cohesive particle was mapped to the field of a grid node" );
 
-      nodes.registerWrapper< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() ).
+      nodeManager.registerWrapper< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() ).
         setPlotLevel( PlotLevel::NOPLOT).
         setRegisteringObjects( this->getName() ).
         setDescription( "Holds the max global ID of the particles that mapped to the grid node" );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the cohesive force for each field" );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCohesiveTractionString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCohesiveTractionString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array storing the normal cohesive traction for each field" );
       //*********************************************************************************************
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridReferenceSurfacePositionString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridReferenceSurfacePositionString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the  surface position" );
 
-      nodes.registerWrapper< array1d< real64 > >( viewKeyStruct::gridReferenceMaterialVolumeString() ).
+      nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridReferenceMaterialVolumeString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the reference material volume" );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the reference area vector" );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDisplacementString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDisplacementString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that hold the displacement on the nodes for each field");
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that hold the center of volume on the nodes for each field");
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridParticleMappedSurfaceNormalString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridParticleMappedSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the surface normals interpoalted from particles for each field");
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMassString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMassString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the mass on the nodes." );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the material volume on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVelocityString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVelocityString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current velocity on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDVelocityString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDVelocityString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the change in velocity from enforcing contact." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridMomentumString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridMomentumString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current momentum on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridAccelerationString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridAccelerationString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current acceleration on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                         " conditions as well as coupling forces such as hydraulic forces." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridInternalForceString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridInternalForceString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the internal forces on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the contact force on the nodes." );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridDamageString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridDamageString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle damage to the nodes." );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle damage gradients to the nodes." );
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the maximum damage of any particle mapping to a given node." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds weights of surface normals at nodes." );
+
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the number of particles mapping to each field of a grid node." );
+
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the contact surface normals on the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the contact surface positions on the nodes." );  
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle positions to the nodes." );
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridNormalStressString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridNormalStressString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle normal stresses to the nodes for x profiling." );     
 
-      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle mass weighted damage to the nodes for x profiling." );     
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVPlusString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVPlusString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of each XPIC and FMPM order iteration" );   
 
-      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDVPlusString() ).
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridDVPlusString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of each XPIC and FMPM order iteration for multifield contact" );   
 
-      Group & nodeSets = nodes.sets();
+      Group & nodeSets = nodeManager.sets();
 
       nodeSets.registerWrapper< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -1468,10 +1467,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       // Adjust plotting levels for grid fields to match those specified in plottable fields
       if( m_plottableFieldsSorted.size() > 0 )
       {
-        std::vector< string > const wrapperNames  = nodes.getWrappersNames();
+        std::vector< string > const wrapperNames  = nodeManager.getWrappersNames();
         for( const std::string & wrapperName : wrapperNames )
         {
-          WrapperBase & wrapper = nodes.getWrapperBase( wrapperName );
+          WrapperBase & wrapper = nodeManager.getWrapperBase( wrapperName );
           if( !m_plottableFieldsSorted.contains( wrapperName ) )
           {
             wrapper.setPlotLevel( PlotLevel::NOPLOT );
@@ -1998,6 +1997,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -2232,6 +2233,33 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   if( m_prescribedBcTable == 1 )
   {
     boundaryConditionUpdate( dt, time_n );
+  }
+
+
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_disableSurfaceNormalsAndPositionsOnDamage == 1, "Disable explicit normals and positions of fully damaged particles" );
+  solverProfilingIf( "Disable explicit normals and positions of fully damaged particles", m_disableSurfaceNormalsAndPositionsOnDamage == 1 );
+  //#######################################################################################
+  if( m_disableSurfaceNormalsAndPositionsOnDamage == 1 )
+  {
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+      arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+      arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
+
+      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+
+        if( particleDamage[p] >= 0.99999999 ) // Should this threshol be an optional user input
+        {
+          LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
+          LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
+        }
+      } );
+    } );
   }
 
 
@@ -3550,6 +3578,8 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
                                                    NodeManager & nodeManager )
 {
   // Grid fields
+  // arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
@@ -3558,6 +3588,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
   {
     // Particle fields
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    // arrayView1d< real64 const > const particleMass = subRegion.getField< mpm::fields::particleMass >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
     
@@ -3590,6 +3621,30 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
                                                particleSurfaceNormal[p],
                                                gridDamageGradient[mappedNode] );
 
+        // real64 surfaceNormal[3] = { 0 };
+        // for( int i = 0; i < numDims; i++ )
+        // {
+        //   surfaceNormal[i] += shapeFunctionGradientValues[pp][g][i] * particleVolume[p] / shapeFunctionValues[pp][g];
+        // }
+
+        // // Also maps explicit particle surface normals which will dominate if m_explicitSurfaceNormalInfluence is large
+        // if( particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ) // Update this with enum type for type safety to specifically only implement 2 and 3 for now (those with explicit surface normals)
+        // {
+        //   for( int i = 0; i < numDims; i++ )
+        //   {
+        //     surfaceNormal[i] += m_explicitSurfaceNormalInfluence * particleSurfaceNormal[p][i] * particleVolume[p]; //* shapeFunctionValues[pp][g];
+        //   }
+        // }
+
+        // for( int i = 0; i < numDims; i++ )
+        // {
+        //   gridSurfaceNormal[mappedNode][fieldIndex][i] += shapeFunctionValues[pp][g] * particleMass[p] * surfaceNormal[i];
+        // }
+
+
+        // gridNumMappedParticles[g][fieldIndex] += LvArray::tensorOps::normalize< 3 >( surfaceNormal ) * particleMass[p] * shapeFunctionValues[pp][g];
+
+        // Old compute grid surface normals code
         for( int i = 0; i < numDims; i++ )
         {
           gridSurfaceNormal[mappedNode][fieldIndex][i] += shapeFunctionGradientValues[pp][g][i] * particleVolume[p];
@@ -3618,7 +3673,7 @@ void SolidMechanicsMPM::computeGridSurfacePositions( ParticleManager & particleM
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   // arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
-  arrayView2d< real64 >  const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
+  arrayView2d< real64 > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ); 
 
   localIndex subRegionIndex = 0;
@@ -3692,8 +3747,10 @@ void SolidMechanicsMPM::computeGridSurfacePositions( ParticleManager & particleM
 
 void SolidMechanicsMPM::normalizeGridSurfaceNormals( NodeManager & nodeManager )
 {
-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  // arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  // arrayView2d< real64 const > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
+  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
 
   int const numNodes = nodeManager.size();
   int const numVelocityFields = m_numVelocityFields;
@@ -3706,26 +3763,21 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( NodeManager & nodeManager )
       arraySlice1d< real64 > const surfaceNormal = gridSurfaceNormal[g][fieldIndex];
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
-        real64 norm = planeStrain == 1 ? sqrt( surfaceNormal[0] * surfaceNormal[0] + surfaceNormal[1] * surfaceNormal[1] ) : LvArray::tensorOps::l2Norm< 3 >( surfaceNormal );
+        real64 norm = planeStrain == 1 ? sqrt( surfaceNormal[0] * surfaceNormal[0] + surfaceNormal[1] * surfaceNormal[1] ) : LvArray::tensorOps::l2Norm< 3 >( surfaceNormal );       
         if( norm > 1e-12 ) // TODO: Pick a good global threhsold, probably should be a user settable input
         {
           LvArray::tensorOps::scale< 3 >( surfaceNormal, 1.0 / norm );
-        }
-        else
-        {
-          // CC: TODO: Change to lvarray fill
-          surfaceNormal[0] = 0.0;
-          surfaceNormal[1] = 0.0;
-          surfaceNormal[2] = 0.0;
+
+          // if(gridNumMappedParticles[g][fieldIndex] > 1e-12)
+          // {
+          //   gridSurfaceNormalWeights[g][fieldIndex] = norm / gridNumMappedParticles[g][fieldIndex];
+          // }
+
+          continue;
         }
       }
-      else
-      {
-        // CC: TODO: Change to lvarray fill
-        surfaceNormal[0] = 0.0;
-        surfaceNormal[1] = 0.0;
-        surfaceNormal[2] = 0.0;
-      }
+
+      LvArray::tensorOps::fill< 3 >( surfaceNormal, 0.0);
     }
   } );
 }
@@ -3745,15 +3797,12 @@ void SolidMechanicsMPM::normalizeGridSurfacePositions( NodeManager & nodeManager
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; fieldIndex++ )
     {
       if( gridSurfaceFieldMass[g][fieldIndex] > smallMass ) // small mass threshold
-      // if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
-        // LvArray::tensorOps::scale< 3 >( gridSurfacePosition[g][fieldIndex], 1 / gridMass[g][fieldIndex] );
         LvArray::tensorOps::scale< 3 >( gridSurfacePosition[g][fieldIndex], 1 / gridSurfaceFieldMass[g][fieldIndex] );
+        continue;
       }
-      else
-      {
-        LvArray::tensorOps::fill< 3 >( gridSurfacePosition[g][fieldIndex], 0.0 );
-      }
+
+      LvArray::tensorOps::fill< 3 >( gridSurfacePosition[g][fieldIndex], 0.0 );
     }
   } );
 }
@@ -5838,6 +5887,8 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
   arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+  arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
 
@@ -5884,6 +5935,9 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridMaxDamage[g][fieldIndex] = 0.0;
         gridMassWeightedDamage[g][fieldIndex] = 0.0;
         
+        gridNumMappedParticles[g][fieldIndex] = 0;
+        gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
+
         for( int i = 0; i < 3; i++ )
         {
           gridCenterOfMass[g][fieldIndex][i] = 0.0;
@@ -6908,7 +6962,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
 
       if( particleCohesiveZoneFlag[p] == 1 )
       {
-        if( particleDamage[p] < 1 )
+        if( particleDamage[p] < 1.0 )
         {
           // Map particle displacement to grid
           for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
