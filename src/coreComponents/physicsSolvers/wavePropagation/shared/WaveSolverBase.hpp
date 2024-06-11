@@ -413,8 +413,8 @@ DECLARE_FIELD( referencePosition32,
                "Copy of the referencePosition from NodeManager in 32 bits integer" );
 DECLARE_FIELD( taperCoeff,
                "taperCoeff",
-               array1d<real32>,
-               0,
+               array1d< real32 >,
+               1.0,
                NOPLOT,
                WRITE_AND_READ,
                "Array continaing the coefficients for the taper" );

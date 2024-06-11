@@ -19,9 +19,12 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_TAPERKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_TAPERKERNEL_HPP_
 
+#include "WaveSolverUtils.hpp"
+
 namespace geos
 {
 
+  using wsCoordType = WaveSolverUtils::wsCoordType;
 
   struct TaperKernel
   {
@@ -50,51 +53,51 @@ namespace geos
     template< typename EXEC_POLICY>
     static void
     computeTaperCoeff( localIndex const size,
-            arrayView2d< real64 const > const elemCenter,
-            R1Tensor32 const xMin,
-            R1Tensor32 const xMax,
-            R1Tensor32 const dMin,
-            R1Tensor32 const dMax,
-            real32 taperConstant,
-            arrayView1d<real32 > const taperCoeff )
+                       arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                       R1Tensor32 const xMin,
+                       R1Tensor32 const xMax,
+                       R1Tensor32 const dMin,
+                       R1Tensor32 const dMax,
+                       real32 taperConstant,
+                       arrayView1d<real32 > const taperCoeff )
     {
       /// Loop over elements in the subregion, 'l' is the element index within the target set
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-         real32 tmpXmin = (xMin[0]-elemCenter[k][0])/dMin[0];
-         real32 tmpxMax = (elemCenter[k][0]-xMax[0])/dMax[0];
+         real32 tmpXmin = (xMin[0]-nodeCoords[a][0])/dMin[0];
+         real32 tmpxMax = (nodeCoords[a][0]-xMax[0])/dMax[0];
 
-         real32 tmpYmin = (xMin[1]-elemCenter[k][1])/dMin[1];
-         real32 tmpYmax = (elemCenter[k][1]-xMax[1])/dMax[1];
+         real32 tmpYmin = (xMin[1]-nodeCoords[a][1])/dMin[1];
+         real32 tmpYmax = (nodeCoords[a][1]-xMax[1])/dMax[1];
 
-         real32 tmpZmin = (xMin[2]-elemCenter[k][2])/dMin[2];
-         real32 tmpZmax = (elemCenter[k][2]-xMax[2])/dMax[2];
+         real32 tmpZmin = (xMin[2]-nodeCoords[a][2])/dMin[2];
+         real32 tmpZmax = (nodeCoords[a][2]-xMax[2])/dMax[2];
 
          real32 dist = 0.0;
 
-         if (xMin[0]>elemCenter[k][0])
+         if (xMin[0]>nodeCoords[a][0])
          {
-           if (xMin[2]>elemCenter[k][2])
+           if (xMin[2]>nodeCoords[a][2])
            {
              dist = LvArray::math::min(tmpXmin,tmpZmin);
-             if (xMin[1]>elemCenter[k][1])
+             if (xMin[1]>nodeCoords[a][1])
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xMax[1])
+             else if (nodeCoords[a][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
 
            }
-           else if ( elemCenter[k][2] > xMax[2])
+           else if ( nodeCoords[a][2] > xMax[2])
            {
              dist = LvArray::math::min(tmpXmin,tmpZmax);
-             if (xMin[1]>elemCenter[k][1])
+             if (xMin[1]>nodeCoords[a][1])
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xMax[1])
+             else if (nodeCoords[a][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -103,30 +106,31 @@ namespace geos
            else
            {
             dist=tmpXmin;
+            taperCoeff[a] = LvArray::math::exp(-0.015*(dMin[0]-nodeCoords[a][0]));
            }
          }
-         else if (elemCenter[k][0]>xMax[0])
+         else if (nodeCoords[a][0]>xMax[0])
          {
-          if (xMin[2]>elemCenter[k][2])
+          if (xMin[2]>nodeCoords[a][2])
           {
             dist = LvArray::math::min(tmpxMax,tmpZmin);
-            if (xMin[1]>elemCenter[k][1])
+            if (xMin[1]>nodeCoords[a][1])
              {
                 dist= LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xMax[1])
+             else if (nodeCoords[a][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
           }
-          else if ( elemCenter[k][2] > xMax[2])
+          else if ( nodeCoords[a][2] > xMax[2])
            {
              dist = LvArray::math::min(tmpXmin,tmpZmax); //faux
-             if (xMin[1]>elemCenter[k][1])
+             if (xMin[1]>nodeCoords[a][1])
              {
                dist = LvArray::math::min(dist,tmpYmin);
              }
-             else if (elemCenter[k][1] > xMax[1])
+             else if (nodeCoords[a][1] > xMax[1])
              {
                 dist=LvArray::math::min(dist,tmpYmax);
              }
@@ -137,13 +141,13 @@ namespace geos
             dist=tmpxMax;
            }
          }
-         if (xMin[2]>elemCenter[k][2])
+         if (xMin[2]>nodeCoords[a][2])
          {
-          if (xMin[1]>elemCenter[k][1])
+          if (xMin[1]>nodeCoords[a][1])
           {
              dist= LvArray::math::min(tmpZmin,tmpYmin);
           }
-          else if (elemCenter[k][1] > xMax[1])
+          else if (nodeCoords[a][1] > xMax[1])
           {
              dist=LvArray::math::min(tmpZmin,tmpYmax);
           }
@@ -153,13 +157,13 @@ namespace geos
           }
 
          }
-         else if ( elemCenter[k][2] > xMax[2])
+         else if ( nodeCoords[a][2] > xMax[2])
          {
-            if (xMin[1]>elemCenter[k][1])
+            if (xMin[1]>nodeCoords[a][1])
             {
               dist = LvArray::math::min(tmpZmax,tmpYmin);
             }
-            else if (elemCenter[k][1] > xMax[1])
+            else if (nodeCoords[a][1] > xMax[1])
             {
                dist=LvArray::math::min(tmpZmax,tmpYmax);
             }
@@ -168,12 +172,12 @@ namespace geos
               dist=tmpZmax;
             }
          }
-         else if (xMin[1]>elemCenter[k][1])
+         else if (xMin[1]>nodeCoords[a][1])
          {
            dist=tmpYmin;
          }
 
-         else if (elemCenter[k][1] > xMax[1])
+         else if (nodeCoords[a][1] > xMax[1])
          {
            dist=tmpYmax;
          }
@@ -183,27 +187,18 @@ namespace geos
 
          }
 
-         taperCoeff[k] = (taperConstant -1.0)*dist*dist+1.0;
-
       } );
     }
 
-    template< typename EXEC_POLICY, typename FE_TYPE >
+    template< typename EXEC_POLICY>
     static void
     multiplyByTaperCoeff(localIndex const size,
-                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                          arrayView1d<real32 const > const taperCoeff,
                          arrayView1d<real32 > const vector)
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        for (localIndex i = 0; i < numNodesPerElem; ++i)
-        {
-          vector[elemsToNodes[k][i]] *= taperCoeff[k];
-        }
-
+        vector[a] *= taperCoeff[a];
       } );
 
     }

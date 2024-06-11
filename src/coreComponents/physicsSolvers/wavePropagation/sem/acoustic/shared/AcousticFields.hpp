@@ -193,7 +193,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                NOPLOT,
                WRITE_AND_READ,
                "PML scalar auxiliary variable 4." );
-
 }
 
 }

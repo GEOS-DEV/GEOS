@@ -122,7 +122,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
@@ -159,6 +159,12 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
+  if (m_useTaper==1)
+  {
+    arrayView1d< real32 > const taperCoeff = nodeManager.getField<fields::taperCoeff>();
+    TaperKernel::computeTaperCoeff< EXEC_POLICY > (nodeManager.size(),nodeCoords32,m_xMinTaper, m_xMaxTaper,m_thicknessMinXYZTaper,m_thicknessMaxXYZTaper,m_taperConstant,taperCoeff);
+  }
+
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
@@ -170,14 +176,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
-
-   
-
-    if (m_useTaper==1)
-    {
-       arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
-      TaperKernel::computeTaperCoeff< EXEC_POLICY > (elementSubRegion.size(),elemCenter,m_xMinTaper, m_xMaxTaper,m_thicknessMinXYZTaper,m_thicknessMaxXYZTaper,m_taperConstant,taperCoeff);
-    }
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -950,6 +948,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
   arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
+  arrayView1d< real32 > const taperCoeff = nodeManager.getField<fields::taperCoeff>();
+
   arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
@@ -980,31 +980,10 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
     
+    
     if(m_useTaper==1)
     {
-      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                          CellElementSubRegion & elementSubRegion )
-  
-      {
-         GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-         getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
-         InputError );
-  
-         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-         arrayView1d< real32 > const taperCoeff = elementSubRegion.getField<fields::taperCoeff>();
-  
-         finiteElement::FiniteElementBase const &
-         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-         finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
-         {
-  
-          using FE_TYPE = TYPEOFREF( finiteElement );
-  
-          TaperKernel::multiplyByTaperCoeff<EXEC_POLICY, FE_TYPE>(elementSubRegion.size(),elemsToNodes,taperCoeff,p_np1);
-  
-         } );
-  
-      } );
+      TaperKernel::multiplyByTaperCoeff<EXEC_POLICY>(nodeManager.size(),taperCoeff,p_np1);
     }
   }
   else

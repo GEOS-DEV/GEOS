@@ -283,15 +283,8 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
       }
     }
 
-    if (m_useTaper==1)
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-      elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-      {
-         subRegion.registerField<fields::taperCoeff>(this->getName());
-      } );
-
-    }
+ 
+      nodeManager.registerField<fields::taperCoeff > (this->getName());
 
   } );
 }
