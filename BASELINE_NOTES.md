@@ -75,3 +75,8 @@ PR #3044 (2024-05-02)
 Removed old integratedTests submodule
 Implemented new baseline storage
 Implemented new CI integrated tests
+
+
+PR #3140 (2024-06-11)
+======================
+Fixed derivative in EzrokhiBrineDensity
