@@ -267,8 +267,8 @@ void LinearSolverParametersInput::print()
 {
   TableData tableData;
   tableData.addRow( "Log level", getLogLevel());
-  tableData.addRow( "Linear solver type", EnumStrings< LinearSolverParameters::SolverType >::toString( m_parameters.solverType ) );
-  tableData.addRow( "Preconditioner type", EnumStrings< LinearSolverParameters::PreconditionerType >::toString( m_parameters.preconditionerType ) );
+  tableData.addRow( "Linear solver type", m_parameters.solverType );
+  tableData.addRow( "Preconditioner type", m_parameters.preconditionerType );
   tableData.addRow( "Stop if error", m_parameters.stopIfError );
   if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
