@@ -397,14 +397,11 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
     arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
     arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
     arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-    //arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-    //arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
       LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
-      //oldFractureState[kfe] = fractureState[kfe];
     } );
 
   } );

@@ -186,7 +186,7 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
-   * @brief Calculate shape functions values for each support face at a
+   * @brief Calculate face bubble functions values for each face at a
    *   given point in the parent space.
    * @param pointCoord coordinates of the given point.
    * @param N An array to pass back the shape function values for each support
@@ -209,7 +209,7 @@ public:
   }
 
   /**
-   * @brief Calculate shape functions values for each support face at a
+   * @brief Calculate face bubble functions values for each face at a
    *   quadrature point.
    * @param q Index of the quadrature point.
    * @param N An array to pass back the shape function values for each support
@@ -260,7 +260,7 @@ public:
                            real64 ( &gradN )[numNodes][3] );
 
   /**
-   * @brief Calculate the shape bubble function derivatives wrt the physical
+   * @brief Calculate the bubble function derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
