@@ -66,7 +66,7 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_parameters = CompositionalDensity::createParameters( nullptr );
+    m_parameters = CompositionalDensity::createParameters( std::make_unique< ModelParameters >() );
     auto * equationOfState = const_cast< EquationOfState * >(m_parameters->get< EquationOfState >());
     equationOfState->m_equationsOfStateNames.resize( 1 );
     equationOfState->m_equationsOfStateNames[0] = EnumStrings< EquationOfStateType >::toString( EOS_TYPE );
