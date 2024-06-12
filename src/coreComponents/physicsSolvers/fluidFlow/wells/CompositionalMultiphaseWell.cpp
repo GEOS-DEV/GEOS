@@ -377,8 +377,8 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
       compareMultiphaseModels( fluid, referenceFluid );
       compareMulticomponentModels( fluid, referenceFluid );
 
-      string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
+      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
       compareMultiphaseModels( relPerm, referenceFluid );
 
       WellControls const & wellControls = getWellControls( subRegion );
