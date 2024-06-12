@@ -41,8 +41,6 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/pyt
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
 
-set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
-
 # caliper 
 set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
 set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "" FORCE)
