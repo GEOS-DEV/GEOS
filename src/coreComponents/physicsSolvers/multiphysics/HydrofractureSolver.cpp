@@ -26,6 +26,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geos
 {
@@ -33,39 +34,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename POROMECHANICS_SOLVER > class
-  HydrofractureSolverCatalogNames {};
-
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return "Hydrofracture"; }
-};
-
-// Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return "MultiphaseHydrofracture"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-HydrofractureSolver< POROMECHANICS_SOLVER >::
-catalogName()
-{
-  return HydrofractureSolverCatalogNames< POROMECHANICS_SOLVER >::name();
-}
-
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
@@ -258,7 +226,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
                                          flow::pressure_n::key(),
-                                         SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                         fields::elementAperture::key() },
                                        { m_surfaceGenerator->getFractureRegionName() } );
 
       fieldsToBeSync.addFields( FieldLocation::Node,
@@ -1019,7 +987,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
 
-      arrayView1d< real64 > const aperture = subRegion.getReference< array1d< real64 > >( "elementAperture" );
+      arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
 
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
@@ -1155,7 +1123,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
 namespace
 {
-typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
+typedef HydrofractureSolver<> SinglePhaseHydrofracture;
 // typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )

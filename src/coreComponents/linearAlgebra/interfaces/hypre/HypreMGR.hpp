@@ -203,6 +203,7 @@ protected:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, 16 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
@@ -225,11 +226,12 @@ protected:
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
-    // TODO: keep or not 1 aggressive level?
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) ); // TODO: keep or not 1 aggressive level?
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, 16 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 2 ) ); // pressure and temperature (CPTR)
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 0 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
