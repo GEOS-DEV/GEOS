@@ -83,8 +83,6 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) override { flowSolver()->saveSequentialIterationState( domain ); }
-
 protected:
 
   virtual void initializePreSubGroups() override;
