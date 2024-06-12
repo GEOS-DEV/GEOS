@@ -66,7 +66,7 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_parameters = CompositionalDensity< EOS_TYPE >::createParameters( nullptr );
+    m_parameters = CompositionalDensity< EOS_TYPE >::createParameters( std::make_unique< ModelParameters >() );
     m_density = std::make_unique< CompositionalDensity< EOS_TYPE > >( "PhaseDensity", componentProperties, 0, *m_parameters );
   }
 
