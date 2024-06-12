@@ -2245,18 +2245,23 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
       arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+      arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
       arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+      arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
       arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-
+    
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
 
-        if( particleDamage[p] >= 0.99999999 ) // Should this threshol be an optional user input
+        if( particleDamage[p] >= 0.9 ) // Should this threshol be an optional user input
         {
           LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
           LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
+
+          LvArray::tensorOps::fill<3>( particleReferenceSurfaceNormal[p], 0.0 );
+          LvArray::tensorOps::fill<3>( particleReferenceSurfacePosition[p], 0.0 );
         }
       } );
     } );
@@ -9240,7 +9245,9 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
     {
       real64 const lCrit = m_planeStrain == 1 ? 0.49999 * fmin( m_hEl[0], m_hEl[1] ) : 0.49999 * fmin( m_hEl[0], fmin( m_hEl[1], m_hEl[2] ) );
       arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+      arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
       arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+      arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
       arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
 
       int const planeStrain = m_planeStrain;
@@ -9288,6 +9295,9 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
             {
               LvArray::tensorOps::fill<3>( particleSurfaceNormal[p], 0.0 );
               LvArray::tensorOps::fill<3>( particleSurfacePosition[p], 0.0 );
+
+              LvArray::tensorOps::fill<3>( particleReferenceSurfaceNormal[p], 0.0 );
+              LvArray::tensorOps::fill<3>( particleReferenceSurfacePosition[p], 0.0 );
             }
           }
         }
@@ -9332,6 +9342,9 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
             {
               LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
               LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
+
+              LvArray::tensorOps::fill<3>( particleReferenceSurfaceNormal[p], 0.0 );
+              LvArray::tensorOps::fill<3>( particleReferenceSurfacePosition[p], 0.0 );
             }
           }
         }
