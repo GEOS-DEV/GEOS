@@ -38,9 +38,21 @@
       timeFrequency="4.32e6"
       target="/Outputs/timeHistoryOutput"/>
     <PeriodicEvent
+      name="compflowHistoryOutput"
+      timeFrequency="4.32e6"
+      target="/Outputs/compflowHistory"/>
+    <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="4.32e6"
       target="/Tasks/compOutfluxCollection"/>
+    <PeriodicEvent
+      name="avaragePressureCollection"
+      timeFrequency="4.32e6"
+      target="/Tasks/averagePressurePackCollection"/>
+    <PeriodicEvent
+      name="minPressureCollection"
+      timeFrequency="4.32e6"
+      target="/Tasks/minPressurePackCollection"/>
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
@@ -346,6 +358,15 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/compOutfluxCollection }"
       filename="compOutfluxHistory"/>
+
+    <TimeHistory
+      name="compflowHistory"
+      sources="{ 
+        /Tasks/averagePressurePackCollection,
+        /Tasks/minPressurePackCollection
+      }"
+      filename="compFlowHistory" />
+
     <Restart
       name="restartOutput"/>    
   </Outputs>
@@ -355,12 +376,23 @@
       name="compOutfluxCollection"
       objectPath="ElementRegions/leakyWell/aquitard11"
       fieldName="componentOutflux"/>
+      
     <CompositionalMultiphaseStatistics
       name="compflowStatistics"
       flowSolverName="compflow"
       logLevel="1"
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
+
+     <PackCollection
+      name="averagePressurePackCollection"
+      objectPath="/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/aquiferTop/regionStatistics"
+      fieldName="averagePressure" />
+
+     <PackCollection
+      name="minPressurePackCollection"
+      objectPath="/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/aquiferTop/regionStatistics"
+      fieldName="minPressure" />
   </Tasks>
   
 </Problem>
