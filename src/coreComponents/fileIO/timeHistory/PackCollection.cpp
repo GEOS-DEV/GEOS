@@ -36,6 +36,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "Whether or not to create coordinate meta-collectors if collected objects are mesh objects." );
+
 }
 
 void PackCollection::initializePostSubGroups( )
@@ -67,7 +68,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
-
+  std::cout << "getMetaData targetField " << targetField.getName() << std::endl;
   if( collectAll() )
   {
     // If we collect all the data, then we have a unique field: "all".
@@ -132,6 +133,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   Group const * targetGrp = nullptr;
   try
   {
+    std::cout << "updateSetsIndices - " << m_fieldName << " m_objectPath - " <<  m_objectPath << " domain - "<< domain.getName()  <<std::endl;
     targetGrp = this->getTargetObject( domain, m_objectPath );
     WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
     // If we're collecting everything from a mesh target or just collecting an entire non-mesh object
@@ -278,6 +280,7 @@ void PackCollection::buildMetaDataCollectors()
     collector->m_setNames = m_setNames;
     collector->m_onlyOnSetChange = true;
     // don't recursively keep creating metaDataCollectors
+
     collector->disableCoordCollection();
     m_metaDataCollectors.push_back( std::move( collector ) );
   }
@@ -291,6 +294,7 @@ void PackCollection::collect( DomainPartition const & domain,
   GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
+
   // If we have any indices to collect, and we're either collecting every time or we're only collecting
   // when the set changes and the set has changed.
   parallelDeviceEvents events;
