@@ -53,7 +53,15 @@ DECLARE_FIELD( globalCompDensity_n,
                0,
                NOPLOT,
                NO_WRITE,
-               "Global component density updates at the previous converged time step " );
+               "Global component density updates at the previous converged time step" );
+
+DECLARE_FIELD( globalCompDensity_k,
+               "globalCompDensity_k",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Global component density updates at the previous sequential iteration" );
 
 DECLARE_FIELD( globalCompFraction,
                "globalCompFraction",
@@ -111,6 +119,7 @@ DECLARE_FIELD( dPhaseMobility,
                NO_WRITE,
                "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
 
+// this is needed for time step selector
 DECLARE_FIELD( phaseVolumeFraction_n,
                "phaseVolumeFraction_n",
                array2dLayoutPhase,
@@ -118,14 +127,6 @@ DECLARE_FIELD( phaseVolumeFraction_n,
                NOPLOT,
                WRITE_AND_READ,
                "Phase volume fraction at the previous converged time step" );
-
-DECLARE_FIELD( phaseMobility_n,
-               "phaseMobility_n",
-               array2dLayoutPhase,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase mobility at the previous converged time step" );
 
 DECLARE_FIELD( phaseOutflux,
                "phaseOutflux",
@@ -158,6 +159,30 @@ DECLARE_FIELD( componentCFLNumber,
                LEVEL_0,
                NO_WRITE,
                "Component CFL number" );
+
+DECLARE_FIELD( globalCompDensityScalingFactor,
+               "globalCompDensityScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for global component densities" );
+
+DECLARE_FIELD( compAmount,
+               "compAmount",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount" );
+
+DECLARE_FIELD( compAmount_n,
+               "compAmount_n",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount at the previous converged time step" );
 
 }
 

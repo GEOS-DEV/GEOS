@@ -92,6 +92,7 @@ public:
                      globalIndex const rankOffset,
                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                      arrayView1d< real64 > const inputRhs,
+                     real64 const inputDt,
                      real64 const (&gravityVector)[3],
                      string const inputFlowDofKey,
                      string const fluidModelKey ):
@@ -105,7 +106,8 @@ public:
           inputDispDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     m_X( nodeManager.referencePosition() ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
@@ -298,6 +300,7 @@ protected:
   arrayView1d< real64 const > const m_pressure;
 
 };
+
 
 } // namespace poromechanicsKernels
 

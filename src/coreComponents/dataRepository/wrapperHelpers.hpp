@@ -228,7 +228,7 @@ byteSizeOfElement()
 template< typename T >
 inline size_t
 byteSize( T const & value )
-{ return size( value ) * byteSizeOfElement< T >(); }
+{ return wrapperHelpers::size( value ) * byteSizeOfElement< T >(); }
 
 
 template< typename T >
@@ -259,7 +259,7 @@ capacity( T const & value )
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_capacity< T const >, localIndex >
 capacity( T const & value )
-{ return size( value ); }
+{ return wrapperHelpers::size( value ); }
 
 
 

@@ -55,11 +55,12 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
+                                                       real64 const & dHydraulicAperture_dNormalJump,
                                                        real64 const & pressure,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override
   {
-    GEOS_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure );
+    GEOS_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, traction, pressure );
 
     compute( dispJump,
              m_initialPermeability,

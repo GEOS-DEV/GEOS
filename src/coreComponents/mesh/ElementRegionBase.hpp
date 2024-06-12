@@ -102,7 +102,7 @@ public:
    * @brief Generate mesh.
    * @param blocks Cell or face blocks from where the mesh is extracted.
    */
-  virtual void generateMesh( Group & blocks ) = 0;
+  virtual void generateMesh( Group const & blocks ) = 0;
 
   ///@}
 

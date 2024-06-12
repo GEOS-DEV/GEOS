@@ -102,8 +102,9 @@ void ElasticIsotropic::postProcessInput()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 "A specific pair of elastic constants is required. Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "<<
-                 "You have specified "<<errorCheck );
+                 getFullName() << ": A specific pair of elastic constants is required. " <<
+                 "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
+                 "You have specified " << errorCheck );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
@@ -137,7 +138,8 @@ void ElasticIsotropic::postProcessInput()
   }
   else
   {
-    GEOS_ERROR( "Invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants. " <<
+                errorCheck << " has been specified." );
   }
 
   // set results as array default values
@@ -146,6 +148,9 @@ void ElasticIsotropic::postProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
+
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::wavespeedString() ).
+    setApplyDefaultValue( sqrt( ( m_defaultBulkModulus + (4.0/3.0) * m_defaultShearModulus ) / m_defaultDensity ) );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )

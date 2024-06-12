@@ -16,7 +16,6 @@
  * @file PVTFunctionHelpers.cpp
  */
 
-#include "codingUtilities/StringUtilities.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "LvArray/src/sortedArrayManipulation.hpp"
 

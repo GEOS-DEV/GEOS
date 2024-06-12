@@ -36,7 +36,8 @@ namespace PVTProps
 EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
                                           string_array const & inputPara,
                                           string_array const & componentNames,
-                                          array1d< real64 > const & componentMolarWeight ):
+                                          array1d< real64 > const & componentMolarWeight,
+                                          bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -50,6 +51,11 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   makeCoefficients( inputPara );
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_waterSatDensityTable->print( m_waterSatDensityTable->getName() );
+    m_waterSatPressureTable->print( m_waterSatPressureTable->getName() );
+  }
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
@@ -75,6 +81,13 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   }
 }
 
+void EzrokhiBrineDensity::checkTablesParameters( real64 const GEOS_UNUSED_PARAM( pressure ),
+                                                 real64 const temperature ) const
+{
+  m_waterSatDensityTable->checkCoord( temperature, 0 );
+  m_waterSatPressureTable->checkCoord( temperature, 0 );
+}
+
 EzrokhiBrineDensity::KernelWrapper
 EzrokhiBrineDensity::createKernelWrapper() const
 {
@@ -89,7 +102,7 @@ EzrokhiBrineDensity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 

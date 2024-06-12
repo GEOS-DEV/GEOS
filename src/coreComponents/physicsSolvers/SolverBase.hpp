@@ -21,12 +21,10 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-
 
 #include <limits>
 
@@ -52,6 +50,11 @@ public:
   SolverBase & operator=( SolverBase && ) = delete;
 
   static string catalogName() { return "SolverBase"; }
+
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
 
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
@@ -148,7 +151,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -158,6 +161,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -438,7 +452,7 @@ public:
    *
    */
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
@@ -451,7 +465,7 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution );
 
@@ -481,6 +495,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain );
 
   /**
@@ -609,6 +624,10 @@ public:
    */
   R1Tensor const gravityVector() const;
 
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const;
+
+  virtual void saveSequentialIterationState( DomainPartition & domain );
+
   /**
    * @brief accessor for the linear solver parameters.
    * @return the linear solver parameter list
@@ -711,6 +730,8 @@ public:
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
+  SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
@@ -796,6 +817,7 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to

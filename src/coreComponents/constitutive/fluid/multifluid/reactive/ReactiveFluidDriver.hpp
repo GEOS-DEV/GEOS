@@ -22,6 +22,7 @@
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/reactive/ReactiveFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -112,7 +113,7 @@ private:
 
   enum columnKeys { TIME, PRES, TEMP }; ///< Enumeration of "input" column keys for readability
 
-  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
+  static constexpr real64 m_baselineTol = MultiFluidConstants::baselineTolerance; ///< Comparison tolerance for baseline results
 };
 
 } /* namespace geos */

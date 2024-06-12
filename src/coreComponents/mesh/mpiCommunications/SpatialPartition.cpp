@@ -19,6 +19,7 @@
 #include "mesh/generators/CellBlockManager.hpp"
 
 #include <cmath>
+#include <string>
 
 namespace geos
 {
@@ -51,57 +52,64 @@ real64 MapValueToRange( real64 value, real64 min, real64 max )
 
 SpatialPartition::SpatialPartition( string const & name,
                                     Group * const parent ):
-  PartitionBase(name, parent),
-  m_Partitions(),
-  m_Periodic( nsdof ),
+  PartitionBase( name, parent ),
+  m_min( nsdof ),
+  m_max( nsdof ),
+  m_blockSize( nsdof ),
+  m_gridMin( nsdof ),
+  m_gridMax( nsdof ),
+  m_gridSize( nsdof ),
   m_coords( nsdof ),
-  m_min( 3 ), //{ 0.0, 0.0, 0.0 },
-  m_max( 3 ), //{ 0.0, 0.0, 0.0 },
-  m_partitionLocations( 3 ),
-  m_blockSize( 3 ), //{ 1.0, 1.0, 1.0 },
-  m_gridSize( 3 ), //{ 0.0, 0.0, 0.0 },
-  m_gridMin( 3 ), //{ 0.0, 0.0, 0.0 },
-  m_gridMax( 3 ), //{ 0.0, 0.0, 0.0 }
-  m_contactGhostMin( 3 ),
-  m_contactGhostMax( 3 ) 
+  m_partitions( nsdof ),
+  m_periodic( nsdof ),
+  m_contactGhostMin( nsdof ),
+  m_contactGhostMax( nsdof )
 {
   m_size = 0;
   m_rank = 0;
   m_numColors = 8;
-
   setPartitions( 1, 1, 1 );
 
-  registerWrapper( viewKeyStruct::periodicString(), &m_Periodic ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "periodic flag for each direction of mesh" );
+  // Do m_coords, m_partitions need to be registered?
 
   registerWrapper( viewKeyStruct::minString() , &m_min ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Minimum extent of partition dimensions (excluding ghost objects)" );
 
   registerWrapper( viewKeyStruct::maxString() , &m_max ).
+    setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Maximum extent of partition dimensions (excluding ghost objects)" );
+
+  registerWrapper( viewKeyStruct::blockSizeString() , &m_blockSize ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Length of partition dimensions (excluding ghost objects)." );
 
   registerWrapper( viewKeyStruct::partitionLocationsString() , &m_partitionLocations ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Locations of partition boundaries" );
 
-  registerWrapper( viewKeyStruct::blockSizeString() , &m_blockSize ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "Length of partition dimensions (excluding ghost objects)." );
-
-  registerWrapper( viewKeyStruct::gridSizeString() , &m_gridSize ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "Total length of problem dimensions (excluding ghost objects)." );
-
   registerWrapper( viewKeyStruct::gridMinString() , &m_gridMin ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Minimum extent of problem dimensions (excluding ghost objects)." );
 
   registerWrapper( viewKeyStruct::gridMaxString() , &m_gridMax ).
+      setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Maximum extent of problem dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::gridSizeString() , &m_gridSize ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Total length of problem dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::periodicString(), &m_periodic ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "periodic flag for each direction of mesh" );
 
   registerWrapper( viewKeyStruct::contactGhostMinString() , &m_contactGhostMin ).
     setInputFlag( InputFlags::FALSE ).
@@ -110,12 +118,10 @@ SpatialPartition::SpatialPartition( string const & name,
   registerWrapper( viewKeyStruct::contactGhostMaxString() , &m_contactGhostMax ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position max." );
-
 }
 
 SpatialPartition::~SpatialPartition()
 {}
-
 
 void SpatialPartition::postProcessInput()
 {
@@ -130,10 +136,13 @@ void SpatialPartition::postProcessInput()
       }
     }
 
-    if( m_Periodic.size() == 0 ){
-      GEOS_ERROR_IF( m_Periodic.size() !=3, "Periodic flags must have size 3" );
-      m_Periodic.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_Periodic, 0);
+    if( m_periodic.size() == 0 ){
+      m_periodic.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_periodic, 0);
+    }
+    else
+    {
+      GEOS_ERROR_IF( m_periodic.size() !=3, "Periodic flags must have size 3" );
     }
 
     if( m_min.size() == 0 )
@@ -180,22 +189,20 @@ void SpatialPartition::postProcessInput()
     {
       m_contactGhostMax.resize( 3 );
     }
-
 }
-
 
 void SpatialPartition::setPartitions( unsigned int xPartitions,
                                       unsigned int yPartitions,
                                       unsigned int zPartitions )
 {
-  m_Partitions.resize( 3 );
-  m_Partitions( 0 ) = xPartitions;
-  m_Partitions( 1 ) = yPartitions;
-  m_Partitions( 2 ) = zPartitions;
+  m_partitions.resize( 3 );
+  m_partitions( 0 ) = xPartitions;
+  m_partitions( 1 ) = yPartitions;
+  m_partitions( 2 ) = zPartitions;
   m_size = 1;
   for( int i = 0; i < nsdof; i++ )
   {
-    m_size *= m_Partitions( i );
+    m_size *= m_partitions( i );
   }
   setContactGhostRange( 0.0 );
 }
@@ -247,8 +254,8 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = this->m_Partitions( LvArray::integerConversion< localIndex >( idim ) );
-    const bool periodic = this->m_Periodic( LvArray::integerConversion< localIndex >( idim ) );
+    const int dim = this->m_partitions( LvArray::integerConversion< localIndex >( idim ) );
+    const bool periodic = this->m_periodic( LvArray::integerConversion< localIndex >( idim ) );
     for( int i = -1; i < 2; i++ )
     {
       ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
@@ -290,10 +297,23 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
   }
 }
 
-void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                 real64 const ( &max )[ 3 ] )
-{
+//void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
+//                                 real64 const ( &max )[ 3 ] )
+//{
+//  // global values
+//  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+//  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+//  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+//  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+//
+//  // block values
+//  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+//
+//  initializeNeighbors();
+//}
 
+void SpatialPartition::initializeNeighbors()
+{
   {
     //get size of problem and decomposition
     m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -303,7 +323,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
       int check = 1;
       for( int i = 0; i < nsdof; i++ )
       {
-        check *= this->m_Partitions( i );
+        check *= this->m_partitions( i );
       }
       GEOS_ERROR_IF_NE( check, m_size );
     }
@@ -312,7 +332,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, nsdof, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
     }
     m_rank = MpiWrapper::commRank( cartcomm );
     MpiWrapper::cartCoords( cartcomm, m_rank, nsdof, m_coords.data());
@@ -327,66 +347,66 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MpiWrapper::commFree( cartcomm );
   }
 
-  // global values
-  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
-  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
-  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
-  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
+  // // global values
+  // LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+  // LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+  // LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+  // LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 
-  // block values
-  LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
+  // // block values
+  // LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
-  LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < nsdof; ++i )
-  {
-    const int nloc = m_Partitions( i ) - 1;
-    const localIndex nlocl = static_cast< localIndex >(nloc);
-    if( m_partitionLocations[i].empty() )
-    {
-      // the default "even" spacing
-      m_blockSize[ i ] /= m_Partitions( i );
-      m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-      m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
+  // LvArray::tensorOps::copy< 3 >( m_min, min );
+  // for( int i = 0; i < nsdof; ++i )
+  // {
+  //   const int nloc = m_partitions( i ) - 1;
+  //   const localIndex nlocl = static_cast< localIndex >(nloc);
+  //   if( m_partitionLocations[i].empty() )
+  //   {
+  //     // the default "even" spacing
+  //     m_blockSize[ i ] /= m_partitions( i );
+  //     m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
+  //     m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
 
-      m_partitionLocations[i].resize( nlocl );
-      for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
-      {
-        m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
-      }
-    }
-    else if( nlocl == m_partitionLocations[i].size() )
-    {
-      const int parIndex = m_coords[i];
-      if( parIndex == 0 )
-      {
-        m_min[i] = min[i];
-        m_max[i] = m_partitionLocations[i][parIndex];
-      }
-      else if( parIndex == nloc )
-      {
-        m_min[i] = m_partitionLocations[i][parIndex-1];
-        m_max[i] = max[i];
-      }
-      else
-      {
-        m_min[i] = m_partitionLocations[i][parIndex-1];
-        m_max[i] = m_partitionLocations[i][parIndex];
-      }
-    }
-    else
-    {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-    }
-  }
+  //     m_partitionLocations[i].resize( nlocl );
+  //     for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
+  //     {
+  //       m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
+  //     }
+  //   }
+  //   else if( nlocl == m_partitionLocations[i].size() )
+  //   {
+  //     const int parIndex = m_coords[i];
+  //     if( parIndex == 0 )
+  //     {
+  //       m_min[i] = min[i];
+  //       m_max[i] = m_partitionLocations[i][parIndex];
+  //     }
+  //     else if( parIndex == nloc )
+  //     {
+  //       m_min[i] = m_partitionLocations[i][parIndex-1];
+  //       m_max[i] = max[i];
+  //     }
+  //     else
+  //     {
+  //       m_min[i] = m_partitionLocations[i][parIndex-1];
+  //       m_max[i] = m_partitionLocations[i][parIndex];
+  //     }
+  //   }
+  //   else
+  //   {
+  //     GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+  //   }
+  // }
 }
 
 bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir ) const
 {
   bool rval = true;
   const int i = dir;
-  if( m_Periodic( i ))
+  if( m_periodic( i ))
   {
-    if( m_Partitions( i ) != 1 )
+    if( m_partitions( i ) != 1 )
     {
       real64 localCenter = MapValueToRange( coord,  m_gridMin[ i ],  m_gridMax[ i ] );
       rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
@@ -395,7 +415,7 @@ bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
   }
   else
   {
-    rval = rval && (m_Partitions[ i ] == 1 || (coord >= m_min[ i ] && coord < m_max[ i ]));
+    rval = rval && (m_partitions[ i ] == 1 || (coord >= m_min[ i ] && coord < m_max[ i ]));
   }
 
   return rval;
@@ -408,10 +428,10 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
   for( int i = 0; i < nsdof; i++ )
   {
     // Is particle already in bounds of partition?
-    if( !(m_Partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
+    if( !(m_partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
     {
       // Particle not in bounds, check if direction has a periodic boundary
-      if( m_Periodic( i ) && (m_coords[i] == 0 || m_coords[i] == m_Partitions[i] - 1) )
+      if( m_periodic( i ) && (m_coords[i] == 0 || m_coords[i] == m_partitions[i] - 1) )
       {
         // Partition minimum boundary is periodic
         if( m_coords[i] == 0 && ( (elemCenter[i] - m_gridSize[i]) < (m_min[i] - boundaryRadius) ) )
@@ -419,7 +439,7 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
           return false;
         }
         // Partition maximum boundary is periodic
-        if( m_coords[i] == m_Partitions[i] - 1 && ( (elemCenter[i] + m_gridSize[i]) > (m_max[i] + boundaryRadius) ) )
+        if( m_coords[i] == m_partitions[i] - 1 && ( (elemCenter[i] + m_gridSize[i]) > (m_max[i] + boundaryRadius) ) )
         {
           return false;
         }
@@ -473,13 +493,14 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
   // should only happen if it has left the global domain (hopefully at an outflow b.c.).
 
+  arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
   arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
   arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
   array1d< R1Tensor > outOfDomainParticleCoordinates;
   std::vector< localIndex > outOfDomainParticleLocalIndices;
   unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
-  forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
+  forAll< serialPolicy >( subRegion.size(), [&, particleID, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
     {
       bool inPartition = true;
       R1Tensor p_x;
@@ -488,6 +509,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
         p_x[i] = particleCenter[pp][i];
         inPartition = inPartition && isCoordInPartition( p_x[i], i );
       }
+
       if( particleRank[pp]==this->m_rank && !inPartition )
       {
         outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
@@ -605,7 +627,6 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     subRegion.resize( newSize ); // TODO: Does this handle constitutive fields owned by the subRegion?
   }
 
-
   // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
 
   //int sizeBeforeParticleSend = subRegion.size(); // subregion size changes after this, so we need this here to use to size the deletion
@@ -621,23 +642,25 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   //     will still have Rank=-1. This should only happen if the particle has left the global domain.
   //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
   //     the global domain, print a warning.
-
-  arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter(); //CC: this particle center needs to be updated if crossing periodic boundary
+  arrayView1d< globalIndex const > const particleIDAfter = subRegion.getParticleID();
+  arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
-  forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  int numOrphanedParticles = 0;
+  forAll< serialPolicy >( subRegion.size(), [&, particleIDAfter, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  {
+    if( particleRankAfter[p] == -1 )
     {
-      if( particleRankAfter[p] == -1 )
-      {
-        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-        indicesToErase.insert( p );
-      }
-      else if( particleRankAfter[p] != m_rank )
-      {
-        indicesToErase.insert( p );
-      }
-    } );
+      
+      indicesToErase.insert( p );
+    }
+    else if( particleRankAfter[p] != m_rank )
+    {
+      indicesToErase.insert( p );
+    }
+  } );
   subRegion.erase( indicesToErase );
+  GEOS_LOG_RANK_IF(numOrphanedParticles > 0, "Deleted " << numOrphanedParticles << " orphaned out-of-domain particle" << (numOrphanedParticles == 1 ? "s": "")  << " during repartition" );
 
   // Resize particle region owning this subregion
   ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
@@ -813,7 +836,6 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     {
       subRegion.resize( newSize );   // TODO: Does this handle constitutive fields owned by the subregion's parent region?
     }
-
 
     // (7) Pack/Send/Receive/Unpack particles to be sent to each neighbor.
 
@@ -1142,13 +1164,13 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
 
 }
 
-
 //CC: overrides global indices on periodic faces so they are matched when finding neighboring nodes
 void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
                                                          NodeManager & nodeManager,
                                                          EdgeManager & edgeManager,
                                                          FaceManager & faceManager )
   {
+    GEOS_LOG_RANK( "Set periodic domain boundary objects");
     arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
     // unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); // CC: need this for single partition case 
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
@@ -1161,18 +1183,18 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
 
     // Check for periodic boundaries in each direction
     for(unsigned int dimension =0; dimension < 3; dimension++)
     {
-      if(m_Periodic[dimension])
+      if(m_periodic[dimension])
       {
         // Is this partition on a boundary of domain?
         if( (m_coords[dimension] == 0)  ||
-            (m_coords[dimension] == m_Partitions[dimension]-1) )
+            (m_coords[dimension] == m_partitions[dimension]-1) )
         {
           // Reset global id numbers
           ///////////////////////////
@@ -1202,13 +1224,13 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
 
           PlanarSorter planarSorter(gridPosition, dimension);
 
-          if(m_Partitions[dimension] > 1){
+          if(m_partitions[dimension] > 1){
             // Multiple partitions
 
             // Find periodic neighbor partition coordinates
             array1d<int> nbr_coords = m_coords;
             if(m_coords[dimension] == 0){
-              nbr_coords[dimension] = m_Partitions[dimension]-1;
+              nbr_coords[dimension] = m_partitions[dimension]-1;
             } else {
               nbr_coords[dimension] = 0;
             }
