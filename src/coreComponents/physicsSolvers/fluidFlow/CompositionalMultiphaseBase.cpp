@@ -206,6 +206,12 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be smaller or equal to 1.0" );
+  GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be larger than 0.0" );
+  GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be smaller or equal to 1.0" );
 
   if( m_isThermal && m_useSimpleAccumulation == 1 ) // useSimpleAccumulation is not yet compatible with thermal
   {

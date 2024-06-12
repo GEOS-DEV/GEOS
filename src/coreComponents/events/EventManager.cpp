@@ -55,12 +55,12 @@ EventManager::EventManager( string const & name,
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
     setApplyDefaultValue( std::numeric_limits< real64 >::max() ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum simulation time for the global event loop." );
+    setDescription( "Maximum simulation time for the global event loop. Disabled by default." );
 
   registerWrapper( viewKeyStruct::maxCycleString(), &m_maxCycle ).
     setApplyDefaultValue( std::numeric_limits< integer >::max() ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum simulation cycle for the global event loop." );
+    setDescription( "Maximum simulation cycle for the global event loop. Disabled by default." );
 
   registerWrapper( viewKeyStruct::timeString(), &m_time ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -226,38 +226,43 @@ bool EventManager::run( DomainPartition & domain )
 
 void EventManager::outputTime() const
 {
+  const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
+  const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();
+  units::TimeFormatInfo const timeInfo = units::TimeFormatInfo::fromSeconds( m_time );
+  units::TimeFormatInfo const maxTimeInfo = units::TimeFormatInfo::fromSeconds( m_maxTime );
+
+  const auto timeCompletionUnfoldedString = [&]() -> std::string {
+    return GEOS_FMT( " out of {} ({:.0f}% completed)",
+                     maxTimeInfo.toUnfoldedString(),
+                     100.0 * (m_time - m_minTime) / ( m_maxTime - m_minTime ) );
+  };
+  const auto timeCompletionSecondsString = [&]() -> std::string {
+    return GEOS_FMT( " / {}", maxTimeInfo.toSecondsString() );
+  };
+  const auto cycleCompletionString = [&]() -> std::string {
+    return GEOS_FMT( " out of {} ({:.0f}% completed)",
+                     m_maxCycle, ( 100.0 * m_cycle ) / m_maxCycle );
+  };
+
   // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( "\n------------------- TIMESTEP START -------------------" );
-  if( m_maxTime < std::numeric_limits< real64 >::max() )
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {} out of {} ({}%)",
-                               units::TimeFormatInfo::fromSeconds( m_time ),
-                               units::TimeFormatInfo::fromSeconds( m_maxTime ),
-                               fmt::format( "{:.{}f}", 100.0 * m_time / m_maxTime, 0 ) ) );
-  }
-  else
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}", units::TimeFormatInfo::fromSeconds( m_time ) ) );
-  }
+  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
+                             timeInfo.toUnfoldedString(),
+                             isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
+                             timeInfo.toSecondsString(),
+                             isTimeLimited ? timeCompletionSecondsString() : "" ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
-  if( m_maxCycle < std::numeric_limits< integer >::max() )
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {} out of {} ({}%)",
-                               m_cycle, m_maxCycle, fmt::format( "{:.{}f}", 100.0 * m_cycle / m_maxCycle, 0 ) ) );
-  }
-  else
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}", m_cycle ) );
-  }
-  GEOS_LOG_RANK_0( "------------------------------------------------------\n" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
+                             m_cycle,
+                             isCycleLimited ? cycleCompletionString() : "" ) );
+  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
   {
-    units::TimeFormatInfo info = units::TimeFormatInfo::fromSeconds( m_time );
-
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}\n",
-                               info.m_years, info.m_days, info.m_hours, info.m_minutes, info.m_seconds, m_dt, m_cycle ) );
+                               timeInfo.m_years, timeInfo.m_days, timeInfo.m_hours, timeInfo.m_minutes, timeInfo.m_seconds, m_dt, m_cycle ) );
   }
   else if( m_timeOutputFormat==TimeOutputFormat::years )
   {
