@@ -37,6 +37,9 @@ public:
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_stabilizationType;
+  using Base::m_stabilizationRegionNames;
+  using Base::m_stabilizationMultiplier;
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects
