@@ -93,7 +93,7 @@
       viscosibility="0.0"/>
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="7.1190476190476195e10"
+      defaultGrainBulkModulus="7.1190476190476195e10"
       defaultReferencePorosity="0.15"/>
     <ConstantPermeability
       name="rockPerm"
