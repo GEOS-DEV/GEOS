@@ -24,7 +24,6 @@
 
 // System includes
 #include <functional>
-#include <chrono>
 #include <memory>
 
 // Forward declaration of conduit::Node.

@@ -80,6 +80,7 @@ public:
   using Base::m_elementVolume;
   using Base::m_fracturedElems;
   using Base::m_cellsToEmbeddedSurfaces;
+  using Base::m_dt;
 
 
   /**
@@ -100,6 +101,7 @@ public:
         globalIndex const rankOffset,
         CRSMatrixView< real64, globalIndex const > const inputMatrix,
         arrayView1d< real64 > const inputRhs,
+        real64 const inputDt,
         real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -113,6 +115,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
+          inputDt,
           inputGravityVector ),
     m_wDofNumber( wDofNumber )
   {}
@@ -276,6 +279,7 @@ using EFEMFactory = finiteElement::KernelFactory< EFEM,
                                                   globalIndex const,
                                                   CRSMatrixView< real64, globalIndex const > const,
                                                   arrayView1d< real64 > const,
+                                                  real64 const,
                                                   real64 const (&) [3] >;
 /**
  * @brief A struct to update fracture traction
@@ -301,7 +305,8 @@ struct StateUpdateKernel
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,
           arrayView3d< real64 > const & dFractureTraction_dJump,
-          arrayView1d< integer const > const & fractureState )
+          arrayView1d< integer const > const & fractureState,
+          arrayView1d< real64 > const & slip )
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -309,6 +314,9 @@ struct StateUpdateKernel
                                       fractureState[k],
                                       fractureTraction[k],
                                       dFractureTraction_dJump[k] );
+
+      slip[ k ] = LvArray::math::sqrt( LvArray::math::square( jump( k, 1 ) ) +
+                                       LvArray::math::square( jump( k, 2 ) ) );
     } );
   }
 

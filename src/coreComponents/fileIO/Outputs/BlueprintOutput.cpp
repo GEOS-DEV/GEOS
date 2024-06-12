@@ -118,6 +118,7 @@ BlueprintOutput::BlueprintOutput( string const & name,
   registerWrapper( "plotLevel", &m_plotLevel ).
     setApplyDefaultValue( dataRepository::PlotLevel::LEVEL_1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setRTTypeName( rtTypes::CustomTypes::plotLevel ).
     setDescription( "Determines which fields to write." );
 
   registerWrapper( "outputFullQuadratureData", &m_outputFullQuadratureData ).

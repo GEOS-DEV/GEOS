@@ -58,9 +58,9 @@ std::istream & operator>>( std::istream & is, Path & p )
 {
   std::string & s = static_cast< std::string & >( p );
   is >> s;
-  if( !isAbsolutePath( s ) && !Path::pathPrefix().empty() )
+  if( !isAbsolutePath( s ) && !Path::getPathPrefix().empty() )
   {
-    s = getAbsolutePath( Path::pathPrefix() + '/' + p );
+    s = getAbsolutePath( std::string( Path::getPathPrefix() ) + '/' + p );
   }
   return is;
 }

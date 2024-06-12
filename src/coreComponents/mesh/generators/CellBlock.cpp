@@ -120,7 +120,7 @@ void CellBlock::setElementType( ElementType elementType )
     }
     default:
     {
-      GEOS_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
+      GEOS_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getDataContext() );
     }
   }
 

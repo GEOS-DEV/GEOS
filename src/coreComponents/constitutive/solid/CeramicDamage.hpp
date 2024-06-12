@@ -29,6 +29,7 @@
  * integrated and tracked by this model.
  */
 
+
 #ifndef GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
 
@@ -89,8 +90,17 @@ public:
                         arrayView1d< real64 const > const & thermalExpansionCoefficient,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                        arrayView2d< real64 > const & density,
+                        arrayView2d< real64 > const & wavespeed,
                         bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+    ElasticIsotropicUpdates( bulkModulus,
+                             shearModulus,
+                             thermalExpansionCoefficient,
+                             newStress,
+                             oldStress,
+                             density,
+                             wavespeed,
+                             disableInelasticity ),
     m_damage( damage ),
     m_jacobian( jacobian ),
     m_lengthScale( lengthScale ),
@@ -209,6 +219,7 @@ real64 thirdInvariantStrengthScaling( const real64 J2,
                                       const real64 J3,
                                       const real64 dfdp ) const;
 
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void saveConvergedState( localIndex const k,
@@ -271,7 +282,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] ) const
 {
-  // elastic predictor (assume strainIncrement is all elastic)
+  // Elastic trial update (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, 
                                               q, 
                                               timeIncrement,
@@ -295,7 +306,6 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   endRotation[1][1] = 1.0;
   endRotation[2][2] = 1.0;
 
-  // call the constitutive model
   CeramicDamageUpdates::smallStrainUpdateHelper( k, 
                                                  q, 
                                                  timeIncrement, 
@@ -362,6 +372,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          timeIncrement,
                                                          strainIncrement, 
                                                          stress );
+
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
@@ -369,7 +380,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     return;
   }
 
-  // call the constitutive model
+  // Call the constitutive model
   CeramicDamageUpdates::smallStrainUpdateHelper( k, 
                                                  q, 
                                                  timeIncrement,
@@ -377,7 +388,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                  endRotation, 
                                                  stress );
 
-  // save new stress and return
+  // Save new stress and return
   saveStress( k, q, stress );
   return;
 }
@@ -459,6 +470,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                        meanStress,
                                        vonMises,
                                        deviator );
+
 
     real64 brittleDuctileTransitionPressure = Ycmax / mu;
     real64 J2 = vonMises * vonMises / 3.0;
@@ -638,7 +650,6 @@ real64 CeramicDamageUpdates::thirdInvariantStrengthScaling( const real64 J2,    
   return oneOverGamma;
 }
 
-
 /**
  * @class CeramicDamage
  *
@@ -759,6 +770,8 @@ public:
                                  m_thermalExpansionCoefficient,
                                  m_newStress,
                                  m_oldStress,
+                                 m_density,
+                                 m_wavespeed,
                                  m_disableInelasticity );
   }
 
@@ -792,6 +805,8 @@ public:
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
+                          m_density,
+                          m_wavespeed,
                           m_disableInelasticity );
   }
 

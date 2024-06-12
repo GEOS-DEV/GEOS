@@ -14,8 +14,12 @@
 
 /**
  * @file version.hpp
+ *
+ * Utilities for getting and printing version info of GEOS,
+ * its build environment and dependencies.
  */
-#include "common/DataTypes.hpp"
+
+#include <string>
 
 namespace geos
 {
@@ -23,25 +27,11 @@ namespace geos
  * @brief Get GEOSX version.
  * @return The full version string.
  */
-string getVersion();
+std::string getVersion();
 
 /**
  * @brief output version info for dependencies to log
  */
 void outputVersionInfo();
-
-/**
- * @brief Get a ID and version of the c++ compiler
- *
- * @return A string containing the c++ compiler ID and version
- */
-string getCppCompilerIdString();
-
-/**
- * @brief Get the Gpu Compiler type and version
- *
- * @return A string containing the GPU compiler ID and version
- */
-string getGpuCompilerIdString();
 
 }
