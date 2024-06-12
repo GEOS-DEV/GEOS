@@ -19,10 +19,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
@@ -355,9 +352,9 @@ protected:
    * @param dt the time step dt
    * @param subRegion the well subRegion
    */
-  void validateWellConstraints( real64 const & time_n,
+  virtual void validateWellConstraints( real64 const & time_n,
                                 real64 const & dt,
-                                WellElementSubRegion const & subRegion );
+                                WellElementSubRegion const & subRegion ) override;
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
