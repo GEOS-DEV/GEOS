@@ -78,7 +78,7 @@ DECLARE_FIELD( traction,
                array2d< real64 >,
                0,
                LEVEL_0,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Fracture traction vector" );
 
 DECLARE_FIELD( deltaTraction,
