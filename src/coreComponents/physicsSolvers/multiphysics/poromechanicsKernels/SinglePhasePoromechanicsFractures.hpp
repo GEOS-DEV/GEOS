@@ -70,6 +70,7 @@ struct StateUpdateKernel
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
       hydraulicAperture[k] = minimumHydraulicAperture[k] + aperture[k];
+      real64 const dHydraulicAperture_dNormalJump = 1.0;
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
@@ -78,6 +79,7 @@ struct StateUpdateKernel
 
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k], hydraulicAperture[k],
+                                                                            dHydraulicAperture_dNormalJump,
                                                                             jump, traction );
 
     } );

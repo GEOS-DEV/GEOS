@@ -31,6 +31,7 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 

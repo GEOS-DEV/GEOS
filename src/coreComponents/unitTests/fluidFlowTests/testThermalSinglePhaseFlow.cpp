@@ -107,7 +107,7 @@ char const * xmlInput =
                                            compressibility="5e-10"
                                            thermalExpansionCoeff="7e-4"
                                            viscosibility="0.0"
-                                           volumetricHeatCapacity="4.5e3" />
+                                           specificHeatCapacity="4.5e3" />
       <SinglePhaseConstantThermalConductivity name="thermalCond"
                                               thermalConductivityComponents="{ 0.6, 0.6, 0.6 }" />
     </Constitutive>
@@ -258,7 +258,7 @@ TEST_F( ThermalSinglePhaseFlowTest, jacobianNumericalCheck_flux )
                                arrayView1d< real64 > const & localRhs )
   {
     // The first input parameter denotes t_n, which is unused. Just input something here.
-    solver->assembleFluxTerms( 0.0, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

@@ -66,7 +66,7 @@ public:
    * @brief Compute node-based statistics on the reservoir
    * @param[in] mesh the mesh level object
    */
-  void computeNodeStatistics( MeshLevel & mesh ) const;
+  void computeNodeStatistics( MeshLevel & mesh, real64 const time ) const;
 
 private:
 
@@ -90,6 +90,7 @@ private:
   };
 
   void registerDataOnMesh( Group & meshBodies ) override;
+
 };
 
 

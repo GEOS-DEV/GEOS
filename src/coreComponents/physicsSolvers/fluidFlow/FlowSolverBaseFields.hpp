@@ -48,6 +48,14 @@ DECLARE_FIELD( pressure_n,
                WRITE_AND_READ,
                "Pressure at the previous converged time step" );
 
+DECLARE_FIELD( pressure_k,
+               "pressure_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Pressure at the previous sequential iteration" );
+
 DECLARE_FIELD( initialPressure,
                "initialPressure",
                array1d< real64 >,
@@ -88,14 +96,6 @@ DECLARE_FIELD( temperature,
                WRITE_AND_READ,
                "Temperature" );
 
-DECLARE_FIELD( faceTemperature,
-               "faceTemperature",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Face temperature" );
-
 DECLARE_FIELD( temperature_n,
                "temperature_n",
                array1d< real64 >,
@@ -104,6 +104,14 @@ DECLARE_FIELD( temperature_n,
                WRITE_AND_READ,
                "Temperature at the previous converged time step" );
 
+DECLARE_FIELD( temperature_k,
+               "temperature_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Temperature at the previous sequential iteration" );
+
 DECLARE_FIELD( initialTemperature,
                "initialTemperature",
                array1d< real64 >,
@@ -111,6 +119,14 @@ DECLARE_FIELD( initialTemperature,
                NOPLOT,
                WRITE_AND_READ,
                "Initial temperature" );
+
+DECLARE_FIELD( faceTemperature,
+               "faceTemperature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face temperature" );
 
 DECLARE_FIELD( netToGross,
                "netToGross",
@@ -207,6 +223,54 @@ DECLARE_FIELD( transMultiplier,
                LEVEL_0,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
+
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
+
+DECLARE_FIELD( mass,
+               "mass",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Mass" );
+
+DECLARE_FIELD( mass_n,
+               "mass_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Mass at the previous converged time step" );
+
+DECLARE_FIELD( energy,
+               "energy",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Energy" );
+
+DECLARE_FIELD( energy_n,
+               "energy_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Energy at the previous converged time step" );
 
 }
 

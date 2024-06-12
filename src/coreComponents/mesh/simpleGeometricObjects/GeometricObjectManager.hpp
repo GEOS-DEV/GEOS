@@ -20,6 +20,7 @@
 #define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_GEOMETRICOBJECTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "mesh/simpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 
 
 namespace geos
@@ -59,6 +60,20 @@ public:
   static GeometricObjectManager & getInstance();
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
+
+  /**
+   * @brief This function is used to launch a unction over the target geometric objects with region type =
+   * SimpleGeometricObjectBase.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetObjects target geometric objects names or indices
+   * @param lambda kernel function
+   */
+  template< typename OBJECTTYPE = SimpleGeometricObjectBase, typename ... OBJECTTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forGeometricObject( LOOKUP_CONTAINER const & targetObjects, LAMBDA && lambda )
+  {
+    this->forSubGroups< OBJECTTYPE, OBJECTTYPES... >( targetObjects, std::forward< LAMBDA >( lambda ) );
+  }
 
   virtual void expandObjectCatalogs() override;
 

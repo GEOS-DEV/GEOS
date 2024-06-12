@@ -715,6 +715,7 @@ AssemblerKernelHelper::
                           arrayView1d< real64 const > const & mimFaceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
+                          integer const useTotalMassEquation,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -864,11 +865,14 @@ AssemblerKernelHelper::
 
   }
 
-  // Apply equation/variable change transformation(s)
-  real64 work[NDOF*(NF+1)];
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
-  shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
+  if( useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[NDOF * ( NF + 1 )];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
+  }
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread
@@ -1153,6 +1157,7 @@ AssemblerKernelHelper::
                                           arrayView1d< real64 const > const & mimFaceGravCoef, \
                                           arraySlice1d< localIndex const > const & elemToFaces, \
                                           real64 const & elemGravCoef, \
+                                          integer const useTotalMassEquation, \
                                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
                                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
@@ -1281,6 +1286,7 @@ AssemblerKernel::
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
+           integer const useTotalMassEquation,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -1354,6 +1360,7 @@ AssemblerKernel::
                                                                  mimFaceGravCoef,
                                                                  elemToFaces,
                                                                  elemGravCoef,
+                                                                 useTotalMassEquation,
                                                                  phaseDens,
                                                                  dPhaseDens,
                                                                  phaseMassDens,
@@ -1407,6 +1414,7 @@ AssemblerKernel::
                            arraySlice1d< localIndex const > const & elemToFaces, \
                            real64 const & elemPres, \
                            real64 const & elemGravCoef, \
+                           integer const useTotalMassEquation, \
                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
@@ -1498,6 +1506,7 @@ FluxKernel::
           globalIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
+          integer const useTotalMassEquation,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -1575,6 +1584,7 @@ FluxKernel::
                                                                                      elemToFaces[ei],
                                                                                      elemPres[ei],
                                                                                      elemGravCoef[ei],
+                                                                                     useTotalMassEquation,
                                                                                      phaseDens,
                                                                                      dPhaseDens,
                                                                                      phaseMassDens,
@@ -1627,6 +1637,7 @@ FluxKernel::
                                    globalIndex const rankOffset, \
                                    real64 const lengthTolerance, \
                                    real64 const dt, \
+                                   integer const useTotalMassEquation, \
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                                    arrayView1d< real64 > const & localRhs )
 

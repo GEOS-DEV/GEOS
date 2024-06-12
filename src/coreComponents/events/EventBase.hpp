@@ -321,6 +321,14 @@ protected:
   bool isActive( real64 const time ) const
   { return ( time >= m_beginTime ) && ( time < m_endTime ); }
 
+  /**
+   * @brief Is the event ready for cleanup?
+   * @param time The time at which we want to check if the event is cleanup.
+   * @return @p true if is ready for cleanup, @p false otherwise.
+   */
+  bool isReadyForCleanup( real64 const time ) const
+  { return isActive( time ) || isZero( time - m_endTime ); }
+
 
   /// The last time the event occurred.
   real64 m_lastTime;

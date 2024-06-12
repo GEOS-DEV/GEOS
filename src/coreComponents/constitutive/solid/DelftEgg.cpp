@@ -112,10 +112,14 @@ void DelftEgg::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOS_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
-  GEOS_THROW_IF( m_defaultShapeParameter < 1., "Shape parameter for yield surface must be greater than or equal to one", InputError );
-  GEOS_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
-  GEOS_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
+  GEOS_THROW_IF( m_defaultCslSlope <= 0,
+                 getFullName() << ": Non-positive slope of critical state line detected", InputError );
+  GEOS_THROW_IF( m_defaultShapeParameter < 1.,
+                 getFullName() << ": Shape parameter for yield surface must be greater than or equal to one", InputError );
+  GEOS_THROW_IF( m_defaultVirginCompressionIndex <= 0,
+                 getFullName() << ": Non-positive virgin compression index detected", InputError );
+  GEOS_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex,
+                 getFullName() << ": Recompression index should exceed virgin recompression index", InputError );
 
   // set results as array default values
 

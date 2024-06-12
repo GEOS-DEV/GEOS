@@ -45,18 +45,16 @@ public:
   /// Compile time value for the number of norms to compute
   static constexpr integer numNorm = NUM_NORM;
 
-  /// Const value used to make sure that normalizers are never zero
-  static constexpr real64 minNormalizer = 1e-12;
-
-
   ResidualNormKernelBase( globalIndex const rankOffset,
                           arrayView1d< real64 const > const & localResidual,
                           arrayView1d< globalIndex const > const & dofNumber,
-                          arrayView1d< localIndex const > const & ghostRank ):
+                          arrayView1d< localIndex const > const & ghostRank,
+                          real64 const minNormalizer ):
     m_rankOffset( rankOffset ),
     m_localResidual( localResidual ),
     m_dofNumber( dofNumber ),
-    m_ghostRank( ghostRank )
+    m_ghostRank( ghostRank ),
+    m_minNormalizer( minNormalizer )
   {}
 
   /**
@@ -232,6 +230,9 @@ protected:
 
   /// View on the ghost ranks
   arrayView1d< integer const > const m_ghostRank;
+
+  /// Value used to make sure that normalizers are never zero
+  real64 const m_minNormalizer;
 
 };
 

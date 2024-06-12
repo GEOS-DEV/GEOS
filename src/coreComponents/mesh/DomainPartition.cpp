@@ -40,11 +40,10 @@ DomainPartition::DomainPartition( string const & name,
     setSizedFromParent( false );
 
   // this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
-  //   setRestartFlags( RestartFlags::NO_WRITE ).
+  //   setRestartFlags( RestartFlags::WRITE ). //RestartFlags::NO_WRITE ).
   //   setSizedFromParent( false );
 
-  // Advice from randy make spatialpartition member and register as group
-  m_spatialPartition = &registerGroup< SpatialPartition >( groupKeys.spatialPartition );
+  registerGroup< SpatialPartition >( groupKeys.partitionManager );
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 }
@@ -81,24 +80,24 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOSX_USE_MPI)
+  // PartitionBase & partition1 = getReference< PartitionBase >( groupKeys.partitionManager ); //keys::partitionManager );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) );
 
-  if( m_metisNeighborList.empty() )
+  const std::set< int > metisNeighborList = partition.getMetisNeighborList();
+  if( metisNeighborList.empty() )
   {
-    // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-    // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-    SpatialPartition & partition = *m_spatialPartition;
-
     //get communicator, rank, and coordinates
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.getPartitions().data(), partition.getPeriodic().data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;
 
-    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
+    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.getCoords().data() );
 
     int ncoords[3];
     addNeighbors( 0, cartcomm, ncoords );
@@ -107,7 +106,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   }
   else
   {
-    for( integer const neighborRank : m_metisNeighborList )
+    for( integer const neighborRank : metisNeighborList )
     {
       m_neighbors.emplace_back( neighborRank );
     }
@@ -184,19 +183,56 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
                                                              m_neighbors );
 
       // CC: Add check if there even are any periodic boundaries?
-      // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager ); //CC: This is grabbed above in separate scope, duplicate code?
-      // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-      SpatialPartition & partition = *m_spatialPartition;
+      // TODO: If GEOS_USE_MPI flag is set off this will through compile error since partition is not included
       partition.setPeriodicDomainBoundaryObjects( meshBody,
                                                   nodeManager,
                                                   edgeManager,
                                                   faceManager );
 
+
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                              m_neighbors );
 
-      CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+      CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
                                                                              m_neighbors );
+
+      // w.r.t. edges and faces, finding the matching nodes between partitions is a bit trickier.
+      // Because for contact mechanics and fractures, some nodes can be collocated.
+      // And the fracture elements will point to those nodes.
+      // While they are not the _same_ nodes (which is the criterion for edges and faces),
+      // we still want those collocated nodes to be exchanged between the ranks.
+      // This is why we gather some additional information: what are those collocated nodes
+      // and also what are the nodes that we require but are not present on the current rank!
+      std::set< std::set< globalIndex > > collocatedNodesBuckets;
+      std::set< globalIndex > requestedNodes;
+      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+        [&, g2l = &nodeManager.globalToLocalMap()]( FaceElementSubRegion const & subRegion )
+      {
+        ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
+        for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
+        {
+          for( integer ni = 0; ni < buckets.sizeOfArray( e2d ); ++ni )
+          {
+            array1d< globalIndex > const & bucket = buckets( e2d, ni );
+            std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
+            collocatedNodesBuckets.insert( tmp );
+
+            for( globalIndex const gni: bucket )
+            {
+              auto const it = g2l->find( gni );
+              if( it == g2l->cend() )
+              {
+                requestedNodes.insert( gni );
+              }
+            }
+          }
+        }
+      } );
+
+      CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
+                                                                           m_neighbors,
+                                                                           collocatedNodesBuckets,
+                                                                           requestedNodes );
     }
   } );
 }
@@ -222,7 +258,6 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
-
           for( NeighborCommunicator const & neighbor : m_neighbors )
           {
             neighbor.addNeighborGroupToMesh( meshLevel );
@@ -248,15 +283,14 @@ void DomainPartition::addNeighbors( const unsigned int idim,
                                     int * ncoords )
 {  
   // PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-  SpatialPartition & partition = *m_spatialPartition;
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) ); // partition1);
 
   if( idim == nsdof )
   {
     bool me = true;
     for( int i = 0; i < nsdof; i++ )
     {
-      if( ncoords[i] != partition.m_coords( i ))
+      if( ncoords[i] != partition.getCoords()( i ))
       {
         me = false;
         break;
@@ -270,11 +304,11 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions( LvArray::integerConversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
+    const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
+    const bool periodic = partition.getPeriodic()( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
+      ncoords[idim] = partition.getCoords()( LvArray::integerConversion< localIndex >( idim )) + i;
       bool ok = true;
       if( periodic )
       {

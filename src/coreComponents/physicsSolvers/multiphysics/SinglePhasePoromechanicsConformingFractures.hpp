@@ -21,27 +21,22 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >;
+  using Base = SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Poromechanics = 0,
-    Contact = 1
-  };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFractures"; }
@@ -63,24 +58,10 @@ public:
    * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsConformingFractures"; }
-
   /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
+   * @copydoc SolverBase::getCatalogName()
    */
-  LagrangianContactSolver * contactSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Contact ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the poromechanics solver
-   * @return a pointer to the flow solver
-   */
-  SinglePhasePoromechanics * poromechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
-  }
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @defgroup Solver Interface Functions
@@ -108,16 +89,9 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
-
-  // virtual void implicitStepComplete( real64 const & time_n,
-  //                                    real64 const & dt,
-  //                                    DomainPartition & domain ) override;
-
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
-
-  void initializePostInitialConditionsPostSubGroups() override final;
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
@@ -125,12 +99,12 @@ public:
 
 private:
 
-  void assembleCellBasedContributions( real64 const time_n,
-                                       real64 const dt,
-                                       DomainPartition & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs );
+  void assembleElementBasedContributions( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs );
 
   virtual void assembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
@@ -150,11 +124,6 @@ private:
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs );
-
-  void assembleForceResidualDerivativeWrtPressure( MeshLevel & mesh,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -200,12 +169,12 @@ private:
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }

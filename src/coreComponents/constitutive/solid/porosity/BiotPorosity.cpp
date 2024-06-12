@@ -40,17 +40,28 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default thermal expansion coefficient" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
+  registerWrapper( viewKeyStruct::useUniaxialFixedStressString(), &m_useUniaxialFixedStress ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
+
+  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
+  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
 
   registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
 
-  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Volumetric stress increment" );
+  registerField( fields::porosity::meanTotalStressIncrement_k{}, &m_meanTotalStressIncrement_k );
+
+  registerField( fields::porosity::averageMeanTotalStressIncrement_k{}, &m_averageMeanTotalStressIncrement_k );
 
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
+
+  registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Solid shear modulus" );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
@@ -58,7 +69,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_meanStressIncrement.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanTotalStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
@@ -88,6 +99,20 @@ void BiotPorosity::initializeState() const
       initialPorosity[k][q] = referencePorosity[k];
     }
   } );
+}
+
+void BiotPorosity::saveConvergedState() const
+{
+  PorosityBase::saveConvergedState();
+  m_meanTotalStressIncrement_k.zero();
+  m_averageMeanTotalStressIncrement_k.zero();
+}
+
+void BiotPorosity::ignoreConvergedState() const
+{
+  PorosityBase::ignoreConvergedState();
+  m_meanTotalStressIncrement_k.zero();
+  m_averageMeanTotalStressIncrement_k.zero();
 }
 
 

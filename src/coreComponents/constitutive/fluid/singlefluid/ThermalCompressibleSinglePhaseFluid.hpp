@@ -95,16 +95,6 @@ public:
   GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
-                        real64 & viscosity ) const override
-  {
-    m_densRelation.compute( pressure, density );
-    m_viscRelation.compute( pressure, viscosity );
-  }
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual void compute( real64 const pressure,
-                        real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override
@@ -250,7 +240,7 @@ public:
   struct viewKeyStruct : public CompressibleSinglePhaseFluid::viewKeyStruct
   {
     static constexpr char const * thermalExpansionCoeffString() { return "thermalExpansionCoeff"; }
-    static constexpr char const * volumetricHeatCapacityString() { return "volumetricHeatCapacity"; }
+    static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
     static constexpr char const * internalEnergyModelTypeString() { return "internalEnergyModelType"; }
@@ -266,7 +256,7 @@ private:
   real64 m_thermalExpansionCoeff;
 
   /// scalar fluid volumetric heat capacity coefficient
-  real64 m_volumetricHeatCapacity;
+  real64 m_specificHeatCapacity;
 
   /// reference temperature parameter
   real64 m_referenceTemperature;

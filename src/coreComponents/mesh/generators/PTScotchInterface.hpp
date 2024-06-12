@@ -20,11 +20,10 @@
 #define GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
+
 #include "common/MpiWrapper.hpp"
 
-namespace geos
-{
-namespace ptscotch
+namespace geos::ptscotch
 {
 
 /**
@@ -39,7 +38,6 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
            int64_t const numParts,
            MPI_Comm comm );
 
-} // namespace ptscotch
-} // namespace geos
+} // namespace geos::ptscotch
 
 #endif //GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_

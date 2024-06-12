@@ -23,6 +23,7 @@
 #include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "AcousticFields.hpp"
 
 namespace geos
 {
@@ -46,8 +47,14 @@ public:
   AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
   AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "acoustic"; }
 
   static string catalogName() { return "AcousticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -81,21 +88,6 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtReceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -110,14 +102,6 @@ public:
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
   } waveEquationViewKeys;
@@ -135,6 +119,22 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
+
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        arrayView1d< string const > const & regionNames );
+
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 
 protected:
 
@@ -169,140 +169,6 @@ private:
   array2d< real32 > m_pressureNp1AtReceivers;
 
 };
-
-
-namespace fields
-{
-
-DECLARE_FIELD( Pressure_nm1,
-               "pressure_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n-1." );
-
-DECLARE_FIELD( Pressure_n,
-               "pressure_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Scalar pressure at time n." );
-
-DECLARE_FIELD( Pressure_np1,
-               "pressure_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Scalar pressure at time n+1." );
-
-DECLARE_FIELD( ForcingRHS,
-               "rhs",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS" );
-
-DECLARE_FIELD( MassVector,
-               "massVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Mass Matrix." );
-
-DECLARE_FIELD( DampingVector,
-               "dampingVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal of the Damping Matrix." );
-
-DECLARE_FIELD( MediumVelocity,
-               "mediumVelocity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium velocity of the cell" );
-
-DECLARE_FIELD( StiffnessVector,
-               "stiffnessVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Stiffness vector contains R_h*Pressure_n." );
-
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
-
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
-
-DECLARE_FIELD( PressureDoubleDerivative,
-               "pressureDoubleDerivative",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Double derivative of the pressure for each node to compute the gradient" );
-
-DECLARE_FIELD( PartialGradient,
-               "partialGradient",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Partiel gradient computed during backward propagation" );
-
-DECLARE_FIELD( AuxiliaryVar1PML,
-               "auxiliaryVar1PML",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "PML vectorial auxiliary variable 1." );
-
-DECLARE_FIELD( AuxiliaryVar2PML,
-               "auxiliaryVar2PML",
-               array2d< real32 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "PML vectorial auxiliary variable 2." );
-
-DECLARE_FIELD( AuxiliaryVar3PML,
-               "auxiliaryVar3PML",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               NO_WRITE,
-               "PML scalar auxiliary variable 3." );
-
-DECLARE_FIELD( AuxiliaryVar4PML,
-               "auxiliaryVar4PML",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "PML scalar auxiliary variable 4." );
-
-}
 
 } /* namespace geos */
 

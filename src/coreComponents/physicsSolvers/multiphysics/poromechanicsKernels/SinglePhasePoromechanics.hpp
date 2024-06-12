@@ -73,6 +73,7 @@ public:
   using Base::m_pressure;
   using Base::m_pressure_n;
   using Base::m_meshData;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -90,8 +91,10 @@ public:
                             globalIndex const rankOffset,
                             CRSMatrixView< real64, globalIndex const > const inputMatrix,
                             arrayView1d< real64 > const inputRhs,
+                            real64 const inputDt,
                             real64 const (&gravityVector)[3],
                             string const inputFlowDofKey,
+                            integer const performStressInitialization,
                             string const fluidModelKey );
 
   //*****************************************************************************
@@ -255,6 +258,7 @@ protected:
   /// Derivative of fluid density wrt pressure
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
+  integer const m_performStressInitialization;
 };
 
 using SinglePhasePoromechanicsKernelFactory =
@@ -263,12 +267,14 @@ using SinglePhasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
+                                integer const,
                                 string const >;
 
 /**
- * @class BulkDensityKernel
+ * @class SinglePhaseBulkDensityKernel
  * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
  */
 class SinglePhaseBulkDensityKernel

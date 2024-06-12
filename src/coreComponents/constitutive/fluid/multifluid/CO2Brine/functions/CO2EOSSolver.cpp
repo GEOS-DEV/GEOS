@@ -18,6 +18,8 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 
+#include "common/Units.hpp"
+
 
 namespace geos
 {
@@ -61,14 +63,7 @@ CO2EOSSolver::solve( string const & name,
     if( var < allowedMinValue )
     {
       var = allowedMinValue;
-      (*f)( temp, pres, var );
-    }
-
-    // check convergence (based on the magnitude of the Newton update for historical reasons)
-    if( LvArray::math::abs( update ) < tolerance )
-    {
-      newtonHasConverged = true;
-      break;
+      res = (*f)( temp, pres, var );
     }
 
     // compute finite-difference derivative
@@ -104,6 +99,14 @@ CO2EOSSolver::solve( string const & name,
     // recompute the residual
     real64 const newVar = var + update;
     real64 const newRes = (*f)( temp, pres, newVar );
+
+    // check convergence based on the magnitude of the residual
+    if( LvArray::math::abs( newRes ) < tolerance )
+    {
+      var = newVar;
+      newtonHasConverged = true;
+      break;
+    }
 
     // if the new residual is larger than the previous one, do some backtracking steps
     bool backtrackingIsSuccessful = false;
@@ -141,7 +144,7 @@ CO2EOSSolver::solve( string const & name,
 
   GEOS_THROW_IF( !newtonHasConverged,
                  name << ": Newton's method failed to converge for pair "
-                      << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << temp+273.15 << " K) :"
+                      << "( pressure = " << pres*presMultiplierForReporting << " Pa, temperature = " << units::convertCToK( temp ) << " K) :"
                       << " final residual = " << res << ", final update = " << update << ", tolerance = " << tolerance,
                  InputError );
   return var;

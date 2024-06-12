@@ -19,6 +19,9 @@
 #include "ParticleSubRegionBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
+// CC: TODO check if this is needed
+#include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+
 namespace geos
 {
 
@@ -34,16 +37,18 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleGroup(),
   m_particleSurfaceFlag(),
   m_particleDamage(),
+  m_particlePorosity(),
+  m_particleTemperature(),
   m_particleStrengthScale(),
   m_particleCenter(),
   m_particleVelocity(),
-  m_particleInitialMaterialDirection(),
   m_particleMaterialDirection(),
   m_particleVolume(),
   m_particleType(),
   m_particleRVectors(),
-  m_particleInitialSurfaceNormal(),
-  m_particleSurfaceNormal()
+  m_particleSurfaceNormal(),
+  m_particleSurfacePosition(),
+  m_particleSurfaceTraction()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -63,6 +68,12 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleDamageString(), &m_particleDamage ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
+  registerWrapper( viewKeyStruct::particlePorosityString(), &m_particlePorosity ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleTemperatureString(), &m_particleTemperature ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
   registerWrapper( viewKeyStruct::particleStrengthScaleString(), &m_particleStrengthScale ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
@@ -71,10 +82,6 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
-
-  registerWrapper( viewKeyStruct::particleInitialMaterialDirectionString(), &m_particleInitialMaterialDirection ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
@@ -89,11 +96,15 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
-  registerWrapper( viewKeyStruct::particleInitialSurfaceNormalString(), &m_particleInitialSurfaceNormal ).
+  registerWrapper( viewKeyStruct::particleSurfaceNormalString(), &m_particleSurfaceNormal ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerWrapper( viewKeyStruct::particleSurfaceNormalString(), &m_particleSurfaceNormal ).
+  registerWrapper( viewKeyStruct::particleSurfacePositionString(), &m_particleSurfacePosition ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleSurfaceTractionString(), &m_particleSurfaceTraction ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 }
@@ -170,10 +181,11 @@ void ParticleSubRegionBase::setActiveParticleIndices()
   m_inactiveParticleIndices.clear();
 
   arrayView1d< int const > const particleRank = m_particleRank.toViewConst();
-  forAll< serialPolicy >( this->size(), [&, particleRank] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
-                                                                                           // a sorted array. Parallelize with atomics?
+  arrayView1d< int const > const particleDeleteFlag = this->getField< fields::mpm::particleDeleteFlag >();
+  forAll< serialPolicy >( this->size(), [&, particleRank, particleDeleteFlag] GEOS_HOST ( localIndex const p ) // This must be on host since we're dealing with
+                                                                                                               // a sorted array. Parallelize with atomics?
     {
-      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) )
+      if( particleRank[p] == MpiWrapper::commRank( MPI_COMM_GEOSX ) && particleDeleteFlag[p] != 1 )
       {
         m_activeParticleIndices.insert( p );
       }

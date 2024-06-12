@@ -69,6 +69,8 @@ public:
   using Base::m_dFluidDensity_dPressure;
   using Base::m_solidDensity;
   using Base::m_flowDofNumber;
+  using Base::m_dt;
+  using Base::m_performStressInitialization;
 
   /**
    * @brief Constructor
@@ -86,8 +88,10 @@ public:
                                    globalIndex const rankOffset,
                                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                    arrayView1d< real64 > const inputRhs,
+                                   real64 const inputDt,
                                    real64 const (&gravityVector)[3],
                                    string const inputFlowDofKey,
+                                   integer const performStressInitialization,
                                    string const fluidModelKey );
 
   //*****************************************************************************
@@ -300,8 +304,10 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
+                                integer const,
                                 string const >;
 
 } // namespace thermalPoromechanicsKernels

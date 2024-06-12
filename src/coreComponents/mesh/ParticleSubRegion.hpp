@@ -16,7 +16,7 @@
 #ifndef GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
 
-#include "mesh/generators/ParticleBlockABC.hpp"
+#include "particleGenerators/ParticleBlockABC.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ParticleSubRegionBase.hpp"
 
@@ -84,11 +84,11 @@ public:
    */
   void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
-  /**
-   * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
-   * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
-   */
-  void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
+  // /**
+  //  * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
+  //  * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
+  //  */
+  // void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
 
   ///@}
 

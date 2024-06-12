@@ -53,14 +53,6 @@ public:
     m_coef2( coef2 )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -104,13 +96,19 @@ public:
   EzrokhiBrineViscosity( string const & name,
                          string_array const & inputPara,
                          string_array const & componentNames,
-                         array1d< real64 > const & componentMolarWeight );
+                         array1d< real64 > const & componentMolarWeight,
+                         bool const printTable );
 
   virtual ~EzrokhiBrineViscosity() override = default;
 
   static string catalogName() { return "EzrokhiBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
+
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   virtual PVTFunctionType functionType() const override
   {
@@ -146,26 +144,6 @@ private:
   real64 m_coef2;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
-                                           real64 const & temperature,
-                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                           real64 & value,
-                                           bool useMass ) const
-{
-  GEOS_UNUSED_VAR( pressure, useMass );
-  real64 const waterVisc = m_waterViscosityTable.compute( &temperature );
-  // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
-  real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] /
-                                         ( phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] +
-                                           phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex]);
-
-
-  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * massPhaseCompositionCO2;
-  value = waterVisc * pow( 10, value );
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE

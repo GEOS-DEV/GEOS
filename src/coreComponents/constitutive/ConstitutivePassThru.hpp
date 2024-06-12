@@ -22,6 +22,8 @@
 
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
+#include "ContinuumBase.hpp"
+#include "gas/Gas.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
@@ -139,6 +141,9 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
+                                 DuvautLionsSolid< DruckerPrager >,
+                                 DuvautLionsSolid< DruckerPragerExtended >,
+                                 DuvautLionsSolid< ModifiedCamClay >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
                                  DelftEgg,
@@ -158,11 +163,11 @@ template< typename BASETYPE >
 struct ConstitutivePassThruMPM;
 
 /**
- * Specialization for models that derive from SolidBase that are used by the MPM solver.
+ * Specialization for models that derive from ContinuumBase that are used by the MPM solver.
  * NOTE: this is only a temporary dispatch to reduce the compilation time.
  */
 template<>
-struct ConstitutivePassThruMPM< SolidBase >
+struct ConstitutivePassThruMPM< ContinuumBase >
 {
 
   // NOTE: The switch order here can be fragile if a model derives from another
@@ -173,7 +178,7 @@ struct ConstitutivePassThruMPM< SolidBase >
 
   template< typename LAMBDA >
   static
-  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  void execute( ContinuumBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< Graphite,
                                  CeramicDamage,
@@ -184,8 +189,9 @@ struct ConstitutivePassThruMPM< SolidBase >
                                  VonMisesJ,
                                  ElasticIsotropic,
                                  Hyperelastic,
-                                 HyperelasticMMS >::execute( constitutiveRelation,
-                                                             std::forward< LAMBDA >( lambda ) );
+                                 HyperelasticMMS,
+                                 Gas >::execute( constitutiveRelation,
+                                                 std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -246,8 +252,8 @@ struct ConstitutivePassThru< NullModel >
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
-                  << constitutiveRelation.getName() << " with type "
+      GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed on constitutive relation "
+                  << constitutiveRelation.getDataContext() << " with type "
                   << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
@@ -270,8 +276,8 @@ struct ConstitutivePassThru< PorousSolid< ElasticIsotropic > >
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed. The constitutive relation is named "
-                  << constitutiveRelation.getName() << " with type "
+      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed on constitutive relation "
+                  << constitutiveRelation.getDataContext() << " with type "
                   << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
@@ -309,6 +315,9 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPrager > >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
+                                 PorousSolid< DuvautLionsSolid< ModifiedCamClay > >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
@@ -369,8 +378,8 @@ struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeabili
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
-                  << constitutiveRelation.getName() << " with type "
+      GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed on constitutive relation "
+                  << constitutiveRelation.getDataContext() << " with type "
                   << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
@@ -396,6 +405,9 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPrager > >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
+                                 PorousSolid< DuvautLionsSolid< ModifiedCamClay > >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
@@ -419,6 +431,9 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPrager > >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
+                                 PorousSolid< DuvautLionsSolid< ModifiedCamClay > >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,

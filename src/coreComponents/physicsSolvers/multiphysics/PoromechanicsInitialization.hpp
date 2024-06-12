@@ -20,9 +20,11 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_
 
 #include "events/tasks/TaskBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsStateReset.hpp"
 
 namespace geos
 {
+class SolidMechanicsStatistics;
 
 /**
  * @class PoromechanicsInitialization
@@ -79,21 +81,27 @@ private:
   {
     /// String for the poromechanics solver name
     constexpr static char const * poromechanicsSolverNameString() { return "poromechanicsSolverName"; }
-    /// String for the solver configuration
-    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+    /// String for the solid mechanics statistics name
+    constexpr static char const * solidMechanicsStatisticsNameString() { return "solidMechanicsStatisticsName"; }
   };
 
-
   void postProcessInput() override;
+
+//  void registerDataOnMesh( Group & meshBodies ) override;
 
   /// Name of the poromechanics solver
   string m_poromechanicsSolverName;
 
-  /// Pointer to the multiphase poromechanics solver
+  /// Name of the solid mechanics statistics
+  string m_solidMechanicsStatisticsName;
+
+  /// Pointer to the poromechanics solver
   POROMECHANICS_SOLVER * m_poromechanicsSolver;
 
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
+  /// Pointer to the solid mechanics statistics
+  SolidMechanicsStatistics * m_solidMechanicsStatistics;
+
+  SolidMechanicsStateReset m_solidMechanicsStateResetTask;
 
 };
 

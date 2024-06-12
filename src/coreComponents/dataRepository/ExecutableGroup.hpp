@@ -22,12 +22,12 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "Group.hpp"
-
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
 
-class DomainPartition;
+// class DomainPartition;
 
 /**
  * @class ExecutableGroup
@@ -116,7 +116,7 @@ public:
    * @brief Get the target's time step behavior.
    * @return The time stepping type
    */
-  TimesteppingBehavior getTimesteppingBehavior() { return m_timesteppingBehavior; }
+  TimesteppingBehavior getTimesteppingBehavior() const { return m_timesteppingBehavior; }
 
 private:
 

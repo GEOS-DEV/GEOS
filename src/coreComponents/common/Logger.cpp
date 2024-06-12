@@ -29,30 +29,37 @@ namespace geos
  * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOSX_THROW)
  * @param msgToInsert message to insert at the top of the originalMsg
  */
-std::string InsertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
+std::string insertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
 {
   std::string newMsg( originalMsg );
-
   size_t insertPos = 0;
   // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static auto constexpr rankLogStart =  "***** Rank ";
-  static auto constexpr rankLogEnd =  ": ";
-  static auto constexpr simpleLogStart =  "***** ";
+  static string_view constexpr rankLogStart =  "***** Rank ";
+  static string_view constexpr rankLogEnd =  ": ";
+  static string_view constexpr simpleLogStart =  "***** ";
   if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    insertPos = newMsg.find( rankLogEnd, insertPos + stringutilities::cstrlen( rankLogStart ) )
-                + stringutilities::cstrlen( rankLogEnd );
+    insertPos = newMsg.find( rankLogEnd, insertPos + rankLogStart.size() )
+                + rankLogEnd.size();
   }
-  else if( ( insertPos = newMsg.find_last_of( simpleLogStart ) ) != std::string::npos )
+  else if( ( insertPos = newMsg.rfind( simpleLogStart ) ) != std::string::npos )
   {
-    insertPos += stringutilities::cstrlen( simpleLogStart );
+    insertPos += simpleLogStart.size();
+  }
+  else
+  {
+    insertPos = 0;
   }
   newMsg.insert( insertPos, msgToInsert );
   return newMsg;
 }
 
 InputError::InputError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( InsertExMsg( subException.what(), msgToInsert ) )
+  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
+{}
+
+SimulationError::SimulationError( std::exception const & subException, std::string const & msgToInsert ):
+  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
 {}
 
 namespace logger

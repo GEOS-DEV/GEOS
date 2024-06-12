@@ -47,6 +47,12 @@ class FiniteElementDiscretization : public dataRepository::Group
 {
 public:
 
+  /// Enumerator of available interpolation types
+  enum class Formulation : integer
+  {
+    Default,
+    SEM,
+  };
 
 
   FiniteElementDiscretization() = delete;
@@ -96,7 +102,7 @@ private:
   int m_order;
 
   /// Optional string indicating any specialized formulation type.
-  string m_formulation;
+  Formulation m_formulation;
 
   /// Optional parameter indicating if the class should use Virtual Elements.
   int m_useVem;
@@ -104,6 +110,11 @@ private:
   void postProcessInput() override final;
 
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( FiniteElementDiscretization::Formulation,
+              "default",
+              "SEM" );
 
 template< typename SUBREGION_TYPE,
           typename FE_TYPE >
@@ -117,7 +128,7 @@ FiniteElementDiscretization::
   GEOS_MARK_FUNCTION;
 
   // do not precompute shape functions in case of SEM formulation (not needed)
-  if( m_formulation == "SEM" )
+  if( m_formulation == Formulation::SEM )
     return;
 
   array4d< real64 > & dNdX = elementSubRegion->dNdX();

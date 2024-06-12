@@ -17,15 +17,15 @@
 namespace geos
 {
 
-PartitionBase::PartitionBase(string const & name,
-                Group * const parent ):
- Group( name, parent )
+PartitionBase::PartitionBase( string const & name,
+                              Group * const parent ) :
+  Group( name, parent )
 {}
 
 PartitionBase::PartitionBase( const unsigned int numPartitions,
-                              const unsigned int thisPartition, 
+                              const unsigned int thisPartition,
                               string const & name,
-                              Group * const parent ): 
+                              Group * const parent ) :
   Group( name, parent ),
   m_size( numPartitions ),
   m_rank( thisPartition ),

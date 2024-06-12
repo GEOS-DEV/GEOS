@@ -23,6 +23,7 @@
 #include "WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "ElasticFields.hpp"
 
 namespace geos
 {
@@ -33,11 +34,6 @@ public:
 
   using EXEC_POLICY = parallelDevicePolicy<  >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
 
   ElasticWaveEquationSEM( const std::string & name,
                           Group * const parent );
@@ -51,8 +47,14 @@ public:
   ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM const & ) = delete;
   ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM && ) = delete;
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "elastic"; }
 
   static string catalogName() { return "ElasticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -88,23 +90,9 @@ public:
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values at iteration n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
-   * @brief Compute DAS data from the appropriate three-component receiver pairs
+   * @brief Compute DAS data as a difference of the field at two points, from the appropriate three-component receiver pairs, when the DAS
+   * type is set to 2
    * @param xCompRcv the array holding the x-component of pairs of receivers
    * @param yCompRcv the array holding the y-component of pairs of receivers
    * @param zCompRcv the array holding the z-component of pairs of receivers
@@ -112,7 +100,6 @@ public:
   void computeDAS( arrayView2d< real32 > const xCompRcv,
                    arrayView2d< real32 > const yCompRcv,
                    arrayView2d< real32 > const zCompRcv );
-
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -123,19 +110,13 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
+
+    static constexpr char const * dasSignalNp1AtReceiversString() { return "dasSignalNp1AtReceivers"; }
 
     static constexpr char const * sourceForceString() { return "sourceForce"; }
     static constexpr char const * sourceMomentString() { return "sourceMoment"; }
@@ -155,6 +136,22 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
+
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        arrayView1d< string const > const & regionNames );
+
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 protected:
 
   virtual void postProcessInput() override final;
@@ -190,31 +187,14 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  localIndex getNumNodesPerElem();
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in y-direction
   array2d< real64 > m_sourceConstantsy;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction
   array2d< real64 > m_sourceConstantsz;
-
-  /// Flag that indicates whether the source is accessible or not to the MPI rank
-  array1d< localIndex > m_sourceIsAccessible;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
   array2d< real32 > m_displacementXNp1AtReceivers;
@@ -225,6 +205,9 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver (z-component)
   array2d< real32 > m_displacementZNp1AtReceivers;
 
+  /// DAS receiver signal at np1 for each time step for each receiver (z-component)
+  array2d< real32 > m_dasSignalNp1AtReceivers;
+
   /// Vector describing the force of the source
   R1Tensor m_sourceForce;
 
@@ -232,205 +215,6 @@ private:
   R2SymTensor m_sourceMoment;
 
 };
-
-
-namespace fields
-{
-
-DECLARE_FIELD( Displacementx_nm1,
-               "displacementx_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementy_nm1,
-               "displacementy_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementz_nm1,
-               "displacementz_nm1",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of displacement at time n-1." );
-
-DECLARE_FIELD( Displacementx_n,
-               "displacementx_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementy_n,
-               "displacementy_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementz_n,
-               "displacementz_n",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of displacement at time n." );
-
-DECLARE_FIELD( Displacementx_np1,
-               "displacementx_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "x-component of displacement at time n+1." );
-
-DECLARE_FIELD( Displacementy_np1,
-               "displacementy_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "y-component of displacement at time n+1." );
-
-DECLARE_FIELD( Displacementz_np1,
-               "displacementz_np1",
-               array1d< real32 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "z-component of displacement at time n+1." );
-
-DECLARE_FIELD( ForcingRHSx,
-               "rhsx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for x-direction" );
-
-DECLARE_FIELD( ForcingRHSy,
-               "rhsy",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for y-direction" );
-
-DECLARE_FIELD( ForcingRHSz,
-               "rhsz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "RHS for z-direction" );
-
-DECLARE_FIELD( MassVector,
-               "massVector",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Mass Matrix." );
-
-DECLARE_FIELD( DampingVectorx,
-               "dampingVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in x-direction." );
-
-DECLARE_FIELD( DampingVectory,
-               "dampingVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in y-direction." );
-
-DECLARE_FIELD( DampingVectorz,
-               "dampingVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Diagonal Damping Matrix in z-direction." );
-
-DECLARE_FIELD( StiffnessVectorx,
-               "stiffnessVectorx",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "x-component of stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectory,
-               "stiffnessVectory",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "y-component of stiffness vector." );
-
-DECLARE_FIELD( StiffnessVectorz,
-               "stiffnessVectorz",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "z-component of stiffness vector." );
-
-DECLARE_FIELD( MediumVelocityVp,
-               "mediumVelocityVp",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "P-waves speed in the cell" );
-
-DECLARE_FIELD( MediumVelocityVs,
-               "mediumVelocityVs",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "S-waves speed in the cell" );
-
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
-               array1d< real32 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Medium density of the cell" );
-
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
-
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
-               array1d< localIndex >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
-
-}
-
 
 } /* namespace geos */
 
