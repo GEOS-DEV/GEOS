@@ -126,7 +126,10 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
   nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+  arrayView1d< globalIndex const > const nodeLocalToGlobalMap = nodeManager.localToGlobalMap().toViewConst();
 
+  ArrayOfArraysView< localIndex const > const  facesToNodes = faceManager.nodeList().toViewConst();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -185,13 +188,13 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
           numFacesPerElem,
+          facesToNodes,
           nodeCoords32,
+          nodeLocalToGlobalMap,
           elemGhostRank,
           elemsToNodes,
           elemsToFaces,
           elemCenter,
-          faceNormal,
-          faceCenter,
           sourceCoordinates,
           sourceIsAccessible,
           sourceNodeIds,

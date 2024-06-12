@@ -346,7 +346,6 @@ int sign( T const val )
   return (T( 0 ) < val) - (val < T( 0 ));
 }
 
-
 /**
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
  * @tparam POINT_TYPE type of @p point
@@ -397,6 +396,102 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
     }
   }
   return true;
+}
+
+/**
+ * @brief Check if a point is inside a convex polyhedron (3D polygon), using a slow but robust method
+ *  to avoid ambiguity when the point lies on an interface.
+ *  This method is based on the following paper:
+ *  Jacobson A., Kavan L., Sorkine-Hornung O.,
+ *  "Robust inside-outside segmentation using generalized winding numbers",
+ *  ACM Transactions on Graphics (TOG). 2013 Jul 21;32(4):1-2.
+ *  Additional measures are taken to make the check more robust wrt domain decomposition
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] nodeCoordinates a global array of nodal coordinates
+ * @param[in] faceIndices global indices of the faces of the cell
+ * @param[in] facesToNodes map from face to nodes
+ * @param[in] nodesLocalToGobal global indices of nodes
+ * @param[in] elemCenter coordinates of the element centroid
+ * @param[in] point coordinates of the query point
+ * @return whether the point is inside
+ */
+template< typename COORD_TYPE, typename POINT_TYPE >
+GEOS_HOST_DEVICE
+bool isPointInsideConvexPolyhedronRobust( arrayView2d< COORD_TYPE const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                                          arraySlice1d< localIndex const > const & faceIndices,
+                                          ArrayOfArraysView< localIndex const > const facesToNodes,
+                                          arrayView1d< globalIndex const > const nodeLocalToGlobal,
+                                          POINT_TYPE const & elemCenter,
+                                          POINT_TYPE const & point )
+{
+  localIndex const numFaces = faceIndices.size();
+  real64 omega = 0;
+  for( localIndex kf = 0; kf < numFaces; ++kf )
+  {
+    // triangulate the face. The triangulation must be done in a consistent way across ranks.
+    // This can be achieved by always picking the vertex with the lowest global index as root.
+    localIndex const faceIndex = faceIndices[kf];
+    globalIndex minGlobalId = std::numeric_limits< localIndex >::max();
+    localIndex minVertex = -1;
+    localIndex numFaceVertices = facesToNodes[faceIndex].size();
+    for( localIndex v = 0; v < numFaceVertices; v++ )
+    {
+      localIndex vIndex = facesToNodes( faceIndex, v ); 
+      globalIndex globalId = nodeLocalToGlobal[ vIndex ];
+      if( globalId < minGlobalId )
+      {
+        minGlobalId = globalId;
+        minVertex = vIndex;
+      }
+    }
+    // triangulate the face using the minimum-id vertex as root
+    localIndex vi[ 3 ] = {minVertex, -1, -1};
+    for( localIndex v = 0; v < numFaceVertices; v++ )
+    {
+      vi[ 1 ] = facesToNodes( faceIndex, v );
+      vi[ 2 ] = facesToNodes( faceIndex, (v + 1) % numFaceVertices );
+      if( vi[ 1 ] != minVertex && vi[ 2 ] != minVertex )
+      {
+        // To make the algorithm independent of rank, always take the two additional vertices in increasing global ID
+        if( nodeLocalToGlobal[ vi[ 1 ] ] > nodeLocalToGlobal[ vi[ 2 ] ] )
+        {
+          std::swap( vi[ 1 ], vi[ 2 ] );
+        }
+        // compute the signed solid angle contributed by this triangle
+        real64 abc[ 3 ][ 3 ] = { { 0 } };
+        for( int i = 0; i < 3; i++ )
+        {
+          for( int j = 0; j < 3; j++ )
+          {
+            abc[ i ][ j ] = nodeCoordinates( vi[ i ], j ) - point[ j ];  
+          }
+        }
+        real64 a = LvArray::tensorOps::l2Norm< 3 >( abc[ 0 ] );
+        real64 b = LvArray::tensorOps::l2Norm< 3 >( abc[ 1 ] );
+        real64 c = LvArray::tensorOps::l2Norm< 3 >( abc[ 2 ] );
+        real64 ab = LvArray::tensorOps::AiBi< 3 >( abc[ 0 ], abc[ 1 ] ); 
+        real64 bc = LvArray::tensorOps::AiBi< 3 >( abc[ 1 ], abc[ 2 ] ); 
+        real64 ac = LvArray::tensorOps::AiBi< 3 >( abc[ 0 ], abc[ 2 ] );
+        real64 det = LvArray::tensorOps::determinant< 3 >( abc );
+        // make the orientation of this triangle coherent
+        R1Tensor vv1 = { nodeCoordinates( vi[ 1 ], 0 ) - nodeCoordinates( vi[ 0 ], 0 ), 
+                         nodeCoordinates( vi[ 1 ], 1 ) - nodeCoordinates( vi[ 0 ], 1 ), 
+                         nodeCoordinates( vi[ 1 ], 2 ) - nodeCoordinates( vi[ 0 ], 2 )  };
+        R1Tensor vv2 = { nodeCoordinates( vi[ 2 ], 0 ) - nodeCoordinates( vi[ 0 ], 0 ), 
+                         nodeCoordinates( vi[ 2 ], 1 ) - nodeCoordinates( vi[ 0 ], 1 ), 
+                         nodeCoordinates( vi[ 2 ], 2 ) - nodeCoordinates( vi[ 0 ], 2 )  };
+        R1Tensor dist = { elemCenter[ 0 ] - ( nodeCoordinates( vi[ 0 ], 0 ) + nodeCoordinates( vi[ 1 ], 0 ) + nodeCoordinates( vi[ 2 ], 0 ) )/3.0,
+                          elemCenter[ 1 ] - ( nodeCoordinates( vi[ 0 ], 1 ) + nodeCoordinates( vi[ 1 ], 1 ) + nodeCoordinates( vi[ 2 ], 1 ) )/3.0,
+                          elemCenter[ 2 ] - ( nodeCoordinates( vi[ 0 ], 2 ) + nodeCoordinates( vi[ 1 ], 2 ) + nodeCoordinates( vi[ 2 ], 2 ) )/3.0 };
+        R1Tensor norm = { };
+        LvArray::tensorOps::crossProduct( norm, vv1, vv2 );
+        det = LvArray::tensorOps::AiBi< 3 >( norm, dist ) > 0 ? det : -det;
+        omega += atan2( det, a*b*c + ab*c + b*ac + c*ab ); 
+      }
+    }
+  }  
+  
+  return std::abs( omega ) > M_PI;
 }
 
 
