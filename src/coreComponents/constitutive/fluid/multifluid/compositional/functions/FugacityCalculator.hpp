@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_FUGACITYCALCULATOR_HPP_
 
 #include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 
 namespace geos
