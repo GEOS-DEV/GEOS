@@ -25,6 +25,7 @@ PhaseFieldDamageFEM                           node                 :ref:`XML_Pha
 PhaseFieldFracture                            node                 :ref:`XML_PhaseFieldFracture`                            
 ProppantTransport                             node                 :ref:`XML_ProppantTransport`                             
 ReactiveCompositionalMultiphaseOBL            node                 :ref:`XML_ReactiveCompositionalMultiphaseOBL`            
+SeismicityRate                                node                 :ref:`XML_SeismicityRate`                                
 SinglePhaseFVM                                node                 :ref:`XML_SinglePhaseFVM`                                
 SinglePhaseHybridFVM                          node                 :ref:`XML_SinglePhaseHybridFVM`                          
 SinglePhasePoromechanics                      node                 :ref:`XML_SinglePhasePoromechanics`                      

@@ -61,16 +61,6 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
                           DofManager::Connector::Elem );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
-{
-  return solidMechanicsSolver()->updateConfiguration( domain );
-}
-
-bool SinglePhasePoromechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
-{
-  return solidMechanicsSolver()->resetConfigurationToDefault( domain );
-}
-
 void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition & domain,
                                                                DofManager & dofManager,
                                                                CRSMatrix< real64, globalIndex > & localMatrix,
@@ -153,8 +143,6 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 
   solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  synchronizeNonLinearParameters();
-
   assembleElementBasedContributions( time_n,
                                      dt,
                                      domain,
@@ -192,9 +180,6 @@ void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributi
   /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
 
   Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  this->solidMechanicsSolver()->getMaxForce() = 0.0;
-  /// TODO: this is to be consistent with old version but it should be changed. We likely want to scale the residual for contact the same
-  /// way we scale the mechanics one.
 
   // Flow accumulation for fractures
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -793,12 +778,6 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
       } );
     } );
   } );
-}
-
-
-void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
-{
-  solidMechanicsSolver()->outputConfigurationStatistics( domain );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
