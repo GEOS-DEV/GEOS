@@ -159,8 +159,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleSystem(
 
   this->solidMechanicsSolver()->synchronizeFractureState( domain );
 
-  this->synchronizeNonLinearParameters();
-
   assembleElementBasedContributions( time_n,
                                      dt,
                                      domain,
