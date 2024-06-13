@@ -175,18 +175,17 @@ static constexpr double YearSeconds = YearDays * DaySeconds;
 struct TimeFormatInfo
 {
   /// Total time (including the decimal part) this instance represents in seconds
-  double m_totalSeconds = 0.0;
+  double const m_totalSeconds = 0.0;
   /// Number of integral years to show
-  int m_years = 0;
+  int const m_years = 0;
   /// Number of integral days to show
-  int m_days = 0;
+  int const m_days = 0;
   /// Number of integral hours to show
-  int m_hours = 0;
+  int const m_hours = 0;
   /// Number of integral minutes to show
-  int m_minutes = 0;
+  int const m_minutes = 0;
   /// Number of integral seconds to show
-  int m_seconds = 0;
-
+  int const m_seconds = 0;
 
   /**
    * @brief Construct a TimeFormatInfo from raw data (which must be coherent)
@@ -216,9 +215,19 @@ struct TimeFormatInfo
   friend std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & ctx );
 
   /**
-   * @return a user friendly string representation of this structure.
+   * @return a comprehensive string representation of this structure.
    */
   string toString() const;
+
+  /**
+   * @return a user friendly string representation of this structure (YDHMS format, without subsecond details).
+   */
+  string toUnfoldedString() const;
+
+  /**
+   * @return a precise string representation of this structure (decimal seconds).
+   */
+  string toSecondsString() const;
 };
 
 
