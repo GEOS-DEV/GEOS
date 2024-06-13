@@ -51,7 +51,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseProppantFluxKernels.hpp
      fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/StencilAccessors.hpp
-     fluidFlow/StencilOutput.hpp
+     fluidFlow/StencilDataCollection.hpp
      fluidFlow/ThermalSinglePhaseBaseKernels.hpp
      fluidFlow/ThermalSinglePhaseFVMKernels.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
@@ -180,7 +180,7 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/SinglePhaseProppantFluxKernels.cpp
-     fluidFlow/StencilOutput.cpp
+     fluidFlow/StencilDataCollection.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp
      fluidFlow/wells/SinglePhaseWell.cpp

@@ -3,7 +3,7 @@
 =========================================================== ==== ================================================================================ 
 Name                                                        Type Description                                                                      
 =========================================================== ==== ================================================================================ 
-CellToCellOutput                                            node :ref:`DATASTRUCTURE_CellToCellOutput`                                            
+CellToCellDataCollection                                    node :ref:`DATASTRUCTURE_CellToCellDataCollection`                                    
 CompositionalMultiphaseReservoirPoromechanicsInitialization node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanicsInitialization` 
 CompositionalMultiphaseStatistics                           node :ref:`DATASTRUCTURE_CompositionalMultiphaseStatistics`                           
 MultiphasePoromechanicsInitialization                       node :ref:`DATASTRUCTURE_MultiphasePoromechanicsInitialization`                       

@@ -150,11 +150,11 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion.rst
 
 
-.. _XML_CellToCellOutput:
+.. _XML_CellToCellDataCollection:
 
-Element: CellToCellOutput
-=========================
-.. include:: ../../coreComponents/schema/docs/CellToCellOutput.rst
+Element: CellToCellDataCollection
+=================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection.rst
 
 
 .. _XML_CeramicDamage:
@@ -1561,11 +1561,11 @@ Datastructure: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion_other.rst
 
 
-.. _DATASTRUCTURE_CellToCellOutput:
+.. _DATASTRUCTURE_CellToCellDataCollection:
 
-Datastructure: CellToCellOutput
-===============================
-.. include:: ../../coreComponents/schema/docs/CellToCellOutput_other.rst
+Datastructure: CellToCellDataCollection
+=======================================
+.. include:: ../../coreComponents/schema/docs/CellToCellDataCollection_other.rst
 
 
 .. _DATASTRUCTURE_CeramicDamage:
