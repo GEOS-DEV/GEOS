@@ -760,12 +760,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
   } );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::outputConfigurationStatistics( DomainPartition const & domain ) const
-{
-  this->solidMechanicsSolver()->outputConfigurationStatistics( domain );
-}
-
 template class SinglePhasePoromechanicsConformingFractures<>;
 //template class SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >;
 
