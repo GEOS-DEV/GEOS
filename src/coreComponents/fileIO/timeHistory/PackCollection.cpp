@@ -68,7 +68,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
-  std::cout << "getMetaData targetField " << targetField.getName() << std::endl;
+  
   if( collectAll() )
   {
     // If we collect all the data, then we have a unique field: "all".
@@ -133,7 +133,6 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   Group const * targetGrp = nullptr;
   try
   {
-    std::cout << "updateSetsIndices - " << m_fieldName << " m_objectPath - " <<  m_objectPath << " domain - "<< domain.getName()  <<std::endl;
     targetGrp = this->getTargetObject( domain, m_objectPath );
     WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
     // If we're collecting everything from a mesh target or just collecting an entire non-mesh object

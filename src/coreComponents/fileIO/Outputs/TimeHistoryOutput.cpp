@@ -73,7 +73,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
       {
         metadata.setName( prefix + metadata.getName() );
       }
-
       m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, metadata, m_recordCount ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {

@@ -105,7 +105,6 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
           setRestartFlags( RestartFlags::NO_WRITE );
 
         RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
-                std::cout << " REGISTERD REGION STATISTICS "  <<  regionStatistics.getPath() << std::endl;
         regionStatistics.init( numPhases, numComps );
         // write output header
         if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
@@ -313,7 +312,6 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     if( subRegionMinPres < minPressure )
     {
       regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::minPressureString()).setApplyDefaultValue( subRegionMinPres );
-      real64 & test = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::minPressureString());
     }
     real64 & maxPressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::maxPressureString());
     if( subRegionMaxPres > maxPressure )
@@ -445,40 +443,40 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
     string const massUnit = useMass ? "kg" : "mol";
 
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Pressure (min, average, max): "
-    //                                     << minPressure << ", " << averagePressure << ", " << maxPressure << " Pa" );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Delta pressure (min, max): "
-    //                                     << minDeltaPressure << ", " << maxDeltaPressure << " Pa" );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Temperature (min, average, max): "
-    //                                     << minTemperature << ", " << averageTemperature << ", " << maxTemperature << " K" );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Total dynamic pore volume: " << totalPoreVolume << " rm^3" );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Phase dynamic pore volumes: " << phasePoreVolume << " rm^3" );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Phase mass: " << phaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Pressure (min, average, max): "
+                                        << minPressure << ", " << averagePressure << ", " << maxPressure << " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Delta pressure (min, max): "
+                                        << minDeltaPressure << ", " << maxDeltaPressure << " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Temperature (min, average, max): "
+                                        << minTemperature << ", " << averageTemperature << ", " << maxTemperature << " K" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Total dynamic pore volume: " << totalPoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Phase dynamic pore volumes: " << phasePoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Phase mass: " << phaseMass << " " << massUnit );
 
-    // // metric 1: trapping computed with the Land trapping coefficient (similar to Eclipse)
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Trapped phase mass (metric 1): " << trappedPhaseMass << " " << massUnit
-    //                        );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Non-trapped phase mass (metric 1): " << nonTrappedPhaseMass << " " << massUnit );
+    // metric 1: trapping computed with the Land trapping coefficient (similar to Eclipse)
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Trapped phase mass (metric 1): " << trappedPhaseMass << " " << massUnit
+                           );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Non-trapped phase mass (metric 1): " << nonTrappedPhaseMass << " " << massUnit );
 
-    // // metric 2: immobile phase mass computed with a threshold on relative permeability
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Immobile phase mass (metric 2): " << immobilePhaseMass << " " << massUnit
-    //                        );
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Mobile phase mass (metric 2): " << mobilePhaseMass << " " << massUnit );
+    // metric 2: immobile phase mass computed with a threshold on relative permeability
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Immobile phase mass (metric 2): " << immobilePhaseMass << " " << massUnit
+                           );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Mobile phase mass (metric 2): " << mobilePhaseMass << " " << massUnit );
 
 
-    // GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-    //                                     << ": Dissolved component mass: " << dissolvedComponentMass << " " << massUnit
-    //                        );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Dissolved component mass: " << dissolvedComponentMass << " " << massUnit
+                           );
 
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
