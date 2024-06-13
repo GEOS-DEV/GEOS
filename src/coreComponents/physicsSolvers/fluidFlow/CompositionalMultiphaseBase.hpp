@@ -267,6 +267,7 @@ public:
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
+    static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
 
   };
 
