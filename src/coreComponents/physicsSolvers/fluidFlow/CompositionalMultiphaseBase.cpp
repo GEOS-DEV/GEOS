@@ -150,6 +150,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (absolute) component density change in a sequential iteration, used for outer loop convergence check" );
+
+  this->registerWrapper( viewKeyStruct::minScalingFactorString(), &m_minScalingFactor ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.01 ).
+    setDescription( "Minimum value for solution scaling factor" );
 }
 
 void CompositionalMultiphaseBase::postProcessInput()
@@ -177,13 +183,18 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
                         ": The target change in phase volume fraction in a time step must be larger than to 0.0" );
-
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be larger or equal to 0.0" );
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be smaller or equal to 1.0" );
+  GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be larger than 0.0" );
+  GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
+                        ": The minumum scaling factor must be smaller or equal to 1.0" );
 
   if( m_isThermal && m_useSimpleAccumulation == 1 ) // useSimpleAccumulation is not yet compatible with thermal
   {
@@ -2115,12 +2126,20 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 
   real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
                                 / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on pressure change = {}", getName(), nextDtPressure ));
   real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
                                     / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
-  real64 const nextDtTemperature = m_isThermal
-    ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
-                                   / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange )
-    : LvArray::NumericLimits< real64 >::max;
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on phase volume fraction change = {}", getName(), nextDtPhaseVolFrac ));
+  real64 nextDtTemperature = LvArray::NumericLimits< real64 >::max;
+  if( m_isThermal )
+  {
+    nextDtTemperature = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange
+                        / std::max( eps, maxRelativeTempChange + m_solutionChangeScalingFactor * m_targetRelativeTempChange );
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on temperature change = {}", getName(), nextDtPhaseVolFrac ));
+  }
 
   return std::min( std::min( nextDtPressure, nextDtPhaseVolFrac ), nextDtTemperature );
 }
