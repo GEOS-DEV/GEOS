@@ -41,8 +41,6 @@ set(YAPF_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/pyt
 set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build CACHE PATH "" FORCE)
 
 
-set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
-
 # caliper 
 set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
 set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "" FORCE)
@@ -58,9 +56,9 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
 
 # ATS
 set(ATS_ARGUMENTS "--machine slurm36"  CACHE STRING "")
-# set(USER $ENV{USER} CACHE STRING "")
-# set(ATS_WORKING_DIR "/p/lustre2/${USER}/integratedTests/${CONFIG_NAME}"  CACHE PATH "")
-# set(ATS_BASELINE_DIR "/p/lustre2/${USER}/integratedTests/baselines"  CACHE PATH "")
+set(USER $ENV{USER} CACHE STRING "")
+set(ATS_WORKING_DIR "/p/lustre2/${USER}/integratedTestsGEOS/${CONFIG_NAME}"  CACHE PATH "")
+set(ATS_BASELINE_DIR "/p/lustre2/${USER}/integratedTestsGEOS/baselines"  CACHE PATH "")
 
 # Temporary argument for python module change testing
 # set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)

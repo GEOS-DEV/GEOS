@@ -18,9 +18,7 @@
 
 #include "CompositionalMultiphaseFVM.hpp"
 
-#include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
-#include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -1056,8 +1054,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
-                                   bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
+                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 
       if( stencil.size() == 0 )

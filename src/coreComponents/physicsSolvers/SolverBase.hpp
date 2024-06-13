@@ -21,12 +21,10 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
-
 
 #include <limits>
 
@@ -50,8 +48,6 @@ public:
   SolverBase( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
-
-  static string catalogName() { return "SolverBase"; }
 
   /**
    * @return Get the final class Catalog name
@@ -666,6 +662,10 @@ public:
   {
     return m_nonlinearSolverParameters;
   }
+
+  virtual void
+  synchronizeNonlinearSolverParameters()
+  { /* empty here, overriden in CoupledSolver */ }
 
   /**
    * @brief Get position of a given region within solver's target region list
