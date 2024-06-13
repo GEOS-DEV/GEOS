@@ -230,7 +230,7 @@ void NonlinearSolverParameters::print() const
   }
   TableLayout const tableLayout = TableLayout( {
       TableLayout::ColumnParam{"Parameter", TableLayout::Alignment::left},
-      TableLayout::ColumnParam{"Value", TableLayout::Alignment::center},
+      TableLayout::ColumnParam{"Value", TableLayout::Alignment::left},
     }, GEOS_FMT( "{}: nonlinear solver", getParent().getName() ) );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
