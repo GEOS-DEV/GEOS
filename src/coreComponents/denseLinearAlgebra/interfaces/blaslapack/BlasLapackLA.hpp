@@ -468,6 +468,80 @@ struct BlasLapackLA
                                  Vec< real64 > const & solution );
 
   /**
+   * @brief Solves the linear system ;
+   * \p A  \p solution = \p rhs.
+   *
+   * @details The method is intended for the solution of a small dense linear system.
+   * This solves the system in-place without allocating extra memory for the matrix or the solution. This means
+   * that at on exit the matrix is modified replaced by the LU factors and the right hand side vector is
+   * replaced by the solution.
+   * It employs lapack method dgetr.
+   *
+   * @param [in/out]  A GEOSX array2d. The matrix. On exit this will be replaced by the factorisation of A
+   * @param [in/out]  rhs GEOSX array1d. The right hand side. On exit this will be the solution
+   */
+  static void solveLinearSystem( MatRowMajor< real64 > const & A,
+                                 Vec< real64 > const & rhs );
+
+  /**
+   * @copydoc solveLinearSystem( MatRowMajor< real64 > const &, Vec< real64 > const & )
+   *
+   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+   */
+  static void solveLinearSystem( MatColMajor< real64 > const & A,
+                                 Vec< real64 > const & rhs );
+
+  /**
+   * @brief Solves the linear system ;
+   * \p A  \p solution = \p rhs.
+   *
+   * @details The method is intended for the solution of a small dense linear system in which A is an NxN matrix, the
+   * right-hand-side and the solution are matrices of size NxM.
+   * It employs lapack method dgetr.
+   *
+   * @param [in]  A GEOSX array2d.
+   * @param [in]  rhs GEOSX array2d.
+   * @param [out] solution GEOSX array2d.
+   */
+  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
+                                 MatRowMajor< real64 const > const & rhs,
+                                 MatRowMajor< real64 > const & solution );
+
+  /**
+   * @copydoc solveLinearSystem( MatRowMajor< real64 const > const &, MatRowMajor< real64 const > const &, MatRowMajor< const > const & )
+   *
+   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+   */
+  static void solveLinearSystem( MatColMajor< real64 const > const & A,
+                                 MatColMajor< real64 const > const & rhs,
+                                 MatColMajor< real64 > const & solution );
+
+  /**
+   * @brief Solves the linear system ;
+   * \p A  \p solution = \p rhs.
+   *
+   * @details The method is intended for the solution of a small dense linear system in which A is an NxN matrix, the
+   * right-hand-side and the solution are matrices of size NxM.
+   * This solves the system in-place without allocating extra memory for the matrix or the solution. This means
+   * that at on exit the matrix is modified replaced by the LU factors and the right hand side vector is
+   * replaced by the solution.
+   * It employs lapack method dgetr.
+   *
+   * @param [in/out]  A GEOSX array2d. The matrix. On exit this will be replaced by the factorisation of A
+   * @param [in/out]  rhs GEOSX array1d. The right hand side. On exit this will be the solution
+   */
+  static void solveLinearSystem( MatRowMajor< real64 > const & A,
+                                 MatRowMajor< real64 > const & rhs );
+
+  /**
+   * @copydoc solveLinearSystem( MatRowMajor< real64 > const &, MatRowMajor< real64 > const & )
+   *
+   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+   */
+  static void solveLinearSystem( MatColMajor< real64 > const & A,
+                                 MatColMajor< real64 > const & rhs );
+
+  /**
    * @brief Vector copy;
    * \p Y = \p X.
    *
