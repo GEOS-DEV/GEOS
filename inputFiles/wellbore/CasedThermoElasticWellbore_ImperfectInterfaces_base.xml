@@ -79,7 +79,7 @@
       name="Fracture"
       faceBlock="faceElementSubRegion"
       materialList="{ fluid, fractureFilling, fractureContact, contactThermalCond }"
-      defaultAperture="5.e-3"/>
+      defaultAperture="5.0e-4"/>
     <!-- SPHINX_SurfaceElementRegionEnd -->  
 
     <CellElementRegion
