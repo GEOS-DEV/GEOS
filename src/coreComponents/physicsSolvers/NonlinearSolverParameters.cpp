@@ -188,7 +188,9 @@ void NonlinearSolverParameters::postProcessInput()
                         getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
 
   if( getLogLevel() > 0 )
+  {
     print();
+  }
 }
 
 void NonlinearSolverParameters::print() const
