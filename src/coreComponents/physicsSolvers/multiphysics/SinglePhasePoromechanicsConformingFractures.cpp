@@ -64,18 +64,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupCoupling( 
 }
 
 template< typename FLOW_SOLVER >
-bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateConfiguration( DomainPartition & domain )
-{
-  return this->solidMechanicsSolver()->updateConfiguration( domain );
-}
-
-template< typename FLOW_SOLVER >
-bool SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::resetConfigurationToDefault( DomainPartition & domain ) const
-{
-  return this->solidMechanicsSolver()->resetConfigurationToDefault( domain );
-}
-
-template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
                                                                               DofManager & dofManager,
                                                                               CRSMatrix< real64, globalIndex > & localMatrix,
