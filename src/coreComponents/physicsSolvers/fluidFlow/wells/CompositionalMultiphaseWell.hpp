@@ -353,8 +353,8 @@ protected:
    * @param subRegion the well subRegion
    */
   virtual void validateWellConstraints( real64 const & time_n,
-                                real64 const & dt,
-                                WellElementSubRegion const & subRegion ) override;
+                                        real64 const & dt,
+                                        WellElementSubRegion const & subRegion ) override;
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
