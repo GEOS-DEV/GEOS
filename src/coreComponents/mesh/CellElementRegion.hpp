@@ -119,10 +119,9 @@ public:
 
   /**
    * @brief Fill the current @c CellElementRegion with the cell blocks.
-   * @param neighbors The neighbors of the current @c CellElementRegion
    * @param cellBlks All the cell blocks. It's the role of the current @c CellElementRegion to pick the one it needs.
    */
-  void generateMesh( std::set< integer > const & neighbors, std::map< string, generators::CellBlk const * > const & cellBlks );
+  void generateMesh( std::map< string, generators::CellBlk const * > const & cellBlks );
 
   ///@}
 

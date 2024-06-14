@@ -157,7 +157,7 @@ array2d< localIndex > ElementRegionManager::generateMesh( generators::MeshMappin
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
-    elemRegion.generateMesh( meshMappings.getNeighbors(), meshMappings.getCellMgr().getCellBlks() );
+    elemRegion.generateMesh( meshMappings.getCellMgr().getCellBlks() );
   } );
   // TODO finish the work for fractures.
   return this->getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() );

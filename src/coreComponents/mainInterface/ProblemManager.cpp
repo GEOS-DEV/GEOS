@@ -587,9 +587,9 @@ void generateMeshLevelFreeFct( generators::MeshMappings const & meshMappings,
   ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
 
   array2d< localIndex > const cb2sr = elemRegionManager.generateMesh( meshMappings );
-  nodeManager.setGeometricalRelations( meshMappings, cb2sr.toViewConst() );
-  edgeManager.setGeometricalRelations( meshMappings.getNeighbors(), meshMappings.getEdgeMgr() );
-  faceManager.setGeometricalRelations( meshMappings, cb2sr.toViewConst(), nodeManager );
+  nodeManager.setGeometricalRelations( meshMappings.getNodeMgr(), cb2sr.toViewConst() );
+  edgeManager.setGeometricalRelations( meshMappings.getEdgeMgr() );
+  faceManager.setGeometricalRelations( meshMappings.getFaceMgr(), cb2sr.toViewConst(), nodeManager );
 //  nodeManager.constructGlobalToLocalMap( cellBlockManager );
 // TODO Still need to work on the sets.
 //  // Edge, face and element region managers rely on the sets provided by the node manager.

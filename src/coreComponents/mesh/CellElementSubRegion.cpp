@@ -106,8 +106,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   } );
 }
 
-void CellElementSubRegion::copyFromCellBlock( std::set< integer > const & neighbors,
-                                              generators::CellBlk const & cellBlock )
+void CellElementSubRegion::copyFromCellBlock( generators::CellBlk const & cellBlock )
 {
   // Defines the (unique) element type of this cell element region,
   // and its associated number of nodes, edges, faces.
@@ -131,7 +130,7 @@ void CellElementSubRegion::copyFromCellBlock( std::set< integer > const & neighb
   this->m_localToGlobalMap = cellBlock.getLocalToGlobal();
   this->m_globalToLocalMap = cellBlock.getGlobalToLocal();
 
-  copyExchangeInfo( neighbors, cellBlock.getSend(), cellBlock.getRecv() );
+  copyExchangeInfo( cellBlock.getSend(), cellBlock.getRecv() );
 
   //this->constructGlobalToLocalMap();  // TODO what about `m_localMaxGlobalIndex`?
   // TODO add the external properties import

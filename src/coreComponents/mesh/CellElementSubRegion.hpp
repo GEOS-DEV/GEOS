@@ -87,10 +87,9 @@ public:
 
   /**
    * @brief Fill the current @c CellElementSubRegion using the @c cellBlock information
-   * @param[in] neighbors The neighbors' ranks.
    * @param[in] cellBlock The cell block with all the mappings and ghosting information.
    */
-  void copyFromCellBlock( std::set< integer > const & neighbors, generators::CellBlk const & cellBlock );
+  void copyFromCellBlock( generators::CellBlk const & cellBlock );
 
   ///@}
 

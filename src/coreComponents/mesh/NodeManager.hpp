@@ -168,10 +168,10 @@ public:
 
   /**
    * @brief Initialise the current @c NodeManager with the information from @c meshMappings.
-   * @param[in] meshMappings Provides all the geometrical mappings.
+   * @param[in] nodeMgr Provides all the geometrical mappings and ghost exchange information.
    * @param[in] cb2sr The mapping from the incoming geometrical cell blocks to their sub-region twin.
    */
-  void setGeometricalRelations( generators::MeshMappings const & meshMappings,
+  void setGeometricalRelations( generators::NodeMgr const & nodeMgr,
                                 arrayView2d< localIndex const > const & cb2sr );
 
   /**

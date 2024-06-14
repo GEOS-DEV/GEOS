@@ -1043,8 +1043,7 @@ void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
   } );
 }
 
-void ObjectManagerBase::copyExchangeInfo( std::set< integer > const & neighbors,
-                                          std::map< integer, array1d< localIndex > > const & send,
+void ObjectManagerBase::copyExchangeInfo( std::map< integer, array1d< localIndex > > const & send,
                                           std::map< integer, array1d< localIndex > > const & recv )
 {
   // Build the ghost rank from the `send` and `recv` information.
@@ -1064,7 +1063,12 @@ void ObjectManagerBase::copyExchangeInfo( std::set< integer > const & neighbors,
     }
   }
 
-  for( integer const & rank: neighbors )
+  // Compute the neighbors of the current instance from the `send` and `recv` information.
+  std::set< integer > neighbors_;
+  neighbors_.merge( mapKeys< std::set >( send ) );
+  neighbors_.merge( mapKeys< std::set >( recv ) );
+
+  for( integer const & rank: neighbors_ )
   {
     addNeighbor( rank );
   }

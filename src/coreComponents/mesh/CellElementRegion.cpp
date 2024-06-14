@@ -47,8 +47,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
   }
 }
 
-void CellElementRegion::generateMesh( std::set< integer > const & neighbors,
-                                      std::map< string, generators::CellBlk const * > const & cellBlks )
+void CellElementRegion::generateMesh( std::map< string, generators::CellBlk const * > const & cellBlks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
@@ -56,7 +55,7 @@ void CellElementRegion::generateMesh( std::set< integer > const & neighbors,
   {
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
     generators::CellBlk const * source = cellBlks.at( cellBlockName );
-    subRegion.copyFromCellBlock( neighbors, *source );
+    subRegion.copyFromCellBlock( *source );
   }
 }
 
