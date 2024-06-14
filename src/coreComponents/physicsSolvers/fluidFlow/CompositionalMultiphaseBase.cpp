@@ -35,6 +35,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "fieldSpecification/SourceFluxStatistics.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -73,10 +74,13 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Temperature" );
 //END_SPHINX_INCLUDE_00
+
+  // TODO: add more description on how useMass can alter the simulation (convergence issues?). How does it interact with wells useMass?
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use mass formulation instead of molar" );
+    setDescription( GEOS_FMT( "Use mass formulation instead of molar. Warning : Affects {} rates units.",
+                              SourceFluxBoundaryCondition::catalogName() ) );
 
   this->registerWrapper( viewKeyStruct::solutionChangeScalingFactorString(), &m_solutionChangeScalingFactor ).
     setSizedFromParent( 0 ).
@@ -1552,6 +1556,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
       localIndex const rankOffset = dofManager.rankOffset();
 
+      RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       fs.computeRhsContribution< FieldSpecificationAdd,
                                  parallelDevicePolicy<> >( targetSet.toViewConst(),
@@ -1585,7 +1591,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            useTotalMassEquation,
                                                            dofNumber,
                                                            rhsContributionArrayView,
-                                                           localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           localRhs,
+                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1594,26 +1601,33 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           return;
         }
 
+        real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+        massProd += rhsValue;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
           globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-          localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                            // sizeScalingFactor
-                                                                                            // here
+          localRhs[totalMassBalanceRow] += rhsValue;
           if( fluidComponentId < numFluidComponents - 1 )
           {
             globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
-            localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                             // sizeScalingFactor here
+            localRhs[compMassBalanceRow] += rhsValue;
           }
         }
         else
         {
           globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
-          localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
-                                                                                           // sizeScalingFactor here
+          localRhs[compMassBalanceRow] += rhsValue;
         }
+      } );
+
+      SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
+                                                         [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
+      {
+        // set the new sub-region statistics for this timestep
+        array1d< real64 > massProdArr{ m_numComponents };
+        massProdArr[fluidComponentId] = massProd.get();
+        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), targetSet.size() );
       } );
     } );
   } );
