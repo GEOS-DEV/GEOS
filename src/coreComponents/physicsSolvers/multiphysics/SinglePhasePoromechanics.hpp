@@ -26,7 +26,7 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER = SinglePhaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
