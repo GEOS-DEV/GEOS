@@ -191,6 +191,10 @@ public:
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
+    /// @return String key to bubbleCells
+    static constexpr char const * bubbleCellsString() { return "bubbleCells"; }
+    /// @return String key to toFaceElements
+    static constexpr char const * toFaceElementsString() { return "toFaceElements"; }
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
@@ -405,10 +409,12 @@ private:
   /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
 
-  /// List of the elements sharing some face with the interface elements (useful for bubble elements)
+  /// List of the elements adjacent to faceElement (useful for bubble elements)
   array1d< localIndex > m_bubbleCells;
 
-  /// List of face ids which are shared with the interface elements (useful for bubble elements)
+  /// List of face IDs adjacent to faceElement (useful for bubble elements).
+  /// A 2D array is needed to store both the face ID in the physical space 
+  /// and the corresponding face ID in the parent element space.
   array2d< localIndex > m_toFaceElements;
 
   /**
