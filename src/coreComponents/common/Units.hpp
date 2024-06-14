@@ -82,6 +82,18 @@ enum Unit : integer
 
   /// Solubility in g/L
   Solubility,
+
+  /// Mass in kg
+  Mass,
+
+  /// Mole in mol
+  Mole,
+
+  /// Mass rate in kg/s
+  MassRate,
+
+  /// Mole rate in mol/s
+  MoleRate,
 };
 
 
@@ -104,6 +116,10 @@ constexpr inline std::string_view getDescription( Unit unit )
     case Enthalpy:        return "enthalpy [J/kg]";
     case Density:         return "density [kg/m3]";
     case Solubility:      return "solubility [g/L]";
+    case Mass:            return "mass [kg]";
+    case Mole:            return "mole [mol]";
+    case MassRate:        return "mass rate [kg/s]";
+    case MoleRate:        return "mole rate [mol/s]";
   }
 }
 
@@ -122,6 +138,14 @@ constexpr inline std::string_view getSymbol( Unit unit )
     case TemperatureInC:  return "C";
     case Distance:        return "m";
     case Time:            return "s";
+    case Viscosity:       return "Pa*s";
+    case Enthalpy:        return "J/kg";
+    case Density:         return "kg/m3";
+    case Solubility:      return "g/L";
+    case Mass:            return "kg";
+    case Mole:            return "mol";
+    case MassRate:        return "kg/s";
+    case MoleRate:        return "mol/s";
   }
 }
 
@@ -143,6 +167,14 @@ inline string formatValue( real64 value, Unit unit )
     case TemperatureInC:  return GEOS_FMT( "temperature of {} [K]", convertCToK( value ) );
     case Distance:        return GEOS_FMT( "distance of {} [s]", value );
     case Time:            return GEOS_FMT( "time of {} [s]", value );
+    case Viscosity:       return GEOS_FMT( "viscosity of {} [Pa*s]", value );
+    case Enthalpy:        return GEOS_FMT( "enthalpy of {} [J/kg]", value );
+    case Density:         return GEOS_FMT( "density of {} [kg/m3]", value );
+    case Solubility:      return GEOS_FMT( "solubility of {} [g/L]", value );
+    case Mass:            return GEOS_FMT( "mass of {} [kg]", value );
+    case Mole:            return GEOS_FMT( "mole of {} [mol]", value );
+    case MassRate:        return GEOS_FMT( "mass rate of {} [kg/s]", value );
+    case MoleRate:        return GEOS_FMT( "mole rate of {} [mol/s]", value );
   }
 }
 
