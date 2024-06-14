@@ -29,7 +29,7 @@ namespace geos
 
 using dataRepository::Group;
 
-template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics< SinglePhaseBase > >
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics<> >
 class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
