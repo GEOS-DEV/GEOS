@@ -93,14 +93,6 @@ public:
 
 
   virtual real64
-  calculateResidualNorm1( real64 const & time_n,
-                          real64 const & dt,
-                          DomainPartition const & domain,
-                          DofManager const & dofManager,
-                          arrayView1d< real64 const > const & localRhs );
-
-
-  virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
                          DomainPartition const & domain,

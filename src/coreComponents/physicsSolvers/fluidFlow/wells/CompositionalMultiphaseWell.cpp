@@ -1220,11 +1220,11 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
 
 
 real64
-CompositionalMultiphaseWell::calculateResidualNorm1( real64 const & time_n,
-                                                     real64 const & dt,
-                                                     DomainPartition const & domain,
-                                                     DofManager const & dofManager,
-                                                     arrayView1d< real64 const > const & localRhs )
+CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    DomainPartition const & domain,
+                                                    DofManager const & dofManager,
+                                                    arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1346,79 +1346,7 @@ CompositionalMultiphaseWell::calculateResidualNorm1( real64 const & time_n,
   }
   return resNorm;
 }
-real64
-CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    DomainPartition const & domain,
-                                                    DofManager const & dofManager,
-                                                    arrayView1d< real64 const > const & localRhs )
-{
 
-  return calculateResidualNorm1( time_n, dt, domain, dofManager, localRhs );
-
-  GEOS_MARK_FUNCTION;
-
-  real64 localResidualNorm = 0.0;
-
-  globalIndex const rankOffset = dofManager.rankOffset();
-  string const wellDofKey = dofManager.getKey( wellElementDofName() );
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-
-
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion const & subRegion )
-    {
-      real64 subRegionResidualNorm[1]{};
-
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-
-      WellControls const & wellControls = getWellControls( subRegion );
-
-      // step 1: compute the norm in the subRegion
-
-      ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   numDofPerWellElement(),
-                                                   m_targetPhaseIndex,
-                                                   rankOffset,
-                                                   wellDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   fluid,
-                                                   wellControls,
-                                                   time_n + dt,
-                                                   dt,
-                                                   m_nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm );
-
-      // step 2: reduction across meshBodies/regions/subRegions
-
-      if( subRegionResidualNorm[0] > localResidualNorm )
-      {
-        localResidualNorm = subRegionResidualNorm[0];
-      }
-
-    } );
-  } );
-
-  // step 3: second reduction across MPI ranks
-
-  real64 const residualNorm = MpiWrapper::max( localResidualNorm );
-
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
-  return residualNorm;
-}
 real64
 CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
@@ -1429,134 +1357,102 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   real64 scalingFactor = 1.0;
-  if( 0 )
+  real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
+  real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
   {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
     {
-      mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                                          [&]( localIndex const,
-                                                                               ElementSubRegionBase & subRegion )
-      {
-        // check that pressure and component densities are non-negative
-        auto const subRegionData =
-          compositionalMultiphaseWellKernels::
-            ScalingForSystemSolutionKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
-                                                       m_maxAbsolutePresChange,
-                                                       m_maxCompFracChange,
-                                                       dofManager.rankOffset(),
-                                                       m_numComponents,
-                                                       wellDofKey,
-                                                       subRegion,
-                                                       localSolution );
-
-        scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
-      } );
-
-    } );
-
-    return LvArray::math::max( MpiWrapper::min( scalingFactor ), m_minScalingFactor );
-  }
-  else
-  {
-    real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
-    real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions( regionNames,
-                                                  [&]( localIndex const,
-                                                       ElementSubRegionBase & subRegion )
-      {
-        arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
-        arrayView1d< real64 const > const temperature = subRegion.getField< fields::well::temperature >();
-        arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
-        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
-        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::well::temperatureScalingFactor >();
-        arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
-        const integer temperatureOffset = m_numComponents+2;
-        auto const subRegionData =
-          m_isThermal
+      arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
+      arrayView1d< real64 const > const temperature = subRegion.getField< fields::well::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
+      arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::well::temperatureScalingFactor >();
+      arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
+      const integer temperatureOffset = m_numComponents+2;
+      auto const subRegionData =
+        m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
-            ScalingForSystemSolutionKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
-                                                       m_maxAbsolutePresChange,
-                                                       m_maxRelativeTempChange,
-                                                       m_maxCompFracChange,
-                                                       pressure,
-                                                       temperature,
-                                                       compDens,
-                                                       pressureScalingFactor,
-                                                       compDensScalingFactor,
-                                                       temperatureScalingFactor,
-                                                       dofManager.rankOffset(),
-                                                       m_numComponents,
-                                                       wellDofKey,
-                                                       subRegion,
-                                                       localSolution,
-                                                       temperatureOffset )
+          ScalingForSystemSolutionKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
+                                                     m_maxRelativeTempChange,
+                                                     m_maxCompFracChange,
+                                                     pressure,
+                                                     temperature,
+                                                     compDens,
+                                                     pressureScalingFactor,
+                                                     compDensScalingFactor,
+                                                     temperatureScalingFactor,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     wellDofKey,
+                                                     subRegion,
+                                                     localSolution,
+                                                     temperatureOffset )
   : isothermalCompositionalMultiphaseBaseKernels::
-            ScalingForSystemSolutionKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
-                                                       m_maxAbsolutePresChange,
-                                                       m_maxCompFracChange,
-                                                       pressure,
-                                                       compDens,
-                                                       pressureScalingFactor,
-                                                       compDensScalingFactor,
-                                                       dofManager.rankOffset(),
-                                                       m_numComponents,
-                                                       wellDofKey,
-                                                       subRegion,
-                                                       localSolution );
+          ScalingForSystemSolutionKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
+                                                     m_maxCompFracChange,
+                                                     pressure,
+                                                     compDens,
+                                                     pressureScalingFactor,
+                                                     compDensScalingFactor,
+                                                     dofManager.rankOffset(),
+                                                     m_numComponents,
+                                                     wellDofKey,
+                                                     subRegion,
+                                                     localSolution );
 
 
-        scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
+      scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
 
-        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
-        maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
-        maxDeltaTemp = std::max( maxDeltaTemp, subRegionData.localMaxDeltaTemp );
-        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
-        minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
-        minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
-      } );
+      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
+      maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
+      maxDeltaTemp = std::max( maxDeltaTemp, subRegionData.localMaxDeltaTemp );
+      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
+      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
+      minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
     } );
+  } );
 
-    scalingFactor = MpiWrapper::min( scalingFactor );
-    maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
-    maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
-    minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
-    minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
+  scalingFactor = MpiWrapper::min( scalingFactor );
+  maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+  maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+  minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
 
-    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
-                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well component density change: {} {} (before scaling)",
-                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
+  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
+                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well component density change: {} {} (before scaling)",
+                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
 
-    if( m_isThermal )
-    {
-      maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
-      minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
-                                          getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
-    }
-
-
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well pressure scaling factor: {}", getName(), minPresScalingFactor ) );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well component density scaling factor: {}", getName(), minCompDensScalingFactor ) );
-    if( m_isThermal )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well temperature scaling factor: {}", getName(), minTempScalingFactor ) );
-    }
-
-
-    return LvArray::math::max( scalingFactor, m_minScalingFactor );
+  if( m_isThermal )
+  {
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
+                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
+
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well pressure scaling factor: {}", getName(), minPresScalingFactor ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well component density scaling factor: {}", getName(), minCompDensScalingFactor ) );
+  if( m_isThermal )
+  {
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min well temperature scaling factor: {}", getName(), minTempScalingFactor ) );
+  }
+
+
+  return LvArray::math::max( scalingFactor, m_minScalingFactor );
+
 }
 
 bool
@@ -1796,21 +1692,18 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                fields::well::pressure::key(),
                                scalingFactor,
                                pressureMask );
-  //{ m_numDofPerWellElement, 0, 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                fields::well::globalCompDensity::key(),
                                scalingFactor,
                                componentMask );
-  //{ m_numDofPerWellElement, 1, m_numDofPerWellElement - 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                fields::well::mixtureConnectionRate::key(),
                                scalingFactor,
                                connRateMask );
-  //{ m_numDofPerWellElement, m_numDofPerWellElement - 1, m_numDofPerWellElement } );
 
   if( isThermal() )
   {

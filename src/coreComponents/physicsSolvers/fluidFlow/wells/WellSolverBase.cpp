@@ -257,11 +257,11 @@ void WellSolverBase::updateState( DomainPartition & domain )
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
-                                                  real64 const dt,
-                                                  DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs )
+                                     real64 const dt,
+                                     DomainPartition & domain,
+                                     DofManager const & dofManager,
+                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                     arrayView1d< real64 > const & localRhs )
 {
   string const wellDofKey = dofManager.getKey( wellElementDofName());
 

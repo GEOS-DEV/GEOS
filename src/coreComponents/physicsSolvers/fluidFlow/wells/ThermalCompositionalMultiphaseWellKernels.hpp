@@ -991,9 +991,9 @@ public:
           for( integer dof=0; dof < numComp; dof++ )
           {
             stack.localEnergyFluxJacobian[TAG::NEXT   ][CP_Deriv::dC+dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
-                                                                +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
+                                                                             +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
             stack.localEnergyFluxJacobian[TAG::CURRENT ][CP_Deriv::dC+dof] +=  m_phaseEnthalpy[iwelemUp][0][ip]*dPF_dC[dof]
-                                                                 +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
+                                                                              +dPE_dC[dof]*m_phaseFraction[iwelemUp][0][ip];
           }
         }
         stack.localEnergyFlux[TAG::NEXT   ]   =  m_dt * eflux * currentConnRate;
