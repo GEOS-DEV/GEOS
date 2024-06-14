@@ -77,14 +77,22 @@ public:
 
   virtual ~FlashModelBase() = default;
 
+  /// Struct containing output options
+  struct PVTOutputOptions
+  {
+    /// Output PVT in CSV file
+    bool writeCSV;
+    /// Output PVT in log
+    bool writeInLog;
+  };
+
   using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase,
                                                              string const &,
                                                              string_array const &,
                                                              string_array const &,
                                                              string_array const &,
                                                              array1d< real64 > const &,
-                                                             bool const,
-                                                             bool const >;
+                                                             PVTOutputOptions >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;

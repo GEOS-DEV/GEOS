@@ -70,13 +70,12 @@ public:
                    string_array const & inputPara,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight,
-                   bool const printInCsv,
-                   bool const printInLog )
+                   PVTOutputOptions pvtOpts )
     : PVTFunctionBase( name,
                        componentNames,
                        componentMolarWeight )
   {
-    GEOS_UNUSED_VAR( inputPara, printInCsv, printInLog );
+    GEOS_UNUSED_VAR( inputPara, pvtOpts );
   }
 
   virtual ~NoOpPVTFunction() override = default;

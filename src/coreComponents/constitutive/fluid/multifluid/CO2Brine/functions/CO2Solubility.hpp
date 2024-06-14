@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_CO2SOLUBILITY_HPP_
 
 #include "FlashModelBase.hpp"
-
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -117,8 +116,7 @@ public:
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
-                 bool const printInCsv,
-                 bool const printInLog );
+                 geos::constitutive::PVTProps::FlashModelBase::PVTOutputOptions pvtOpts );
 
   static string catalogName() { return "CO2Solubility"; }
 
@@ -130,19 +128,18 @@ public:
   void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   /**
-   * @brief Check whether we print to screen or to a csv file
-   * @param tableData
-   * @param printInCsv
-   * @param printInLog
+   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
+   * @param tableData The target table to be printed
+   * @param pvtOpts Struct containing output options
    */
-  void checkTableOutput( TableFunction const * tableData, bool const printInCsv, bool const printInLog )
+  void handleTableOutputOptions( TableFunction const * tableData, PVTOutputOptions pvtOpts )
   {
-    if( printInLog &&  tableData->numDimensions() <= 2 )
+    if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {
       TableTextFormatter textFormatter;
       GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
     }
-    if( printInCsv || ( printInLog && tableData->numDimensions() >= 3 ) )
+    if( pvtOpts.writeCSV || ( pvtOpts.writeInLog && tableData->numDimensions() >= 3 ) )
     {
       string const filename = tableData->getName();
       std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );

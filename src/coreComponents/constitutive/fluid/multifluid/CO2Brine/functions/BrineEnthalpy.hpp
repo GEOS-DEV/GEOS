@@ -91,8 +91,7 @@ public:
                  string_array const & inputParams,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
-                 bool const printInCsv,
-                 bool const printInLog );
+                 PVTOutputOptions pvtOpts );
 
   static string catalogName() { return "BrineEnthalpy"; }
 

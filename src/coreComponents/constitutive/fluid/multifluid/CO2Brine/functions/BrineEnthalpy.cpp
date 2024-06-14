@@ -191,8 +191,7 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
                               string_array const & inputParams,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight,
-                              bool const printInCsv,
-                              bool const printInLog ):
+                              PVTOutputOptions pvtOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -206,8 +205,8 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  checkTableOutput( m_CO2EnthalpyTable, printInCsv, printInLog );
-  checkTableOutput( m_brineEnthalpyTable, printInCsv, printInLog );
+  handleTableOutputOptions( m_CO2EnthalpyTable, pvtOpts );
+  handleTableOutputOptions( m_brineEnthalpyTable, pvtOpts );
 }
 
 
@@ -232,7 +231,7 @@ BrineEnthalpy::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineEnthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::PVTOutputOptions )
 
 } // namespace PVTProps
 

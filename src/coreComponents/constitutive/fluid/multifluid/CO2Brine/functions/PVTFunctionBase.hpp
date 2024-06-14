@@ -114,13 +114,23 @@ public:
 
   virtual ~PVTFunctionBase() = default;
 
+
+  /// Struct containing output options
+  struct PVTOutputOptions
+  {
+    /// Output PVT in CSV file
+    bool writeCSV;
+    /// Output PVT in log
+    bool writeInLog;
+  };
+
+
   using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
                                                              string const &,
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const &,
-                                                             bool const,
-                                                             bool const >;
+                                                             PVTOutputOptions >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -142,20 +152,19 @@ public:
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
 
   /**
-   * @brief Check if the log should be printed on log (standard output) and/or CSV files
-   * @param table The target table to be printed
-   * @param printInCsv Boolean for printing in CSV
-   * @param printInLog Boolean for printing in Log
+   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
+   * @param tableData The target table to be printed
+   * @param pvtOpts Struct containing output options
    */
-  void checkTableOutput( TableFunction const * tableData, bool const printInCsv, bool const printInLog )
+  void handleTableOutputOptions( TableFunction const * tableData, PVTOutputOptions pvtOpts )
   {
-    if( printInLog &&  tableData->numDimensions() <= 2 )
+    if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {
       TableTextFormatter textFormatter;
       GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
     }
 
-    if( printInCsv || ( printInLog && tableData->numDimensions() >= 3 ) )
+    if( pvtOpts.writeCSV || ( pvtOpts.writeInLog && tableData->numDimensions() >= 3 ) )
     {
       string const filename = tableData->getName();
       std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );

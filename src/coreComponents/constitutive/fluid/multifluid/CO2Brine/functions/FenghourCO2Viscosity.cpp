@@ -141,15 +141,14 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
-                                            bool const printInCsv,
-                                            bool const printInLog )
+                                            PVTOutputOptions pvtOpts )
   : PVTFunctionBase( name,
                      componentNames,
                      componentMolarWeight )
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  checkTableOutput( m_CO2ViscosityTable, printInCsv, printInLog );
+  handleTableOutputOptions( m_CO2ViscosityTable, pvtOpts );
 }
 
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,
@@ -166,7 +165,7 @@ FenghourCO2Viscosity::createKernelWrapper() const
                         *m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const, bool const )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::PVTOutputOptions )
 
 } // end namespace PVTProps
 

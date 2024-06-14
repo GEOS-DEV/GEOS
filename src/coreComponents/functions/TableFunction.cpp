@@ -17,8 +17,6 @@
  */
 
 #include "TableFunction.hpp"
-#include "fileIO/Table/TableData.hpp"
-#include "fileIO/Table/TableLayout.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include <algorithm>

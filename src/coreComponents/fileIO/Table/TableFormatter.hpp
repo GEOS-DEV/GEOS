@@ -22,8 +22,7 @@
 #include "TableData.hpp"
 #include "TableLayout.hpp"
 #include "common/Units.hpp"
-#include <numeric>
-#include "codingUtilities/StringUtilities.hpp"
+
 
 namespace geos
 {
@@ -63,7 +62,9 @@ public:
   /**
    * @brief Construct a new Table Formatter
    */
-  TableCSVFormatter(): TableFormatter( TableLayout()) {}
+  TableCSVFormatter():
+    TableFormatter( TableLayout() )
+  {}
 
   /**
    * @brief Construct a new Table Formatter from a tableLayout
@@ -119,7 +120,9 @@ public:
   /**
    * @brief Construct a new TableFormatter
    */
-  TableTextFormatter(): TableFormatter( TableLayout()) {}
+  TableTextFormatter():
+    TableFormatter( TableLayout() )
+  {}
 
   /**
    * @brief Construct a new TableFormatter from a tableLayout

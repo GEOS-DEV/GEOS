@@ -239,18 +239,6 @@ private:
    */
   void checkCoord( real64 coord, localIndex dim ) const;
 
-  // /**
-  //  * @brief Print table into a CSV file
-  //  * @param filename Filename for output
-  //  */
-  // void printInCSV( string const & filename ) const;
-
-  // /**
-  //  * @brief Print table to the log (only 1d and 2d tables are supported).
-  //  * @param filename Filename for output
-  //  */
-  // void printInLog( string const & filename ) const;
-
   /**
    * @brief @return Number of table dimensions
    */
