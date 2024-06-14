@@ -479,6 +479,14 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+      arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
+      arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+
+      const integer temperatureOffset = m_numComponents+1;
       auto const subRegionData =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
@@ -487,16 +495,27 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      m_maxAbsolutePresChange,
                                                      m_maxRelativeTempChange,
                                                      m_maxCompFracChange,
+                                                     pressure,
+                                                     temperature,
+                                                     compDens,
+                                                     pressureScalingFactor,
+                                                     compDensScalingFactor,
+                                                     temperatureScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
                                                      subRegion,
-                                                     localSolution )
+                                                     localSolution,
+                                                     temperatureOffset )
   : isothermalCompositionalMultiphaseBaseKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
+                                                     pressure,
+                                                     compDens,
+                                                     pressureScalingFactor,
+                                                     compDensScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
@@ -569,8 +588,18 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      arrayView1d< real64 const > const pressure =
+        subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const temperature =
+        subRegion.getField< fields::flow::temperature >();
+      arrayView2d< real64 const, compflow::USD_COMP > const compDens =
+        subRegion.getField< fields::flow::globalCompDensity >();
+      arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+      arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
+      arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
       // check that pressure and component densities are non-negative
       // for thermal, check that temperature is above 273.15 K
+      const integer temperatureOffset = m_numComponents+1;
       auto const subRegionData =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
@@ -579,17 +608,30 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                      m_allowNegativePressure,
                                                      m_scalingType,
                                                      scalingFactor,
+                                                     pressure,
+                                                     temperature,
+                                                     compDens,
+                                                     pressureScalingFactor,
+                                                     temperatureScalingFactor,
+                                                     compDensScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
                                                      subRegion,
-                                                     localSolution )
+                                                     localSolution,
+                                                     temperatureOffset )
   : isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
                                                      m_scalingType,
                                                      scalingFactor,
+                                                     pressure,
+
+                                                     compDens,
+                                                     pressureScalingFactor,
+
+                                                     compDensScalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
@@ -619,10 +661,10 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                         getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   if( numNegDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {} ",
                                         getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
   if( minTotalDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {} ",
                                         getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
   return MpiWrapper::min( localCheck );

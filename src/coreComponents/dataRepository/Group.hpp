@@ -29,6 +29,7 @@
 
 
 #include <iostream>
+#include <typeinfo>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 /// macro definition to enable/disable char * lookups
@@ -446,7 +447,6 @@ public:
   {
     using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, CASTTYPE const, CASTTYPE >;
     T * const castedContainer = dynamic_cast< T * >( &container );
-
     if( castedContainer != nullptr )
     {
       lambda( *castedContainer );
@@ -587,6 +587,7 @@ public:
   void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda )
   {
     localIndex counter = 0;
+
     for( auto const & subgroup : subGroupKeys )
     {
       applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
@@ -870,7 +871,6 @@ public:
 
     for( auto const & subGroupIter : m_subGroups )
     {
-      std::cout << indent << subGroupIter.second->getName() << std::endl;
       subGroupIter.second->generateDataStructureSkeleton( level + 1 );
     }
   }

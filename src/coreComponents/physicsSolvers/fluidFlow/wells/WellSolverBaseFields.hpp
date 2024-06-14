@@ -49,7 +49,7 @@ DECLARE_FIELD( pressure_n,
                "Pressure at the previous converged time step" );
 
 DECLARE_FIELD( temperature,
-               "wellTemperature",
+               "temperature",
                array1d< real64 >,
                0,
                LEVEL_0,
@@ -57,7 +57,7 @@ DECLARE_FIELD( temperature,
                "Temperature" );
 
 DECLARE_FIELD( temperature_n,
-               "wellTemperature_n",
+               "temperature_n",
                array1d< real64 >,
                0,
                NOPLOT,
