@@ -37,9 +37,12 @@ string NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::catalogNa
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
 NegativeTwoPhaseFlashModel( string const & name,
-                            ComponentProperties const & componentProperties ):
+                            ComponentProperties const & componentProperties,
+                            ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
-{}
+{
+  GEOS_UNUSED_VAR( modelParameters );
+}
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 typename NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::KernelWrapper
