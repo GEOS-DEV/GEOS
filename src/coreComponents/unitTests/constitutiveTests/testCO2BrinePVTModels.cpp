@@ -360,9 +360,9 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    PVTFunctionBase::PVTOutputOptions pvtOpts = {
-     true,// writeCSV
-     true, // writeInLog
+    PVTFunctionBase::TableOutputOptions pvtOpts = {
+      true,// writeCSV
+      true, // writeInLog
     };
 
     if( strs.size()>1 && strs[0] == key )
@@ -405,10 +405,10 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   while( std::getline( is, str ) )
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
-    FlashModelBase::PVTOutputOptions flashOpts = {
-    true,  // writeCSV
-    true,   // writeInLog
-  };
+    FlashModelBase::TableOutputOptions flashOpts = {
+      true, // writeCSV
+      true, // writeInLog
+    };
     if( strs.size()>1 && strs[0] == key )
     {
       flashModel = std::make_unique< MODEL >( strs[1],
@@ -416,7 +416,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               phaseNames,
                                               componentNames,
                                               componentMolarWeight,
-                                              flashOpts);
+                                              flashOpts );
     }
   }
   GEOS_ERROR_IF( flashModel == nullptr,

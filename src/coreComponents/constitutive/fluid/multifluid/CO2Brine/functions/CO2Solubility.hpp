@@ -116,7 +116,7 @@ public:
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
-                 geos::constitutive::PVTProps::FlashModelBase::PVTOutputOptions pvtOpts );
+                 geos::constitutive::PVTProps::FlashModelBase::TableOutputOptions pvtOpts );
 
   static string catalogName() { return "CO2Solubility"; }
 
@@ -126,31 +126,6 @@ public:
    * @copydoc FlashModelBase::checkTablesParameters( real64 pressure, real64 temperature )
    */
   void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
-
-  /**
-   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
-   * @param tableData The target table to be printed
-   * @param pvtOpts Struct containing output options
-   */
-  void handleTableOutputOptions( TableFunction const * tableData, PVTOutputOptions pvtOpts )
-  {
-    if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
-    {
-      TableTextFormatter textFormatter;
-      GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
-    }
-    if( pvtOpts.writeCSV || ( pvtOpts.writeInLog && tableData->numDimensions() >= 3 ) )
-    {
-      string const filename = tableData->getName();
-      std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
-                                 OutputBase::getOutputDirectory(),
-                                 filename ));
-
-      TableCSVFormatter csvFormatter;
-      logStream << csvFormatter.toString( *tableData );
-    }
-  }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CO2SolubilityUpdate;

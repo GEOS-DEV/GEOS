@@ -321,7 +321,7 @@ private:
   }
 
 /**
- * @return The unit of the table values
+ * @return The table unit
  */
   units::Unit getValueUnit() const
   {

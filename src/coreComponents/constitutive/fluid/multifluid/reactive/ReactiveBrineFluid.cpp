@@ -204,7 +204,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
-  PVTFunctionBase::PVTOutputOptions pvtOpts = {
+  PVTFunctionBase::TableOutputOptions pvtOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };

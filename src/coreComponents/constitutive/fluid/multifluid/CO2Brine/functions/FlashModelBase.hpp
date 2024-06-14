@@ -20,6 +20,8 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_FLASHMODELBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
@@ -78,7 +80,7 @@ public:
   virtual ~FlashModelBase() = default;
 
   /// Struct containing output options
-  struct PVTOutputOptions
+  struct TableOutputOptions
   {
     /// Output PVT in CSV file
     bool writeCSV;
@@ -92,7 +94,7 @@ public:
                                                              string_array const &,
                                                              string_array const &,
                                                              array1d< real64 > const &,
-                                                             PVTOutputOptions >;
+                                                             TableOutputOptions >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -108,6 +110,31 @@ public:
    * @throw a SimulationError if one of the input values is out of bound.
    */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
+  /**
+   * @brief Print the table(s) in the log and/or CSV files when requested by the user.
+   * @param tableData The target table to be printed
+   * @param pvtOpts Struct containing output options
+   */
+  void handleTableOutputOptions( TableFunction const * tableData, TableOutputOptions pvtOpts )
+  {
+    if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
+    {
+      TableTextFormatter textFormatter;
+      GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
+    }
+    if( pvtOpts.writeCSV || ( pvtOpts.writeInLog && tableData->numDimensions() >= 3 ) )
+    {
+      string const filename = tableData->getName();
+      std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
+                                 OutputBase::getOutputDirectory(),
+                                 filename ));
+
+      TableCSVFormatter csvFormatter;
+      logStream << csvFormatter.toString( *tableData );
+    }
+  }
 
   string const & flashModelName() const { return m_modelName; }
 

@@ -116,7 +116,7 @@ public:
 
 
   /// Struct containing output options
-  struct PVTOutputOptions
+  struct TableOutputOptions
   {
     /// Output PVT in CSV file
     bool writeCSV;
@@ -130,7 +130,7 @@ public:
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const &,
-                                                             PVTOutputOptions >;
+                                                             TableOutputOptions >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -156,7 +156,7 @@ public:
    * @param tableData The target table to be printed
    * @param pvtOpts Struct containing output options
    */
-  void handleTableOutputOptions( TableFunction const * tableData, PVTOutputOptions pvtOpts )
+  void handleTableOutputOptions( TableFunction const * tableData, TableOutputOptions pvtOpts )
   {
     if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {

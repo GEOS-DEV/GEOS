@@ -75,7 +75,7 @@ public:
                 string_array const & inputParams,
                 string_array const & componentNames,
                 array1d< real64 > const & componentMolarWeight,
-                PVTOutputOptions pvtOpts );
+                TableOutputOptions pvtOpts );
 
   static string catalogName() { return "WaterDensity"; }
   virtual string getCatalogName() const final { return catalogName(); }

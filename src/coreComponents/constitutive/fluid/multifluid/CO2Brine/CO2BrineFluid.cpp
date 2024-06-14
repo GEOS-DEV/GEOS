@@ -335,7 +335,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  PVTFunctionBase::PVTOutputOptions pvtOpts = {
+  PVTFunctionBase::TableOutputOptions pvtOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };
@@ -363,7 +363,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
         {
           if( strs[1] == FLASH::catalogName() )
           {
-            FlashModelBase::PVTOutputOptions flashOpts = {
+            FlashModelBase::TableOutputOptions flashOpts = {
               !isClone && m_writeCSV,// writeCSV
               !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
             };
@@ -408,7 +408,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
     {
       strs[2] = m_solubilityTables[0];
     }
-    FlashModelBase::PVTOutputOptions flashOpts = {
+    FlashModelBase::TableOutputOptions flashOpts = {
       !isClone && m_writeCSV,// writeCSV
       !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
     };

@@ -36,7 +36,7 @@ WaterDensity::WaterDensity( string const & name,
                             string_array const & inputParams,
                             string_array const & componentNames,
                             array1d< real64 > const & componentMolarWeight,
-                            PVTOutputOptions pvtOpts ):
+                            TableOutputOptions pvtOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -61,7 +61,7 @@ WaterDensity::createKernelWrapper() const
                         *m_waterDensityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::PVTOutputOptions )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions )
 
 } // namespace PVTProps
 
