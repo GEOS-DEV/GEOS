@@ -577,6 +577,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
 
 
+.. _XML_HydrofractureInitialization:
+
+Element: HydrofractureInitialization
+====================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization.rst
+
+
 .. _XML_HydrostaticEquilibrium:
 
 Element: HydrostaticEquilibrium
@@ -2014,6 +2021,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrofractureInitialization:
+
+Datastructure: HydrofractureInitialization
+==========================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization_other.rst
 
 
 .. _DATASTRUCTURE_HydrostaticEquilibrium:

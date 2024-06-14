@@ -12,6 +12,7 @@ name                 groupName          required A name is required for any non-
 phaseNames           groupNameRef_array {}       List of fluid phases                                                                                         
 phasePVTParaFiles    path_array         required Names of the files defining the parameters of the viscosity and density models                               
 solubilityTableNames string_array       {}       Names of solubility tables for each phase                                                                    
+writeCSV             integer            1        Write PVT tables into a CSV file                                                                             
 ==================== ================== ======== ============================================================================================================ 
 
 
