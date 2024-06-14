@@ -208,7 +208,7 @@ void NodeManager::setGeometricalRelations( generators::MeshMappings const & mesh
   m_globalToLocalMap = nodeMgr.getGlobalToLocal();
 
   // TODO not for there, but it's convenient
-  copyExchangeInfo( meshMappings.getNeighbors(), nodeMgr.getGhostRank(), nodeMgr.getSend(), nodeMgr.getRecv() );
+  copyExchangeInfo( meshMappings.getNeighbors(), nodeMgr.getSend(), nodeMgr.getRecv() );
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( nodeMgr.getNodeToEdges(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );

@@ -1044,11 +1044,26 @@ void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
 }
 
 void ObjectManagerBase::copyExchangeInfo( std::set< integer > const & neighbors,
-                                          array1d< integer > const & ghostRank,
                                           std::map< integer, array1d< localIndex > > const & send,
                                           std::map< integer, array1d< localIndex > > const & recv )
 {
-  m_ghostRank = ghostRank;
+  // Build the ghost rank from the `send` and `recv` information.
+  m_ghostRank.setValues< serialPolicy >( -2 );
+  for( auto const & [_, lis]: send )
+  {
+    for( localIndex const & li: lis )
+    {
+      m_ghostRank[li] = -1;
+    }
+  }
+  for( auto const & [rank, lis]: recv )
+  {
+    for( localIndex const & li: lis )
+    {
+      m_ghostRank[li] = rank;
+    }
+  }
+
   for( integer const & rank: neighbors )
   {
     addNeighbor( rank );

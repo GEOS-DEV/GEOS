@@ -131,7 +131,7 @@ void CellElementSubRegion::copyFromCellBlock( std::set< integer > const & neighb
   this->m_localToGlobalMap = cellBlock.getLocalToGlobal();
   this->m_globalToLocalMap = cellBlock.getGlobalToLocal();
 
-  copyExchangeInfo( neighbors, cellBlock.getGhostRank(), cellBlock.getSend(), cellBlock.getRecv() );
+  copyExchangeInfo( neighbors, cellBlock.getSend(), cellBlock.getRecv() );
 
   //this->constructGlobalToLocalMap();  // TODO what about `m_localMaxGlobalIndex`?
   // TODO add the external properties import

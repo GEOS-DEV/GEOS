@@ -119,7 +119,7 @@ void EdgeManager::setGeometricalRelations( std::set< integer > const & neighbors
   m_globalToLocalMap = edgeMgr.getGlobalToLocal();
 
   // TODO not for there, but it's convenient
-  copyExchangeInfo( neighbors, edgeMgr.getGhostRank(), edgeMgr.getSend(), edgeMgr.getRecv() );
+  copyExchangeInfo( neighbors, edgeMgr.getSend(), edgeMgr.getRecv() );
 }
 
 void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,

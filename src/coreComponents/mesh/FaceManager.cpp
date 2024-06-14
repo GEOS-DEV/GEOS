@@ -223,7 +223,7 @@ void FaceManager::setGeometricalRelations( generators::MeshMappings const & mesh
   m_globalToLocalMap = faceMgr.getGlobalToLocal();
 
   // TODO not for there, but it's convenient
-  copyExchangeInfo( meshMappings.getNeighbors(), faceMgr.getGhostRank(), faceMgr.getSend(), faceMgr.getRecv() );
+  copyExchangeInfo( meshMappings.getNeighbors(), faceMgr.getSend(), faceMgr.getRecv() );
 
   ToCellRelation< array2d< localIndex > > const toCellBlock = faceMgr.getFaceToElements();
   meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( cb2sr.toViewConst(),
