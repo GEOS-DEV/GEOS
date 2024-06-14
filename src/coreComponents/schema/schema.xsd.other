@@ -1305,6 +1305,7 @@
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
+			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1320,6 +1321,7 @@
 	<xsd:complexType name="SinglePhaseStatisticsType" />
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
+	<xsd:complexType name="SourceFluxStatisticsType" />
 	<xsd:complexType name="TriaxialDriverType" />
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -1455,6 +1457,8 @@
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
 		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
 		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
+		<!--grainBulkModulus => Grain Bulk modulus.-->
+		<xsd:attribute name="grainBulkModulus" type="real64_array" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--meanTotalStressIncrement_k => Mean total stress increment at quadrature points at the previous sequential iteration-->
