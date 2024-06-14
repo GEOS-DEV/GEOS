@@ -66,7 +66,8 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_density = std::make_unique< CompositionalDensity< EOS_TYPE > >( "PhaseDensity", componentProperties );
+    m_parameters = CompositionalDensity< EOS_TYPE >::createParameters( std::make_unique< ModelParameters >() );
+    m_density = std::make_unique< CompositionalDensity< EOS_TYPE > >( "PhaseDensity", componentProperties, 0, *m_parameters );
   }
 
   ~CompositionalDensityTestFixture() = default;
@@ -199,6 +200,7 @@ public:
 protected:
   std::unique_ptr< CompositionalDensity< EOS_TYPE > > m_density{};
   std::unique_ptr< TestFluid< NC > > m_fluid{};
+  std::unique_ptr< ModelParameters > m_parameters{};
 };
 
 using CompositionalDensity9CompPR = CompositionalDensityTestFixture< 9, CubicEOSPhaseModel< PengRobinsonEOS > >;
