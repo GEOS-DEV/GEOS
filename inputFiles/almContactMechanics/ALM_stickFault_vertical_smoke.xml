@@ -15,7 +15,7 @@
       zCoords="{  0, 200 }"
       nx="{ 8, 8 }"
       ny="{ 16 }"
-      nz="{ 128 }"
+      nz="{ 16 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -54,32 +54,6 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
-
-<!--
-    <FieldSpecification
-      name="yconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="1"
-      scale="0.0"
-      setNames="{ xneg }"/>
-
-    <FieldSpecification
-      name="xconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ yneg, ypos, xneg, xpos }"/>
-
-    <FieldSpecification
-      name="zconstraint"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="2"
-      scale="0.0"
-      setNames="{ zneg, zpos }"/>
--->
 
     <FieldSpecification
       name="xconstraint"
@@ -123,30 +97,14 @@
       setNames="{ xpos }"
       functionName="dispFunction"/>
 
-<!--
-    <FieldSpecification 
-      name="Sigmax"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region"
-      fieldName="rock_stress"
-      component="0"
-      scale="-4.25e6"/>
-
-    <FieldSpecification
-      name="shearLoad"
-      objectPath="nodeManager"
-      fieldName="totalDisplacement"
-      component="0"
-      scale="-0.01"
-      setNames="{ xpos }"
-      functionName="dispFunction"/>
--->
   </FieldSpecifications>
 
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="faultSlip_vertical"/>
-    </Outputs>
+      plotFileRoot="faultStick_vertical"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 </Problem>

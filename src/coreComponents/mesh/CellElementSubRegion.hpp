@@ -413,7 +413,7 @@ private:
   array1d< localIndex > m_bubbleCells;
 
   /// List of face IDs adjacent to faceElement (useful for bubble elements).
-  /// A 2D array is needed to store both the face ID in the physical space 
+  /// A 2D array is needed to store both the face ID in the physical space
   /// and the corresponding face ID in the parent element space.
   array2d< localIndex > m_toFaceElements;
 

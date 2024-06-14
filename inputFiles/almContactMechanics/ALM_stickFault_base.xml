@@ -43,14 +43,19 @@
       name="solverApplications"
       beginTime="0.0"
       endTime="1.0"
-      forceDt="0.2"
+      forceDt="0.5"
       target="/Solvers/AugmentedLagrangian"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.5"
+      target="/Outputs/restartOutput"/>      
 
     <PeriodicEvent
       name="outputs"
       beginTime="0.0"
       endTime="1.0"
-      forceDt="0.2"
+      forceDt="0.5"
       target="/Outputs/vtkOutput"/>
   </Events> 
 

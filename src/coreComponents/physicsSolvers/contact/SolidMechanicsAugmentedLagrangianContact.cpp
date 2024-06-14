@@ -255,8 +255,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     // TODO: This is only temporary. The setting of penalty will be adaptive in the final version.
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      penalty[k] [0] = 1.e+9;
-      penalty[k] [1] = 1.e+9;
+      penalty[k] [0] = 1.e+7;
+      penalty[k] [1] = 1.e+7;
     } );
 
   } );
@@ -1331,7 +1331,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             // Finally, compute tolerances for the given fracture element
             normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+8;
             slidingTolerance[kfe] = sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
-                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
+                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+8;
             normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe];
           }
         } );
