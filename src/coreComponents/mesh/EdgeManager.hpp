@@ -21,6 +21,7 @@
 
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/include/EdgeMgr.hpp"
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -126,6 +127,13 @@ public:
    * @param[in] isBaseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool isBaseMeshLevel );
+
+  /**
+   * @brief Initialise the current @c EdgeManager with the information from @c edgeMgr.
+   * @param[in] neighbors The ranks of the neighbors.
+   * @param[in] edgeMgr Provides the geometrical mappings at stake for the @c EdgeManager.
+   */
+  void setGeometricalRelations( std::set< integer > const & neighbors, generators::EdgeMgr const & edgeMgr );
 
   /**
    * @brief Link the current manager to other managers.

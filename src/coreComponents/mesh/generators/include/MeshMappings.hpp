@@ -85,6 +85,8 @@ public:
   virtual EdgeMgr const & getEdgeMgr() const = 0 ;
   virtual FaceMgr const & getFaceMgr() const = 0 ;
   virtual NodeMgr const & getNodeMgr() const = 0 ;
+
+  virtual std::set< integer > const & getNeighbors() const = 0;
 };
 
 }

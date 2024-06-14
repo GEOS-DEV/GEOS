@@ -731,9 +731,9 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // the number of columns being the number of nodes in the mesh graph,
   // the number of rows being the number of MPI ranks.
   //
-  // As the result of the multiplication of the `ghostingFootprint` matrix and the `ownership`,
+  // As the result of the multiplication between the `ghostingFootprint` matrix and the `ownership` matrix,
   // for each row owned (ie at the current MPI rank index),
-  // the value of the matrix term will provide the actual owning rank for all the .
+  // the value of the `ghostExchange` matrix term will provide the actual owning rank for all the .
   //
   // From `ghostExchange` we can extract which other rank will send to the current rank any graph node.
   Epetra_CrsMatrix ghostExchange( Epetra_DataAccess::Copy, mpiMap, 1, false );
@@ -762,41 +762,46 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     ghostingFootprint.ExtractGlobalRowCopy( index, length, extracted, extractedValues.data(), extractedIndices.data() );
     GEOS_ASSERT_EQ( extracted, length );
 
-    std::set< MpiRank > * sendingTo = nullptr;
+    std::set< MpiRank > neighbors;
+    for( int i = 0; i < extracted; ++i )
+    {
+      MpiRank const rank{ extractedIndices[i] };
+      if( rank != curRank )
+      {
+        neighbors.insert( rank );
+      }
+    }
+
+    if( std::empty( neighbors ) )
+    {
+      continue;
+    }
+
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
       {
-        sendingTo = &send.nodes[convert.toNodeGlbIdx( index )];
+        send.nodes.emplace( convert.toNodeGlbIdx( index ), std::move( neighbors ) );
         break;
       }
       case Geom::EDGE:
       {
-        sendingTo = &send.edges[convert.toEdgeGlbIdx( index )];
+        send.edges.emplace( convert.toEdgeGlbIdx( index ), std::move( neighbors ) );
         break;
       }
       case Geom::FACE:
       {
-        sendingTo = &send.faces[convert.toFaceGlbIdx( index )];
+        send.faces.emplace( convert.toFaceGlbIdx( index ), std::move( neighbors ) );
         break;
       }
       case Geom::CELL:
       {
-        sendingTo = &send.cells[convert.toCellGlbIdx( index )];
+        send.cells.emplace( convert.toCellGlbIdx( index ), std::move( neighbors ) );
         break;
       }
       default:
       {
         GEOS_ERROR( "Internal error" );
-      }
-    }
-
-    for( int ii = 0; ii < extracted; ++ii )
-    {
-      MpiRank const rank{ extractedIndices[ii] };
-      if( rank != curRank )
-      {
-        sendingTo->insert( rank );
       }
     }
   }

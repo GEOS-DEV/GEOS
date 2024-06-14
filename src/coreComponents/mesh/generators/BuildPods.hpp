@@ -32,7 +32,7 @@ namespace geos::ghosting
  * @details When a cell refers to a face, w.r.t. the canonical ordering of the face,
  * the nodes of the face (in the cell) can be shifted,
  * and travelled in a different direction (clockwise or counter-clockwise).
- * The @c isFlipped parameter informs about the travel discrepancy.
+ * The @c isFlipped parameter informs about the travel direction.
  * The @c start parameter informs about the shift.
  * @note This class does not refer to how multiple faces are ordered by a cell,
  * but to the precise information when refering to one given face.

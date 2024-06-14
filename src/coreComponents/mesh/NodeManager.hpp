@@ -20,6 +20,7 @@
 #define GEOS_MESH_NODEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
@@ -164,6 +165,14 @@ public:
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
                                 bool isBaseMeshLevel );
+
+  /**
+   * @brief Initialise the current @c NodeManager with the information from @c meshMappings.
+   * @param[in] meshMappings Provides all the geometrical mappings.
+   * @param[in] elemRegionManager Provides the mapping from the incoming geometrical cell blocks to their sub-region twin.
+   */
+  void setGeometricalRelations( generators::MeshMappings const & meshMappings,
+                                ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Link the current manager to other managers.

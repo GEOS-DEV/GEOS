@@ -18,7 +18,7 @@
 
 #include "NewGlobalNumbering.hpp"
 
-//#include "common/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 #include "LvArray/src/ArrayOfArraysView.hpp"
@@ -161,16 +161,21 @@ ArrayOfArrays< localIndex > convertToAoA( std::map< T, std::vector< U > > const 
   return t2u_;
 }
 
-template< class T, class U >
-array2d< localIndex > convertToA2d( std::map< T, std::vector< U > > const & t2u,
-                                    int dimU )
+template< class T, class U, class P=camp::make_idx_seq_t< 2 > >
+array2d< localIndex, P > convertToA2d( std::map< T, std::vector< U > > const & t2u,
+                                       int dimU,
+                                       bool check = true )
 {
   static_assert( !std::is_same_v< T, U > );
-  array2d< localIndex > t2u_( std::size( t2u ), dimU );
-  t2u_.setValues< serialPolicy >( -1 );
+  array2d< localIndex, P > t2u_( std::size( t2u ), dimU );
+  t2u_.template setValues< serialPolicy >( -1 );
 
   for( auto const & [t, us]: t2u )
   {
+    if( check )
+    {
+      GEOS_ASSERT_EQ( intConv< int >( std::size( us ) ), dimU );
+    }
     for( int i = 0; i < intConv< int >( std::size( us ) ); ++i )
     {
       t2u_( t.get(), i ) = us[i].get();
@@ -185,6 +190,7 @@ convertGlbLoc( std::map< GI, LI > const & g2l )
 {
   static_assert( !std::is_same_v< GI, LI > );
   array1d< globalIndex > l2g_( std::size( g2l ) );
+  l2g_.setValues< serialPolicy >( -1 );
   unordered_map< globalIndex, localIndex > g2l_;
   for( auto const & [gi, li]: g2l )
   {
@@ -195,12 +201,31 @@ convertGlbLoc( std::map< GI, LI > const & g2l )
   return { l2g_, g2l_ };
 }
 
+template< typename LI >
+std::map< integer, array1d< localIndex > > toFlavorlessMapping( std::map< MpiRank, std::vector< LI > > const & input )
+{
+  std::map< integer, array1d< localIndex > > output;
+  for( auto const & [rank, lis]: input )
+  {
+    array1d< localIndex > & tmp = output[rank.get()];
+    tmp.reserve( std::size( lis ) );
+    for( LI const & li: lis )
+    {
+      tmp.emplace_back( li.get() );
+    }
+  }
+
+  return output;
+};
+
 EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
                                        std::vector< integer > const & ghostRank,
                                        std::map< EdgeLocIdx, std::tuple< NodeLocIdx, NodeLocIdx > > const & e2n,
                                        std::map< EdgeLocIdx, std::vector< FaceLocIdx > > const & e2f,
                                        std::map< EdgeGlbIdx, EdgeLocIdx > const & eg2l,
-                                       std::map< EdgeLocIdx, EdgeGlbIdx > const & el2g )
+                                       std::map< EdgeLocIdx, EdgeGlbIdx > const & el2g,
+                                       std::map< MpiRank, std::vector< EdgeLocIdx > > const & send,
+                                       std::map< MpiRank, std::vector< EdgeLocIdx > > const & recv )
 {
   GEOS_ASSERT_EQ( numEdges, std::size( ghostRank ) );
   GEOS_ASSERT_EQ( numEdges, std::size( e2n ) );
@@ -218,13 +243,21 @@ EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
 
   auto [l2g, g2l] = convertGlbLoc( eg2l );
 
-  array1d< integer > ghostRank_( numEdges );
+  array1d< integer > ghostRank_;
+  ghostRank_.reserve( numEdges );
   for( integer const & gr: ghostRank )
   {
     ghostRank_.emplace_back( gr );
   }
 
-  return EdgeMgrImpl( numEdges, std::move( ghostRank_ ), std::move( e2n_ ), convertToAoA( e2f ), std::move( g2l ), std::move( l2g ) );
+  return EdgeMgrImpl( numEdges,
+                      std::move( ghostRank_ ),
+                      std::move( e2n_ ),
+                      convertToAoA( e2f ),
+                      std::move( g2l ),
+                      std::move( l2g ),
+                      toFlavorlessMapping( send ),
+                      toFlavorlessMapping( recv ) );
 }
 
 FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
@@ -233,7 +266,9 @@ FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
                                        std::map< FaceLocIdx, std::vector< EdgeLocIdx > > const & f2e,
                                        std::map< FaceLocIdx, std::vector< CellLocIdx > > const & f2c,
                                        std::map< FaceGlbIdx, FaceLocIdx > const & fg2l,
-                                       std::map< FaceLocIdx, FaceGlbIdx > const & fl2g )
+                                       std::map< FaceLocIdx, FaceGlbIdx > const & fl2g,
+                                       std::map< MpiRank, std::vector< FaceLocIdx > > const & send,
+                                       std::map< MpiRank, std::vector< FaceLocIdx > > const & recv )
 {
   GEOS_ASSERT_EQ( numFaces, std::size( ghostRank ) );
   GEOS_ASSERT_EQ( numFaces, std::size( f2n ) );
@@ -244,13 +279,21 @@ FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
 
   auto [l2g, g2l] = convertGlbLoc( fg2l );
 
-  array1d< integer > ghostRank_( numFaces );
+  array1d< integer > ghostRank_;
+  ghostRank_.reserve( numFaces );
   for( integer const & gr: ghostRank )
   {
     ghostRank_.emplace_back( gr );
   }
 
-  return FaceMgrImpl( numFaces, std::move( ghostRank_ ), convertToAoA( f2n ), convertToAoA( f2e ), convertToA2d( f2c, 2 ), std::move( g2l ), std::move( l2g ) );
+  return FaceMgrImpl( numFaces, std::move( ghostRank_ ),
+                      convertToAoA( f2n ),
+                      convertToAoA( f2e ),
+                      convertToA2d( f2c, 2, false ),
+                      std::move( g2l ),
+                      std::move( l2g ),
+                      toFlavorlessMapping( send ),
+                      toFlavorlessMapping( recv ) );
 }
 
 NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
@@ -260,7 +303,9 @@ NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
                                        std::map< NodeLocIdx, std::vector< FaceLocIdx > > const & n2f,
                                        std::map< NodeLocIdx, std::vector< CellLocIdx > > const & n2c,
                                        std::map< NodeGlbIdx, NodeLocIdx > const & ng2l,
-                                       std::map< NodeLocIdx, NodeGlbIdx > const & nl2g )
+                                       std::map< NodeLocIdx, NodeGlbIdx > const & nl2g,
+                                       std::map< MpiRank, std::vector< NodeLocIdx > > const & send,
+                                       std::map< MpiRank, std::vector< NodeLocIdx > > const & recv )
 {
   GEOS_ASSERT_EQ( numNodes, std::size( ghostRank ) );
   GEOS_ASSERT_EQ( numNodes, std::size( n2pos ) );
@@ -274,7 +319,8 @@ NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
   // TODO MISSING get the cell -> numNodesPerElement... from the original CellBlock
   auto [l2g, g2l] = convertGlbLoc( ng2l );
 
-  array1d< integer > ghostRank_( numNodes );
+  array1d< integer > ghostRank_;
+  ghostRank_.reserve( numNodes );
   for( integer const & gr: ghostRank )
   {
     ghostRank_.emplace_back( gr );
@@ -284,12 +330,22 @@ NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
   for( auto const & [ngi, pos]: n2pos )
   {
     NodeLocIdx const nli = ng2l.at( ngi );
-    positions( nli.get(), 0 ) = pos[0];
-    positions( nli.get(), 1 ) = pos[2];
-    positions( nli.get(), 2 ) = pos[2];
+    for( auto i = 0; i < 3; ++i )
+    {
+      positions( nli.get(), i ) = pos[i];
+    }
   }
 
-  return NodeMgrImpl( intConv< localIndex >( numNodes ), std::move( positions ), std::move( ghostRank_ ), convertToAoA( n2e ), convertToAoA( n2f ), convertToAoA( n2c ), std::move( l2g ) );
+  return NodeMgrImpl( intConv< localIndex >( numNodes ),
+                      std::move( positions ),
+                      std::move( ghostRank_ ),
+                      convertToAoA( n2e ),
+                      convertToAoA( n2f ),
+                      convertToAoA( n2c ),
+                      std::move( l2g ),
+                      std::move( g2l ),
+                      toFlavorlessMapping( send ),
+                      toFlavorlessMapping( recv ) );
 }
 
 CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
@@ -298,7 +354,9 @@ CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
                                        std::map< CellLocIdx, std::vector< EdgeLocIdx > > const & c2e,
                                        std::map< CellLocIdx, std::vector< FaceLocIdx > > const & c2f,
                                        std::map< CellGlbIdx, CellLocIdx > const & cg2l,
-                                       std::map< CellLocIdx, CellGlbIdx > const & cl2g )
+                                       std::map< CellLocIdx, CellGlbIdx > const & cl2g,
+                                       std::map< MpiRank, std::vector< CellLocIdx > > const & send,
+                                       std::map< MpiRank, std::vector< CellLocIdx > > const & recv )
 {
   GEOS_ASSERT_EQ( numCells, std::size( ghostRank ) );
   GEOS_ASSERT_EQ( numCells, std::size( c2n ) );
@@ -311,13 +369,22 @@ CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
   // TODO MISSING get the cell -> numNodesPerElement... from the original CellBlock
   auto [l2g, g2l] = convertGlbLoc( cg2l );
 
-  array1d< integer > ghostRank_( numCells );
+  array1d< integer > ghostRank_;
+  ghostRank_.reserve( numCells );
   for( integer const & gr: ghostRank )
   {
     ghostRank_.emplace_back( gr );
   }
 
-  return CellBlkImpl( intConv< localIndex >( numCells ), ghostRank_, convertToA2d( c2n, 8 ), convertToA2d( c2e, 12 ), convertToA2d( c2f, 6 ), std::move( l2g ) );
+  return CellBlkImpl( intConv< localIndex >( numCells ),
+                      std::move( ghostRank_ ),
+                      convertToA2d< CellLocIdx, NodeLocIdx, cells::NODE_MAP_PERMUTATION >( c2n, 8 ),
+                      convertToA2d( c2e, 12 ),
+                      convertToA2d( c2f, 6 ),
+                      std::move( l2g ),
+                      std::move( g2l ),
+                      toFlavorlessMapping( send ),
+                      toFlavorlessMapping( recv ) );
 }
 
 DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
@@ -390,9 +457,8 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
     std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
 
     // TODO carefully check the ordering...
-    res.c2n[cli] = { bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
-//    nodes.insert( std::end( nodes ), std::cbegin( bn ), std::cend( bn ) );
-//    nodes.insert( std::end( nodes ), std::cbegin( tn ), std::cend( tn ) );
+    std::array< NodeLocIdx, 8 > const tmp{ bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
+    res.c2n[cli] = { tmp[0], tmp[1], tmp[3], tmp[2], tmp[4], tmp[5], tmp[7], tmp[6] };
   }
 
   return res;
@@ -453,6 +519,85 @@ UpwardMappings buildUpwardMappings( DownwardMappings const & downwardMappings )
   return res;
 }
 
+std::set< integer > getNeighbors( GhostRecv const & recv,
+                                  GhostSend const & send )
+{
+  std::set< MpiRank > ranks;
+
+  auto const insertSingle = [&]( auto const & geom2neighbor )
+  {
+    for( auto const & [_, neighbor]: geom2neighbor )
+    {
+      ranks.insert( neighbor );
+    }
+  };
+
+  auto const insertMultiple = [&]( auto const & geom2neighbors )
+  {
+    for( auto const & [_, neighbors]: geom2neighbors )
+    {
+      ranks.insert( std::cbegin( neighbors ), std::cend( neighbors ) );
+    }
+  };
+
+  insertSingle( recv.nodes );
+  insertSingle( recv.edges );
+  insertSingle( recv.faces );
+  insertSingle( recv.cells );
+
+  insertMultiple( send.nodes );
+  insertMultiple( send.edges );
+  insertMultiple( send.faces );
+  insertMultiple( send.cells );
+
+  std::set< integer > result;
+  for( MpiRank const & rank: ranks )
+  {
+    result.insert( rank.get() );
+  }
+
+  return result;
+}
+
+template< typename GI, typename LI >
+std::map< MpiRank, std::vector< LI > > invertGhostSend( std::map< GI, std::set< MpiRank > > const & input,
+                                                        std::map< GI, LI > const & g2l )
+{
+  std::map< MpiRank, std::vector< LI > > output;
+  for( auto const & [gi, ranks]: input )
+  {
+    for( MpiRank const & rank: ranks )
+    {
+      output[rank].emplace_back( g2l.at( gi ) );
+    }
+  }
+
+  for( auto & [_, lis]: output )
+  {
+    std::sort( std::begin( lis ), std::end( lis ) );
+  }
+
+  return output;
+}
+
+template< typename GI, typename LI >
+std::map< MpiRank, std::vector< LI > > invertGhostRecv( std::map< GI, MpiRank > const & input,
+                                                        std::map< GI, LI > const & g2l )
+{
+  std::map< MpiRank, std::vector< LI > > output;
+  for( auto const & [gi, rank]: input )
+  {
+    output[rank].emplace_back( g2l.at( gi ) );
+  }
+
+  for( auto & [_, lis]: output )
+  {
+    std::sort( std::begin( lis ), std::end( lis ) );
+  }
+
+  return output;
+}
+
 void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
@@ -467,44 +612,54 @@ void buildPods( MeshGraph const & owned,
   DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
 
-  NodeMgrImpl const nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
-                                                         buildGhostRank( g2l.nodes, send.nodes, recv.nodes ),
-                                                         graph.n2pos,
-                                                         upwardMappings.n2e,
-                                                         upwardMappings.n2f,
-                                                         upwardMappings.n2c,
-                                                         g2l.nodes,
-                                                         l2g.nodes );
+  NodeMgrImpl nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
+                                                   buildGhostRank( g2l.nodes, send.nodes, recv.nodes ),
+                                                   graph.n2pos,
+                                                   upwardMappings.n2e,
+                                                   upwardMappings.n2f,
+                                                   upwardMappings.n2c,
+                                                   g2l.nodes,
+                                                   l2g.nodes,
+                                                   invertGhostSend( send.nodes, g2l.nodes ),
+                                                   invertGhostRecv( recv.nodes, g2l.nodes ) );
 
-  EdgeMgrImpl const edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
-                                                         buildGhostRank( g2l.edges, send.edges, recv.edges ),
-                                                         downwardMappings.e2n,
-                                                         upwardMappings.e2f,
-                                                         g2l.edges,
-                                                         l2g.edges );
+  EdgeMgrImpl edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
+                                                   buildGhostRank( g2l.edges, send.edges, recv.edges ),
+                                                   downwardMappings.e2n,
+                                                   upwardMappings.e2f,
+                                                   g2l.edges,
+                                                   l2g.edges,
+                                                   invertGhostSend( send.edges, g2l.edges ),
+                                                   invertGhostRecv( recv.edges, g2l.edges ) );
 
-  FaceMgrImpl const faceMgr = makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
-                                                         buildGhostRank( g2l.faces, send.faces, recv.faces ),
-                                                         downwardMappings.f2n,
-                                                         downwardMappings.f2e,
-                                                         upwardMappings.f2c,
-                                                         g2l.faces,
-                                                         l2g.faces );
+  FaceMgrImpl faceMgr = makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
+                                                   buildGhostRank( g2l.faces, send.faces, recv.faces ),
+                                                   downwardMappings.f2n,
+                                                   downwardMappings.f2e,
+                                                   upwardMappings.f2c,
+                                                   g2l.faces,
+                                                   l2g.faces,
+                                                   invertGhostSend( send.faces, g2l.faces ),
+                                                   invertGhostRecv( recv.faces, g2l.faces ) );
 
-  CellBlkImpl const cellBlock = makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
-                                                           buildGhostRank( g2l.cells, send.cells, recv.cells ),
-                                                           downwardMappings.c2n,
-                                                           downwardMappings.c2e,
-                                                           downwardMappings.c2f,
-                                                           g2l.cells,
-                                                           l2g.cells );
+  CellBlkImpl cellBlock = makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
+                                                     buildGhostRank( g2l.cells, send.cells, recv.cells ),
+                                                     downwardMappings.c2n,
+                                                     downwardMappings.c2e,
+                                                     downwardMappings.c2f,
+                                                     g2l.cells,
+                                                     l2g.cells,
+                                                     invertGhostSend( send.cells, g2l.cells ),
+                                                     invertGhostRecv( recv.cells, g2l.cells ) );
 
-  CellMgrImpl const cellMgr( cellBlock );
+  CellMgrImpl cellMgr( std::move( cellBlock ) );
 
-  meshMappings.setCellMgr( cellMgr );
-  meshMappings.setEdgeMgr( edgeMgr );
-  meshMappings.setFaceMgr( faceMgr );
-  meshMappings.setNodeMgr( nodeMgr );
+  meshMappings.setCellMgr( std::move( cellMgr ) );
+  meshMappings.setEdgeMgr( std::move( edgeMgr ) );
+  meshMappings.setFaceMgr( std::move( faceMgr ) );
+  meshMappings.setNodeMgr( std::move( nodeMgr ) );
+
+  meshMappings.setNeighbors( getNeighbors( recv, send ) );
 }
 
 }

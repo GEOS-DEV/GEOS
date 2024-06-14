@@ -19,6 +19,11 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/generators/CellBlockUtilities.hpp"
 
+#include "common/MpiWrapper.hpp"
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 namespace geos
 {
 using namespace dataRepository;
@@ -99,6 +104,37 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
       this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
     }, wrapper );
   } );
+}
+
+void CellElementSubRegion::copyFromCellBlock( std::set< integer > const & neighbors,
+                                              generators::CellBlk const & cellBlock )
+{
+  // Defines the (unique) element type of this cell element region,
+  // and its associated number of nodes, edges, faces.
+  m_elementType = cellBlock.getElementType();
+  m_numNodesPerElement = cellBlock.numNodesPerElement();
+  m_numEdgesPerElement = cellBlock.numEdgesPerElement();
+  m_numFacesPerElement = cellBlock.numFacesPerElement();
+
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `CellElementSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
+  m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
+  this->resize( cellBlock.numElements() );
+
+  this->nodeList() = cellBlock.getElemToNodes();
+  this->edgeList() = cellBlock.getElemToEdges();
+  this->faceList() = cellBlock.getElemToFaces();
+
+  this->m_localToGlobalMap = cellBlock.getLocalToGlobal();
+  this->m_globalToLocalMap = cellBlock.getGlobalToLocal();
+
+  copyExchangeInfo( neighbors, cellBlock.getGhostRank(), cellBlock.getSend(), cellBlock.getRecv() );
+
+  //this->constructGlobalToLocalMap();  // TODO what about `m_localMaxGlobalIndex`?
+  // TODO add the external properties import
 }
 
 void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,

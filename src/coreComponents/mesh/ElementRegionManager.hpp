@@ -23,6 +23,7 @@
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -147,6 +148,9 @@ public:
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
   void generateMesh( CellBlockManagerABC const & cellBlockManager );
+
+
+  void generateMesh( generators::MeshMappings const & meshMappings );
 
   /**
    * @brief Generate the wells.
@@ -273,6 +277,7 @@ public:
    *         region (first entry) and subregion (second entry) indices, or -1 if block was not used.
    */
   array2d< localIndex > getCellBlockToSubRegionMap( CellBlockManagerABC const & cellBlockManager ) const;
+  array2d< localIndex > getCellBlockToSubRegionMap( std::map< string, generators::CellBlk const * > const & cb ) const;
 
   /**
    * @brief This function is used to launch kernel function over all the element regions with region type =

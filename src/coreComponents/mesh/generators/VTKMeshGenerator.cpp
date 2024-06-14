@@ -89,7 +89,6 @@ void VTKMeshGenerator::fillMeshMappings( MeshMappingImpl & meshMappings,
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
-
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );

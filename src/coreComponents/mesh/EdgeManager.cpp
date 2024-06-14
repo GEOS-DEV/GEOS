@@ -105,6 +105,23 @@ void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
 }
 
+void EdgeManager::setGeometricalRelations( std::set< integer > const & neighbors,
+                                           generators::EdgeMgr const & edgeMgr )
+{
+  GEOS_MARK_FUNCTION;
+  resize( edgeMgr.numEdges() );
+
+  m_toNodesRelation.base() = edgeMgr.getEdgeToNodes();
+  m_toFacesRelation.base().assimilate< parallelHostPolicy >( edgeMgr.getEdgeToFaces(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+  // TODO This is new
+  m_localToGlobalMap = edgeMgr.getLocalToGlobal();
+  m_globalToLocalMap = edgeMgr.getGlobalToLocal();
+
+  // TODO not for there, but it's convenient
+  copyExchangeInfo( neighbors, edgeMgr.getGhostRank(), edgeMgr.getSend(), edgeMgr.getRecv() );
+}
+
 void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                                   FaceManager const & faceManager )
 {

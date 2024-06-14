@@ -17,6 +17,7 @@
 
 #include "Indices.hpp"
 
+#include "include/GhostExchange.hpp"
 #include "include/NodeMgr.hpp"
 #include "include/EdgeMgr.hpp"
 #include "include/FaceMgr.hpp"
@@ -27,11 +28,19 @@
 namespace geos
 {
 
+struct GhostMapping
+{
+  array1d< integer > m_ghostRank;
+  array1d< globalIndex > m_l2g;
+  unordered_map< globalIndex, localIndex > m_g2l;
+  std::map< integer, array1d< localIndex > > m_send;
+  std::map< integer, array1d< localIndex > > m_recv;
+};
+
 class NodeMgrImpl : public generators::NodeMgr
 {
 public:
-  NodeMgrImpl()
-  { }
+  NodeMgrImpl() = default;
 
   NodeMgrImpl( localIndex numNodes,
                array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
@@ -39,70 +48,139 @@ public:
                ArrayOfArrays< localIndex > const & n2e,
                ArrayOfArrays< localIndex > const & n2f,
                ArrayOfArrays< localIndex > const & n2c,
-               array1d< globalIndex > const & l2g );
+               array1d< globalIndex > && l2g,
+               unordered_map< globalIndex, localIndex > && g2l,
+               std::map< integer, array1d< localIndex > > && send,
+               std::map< integer, array1d< localIndex > > && recv );
 
-  [[nodiscard]] localIndex numNodes() const override;
+  [[nodiscard]] localIndex numNodes() const override
+  {
+    return m_numNodes;
+  }
 
-  [[nodiscard]] array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override;
+  [[nodiscard]] array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodePositions() const override
+  {
+    return m_positions;
+  }
 
-  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToEdges() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToEdges() const override
+  {
+    return m_n2e;
+  }
 
-  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToFaces() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getNodeToFaces() const override
+  {
+    return m_n2f;
+  }
 
-  [[nodiscard]] ToCellRelation< ArrayOfArrays< localIndex>> getNodeToElements() const override;
+  [[nodiscard]] ToCellRelation< ArrayOfArrays< localIndex > > getNodeToElements() const override;
 
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
+  [[nodiscard]] std::map< string, SortedArray< localIndex > > const & getNodeSets() const override
+  {
+    return m_todo;
+  }
 
-  [[nodiscard]] std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
+  // Diamond
+  [[nodiscard]] array1d< integer > getGhostRank() const override
+  {
+    return m_ghost.m_ghostRank;
+  }
 
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
+  {
+    return m_ghost.m_l2g;
+  }
+
+  [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
+  {
+    return m_ghost.m_g2l;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getSend() const override
+  {
+    return m_ghost.m_send;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getRecv() const override
+  {
+    return m_ghost.m_recv;
+  }
 private:
+  GhostMapping m_ghost; // Diamond
   localIndex m_numNodes;
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_positions;
-  array1d< integer > m_ghostRank;
   ArrayOfArrays< localIndex > m_n2e;
   ArrayOfArrays< localIndex > m_n2f;
   ArrayOfArrays< localIndex > m_n2c;
-  array1d< globalIndex > m_l2g;
   std::map< string, SortedArray< localIndex > > m_todo;
 };
 
 class EdgeMgrImpl : public generators::EdgeMgr
 {
 public:
-  EdgeMgrImpl()
-  { }
+  EdgeMgrImpl() = default;
 
   EdgeMgrImpl( std::size_t numEdges,
                array1d< integer > && ghostRank,
                array2d< localIndex > && e2n,
                ArrayOfArrays< localIndex > && e2f,
                unordered_map< globalIndex, localIndex > && g2l,
-               array1d< globalIndex > && l2g );
+               array1d< globalIndex > && l2g,
+               std::map< integer, array1d< localIndex > > && send,
+               std::map< integer, array1d< localIndex > > && recv );
 
-  [[nodiscard]] localIndex numEdges() const override;
+  [[nodiscard]] localIndex numEdges() const override
+  {
+    return m_numEdges;
+  }
 
-  [[nodiscard]] array2d< localIndex > getEdgeToNodes() const override;
+  [[nodiscard]] array2d< localIndex > getEdgeToNodes() const override
+  {
+    return m_e2n;
+  }
 
-  [[nodiscard]] ArrayOfArrays< localIndex > getEdgeToFaces() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getEdgeToFaces() const override
+  {
+    return m_e2f;
+  }
 
-  [[nodiscard]] array1d< integer > getGhostRank() const override;
+  // Diamond
+  [[nodiscard]] array1d< integer > getGhostRank() const override
+  {
+    return m_ghost.m_ghostRank;
+  }
 
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
+  {
+    return m_ghost.m_l2g;
+  }
+
+  [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
+  {
+    return m_ghost.m_g2l;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getSend() const override
+  {
+    return m_ghost.m_send;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getRecv() const override
+  {
+    return m_ghost.m_recv;
+  }
 
 private:
+  GhostMapping m_ghost; // Diamond
   localIndex m_numEdges;
-  array1d< integer > m_ghostRank;
   array2d< localIndex > m_e2n;
   ArrayOfArrays< localIndex > m_e2f;
-  unordered_map< globalIndex, localIndex > m_g2l;
-  array1d< globalIndex > m_l2g;
 };
 
 class FaceMgrImpl : public generators::FaceMgr
 {
 public:
-  FaceMgrImpl()
-  { }
+  FaceMgrImpl() = default;
 
   FaceMgrImpl( std::size_t numFaces,
                array1d< integer > && ghostRank,
@@ -110,42 +188,74 @@ public:
                ArrayOfArrays< localIndex > && f2e,
                array2d< localIndex > && f2c,
                unordered_map< globalIndex, localIndex > && g2l,
-               array1d< globalIndex > && l2g );
+               array1d< globalIndex > && l2g,
+               std::map< integer, array1d< localIndex > > && send,
+               std::map< integer, array1d< localIndex > > && recv );
 
-  [[nodiscard]] localIndex numFaces() const override;
+  [[nodiscard]] localIndex numFaces() const override
+  {
+    return intConv< localIndex >( m_numFaces );
+  }
 
-  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToNodes() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToNodes() const override
+  {
+    return m_f2n;
+  }
 
-  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToEdges() const override;
+  [[nodiscard]] ArrayOfArrays< localIndex > getFaceToEdges() const override
+  {
+    return m_f2e;
+  }
 
   [[nodiscard]] ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
-  [[nodiscard]] array1d< integer > getGhostRank() const override;
+  // Diamond
+  [[nodiscard]] array1d< integer > getGhostRank() const override
+  {
+    return m_ghost.m_ghostRank;
+  }
 
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override;
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
+  {
+    return m_ghost.m_l2g;
+  }
+
+  [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
+  {
+    return m_ghost.m_g2l;
+  }
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getSend() const override
+  {
+    return m_ghost.m_send;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getRecv() const override
+  {
+    return m_ghost.m_recv;
+  }
 
 private:
+  GhostMapping m_ghost; // Diamond
   localIndex m_numFaces;
-  array1d< integer > m_ghostRank;
   ArrayOfArrays< localIndex > m_f2n;
   ArrayOfArrays< localIndex > m_f2e;
   array2d< localIndex > m_f2c;
-  unordered_map< globalIndex, localIndex > m_g2l;
-  array1d< globalIndex > m_l2g;
 };
 
-class CellBlkImpl : public CellBlk
+class CellBlkImpl : public generators::CellBlk
 {
 public:
-  CellBlkImpl()
-  { }
+  CellBlkImpl() = default;
 
   CellBlkImpl( localIndex numCells,
-               array1d< integer > const & ghostRank,
+               array1d< integer > && ghostRank,
                array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                array2d< localIndex > const & c2e,
                array2d< localIndex > const & c2f,
-               array1d< globalIndex > const & l2g );
+               array1d< globalIndex > && l2g,
+               unordered_map< globalIndex, localIndex > && m_g2l,
+               std::map< integer, array1d< localIndex > > && send,
+               std::map< integer, array1d< localIndex > > && recv );
 
   [[nodiscard]] ElementType getElementType() const override;
 
@@ -155,37 +265,70 @@ public:
 
   [[nodiscard]] localIndex numFacesPerElement() const override;
 
-  [[nodiscard]] localIndex numElements() const override;
+  [[nodiscard]] localIndex numElements() const override
+  {
+    return m_numCells;
+  }
 
-  [[nodiscard]] array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override;
+  [[nodiscard]] array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override
+  {
+    return m_c2n;
+  }
 
-  [[nodiscard]] array2d< localIndex > getElemToEdges() const override;
+  [[nodiscard]] array2d< localIndex > getElemToEdges() const override
+  {
+    return m_c2e;
+  }
 
-  [[nodiscard]] array2d< localIndex > getElemToFaces() const override;
+  [[nodiscard]] array2d< localIndex > getElemToFaces() const override
+  {
+    return m_c2f;
+  }
 
-  [[nodiscard]] array1d< globalIndex > localToGlobalMap() const override;
+  // Diamond
+  [[nodiscard]] array1d< integer > getGhostRank() const override
+  {
+    return m_ghost.m_ghostRank;
+  }
+
+  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
+  {
+    return m_ghost.m_l2g;
+  }
+
+  [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
+  {
+    return m_ghost.m_g2l;
+  }
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getSend() const override
+  {
+    return m_ghost.m_send;
+  }
+
+  [[nodiscard]] std::map< integer, array1d< localIndex > > getRecv() const override
+  {
+    return m_ghost.m_recv;
+  }
 
 private:
+  GhostMapping m_ghost; // Diamond
   localIndex m_numCells;
-  array1d< integer > m_ghostRank;
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_c2n;
   array2d< localIndex > m_c2e;
   array2d< localIndex > m_c2f;
-  array1d< globalIndex > m_l2g;
 };
 
 class CellMgrImpl : public generators::CellMgr
 {
 public:
-  CellMgrImpl()
-  { }
+  CellMgrImpl() = default;
 
-  CellMgrImpl( CellBlkImpl const & cellBlks )
+  CellMgrImpl( CellBlkImpl && cellBlks )
     :
     m_cellBlk( cellBlks )
   { }
 
-  [[nodiscard]] std::list< CellBlk const * > getCellBlks() const override;
+  [[nodiscard]] std::map< string, generators::CellBlk const * > getCellBlks() const override;
 
 private:
   CellBlkImpl m_cellBlk;
@@ -199,30 +342,52 @@ public:
     : MeshMappings( name, parent )
   { }
 
-  [[nodiscard]] generators::CellMgr const & getCellMgr() const override;
+  [[nodiscard]] generators::CellMgr const & getCellMgr() const override
+  {
+    return m_cellMgr;
+  }
 
-  [[nodiscard]] generators::EdgeMgr const & getEdgeMgr() const override;
+  [[nodiscard]] generators::EdgeMgr const & getEdgeMgr() const override
+  {
+    return m_edgeMgr;
+  }
 
-  [[nodiscard]] generators::FaceMgr const & getFaceMgr() const override;
+  [[nodiscard]] generators::FaceMgr const & getFaceMgr() const override
+  {
+    return m_faceMgr;
+  }
 
-  [[nodiscard]] generators::NodeMgr const & getNodeMgr() const override;
+  [[nodiscard]] generators::NodeMgr const & getNodeMgr() const override
+  {
+    return m_nodeMgr;
+  }
 
-  void setCellMgr( CellMgrImpl const & cellMgr )
+  [[nodiscard]] std::set< integer > const & getNeighbors() const override
+  {
+    return m_neighbors;
+  }
+
+  void setNeighbors( std::set< integer > && neighbors )
+  {
+    m_neighbors = std::move( neighbors );
+  }
+
+  void setCellMgr( CellMgrImpl && cellMgr )
   {
     m_cellMgr = cellMgr;
   }
 
-  void setEdgeMgr( EdgeMgrImpl const & edgeMgr )
+  void setEdgeMgr( EdgeMgrImpl && edgeMgr )
   {
     m_edgeMgr = edgeMgr;
   }
 
-  void setFaceMgr( FaceMgrImpl const & faceMgr )
+  void setFaceMgr( FaceMgrImpl && faceMgr )
   {
     m_faceMgr = faceMgr;
   }
 
-  void setNodeMgr( NodeMgrImpl const & nodeMgr )
+  void setNodeMgr( NodeMgrImpl && nodeMgr )
   {
     m_nodeMgr = nodeMgr;
   }
@@ -232,6 +397,8 @@ private:
   EdgeMgrImpl m_edgeMgr;
   FaceMgrImpl m_faceMgr;
   NodeMgrImpl m_nodeMgr;
+
+  std::set< integer > m_neighbors;
 };
 
 } // geos

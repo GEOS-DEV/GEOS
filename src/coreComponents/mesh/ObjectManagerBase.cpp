@@ -1043,5 +1043,25 @@ void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
   } );
 }
 
+void ObjectManagerBase::copyExchangeInfo( std::set< integer > const & neighbors,
+                                          array1d< integer > const & ghostRank,
+                                          std::map< integer, array1d< localIndex > > const & send,
+                                          std::map< integer, array1d< localIndex > > const & recv )
+{
+  m_ghostRank = ghostRank;
+  for( integer const & rank: neighbors )
+  {
+    addNeighbor( rank );
+  }
+  for( auto const & [rank, lis]: send )
+  {
+    m_neighborData.at( rank ).ghostsToSend() = lis;
+  }
+  for( auto const & [rank, lis]: recv)
+  {
+    m_neighborData.at( rank ).ghostsToReceive() = lis;
+  }
+}
+
 
 } /* namespace geos */

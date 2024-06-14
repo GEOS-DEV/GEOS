@@ -47,6 +47,19 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
   }
 }
 
+void CellElementRegion::generateMesh( std::set< integer > const & neighbors,
+                                      std::map< string, generators::CellBlk const * > const & cellBlks )
+{
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
+
+  for( string const & cellBlockName: this->m_cellBlockNames )
+  {
+    CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
+    generators::CellBlk const * source = cellBlks.at( cellBlockName );
+    subRegion.copyFromCellBlock( neighbors, *source );
+  }
+}
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )
 
 } /* namespace geos */

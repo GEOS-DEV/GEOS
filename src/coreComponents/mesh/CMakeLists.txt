@@ -63,6 +63,7 @@ set( mesh_headers
      generators/include/CellBlk.hpp
      generators/include/CellBlockABC.hpp
      generators/include/FaceBlockABC.hpp
+     generators/include/GhostExchange.hpp
      generators/include/LineBlockABC.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp

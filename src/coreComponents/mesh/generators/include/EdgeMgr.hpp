@@ -15,12 +15,14 @@
 #ifndef GEOS_EDGEMGR_HPP
 #define GEOS_EDGEMGR_HPP
 
+#include "GhostExchange.hpp"
+
 #include "common/DataTypes.hpp"
 
 namespace geos::generators
 {
 
-class EdgeMgr
+class EdgeMgr: public GhostExchange
 {
 public:
   /**
@@ -40,15 +42,6 @@ public:
    * @return A one to many relationship.
    */
   [[nodiscard]] virtual ArrayOfArrays< localIndex > getEdgeToFaces() const = 0;
-
-  /**
-   * @brief Returns the ghost rank mapping. Index is an edge index local to the MPI rank.
-   * @return A @c numEdges length array.
-   */
-  [[nodiscard]] virtual array1d< integer > getGhostRank() const = 0;
-
-  // TODO Use inheritance?
-  [[nodiscard]] virtual array1d< globalIndex > getLocalToGlobal() const = 0;
 };
 
 }

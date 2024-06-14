@@ -18,12 +18,14 @@
 
 #include "../CellBlockUtilities.hpp" // TODO At least part of it should become public.
 
+#include "GhostExchange.hpp"
+
 #include "common/DataTypes.hpp"
 
 namespace geos::generators
 {
 
-class NodeMgr
+class NodeMgr: public GhostExchange
 {
 public:
   /**
@@ -57,12 +59,6 @@ public:
    * @return A one to many relationship.
    */
   [[nodiscard]] virtual ToCellRelation< ArrayOfArrays< localIndex > > getNodeToElements() const = 0;
-
-  /**
-   * @brief The node to global mapping for nodes.
-   * @return The mapping as an array of size numNodes.
-   */
-  [[nodiscard]] virtual array1d< globalIndex > getLocalToGlobal() const = 0;
 
   /**
    * @brief Returns the node sets. Key of the map is the name of the set.

@@ -29,7 +29,7 @@ namespace geos::generators
 class CellMgr
 {
 public:
-  virtual std::list< CellBlk const * > getCellBlks() const = 0;
+  virtual std::map< string, CellBlk const * > getCellBlks() const = 0;
 //
 //  /**
 //   * @brief Returns a group containing the cell blocks as @p CellBlockABC instances.

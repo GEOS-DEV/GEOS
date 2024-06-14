@@ -17,12 +17,14 @@
 
 #include "../CellBlockUtilities.hpp" // TODO At least part of it should become public.
 
+#include "GhostExchange.hpp"
+
 #include "common/DataTypes.hpp"
 
 namespace geos::generators
 {
 
-class FaceMgr
+class FaceMgr: public GhostExchange
 {
 public:
   /**
@@ -50,10 +52,6 @@ public:
    * In case the face only belongs to one single element, the second value of the table is -1.
    */
   [[nodiscard]] virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
-
-  [[nodiscard]] virtual array1d< integer > getGhostRank() const = 0;
-
-  [[nodiscard]] virtual array1d< globalIndex > getLocalToGlobal() const = 0;
 };
 
 }

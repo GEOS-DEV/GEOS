@@ -206,6 +206,34 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   }
 }
 
+void FaceManager::setGeometricalRelations( generators::MeshMappings const & meshMappings,
+                                           ElementRegionManager const & elemRegionManager,
+                                           NodeManager const & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+  auto const & faceMgr = meshMappings.getFaceMgr();
+
+  resize( faceMgr.numFaces() );
+
+  m_toNodesRelation.base() = faceMgr.getFaceToNodes();
+  m_toEdgesRelation.base() = faceMgr.getFaceToEdges();
+
+  // TODO This is new
+  m_localToGlobalMap = faceMgr.getLocalToGlobal();
+  m_globalToLocalMap = faceMgr.getGlobalToLocal();
+
+  // TODO not for there, but it's convenient
+  copyExchangeInfo( meshMappings.getNeighbors(), faceMgr.getGhostRank(), faceMgr.getSend(), faceMgr.getRecv() );
+
+  ToCellRelation< array2d< localIndex > > const toCellBlock = faceMgr.getFaceToElements();
+  array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() ); // TODO This already exists in NodeManager
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+                                                                         toCellBlock,
+                                                                         m_toElements );
+  // TODO add the fracture stuff
+  computeGeometry( nodeManager );
+}
+
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                                   EdgeManager const & edgeManager,
                                                   ElementRegionManager const & elemRegionManager )

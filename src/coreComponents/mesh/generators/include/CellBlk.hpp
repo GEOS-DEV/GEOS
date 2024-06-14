@@ -15,14 +15,16 @@
 #ifndef GEOS_CELLBLK_HPP
 #define GEOS_CELLBLK_HPP
 
+#include "GhostExchange.hpp"
+
 #include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
 
 
-namespace geos
+namespace geos::generators
 {
 
-class CellBlk
+class CellBlk: public generators::GhostExchange
 {
 public:
 
@@ -75,12 +77,6 @@ public:
    * @return The mapping relationship as a 2d-array.
    */
   [[nodiscard]] virtual array2d< localIndex > getElemToFaces() const = 0;
-
-  /**
-   * @brief Get local to global map.
-   * @return The mapping relationship as an array.
-   */
-  [[nodiscard]] virtual array1d< globalIndex > localToGlobalMap() const = 0;
 };
 
 } // end of namespace

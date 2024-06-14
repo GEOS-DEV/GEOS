@@ -48,6 +48,10 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 // System includes
 #include <vector>
 #include <regex>
@@ -168,7 +172,8 @@ void ProblemManager::problemSetup()
 
   initialize();
 
-  importFields();
+  // TODO Import the fields back!
+//  importFields();
 }
 
 
@@ -573,6 +578,7 @@ void ProblemManager::initializationOrder( string_array & order )
 
 
 void generateMeshLevelFreeFct( generators::MeshMappings const & meshMappings,
+                               GeometricObjectManager const & geometries,
                                MeshLevel & meshLevel )
 {
   NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -580,7 +586,46 @@ void generateMeshLevelFreeFct( generators::MeshMappings const & meshMappings,
   FaceManager & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
 
-  GEOS_ERROR( "Implementation in progess" );
+  elemRegionManager.generateMesh( meshMappings );
+  nodeManager.setGeometricalRelations( meshMappings, elemRegionManager );
+  edgeManager.setGeometricalRelations( meshMappings.getNeighbors(), meshMappings.getEdgeMgr() );
+  faceManager.setGeometricalRelations( meshMappings, elemRegionManager, nodeManager );
+//  nodeManager.constructGlobalToLocalMap( cellBlockManager );
+// TODO Still need to work on the sets.
+//  // Edge, face and element region managers rely on the sets provided by the node manager.
+//  // This is why `nodeManager.buildSets` is called first.
+//  nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+  nodeManager.buildGeometricSets( geometries );
+  edgeManager.buildSets( nodeManager );
+  faceManager.buildSets( nodeManager );
+  elemRegionManager.buildSets( nodeManager );
+  // The edge manager do not hold any information related to the regions nor the elements.
+  // This is why the element region manager is not provided.
+  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
+  edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
+  // FIXME Boundary markers should now be obsolete
+//  // Node and edge managers rely on the boundary information provided by the face manager.
+//  // This is why `faceManager.setDomainBoundaryObjects` is called first.
+//  faceManager.setDomainBoundaryObjects( elemRegionManager );
+//  edgeManager.setDomainBoundaryObjects( faceManager );
+//  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+//
+  meshLevel.generateSets();
+//
+  elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+  {
+    subRegion.setupRelatedObjectsInRelations( meshLevel );
+    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
+    // in order to compute the geometric quantities.
+    // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
+    // can have no neighbor. Making impossible the computation, which is therefore postponed to after the ghosting.
+    subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+//      subRegion.setMaxGlobalIndex();  // FIXME This should be useless for static meshes (maybe needed for surface generator).
+  } );
+//  elemRegionManager.setMaxGlobalIndex();
+
+//  GEOS_ERROR( "Implementation in progress" );
 }
 
 void ProblemManager::generateMesh()
@@ -595,8 +640,7 @@ void ProblemManager::generateMesh()
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
-  discretizations = getDiscretizations();
+  map< std::pair< string, Group const * const >, arrayView1d< string const > const > discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
@@ -617,8 +661,14 @@ void ProblemManager::generateMesh()
       if( m_useNewGhosting )
       {
         GEOS_LOG_RANK_0( "Generating the mesh levels for the new ghosting." );
-        generateMeshLevelFreeFct( meshBody.getMeshMappings(), baseMesh );
+        generateMeshLevelFreeFct( meshBody.getMeshMappings(),
+                                  this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ),
+                                  baseMesh );
         // TODO add wells
+        for( integer const & neighbor: meshBody.getMeshMappings().getNeighbors() )
+        {
+          domain.getNeighbors().emplace_back( neighbor );
+        }
       }
       else
       {
@@ -637,7 +687,7 @@ void ProblemManager::generateMesh()
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupBaseLevelMeshGlobalInfo();
+//  domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -649,7 +699,7 @@ void ProblemManager::generateMesh()
     {                                                                          // particle mesh bodies don't have a finite element
                                                                                // discretization
       FiniteElementDiscretization const * const
-      feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
+        feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
 
       // if the discretization is a finite element discretization
       if( feDiscretization != nullptr )
@@ -730,7 +780,6 @@ void ProblemManager::generateMesh()
       edgeManager.setIsExternal( faceManager );
     } );
   } );
-
 }
 
 

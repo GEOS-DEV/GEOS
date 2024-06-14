@@ -23,35 +23,17 @@ NodeMgrImpl::NodeMgrImpl( localIndex numNodes,
                           ArrayOfArrays< localIndex > const & n2e,
                           ArrayOfArrays< localIndex > const & n2f,
                           ArrayOfArrays< localIndex > const & n2c,
-                          array1d< globalIndex > const & l2g )
-  : m_numNodes( numNodes ),
+                          array1d< globalIndex > && l2g,
+                          unordered_map< globalIndex, localIndex > && g2l,
+                          std::map< integer, array1d< localIndex > > && send,
+                          std::map< integer, array1d< localIndex > > && recv )
+  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+    m_numNodes( numNodes ),
     m_positions( positions ),
-    m_ghostRank( ghostRank ),
     m_n2e( n2e ),
     m_n2f( n2f ),
-    m_n2c( n2c ),
-    m_l2g( l2g )
+    m_n2c( n2c )
 { }
-
-localIndex NodeMgrImpl::numNodes() const
-{
-  return m_numNodes;
-}
-
-array2d< real64, nodes::REFERENCE_POSITION_PERM > NodeMgrImpl::getNodePositions() const
-{
-  return m_positions;
-}
-
-ArrayOfArrays< localIndex > NodeMgrImpl::getNodeToEdges() const
-{
-  return m_n2e;
-}
-
-ArrayOfArrays< localIndex > NodeMgrImpl::getNodeToFaces() const
-{
-  return m_n2f;
-}
 
 ToCellRelation< ArrayOfArrays< localIndex > > NodeMgrImpl::getNodeToElements() const
 {
@@ -69,54 +51,19 @@ ToCellRelation< ArrayOfArrays< localIndex > > NodeMgrImpl::getNodeToElements() c
   return { std::move( toBlockIndex ), m_n2c };
 }
 
-array1d< globalIndex > NodeMgrImpl::getLocalToGlobal() const
-{
-  return m_l2g;
-}
-
-std::map< string, SortedArray< localIndex > > const & NodeMgrImpl::getNodeSets() const
-{
-  return m_todo;
-}
-
 EdgeMgrImpl::EdgeMgrImpl( std::size_t numEdges,
                           array1d< integer > && ghostRank,
                           array2d< localIndex > && e2n,
                           ArrayOfArrays< localIndex > && e2f,
                           unordered_map< globalIndex, localIndex > && g2l,
-                          array1d< globalIndex > && l2g )
-  : m_numEdges( numEdges ),
-    m_ghostRank( ghostRank ),
+                          array1d< globalIndex > && l2g,
+                          std::map< integer, array1d< localIndex > > && send,
+                          std::map< integer, array1d< localIndex > > && recv )
+  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+    m_numEdges( numEdges ),
     m_e2n( e2n ),
-    m_e2f( e2f ),
-    m_g2l( g2l ),
-    m_l2g( l2g )
+    m_e2f( e2f )
 { }
-
-localIndex EdgeMgrImpl::numEdges() const
-{
-  return m_numEdges;
-}
-
-array2d< localIndex > EdgeMgrImpl::getEdgeToNodes() const
-{
-  return m_e2n;
-}
-
-ArrayOfArrays< localIndex > EdgeMgrImpl::getEdgeToFaces() const
-{
-  return m_e2f;
-}
-
-array1d< integer > EdgeMgrImpl::getGhostRank() const
-{
-  return m_ghostRank;
-}
-
-array1d< globalIndex > EdgeMgrImpl::getLocalToGlobal() const
-{
-  return m_l2g;
-}
 
 FaceMgrImpl::FaceMgrImpl( std::size_t numFaces,
                           array1d< integer > && ghostRank,
@@ -124,30 +71,15 @@ FaceMgrImpl::FaceMgrImpl( std::size_t numFaces,
                           ArrayOfArrays< localIndex > && f2e,
                           array2d< localIndex > && f2c,
                           unordered_map< globalIndex, localIndex > && g2l,
-                          array1d< globalIndex > && l2g )
-  : m_numFaces( numFaces ),
-    m_ghostRank( ghostRank ),
+                          array1d< globalIndex > && l2g,
+                          std::map< integer, array1d< localIndex > > && send,
+                          std::map< integer, array1d< localIndex > > && recv )
+  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+    m_numFaces( numFaces ),
     m_f2n( f2n ),
     m_f2e( f2e ),
-    m_f2c( f2c ),
-    m_g2l( g2l ),
-    m_l2g( l2g )
+    m_f2c( f2c )
 { }
-
-localIndex FaceMgrImpl::numFaces() const
-{
-  return intConv< localIndex >( m_numFaces );
-}
-
-ArrayOfArrays< localIndex > FaceMgrImpl::getFaceToNodes() const
-{
-  return m_f2n;
-}
-
-ArrayOfArrays< localIndex > FaceMgrImpl::getFaceToEdges() const
-{
-  return m_f2e;
-}
 
 ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
 {
@@ -165,28 +97,20 @@ ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
   return { std::move( toBlockIndex ), m_f2c };
 }
 
-array1d< integer > FaceMgrImpl::getGhostRank() const
-{
-  return m_ghostRank;
-}
-
-array1d< globalIndex > FaceMgrImpl::getLocalToGlobal() const
-{
-  return m_l2g;
-}
-
 CellBlkImpl::CellBlkImpl( localIndex numCells,
-                          array1d< integer > const & ghostRank,
+                          array1d< integer > && ghostRank,
                           array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                           array2d< localIndex > const & c2e,
                           array2d< localIndex > const & c2f,
-                          array1d< globalIndex > const & l2g )
-  : m_numCells( numCells ),
-    m_ghostRank( ghostRank ),
+                          array1d< globalIndex > && l2g,
+                          unordered_map< globalIndex, localIndex > && g2l,
+                          std::map< integer, array1d< localIndex > > && send,
+                          std::map< integer, array1d< localIndex > > && recv )
+  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+    m_numCells( numCells ),
     m_c2n( c2n ),
     m_c2e( c2e ),
-    m_c2f( c2f ),
-    m_l2g( l2g )
+    m_c2f( c2f )
 { }
 
 ElementType CellBlkImpl::getElementType() const
@@ -209,59 +133,9 @@ localIndex CellBlkImpl::numFacesPerElement() const
   return 6;
 }
 
-localIndex CellBlkImpl::numElements() const
+std::map< string, generators::CellBlk const * > CellMgrImpl::getCellBlks() const
 {
-  return m_numCells;
-}
-
-array2d< localIndex, cells::NODE_MAP_PERMUTATION > CellBlkImpl::getElemToNodes() const
-{
-  return m_c2n;
-}
-
-array2d< localIndex > CellBlkImpl::getElemToEdges() const
-{
-  return m_c2e;
-}
-
-array2d< localIndex > CellBlkImpl::getElemToFaces() const
-{
-  return m_c2f;
-}
-
-array1d< globalIndex > CellBlkImpl::localToGlobalMap() const
-{
-  return m_l2g;
-}
-
-//std::list< dataRepository::WrapperBase const * > CellBlkImpl::getExternalProperties() const
-//{
-//  return {};
-//}
-
-generators::CellMgr const & MeshMappingImpl::getCellMgr() const
-{
-  return m_cellMgr;
-}
-
-generators::EdgeMgr const & MeshMappingImpl::getEdgeMgr() const
-{
-  return m_edgeMgr;
-}
-
-generators::FaceMgr const & MeshMappingImpl::getFaceMgr() const
-{
-  return m_faceMgr;
-}
-
-generators::NodeMgr const & MeshMappingImpl::getNodeMgr() const
-{
-  return m_nodeMgr;
-}
-
-std::list< CellBlk const * > CellMgrImpl::getCellBlks() const
-{
-  return { &m_cellBlk };
+  return { { string( "hexahedra" ), &m_cellBlk } };  // TODO hard coded values.
 }
 
 } // end of namespace
