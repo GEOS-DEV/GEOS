@@ -194,7 +194,7 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 }
 
 void NodeManager::setGeometricalRelations( generators::MeshMappings const & meshMappings,
-                                           ElementRegionManager const & elemRegionManager )
+                                           arrayView2d< localIndex const > const & cb2sr )
 {
   GEOS_MARK_FUNCTION;
   auto const & nodeMgr = meshMappings.getNodeMgr();
@@ -216,8 +216,7 @@ void NodeManager::setGeometricalRelations( generators::MeshMappings const & mesh
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = nodeMgr.getNodeToElements();
-  array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() ); // TODO This already exists in FaceManager
-  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( cb2sr.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
   // TODO add the fracture component

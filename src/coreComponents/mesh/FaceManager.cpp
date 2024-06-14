@@ -207,7 +207,7 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 }
 
 void FaceManager::setGeometricalRelations( generators::MeshMappings const & meshMappings,
-                                           ElementRegionManager const & elemRegionManager,
+                                           arrayView2d< localIndex const > const & cb2sr,
                                            NodeManager const & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -226,8 +226,7 @@ void FaceManager::setGeometricalRelations( generators::MeshMappings const & mesh
   copyExchangeInfo( meshMappings.getNeighbors(), faceMgr.getGhostRank(), faceMgr.getSend(), faceMgr.getRecv() );
 
   ToCellRelation< array2d< localIndex > > const toCellBlock = faceMgr.getFaceToElements();
-  array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() ); // TODO This already exists in NodeManager
-  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( cb2sr.toViewConst(),
                                                                          toCellBlock,
                                                                          m_toElements );
   // TODO add the fracture stuff

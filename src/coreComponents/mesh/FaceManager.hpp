@@ -127,13 +127,13 @@ public:
   /**
    * @brief Initialise the current @c FaceManager with the information from @c meshMappings.
    * @param[in] meshMappings Provides all the geometrical mappings.
-   * @param[in] elemRegionManager Provides the mapping from the incoming geometrical cell blocks to their sub-region twin.
+   * @param[in] cb2sr The mapping from the incoming geometrical cell blocks to their sub-region twin.
    * @param[in] nodeManager Provides the positions of the nodes in order to perform the area computations.
    * @note We could have relied on the node positions of the @c meshMappings in order to reduce the number of input parameters.
    * This is disputable since we do not want to have multiple sources of data which, while currenly identical, may in the future differ.
    */
   void setGeometricalRelations( generators::MeshMappings const & meshMappings,
-                                ElementRegionManager const & elemRegionManager,
+                                arrayView2d< localIndex const > const & cb2sr,
                                 NodeManager const & nodeManager );
 
   /**

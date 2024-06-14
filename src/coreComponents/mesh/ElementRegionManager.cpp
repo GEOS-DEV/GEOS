@@ -153,13 +153,14 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
 
 }
 
-void ElementRegionManager::generateMesh( generators::MeshMappings const & meshMappings )
+array2d< localIndex > ElementRegionManager::generateMesh( generators::MeshMappings const & meshMappings )
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
     elemRegion.generateMesh( meshMappings.getNeighbors(), meshMappings.getCellMgr().getCellBlks() );
   } );
   // TODO finish the work for fractures.
+  return this->getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() );
 }
 
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
