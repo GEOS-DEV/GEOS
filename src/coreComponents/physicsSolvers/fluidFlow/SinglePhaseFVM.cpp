@@ -306,12 +306,12 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   } );
 }
 
-template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const dt,
-                                                           DomainPartition const & domain,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs )
+template<>
+void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
+                                          DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -882,12 +882,12 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEO
 }
 
 template<>
-void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
-                                                        real64 const dt,
-                                                        DomainPartition & domain,
-                                                        DofManager const & dofManager,
-                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                        arrayView1d< real64 > const & localRhs ) const
+void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
+                                       real64 const dt,
+                                       DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -953,9 +953,9 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
 
 namespace
 {
-typedef SinglePhaseFVM< SinglePhaseBase > NoProppant;
-typedef SinglePhaseFVM< SinglePhaseProppantBase > Proppant;
-REGISTER_CATALOG_ENTRY( SolverBase, NoProppant, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( SolverBase, Proppant, string const &, Group * const )
+typedef SinglePhaseFVM< SinglePhaseProppantBase > SinglePhaseFVMProppant;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVMProppant, string const &, Group * const )
+typedef SinglePhaseFVM<> SinglePhaseFVM;
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFVM, string const &, Group * const )
 }
 } /* namespace geos */
