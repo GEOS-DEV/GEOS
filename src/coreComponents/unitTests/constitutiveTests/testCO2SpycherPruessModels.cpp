@@ -82,13 +82,17 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   // Read file parameters
   array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( fileContent );
 
+  FlashModelBase::PVTOutputOptions flashOpts = {
+    false,  // writeCSV
+    false,   // writeInLog
+  };
+
   return std::make_unique< CO2Solubility >( strs[1],
                                             strs,
                                             phaseNames,
                                             componentNames,
                                             componentMolarWeight,
-                                            false,
-                                            false );
+                                            flashOpts );
 }
 
 TEST_P( CO2SolubilitySpycherPruessTestFixture, testExpectedValues )
