@@ -193,8 +193,8 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ /Users/byer3/GEOS-DEV/mass_inj_const/src/coreComponents/unitTests/wellsTests/pvtgas.txt, /Users/byer3/GEOS-DEV/mass_inj_const/src/coreComponents/unitTests/wellsTests/pvtliquid.txt }"
-      flashModelParaFile="/Users/byer3/GEOS-DEV/mass_inj_const/src/coreComponents/unitTests/wellsTests/co2flash.txt"/>
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"

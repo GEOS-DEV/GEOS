@@ -222,8 +222,6 @@ public:
     // b) get well variables
 
     pres[TAG::WELL] = m_wellElemPres[iwelem];
-    std::cout << "wrpres " << iwelem << " RES " << pres[TAG::RES] << " WELL " << pres[TAG::WELL]
-              << " dp " << pres[TAG::WELL]-pres[TAG::RES];
     dPres[TAG::WELL][CP_Deriv::dP] = 1.0;
     multiplier[TAG::WELL] = -1.0;
 
@@ -253,11 +251,6 @@ public:
         dPotDiff[i][ic] += multiplier[i] * m_perfTrans[iperf] * dPres[i][ic];
       }
     }
-    std::cout << " WELLC " << pres[TAG::WELL]   << " dp " << pres[TAG::WELL]-pres[TAG::RES] <<
-      " " << m_wellElemCompDens[iwelem][0] << " " << m_wellElemCompDens[iwelem][1] << " "
-              << m_wellElemCompFrac[iwelem][0] << " " << m_wellElemCompFrac[iwelem][1];
-    std::cout << " potdiff " << potDiff << std::endl;
-
     // Step 4: upwinding based on the flow direction
 
     real64 flux = 0.0;

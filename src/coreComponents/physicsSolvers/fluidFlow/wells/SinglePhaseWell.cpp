@@ -481,31 +481,6 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
   } );
 }
 
-void SinglePhaseWell::assembleSystem( real64 const time,
-                                      real64 const dt,
-                                      DomainPartition & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-  // assemble the accumulation term in the mass balance equations
-  assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
-
-  // then assemble the pressure relations between well elements
-  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
-
-  // then compute the perforation rates (later assembled by the coupled solver)
-  computePerforationRates( time, dt, domain );
-
-  // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
-
-
-  // then apply a special treatment to the wells that are shut
-  //shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
-}
-
 void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
                                          real64 const & dt,
                                          DomainPartition & domain,

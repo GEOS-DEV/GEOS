@@ -167,7 +167,6 @@ ControlEquationHelper::
   if( currentControl == WellControls::Control::BHP )
   {
     // control equation is a difference between current BHP and target BHP
-    std::cout << "Current control - BHP " <<  targetBHP << " "  <<  currentBHP << std::endl;
     controlEqn = currentBHP - targetBHP;
     dControlEqn[COFFSET_WJ::dP] = dCurrentBHP[Deriv::dP];
     for( integer ic = 0; ic < NC; ++ic )
@@ -195,9 +194,6 @@ ControlEquationHelper::
   // Total volumetric rate control
   else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
-    if( targetTotalRate <= 0.0 )
-      std::cout << "Shutin " << std::endl;
-    std::cout << "Current control - TOTALVOLRATE " <<  targetTotalRate << " "  <<  currentTotalVolRate << std::endl;
     controlEqn = currentTotalVolRate - targetTotalRate;
     dControlEqn[COFFSET_WJ::dP] = dCurrentTotalVolRate[COFFSET_WJ::dP];
     dControlEqn[COFFSET_WJ::dQ] = dCurrentTotalVolRate[COFFSET_WJ::dQ];

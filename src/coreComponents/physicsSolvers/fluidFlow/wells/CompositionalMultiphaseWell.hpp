@@ -203,12 +203,6 @@ public:
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
-  virtual void assembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override;
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param time_n previous time value

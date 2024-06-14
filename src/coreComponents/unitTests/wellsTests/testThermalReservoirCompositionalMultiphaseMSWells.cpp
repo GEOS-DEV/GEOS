@@ -345,15 +345,12 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
   {
     meshBody.forMeshLevels( [&] ( MeshLevel & mesh )
     {
-      std::cout << mesh.getName() << " " ;
       ElementRegionManager & elemManager = mesh.getElemManager();
-      std::cout << elemManager.getName() << std::endl;
       for( localIndex er = 0; er < elemManager.numRegions(); ++er )
       {
         ElementRegionBase & elemRegion = elemManager.getRegion( er );
         elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const, CellElementSubRegion & subRegion )
         {
-          std::cout << " " << subRegion.getName() << " " << subRegion.size() << std::endl;
           // get the degrees of freedom and ghosting information
           arrayView1d< globalIndex const > const & dofNumber =
             subRegion.getReference< array1d< globalIndex > >( resDofKey );

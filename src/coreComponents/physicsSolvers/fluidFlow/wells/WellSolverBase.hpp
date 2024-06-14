@@ -180,12 +180,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
-                               real64 const GEOS_UNUSED_PARAM( dt ),
-                               DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {};
+  virtual void assembleSystem( real64 const time ,
+                               real64 const dt ,
+                               DomainPartition &  domain ,
+                               DofManager const &  dofManager ,
+                               CRSMatrixView< real64, globalIndex const > const &  localMatrix ,
+                               arrayView1d< real64 > const & localRhs ) override; 
 
   /**
    * @brief assembles the flux terms for all connections between well elements

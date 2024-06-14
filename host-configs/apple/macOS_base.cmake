@@ -55,5 +55,6 @@ endif()
 # ATS
 set(ATS_ARGUMENTS "--machine openmpi --ats openmpi_mpirun=${MPIEXEC}"  CACHE PATH "")
 #set(GEOSX_TPL_DIR "/Users/byer3/GEOS-DEV/thirdPartyLibs/install-mac-debug" CACHE PATH "" FORCE)
-set(GEOSX_TPL_DIR "/Users/byer3/GEOS-DEV/thirdPartyLibs/install-mac_rel-release" CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR "/Users/byer3/GEOS-DEV-20240517/thirdPartyLibs/install-mac_rel-release" CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR "/Users/byer3/gd_20240517/thirdPartyLibs/install-mac_rel-release" CACHE PATH "" FORCE)
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
