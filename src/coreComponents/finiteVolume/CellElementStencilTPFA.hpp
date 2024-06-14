@@ -436,6 +436,12 @@ CellElementStencilTPFAWrapper::
       LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
 
       LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux / surface[i] );
+      //change sign
+      if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
+      {
+        LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
+      }
+
       LvArray::tensorOps::hadamardProduct< 3 >( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i] );
       for( int dir = 0; dir < 3; ++dir )
       {
