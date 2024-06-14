@@ -28,7 +28,7 @@
 
     <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
-      stabilizationName="singlePhaseTPFA_stab"
+      stabilizationName="singlePhaseTPFA"
       logLevel="1"
       targetRegions="{ Region, Fault }"
       timeIntegrationOption="QuasiStatic"

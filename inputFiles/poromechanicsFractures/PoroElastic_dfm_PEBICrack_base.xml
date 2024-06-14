@@ -59,6 +59,8 @@
 
   <NumericalMethods>
     <FiniteVolume>
+       <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA_stab"/>  
     </FiniteVolume>
