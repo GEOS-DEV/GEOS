@@ -114,8 +114,8 @@ void EdgeManager::setGeometricalRelations( generators::EdgeMgr const & edgeMgr )
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( edgeMgr.getEdgeToFaces(),
                                                              LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   // TODO This is new
-  m_localToGlobalMap = edgeMgr.getLocalToGlobal();
   m_globalToLocalMap = edgeMgr.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
 
   // TODO not for there, but it's convenient
   copyExchangeInfo( edgeMgr.getSend(), edgeMgr.getRecv() );

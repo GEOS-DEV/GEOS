@@ -202,8 +202,8 @@ void NodeManager::setGeometricalRelations( generators::NodeMgr const & nodeMgr,
   m_referencePosition = nodeMgr.getNodePositions();
 
   // TODO I add the copy of the g2l and l2g mappings here. This is new
-  m_localToGlobalMap = nodeMgr.getLocalToGlobal();
   m_globalToLocalMap = nodeMgr.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
 
   // TODO not for there, but it's convenient
   copyExchangeInfo( nodeMgr.getSend(), nodeMgr.getRecv() );

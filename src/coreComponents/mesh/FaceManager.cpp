@@ -217,8 +217,8 @@ void FaceManager::setGeometricalRelations( generators::FaceMgr const & faceMgr,
   m_toEdgesRelation.base() = faceMgr.getFaceToEdges();
 
   // TODO This is new
-  m_localToGlobalMap = faceMgr.getLocalToGlobal();
   m_globalToLocalMap = faceMgr.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
 
   // TODO not for there, but it's convenient
   copyExchangeInfo( faceMgr.getSend(), faceMgr.getRecv() );

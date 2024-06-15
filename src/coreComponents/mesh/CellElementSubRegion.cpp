@@ -127,8 +127,8 @@ void CellElementSubRegion::copyFromCellBlock( generators::CellBlk const & cellBl
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();
 
-  this->m_localToGlobalMap = cellBlock.getLocalToGlobal();
-  this->m_globalToLocalMap = cellBlock.getGlobalToLocal();
+  m_globalToLocalMap = cellBlock.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
 
   copyExchangeInfo( cellBlock.getSend(), cellBlock.getRecv() );
 

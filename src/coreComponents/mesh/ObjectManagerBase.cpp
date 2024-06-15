@@ -203,6 +203,14 @@ void ObjectManagerBase::constructGlobalToLocalMap()
   }
 }
 
+void ObjectManagerBase::constructLocalToGlobalMap()
+{
+  for( auto const & [gi, li]: m_globalToLocalMap )
+  {
+    m_localToGlobalMap[li] = gi;
+  }
+}
+
 localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,

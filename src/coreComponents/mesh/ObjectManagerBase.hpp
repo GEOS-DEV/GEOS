@@ -931,6 +931,13 @@ protected:
    */
   void copyExchangeInfo( std::map< integer, array1d< localIndex > > const & send,
                          std::map< integer, array1d< localIndex > > const & recv );
+
+
+  /**
+   * @brief Constructs the global to local map from the local to global map.
+   */
+  void constructLocalToGlobalMap();
+
   /// Group that holds object sets.
   Group m_sets;
 

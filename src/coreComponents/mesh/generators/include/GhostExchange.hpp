@@ -24,12 +24,6 @@ class GhostExchange
 {
 public:
   /**
-   * @brief Get local to global map for the contained geometrical quantity (nodes, edges...).
-   * @return The mapping relationship as an array (local indexing is contiguous).
-   */
-  [[nodiscard]] virtual array1d< globalIndex > getLocalToGlobal() const = 0;
-
-  /**
    * @brief Get global to local map for the contained geometrical quantity (nodes, edges...).
    * @return The mapping relationship as a map (global indexing is not contiguous).
    */
