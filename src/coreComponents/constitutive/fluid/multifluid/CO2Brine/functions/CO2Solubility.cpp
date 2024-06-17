@@ -256,8 +256,8 @@ CO2Solubility::CO2Solubility( string const & name,
 
   std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, inputParams, solubilityModel );
 
-  handleTableOutputOptions( m_CO2SolubilityTable, pvtOpts );
-  handleTableOutputOptions( m_WaterVapourisationTable, pvtOpts );
+  outputPVTTableData( m_CO2SolubilityTable, pvtOpts );
+  outputPVTTableData( m_WaterVapourisationTable, pvtOpts );
 
 }
 

@@ -156,7 +156,7 @@ public:
    * @param tableData The target table to be printed
    * @param pvtOpts Struct containing output options
    */
-  void handleTableOutputOptions( TableFunction const * tableData, TableOutputOptions pvtOpts )
+  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions pvtOpts )
   {
     if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {

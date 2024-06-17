@@ -160,6 +160,10 @@ protected:
 
 private:
 
+  /**
+   * @brief Create a PVT Model and output them
+   * @param isClone Check if we have a clone of this constitutive model. If so don't regenarate.output
+   */
   void createPVTModels( bool isClone );
 
   bool m_isClone = true;

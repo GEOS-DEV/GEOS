@@ -116,7 +116,7 @@ public:
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
-                 geos::constitutive::PVTProps::FlashModelBase::TableOutputOptions pvtOpts );
+                 PVTProps::FlashModelBase::TableOutputOptions pvtOpts );
 
   static string catalogName() { return "CO2Solubility"; }
 
