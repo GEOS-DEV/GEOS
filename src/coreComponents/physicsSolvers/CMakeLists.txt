@@ -56,6 +56,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/SinglePhaseProppantFluxKernels.hpp
      fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/StabilizedSinglePhaseFVMKernels.hpp
      fluidFlow/StencilAccessors.hpp
      fluidFlow/ThermalSinglePhaseBaseKernels.hpp
      fluidFlow/ThermalSinglePhaseFVMKernels.hpp
