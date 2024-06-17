@@ -127,7 +127,8 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    GEOS_UNUSED_VAR( setSparsity );
+    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
+    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
     dofManager.setDomain( domain );
 
