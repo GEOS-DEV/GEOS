@@ -256,7 +256,8 @@ public:
   void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
   { reservoirSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) override { reservoirSolver()->saveSequentialIterationState( domain ); }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override
+  { reservoirSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 
