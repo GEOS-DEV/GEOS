@@ -6,6 +6,11 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3088 (2024-06-17)
+======================
+Adding temperature-dependent Solid Volumetric Heat Capacity. Rebaseline because of the parameter change in SolidInternalEnergy.
+
+
 PR #3100 (2024-06-14)
 ======================
 Adding pressure stabilization for single phase poromechanics.
@@ -54,6 +59,7 @@ Add missing compositionalMultiphaseFlow tests into ATS and adjust output naming.
 PR #3113 (2024-06-05)
 =====================
 Add general version updateConfiguration. Rebaseline of some edfm cases is needed.
+
 
 PR #3050 (2024-05-20)
 =====================
