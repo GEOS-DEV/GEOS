@@ -44,7 +44,6 @@ set(ESSL_LIBRARIES ${ESSL_DIR}/lib64/libesslsmpcuda.so
 # TPL
 set(ENABLE_PAPI OFF CACHE BOOL "")
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
-set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
 # GEOSX specific options
 set(ENABLE_PVTPackage ON CACHE BOOL "")
