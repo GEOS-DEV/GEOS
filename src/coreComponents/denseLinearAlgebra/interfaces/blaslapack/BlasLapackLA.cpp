@@ -412,6 +412,11 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
                    X.size( 1 ) == M,
                    "solution matrix has wrong dimensions" );
 
+  // --- Check that everything is contiguous
+  GEOS_ASSERT_MSG( A.isContiguous(), "Matrix is not contiguous" );
+  GEOS_ASSERT_MSG( B.isContiguous(), "right-hand-side matrix is not contiguous" );
+  GEOS_ASSERT_MSG( X.isContiguous(), "solution matrix is not contiguous" );
+
   real64 * matrixData = nullptr;
   array2d< real64 > LU;   // Space for LU-factors
   if constexpr ( INPLACE )
@@ -431,13 +436,22 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
 
   array1d< int > IPIV( N );
   int INFO;
-  char const TRANS = (USD == MatrixLayout::ROW_MAJOR) ? 'T' : 'N';
+  char transA[3] = {'N','T','T'};
+  char matA[2] = {'L','U'};
+  char const TRANS = (USD == MatrixLayout::ROW_MAJOR) ? transA[0] : 'N';
 
   GEOS_dgetrf( &N, &N, matrixData, &N, IPIV.data(), &INFO );
 
   GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
-  // If copyB is false then it means that on entry B == X
+  std::cout << "IPIV:";
+  for( integer i = 0; i < N; ++i )
+  {
+    std::cout << " " << IPIV[i];
+  }
+  std::cout << "\n";
+
+  // If INPLACE is false then it means that on entry B == X
   if constexpr ( !INPLACE )
   {
     int const INCX = 1;
@@ -446,7 +460,55 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
     GEOS_dcopy( &K, B.dataIfContiguous(), &INCX, X.dataIfContiguous(), &INCY );
   }
 
-  GEOS_dgetrs( &TRANS, &N, &M, matrixData, &N, IPIV.data(), X.dataIfContiguous(), &N, &INFO );
+  auto printMatrix = []( auto const & AA )
+  {
+    int const MA = LvArray::integerConversion< int >( AA.size( 0 ) );
+    int const NA = LvArray::integerConversion< int >( AA.size( 1 ) );
+    std::cout << std::fixed << std::setprecision( 4 );
+    for( int i = 0; i < MA; i++ )
+    {
+      for( int j = 0; j < NA; j++ )
+      {
+        std::cout << " " << std::setw( 10 ) << AA( i, j );
+      }
+      std::cout << "\n";
+    }
+    std::cout << "------------------------------------------------\n";
+  };
+
+  if constexpr (USD == MatrixLayout::ROW_MAJOR)
+  {
+    printMatrix( LU );
+    //int const K1 = 1;
+    //int const K2 = N;
+    //int const INCX = 1;
+    //GEOS_dlaswp( &M, X.dataIfContiguous(), &N, &K1, &K2, IPIV.data(), &INCX );
+
+    printMatrix( X );
+    double const ALPHA = 1.0;
+    GEOS_dtrsm( "R", &matA[0], &transA[1], "N", &N, &M, &ALPHA, matrixData, &N, X.dataIfContiguous(), &N );
+    printMatrix( X );
+    for( int i = N-1; i >= 0; i-- )
+    {
+      int j = IPIV[i] - 1;
+      for( int k = 0; k < M; ++k )
+      {
+        real64 const t = X( i, k );
+        X( i, k ) = X( j, k );
+        X( j, k ) = t;
+      }
+    }
+    printMatrix( X );    
+    GEOS_dtrsm( "R", &matA[1], &transA[2], "N", &N, &M, &ALPHA, matrixData, &N, X.dataIfContiguous(), &N );
+    printMatrix( X );
+
+//CALL DLASWP( NRHS, B, LDB, 1, N, IPIV, 1 )
+  }
+  else
+  {
+    GEOS_UNUSED_VAR( printMatrix );
+    GEOS_dgetrs( &TRANS, &N, &M, matrixData, &N, IPIV.data(), X.dataIfContiguous(), &N, &INFO );
+  }
 
   GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
 }
@@ -459,7 +521,7 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
   // --- Check that b and x have the same size
   int const N = LvArray::integerConversion< int >( b.size( 0 ) );
   GEOS_ASSERT_MSG( 0 < N && x.size() == N,
-                   "right-hand-side and/or solution have wrong dimensions" );
+                   "right-hand-side and/or solution has wrong dimensions" );
 
   // Create 2d slices
   int const dims[2] = {N, 1};

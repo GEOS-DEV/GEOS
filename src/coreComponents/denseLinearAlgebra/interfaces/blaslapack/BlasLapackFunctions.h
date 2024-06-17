@@ -175,6 +175,19 @@ void GEOS_dgels( char const * TRANS,
                  int const * LWORK,
                  int * INFO );
 
+#define GEOS_dtrsm FORTRAN_MANGLE( dtrsm )
+void GEOS_dtrsm( char const * SIDE,
+char const * UPLO,
+char const * TRANSA,
+char const * DIAG,
+int const * M,
+                     int const * N,
+                     double const * ALPHA,
+                 double * A,
+                 int const * LDA,
+                 double * B,
+                 int const * LDB );
+
 }
 #endif
 
