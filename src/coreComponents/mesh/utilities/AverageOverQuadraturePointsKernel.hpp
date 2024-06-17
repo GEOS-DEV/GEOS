@@ -287,6 +287,177 @@ public:
   }
 };
 
+
+
+/**
+ * @class AverageOverQuadraturePoints2D
+ * @tparam SUBREGION_TYPE the subRegion type
+ * @tparam FE_TYPE the finite element type
+ */
+template< typename SUBREGION_TYPE,
+          typename FE_TYPE >
+class AverageOverQuadraturePoints2D :
+  public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+                                          FE_TYPE >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+                                                FE_TYPE >;
+
+  using Base::m_elementVolume;
+
+  /**
+   * @brief Constructor for the class
+   * @param nodeManager the node manager
+   * @param edgeManager the edge manager
+   * @param faceManager the face manager
+   * @param elementSubRegion the element subRegion
+   * @param finiteElementSpace the finite element space
+   * @param property the property at quadrature points
+   * @param averageProperty the property averaged over quadrature points
+   */
+  AverageOverQuadraturePoints2D( NodeManager & nodeManager,
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 arrayView3d< real64 const > const property,
+                                 arrayView2d< real64 > const averageProperty ):
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          elementSubRegion,
+          finiteElementSpace ),
+    m_property( property ),
+    m_averageProperty( averageProperty )
+  {}
+
+  /**
+   * @copydoc finiteElement::KernelBase::StackVariables
+   */
+  struct StackVariables : Base::StackVariables
+  {};
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param k The element index.
+   * @param stack The StackVariable object that hold the stack variables.
+   */
+  GEOS_HOST_DEVICE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    Base::setup( k, stack );
+
+    for (int icomp = 0, icomp < m_property.size(2), ++icomp)
+    {
+	    m_averageProperty[k][icomp] = 0.0;
+    }
+  }
+
+  /**
+   * @brief Increment the average property with the contribution of the property at this quadrature point
+   * @param k The element index
+   * @param q The quadrature point index
+   * @param stack The StackVariables object that hold the stack variables.
+   */
+  GEOS_HOST_DEVICE
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
+
+    for (int icomp = 0; icomp < m_property.size(2); ++icomp)
+    {
+	    m_averageProperty[k][icomp] += weight*m_property[k][q][icomp];
+    }
+  }
+
+  /**
+   * @brief Launch the kernel over the elements in the subRegion
+   * @tparam POLICY the kernel policy
+   * @tparam KERNEL_TYPE the type of kernel
+   * @param numElems the number of elements in the subRegion
+   * @param kernelComponent the kernel component
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static void
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems,
+                      [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+      for( integer q = 0; q < FE_TYPE::numQuadraturePoints; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+    } );
+  }
+
+protected:
+
+  /// The property living on quadrature points
+  arrayView3d< real64 const > const m_property;
+
+  /// The average property
+  arrayView2d< real64 > const m_averageProperty;
+
+};
+
+
+
+/**
+ * @class AverageOverQuadraturePoints2DKernelFactory
+ * @brief Class to create and launch the kernel
+ */
+class AverageOverQuadraturePoints2DKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam SUBREGION_TYPE the subRegion type
+   * @tparam FE_TYPE the finite element type
+   * @tparam POLICY the kernel policy
+   * @param nodeManager the node manager
+   * @param edgeManager the edge manager
+   * @param faceManager the face manager
+   * @param elementSubRegion the element subRegion
+   * @param finiteElementSpace the finite element space
+   * @param property the property at quadrature points
+   * @param averageProperty the property averaged over quadrature points
+   */
+  template< typename SUBREGION_TYPE,
+            typename FE_TYPE,
+            typename POLICY >
+  static void
+  createAndLaunch( NodeManager & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   SUBREGION_TYPE const & elementSubRegion,
+                   FE_TYPE const & finiteElementSpace,
+                   arrayView3d< real64 const > const property,
+                   arrayView2d< real64 > const averageProperty )
+  {
+    AverageOverQuadraturePoints2D< SUBREGION_TYPE, FE_TYPE >
+    kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
+            property, averageProperty );
+
+    AverageOverQuadraturePoints2D< SUBREGION_TYPE, FE_TYPE >::template
+    kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
+  }
+};
+
+
+
 }
 
 #endif /* GEOS_MESH_UTILITIES_AVERAGEOVERQUADRATUREPOINTSKERNEL_HPP_ */
