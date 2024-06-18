@@ -378,7 +378,21 @@ using LinearSolveTypes = ::testing::Types<
   Array< real64, 2, MatrixLayout::ROW_MAJOR_PERM >,
   StackArray< real64, 2, MAX_SIZE *MAX_SIZE, MatrixLayout::COL_MAJOR_PERM >,
   StackArray< real64, 2, MAX_SIZE *MAX_SIZE, MatrixLayout::ROW_MAJOR_PERM > >;
-TYPED_TEST_SUITE( LinearSolveFixture, LinearSolveTypes );
+
+class NameGenerator
+{
+public:
+  template< typename T >
+  static std::string GetName( int )
+  {
+    if constexpr (std::is_same_v< T, Array< real64, 2, MatrixLayout::COL_MAJOR_PERM > >) return "col-major-heap-array";
+    if constexpr (std::is_same_v< T, Array< real64, 2, MatrixLayout::ROW_MAJOR_PERM > >) return "row-major-heap-array";
+    if constexpr (std::is_same_v< T, StackArray< real64, 2, MAX_SIZE *MAX_SIZE, MatrixLayout::COL_MAJOR_PERM > >) return "col-major-stack-array";
+    if constexpr (std::is_same_v< T, StackArray< real64, 2, MAX_SIZE *MAX_SIZE, MatrixLayout::ROW_MAJOR_PERM > >) return "row-major-stack-array";
+  }
+};
+
+TYPED_TEST_SUITE( LinearSolveFixture, LinearSolveTypes, NameGenerator );
 
 TYPED_TEST( LinearSolveFixture, matrix_vector_solve_laplace )
 {
