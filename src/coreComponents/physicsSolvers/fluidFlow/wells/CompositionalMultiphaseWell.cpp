@@ -71,7 +71,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_allowCompDensChopping( 1 ),
   m_targetPhaseIndex( -1 )
 {
-
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
