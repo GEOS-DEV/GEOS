@@ -55,8 +55,8 @@ char const * pvtLiquid = "DensityFun PhillipsBrineDensity 1e6 7.5e7 5e5 299.15 3
                          "EnthalpyFun BrineEnthalpy 1e6 7.5e7 5e5 299.15 369.15 10 0\n";
 
 char const * pvtGas = "DensityFun SpanWagnerCO2Density 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                         "ViscosityFun FenghourCO2Viscosity 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                          "EnthalpyFun CO2Enthalpy 1e6 7.5e7 5e5 299.15 369.15 10\n";
+                      "ViscosityFun FenghourCO2Viscosity 1e6 7.5e7 5e5 299.15 369.15 10\n"
+                      "EnthalpyFun CO2Enthalpy 1e6 7.5e7 5e5 299.15 369.15 10\n";
 char const * xmlInput =
   R"xml(
 
@@ -815,8 +815,8 @@ int main( int argc, char * * argv )
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
   removeFile( "co2flash.txt" );
-  removeFile("pvtliquid.txt");
-  removeFile("pvtgas.txt");
- 
+  removeFile( "pvtliquid.txt" );
+  removeFile( "pvtgas.txt" );
+
   return result;
 }
