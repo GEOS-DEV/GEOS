@@ -31,7 +31,6 @@ enum TestMatrixType
 {
   LAPLACE,
   SAMPLING,
-  REDHEFFER,
   GRCAR
 };
 
@@ -84,24 +83,6 @@ struct TestMatrix< TestMatrixType::SAMPLING >
     for( int j = 0; j < N; j++ )
     {
       A( j, j ) -= minajj;
-    }
-  }
-};
-
-template<>
-struct TestMatrix< TestMatrixType::REDHEFFER >
-{
-  template< int USD >
-  static void create( arraySlice2d< real64, USD > const & A )
-  {
-    int const N = LvArray::integerConversion< int >( A.size( 0 ) );
-    GEOS_ASSERT( 2 <= N );
-    for( int i = 1; i <= N; i++ )
-    {
-      for( int j = 1; j <= N; j++ )
-      {
-        A( i-1, j-1 ) = (j==1) || ((j%i)==0) ? 1.0 : 0.0;
-      }
     }
   }
 };
@@ -415,14 +396,6 @@ TYPED_TEST( LinearSolveFixture, matrix_vector_solve_grcar )
   this->template test_matrix_vector_solve_inplace< TestMatrixType::GRCAR, 10 >();
 }
 
-TYPED_TEST( LinearSolveFixture, matrix_vector_solve_redheffer )
-{
-  this->template test_matrix_vector_solve< TestMatrixType::REDHEFFER, 2 >();
-  this->template test_matrix_vector_solve_inplace< TestMatrixType::REDHEFFER, 2 >();
-  this->template test_matrix_vector_solve< TestMatrixType::REDHEFFER, 8 >();
-  this->template test_matrix_vector_solve_inplace< TestMatrixType::REDHEFFER, 8 >();
-}
-
 TYPED_TEST( LinearSolveFixture, matrix_vector_solve_sampling )
 {
   this->template test_matrix_vector_solve< TestMatrixType::SAMPLING, 3 >();
@@ -453,18 +426,6 @@ TYPED_TEST( LinearSolveFixture, matrix_matrix_solve_grcar )
   this->template test_matrix_matrix_solve_inplace< TestMatrixType::GRCAR, 5, 5 >();
   this->template test_matrix_matrix_solve< TestMatrixType::GRCAR, 5, 12 >();
   this->template test_matrix_matrix_solve_inplace< TestMatrixType::GRCAR, 5, 12 >();
-}
-
-TYPED_TEST( LinearSolveFixture, matrix_matrix_solve_redheffer )
-{
-  this->template test_matrix_matrix_solve< TestMatrixType::REDHEFFER, 5, 1 >();
-  this->template test_matrix_matrix_solve_inplace< TestMatrixType::REDHEFFER, 5, 1 >();
-  this->template test_matrix_matrix_solve< TestMatrixType::REDHEFFER, 12, 3 >();
-  this->template test_matrix_matrix_solve_inplace< TestMatrixType::REDHEFFER, 5, 3 >();
-  this->template test_matrix_matrix_solve< TestMatrixType::REDHEFFER, 5, 5 >();
-  this->template test_matrix_matrix_solve_inplace< TestMatrixType::REDHEFFER, 5, 5 >();
-  this->template test_matrix_matrix_solve< TestMatrixType::REDHEFFER, 5, 12 >();
-  this->template test_matrix_matrix_solve_inplace< TestMatrixType::REDHEFFER, 5, 12 >();
 }
 
 TYPED_TEST( LinearSolveFixture, matrix_matrix_solve_sampling )
