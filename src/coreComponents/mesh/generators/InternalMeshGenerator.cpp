@@ -229,8 +229,6 @@ void InternalMeshGenerator::postProcessInput()
     m_max[i] = m_vertices[i].back();
   }
 
-  GEOS_LOG_RANK("Post process input: " << m_vertices);
-
   for( int dir=0; dir<3; ++dir )
   {
     m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );

@@ -117,7 +117,6 @@ private:
     constexpr static char const * particleFilePathString() { return "particleFile"; }
     constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
-    constexpr static char const * particleMaterialNamesString() { return "particleMaterialNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
   };
   /// @endcond

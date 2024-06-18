@@ -48,11 +48,6 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
     setSizedFromParent( 0 ).
     setDescription( "Names of each particle block" );
 
-  registerWrapper( viewKeyStruct::particleMaterialNamesString(), &m_materialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Names of each particle material, index corresponds to material ID in particle file");
-
   registerWrapper( viewKeyStruct::particleTypesString(), &m_particleTypes ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
