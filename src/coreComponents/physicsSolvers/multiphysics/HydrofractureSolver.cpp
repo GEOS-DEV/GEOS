@@ -203,7 +203,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 
-    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    if( !this->m_performStressInitialization && m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
       locallyFractured = 1;
     }
@@ -1124,8 +1124,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 namespace
 {
 typedef HydrofractureSolver<> SinglePhaseHydrofracture;
-// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
+// typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 

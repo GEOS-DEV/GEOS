@@ -110,8 +110,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
         {
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
-          integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-          string const massUnit = useMass ? "kg" : "mol";
+          string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
           outputFile <<
             "Time [s],Min pressure [Pa],Average pressure [Pa],Max pressure [Pa],Min delta pressure [Pa],Max delta pressure [Pa]," <<
             "Min temperature [Pa],Average temperature [Pa],Max temperature [Pa],Total dynamic pore volume [rm^3]";
@@ -303,8 +302,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                         subRegionImmobilePhaseMass.toView(),
                                         subRegionDissolvedComponentMass.toView() );
 
-    ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
-    RegionStatistics & regionStatistics = region.getGroup< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+    ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion( subRegion ).getName() );
+    RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     real64 & averagePressure = regionStatistics.getReference< real64 >( RegionStatistics::viewKeyStruct::averagePressureString());
     regionStatistics.getWrapper< real64 >( RegionStatistics::viewKeyStruct::averagePressureString()).setApplyDefaultValue( averagePressure + subRegionAvgPresNumerator );
@@ -440,8 +439,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       mobilePhaseMass[ip] = phaseMass[ip] - immobilePhaseMass[ip];
     }
 
-    integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-    string const massUnit = useMass ? "kg" : "mol";
+    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                         << ": Pressure (min, average, max): "
