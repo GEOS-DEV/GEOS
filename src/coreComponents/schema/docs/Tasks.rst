@@ -5,6 +5,7 @@ Name                                                        Type Default Descrip
 =========================================================== ==== ======= ====================================================================== 
 CompositionalMultiphaseReservoirPoromechanicsInitialization node         :ref:`XML_CompositionalMultiphaseReservoirPoromechanicsInitialization` 
 CompositionalMultiphaseStatistics                           node         :ref:`XML_CompositionalMultiphaseStatistics`                           
+HydrofractureInitialization                                 node         :ref:`XML_HydrofractureInitialization`                                 
 MultiphasePoromechanicsInitialization                       node         :ref:`XML_MultiphasePoromechanicsInitialization`                       
 PVTDriver                                                   node         :ref:`XML_PVTDriver`                                                   
 PackCollection                                              node         :ref:`XML_PackCollection`                                              
