@@ -52,6 +52,11 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
+  registerWrapper( viewKeys::timeHistoryMPIOString(), &m_useMPIO ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to use MPIO to write a single file or a separate file for each rank (only applicable to HDF5 format)." );
+
 }
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
@@ -74,7 +79,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
         metadata.setName( prefix + metadata.getName() );
       }
 
-      m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, metadata, m_recordCount ) );
+      m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, static_cast<bool>( m_useMPIO ), metadata, m_recordCount ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
         m_io[idx]->updateCollectingCount( count );
@@ -99,7 +104,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
-    m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, static_cast<bool>( m_useMPIO ), timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );
     m_io.back()->init( !freshInit );
@@ -119,7 +124,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX );
     string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    HDFFile( outputFile, (m_recordCount == 0), static_cast<bool>(m_useMPIO), MPI_COMM_GEOSX );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );

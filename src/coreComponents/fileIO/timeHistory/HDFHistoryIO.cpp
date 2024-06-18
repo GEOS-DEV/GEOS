@@ -82,6 +82,7 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
 }
 
 HDFHistoryIO::HDFHistoryIO( string const & filename,
+                            bool useMPIO,
                             localIndex rank,
                             std::vector< localIndex > const & dims,
                             string const & name,
@@ -94,6 +95,7 @@ HDFHistoryIO::HDFHistoryIO( string const & filename,
   m_bufferHead( nullptr ),
   m_dataBuffer( 0 ),
   m_filename( filename ),
+  m_useMPIO(useMPIO ),
   m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
   m_globalIdxCount( 0 ),
@@ -132,8 +134,12 @@ void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
     color = 0;
   }
 
-  std::vector< globalIndex > counts( size );
-  MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  std::vector< globalIndex > counts( size, 0 );
+  counts[ rank ] = localIdxCount;
+  if ( m_useMPIO )
+  {
+    MpiWrapper::allgather( &localIdxCount, 1, &counts[0], 1, m_comm );
+  }
 
   m_chunkSize = std::numeric_limits< hsize_t >::max( );
   globalIndex globalIdxCount = 0;
@@ -213,7 +219,7 @@ void HDFHistoryIO::init( bool existsOkay )
     dimChunks[1] = m_chunkSize;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
-    HDFFile target( m_filename, false, true, subcomm );
+    HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? subcomm : m_comm );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
@@ -221,7 +227,8 @@ void HDFHistoryIO::init( bool existsOkay )
       std::vector< hsize_t > maxFileDims( historyFileDims );
       // chunking is required to create an extensible dataset
       dcplId = H5Pcreate( H5P_DATASET_CREATE );
-      H5Pset_chunk( dcplId, m_rank + 1, &dimChunks[0] );
+      herr_t err = H5Pset_chunk( dcplId, m_rank + 1, &dimChunks[0] );
+      GEOS_ERROR_IF( err < 0, "H5Pset_chunk failed.");
       maxFileDims[0] = H5S_UNLIMITED;
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
@@ -267,7 +274,7 @@ void HDFHistoryIO::write()
 
       if( m_subcomm != MPI_COMM_NULL )
       {
-        HDFFile target( m_filename, false, true, m_subcomm );
+        HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? m_subcomm : m_comm );
 
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
@@ -287,10 +294,10 @@ void HDFHistoryIO::write()
         hid_t memspace = H5Screate_simple( m_rank+1, &bufferedCounts[0], nullptr );
 
         hid_t fileHyperslab = filespace;
-        H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
-
-        H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
-
+        herr_t err = H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
+        GEOS_ERROR_IF( err < 0, "H5Sselect_hyperslab failed.");
+        err = H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
+        GEOS_ERROR_IF( err < 0, "H5Dwrite failed.");
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
@@ -303,9 +310,12 @@ void HDFHistoryIO::write()
         }
 
         // unfortunately have to close/open the file for each row since the accessing mpi ranks and extents can change over time
-        H5Sclose( memspace );
-        H5Sclose( filespace );
-        H5Dclose( dataset );
+        err = H5Sclose( memspace );
+        GEOS_ERROR_IF( err < 0, "H5Sclose failed." );
+        err = H5Sclose( filespace );
+        GEOS_ERROR_IF( err < 0, "H5Sclose failed." );
+        err = H5Dclose( dataset );
+        GEOS_ERROR_IF( err < 0, "H5Dclose failed." );
       }
 
       m_writeHead++;
@@ -339,7 +349,7 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
-    HDFFile target( m_filename, false, true, m_subcomm );
+    HDFFile target( m_filename, false, m_useMPIO, m_useMPIO ? m_subcomm : m_comm );
     std::vector< hsize_t > maxFileDims( m_rank+1 );
     maxFileDims[0] = rowLimit;
     maxFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxHighwater );
@@ -348,8 +358,10 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
       maxFileDims[dd] = m_dims[dd-1];
     }
     hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
-    H5Dset_extent( dataset, &maxFileDims[0] );
-    H5Dclose( dataset );
+    herr_t err = H5Dset_extent( dataset, &maxFileDims[0] );
+    GEOS_ERROR_IF( err < 0, "H5Dset_extent failed." );
+    err = H5Dclose( dataset );
+    GEOS_ERROR_IF( err < 0, "H5Dclose failed." );
   }
 }
 
