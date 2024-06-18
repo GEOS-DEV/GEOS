@@ -411,7 +411,6 @@ bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
     {
       real64 localCenter = MapValueToRange( coord,  m_gridMin[ i ],  m_gridMax[ i ] );
       rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
-      GEOS_LOG_RANK(coord << ", " << m_periodic << ", " << dir  << ", " << m_gridMin << ", " << m_gridMax << ", " << m_min << ", " << m_max << ", " << localCenter << ", " <<  rval);
     }
 
   }
@@ -675,7 +674,6 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
                                                                    MPI_iCommData & commData,
                                                                    const real64 & boundaryRadius )
 {
-    GEOS_LOG_RANK("Ghost particles " << m_neighbors.size());
   /*
    * Make a list of the coordinates and global IDs of all non-ghost objects on the current
    * partition.  These should all be interior to the partition domain (excluding the ghost

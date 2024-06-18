@@ -697,11 +697,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
-  GEOS_LOG_RANK( "localMin: " << m_xLocalMinNoGhost << ", " << 
-  "localMax: " << m_xLocalMaxNoGhost << ", " << 
-  "localMin w/ ghost: " << m_xLocalMin << ", " << 
-  "localMax w/ ghost: " << m_xLocalMax );
-
   // Get element size
   m_hEl.resize( 3 );
   LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
@@ -1047,7 +1042,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     subRegion.setActiveParticleIndices();
-    // GEOS_LOG_RANK(subRegion.getName() << ", " << subRegion.size() << ", " << subRegion.activeParticleIndices().size() << ", " << subRegion.inactiveParticleIndices().size());
   } );
   
   //#######################################################################################
@@ -1274,6 +1268,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         wrapper.move( LvArray::MemorySpace::host, true );
       } );
       partition.repartitionMasterParticles( subRegion, m_iComm );
+
+      subRegion.setActiveParticleIndices();
     } );
 
     // Correct particle centers across periodic boundaries
@@ -4075,10 +4071,6 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
               cornerIJK[corner][i] = std::floor( ( cornerPositionComponent - xLocalMin[i] ) / hEl[i] ); // TODO: Temporarily store the CPDI
                                                                                                         // corners since they're re-used
                                                                                                         // below?
-              if( cornerPositionComponent < m_xLocalMin[i] || cornerPositionComponent > m_xLocalMax[i] )
-              {
-                GEOS_LOG_RANK( "P pos outside: " << particlePosition[p] << ", i: " << i << ", Corner Comp: " << cornerPositionComponent << ", Local Min: " << m_xLocalMin << ", Local Max: " << m_xLocalMax );
-              }
             }
           }
 

@@ -167,8 +167,6 @@ void ParticleSubRegionBase::setActiveParticleIndices()
         m_inactiveParticleIndices.insert( p );
       }
     } );
-
-    GEOS_LOG_RANK(m_inactiveParticleIndices);
 }
 
 void ParticleSubRegionBase::updateMaps()
