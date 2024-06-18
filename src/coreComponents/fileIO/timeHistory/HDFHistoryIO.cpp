@@ -197,43 +197,43 @@ void HDFHistoryIO::init( bool existsOkay )
   // create a dataset in the file if needed, don't erase file
   if( subcomm != MPI_COMM_NULL )
   {
-
-    std::vector< hsize_t > historyFileDims( m_rank+1 );
-    historyFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeLimit );
-
-    std::vector< hsize_t > dimChunks( m_rank+1 );
-    dimChunks[0] = 1;
-
-    for( hsize_t dd = 1; dd < m_rank+1; ++dd )
-    {
-      // hdf5 doesn't like chunk size 0, hence the subcomm
-      dimChunks[dd] = m_dims[dd-1];
-      historyFileDims[dd] = m_dims[dd-1];
-    }
-    dimChunks[1] = m_chunkSize;
-    historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
-
     HDFFile target( m_filename, false, true, subcomm );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
-      hid_t dcplId = 0;
+      std::vector< hsize_t > historyFileDims( m_rank+1 );
+      historyFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeLimit );
+      std::vector< hsize_t > dimChunks( m_rank+1 );
+      dimChunks[0] = 1;
+      for( hsize_t dd = 1; dd < m_rank+1; ++dd )
+      {
+        // hdf5 doesn't like chunk size 0, hence the subcomm
+        dimChunks[dd] = m_dims[dd-1];
+        historyFileDims[dd] = m_dims[dd-1];
+      }
+      dimChunks[1] = m_chunkSize;
+      historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
       std::vector< hsize_t > maxFileDims( historyFileDims );
       // chunking is required to create an extensible dataset
-      dcplId = H5Pcreate( H5P_DATASET_CREATE );
+      hid_t dcplId = H5Pcreate( H5P_DATASET_CREATE );
       H5Pset_chunk( dcplId, m_rank + 1, &dimChunks[0] );
       maxFileDims[0] = H5S_UNLIMITED;
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
+      H5Pset_dxpl_mpio( dataset, H5FD_MPIO_COLLECTIVE );
       H5Dclose( dataset );
       H5Sclose( space );
+      H5Pclose( dcplId );
     }
     else if( existsOkay )
     {
       updateDatasetExtent( m_writeLimit );
     }
-    GEOS_ERROR_IF( inTarget && !existsOkay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
+    else
+    {
+      GEOS_ERROR("Dataset (" + m_name + ") already exists in output file: " + m_filename);
+    }
   }
 }
 
@@ -268,6 +268,10 @@ void HDFHistoryIO::write()
       if( m_subcomm != MPI_COMM_NULL )
       {
         HDFFile target( m_filename, false, true, m_subcomm );
+        if ( !target.hasDataset( m_name ) )
+        {
+          GEOS_ERROR( "Attempted to write to a non-existent dataset: " + m_name );
+        }
 
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
