@@ -222,6 +222,43 @@ public:
     }
   }
 
+  void
+  assembleFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const
+  { reservoirSolver()->assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+
+  void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const
+  { reservoirSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const
+  { return reservoirSolver()->updateFluidState( subRegion ); }
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+  { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+  { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
+
+  integer & isThermal() { return reservoirSolver()->isThermal(); }
+
+  void enableJumpStabilization()
+  { reservoirSolver()->enableJumpStabilization(); }
+
+  void enableFixedStressPoromechanicsUpdate()
+  { reservoirSolver()->enableFixedStressPoromechanicsUpdate(); }
+
+  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { reservoirSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override
+  { reservoirSolver()->saveSequentialIterationState( domain ); }
+
 protected:
 
   /**
