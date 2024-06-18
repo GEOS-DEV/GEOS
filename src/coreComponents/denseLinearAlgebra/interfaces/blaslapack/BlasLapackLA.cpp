@@ -379,20 +379,8 @@ void matrixLeastSquaresSolutionSolve( arraySlice2d< real64, USD > const & A,
   GEOS_ERROR_IF( INFO != 0, "The algorithm computing matrix linear system failed to converge." );
 }
 
-template< int USD, bool INPLACE >
-struct MatrixInPlace
-{
-  using type = arraySlice2d< real64, USD >;
-};
-
-template< int USD >
-struct MatrixInPlace< USD, false >
-{
-  using type = arraySlice2d< real64 const, USD >;
-};
-
-template< bool INPLACE, int USD >
-void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
+template< typename T, int USD >
+void solveLinearSystem( arraySlice2d< T, USD > const & A,
                         arraySlice2d< real64 const, USD > const & B,
                         arraySlice2d< real64, USD > const & X )
 {
@@ -419,7 +407,7 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
 
   real64 * matrixData = nullptr;
   array2d< real64 > LU;   // Space for LU-factors
-  if constexpr ( INPLACE )
+  if constexpr ( !std::is_const< T >::value )
   {
     matrixData = A.dataIfContiguous();
   }
@@ -436,23 +424,13 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
 
   array1d< int > IPIV( N );
   int INFO;
-  char transA[3] = {'N','T','T'};
-  char matA[2] = {'L','U'};
-  char const TRANS = (USD == MatrixLayout::ROW_MAJOR) ? transA[0] : 'N';
+  char const TRANS = (USD == MatrixLayout::ROW_MAJOR) ? 'T' : 'N';
 
   GEOS_dgetrf( &N, &N, matrixData, &N, IPIV.data(), &INFO );
 
   GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
-  std::cout << "IPIV:";
-  for( integer i = 0; i < N; ++i )
-  {
-    std::cout << " " << IPIV[i];
-  }
-  std::cout << "\n";
-
-  // If INPLACE is false then it means that on entry B == X
-  if constexpr ( !INPLACE )
+  if constexpr ( std::is_const< T >::value )
   {
     int const INCX = 1;
     int const INCY = 1;
@@ -460,61 +438,69 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
     GEOS_dcopy( &K, B.dataIfContiguous(), &INCX, X.dataIfContiguous(), &INCY );
   }
 
-  auto printMatrix = []( auto const & AA )
+  // For row-major form, we need to reorder into col-major form
+  // This might require an extra allocation
+  real64 * solutionData = X.dataIfContiguous();
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > X0;
+  if constexpr ( USD == MatrixLayout::ROW_MAJOR )
   {
-    int const MA = LvArray::integerConversion< int >( AA.size( 0 ) );
-    int const NA = LvArray::integerConversion< int >( AA.size( 1 ) );
-    std::cout << std::fixed << std::setprecision( 4 );
-    for( int i = 0; i < MA; i++ )
+    if( 1 < M && M == N )
     {
-      for( int j = 0; j < NA; j++ )
+      // Square case: swap in place
+      for( int i = 0; i < N; i++ )
       {
-        std::cout << " " << std::setw( 10 ) << AA( i, j );
-      }
-      std::cout << "\n";
-    }
-    std::cout << "------------------------------------------------\n";
-  };
-
-  if constexpr (USD == MatrixLayout::ROW_MAJOR)
-  {
-    printMatrix( LU );
-    //int const K1 = 1;
-    //int const K2 = N;
-    //int const INCX = 1;
-    //GEOS_dlaswp( &M, X.dataIfContiguous(), &N, &K1, &K2, IPIV.data(), &INCX );
-
-    printMatrix( X );
-    double const ALPHA = 1.0;
-    GEOS_dtrsm( "R", &matA[0], &transA[1], "N", &N, &M, &ALPHA, matrixData, &N, X.dataIfContiguous(), &N );
-    printMatrix( X );
-    for( int i = N-1; i >= 0; i-- )
-    {
-      int j = IPIV[i] - 1;
-      for( int k = 0; k < M; ++k )
-      {
-        real64 const t = X( i, k );
-        X( i, k ) = X( j, k );
-        X( j, k ) = t;
+        for( int j = i+1; j < N; j++ )
+        {
+          std::swap( X( i, j ), X( j, i ) );
+        }
       }
     }
-    printMatrix( X );    
-    GEOS_dtrsm( "R", &matA[1], &transA[2], "N", &N, &M, &ALPHA, matrixData, &N, X.dataIfContiguous(), &N );
-    printMatrix( X );
+    else if( 1 < M )
+    {
+      X0.resize( N, M );
+      for( int i = 0; i < N; i++ )
+      {
+        for( int j = 0; j < M; j++ )
+        {
+          X0( i, j ) = X( i, j );
+        }
+      }
+      solutionData = X0.data();
+    }
+  }
 
-//CALL DLASWP( NRHS, B, LDB, 1, N, IPIV, 1 )
-  }
-  else
-  {
-    GEOS_UNUSED_VAR( printMatrix );
-    GEOS_dgetrs( &TRANS, &N, &M, matrixData, &N, IPIV.data(), X.dataIfContiguous(), &N, &INFO );
-  }
+  GEOS_dgetrs( &TRANS, &N, &M, matrixData, &N, IPIV.data(), solutionData, &N, &INFO );
 
   GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
+
+  if constexpr ( USD == MatrixLayout::ROW_MAJOR )
+  {
+    if( 1 < M && M == N )
+    {
+      // Square case: swap in place
+      for( int i = 0; i < N; i++ )
+      {
+        for( int j = i+1; j < N; j++ )
+        {
+          std::swap( X( i, j ), X( j, i ) );
+        }
+      }
+    }
+    else if( 1 < M )
+    {
+      for( int i = 0; i < N; i++ )
+      {
+        for( int j = 0; j < M; j++ )
+        {
+          X( i, j ) = X0( i, j );
+        }
+      }
+    }
+  }
 }
 
-template< bool INPLACE, int USD >
-void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
+template< typename T, int USD >
+void solveLinearSystem( arraySlice2d< T, USD > const & A,
                         arraySlice1d< real64 const > const & b,
                         arraySlice1d< real64 > const & x )
 {
@@ -529,7 +515,7 @@ void solveLinearSystem( typename MatrixInPlace< USD, INPLACE >::type const & A,
   arraySlice2d< real64 const, USD > B( b.dataIfContiguous(), dims, strides );
   arraySlice2d< real64, USD > X( x.dataIfContiguous(), dims, strides );
 
-  solveLinearSystem< INPLACE >( A, B, X );
+  solveLinearSystem( A, B, X );
 }
 
 } // namespace detail
@@ -1042,52 +1028,52 @@ void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,
                                       arraySlice1d< real64 const > const & rhs,
                                       arraySlice1d< real64 > const & solution )
 {
-  detail::solveLinearSystem< false, MatrixLayout::ROW_MAJOR >( A, rhs, solution );
+  detail::solveLinearSystem( A, rhs, solution );
 }
 
 void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
                                       arraySlice1d< real64 const > const & rhs,
                                       arraySlice1d< real64 > const & solution )
 {
-  detail::solveLinearSystem< false, MatrixLayout::COL_MAJOR >( A, rhs, solution );
+  detail::solveLinearSystem( A, rhs, solution );
 }
 
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 > const & A,
                                       Vec< real64 > const & rhs )
 {
-  detail::solveLinearSystem< true, MatrixLayout::ROW_MAJOR >( A, rhs.toSliceConst(), rhs );
+  detail::solveLinearSystem( A, rhs.toSliceConst(), rhs );
 }
 
 void BlasLapackLA::solveLinearSystem( MatColMajor< real64 > const & A,
                                       Vec< real64 > const & rhs )
 {
-  detail::solveLinearSystem< true, MatrixLayout::COL_MAJOR >( A, rhs.toSliceConst(), rhs );
+  detail::solveLinearSystem( A, rhs.toSliceConst(), rhs );
 }
 
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,
                                       MatRowMajor< real64 const > const & rhs,
                                       MatRowMajor< real64 > const & solution )
 {
-  detail::solveLinearSystem< false, MatrixLayout::ROW_MAJOR >( A, rhs, solution );
+  detail::solveLinearSystem( A, rhs, solution );
 }
 
 void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
                                       MatColMajor< real64 const > const & rhs,
                                       MatColMajor< real64 > const & solution )
 {
-  detail::solveLinearSystem< false, MatrixLayout::COL_MAJOR >( A, rhs, solution );
+  detail::solveLinearSystem( A, rhs, solution );
 }
 
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 > const & A,
                                       MatRowMajor< real64 > const & rhs )
 {
-  detail::solveLinearSystem< true, MatrixLayout::ROW_MAJOR >( A, rhs.toSliceConst(), rhs );
+  detail::solveLinearSystem( A, rhs.toSliceConst(), rhs );
 }
 
 void BlasLapackLA::solveLinearSystem( MatColMajor< real64 > const & A,
                                       MatColMajor< real64 > const & rhs )
 {
-  detail::solveLinearSystem< true, MatrixLayout::COL_MAJOR >( A, rhs.toSliceConst(), rhs );
+  detail::solveLinearSystem( A, rhs.toSliceConst(), rhs );
 }
 
 void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
