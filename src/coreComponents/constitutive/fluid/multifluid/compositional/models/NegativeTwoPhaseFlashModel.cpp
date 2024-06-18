@@ -37,21 +37,28 @@ string NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::catalogNa
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
 NegativeTwoPhaseFlashModel( string const & name,
-                            ComponentProperties const & componentProperties ):
+                            ComponentProperties const & componentProperties,
+                            ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
-{}
+{
+  GEOS_UNUSED_VAR( modelParameters );
+}
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 typename NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::KernelWrapper
 NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties.getNumberOfComponents() );
+  return KernelWrapper( m_componentProperties.getNumberOfComponents(), 0, 1 );
 }
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
-NegativeTwoPhaseFlashModelUpdate( integer const numComponents ):
-  m_numComponents( numComponents )
+NegativeTwoPhaseFlashModelUpdate( integer const numComponents,
+                                  integer const liquidIndex,
+                                  integer const vapourIndex ):
+  m_numComponents( numComponents ),
+  m_liquidIndex( liquidIndex ),
+  m_vapourIndex( vapourIndex )
 {}
 
 // Explicit instantiation of the model template.

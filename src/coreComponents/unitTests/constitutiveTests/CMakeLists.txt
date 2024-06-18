@@ -1,9 +1,14 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testCapillaryPressure.cpp
+     testCO2BrinePVTModels.cpp
+     testCO2SpycherPruessModels.cpp
      testDamage.cpp
+     testMultiFluidCO2Brine.cpp
+     testMultiFluidDeadOil.cpp
+     testMultiFluidLiveOil.cpp
      testRelPerm.cpp
-     testRelPermHysteresis.cpp
-     testCapillaryPressure.cpp )
+     testRelPermHysteresis.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
@@ -37,9 +42,7 @@ endif()
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp )
-
+          testMultiFluidCompositionalMultiphasePVTPackage.cpp )
     list( APPEND dependencyList PVTPackage )
 endif()
 

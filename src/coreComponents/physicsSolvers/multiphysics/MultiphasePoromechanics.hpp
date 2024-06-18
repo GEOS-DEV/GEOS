@@ -21,37 +21,25 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 
 namespace geos
 {
 
-namespace stabilization
-{
-enum class StabilizationType : integer
-{
-  None,
-  Global,
-  Local,
-};
-
-ENUM_STRINGS( StabilizationType,
-              "None",
-              "Global",
-              "Local" );
-}
-
-template< typename FLOW_SOLVER >
-class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
+template< typename FLOW_SOLVER = CompositionalMultiphaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
 
-  using Base = PoromechanicsSolver< FLOW_SOLVER >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_stabilizationType;
+  using Base::m_stabilizationRegionNames;
+  using Base::m_stabilizationMultiplier;
 
   /**
    * @brief main constructor for MultiphasePoromechanics Objects
@@ -68,7 +56,18 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )   // special case
+    {
+      return "MultiphasePoromechanics";
+    }
+    else   // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -82,8 +81,6 @@ public:
   /**@{*/
 
   virtual void postProcessInput() override;
-
-  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
@@ -106,29 +103,11 @@ public:
 
   /**@}*/
 
-  /*
-   * @brief Utility function to update the stabilization parameters at each time step
-   * @param[in] domain the domain partition
-   */
-  void updateStabilizationParameters( DomainPartition & domain ) const;
-
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializePreSubGroups() override;
 
-  struct viewKeyStruct : Base::viewKeyStruct
-  {
-    /// Type of stabilization used in the simulation
-    constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
-
-    /// Names of the regions where the stabilization is applied
-    constexpr static char const * stabilizationRegionNamesString() { return "stabilizationRegionNames"; }
-
-    /// Multiplier on stabilization
-    constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
-  };
 
 private:
 
@@ -150,29 +129,21 @@ private:
                          real64 const dt,
                          PARAMS && ... params );
 
-  /// Type of stabilization used in the simulation
-  stabilization::StabilizationType m_stabilizationType;
-
-  /// Names of the regions where the stabilization is applied
-  array1d< string > m_stabilizationRegionNames;
-
-  /// Multiplier on stabilization constant
-  real64 m_stabilizationMultiplier;
 
 };
 
-template< typename FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 MultiphasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
-                                                               DofManager const & dofManager,
-                                                               arrayView1d< string const > const & regionNames,
-                                                               string const & materialNamesString,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                               arrayView1d< real64 > const & localRhs,
-                                                               real64 const dt,
-                                                               PARAMS && ... params )
+real64 MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+                                                                                 DofManager const & dofManager,
+                                                                                 arrayView1d< string const > const & regionNames,
+                                                                                 string const & materialNamesString,
+                                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                 arrayView1d< real64 > const & localRhs,
+                                                                                 real64 const dt,
+                                                                                 PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 

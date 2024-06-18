@@ -24,15 +24,14 @@
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
       timeIntegrationOption="QuasiStatic"
-      stabilizationName="tpfaFlow"
+      stabilizationName="contactStabilization"
       discretization="FE1"
       targetRegions="{ casing, cement, rock, Fracture }"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         logLevel="2"
-        newtonMaxIter="10"
-        />
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangeContact>
@@ -67,8 +66,10 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation
+    <TwoPointFluxApproximation
         name="tpfaFlow"/>
+    <TwoPointFluxApproximation
+        name="contactStabilization"/>    
     </FiniteVolume>
   </NumericalMethods>
 
@@ -151,35 +152,35 @@
     <BiotPorosity
       name="casingPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="159.4202899e9"/>
+      defaultGrainBulkModulus="159.4202899e9"/>
 
     <BiotPorosity
       name="cementPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="2.298850575e9"/>
+      defaultGrainBulkModulus="2.298850575e9"/>
 
     <BiotPorosity
       name="rockPorosity"
       defaultReferencePorosity="1e-6"
-      grainBulkModulus="5.535714286e9"/>
+      defaultGrainBulkModulus="5.535714286e9"/>
     <!-- SPHINX_PoroElasticPropertiesEnd -->
 
     <!-- SPHINX_HeatCapacityProperties -->
     <SolidInternalEnergy
       name="casingInternalEnergy"
-      volumetricHeatCapacity="1.375e6"
+      referenceVolumetricHeatCapacity="1.375e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
 
     <SolidInternalEnergy
       name="cementInternalEnergy"
-      volumetricHeatCapacity="4.2e6"
+      referenceVolumetricHeatCapacity="4.2e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="4.56e6"
+      referenceVolumetricHeatCapacity="4.56e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
     <!-- SPHINX_HeatCapacityPropertiesEnd -->
