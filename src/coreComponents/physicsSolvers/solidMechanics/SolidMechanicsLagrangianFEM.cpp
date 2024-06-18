@@ -154,7 +154,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setConstitutiveNamesCallSuper( subRegion );
 
       subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
-      subRegion.registerField< solidMechanics::incrementalStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
+      //subRegion.registerField< solidMechanics::incrementalStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -888,8 +888,8 @@ SolidMechanicsLagrangianFEM::
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
 
-      solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
-      incStrain.zero();
+      //solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
+      //incStrain.zero();
     } );
   } );
 
@@ -909,6 +909,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
       nodeManager.getField< solidMechanics::incrementalDisplacement >();
+
+    solidMechanics::arrayView2dLayoutTotalDisplacement const disp =
+      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -940,15 +943,34 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
 
-      solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
+      //solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
+      //solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+      //for( localIndex k = 0; k < subRegion.size(); ++k )
+      //{
+      //  for( int is = 0; is < 6; ++is )
+      //  {
+      //    strain[k][is] += incStrain[k][is];
+      //  }
+      //
+      //  Call kernel here?
+      //}
+      
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
-      for( localIndex k = 0; k < subRegion.size(); ++k )
+
+      finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase > (this->getDiscretizationName());
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] (auto const finiteElement)
       {
-        for( int is = 0; is < 6; ++is )
-        {
-          strain[k][is] += incStrain[k][is];
-        }
-      }
+         using FE_TYPE = decltype( finiteElement );
+         AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> > ( nodeManager,
+                                                                                                                                  mesh.getEdgeManager(),
+                                                                                                                                  mesh.getFaceManager(),
+                                                                                                                                  subRegion,
+                                                                                                                                  finiteElement,
+                                                                                                                                  disp,
+                                                                                                                                  strain);
+      } );
+
+
     } );
   } );
 
@@ -1314,7 +1336,7 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1333,14 +1355,14 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
       }
     } );
 
-    ElementRegionManager & elementRegionManager = mesh.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
-    {
-      solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
-      incStrain.zero();
-    } );
+    //ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    //elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+    //                                                                   [&]( localIndex const,
+    //                                                                        CellElementSubRegion & subRegion )
+    //{
+    //  solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
+    //  incStrain.zero();
+    //} );
   } );
 }
 

@@ -60,7 +60,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
-  m_incStrain( elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ),
+  //m_incStrain( elementSubRegion.template getField< fields::solidMechanics::incrementalStrain >() ),
   m_elementVolume( elementSubRegion.getElementVolume() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
@@ -129,14 +129,14 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-  for( int is = 0; is < 6; ++is )
-  {
-    if( q == 0 )
-    {
-      m_incStrain[k][is] = 0.0;
-    }
-    m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
-  }
+  //for( int is = 0; is < 6; ++is )
+  //{
+  //  if( q == 0 )
+  //  {
+  //    m_incStrain[k][is] = 0.0;
+  //  }
+  //  m_incStrain[k][is] += strainInc[is]*detJxW/m_elementVolume[k];
+ // }
 
   m_constitutiveUpdate.smallStrainUpdate( k, q, m_dt, strainInc, stress, stiffness );
 

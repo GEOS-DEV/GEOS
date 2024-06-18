@@ -13,130 +13,29 @@
  */
 
 /**
- * @file AverageOverQuadraturePointsKernel.hpp
+ * @file StrainHelper.hpp
  */
 
-#ifndef GEOS_MESH_UTILITIES_AVERAGEOVERQUADRATUREPOINTSKERNEL_HPP_
-#define GEOS_MESH_UTILITIES_AVERAGEOVERQUADRATUREPOINTSKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/CellElementSubRegion.hpp"
+#include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geos
 {
-
 /**
- * @class AverageOverQuadraturePointsBase
+ * @class AverageStrainOverQuadraturePoints
  * @tparam SUBREGION_TYPE the subRegion type
  * @tparam FE_TYPE the finite element type
  */
 template< typename SUBREGION_TYPE,
           typename FE_TYPE >
-class AverageOverQuadraturePointsBase
-{
-public:
-
-  /**
-   * @brief Constructor for the class
-   * @param nodeManager the node manager
-   * @param edgeManager the edge manager
-   * @param faceManager the face manager
-   * @param elementSubRegion the element subRegion
-   * @param finiteElementSpace the finite element space
-   */
-  AverageOverQuadraturePointsBase( NodeManager & nodeManager,
-                                   EdgeManager const & edgeManager,
-                                   FaceManager const & faceManager,
-                                   SUBREGION_TYPE const & elementSubRegion,
-                                   FE_TYPE const & finiteElementSpace ):
-    m_finiteElementSpace( finiteElementSpace ),
-    m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
-    m_X( nodeManager.referencePosition() ),
-    m_elementVolume( elementSubRegion.getElementVolume() )
-  {
-    finiteElement::FiniteElementBase::
-      initialize< FE_TYPE >( nodeManager,
-                             edgeManager,
-                             faceManager,
-                             elementSubRegion,
-                             m_meshData );
-  }
-
-  //*****************************************************************************
-  /**
-   * @copydoc finiteElement::KernelBase::StackVariables
-   */
-  struct StackVariables
-  {
-public:
-
-    /**
-     * Default constructor
-     */
-    GEOS_HOST_DEVICE
-    StackVariables():
-      xLocal()
-    {}
-
-    /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ FE_TYPE::maxSupportPoints ][ 3 ];
-
-    /// Stack variables needed for the underlying FEM type
-    typename FE_TYPE::StackVariables feStack;
-  };
-  //***************************************************************************
-
-  /**
-   * @brief Performs the setup phase for the kernel.
-   * @param k The element index.
-   * @param stack The StackVariable object that hold the stack variables.
-   */
-  GEOS_HOST_DEVICE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-
-    for( localIndex a = 0; a < FE_TYPE::maxSupportPoints; ++a )
-    {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
-
-      for( integer i = 0; i < 3; ++i )
-      {
-        stack.xLocal[a][i] = m_X[localNodeIndex][i];
-      }
-    }
-  }
-
-protected:
-
-  /// The finite element space/discretization object for the element type in
-  /// the SUBREGION_TYPE.
-  FE_TYPE const & m_finiteElementSpace;
-
-  /// The element to nodes map.
-  traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elemsToNodes;
-
-  /// The reference position of the nodes
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-
-  /// The volume of the elements
-  arrayView1d< real64 const > const m_elementVolume;
-
-  /// Data structure containing mesh data used to setup the finite element
-  typename FE_TYPE::template MeshData< SUBREGION_TYPE > m_meshData;
-};
-
-/**
- * @class AverageOverQuadraturePoints1D
- * @tparam SUBREGION_TYPE the subRegion type
- * @tparam FE_TYPE the finite element type
- */
-template< typename SUBREGION_TYPE,
-          typename FE_TYPE >
-class AverageOverQuadraturePoints1D :
+class AverageStrainOverQuadraturePoints :
   public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
                                           FE_TYPE >
 {
@@ -147,6 +46,8 @@ public:
                                                 FE_TYPE >;
 
   using Base::m_elementVolume;
+  using Base::m_elemsToNodes;
+  using Base::m_finiteElementSpace;
 
   /**
    * @brief Constructor for the class
@@ -155,30 +56,30 @@ public:
    * @param faceManager the face manager
    * @param elementSubRegion the element subRegion
    * @param finiteElementSpace the finite element space
-   * @param property the property at quadrature points
-   * @param averageProperty the property averaged over quadrature points
+   * @param displacement the displacement solution field
+   * @param avgStrain the strain averaged over quadrature points
    */
-  AverageOverQuadraturePoints1D( NodeManager & nodeManager,
+  AverageStrainOverQuadraturePoints( NodeManager & nodeManager,
                                  EdgeManager const & edgeManager,
                                  FaceManager const & faceManager,
                                  SUBREGION_TYPE const & elementSubRegion,
                                  FE_TYPE const & finiteElementSpace,
-                                 arrayView2d< real64 const > const property,
-                                 arrayView1d< real64 > const averageProperty ):
+                                 arrayView2d< real64 const > const displacement,
+                                 arrayView2d< real64 > const avgStrain ):
     Base( nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
           finiteElementSpace ),
-    m_property( property ),
-    m_averageProperty( averageProperty )
+    m_displacement( displacement ),
+    m_avgStrain( avgStrain )
   {}
 
   /**
    * @copydoc finiteElement::KernelBase::StackVariables
    */
   struct StackVariables : Base::StackVariables
-  {};
+  {real64 uLocal[FE_TYPE::maxSupportPoints][3]; };
 
   /**
    * @brief Performs the setup phase for the kernel.
@@ -190,7 +91,20 @@ public:
               StackVariables & stack ) const
   {
     Base::setup( k, stack );
-    m_averageProperty[k] = 0.0;
+
+    for (localIndex a = 0; a < FE_TYPE::maxSupportPoints; ++a)
+    {
+      localIndex const localNodeIndex = m_elemsToNodes(k, a);
+      for (int i = 0; i < 3; ++i)
+      {
+        stack.uLocal[a][i] = m_displacement[localNodeIndex][i];
+      }
+    }
+
+    for (int icomp = 0; icomp < 6; ++icomp)
+    {
+	    m_avgStrain[k][icomp] = 0.0;
+    }
   }
 
   /**
@@ -204,8 +118,17 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
-    m_averageProperty[k] += weight * m_property[k][q];
+    //real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
+
+    real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE > (k, q, stack.xLocal, stack.feStack, dNdX);
+    real64 strain[6] = {0.0};
+    FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
+
+    for (int icomp = 0; icomp < 6; ++icomp)
+    {
+	    m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
+    }
   }
 
   /**
@@ -236,20 +159,21 @@ public:
 
 protected:
 
-  /// The property living on quadrature points
-  arrayView2d< real64 const > const m_property;
+  /// The displacement solution
+  arrayView2d< real64 const > const m_displacement;
 
-  /// The average property
-  arrayView1d< real64 > const m_averageProperty;
+  /// The average strain
+  arrayView2d< real64 > const m_avgStrain;
 
 };
 
 
+
 /**
- * @class AverageOverQuadraturePoints1DKernelFactory
+ * @class AverageStrainOverQuadraturePointsKernelFactory
  * @brief Class to create and launch the kernel
  */
-class AverageOverQuadraturePoints1DKernelFactory
+class AverageStrainOverQuadraturePointsKernelFactory
 {
 public:
 
@@ -275,19 +199,21 @@ public:
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
-                   arrayView2d< real64 const > const property,
-                   arrayView1d< real64 > const averageProperty )
+                   arrayView2d< real64 const > const displacement,
+                   arrayView2d< real64 > const avgStrain )
   {
-    AverageOverQuadraturePoints1D< SUBREGION_TYPE, FE_TYPE >
+    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            property, averageProperty );
+            displacement, avgStrain );
 
-    AverageOverQuadraturePoints1D< SUBREGION_TYPE, FE_TYPE >::template
+    AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
   }
 };
 
 
+
 }
 
-#endif /* GEOS_MESH_UTILITIES_AVERAGEOVERQUADRATUREPOINTSKERNEL_HPP_ */
+
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_ */
