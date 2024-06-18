@@ -77,8 +77,8 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
 
-  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useTotalMassEquation ).
-    setApplyDefaultValue( 0 ).
+  this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use total mass equation" );
 
@@ -766,7 +766,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         real64 const currentTotalRate = connRate[iwelemRef];
 
         // Step 2.1: compute the inverse of the total density and derivatives
-        massDensity =totalDens[iwelemRef][0]; // need to verify this is surface dens
+        massDensity =totalDens[iwelemRef][0];
         real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
 
         stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
@@ -878,7 +878,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
 }
 
-void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
+real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -900,8 +900,7 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
                                                  subRegion,
                                                  fluid );
 
-  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
-
+  return maxDeltaPhaseVolFrac;
 }
 
 void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion & subRegion ) const
@@ -926,7 +925,29 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 maxPhaseVolFrac = 0.0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+      real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
+      maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+    } );
+  } );
+  maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max well phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxPhaseVolFrac, 4 ) ) );
+
+}
+
+real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update properties
   updateGlobalComponentFraction( subRegion );
@@ -937,11 +958,12 @@ void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & s
 
   // update densities, phase fractions, phase volume fractions
 
-  updateFluidModel( subRegion ); //  Calculate fluid properties;
-  updatePhaseVolumeFraction( subRegion );
+  updateFluidModel( subRegion );   //  Calculate fluid properties;
+  real64 maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
   updateTotalMassDensity( subRegion );
   // update the current BHP pressure
   updateBHPForConstraint( subRegion );
+  return maxPhaseVolChange;
 }
 
 void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, real64 const & time_n, real64 const & dt )

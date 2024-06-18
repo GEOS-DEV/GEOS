@@ -164,7 +164,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const;
+  real64 updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Recompute total mass densities from mass density and phase volume fractions
@@ -183,7 +183,9 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual void updateState( DomainPartition & domain ) override;
+
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 

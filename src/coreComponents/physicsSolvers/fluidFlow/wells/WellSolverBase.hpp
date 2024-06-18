@@ -276,7 +276,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Recompute the perforation rates for all the wells

@@ -166,7 +166,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
