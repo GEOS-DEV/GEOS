@@ -454,16 +454,14 @@ struct BlasLapackLA
    * @param [in]  rhs GEOSX array1d.
    * @param [out] solution GEOSX array1d.
    */
-  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
+  static void solveLinearSystem( MatColMajor< real64 const > const & A,
                                  Vec< real64 const > const & rhs,
                                  Vec< real64 > const & solution );
 
   /**
-   * @copydoc solveLinearSystem( MatRowMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
-   *
-   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+   * @copydoc solveLinearSystem( MatColMajor<real64 const> const &, Vec< real64 const > const &, Vec< real64 const > const & )
    */
-  static void solveLinearSystem( MatColMajor< real64 const > const & A,
+  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
                                  Vec< real64 const > const & rhs,
                                  Vec< real64 > const & solution );
 
@@ -480,15 +478,13 @@ struct BlasLapackLA
    * @param [in/out]  A GEOSX array2d. The matrix. On exit this will be replaced by the factorisation of A
    * @param [in/out]  rhs GEOSX array1d. The right hand side. On exit this will be the solution
    */
-  static void solveLinearSystem( MatRowMajor< real64 > const & A,
+  static void solveLinearSystem( MatColMajor< real64 > const & A,
                                  Vec< real64 > const & rhs );
 
   /**
-   * @copydoc solveLinearSystem( MatRowMajor< real64 > const &, Vec< real64 > const & )
-   *
-   * @note this function first applies a matrix permutation and then calls the row major version of the function.
+   * @copydoc solveLinearSystem( MatColMajor< real64 > const &, Vec< real64 > const & )
    */
-  static void solveLinearSystem( MatColMajor< real64 > const & A,
+  static void solveLinearSystem( MatRowMajor< real64 > const & A,
                                  Vec< real64 > const & rhs );
 
   /**
@@ -503,18 +499,18 @@ struct BlasLapackLA
    * @param [in]  rhs GEOSX array2d.
    * @param [out] solution GEOSX array2d.
    */
-  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
-                                 MatRowMajor< real64 const > const & rhs,
-                                 MatRowMajor< real64 > const & solution );
-
-  /**
-   * @copydoc solveLinearSystem( MatRowMajor< real64 const > const &, MatRowMajor< real64 const > const &, MatRowMajor< const > const & )
-   *
-   * @note this function first applies a matrix permutation and then calls the row major version of the function.
-   */
   static void solveLinearSystem( MatColMajor< real64 const > const & A,
                                  MatColMajor< real64 const > const & rhs,
                                  MatColMajor< real64 > const & solution );
+
+  /**
+   * @copydoc solveLinearSystem( MatColMajor< real64 const > const &, MatColMajor< real64 const > const &, MatColMajor< const > const & )
+   *
+   * @note this function will allocate space to reorder the solution into column major form.
+   */
+  static void solveLinearSystem( MatRowMajor< real64 const > const & A,
+                                 MatRowMajor< real64 const > const & rhs,
+                                 MatRowMajor< real64 > const & solution );
 
   /**
    * @brief Solves the linear system ;
@@ -530,16 +526,16 @@ struct BlasLapackLA
    * @param [in/out]  A GEOSX array2d. The matrix. On exit this will be replaced by the factorisation of A
    * @param [in/out]  rhs GEOSX array1d. The right hand side. On exit this will be the solution
    */
-  static void solveLinearSystem( MatRowMajor< real64 > const & A,
-                                 MatRowMajor< real64 > const & rhs );
-
-  /**
-   * @copydoc solveLinearSystem( MatRowMajor< real64 > const &, MatRowMajor< real64 > const & )
-   *
-   * @note this function first applies a matrix permutation and then calls the row major version of the function.
-   */
   static void solveLinearSystem( MatColMajor< real64 > const & A,
                                  MatColMajor< real64 > const & rhs );
+
+  /**
+   * @copydoc solveLinearSystem( MatColMajor< real64 > const &, MatRowMajor< real64 > const & )
+   *
+   * @note this function will allocate space to reorder the solution into column major form.
+   */
+  static void solveLinearSystem( MatRowMajor< real64 > const & A,
+                                 MatRowMajor< real64 > const & rhs );
 
   /**
    * @brief Vector copy;

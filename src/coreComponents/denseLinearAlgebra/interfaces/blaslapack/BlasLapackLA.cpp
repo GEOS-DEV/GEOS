@@ -1025,15 +1025,15 @@ void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
 }
 
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,
-                                      arraySlice1d< real64 const > const & rhs,
-                                      arraySlice1d< real64 > const & solution )
+                                      Vec< real64 const > const & rhs,
+                                      Vec< real64 > const & solution )
 {
   detail::solveLinearSystem( A, rhs, solution );
 }
 
 void BlasLapackLA::solveLinearSystem( MatColMajor< real64 const > const & A,
-                                      arraySlice1d< real64 const > const & rhs,
-                                      arraySlice1d< real64 > const & solution )
+                                      Vec< real64 const > const & rhs,
+                                      Vec< real64 > const & solution )
 {
   detail::solveLinearSystem( A, rhs, solution );
 }
