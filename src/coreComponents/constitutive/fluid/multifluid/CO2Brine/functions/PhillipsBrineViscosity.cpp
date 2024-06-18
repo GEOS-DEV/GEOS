@@ -36,7 +36,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                                                 string_array const & inputPara,
                                                 string_array const & componentNames,
                                                 array1d< real64 > const & componentMolarWeight,
-                                                TableOutputOptions pvtOpts ):
+                                                TableOutputOptions pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -44,7 +44,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
   m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
   makeCoefficients( inputPara );
 
-  outputPVTTableData( m_waterViscosityTable, pvtOpts );
+  outputPVTTableData( m_waterViscosityTable, pvtOutputOpts );
 }
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )

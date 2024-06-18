@@ -191,7 +191,7 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
                               string_array const & inputParams,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight,
-                              TableOutputOptions pvtOpts ):
+                              TableOutputOptions pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -205,8 +205,8 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_CO2EnthalpyTable, pvtOpts );
-  outputPVTTableData( m_brineEnthalpyTable, pvtOpts );
+  outputPVTTableData( m_CO2EnthalpyTable, pvtOutputOpts );
+  outputPVTTableData( m_brineEnthalpyTable, pvtOutputOpts );
 }
 
 

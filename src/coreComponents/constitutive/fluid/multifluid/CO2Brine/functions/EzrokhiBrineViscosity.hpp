@@ -97,7 +97,7 @@ public:
                          string_array const & inputPara,
                          string_array const & componentNames,
                          array1d< real64 > const & componentMolarWeight,
-                         TableOutputOptions pvtOpts );
+                         TableOutputOptions pvtOutputOpts );
 
   virtual ~EzrokhiBrineViscosity() override = default;
 

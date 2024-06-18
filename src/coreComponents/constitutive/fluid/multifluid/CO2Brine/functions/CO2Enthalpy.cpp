@@ -256,7 +256,7 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
                           string_array const & inputParams,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
-                          TableOutputOptions pvtOpts ):
+                          TableOutputOptions pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -266,8 +266,8 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_CO2EnthalpyTable, pvtOpts );
-  outputPVTTableData( m_CO2EnthalpyTable, pvtOpts );
+  outputPVTTableData( m_CO2EnthalpyTable, pvtOutputOpts );
+  outputPVTTableData( m_CO2EnthalpyTable, pvtOutputOpts );
 }
 
 

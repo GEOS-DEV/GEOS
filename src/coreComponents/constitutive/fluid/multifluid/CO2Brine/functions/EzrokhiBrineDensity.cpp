@@ -37,7 +37,7 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
                                           string_array const & inputPara,
                                           string_array const & componentNames,
                                           array1d< real64 > const & componentMolarWeight,
-                                          TableOutputOptions pvtOpts ):
+                                          TableOutputOptions pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -52,8 +52,8 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
   m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_waterSatPressureTable, pvtOpts );
-  outputPVTTableData( m_waterSatDensityTable, pvtOpts );
+  outputPVTTableData( m_waterSatPressureTable, pvtOutputOpts );
+  outputPVTTableData( m_waterSatDensityTable, pvtOutputOpts );
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )

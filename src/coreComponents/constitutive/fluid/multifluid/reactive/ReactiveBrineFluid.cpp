@@ -204,14 +204,14 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
-  PVTFunctionBase::TableOutputOptions pvtOpts = {
+  PVTFunctionBase::TableOutputOptions pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };
 
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       pvtOpts );
+                                       pvtOutputOpts );
 }
 
 template< typename PHASE >

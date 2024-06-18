@@ -141,14 +141,14 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
-                                            TableOutputOptions pvtOpts )
+                                            TableOutputOptions pvtOutputOpts )
   : PVTFunctionBase( name,
                      componentNames,
                      componentMolarWeight )
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_CO2ViscosityTable, pvtOpts );
+  outputPVTTableData( m_CO2ViscosityTable, pvtOutputOpts );
 }
 
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,

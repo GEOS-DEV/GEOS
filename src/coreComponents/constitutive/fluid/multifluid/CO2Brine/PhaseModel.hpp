@@ -55,28 +55,28 @@ struct PhaseModel
    * @param[in] inputParams input parameters read from files
    * @param[in] componentNames names of the components
    * @param[in] componentMolarWeight molar weights of the components
-   * @param[in] pvtOpts Struct output options
+   * @param[in] pvtOutputOpts Struct output options
    */
   PhaseModel( string const & phaseModelName,
               array1d< array1d< string > > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
-              PVTProps::PVTFunctionBase::TableOutputOptions pvtOpts )
+              PVTProps::PVTFunctionBase::TableOutputOptions pvtOutputOpts )
     : density( phaseModelName + "_" + Density::catalogName(),
                inputParams[InputParamOrder::DENSITY],
                componentNames,
                componentMolarWeight,
-               pvtOpts ),
+               pvtOutputOpts ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
                inputParams[InputParamOrder::VISCOSITY],
                componentNames,
                componentMolarWeight,
-               pvtOpts ),
+               pvtOutputOpts ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
               inputParams[InputParamOrder::ENTHALPY],
               componentNames,
               componentMolarWeight,
-              pvtOpts )
+              pvtOutputOpts )
   {}
 
   /// The phase density model

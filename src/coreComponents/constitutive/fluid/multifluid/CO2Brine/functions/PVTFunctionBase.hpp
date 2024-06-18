@@ -154,17 +154,17 @@ public:
   /**
    * @brief Print the table(s) in the log and/or CSV files when requested by the user.
    * @param tableData The target table to be printed
-   * @param pvtOpts Struct containing output options
+   * @param pvtOutputOpts Struct containing output options
    */
-  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions pvtOpts )
+  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions pvtOutputOpts )
   {
-    if( pvtOpts.writeInLog &&  tableData->numDimensions() <= 2 )
+    if( pvtOutputOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {
       TableTextFormatter textFormatter;
       GEOS_LOG_RANK_0( textFormatter.toString( *tableData ));
     }
 
-    if( pvtOpts.writeCSV || ( pvtOpts.writeInLog && tableData->numDimensions() >= 3 ) )
+    if( pvtOutputOpts.writeCSV || ( pvtOutputOpts.writeInLog && tableData->numDimensions() >= 3 ) )
     {
       string const filename = tableData->getName();
       std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );

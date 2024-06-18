@@ -278,7 +278,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
-                                            TableOutputOptions pvtOpts ):
+                                            TableOutputOptions pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -288,7 +288,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 
-  outputPVTTableData( m_CO2DensityTable, pvtOpts );
+  outputPVTTableData( m_CO2DensityTable, pvtOutputOpts );
 }
 
 void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,
