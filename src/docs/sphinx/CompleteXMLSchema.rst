@@ -1221,6 +1221,13 @@ Element: SourceFlux
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
 
 
+.. _XML_SourceFluxStatistics:
+
+Element: SourceFluxStatistics
+=============================
+.. include:: ../../coreComponents/schema/docs/SourceFluxStatistics.rst
+
+
 .. _XML_SurfaceElementRegion:
 
 Element: SurfaceElementRegion
@@ -2665,6 +2672,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_SourceFluxStatistics:
+
+Datastructure: SourceFluxStatistics
+===================================
+.. include:: ../../coreComponents/schema/docs/SourceFluxStatistics_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:

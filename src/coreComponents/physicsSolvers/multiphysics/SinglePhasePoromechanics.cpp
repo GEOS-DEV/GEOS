@@ -322,16 +322,18 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensit
                                                subRegion );
 }
 
-template class SinglePhasePoromechanics< SinglePhaseBase >;
+template class SinglePhasePoromechanics<>;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsLagrangeContact >;
 template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >;
-template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
+template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> >;
+//template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangeContact >;
+//template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsEmbeddedFractures >;
 
 namespace
 {
-typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > SinglePhaseReservoirPoromechanics;
+typedef SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > SinglePhaseReservoirPoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseReservoirPoromechanics, string const &, Group * const )
-typedef SinglePhasePoromechanics< SinglePhaseBase > SinglePhasePoromechanics;
+typedef SinglePhasePoromechanics<> SinglePhasePoromechanics;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )
 }
 
