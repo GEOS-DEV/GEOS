@@ -86,7 +86,8 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getGroup( domain.groupKeys.partitionManager ) );
 
     meshGen.generateMesh( meshBody, partition.getPartitions() );
 
@@ -95,8 +96,8 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 
     PartitionDescriptorABC const & pd = meshGen.getPartitionDescriptor();
     partition.setMetisNeighborList( pd.getMetisNeighborList() );
-    partition.m_coords = pd.getCoords();
-    partition.m_Periodic = pd.getPeriodic();
+    partition.setCoords( pd.getCoords() );
+    partition.setPeriodic( pd.getPeriodic() );
     partition.setGrid( pd.getGrid() );
     partition.setBlockSize( pd.getBlockSize() );
     partition.setBoundingBox( pd.getBoundingBox() );
@@ -107,7 +108,8 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getGroup( domain.groupKeys.partitionManager ) );
 
     meshGen.generateMesh( meshBody, partition );
   } );

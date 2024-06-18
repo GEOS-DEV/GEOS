@@ -30,14 +30,14 @@ namespace geos
 {
 
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-/// @return PartitionManager string key
-string const partitionManager( "partitionManager" );
-}
-}
+// namespace dataRepository
+// {
+// namespace keys
+// {
+// /// @return PartitionManager string key
+// string const partitionManager( "partitionManager" );
+// }
+// }
 
 class ObjectManagerBase;
 class PartitionBase;
@@ -135,6 +135,8 @@ public:
     dataRepository::GroupKey constitutiveManager = { constitutiveManagerString() };
     /// View key to the Group holding the CommunicationManager
     dataRepository::GroupKey communicationManager = { "communicationManager" };
+    /// View key to the Group holding the partitionManager
+    dataRepository::GroupKey partitionManager = { "partitionManager" };
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;

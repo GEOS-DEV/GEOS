@@ -154,6 +154,7 @@ protected:
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
     constexpr static char const * meshTypeString() { return "meshType"; }
     constexpr static char const * positionToleranceString() { return "positionTolerance"; }
+    constexpr static char const * periodicString() { return "periodic"; }
   };
   /// @endcond
 
@@ -204,6 +205,9 @@ private:
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
+
+  // Array of periodic flags for each direction
+  array1d< int > m_periodic;
 
   /**
    * @brief Member variable for triangle pattern seletion.

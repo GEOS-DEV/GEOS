@@ -20,6 +20,10 @@
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/EnumStrings.hpp"
+#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+
+template<typename Enum>
+constexpr auto EnumSize = static_cast< int >(Enum::Count);
 
 namespace geos
 {
@@ -34,6 +38,51 @@ class SpatialPartition;
 class ParticleMeshGenerator : public ParticleMeshGeneratorBase
 {
 public:
+
+  /**
+   * @enum ParticleColumnHeaders
+   *
+   * Particle column header names
+   */
+  enum class ParticleColumnHeaders : integer
+  {
+    ID,
+    PositionX,
+    PositionY,
+    PositionZ,
+    VelocityX,
+    VelocityY,
+    VelocityZ,
+    MaterialType,
+    ContactGroup,
+    SurfaceFlag,
+    Damage,
+    Porosity,
+    Temperature,
+    StrengthScale,
+    RVectorXX,
+    RVectorXY,
+    RVectorXZ,
+    RVectorYX,
+    RVectorYY,
+    RVectorYZ,
+    RVectorZX,
+    RVectorZY,
+    RVectorZZ,
+    MaterialDirectionX,
+    MaterialDirectionY,
+    MaterialDirectionZ,
+    SurfaceNormalX,
+    SurfaceNormalY,
+    SurfaceNormalZ,
+    SurfacePositionX,
+    SurfacePositionY,
+    SurfacePositionZ,
+    SurfaceTractionX,
+    SurfaceTractionY,
+    SurfaceTractionZ,
+    Count
+  };
 
   /**
    * @brief Main constructor for ParticleMeshGenerator.
@@ -68,6 +117,7 @@ private:
     constexpr static char const * particleFilePathString() { return "particleFile"; }
     constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
+    constexpr static char const * particleMaterialNamesString() { return "particleMaterialNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
   };
   /// @endcond
@@ -83,9 +133,49 @@ private:
   /// String array of particle block names associated with the particle mesh
   array1d< string > m_blockNames;
 
+  /// String array of particle material names associated with the particle mesh
+  array1d< string > m_materialNames;
+
   /// String array listing the particle types present
-  array1d< string > m_particleType;
+  array1d< string > m_particleTypes;
 };
+
+ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
+              "ID",
+              "PositionX",
+              "PositionY",
+              "PositionZ",
+              "VelocityX",
+              "VelocityY",
+              "VelocityZ",
+              "MaterialType",
+              "ContactGroup",
+              "SurfaceFlag",
+              "Damage",
+              "Porosity",
+              "Temperature",
+              "StrengthScale",
+              "RVectorXX",
+              "RVectorXY",
+              "RVectorXZ",
+              "RVectorYX",
+              "RVectorYY",
+              "RVectorYZ",
+              "RVectorZX",
+              "RVectorZY",
+              "RVectorZZ",
+              "MaterialDirectionX",
+              "MaterialDirectionY",
+              "MaterialDirectionZ",
+              "SurfaceNormalX",
+              "SurfaceNormalY",
+              "SurfaceNormalZ",
+              "SurfacePositionX",
+              "SurfacePositionY",
+              "SurfacePositionZ",
+              "SurfaceTractionX",
+              "SurfaceTractionY",
+              "SurfaceTractionZ" );
 
 } /* namespace geos */
 

@@ -110,6 +110,16 @@ public:
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
+  array2d< real64 > getParticleInitialMaterialDirection() const override
+  { return m_particleInitialMaterialDirection; }
+
+  /**
+   * @brief Set the list of material directions in this subregion.
+   * @param particleInitialMaterialDirection The input list of initial directions
+   */
+  void setParticleInitialMaterialDirection( array2d< real64 > const particleInitialMaterialDirection )
+  { m_particleInitialMaterialDirection = particleInitialMaterialDirection; }
+
   array2d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
@@ -150,6 +160,26 @@ public:
   void setParticleDamage( array1d< real64 > const particleDamage )
   { m_particleDamage = particleDamage; }
 
+  array1d< real64 > getParticlePorosity() const override
+  { return m_particlePorosity; }
+
+  /**
+   * @brief Set the list of particle porosity values in this subregion.
+   * @param particlePorosity The input list of porosity values
+   */
+  void setParticlePorosity( array1d< real64 > const particlePorosity )
+  { m_particlePorosity = particlePorosity; }
+
+  array1d< real64 > getParticleTemperature() const override
+  { return m_particleTemperature; }
+
+  /**
+   * @brief Set the list of particle temperature values in this subregion.
+   * @param particleTemperature The input list of temperature values
+   */
+  void setParticleTemperature( array1d< real64 > const particleTemperature )
+  { m_particleTemperature = particleTemperature; }
+
   array1d< real64 > getParticleStrengthScale() const override
   { return m_particleStrengthScale; }
 
@@ -182,6 +212,66 @@ public:
 
   bool hasRVectors() const override
   { return m_hasRVectors; }
+
+  array2d< real64 > getParticleInitialSurfaceNormal() const override
+  { return m_particleInitialSurfaceNormal; }
+
+  /**
+   * @brief Set the list of surface normals in this subregion.
+   * @param particleInitialSurfaceNormal The input list of initial normals
+   */
+  void setParticleInitialSurfaceNormal( array2d< real64 > const particleInitialSurfaceNormal )
+  { m_particleInitialSurfaceNormal = particleInitialSurfaceNormal; }
+
+  array2d< real64 > getParticleSurfaceNormal() const override
+  { return m_particleSurfaceNormal; }
+
+  /**
+   * @brief Set the list of surface normals in this subregion.
+   * @param particleSurfaceNormal The input list of normals
+   */
+  void setParticleSurfaceNormal( array2d< real64 > const particleSurfaceNormal )
+  { m_particleSurfaceNormal = particleSurfaceNormal; }
+
+  array2d< real64 > getParticleInitialSurfacePosition() const override
+  { return m_particleInitialSurfacePosition; }
+
+  /**
+   * @brief Set the list of surface positions in this subregion.
+   * @param particleInitialSurfacePosition The input list of initial surface positions
+   */
+  void setParticleInitialSurfacePosition( array2d< real64 > const particleInitialSurfacePosition )
+  { m_particleInitialSurfacePosition = particleInitialSurfacePosition; }
+
+  array2d< real64 > getParticleSurfacePosition() const override
+  { return m_particleSurfacePosition; }
+
+  /**
+   * @brief Set the list of surface positions in this subregion.
+   * @param particleSurfacePosition The input list of surface positions
+   */
+  void setParticleSurfacePosition( array2d< real64 > const particleSurfacePosition )
+  { m_particleSurfacePosition = particleSurfacePosition; }
+
+  array2d< real64 > getParticleInitialSurfaceTraction() const override
+  { return m_particleInitialSurfaceTraction; }
+
+  /**
+   * @brief Set the list of surface tractions in this subregion.
+   * @param particleInitialSurfaceTraction The input list of initial surface tractions
+   */
+  void setParticleInitialSurfaceTraction( array2d< real64 > const particleInitialSurfaceTraction )
+  { m_particleInitialSurfaceTraction = particleInitialSurfaceTraction; }
+
+  array2d< real64 > getParticleSurfaceTraction() const override
+  { return m_particleSurfaceTraction; }
+
+  /**
+   * @brief Set the list of surface tractions in this subregion.
+   * @param particleSurfaceTraction The input list of surface positions
+   */
+  void setParticleSurfaceTraction( array2d< real64 > const particleSurfaceTraction )
+  { m_particleSurfaceTraction = particleSurfaceTraction; }
 
   localIndex numParticles() const override
   { return size(); }
@@ -234,6 +324,12 @@ private:
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;
 
+  /// Member level field for the particle porosity.
+  array1d< real64 > m_particlePorosity;
+
+  /// Member level field for the particle temperature.
+  array1d< real64 > m_particleTemperature;
+
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;
 
@@ -242,6 +338,9 @@ private:
 
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle initial material direction.
+  array2d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
   array2d< real64 > m_particleMaterialDirection;
@@ -257,6 +356,24 @@ private:
 
   /// R-vectors
   array3d< real64 > m_particleRVectors;
+
+  /// Member level field for the particle initial surface normal.
+  array2d< real64 > m_particleInitialSurfaceNormal;
+
+  /// Member level field for the particle surface normal.
+  array2d< real64 > m_particleSurfaceNormal;
+
+  /// Member level field for the particle initial surface position.
+  array2d< real64 > m_particleInitialSurfacePosition;
+
+  /// Member level field for the particle surface position.
+  array2d< real64 > m_particleSurfacePosition;
+
+  /// Member level field for the particle initial surface traction.
+  array2d< real64 > m_particleInitialSurfaceTraction;
+
+  /// Member level field for the particle surface traction.
+  array2d< real64 > m_particleSurfaceTraction;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

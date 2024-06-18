@@ -16,7 +16,6 @@
 #define GEOSX_PARTICLEBLOCKABC_HPP
 
 #include "mesh/ParticleType.hpp"
-
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
@@ -81,6 +80,18 @@ public:
   virtual array1d< real64 > getParticleDamage() const = 0;
 
   /**
+   * @brief Get the list of particle porosity values in this subregion.
+   * @return the list of particle porosity values in this subregion.
+   */
+  virtual array1d< real64 > getParticlePorosity() const = 0;
+
+  /**
+   * @brief Get the list of particle temperature values in this subregion.
+   * @return the list of particle temperature values in this subregion.
+   */
+  virtual array1d< real64 > getParticleTemperature() const = 0;
+
+  /**
    * @brief Get the list of particle strength scale values in this subregion.
    * @return the list of particle strength scale values in this subregion.
    */
@@ -97,6 +108,12 @@ public:
    * @return the list of particle velocities in this subregion.
    */
   virtual array2d< real64 > getParticleVelocity() const = 0;
+
+  /**
+   * @brief Get the list of particle material directions in this subregion.
+   * @return the list of particle material directions in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialMaterialDirection() const = 0;
 
   /**
    * @brief Get the list of particle material directions in this subregion.
@@ -121,6 +138,42 @@ public:
    * @return a bool indicating whether particles on this subregion have r-vectors that depend on the deformation gradient
    */
   virtual bool hasRVectors() const = 0;
+
+  /**
+   * @brief Get the list of particle initial surface normal in this subregion.
+   * @return the list of particle initial surface normal in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfaceNormal() const = 0;
+
+  /**
+   * @brief Get the list of particle surface normal in this subregion.
+   * @return the list of particle surface normal in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfaceNormal() const = 0;
+
+  /**
+   * @brief Get the list of particle initial surface position in this subregion.
+   * @return the list of particle initial surface position in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfacePosition() const = 0;
+
+  /**
+   * @brief Get the list of particle surface position in this subregion.
+   * @return the list of particle surface position in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfacePosition() const = 0;
+
+  /**
+   * @brief Get the list of particle initial surface traction in this subregion.
+   * @return the list of particle initial surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfaceTraction() const = 0;
+
+  /**
+   * @brief Get the list of particle surface traction in this subregion.
+   * @return the list of particle surface traction in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfaceTraction() const = 0;
 
   /**
    * @brief Get the number of particles.

@@ -15,6 +15,7 @@
 #ifndef GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 #define GEOS_MESH_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
+#include "dataRepository/Group.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "common/DataTypes.hpp"
 
@@ -24,7 +25,7 @@ namespace geos
 /**
  * @brief Base class for partitioning.
  */
-class PartitionBase
+class PartitionBase : public dataRepository::Group
 {
 public:
 
@@ -32,6 +33,20 @@ public:
    * @brief Virtual empty destructor for C++ inheritance reasons
    */
   virtual ~PartitionBase();
+
+  /**
+   * @brief Return the name of the MeshGenerator in object catalog.
+   * @return string that contains the catalog name of the Partition
+   */
+  static string catalogName() { return "Partition"; }
+  
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
+
+  using CatalogInterface = dataRepository::CatalogInterface< PartitionBase, string const &, dataRepository::Group * const >;
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Checks if the point located inside the current partition in the given direction dir.
@@ -78,7 +93,8 @@ protected:
   /**
    * @brief Preventing dummy default constructor.
    */
-  PartitionBase() = default;
+  PartitionBase( string const & name,
+                 Group * const parent  );
 
   /**
    * @brief Builds from the size of partitions and the current rank of the partition
@@ -86,7 +102,9 @@ protected:
    * @param thisPartition The rank of the build partition.
    */
   PartitionBase( const unsigned int numPartitions,
-                 const unsigned int thisPartition );
+                 const unsigned int thisPartition,
+                 string const & name,
+                 Group * const parent );
 
   /**
    * @brief Array of neighbor communicators.

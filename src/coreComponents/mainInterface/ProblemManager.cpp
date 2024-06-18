@@ -501,8 +501,8 @@ void ProblemManager::postProcessInput()
 
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
-
-  PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
+  PartitionBase & partition = dynamic_cast< PartitionBase & >( domain.getGroup( domain.groupKeys.partitionManager ) );
+  // PartitionBase & partition = domain.getReference< PartitionBase >( keys::partitionManager );
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;

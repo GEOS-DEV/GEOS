@@ -421,6 +421,15 @@ public:
   }
 
   /**
+   * @brief Returns the local indices of all ghost particles
+   * @return the local indices of all ghost particles
+   */
+  SortedArrayView< localIndex const > const inactiveParticleIndices() const
+  {
+    return m_inactiveParticleIndices.toView();
+  }
+
+  /**
    * @brief Updates the globalToLocal and localToGlobal maps
    */
   void updateMaps();
@@ -474,6 +483,9 @@ protected:
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;
+
+  /// Indices of ghost particles
+  SortedArray< localIndex > m_inactiveParticleIndices;
 
   /// Neighbor list
   OrderedVariableToManyParticleRelation m_neighborList;

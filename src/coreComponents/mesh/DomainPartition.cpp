@@ -39,10 +39,11 @@ DomainPartition::DomainPartition( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( false );
+  // this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
+  //   setRestartFlags( RestartFlags::WRITE ). //RestartFlags::NO_WRITE ).
+  //   setSizedFromParent( false );
 
+  registerGroup< SpatialPartition >( groupKeys.partitionManager );
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 }
@@ -79,8 +80,9 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOSX_USE_MPI)
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+  // PartitionBase & partition1 = getReference< PartitionBase >( groupKeys.partitionManager ); //keys::partitionManager );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) );
 
   const std::set< int > metisNeighborList = partition.getMetisNeighborList();
   if( metisNeighborList.empty() )
@@ -90,13 +92,13 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.getPartitions().data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.getPartitions().data(), partition.getPeriodic().data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;
 
-    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
+    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.getCoords().data() );
 
     int ncoords[3];
     addNeighbors( 0, cartcomm, ncoords );
@@ -180,6 +182,13 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
       CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
                                                              nodeManager,
                                                              m_neighbors );
+
+      // CC: Add check if there even are any periodic boundaries?
+      // TODO: If GEOS_USE_MPI flag is set off this will throw compile error since partition is not included
+      partition.setPeriodicDomainBoundaryObjects( meshBody,
+                                                  nodeManager,
+                                                  edgeManager,
+                                                  faceManager );
 
       CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
                                                                              m_neighbors );
@@ -273,15 +282,16 @@ void DomainPartition::addNeighbors( const unsigned int idim,
                                     MPI_Comm & cartcomm,
                                     int * ncoords )
 {
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-
+  // PartitionBase & partition1 = getReference< PartitionBase >( groupKeys.partitionManager ); //keys::partitionManager );
+  // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) );
+  
   if( idim == nsdof )
   {
     bool me = true;
     for( int i = 0; i < nsdof; i++ )
     {
-      if( ncoords[i] != partition.m_coords( i ))
+      if( ncoords[i] != partition.getCoords()( i ))
       {
         me = false;
         break;
@@ -296,10 +306,10 @@ void DomainPartition::addNeighbors( const unsigned int idim,
   else
   {
     const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
+    const bool periodic = partition.getPeriodic()( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
+      ncoords[idim] = partition.getCoords()( LvArray::integerConversion< localIndex >( idim )) + i;
       bool ok = true;
       if( periodic )
       {

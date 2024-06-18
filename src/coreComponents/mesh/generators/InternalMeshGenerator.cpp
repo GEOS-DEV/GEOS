@@ -36,7 +36,8 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   m_vertices{},
   m_nElems{},
   m_nElemBias{},
-  m_setCoords{}
+  m_setCoords{},
+  m_periodic( 3 )
 {
   registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -107,6 +108,12 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
+
+  registerWrapper( viewKeyStruct::periodicString(), &m_periodic ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for periodicity in each direction" );
 }
 
 static int getNumElemPerBox( ElementType const elementType )
@@ -130,6 +137,16 @@ static int getNumElemPerBox( ElementType const elementType )
 void InternalMeshGenerator::postProcessInput()
 {
   m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
+
+  // Should this have the size of the problem as enforced by m_dim?
+  if( m_periodic.size() == 0 ){
+    m_periodic.resize( 3 );
+    LvArray::tensorOps::fill< 3 >(m_periodic, 0);
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_periodic.size() !=3, "Periodic flags must have size 3" );
+  }
 
   {
     // Check for vertex/element matching
@@ -211,6 +228,8 @@ void InternalMeshGenerator::postProcessInput()
     m_min[i] = m_vertices[i].front();
     m_max[i] = m_vertices[i].back();
   }
+
+  GEOS_LOG_RANK("Post process input: " << m_vertices);
 
   for( int dir=0; dir<3; ++dir )
   {
@@ -543,6 +562,9 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
 void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition )
 {
   GEOS_MARK_FUNCTION;
+
+  //Needs to be set before addNeighbors call that occurs in SpatialPartition::setSizes
+  m_partition.setPeriodic( m_periodic );
 
   m_partition.setPartitions( partition );
   // Partition based on even spacing to get load balance

@@ -18,6 +18,7 @@
  */
 
 #include "ParticleBlock.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {

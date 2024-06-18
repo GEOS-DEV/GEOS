@@ -85,6 +85,10 @@ public:
     m_periodic[i] = value;
   }
 
+  void setPeriodic( array1d< int > periodic ) {
+    m_periodic = periodic;
+  }
+
   [[nodiscard]] bool isCoordInPartition( const real64 & coord, const int dir ) const;
 
   void setSizes( real64 const ( &min )[3],

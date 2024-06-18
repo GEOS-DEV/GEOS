@@ -360,6 +360,14 @@ public:
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
+  void correctGhostParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
+                                                            SpatialPartition & partition );
+
+  void correctParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
+                                                       SpatialPartition & partition );
+
+  real64 Mod(real64 num, real64 denom);
+
 protected:
   virtual void postProcessInput() override final;
 
