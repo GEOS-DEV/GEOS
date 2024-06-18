@@ -297,7 +297,7 @@ public:
     string m_componentMixingType;
     array1d< real64 > m_componentCriticalVolume;
 
-protected:
+private:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
     void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 

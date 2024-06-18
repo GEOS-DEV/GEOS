@@ -67,19 +67,11 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-
-    m_parameters = LohrenzBrayClarkViscosity::createParameters( std::make_unique< ModelParameters >() );
-    m_parameters = CompositionalDensity::createParameters( std::move( m_parameters ) );
-
+    m_parameters = LohrenzBrayClarkViscosity::createParameters( nullptr );
     auto * parameters = const_cast< LohrenzBrayClarkViscosity::Parameters * >(m_parameters->get< LohrenzBrayClarkViscosity::Parameters >());
     parameters->m_componentCriticalVolume.resize( NC );
     TestFluid< 9 >::populateArray( parameters->m_componentCriticalVolume, this->m_fluid->criticalVolume );
-
-    auto * equationOfState = const_cast< EquationOfState * >(m_parameters->get< EquationOfState >());
-    equationOfState->m_equationsOfStateNames.resize( 1 );
-    equationOfState->m_equationsOfStateNames[0] = EnumStrings< EquationOfStateType >::toString( EquationOfStateType::PengRobinson );
-
-    m_density = std::make_unique< CompositionalDensity >( "PhaseDensity", componentProperties, 0, *m_parameters );
+    m_density = std::make_unique< CompositionalDensity< CubicEOSPhaseModel< PengRobinsonEOS > > >( "PhaseDensity", componentProperties, 0, *m_parameters );
     m_viscosity = std::make_unique< LohrenzBrayClarkViscosity >( "PhaseViscosity", componentProperties, 0, *m_parameters );
   }
 

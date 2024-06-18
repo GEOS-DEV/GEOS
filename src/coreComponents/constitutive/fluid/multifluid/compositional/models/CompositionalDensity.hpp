@@ -83,8 +83,7 @@ public:
                         ModelParameters const & modelParameters )
     : FunctionBase( name, componentProperties )
   {
-    EquationOfState const * equationOfState = modelParameters.get< EquationOfState >();
-    m_equationOfState = EnumStrings< EquationOfStateType >::fromString( equationOfState->m_equationsOfStateNames[phaseIndex] );
+    GEOS_UNUSED_VAR( phaseIndex, modelParameters );
     // Calculate the dimensional volume shift
     m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
     calculateDimensionalVolumeShift( componentProperties,

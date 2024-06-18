@@ -334,11 +334,12 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.update( porosity );
 }
 
-void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
+real64 SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
   updateMass( subRegion );
   updateMobility( subRegion );
+  return 0.0;
 }
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
@@ -829,11 +830,22 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( dt,
-                     domain,
-                     dofManager,
-                     localMatrix,
-                     localRhs );
+  if( m_isJumpStabilized )
+  {
+    assembleStabilizedFluxTerms( dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
+  }
+  else
+  {
+    assembleFluxTerms( dt,
+                       domain,
+                       dofManager,
+                       localMatrix,
+                       localRhs );
+  }
 }
 
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,

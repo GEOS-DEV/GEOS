@@ -26,21 +26,6 @@
 namespace geos
 {
 
-namespace stabilization
-{
-enum class StabilizationType : integer
-{
-  None,
-  Global,
-  Local,
-};
-
-ENUM_STRINGS( StabilizationType,
-              "None",
-              "Global",
-              "Local" );
-}
-
 template< typename FLOW_SOLVER = CompositionalMultiphaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
@@ -52,6 +37,9 @@ public:
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_stabilizationType;
+  using Base::m_stabilizationRegionNames;
+  using Base::m_stabilizationMultiplier;
 
   /**
    * @brief main constructor for MultiphasePoromechanics Objects
@@ -94,8 +82,6 @@ public:
 
   virtual void postProcessInput() override;
 
-  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
-
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
 
@@ -115,35 +101,13 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain ) override;
-
   /**@}*/
-
-  /*
-   * @brief Utility function to update the stabilization parameters at each time step
-   * @param[in] domain the domain partition
-   */
-  void updateStabilizationParameters( DomainPartition & domain ) const;
 
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void initializePreSubGroups() override;
 
-  struct viewKeyStruct : Base::viewKeyStruct
-  {
-    /// Type of stabilization used in the simulation
-    constexpr static char const * stabilizationTypeString() { return "stabilizationType"; }
-
-    /// Names of the regions where the stabilization is applied
-    constexpr static char const * stabilizationRegionNamesString() { return "stabilizationRegionNames"; }
-
-    /// Multiplier on stabilization
-    constexpr static char const * stabilizationMultiplierString() { return "stabilizationMultiplier"; }
-  };
 
 private:
 
@@ -165,14 +129,6 @@ private:
                          real64 const dt,
                          PARAMS && ... params );
 
-  /// Type of stabilization used in the simulation
-  stabilization::StabilizationType m_stabilizationType;
-
-  /// Names of the regions where the stabilization is applied
-  array1d< string > m_stabilizationRegionNames;
-
-  /// Multiplier on stabilization constant
-  real64 m_stabilizationMultiplier;
 
 };
 
