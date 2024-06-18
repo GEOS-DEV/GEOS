@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/PerforationFields.hpp"
+#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -30,7 +31,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
+
 
 namespace geos
 {
