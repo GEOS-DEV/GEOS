@@ -42,6 +42,8 @@ and
 [acknowledgements](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Acknowledgements.html)
 page for more details.  
 
+If you want to [CONTRIBUTE](./HOW_TO_CONTRIBUTE.md )!
+
 How does GEOS relate to the earlier GEOS code?
 ------------------------------
 GEOS is the offshoot of an earlier code developed at LLNL also called GEOS.  The new
