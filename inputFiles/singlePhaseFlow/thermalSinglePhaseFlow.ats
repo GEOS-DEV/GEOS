@@ -22,6 +22,14 @@ decks = [
         partitions=((1, 1, 1), (2, 2, 2)),
         restart_step=6,
         check_step=20,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="thermalCompressible_nonLinear_2d_smoke",
+        description=
+        'non-linear thermal diffusion around a wellbore)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=1,
+        check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

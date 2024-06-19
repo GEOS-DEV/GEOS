@@ -577,6 +577,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
 
 
+.. _XML_HydrofractureInitialization:
+
+Element: HydrofractureInitialization
+====================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization.rst
+
+
 .. _XML_HydrostaticEquilibrium:
 
 Element: HydrostaticEquilibrium
@@ -1233,6 +1240,13 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
+
+
+.. _XML_SourceFluxStatistics:
+
+Element: SourceFluxStatistics
+=============================
+.. include:: ../../coreComponents/schema/docs/SourceFluxStatistics.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -2016,6 +2030,13 @@ Datastructure: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
 
 
+.. _DATASTRUCTURE_HydrofractureInitialization:
+
+Datastructure: HydrofractureInitialization
+==========================================
+.. include:: ../../coreComponents/schema/docs/HydrofractureInitialization_other.rst
+
+
 .. _DATASTRUCTURE_HydrostaticEquilibrium:
 
 Datastructure: HydrostaticEquilibrium
@@ -2693,6 +2714,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_SourceFluxStatistics:
+
+Datastructure: SourceFluxStatistics
+===================================
+.. include:: ../../coreComponents/schema/docs/SourceFluxStatistics_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:
