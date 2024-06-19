@@ -54,6 +54,7 @@ public:
     VelocityY,
     VelocityZ,
     MaterialType,
+    ParticleType,
     ContactGroup,
     SurfaceFlag,
     Damage,
@@ -115,7 +116,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * particleFilePathString() { return "particleFile"; }
-    constexpr static char const * headerFilePathString() { return "headerFile"; }
+    // constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
     constexpr static char const * particleMaterialNamesString() { return "particleMaterialNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
@@ -127,8 +128,8 @@ private:
   /// Path to the particle file
   Path m_particleFilePath;
 
-  /// Path to the header file (problem and particle metadata)
-  Path m_headerFilePath;
+  // /// Path to the header file (problem and particle metadata)
+  // Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
   array1d< string > m_blockNames;
@@ -149,6 +150,7 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "VelocityY",
               "VelocityZ",
               "MaterialType",
+              "ParticleType",
               "ContactGroup",
               "SurfaceFlag",
               "Damage",
