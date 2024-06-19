@@ -16,7 +16,6 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
@@ -272,11 +271,17 @@ bool SolverBase::execute( real64 const time_n,
       {
         // better to do two equal steps than one big and one small (even potentially tiny)
         if( nextDt * 2 > dtRemaining )
+        {
           nextDt = dtRemaining / 2;
+          if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+            GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to cover remaining time {} in two steps", getName(), nextDt, dtRemaining ));
+        }
       }
       else
       {
         nextDt = dtRemaining;
+        if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: shortening time step to {} to match remaining time", getName(), nextDt ));
       }
     }
 
@@ -299,33 +304,45 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
                               DomainPartition & domain )
 {
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on Newton iterations = {}", getName(), nextDtNewton ));
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
+  if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on state change = {}", getName(), nextDtStateChange ));
 
   if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
-    integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
-    integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
     if( nextDtNewton > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: solver converged in less than {} iterations, time-step required will be increased.",
-                                          getName(), iterIncreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
+                                          getName() ) );
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: solver converged in more than {} iterations, time-step required will be decreased.",
-                                          getName(), iterDecreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
+                                          getName() ) );
+    }
+    else
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on number of iterations.",
+                                          getName() ) );
     }
   }
   else         // time step size decided based on state change
   {
     if( nextDtStateChange > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be increased based on state change.",
                                           getName()));
     }
     else if( nextDtStateChange < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be decreased based on state change.",
+                                          getName()));
+    }
+    else
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
                                           getName()));
     }
   }
@@ -351,15 +368,21 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
   {
     // Easy convergence, let's increase the time-step.
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepIncreaseFactor();
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is less than {}, next time step = {} (increase)", getName(), newtonIter, iterIncreaseLimit, nextDt ));
   }
   else if( newtonIter > iterDecreaseLimit )
   {
     // Tough convergence let us make the time-step smaller!
     nextDt = currentDt * m_nonlinearSolverParameters.timeStepDecreaseFactor();
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is more than {}, next time step = {} (decrease)", getName(), newtonIter, iterDecreaseLimit, nextDt ));
   }
   else
   {
     nextDt = currentDt;
+    if( m_nonlinearSolverParameters.getLogLevel() > 0 )
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: number of iterations = {} is between {} and {}, next time step = {} (no change)", getName(), newtonIter, iterIncreaseLimit, iterDecreaseLimit, nextDt ));
   }
   return nextDt;
 }
@@ -833,6 +856,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       Timer timer( m_timers["assemble"] );
 
+      // We sync the nonlinear convergence history. The coupled solver parameters are the one being
+      // used. We want to propagate the info to subsolvers. It can be important for solvers that
+      // have special treatment for specific iterations.
+      synchronizeNonlinearSolverParameters();
+
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
       m_rhs.zero();
@@ -897,7 +925,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // do line search in case residual has increased
     if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
-        && residualNorm > lastResidual && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
+        && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
+        && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
     {
       bool lineSearchSuccess = false;
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
@@ -1121,7 +1150,7 @@ void debugOutputLAObject( T const & obj,
   if( toFile )
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
-    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    obj.write( filename, LAIOutputFormat::NATIVE_ASCII );
     GEOS_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
