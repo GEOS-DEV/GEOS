@@ -41,10 +41,6 @@ using array2dLayoutIncrDisplacement = array2d< real64, nodes::INCR_DISPLACEMENT_
 using arrayView2dLayoutIncrDisplacement = arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD >;
 using arrayViewConst2dLayoutIncrDisplacement = arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD >;
 
-using array2dLayoutStrain = array2d< real64, cells::STRAIN_PERM >;
-using arrayView2dLayoutStrain = arrayView2d< real64, cells::STRAIN_USD >;
-using arrayViewConst2dLayoutStrain = arrayView2d< real64 const, cells::STRAIN_USD >;
-
 using array2dLayoutVelocity = array2d< real64, nodes::VELOCITY_PERM >;
 using arrayView2dLayoutVelocity = arrayView2d< real64, nodes::VELOCITY_USD >;
 using arrayViewConst2dLayoutVelocity = arrayView2d< real64 const, nodes::VELOCITY_USD >;
@@ -77,14 +73,6 @@ DECLARE_FIELD( incrementalDisplacement,
                LEVEL_3,
                WRITE_AND_READ,
                "Incremental displacements for the current time step on the nodes" );
-
-DECLARE_FIELD( strain,
-               "strain",
-               array2dLayoutStrain,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Average strain in cell" );
 
 DECLARE_FIELD( incrementalBubbleDisplacement,
                "incrementalBubbleDisplacement",
