@@ -28,7 +28,7 @@
 
     <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
-      stabilizationName="singlePhaseTPFA"
+      stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ Region, Fault }"
       timeIntegrationOption="QuasiStatic"
@@ -37,7 +37,7 @@
     <SinglePhaseFVM 
       name="flowSolver"
       logLevel="1"
-      discretization="singlePhaseTPFA_stab"
+      discretization="singlePhaseTPFA"
       targetRegions="{ Region, Fault}" > 
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
