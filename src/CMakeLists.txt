@@ -127,7 +127,7 @@ if( ENABLE_CUDA )
   list( APPEND extraComponentsLinkList cuda )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
 endif()
 
