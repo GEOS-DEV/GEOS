@@ -183,7 +183,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
                                                              m_neighbors );
 
       // CC: Add check if there even are any periodic boundaries?
-      // TODO: If GEOS_USE_MPI flag is set off this will through compile error since partition is not included
+      // TODO: If GEOS_USE_MPI flag is set off this will throw compile error since partition is not included
       partition.setPeriodicDomainBoundaryObjects( meshBody,
                                                   nodeManager,
                                                   edgeManager,
