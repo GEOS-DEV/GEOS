@@ -6,6 +6,18 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3130 (2024-06-19)
+======================
+New solver for contact mechanics based on the Augmented Lagrangian Method (ALM). New test case added.
+
+PR #3160 (2024-06-18)
+======================
+Two experimental options for compositional flow solver. Rebaseline because of the new input flags.
+
+PR #3165 (2024-06-18)
+======================
+Small bug fix. Rebaseline required due to appearance of useTotalMassEquation in well solver params. No real results change.
+
 PR #3088 (2024-06-17)
 ======================
 Adding temperature-dependent Solid Volumetric Heat Capacity. Rebaseline because of the parameter change in SolidInternalEnergy.
