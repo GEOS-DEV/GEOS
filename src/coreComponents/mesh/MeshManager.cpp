@@ -96,7 +96,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 
     PartitionDescriptorABC const & pd = meshGen.getPartitionDescriptor();
     partition.setMetisNeighborList( pd.getMetisNeighborList() );
-    partition.setPeriodic( pd.getCoords() );
+    partition.setCoords( pd.getCoords() );
     partition.setPeriodic( pd.getPeriodic() );
     partition.setGrid( pd.getGrid() );
     partition.setBlockSize( pd.getBlockSize() );

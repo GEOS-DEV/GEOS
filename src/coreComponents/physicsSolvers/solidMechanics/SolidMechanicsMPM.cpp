@@ -1150,7 +1150,7 @@ void SolidMechanicsMPM::postProcessInput()
     }
   }
 
- // Sort the grid indices and move any duplicates to the end.
+  // Sort the grid indices and move any duplicates to the end.
   std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( m_plottableFields.begin(),
                                                                                              m_plottableFields.end() );
   // Move unique global grid node indices to member variable
@@ -2616,7 +2616,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       } );
       partition.repartitionMasterParticles( subRegion, m_iComm );
 
-      subRegion.setActiveParticleIndices();
+      subRegion.setActiveParticleIndices(); // Can't we just loop over all the particles when correcting across periodic boundaries? Do we really need to reset the active particle indices again?
     } );
 
     // Correct particle centers across periodic boundaries
@@ -6056,7 +6056,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
   {
     // Get particle fields
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-    arrayView1d< int const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    // arrayView1d< int const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
 
     // Get nodes this particle maps to
@@ -6075,7 +6075,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
   
         real64 index = ( LvArray::tensorOps::AiBi< 3 >( gridPrincipalExplicitSurfaceNormal[g], particleSurfaceNormal[p] ) < 0.0 ) ? -1.0 : 1.0;
 
-        if( particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 )
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 0.0 ) // particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 )
         {
           gridSurfaceMass[g] += particleMass[p] * shapeFunctionValues[pp][gg];
           for(int i=0; i < 3; i++)
@@ -9107,7 +9107,6 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( localIndex const & A,
   return separable;
 }
 
-// CC: do I need to modify this to check for periodic boundaries
 // All master particles should have centers inside the domain if particleCenters are corrected correctly during repartitioning
 // CPDI: Edge case, corner of large or long particle beyond ghost cells but center is still inside domain?
 void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManager )
@@ -9585,8 +9584,6 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
       {
         return;   
       }
-
-      // GEOS_LOG_RANK("Copying " << fieldName);
 
       types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
