@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -129,7 +130,7 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
 
-  if( getParent().getName() == "ConstitutiveModels" )
+  if( getParent().getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString() )
   {
     m_isClone = true;
   }
@@ -204,7 +205,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
-  PVTFunctionBase::TableOutputOptions pvtOutputOpts = {
+  PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };

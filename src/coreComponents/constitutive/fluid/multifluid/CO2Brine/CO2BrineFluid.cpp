@@ -19,7 +19,6 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -335,7 +334,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  PVTFunctionBase::TableOutputOptions pvtOutputOpts = {
+  PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };
@@ -363,7 +362,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
         {
           if( strs[1] == FLASH::catalogName() )
           {
-            FlashModelBase::TableOutputOptions flashOutputOpts = {
+            FlashModelBase::TableOutputOptions const flashOutputOpts = {
               !isClone && m_writeCSV,// writeCSV
               !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
             };
@@ -408,7 +407,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
     {
       strs[2] = m_solubilityTables[0];
     }
-    FlashModelBase::TableOutputOptions flashOutputOpts = {
+    FlashModelBase::TableOutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
       !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
     };

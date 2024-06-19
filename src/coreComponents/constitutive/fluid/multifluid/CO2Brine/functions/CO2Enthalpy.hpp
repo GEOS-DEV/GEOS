@@ -79,7 +79,7 @@ public:
                string_array const & inputParams,
                string_array const & componentNames,
                array1d< real64 > const & componentMolarWeight,
-               TableOutputOptions pvtOutputOpts );
+               TableOutputOptions const pvtOutputOpts );
 
   static string catalogName() { return "CO2Enthalpy"; }
 

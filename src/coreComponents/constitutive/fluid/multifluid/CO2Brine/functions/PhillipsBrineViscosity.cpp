@@ -36,7 +36,7 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                                                 string_array const & inputPara,
                                                 string_array const & componentNames,
                                                 array1d< real64 > const & componentMolarWeight,
-                                                TableOutputOptions pvtOutputOpts ):
+                                                TableOutputOptions const pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -91,7 +91,7 @@ PhillipsBrineViscosity::createKernelWrapper() const
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions const )
 
 } // end namespace PVTProps
 

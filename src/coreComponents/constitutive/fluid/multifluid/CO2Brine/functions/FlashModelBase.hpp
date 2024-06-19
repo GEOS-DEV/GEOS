@@ -94,7 +94,7 @@ public:
                                                              string_array const &,
                                                              string_array const &,
                                                              array1d< real64 > const &,
-                                                             TableOutputOptions >;
+                                                             TableOutputOptions const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -116,7 +116,7 @@ public:
    * @param tableData The target table to be printed
    * @param pvtOutputOpts Struct containing output options
    */
-  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions pvtOutputOpts )
+  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions const pvtOutputOpts )
   {
     if( pvtOutputOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {

@@ -130,7 +130,7 @@ public:
                                                              array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const &,
-                                                             TableOutputOptions >;
+                                                             TableOutputOptions const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -156,7 +156,7 @@ public:
    * @param tableData The target table to be printed
    * @param pvtOutputOpts Struct containing output options
    */
-  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions pvtOutputOpts )
+  void outputPVTTableData( TableFunction const * tableData, TableOutputOptions const pvtOutputOpts )
   {
     if( pvtOutputOpts.writeInLog &&  tableData->numDimensions() <= 2 )
     {
@@ -168,7 +168,7 @@ public:
     {
       string const filename = tableData->getName();
       std::ofstream logStream( joinPath( OutputBase::getOutputDirectory(), filename + ".csv" ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to inputFiles/compositionalMultiphaseWell/{}/{}.csv \n",
+      GEOS_LOG_RANK_0( GEOS_FMT( "CSV Generated to {}/{}.csv \n",
                                  OutputBase::getOutputDirectory(),
                                  filename ));
       TableCSVFormatter csvFormatter;

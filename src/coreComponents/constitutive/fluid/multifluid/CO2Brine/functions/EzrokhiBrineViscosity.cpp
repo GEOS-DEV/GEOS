@@ -37,7 +37,7 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
                                               string_array const & inputPara,
                                               string_array const & componentNames,
                                               array1d< real64 > const & componentMolarWeight,
-                                              TableOutputOptions pvtOutputOpts ):
+                                              TableOutputOptions const pvtOutputOpts ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -93,7 +93,7 @@ EzrokhiBrineViscosity::createKernelWrapper() const
                         m_coef2 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, PVTFunctionBase::TableOutputOptions const )
 
 } // end namespace PVTProps
 

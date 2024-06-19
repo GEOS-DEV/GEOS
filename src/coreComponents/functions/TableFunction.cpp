@@ -329,7 +329,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
   {
     integer const nX = coordinates[0].size();
     integer const nY = coordinates[1].size();
-    if( nX * nY <= 500 )
+    if( nX * nY <= 50000 )
     {
       //1.
       TableData2D tableData2D;
