@@ -63,6 +63,8 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_density( inputConstitutiveType.getDensity() )
 {}
+
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
