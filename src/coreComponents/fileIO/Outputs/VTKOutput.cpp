@@ -58,6 +58,11 @@ VTKOutput::VTKOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Should the vtk files contain the ghost cells or not." );
 
+  registerWrapper( viewKeysStruct::writeFaceElementsAs3D, &m_writeFaceElementsAs3D ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Should the face elements be written as 3d volumes or not." );
+
   registerWrapper( viewKeysStruct::onlyPlotSpecifiedFieldNames, &m_onlyPlotSpecifiedFieldNames ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -116,6 +121,9 @@ void VTKOutput::postProcessInput()
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 
   appendLogLevelDescription( "logLevel >= 1", "Print field name and cycle number during execution" );
+
+  GEOS_ERROR_IF( m_writeFaceElementsAs3D, GEOS_FMT( "{} `{}`: 3D vtk plot of faceElements is not yet supported.",
+                                                    catalogName(), getDataContext() ) );
 }
 
 
@@ -140,6 +148,7 @@ bool VTKOutput::execute( real64 const time_n,
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber ));
 
   m_writer.setWriteGhostCells( m_writeGhostCells );
+  m_writer.setWriteFaceElementsAs3D ( m_writeFaceElementsAs3D );
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );
   m_writer.setPlotLevel( m_plotLevel );
