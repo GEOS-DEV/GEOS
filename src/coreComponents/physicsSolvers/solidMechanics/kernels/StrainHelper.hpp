@@ -60,12 +60,12 @@ public:
    * @param avgStrain the strain averaged over quadrature points
    */
   AverageStrainOverQuadraturePoints( NodeManager & nodeManager,
-                                 EdgeManager const & edgeManager,
-                                 FaceManager const & faceManager,
-                                 SUBREGION_TYPE const & elementSubRegion,
-                                 FE_TYPE const & finiteElementSpace,
-                                 fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                                 fields::solidMechanics::arrayView2dLayoutStrain const avgStrain ):
+                                     EdgeManager const & edgeManager,
+                                     FaceManager const & faceManager,
+                                     SUBREGION_TYPE const & elementSubRegion,
+                                     FE_TYPE const & finiteElementSpace,
+                                     fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -92,18 +92,18 @@ public:
   {
     Base::setup( k, stack );
 
-    for (localIndex a = 0; a < FE_TYPE::maxSupportPoints; ++a)
+    for( localIndex a = 0; a < FE_TYPE::maxSupportPoints; ++a )
     {
-      localIndex const localNodeIndex = m_elemsToNodes(k, a);
-      for (int i = 0; i < 3; ++i)
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+      for( int i = 0; i < 3; ++i )
       {
         stack.uLocal[a][i] = m_displacement[localNodeIndex][i];
       }
     }
 
-    for (int icomp = 0; icomp < 6; ++icomp)
+    for( int icomp = 0; icomp < 6; ++icomp )
     {
-	    m_avgStrain[k][icomp] = 0.0;
+      m_avgStrain[k][icomp] = 0.0;
     }
   }
 
@@ -121,13 +121,13 @@ public:
     //real64 const weight = FE_TYPE::transformedQuadratureWeight( q, stack.xLocal, stack.feStack ) / m_elementVolume[k];
 
     real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
-    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE > (k, q, stack.xLocal, stack.feStack, dNdX);
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
     real64 strain[6] = {0.0};
     FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
 
-    for (int icomp = 0; icomp < 6; ++icomp)
+    for( int icomp = 0; icomp < 6; ++icomp )
     {
-	    m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
+      m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
     }
   }
 

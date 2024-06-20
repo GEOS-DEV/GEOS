@@ -85,7 +85,7 @@ DECLARE_FIELD( strain,
                LEVEL_0,
                WRITE_AND_READ,
                "Average strain in cell" );
-  
+
 DECLARE_FIELD( incrementalBubbleDisplacement,
                "incrementalBubbleDisplacement",
                array2d< real64 >,
@@ -93,7 +93,7 @@ DECLARE_FIELD( incrementalBubbleDisplacement,
                LEVEL_3,
                WRITE_AND_READ,
                "Incremental bubble displacements for the current time step on the nodes" );
-  
+
 DECLARE_FIELD( velocity,
                "velocity",
                array2dLayoutVelocity,
