@@ -240,7 +240,7 @@ localIndex PackCollection::numMetaDataCollectors() const
 
 void PackCollection::buildMetaDataCollectors()
 {
-  if( !m_disableCoordCollection )
+  if( !m_disableCoordCollection && m_targetIsMeshObject )
   {
     char const * coordField = nullptr;
     if( m_objectPath.find( "nodeManager" ) != string::npos )
