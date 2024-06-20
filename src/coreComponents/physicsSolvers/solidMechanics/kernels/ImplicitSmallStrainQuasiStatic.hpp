@@ -95,7 +95,7 @@ public:
                                   EdgeManager const & edgeManager,
                                   FaceManager const & faceManager,
                                   localIndex const targetRegionIndex,
-                                  SUBREGION_TYPE & elementSubRegion,
+                                  SUBREGION_TYPE const & elementSubRegion,
                                   FE_TYPE const & finiteElementSpace,
                                   CONSTITUTIVE_TYPE & inputConstitutiveType,
                                   arrayView1d< globalIndex const > const inputDofNumber,
@@ -234,11 +234,6 @@ protected:
 
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
-
-  /// The rank-global average strain increment array
- // arrayView2d< real64, cells::STRAIN_USD > & m_incStrain;
-  /// The rank-global element volume
-  arrayView1d< real64 const > const m_elementVolume;
 
   /// The gravity vector.
   real64 const m_gravityVector[3];

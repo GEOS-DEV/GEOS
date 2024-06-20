@@ -154,7 +154,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setConstitutiveNamesCallSuper( subRegion );
 
       subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
-      //subRegion.registerField< solidMechanics::incrementalStrain >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -887,9 +886,6 @@ SolidMechanicsLagrangianFEM::
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
-
-      //solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
-      //incStrain.zero();
     } );
   } );
 
@@ -942,18 +938,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
-
-      //solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
-      //solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
-      //for( localIndex k = 0; k < subRegion.size(); ++k )
-      //{
-      //  for( int is = 0; is < 6; ++is )
-      //  {
-      //    strain[k][is] += incStrain[k][is];
-      //  }
-      //
-      //  Call kernel here?
-      //}
       
       solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
 
@@ -1354,15 +1338,6 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
         incdisp( a, i ) = 0.0;
       }
     } );
-
-    //ElementRegionManager & elementRegionManager = mesh.getElemManager();
-    //elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-    //                                                                   [&]( localIndex const,
-    //                                                                        CellElementSubRegion & subRegion )
-    //{
-    //  solidMechanics::arrayView2dLayoutIncrStrain incStrain = subRegion.getField< solidMechanics::incrementalStrain >();
-    //  incStrain.zero();
-    //} );
   } );
 }
 

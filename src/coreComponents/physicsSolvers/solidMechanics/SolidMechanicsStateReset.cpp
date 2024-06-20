@@ -94,16 +94,6 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       }
       nodeManager.getField< solidMechanics::totalDisplacement >().zero();
       nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
-
-      //ElementRegionManager & elemManager = mesh.getElemManager();
-      //elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-      //                                                          [&]( localIndex const,
-      //                                                               ElementSubRegionBase & subRegion )
-      //{
-      //  //zero strains
-      //  subRegion.getField< solidMechanics::incrementalStrain >().zero();
-      //  subRegion.getField< solidMechanics::strain >().zero();
-      //} );
     }
 
 

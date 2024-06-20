@@ -45,10 +45,6 @@ using array2dLayoutStrain = array2d< real64, cells::STRAIN_PERM >;
 using arrayView2dLayoutStrain = arrayView2d< real64, cells::STRAIN_USD >;
 using arrayViewConst2dLayoutStrain = arrayView2d< real64 const, cells::STRAIN_USD >;
 
-using array2dLayoutIncrStrain = array2d< real64, cells::STRAIN_PERM >;
-using arrayView2dLayoutIncrStrain = arrayView2d< real64, cells::STRAIN_USD >;
-using arrayViewConst2dLayoutIncrStrain = arrayView2d< real64 const, cells::STRAIN_USD >;
-
 using array2dLayoutVelocity = array2d< real64, nodes::VELOCITY_PERM >;
 using arrayView2dLayoutVelocity = arrayView2d< real64, nodes::VELOCITY_USD >;
 using arrayViewConst2dLayoutVelocity = arrayView2d< real64 const, nodes::VELOCITY_USD >;
@@ -81,14 +77,6 @@ DECLARE_FIELD( strain,
                LEVEL_0,
                WRITE_AND_READ,
                "Average strain in cell" );
-
-DECLARE_FIELD( incrementalStrain,
-               "incrementalStrain",
-               array2dLayoutIncrStrain,
-               0,
-               LEVEL_3,
-               WRITE_AND_READ,
-               "Average strain increments in cell" );
 
 DECLARE_FIELD( velocity,
                "velocity",
