@@ -64,8 +64,8 @@ public:
                                  FaceManager const & faceManager,
                                  SUBREGION_TYPE const & elementSubRegion,
                                  FE_TYPE const & finiteElementSpace,
-                                 arrayView2d< real64 const > const displacement,
-                                 arrayView2d< real64 > const avgStrain ):
+                                 solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                 solidMechanics::arrayViewConst2dLayoutStrain const avgStrain ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -160,10 +160,10 @@ public:
 protected:
 
   /// The displacement solution
-  arrayView2d< real64 const > const m_displacement;
+  solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
 
   /// The average strain
-  arrayView2d< real64 > const m_avgStrain;
+  solidMechanics::arrayViewConst2dLayoutStrain const m_avgStrain;
 
 };
 
@@ -199,8 +199,8 @@ public:
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
-                   arrayView2d< real64 const > const displacement,
-                   arrayView2d< real64 > const avgStrain )
+                   solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                   solidMechanics::arrayViewConst2dLayoutStrain const avgStrain )
   {
     AverageStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
