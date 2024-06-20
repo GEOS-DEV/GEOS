@@ -82,7 +82,14 @@ decks = [
              restart_step=0,
              check_step=12,
              restartcheck_params=RestartcheckParameters(atol=1e-05,
-                                                        rtol=4e-04))
+                                                        rtol=4e-04)),
+    TestDeck(
+        name="singlePhasePoromechanics_FaultModel_smoke",
+        description='PoroElastic conformingFracture intialization with external mesh',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)
