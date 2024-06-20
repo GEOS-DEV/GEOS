@@ -1,8 +1,10 @@
 # Specify list of tests
 set( testSources
+     testConstexprConstructs.cpp
      testGeosxTraits.cpp
      testStringUtilities.cpp
      testParsing.cpp
+     testPatterns.cpp
      testUtilities.cpp )
 
 set( dependencyList gtest codingUtilities ${parallelDeps} )

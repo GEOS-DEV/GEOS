@@ -29,6 +29,7 @@ set_property( GLOBAL PROPERTY geos_tests_exe_list )
 # Include blt
 ################################
 option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
+option( ENABLE_GMOCK "Enables gmock mocking library" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 
@@ -141,29 +142,34 @@ else()
   list( APPEND extraComponentsLinkList ${geosx_core_libs} )
 endif()
 
-blt_add_executable( NAME geosx
+blt_add_executable( NAME geos
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
+# geos alias for geosx target
+add_custom_target( geosx ALL
+                   COMMAND ${CMAKE_COMMAND} -E echo "WARNING: The target 'geosx' is deprecated and will be removed in a future release. Please use 'geos' instead."
+                   DEPENDS geos )
+
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
-  set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
+  set_target_properties( geos PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
 # Removing all transitive link dependencies from geosx_core target to circumvent
 # the BLT behavior which imposes all dependencies to be public
 #set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( geos PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 # To change the runtime path during installation
-set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+set_target_properties( geos PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set_target_properties( geos PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
-install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-# Duplicate the installed `geosx` executable and rename it `geos` to let the end users adapt their scripts.
-install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geosx
+install(TARGETS geos RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+# Duplicate the installed `geos` executable and rename it `geos` to let the end users adapt their scripts.
+install( FILES ${CMAKE_INSTALL_PREFIX}/bin/geos
          DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
          RENAME geos
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )
@@ -175,9 +181,9 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
 
   add_custom_target( geosx_generate_schema
                      ALL
-                     COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+                     COMMAND geos -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx
+                     DEPENDS geos
                      COMMENT "Generating XML schema"
                      )
 
@@ -215,9 +221,9 @@ install( DIRECTORY ../scripts/
 
 add_custom_target( geosx_generate_install_schema
          ALL
-         COMMAND geosx -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
+         COMMAND geos -s ${CMAKE_BINARY_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-         DEPENDS geosx
+         DEPENDS geos
          COMMENT "Generating XML schema to install"
          )
 
@@ -321,7 +327,7 @@ if ( ENABLE_ATS )
 
     if (NOT Python3_EXECUTABLE)
         message( FATAL_ERROR "An appropriate version of python was not found (required for integrated testing system).  Try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config." )
-    endif() 
+    endif()
 
      # Setup testing
     set( ATS_SCRIPT

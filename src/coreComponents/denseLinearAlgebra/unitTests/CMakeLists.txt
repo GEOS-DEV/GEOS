@@ -1,7 +1,7 @@
 set( serial_tests
      testBlasLapack.cpp )
 
-set( dependencyList gtest denseLinearAlgebra )
+set( dependencyList gtest gmock denseLinearAlgebra )
 
 if ( ENABLE_CUDA )
   list( APPEND dependencyList cuda )

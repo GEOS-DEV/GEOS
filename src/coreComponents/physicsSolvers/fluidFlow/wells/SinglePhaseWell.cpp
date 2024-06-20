@@ -115,7 +115,7 @@ void SinglePhaseWell::initializePostSubGroups()
 {
 
   WellSolverBase::initializePostSubGroups();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )

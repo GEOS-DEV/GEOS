@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ExponentialDecayPermeability_conformingFracture_base.xml"/>
-  </Included> 
+  </Included>
 
   <Mesh>
     <InternalMesh
@@ -35,7 +35,7 @@
       target="/Outputs/vtkOutput"/>
 
    <PeriodicEvent
-      name="timeHistoryCollection"      
+      name="timeHistoryCollection"
       target="/Tasks/tractionCollection" />
 
     <PeriodicEvent
@@ -50,7 +50,7 @@
     <PeriodicEvent
       name="timeHistoryOutput1"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput1"/> 
+      target="/Outputs/timeHistoryOutput1"/>
 
     <PeriodicEvent
       name="timeHistoryCollection2"
@@ -59,7 +59,7 @@
     <PeriodicEvent
       name="timeHistoryOutput2"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput2"/> 
+      target="/Outputs/timeHistoryOutput2"/>
 
     <PeriodicEvent
       name="timeHistoryCollection3"
@@ -68,12 +68,12 @@
     <PeriodicEvent
       name="timeHistoryOutput3"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput3"/> 
+      target="/Outputs/timeHistoryOutput3"/>
 
     <PeriodicEvent
       name="restart"
       timeFrequency="2.e2"
-      target="/Outputs/restarts"/>  
+      target="/Outputs/restarts"/>
   </Events>
 
 </Problem>

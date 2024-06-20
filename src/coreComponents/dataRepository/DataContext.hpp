@@ -104,7 +104,7 @@ protected:
      * @return true if a location has been found to declare the target in an input file.
      */
     bool hasInputFileInfo() const
-    { return !m_filePath.empty() && m_line != xmlWrapper::xmlDocument::npos; }
+    { return !m_filePath.empty() && m_line != string::npos; }
   };
 
   /**
@@ -117,11 +117,31 @@ protected:
 };
 
 /**
+ * @return the node 'name' attribute if it exists, return the node tag name otherwise.
+ * @param node the target node.
+ */
+template < typename DocNode >
+string getNodeName( DocNode const & node )
+{
+  auto nameAtt = node.attribute( "name" );
+  if( !nameAtt.empty() )
+  {
+    return string( node.attribute( "name" ).value() );
+  }
+  else
+  {
+    return string( node.name() );
+}
+}
+
+
+/**
  * @class DataFileContext
  *
  * Stores information to retrieve where a target object has been declared in the input source
  * file (e.g. XML).
  */
+template < typename DocNode, typename DocNodePos, typename DocAttr, typename DocAttrPos >
 class DataFileContext final : public DataContext
 {
 public:
@@ -131,20 +151,48 @@ public:
    * @param targetNode the target object xml node
    * @param nodePos the target object xml node position
    */
-  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlNodePos const & nodePos );
+  DataFileContext( DocNode const & targetNode, DocNodePos const & nodePos ) :
+    DataContext( getNodeName( targetNode ) ),
+    m_typeName( targetNode.name() ),
+    m_filePath( nodePos.filePath ),
+    m_line( nodePos.line ),
+    m_offsetInLine( nodePos.offsetInLine ),
+    m_offset( nodePos.offset )
+  {}
+
   /**
    * @brief Construct the file context of a Group from an xml node.
    * @param targetNode the xml node containing the xml attribute
    * @param att the target object xml attribute
    * @param attPos the target object xml attribute position
    */
-  DataFileContext( xmlWrapper::xmlNode const & targetNode, xmlWrapper::xmlAttribute const & att,
-                   xmlWrapper::xmlAttributePos const & attPos );
+  DataFileContext( DocNode const & targetNode, DocAttr const & att, DocAttrPos const & attPos ) :
+    DataContext( getNodeName( targetNode ) + '/' + att.name() ),
+    m_typeName( att.name() ),
+    m_filePath( attPos.filePath ),
+    m_line( attPos.line ),
+    m_offsetInLine( attPos.offsetInLine ),
+    m_offset( attPos.offset )
+  {}
 
   /**
    * @return the target object name followed by the the file and line declaring it.
    */
-  string toString() const override;
+  string toString() const override
+  {
+    if( m_line != xmlWrapper::xmlDocument::npos )
+    {
+      return GEOS_FMT( "{} ({}, l.{})", m_targetName, splitPath( m_filePath ).second, m_line );
+    }
+    else if( m_offset != xmlWrapper::xmlDocument::npos )
+    {
+      return GEOS_FMT( "{} ({}, offset {})", m_targetName, splitPath( m_filePath ).second, m_offset );
+    }
+    else
+    {
+      return GEOS_FMT( "{} (Source file not found)", m_targetName );
+    }
+  }
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
@@ -194,10 +242,14 @@ private:
   /**
    * @copydoc DataContext::getToStringInfo()
    */
-  ToStringInfo getToStringInfo() const override;
+  ToStringInfo getToStringInfo() const override
+  {
+    return ToStringInfo( m_targetName, m_filePath, m_line );
+  }
 
 };
 
+using DefaultDataFileContext = DataFileContext< xmlWrapper::xmlNode, xmlWrapper::xmlNodePos, xmlWrapper::xmlAttribute, xmlWrapper::xmlAttributePos >;
 
 } /* namespace dataRepository */
 } /* namespace geos */

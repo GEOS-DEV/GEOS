@@ -239,8 +239,8 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     conduit::Node & topology = topologies[ topologyName ];
     topology[ "coordset" ] = coordset.name();
     topology[ "type" ] = "unstructured";
-    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementType() );
-    internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
+    topology[ "elements/shape" ] = geos::internal::toBlueprintShape( subRegion.getElementType() );
+    geos::internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
 
     /// Write out the fields.
     writeOutWrappersAsFields( subRegion, fields, topologyName );

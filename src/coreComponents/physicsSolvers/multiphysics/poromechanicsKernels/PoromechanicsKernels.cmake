@@ -23,7 +23,7 @@ set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<ElasticOrthotropic>
                          PorousSolid<DamageSpectral<ElasticIsotropic>>
                          PorousSolid<DamageVolDev<ElasticIsotropic>>
-                         PorousSolid<Damage<ElasticIsotropic>> 
+                         PorousSolid<Damage<ElasticIsotropic>>
                          PorousSolid<DuvautLionsSolid<DruckerPrager>>
                          PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
                          PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
@@ -54,10 +54,11 @@ endif( )
         foreach( FE_TYPE ${finiteElementDispatch} )
 
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
-        string(REPLACE "<" "-" filename ${filename})
-        string(REPLACE ">" "-" filename ${filename})
-        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE "<" "_" filename ${filename})
+        string(REPLACE ">" "_" filename ${filename})
+        string(REPLACE "," "_" filename ${filename})
         string(REPLACE " " "" filename ${filename})
+        string(REGEX REPLACE "_+" "_" filename "${filename}")
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsKernels.cpp.template
                         ${filename} )
@@ -90,26 +91,27 @@ if ( NOT ${ENABLE_HIP} )
               H1_Wedge_VEM_Gauss1
               H1_Prism11_VEM_Gauss1 )
 endif( )
-  
+
   foreach( KERNELNAME ${kernelNames} )
     foreach( SUBREGION_TYPE  ${subregionList} )
       foreach( CONSTITUTIVE_TYPE ${porousSolidDispatch} )
         foreach( FE_TYPE ${finiteElementDispatch} )
-  
+
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
-        string(REPLACE "<" "-" filename ${filename})
-        string(REPLACE ">" "-" filename ${filename})
-        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE "<" "_" filename ${filename})
+        string(REPLACE ">" "_" filename ${filename})
+        string(REPLACE "," "_" filename ${filename})
         string(REPLACE " " "" filename ${filename})
+        string(REGEX REPLACE "_+" "_" filename "${filename}")
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsEFEMKernels.cpp.template
                           ${filename} )
-  
+
         list( APPEND physicsSolvers_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
-  endforeach()  
+  endforeach()
 
 set( kernelNames ThermoPoromechanicsKernels )
 set( subregionList CellElementSubRegion )
@@ -140,10 +142,11 @@ endif( )
         foreach( FE_TYPE ${finiteElementDispatch} )
 
         set( filename "${CMAKE_BINARY_DIR}/generatedSrc/${kernelPath}/${KERNELNAME}_${SUBREGION_TYPE}_${CONSTITUTIVE_TYPE}_${FE_TYPE}.cpp" )
-        string(REPLACE "<" "-" filename ${filename})
-        string(REPLACE ">" "-" filename ${filename})
-        string(REPLACE "," "-" filename ${filename})
+        string(REPLACE "<" "_" filename ${filename})
+        string(REPLACE ">" "_" filename ${filename})
+        string(REPLACE "," "_" filename ${filename})
         string(REPLACE " " "" filename ${filename})
+        string(REGEX REPLACE "_+" "_" filename "${filename}")
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/ThermoPoromechanicsKernels.cpp.template
                         ${filename} )

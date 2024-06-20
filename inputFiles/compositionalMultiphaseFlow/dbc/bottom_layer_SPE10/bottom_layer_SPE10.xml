@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./bottom_layer_SPE10_base.xml"/>
   </Included>
 
@@ -27,7 +27,7 @@
         maxTimeStepCuts="1000"
         lineSearchAction="None"
         timeStepDecreaseFactor="0.9"
-        timeStepIncreaseFactor="1.5" 
+        timeStepIncreaseFactor="1.5"
         timeStepDecreaseIterLimit="0.8"
         timeStepIncreaseIterLimit="0.6"/>
       <LinearSolverParameters
@@ -41,19 +41,19 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2e7"	
+      maxEventDt="2e7"
       target="/Solvers/bottom_layer_SPE10"/>
 
     <PeriodicEvent
       name="outputs"
       timeFrequency="2e7"
-      target="/Outputs/vtkOutput_cont"/> 
+      target="/Outputs/vtkOutput_cont"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="2e7" 
-      target="/Outputs/restartOutput"/>   
-    
+      timeFrequency="2e7"
+      target="/Outputs/restartOutput"/>
+
   </Events>
 
   <Tasks>
@@ -61,10 +61,10 @@
       name="compflowstats"
       flowSolverName="bottom_layer_SPE10"
       logLevel="1"
-      computeCFLNumbers="1"/> 
+      computeCFLNumbers="1"/>
       <!-- computeRegionStatistics="1" -->
   </Tasks>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -90,13 +90,13 @@
   </Geometry>
 
   <Outputs>
-    <VTK 
+    <VTK
       name="vtkOutput_cont"/>
- 
+
     <Restart
-      name="restartOutput"/>  
+      name="restartOutput"/>
   </Outputs>
 
-  
-  
+
+
 </Problem>

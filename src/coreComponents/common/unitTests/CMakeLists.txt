@@ -2,6 +2,7 @@
 set( gtest_geosx_tests
      testDataTypes.cpp
      testFixedSizeDeque.cpp
+     testGeosFmt.cpp
      testTypeDispatch.cpp
      testLifoStorage.cpp
      testUnits.cpp )
@@ -11,7 +12,7 @@ if ( ENABLE_CALIPER )
         testCaliperSmoke.cpp )
 endif()
 
-set( dependencyList ${parallelDeps} common hdf5 gtest )
+set( dependencyList ${parallelDeps} common hdf5 gtest gmock )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})

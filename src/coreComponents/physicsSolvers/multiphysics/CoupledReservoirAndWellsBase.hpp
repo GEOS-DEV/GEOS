@@ -194,7 +194,7 @@ public:
   {
     Base::initializePostInitialConditionsPreSubGroups( );
 
-    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))

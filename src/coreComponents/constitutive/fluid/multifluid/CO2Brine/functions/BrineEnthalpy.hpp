@@ -95,7 +95,7 @@ public:
 
   static string catalogName() { return "BrineEnthalpy"; }
 
-  virtual string getCatalogName() const final { return catalogName(); }
+  virtual string const getCatalogName() const final { return catalogName(); }
 
   /**
    * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )

@@ -11,10 +11,6 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-
-
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
-
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -29,6 +25,9 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include "tests/meshDirName.hpp"
 
@@ -474,7 +473,7 @@ protected:
 
     string const xmlInput = PreXmlInput + internalWells + PostXmlInput;
 
-    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str() );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput.c_str() );
     SinglePhaseReservoirSolverTest::SetUp();
   }
 };
@@ -551,7 +550,7 @@ protected:
 
     string const xmlInput = PreXmlInput + vtkWells + PostXmlInput;
 
-    setupProblemFromXML( state.getProblemManager(), xmlInput.c_str());
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput.c_str() );
     SinglePhaseReservoirSolverTest::SetUp();
   }
 };

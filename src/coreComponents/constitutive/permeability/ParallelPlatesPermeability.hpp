@@ -115,7 +115,7 @@ public:
 
   static string catalogName() { return "ParallelPlatesPermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   virtual void initializeState() const override final;
 

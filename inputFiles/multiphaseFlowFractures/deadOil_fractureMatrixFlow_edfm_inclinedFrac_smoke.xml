@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./deadOil_fractureMatrixFlow_edfm_base.xml" />
   </Included>
 
@@ -24,7 +24,7 @@
       widthVector="{ -0.5, 0, 0.5 }"
       dimensions="{ 1.1, 1.1 }"/>
   </Geometry>
- 
+
   <Outputs>
     <VTK
       name="vtkOutput"

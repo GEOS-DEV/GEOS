@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ProppantSlotTest_base.xml"/>
   </Included>
- 
+
 <!-- SPHINX_PROPPANT_MESH -->
   <Mesh>
     <InternalMesh
@@ -84,7 +84,7 @@
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="gmres"
-	preconditionerType="amg"  
+	preconditionerType="amg"
         krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
 <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
@@ -95,5 +95,5 @@
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
- 
+
 </Problem>

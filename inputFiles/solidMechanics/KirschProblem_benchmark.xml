@@ -2,7 +2,7 @@
 
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./KirschProblem_base.xml"/>
   </Included>
 
@@ -58,12 +58,12 @@
       target="/Outputs/stressOutput"/>
 
     <SoloEvent
-      name="displacementCollection" 
+      name="displacementCollection"
       target="/Tasks/displacementCollection" />
 
     <SoloEvent
-      name="displacementOutput" 
-      target="/Outputs/displacementOutput" />   
+      name="displacementOutput"
+      target="/Outputs/displacementOutput" />
   </Events>
 
 </Problem>

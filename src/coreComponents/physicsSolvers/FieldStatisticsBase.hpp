@@ -81,9 +81,9 @@ public:
 
 protected:
 
-  void postProcessInput() override
+  void postInputInitialization() override
   {
-    ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
+    ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( GEOS_FMT("/{}", dataRepository::keys::ProblemManager ) );
     PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );

@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes" >
     <File name="./buckleyLeverett_base.xml"/>
   </Included>
 
@@ -32,7 +32,7 @@
 
   <Events
     maxTime="1.0">
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.4"
@@ -43,6 +43,6 @@
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="0.1"
-      target="/Solvers/compflow"/>    
+      target="/Solvers/compflow"/>
   </Events>
 </Problem>

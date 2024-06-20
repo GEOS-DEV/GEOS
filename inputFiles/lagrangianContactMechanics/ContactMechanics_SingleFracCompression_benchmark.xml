@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./ContactMechanics_SingleFracCompression_base.xml"/>
   </Included>
 
@@ -90,7 +90,7 @@
       timeFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
- 
+
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="1"
@@ -113,6 +113,6 @@
       name="timeHistoryOutput1"
       timeFrequency="1"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput1"/>    
-  </Events> 
+      target="/Outputs/timeHistoryOutput1"/>
+  </Events>
 </Problem>

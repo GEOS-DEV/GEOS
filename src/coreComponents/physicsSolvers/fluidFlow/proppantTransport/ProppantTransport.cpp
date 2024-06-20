@@ -82,9 +82,9 @@ ProppantTransport::ProppantTransport( const string & name,
 
 }
 
-void ProppantTransport::postProcessInput()
+void ProppantTransport::postInputInitialization()
 {
-  FlowSolverBase::postProcessInput();
+  FlowSolverBase::postInputInitialization();
 }
 
 void ProppantTransport::registerDataOnMesh( Group & meshBodies )
@@ -163,7 +163,7 @@ void ProppantTransport::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   ConstitutiveManager & cm = domain.getConstitutiveManager();
 
   // Validate proppant models in regions
@@ -315,7 +315,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
 
   integer const numComponents = m_numComponents;

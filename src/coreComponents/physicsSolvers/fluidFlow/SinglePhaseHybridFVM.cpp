@@ -80,7 +80,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
                            getCatalogName(), getDataContext().toString() ),
                  InputError );
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -96,7 +96,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

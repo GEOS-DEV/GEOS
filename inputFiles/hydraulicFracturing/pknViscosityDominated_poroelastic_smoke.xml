@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pknViscosityDominated_poroelastic_base.xml"/>
   </Included>
@@ -31,19 +31,19 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">     
+      contactRelationName="fractureContact">
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }">     
+      targetRegions="{ Domain, Fracture }">
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="0.1e6"
       mpiCommOrder="1"
       isPoroelastic="1"/>
@@ -59,10 +59,10 @@
       nx="{ 10, 1, 2 }"
       ny="{ 10, 1, 2 }"
       nz="{ 1, 1, 2, 1, 1 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
- 
-  <Geometry> 
+
+  <Geometry>
     <Box
       name="fracture"
       xMin="{ -15.1, -15.1, -0.1 }"
@@ -92,11 +92,11 @@
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="restarts"
       timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput" />
   </Events>
- 
+
 </Problem>

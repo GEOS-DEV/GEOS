@@ -68,7 +68,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @defgroup Solver Interface Functions
@@ -77,7 +77,7 @@ public:
    */
   /**@{*/
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;

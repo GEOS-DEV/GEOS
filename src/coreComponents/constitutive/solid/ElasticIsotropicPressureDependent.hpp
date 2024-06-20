@@ -446,7 +446,7 @@ public:
    * @brief Get catalog name
    * @return Name string
    */
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -565,7 +565,7 @@ public:
 protected:
 
   /// Post-process XML data
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the bulk modulus for any new allocations.
   real64 m_defaultRefPressure;

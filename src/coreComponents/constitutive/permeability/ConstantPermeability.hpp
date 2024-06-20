@@ -55,7 +55,7 @@ public:
 
   static string catalogName() { return "ConstantPermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ConstantPermeabilityUpdate;
@@ -80,7 +80,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
 private:
 

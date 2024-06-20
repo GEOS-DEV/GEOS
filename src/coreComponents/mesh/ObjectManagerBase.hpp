@@ -63,11 +63,6 @@ public:
    */
   static CatalogInterface::CatalogType & getCatalog();
 
-  /**
-   * @brief Get the name of the catalog.
-   * @return The name.
-   */
-  virtual string getCatalogName() const = 0;
   ///@}
 
   using dataRepository::Group::packSize;

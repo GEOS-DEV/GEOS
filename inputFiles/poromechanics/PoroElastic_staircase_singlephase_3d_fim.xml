@@ -2,9 +2,9 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_staircase_singlephase_3d_base.xml"/>
-  </Included>  
+  </Included>
 
   <Solvers>
 
@@ -21,7 +21,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsReservoir>
-    
+
     <SinglePhasePoromechanics
       name="singlePhasePoroelasticity"
       solidSolverName="linearElasticity"
@@ -49,7 +49,7 @@
       targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
-        logLevel="1"  
+        logLevel="1"
         type="producer"
         control="BHP"
         referenceElevation="62.5"
@@ -57,22 +57,22 @@
         targetTotalRateTableName="producerTotalRateTable"/>
       <WellControls
         name="wellControls2"
-        logLevel="1"      
+        logLevel="1"
         type="injector"
         control="totalVolRate"
         referenceElevation="250"
         targetBHP="5e7"
-        targetTotalRateTableName="injectorTotalRateTable"       
+        targetTotalRateTableName="injectorTotalRateTable"
         useSurfaceConditions="1"
         surfacePressure="101325"/>
     </SinglePhaseWell>
-   
+
   </Solvers>
 
   <Events
       minTime="-1e11"
       maxTime="1e7">
-    
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
@@ -83,7 +83,7 @@
       targetTime="-1e11"
       beginTime="-1e11"
       target="/Tasks/singlePhasePoroelasticityEquilibrationStep"/>
-    
+
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e6"
@@ -97,7 +97,7 @@
       name="singlePhaseFlowStatistics"
       timeFrequency="1e6"
       target="/Tasks/singlePhaseFlowStatistics"/>
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e6"
@@ -114,13 +114,13 @@
       flowSolverName="singlePhaseFlow"
       logLevel="1"/>
 
-    <SinglePhasePoromechanicsInitialization 
-      logLevel="1"      
+    <SinglePhasePoromechanicsInitialization
+      logLevel="1"
       name="singlePhasePoroelasticityEquilibrationStep"
       poromechanicsSolverName="singlePhasePoroelasticity"
       solidMechanicsStatisticsName="linearElasticityStatistics"/>
   </Tasks>
-  
+
   <Outputs>
     <VTK
       name="vtkOutput"

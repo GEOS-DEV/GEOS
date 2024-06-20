@@ -8,17 +8,23 @@ set( dataRepository_headers
      ExecutableGroup.hpp
      Group.hpp
      HistoryDataSpec.hpp
+     InputExtension.hpp
+     InputExtensionGroup.hpp
      InputFlags.hpp
+     InputParsing.hpp
+     InputProcessing.hpp
      KeyIndexT.hpp
      KeyNames.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
+     TerseInputRegistry.hpp
      Utilities.hpp
      Wrapper.hpp
      WrapperBase.hpp
      wrapperHelpers.hpp
+     xmlInputExtension.hpp
      xmlWrapper.hpp
      DataContext.hpp
      GroupContext.hpp

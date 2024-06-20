@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ThermoPoroElastic_base.xml"/>
   </Included>

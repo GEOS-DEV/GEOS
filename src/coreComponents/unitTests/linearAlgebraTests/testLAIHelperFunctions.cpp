@@ -62,7 +62,7 @@ protected:
     Base(),
     state( std::make_unique< CommandLineOptions >() )
   {
-    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
   }
 
@@ -79,7 +79,7 @@ void assembleGlobalIndexVector( arrayView1d< globalIndex const > const & localTo
                                 integer const numDofPerPoint,
                                 arrayView1d< real64 > const & values )
 {
-  forAll< geos::parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+  forAll< geos::parallelDevicePolicy< > >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     if( dofNumber[k] >= 0 && ghostRank[k] < 0 )
     {

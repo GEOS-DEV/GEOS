@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ProppantSlotTest_base.xml"/>
   </Included>
- 
+
 <!-- SPHINX_PROPPANT_MESH -->
   <Mesh>
     <InternalMesh
@@ -36,12 +36,12 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/siloOutput"/>
-      
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>  
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <Solvers>
@@ -76,7 +76,7 @@
       logLevel="1">
       <NonlinearSolverParameters
         newtonMaxIter="8"
-	lineSearchAction="None"  	  
+	lineSearchAction="None"
         couplingType="Sequential"/>
     </FlowProppantTransport>
 <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
@@ -94,7 +94,7 @@
         lineSearchAction="None"
         newtonMinIter="0"/>
       <LinearSolverParameters
-        solverType="direct"	 
+        solverType="direct"
         directParallel="0"/>
     </SinglePhaseProppantFVM>
 <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
@@ -105,5 +105,5 @@
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
- 
+
 </Problem>

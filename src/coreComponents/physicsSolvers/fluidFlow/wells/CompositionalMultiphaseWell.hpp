@@ -79,7 +79,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -320,7 +320,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
 

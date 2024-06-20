@@ -136,7 +136,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Utility function to check if a directory exists

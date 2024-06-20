@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
@@ -59,7 +59,7 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 2, 2 }"/>
   </Geometry>
-  
+
   <Events
     maxTime="10">
     <SoloEvent
@@ -83,5 +83,5 @@
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
   </Events>
-  
+
 </Problem>

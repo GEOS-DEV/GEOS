@@ -110,7 +110,7 @@ public:
    */
   static string catalogName() { return "Contact"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for aperture tolerance
@@ -141,7 +141,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
 

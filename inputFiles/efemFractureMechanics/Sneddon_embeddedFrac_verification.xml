@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+ <Included name="primary_includes">
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
@@ -38,7 +38,7 @@
   <!-- SPHINX_SNEDDON_SOLVER_END -->
 
   <!-- SPHINX_SNEDDON_MESH -->
-  <Mesh>  
+  <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
@@ -48,9 +48,9 @@
       nx="{ 10, 101, 10 }"
       ny="{ 10, 901, 10 }"
       nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
-  <!-- SPHINX_SNEDDON_MESH_END --> 
+  <!-- SPHINX_SNEDDON_MESH_END -->
 
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
@@ -62,8 +62,8 @@
       widthVector="{0.0, 0.0, 1.0}"
       dimensions="{ 2, 10 }"/>
   </Geometry>
-  <!-- SPHINX_SNEDDON_GEOMETRY_END -->   
-  
+  <!-- SPHINX_SNEDDON_GEOMETRY_END -->
+
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="1.0">
@@ -93,8 +93,8 @@
       name="timeHistoryOutput"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>    
+      target="/Outputs/timeHistoryOutput"/>
   </Events>
   <!-- SPHINX_SNEDDON_EVENTS_END -->
- 
+
 </Problem>

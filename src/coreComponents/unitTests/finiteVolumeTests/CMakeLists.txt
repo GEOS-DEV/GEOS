@@ -2,7 +2,7 @@
 set( gtest_geosx_tests
      testMimeticInnerProducts.cpp )
 
-set( dependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest gmock )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )

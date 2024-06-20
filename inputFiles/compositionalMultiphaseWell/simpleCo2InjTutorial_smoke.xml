@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./simpleCo2InjTutorial_base.xml"/>
   </Included>
 
@@ -33,8 +33,8 @@
       </InternalWell>
    </InternalMesh>
   </Mesh>
-  <!-- SPHINX_FIELD_CASE_Co2_MESH_END --> 
- 
+  <!-- SPHINX_FIELD_CASE_Co2_MESH_END -->
+
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   <Events
     maxTime="5e8">
@@ -56,7 +56,7 @@
       timeFrequency="1e7"
       targetExactTimestep="1"
       target="/Tasks/wellPressureCollection" />
-    
+
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="2e8"
@@ -65,10 +65,10 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="5e5"        
+      maxEventDt="5e5"
       target="/Solvers/coupledFlowAndWells"/>
 
   </Events>
-  <!-- SPHINX_FIELD_CASE_Co2_EVENTS_END -->  
+  <!-- SPHINX_FIELD_CASE_Co2_EVENTS_END -->
 </Problem>
 

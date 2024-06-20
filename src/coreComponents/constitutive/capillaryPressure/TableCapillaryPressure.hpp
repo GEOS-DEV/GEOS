@@ -46,7 +46,7 @@ public:
 
   static std::string catalogName() { return "TableCapillaryPressure"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   class KernelWrapper final : public CapillaryPressureBaseUpdate
@@ -95,7 +95,7 @@ private:
 
 private:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
 

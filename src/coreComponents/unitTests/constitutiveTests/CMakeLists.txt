@@ -29,7 +29,7 @@ set( gtest_pvt_xmls
 set( gtest_reactivefluid_xmls
      testReactiveFluid.xml )
 
-set( dependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest gmock )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )

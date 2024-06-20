@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_efem-edfm_verticalFrac_base.xml" />
   </Included>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -40,7 +40,7 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="pressureCollection" 
+      name="pressureCollection"
       timeFrequency="3.6e3"
       target="/Tasks/pressureCollection"/>
 
@@ -50,13 +50,13 @@
       target="/Outputs/pressureHistoryOutput"/>
 
     <PeriodicEvent
-      name="apertureCollection" 
+      name="apertureCollection"
       target="/Tasks/apertureCollection" />
 
     <PeriodicEvent
       name="apertureOutput"
-      targetExactTimestep="0" 
-      target="/Outputs/apertureOutput" /> 
+      targetExactTimestep="0"
+      target="/Outputs/apertureOutput" />
 
     <PeriodicEvent
       name="solverApplication0"
@@ -69,8 +69,8 @@
       beginTime="100.0"
       endTime="1000.0"
       forceDt="100.0"
-      target="/Solvers/poroSolver"/> 
-  
+      target="/Solvers/poroSolver"/>
+
     <PeriodicEvent
       name="solverApplication2"
       beginTime="1000.0"

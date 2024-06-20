@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-   <Included>
+   <Included name="primary_includes">
     <File name="./kgdValidation_base.xml"/>
    </Included>
-  
+
    <Mesh>
     <!-- SPHINX_MESH -->
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ 0, 0.1525 }"
@@ -15,7 +15,7 @@
       zCoords="{ 0.037, 0.092 }"
       nx="{ 10 }"
       ny="{ 4, 2, 6, 2, 4 }"
-      nz="{ 10 }"	  
+      nz="{ 10 }"
       cellBlockNames="{cb1}"/>
     <!-- SPHINX_MESH_END -->
   </Mesh>
@@ -46,12 +46,12 @@
   <Events
     maxTime="1.0">
 
-    <SoloEvent 
+    <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
       forceDt="1.0"
@@ -63,5 +63,5 @@
       timeFrequency="1.0"
       target="/Outputs/restartOutput"/>
   </Events>
-  
+
 </Problem>

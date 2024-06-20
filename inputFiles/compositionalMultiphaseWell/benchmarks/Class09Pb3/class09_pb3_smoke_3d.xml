@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./class09_pb3_hystRelperm_direct_base.xml"/>
   </Included>
 
@@ -91,7 +91,7 @@
       name="solverApplications1"
       beginTime="0"
       endTime="7.884e8"
-      forceDt="1e5"        
+      forceDt="1e5"
       target="/Solvers/coupledFlowAndWells"/>
 
   </Events>

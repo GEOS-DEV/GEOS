@@ -102,7 +102,7 @@ SolverBase::~SolverBase() = default;
 void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
 }
 

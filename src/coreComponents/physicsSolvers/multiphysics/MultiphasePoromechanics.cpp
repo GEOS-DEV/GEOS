@@ -67,9 +67,9 @@ MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & 
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
+void MultiphasePoromechanics< FLOW_SOLVER >::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   GEOS_ERROR_IF( this->flowSolver()->getCatalogName() == "CompositionalMultiphaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,

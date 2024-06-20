@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-<Included>
+<Included name="primary_includes">
   <File name="./PoroModifiedCamClayWellbore_base.xml"/>
 </Included>
 
@@ -20,11 +20,11 @@
     autoSpaceRadialElems="{ 1 }"
     useCartesianOuterBoundary="0"
     cellBlockNames="{ cb1 }"/>
-</Mesh> 
+</Mesh>
 
 <Events maxTime="80">
 
-<PeriodicEvent 
+<PeriodicEvent
   name="outputs"
   timeFrequency="80"
   targetExactTimestep="1"
@@ -38,7 +38,7 @@
   target="/Outputs/restartOutput"
 />
 
-<PeriodicEvent 
+<PeriodicEvent
   name="solverApplication0"
   forceDt="10"
   target="/Solvers/PoromechanicsSolver"

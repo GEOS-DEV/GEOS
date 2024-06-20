@@ -122,7 +122,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   for( auto collectorPath : m_collectorPaths )
   {
     try

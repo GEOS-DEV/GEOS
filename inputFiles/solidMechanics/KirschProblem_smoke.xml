@@ -2,7 +2,7 @@
 
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./KirschProblem_base.xml"/>
   </Included>
 
@@ -44,7 +44,7 @@
       name="outputs1"
       target="/Outputs/siloOutput"
     />
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1"
@@ -64,12 +64,12 @@
       target="/Outputs/stressOutput"/>
 
     <SoloEvent
-      name="displacementCollection" 
+      name="displacementCollection"
       target="/Tasks/displacementCollection" />
 
     <SoloEvent
-      name="displacementOutput" 
-      target="/Outputs/displacementOutput" />   
+      name="displacementOutput"
+      target="/Outputs/displacementOutput" />
   </Events>
 
 </Problem>

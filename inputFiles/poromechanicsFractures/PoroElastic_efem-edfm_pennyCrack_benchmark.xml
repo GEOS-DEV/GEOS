@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
    <File name="./PoroElastic_efem-edfm_pennyCrack_base.xml"/>
   </Included>
   <Solvers
@@ -21,7 +21,7 @@
       <LinearSolverParameters
         solverType="direct"
         krylovTol="1e-6"
-        preconditionerType="mgr"/>        
+        preconditionerType="mgr"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures

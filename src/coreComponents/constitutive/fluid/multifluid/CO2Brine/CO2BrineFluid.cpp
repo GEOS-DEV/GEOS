@@ -202,9 +202,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 2,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),

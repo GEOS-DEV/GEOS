@@ -84,7 +84,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanics"; }
@@ -178,7 +178,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling

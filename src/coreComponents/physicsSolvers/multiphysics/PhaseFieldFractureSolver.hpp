@@ -54,7 +54,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "PhaseFieldFracture"; }
@@ -65,7 +65,7 @@ public:
     Damage = 1
   };
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver

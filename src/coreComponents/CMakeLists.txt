@@ -70,14 +70,14 @@ foreach( lib ${subdirs} )
 endforeach()
 
 if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
-  message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
+  message(STATUS "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
                     SHARED TRUE )
 
 elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
-  message( "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
+  message(STATUS "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE      SHARED
@@ -85,9 +85,9 @@ elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
                                 LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG} )
 
 elseif( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
-  message( "Building object coreComponents, executables link to coreComponents" )
+  message(STATUS "Building object coreComponents, executables link to coreComponents" )
 else()
-  message( "Building static coreComponents, executables link to coreComponents" )
+  message(STATUS "Building static coreComponents, executables link to coreComponents" )
 endif()
 
 if ( TARGET geosx_core )

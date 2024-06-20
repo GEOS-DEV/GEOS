@@ -45,7 +45,7 @@ public:
    */
   static string catalogName() { return "VTK"; }
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Set the plotFileRoot name for the output

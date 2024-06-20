@@ -77,7 +77,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   int cycleNumber = int(round( time/dt ));
   try
@@ -118,7 +118,7 @@ static PyObject * setOutputDir( PyVTKOutput * self, PyObject * args )
   try
   {
     self->group->setOutputDirectory( path );
-    self->group->postProcessInput();
+    self->group->postInputInitialization();
   }
   catch( std::out_of_range const & e )
   {
@@ -154,7 +154,7 @@ static PyObject * setOutputFileRootName( PyVTKOutput * self, PyObject * args )
   try
   {
     self->group->setPlotFileRoot( filename );
-    self->group->postProcessInput();
+    self->group->postInputInitialization();
   }
   catch( std::out_of_range const & e )
   {

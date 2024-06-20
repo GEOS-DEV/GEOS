@@ -60,7 +60,7 @@ public:
 
   static string catalogName();
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   virtual bool isThermal() const override;
 
@@ -162,7 +162,7 @@ private:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePreSubGroups() override;
 

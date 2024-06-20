@@ -89,7 +89,7 @@ VTKOutput::VTKOutput( string const & name,
 VTKOutput::~VTKOutput()
 {}
 
-void VTKOutput::postProcessInput()
+void VTKOutput::postInputInitialization()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );

@@ -92,7 +92,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Getter for the fluid component names
@@ -310,7 +310,7 @@ public:
 
 private:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// the max number of fluid phases
   integer m_numPhases;

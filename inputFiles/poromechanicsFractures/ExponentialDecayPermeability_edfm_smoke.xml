@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ExponentialDecayPermeability_edfm_base.xml"/>
   </Included>
@@ -53,13 +53,13 @@
     maxTime="0.05">
     <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>  
-   
+      target="/Solvers/SurfaceGenerator"/>
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="5.0e-03"
       target="/Outputs/vtkOutput"/>
-  
+
     <PeriodicEvent
       name="solverApplication0"
       endTime="1.e-10"
@@ -88,7 +88,7 @@
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
-      name="timeHistoryCollection"      
+      name="timeHistoryCollection"
       target="/Tasks/tractionCollection" />
 
     <PeriodicEvent
@@ -103,7 +103,7 @@
     <PeriodicEvent
       name="timeHistoryOutput1"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput1"/> 
+      target="/Outputs/timeHistoryOutput1"/>
 
     <PeriodicEvent
       name="timeHistoryCollection2"
@@ -112,7 +112,7 @@
     <PeriodicEvent
       name="timeHistoryOutput2"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput2"/> 
+      target="/Outputs/timeHistoryOutput2"/>
 
     <PeriodicEvent
       name="timeHistoryCollection3"
@@ -121,11 +121,11 @@
     <PeriodicEvent
       name="timeHistoryOutput3"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput3"/> 
+      target="/Outputs/timeHistoryOutput3"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.02"
-      target="/Outputs/restartOutput"/>          
+      target="/Outputs/restartOutput"/>
   </Events>
 </Problem>

@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml"/>
   </Included>
@@ -70,7 +70,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="temperature"
-      scale="0.0"/>  
+      scale="0.0"/>
 
     <FieldSpecification
       name="sourcePressure"

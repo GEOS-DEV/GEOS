@@ -21,6 +21,8 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
 #include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
 
 using namespace geos;
@@ -210,7 +212,7 @@ protected:
   void SetUp() override
   {
 
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "singleflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();

@@ -33,6 +33,7 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 
 #include <algorithm>
@@ -221,7 +222,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
     setInputFlag( InputFlags::FALSE );
 }
 
-void SurfaceGenerator::postProcessInput()
+void SurfaceGenerator::postInputInitialization()
 {
   static const std::set< integer > binaryOptions = { 0, 1 };
 
@@ -316,7 +317,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString() ) );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 arrayView1d< string const > const & )
@@ -423,7 +424,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString() ) );
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 

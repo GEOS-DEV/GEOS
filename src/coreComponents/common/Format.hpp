@@ -15,6 +15,7 @@
 #ifndef GEOS_COMMON_FORMAT_HPP_
 #define GEOS_COMMON_FORMAT_HPP_
 
+#include "GeosxMacros.hpp"
 #include <type_traits>
 
 #if __cplusplus < 202002L
@@ -24,6 +25,7 @@
 #ifdef GEOSX_USE_FMT
 #define FMT_HEADER_ONLY
 // Differentiate between standalone fmt path and umpire's fmt path
+#include "../include/fmt/args.h"
 #include "../include/fmt/core.h"
 #include "../include/fmt/chrono.h"
 #include "../include/fmt/ranges.h"
@@ -73,6 +75,13 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
 /**
  * @brief Interpolate arguments into a message format string.
  * @param msg the message format string, must be a constant expression
+ * @param args an argument map
+ */
+#define GEOS_VFMT( msg, args ) GEOS_FMT_NS::vformat( msg, args )
+
+/**
+ * @brief Interpolate arguments into a message format string.
+ * @param msg the message format string, must be a constant expression
  */
 #define GEOS_FMT( msg, ... ) GEOS_FMT_NS::format( msg, __VA_ARGS__ )
 
@@ -103,5 +112,17 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
 }
 #endif
 // End of the workaround for fmt compilation issues
+
+template < typename T >
+GEOS_FORCE_INLINE
+auto GEOS_FMT_ARG_MAP( T & namedArgs )
+{
+  GEOS_FMT_NS::dynamic_format_arg_store< GEOS_FMT_NS::format_context > arg_store;
+  for ( const auto & [ key, value ] : namedArgs )
+  {
+    arg_store.push_back( GEOS_FMT_NS::arg(key.c_str(), value) );
+  }
+  return arg_store;
+}
 
 #endif //GEOS_COMMON_FORMAT_HPP_

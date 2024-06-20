@@ -118,10 +118,10 @@ public:
    * @brief Get catalog name
    * @return Catalog name string
    */
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Post-process XML input
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Deliver a clone of this object

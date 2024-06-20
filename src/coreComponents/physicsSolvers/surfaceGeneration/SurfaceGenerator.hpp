@@ -68,7 +68,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & MeshBody ) override final;
 
@@ -99,7 +99,7 @@ public:
 
   inline string const getFractureRegionName() const { return m_fractureRegionName; }
 
-  void postProcessInput() override final;
+  void postInputInitialization() override final;
 
 protected:
 

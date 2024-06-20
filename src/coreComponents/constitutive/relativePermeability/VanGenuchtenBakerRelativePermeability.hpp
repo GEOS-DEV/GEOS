@@ -117,7 +117,7 @@ public:
 
   static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = VanGenuchtenBakerRelativePermeabilityUpdate;
@@ -141,7 +141,7 @@ public:
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
 

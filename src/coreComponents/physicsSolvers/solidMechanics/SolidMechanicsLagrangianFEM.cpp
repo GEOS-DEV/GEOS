@@ -122,9 +122,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 
 }
 
-void SolidMechanicsLagrangianFEM::postProcessInput()
+void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -238,7 +238,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -312,7 +312,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,

@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./viscoExtendedDruckerPrager_relaxation_base.xml"/>
-  </Included> 
+  </Included>
 
 <!-- SPHINX_MESH -->
   <Mesh>
@@ -16,14 +16,14 @@
       nx="{ 9, 1 }"
       ny="{ 9, 1 }"
       nz="{ 9, 1 }"
-      cellBlockNames="{ cb-0_0_0,  cb-1_0_0,  cb-0_1_0,  cb-1_1_0, 
+      cellBlockNames="{ cb-0_0_0,  cb-1_0_0,  cb-0_1_0,  cb-1_1_0,
                         cb-0_0_1,  cb-1_0_1,  cb-0_1_1,  cb-1_1_1 }"/>
   </Mesh>
 <!-- SPHINX_MESH_END -->
 
   <Events
     maxTime="172800.0">
-    <PeriodicEvent 
+    <PeriodicEvent
       name="outputs"
       timeFrequency="1000.0"
       targetExactTimestep="1"
@@ -39,13 +39,13 @@
       target="/Outputs/stressOutput"/>
 
     <PeriodicEvent
-      name="displacementCollection" 
+      name="displacementCollection"
       target="/Tasks/displacementCollection" />
 
     <PeriodicEvent
       name="displacementOutput"
-      targetExactTimestep="0" 
-      target="/Outputs/displacementOutput" /> 
+      targetExactTimestep="0"
+      target="/Outputs/displacementOutput" />
 
     <PeriodicEvent
       name="solverApplications"

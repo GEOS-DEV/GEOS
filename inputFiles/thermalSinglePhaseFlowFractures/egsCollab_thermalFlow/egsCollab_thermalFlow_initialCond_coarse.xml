@@ -2,7 +2,7 @@
 
 <Problem>
 
-   <Included>
+   <Included name="primary_includes">
     <File name="./egsCollab_thermalFlow_initialCond_base.xml"/>
   </Included>
 
@@ -35,6 +35,6 @@
        nx="{ 1, 1, 1, 1, 1, 1, 1, 1, 60 }"
        ny="{ 30 }"
        nz="{ 1, 56, 1, 1, 1, 1, 1, 1, 1, 1 }"
-       cellBlockNames="{ cb }"/> 
+       cellBlockNames="{ cb }"/>
    </Mesh>
 </Problem>

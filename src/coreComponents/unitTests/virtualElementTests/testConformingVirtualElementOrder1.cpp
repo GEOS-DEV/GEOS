@@ -21,6 +21,8 @@
 #include "mesh/MeshManager.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
 
+#include "unitTests/dataRepositoryTests/utils.hpp"
+
 // TPL includes
 #include "gtest/gtest.h"
 
@@ -287,26 +289,27 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-
   ProblemManager & problemManager = state.getProblemManager();
-  problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
+  dataRepository::testing::setupProblemFromXML( &problemManager, inputStream.c_str() );
 
-  // Open mesh levels
-  DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
-                                                                        .meshManager );
-  meshManager.generateMeshLevels( domain );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-  ElementRegionManager & elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( inputFile, topLevelNode );
-  elementManager.postProcessInputRecursive();
-  problemManager.problemSetup();
+  // xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
+  // problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
+
+  // // Open mesh levels
+  // MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
+  //                                                                       .meshManager );
+  // meshManager.generateMeshLevels( domain );
+  // ElementRegionManager & elementManager = mesh.getElemManager();
+  // xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  // elementManager.processInputFileRecursive( inputFile, topLevelNode );
+  // elementManager.postInputInitializationRecursive();
+  // problemManager.problemSetup();
 
   // Test computed projectors for all cells in MeshLevel
+  DomainPartition & domain  = problemManager.getDomainPartition();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   testCellsInMeshLevel< 10, 6 >( mesh );
 }
 
@@ -340,25 +343,27 @@ TEST( ConformingVirtualElementOrder1, wedges )
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
+  // xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
   ProblemManager & problemManager = state.getProblemManager();
-  problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
+  dataRepository::testing::setupProblemFromXML( &problemManager, inputStream.c_str() );
 
-  // Open mesh levels
+  // problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
+
+  // // Open mesh levels
+  // MeshManager & meshManager = problemManager.getGroup< MeshManager >
+  //                               ( problemManager.groupKeys.meshManager );
+  // meshManager.generateMeshLevels( domain );
+  // ElementRegionManager & elementManager = mesh.getElemManager();
+  // xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+  // elementManager.processInputFileRecursive( inputFile, topLevelNode );
+  // elementManager.postInputInitializationRecursive();
+  // problemManager.problemSetup();
+
   DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >
-                                ( problemManager.groupKeys.meshManager );
-  meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-  ElementRegionManager & elementManager = mesh.getElemManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( inputFile, topLevelNode );
-  elementManager.postProcessInputRecursive();
-  problemManager.problemSetup();
-
   // Test computed projectors for all cells in MeshLevel
   testCellsInMeshLevel< 8, 9 >( mesh );
 }

@@ -9,6 +9,7 @@
 
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
+set(DISABLE_KERNEL_COMPILATION OFF CACHE BOOL "")
 
 # MPI
 set(ENABLE_MPI ON CACHE BOOL "")
@@ -43,7 +44,7 @@ set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/p
 
 set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
-# caliper 
+# caliper
 set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
 set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "" FORCE)
 

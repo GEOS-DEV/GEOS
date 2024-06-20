@@ -68,9 +68,9 @@ public:
   CoupledWaveSolver & operator=( CoupledWaveSolver && ) = delete;
 
   virtual void
-  postProcessInput() override final
+  postInputInitialization() override final
   {
-    SolverBase::postProcessInput();
+    SolverBase::postInputInitialization();
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
     {
@@ -137,7 +137,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the acoustic solver

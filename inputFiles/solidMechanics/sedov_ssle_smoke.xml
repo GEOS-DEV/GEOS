@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./sedov_ssle_base.xml"/>
   </Included>

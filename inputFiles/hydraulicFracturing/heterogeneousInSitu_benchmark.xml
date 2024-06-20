@@ -2,7 +2,7 @@
 
 <Problem>
   <!-- SPHINX_HYDROFRACTURE_INCLUDED -->
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./heterogeneousInSitu_base.xml"/>
   </Included>

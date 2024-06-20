@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_efem-edfm_inclinedFrac_base.xml" />
   </Included>
 
@@ -27,7 +27,7 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 8, 4 }"/>
   </Geometry>
-  
+
   <Events
     maxTime="100">
     <PeriodicEvent

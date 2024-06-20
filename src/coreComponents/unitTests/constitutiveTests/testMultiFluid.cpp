@@ -425,7 +425,7 @@ MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 
@@ -512,7 +512,7 @@ MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvtw.txt";
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 
@@ -540,7 +540,7 @@ MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdw.txt"; tableNames[2] = "pvdg.txt";
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 
@@ -661,7 +661,7 @@ MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent 
   real64 & waterViscosity = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString() );
   waterViscosity = 0.0003;
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 
@@ -856,7 +856,7 @@ MultiFluidBase & makeCO2BrinePhillipsFluid( string const & name, Group * parent 
   auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrinePhillipsFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 
@@ -1085,7 +1085,7 @@ MultiFluidBase & makeCO2BrineEzrokhiFluid( string const & name, Group * parent )
   auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineEzrokhiFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return fluid;
 }
 

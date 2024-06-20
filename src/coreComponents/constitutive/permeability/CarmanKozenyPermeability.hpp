@@ -92,7 +92,7 @@ public:
 
   static string catalogName() { return "CarmanKozenyPermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CarmanKozenyPermeabilityUpdate;

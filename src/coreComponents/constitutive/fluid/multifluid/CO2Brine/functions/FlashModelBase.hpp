@@ -90,7 +90,7 @@ public:
     return catalog;
   }
 
-  virtual string getCatalogName() const = 0;
+  virtual string const getCatalogName() const = 0;
 
   /**
    * @brief Check if the input values are in the expected pressure & temperature tables bounds

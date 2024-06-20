@@ -2,7 +2,7 @@
 
 <!--# # -->
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ProppantGelTransport_base.xml"/>
   </Included>
 
@@ -18,7 +18,7 @@
       nz="{ 24 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-  
+
   <Events
     maxTime="31">
     <SoloEvent
@@ -39,12 +39,12 @@
       name="outputs"
       target="/Outputs/siloOutput"/>
 
-    <!--    
+    <!--
     <PeriodicEvent name="restarts"
                    timeFrequency="5"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"/>
 -->
   </Events>
- 
+
 </Problem>

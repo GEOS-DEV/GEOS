@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
@@ -76,5 +76,5 @@
       cycleFrequency="10"
       target="/Outputs/vtkOutput"/>
   </Events>
-  
+
 </Problem>

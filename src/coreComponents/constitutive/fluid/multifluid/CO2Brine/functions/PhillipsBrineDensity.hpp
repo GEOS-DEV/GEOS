@@ -89,7 +89,7 @@ public:
 
   static string catalogName() { return "PhillipsBrineDensity"; }
 
-  virtual string getCatalogName() const final { return catalogName(); }
+  virtual string const getCatalogName() const final { return catalogName(); }
 
   /**
    * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )

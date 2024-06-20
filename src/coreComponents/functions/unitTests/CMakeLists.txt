@@ -3,7 +3,7 @@ set( gtest_geosx_tests
      testFunctions.cpp )
 
 
-set( dependencyList ${parallelDeps} gtest functions )
+set( dependencyList ${parallelDeps} gtest gmock functions )
 
 # if ( GEOSX_BUILD_SHARED_LIBS )
 #   list( APPEND dependencyList geosx_core )

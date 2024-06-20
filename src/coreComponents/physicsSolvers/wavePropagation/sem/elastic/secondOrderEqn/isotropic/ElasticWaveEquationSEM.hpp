@@ -54,7 +54,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override { return catalogName(); }
+  string const getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -154,7 +154,7 @@ public:
   void prepareNextTimestep( MeshLevel & mesh );
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 

@@ -16,7 +16,7 @@ set( multi_files
      multifile_input/solver.xml )
 
 # Add gtest C++ based tests
-set( dependencyList ${parallelDeps} gtest optionparser )
+set( dependencyList ${parallelDeps} gtest gmock optionparser )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )

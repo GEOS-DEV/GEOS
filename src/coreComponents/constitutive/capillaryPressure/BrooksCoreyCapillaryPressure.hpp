@@ -96,7 +96,7 @@ public:
 
   static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyCapillaryPressureUpdate;
@@ -118,7 +118,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
   array1d< real64 > m_phaseCapPressureExponentInv;

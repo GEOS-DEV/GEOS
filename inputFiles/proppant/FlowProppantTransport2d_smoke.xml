@@ -2,10 +2,10 @@
 
 <!--# # -->
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./FlowProppantTransport2d_base.xml"/>
   </Included>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -18,7 +18,7 @@
       nz="{ 25 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-  
+
   <Events
     maxTime="10">
     <SoloEvent
@@ -45,5 +45,5 @@
       targetExactTimestep="0"
       target="/Outputs/sidreRestart"/>
   </Events>
-  
+
 </Problem>

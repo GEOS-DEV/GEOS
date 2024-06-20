@@ -56,9 +56,9 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
 SolidMechanicsStateReset::~SolidMechanicsStateReset()
 {}
 
-void SolidMechanicsStateReset::postProcessInput()
+void SolidMechanicsStateReset::postInputInitialization()
 {
-  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
+  ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( GEOS_FMT("/{}", dataRepository::keys::ProblemManager ) );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),

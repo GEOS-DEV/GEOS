@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_Mandel_prism6_base_hybrid.xml"/>
   </Included>
 
@@ -15,14 +15,14 @@
 
   <Events
     maxTime="10.0">
-    
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="5.0e-01"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="pressureCollection" 
+      name="pressureCollection"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -31,12 +31,12 @@
       target="/Outputs/pressureHistoryOutput"/>
 
     <PeriodicEvent
-      name="displacementCollection" 
+      name="displacementCollection"
       target="/Tasks/displacementCollection" />
 
     <PeriodicEvent
       name="displacementOutput"
-      targetExactTimestep="0" 
+      targetExactTimestep="0"
       target="/Outputs/displacementHistoryOutput" />
 
     <PeriodicEvent
@@ -44,8 +44,8 @@
       beginTime="0.0"
       endTime="10.0"
       forceDt="0.0025"
-      target="/Solvers/poroSolve"/> 
+      target="/Solvers/poroSolve"/>
 
   </Events>
-  
+
 </Problem>

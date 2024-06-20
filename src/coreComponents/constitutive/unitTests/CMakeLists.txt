@@ -15,7 +15,7 @@ set( gtest_geosx_tests
      testCubicEOS.cpp
      testRachfordRice.cpp )
 
-set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
+set( dependencyList gtest gmock blas lapack constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )

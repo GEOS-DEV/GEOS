@@ -40,7 +40,7 @@ bool RestartOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   GEOS_MARK_FUNCTION;
 
-  Group & rootGroup = this->getGroupByPath( "/Problem" );
+  Group & rootGroup = this->getGroupByPath( GEOS_FMT("/{}", dataRepository::keys::ProblemManager ) );
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);

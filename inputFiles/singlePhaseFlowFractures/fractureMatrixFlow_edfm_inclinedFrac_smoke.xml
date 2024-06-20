@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./fractureMatrixFlow_edfm_base.xml" />
   </Included>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -59,7 +59,7 @@
       timeFrequency="1e3"
       target="/Outputs/sidreRestart"/>
   </Events>
- 
+
   <Outputs>
     <VTK
       name="vtkOutput"

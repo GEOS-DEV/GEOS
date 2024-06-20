@@ -88,9 +88,9 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 }
 
-void CompositionalMultiphaseFVM::postProcessInput()
+void CompositionalMultiphaseFVM::postInputInitialization()
 {
-  CompositionalMultiphaseBase::postProcessInput();
+  CompositionalMultiphaseBase::postInputInitialization();
 
   if( m_scalingType == ScalingType::Local && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
@@ -106,7 +106,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
                                                 : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )

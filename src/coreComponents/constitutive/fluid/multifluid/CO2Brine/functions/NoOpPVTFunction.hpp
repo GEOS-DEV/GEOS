@@ -82,7 +82,7 @@ public:
 
   static string catalogName() { return "NoOpPVTFunction"; }
 
-  virtual string getCatalogName() const override final { return catalogName(); }
+  virtual string const getCatalogName() const override final { return catalogName(); }
 
   /**
    * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )

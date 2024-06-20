@@ -100,7 +100,7 @@ public:
 
   static string catalogName() { return "PressurePorosity"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
@@ -128,7 +128,7 @@ public:
 
 
 private:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   real64 m_referencePressure;
 

@@ -10,7 +10,7 @@ set(testSources
     testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
     testQ5_Hexahedron_Lagrange_GaussLobatto.cpp )
 
-set( dependencyList gtest finiteElement ${parallelDeps} )
+set( dependencyList gtest gmock finiteElement ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )

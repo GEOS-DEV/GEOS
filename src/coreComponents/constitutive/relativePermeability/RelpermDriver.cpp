@@ -20,6 +20,8 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -86,10 +88,10 @@ void RelpermDriver::outputResults()
 }
 
 
-void RelpermDriver::postProcessInput()
+void RelpermDriver::postInputInitialization()
 {
   constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   constitutive::RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
@@ -112,7 +114,7 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 
 
   constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   constitutive::RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 
@@ -165,7 +167,7 @@ template< typename RELPERM_TYPE >
 void RelpermDriver::resizeTables()
 {
   constitutive::ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  & constitutiveManager = this->getGroupByPath< constitutive::ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   constitutive::RelativePermeabilityBase
   & baseRelperm = constitutiveManager.getGroup< constitutive::RelativePermeabilityBase >( m_relpermName );
 

@@ -6,6 +6,8 @@
 #
 ####################################
 
+message(STATUS "===================================================")
+message(STATUS "Processing SetupGeosxThirdParty.cmake" )
 
 ################################
 # Helper macros & functions
@@ -106,8 +108,6 @@ macro(extract_version_from_header)
 
     endif()
 
-    message(" ----> ${arg_NAME}_VERSION = ${${arg_NAME}_VERSION}")
-
 endmacro( extract_version_from_header)
 
 
@@ -182,8 +182,6 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
-    message( " ----> Conduit_VERSION = ${Conduit_VERSION}")
-
 
     set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
     foreach(targetName ${CONDUIT_TARGETS} )
@@ -232,8 +230,7 @@ if(DEFINED HDF5_DIR)
 
     file(READ "${HDF5_DIR}/include/H5public.h" header_file )
     string(REGEX MATCH "version: *([0-9]+.[0-9]+.[0-9]+)" _ ${header_file})
-    set( HDF5_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
-    message( " ----> HDF5 version ${HDF5_VERSION}")
+    set( hdf5_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
 
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
@@ -254,6 +251,10 @@ if(DEFINED SILO_DIR AND ENABLE_SILO)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
+    extract_version_from_header( NAME silo
+                      HEADER "${SILO_DIR}/lib/libsiloh5.settings"
+                      VERSION_STRING "Silo Version:" )
+
 
     set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
@@ -272,8 +273,6 @@ if(DEFINED PUGIXML_DIR)
     find_package(pugixml REQUIRED
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
-
-    message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
 
     if(TARGET pugixml::pugixml)
       set(thirdPartyLibs ${thirdPartyLibs} pugixml::pugixml)
@@ -307,8 +306,6 @@ if(DEFINED RAJA_DIR)
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> RAJA_VERSION = ${RAJA_VERSION}")
-
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(RAJA PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
     set(ENABLE_RAJA ON CACHE BOOL "")
@@ -340,8 +337,6 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> umpire_VERSION = ${umpire_VERSION}")
-
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
@@ -358,8 +353,6 @@ if(DEFINED CHAI_DIR)
     find_package(chai REQUIRED
                  PATHS ${CHAI_DIR}
                  NO_DEFAULT_PATH)
-
-    message( " ----> chai_VERSION = ${chai_VERSION}")
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
@@ -381,8 +374,7 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    # Header file provides incorrect version 0.3.0
-    message( " ----> adiak_VERSION = 0.2.2")
+    # Header file provides incorrect version 0.3.
 
     set(adiak_target "")
     if(TARGET adiak::adiak)
@@ -398,6 +390,8 @@ if(DEFINED ADIAK_DIR)
     set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
+
+    set( adiak_VERSION "0.2.2" )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} ${adiak_target})
@@ -665,7 +659,6 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
             set(hypre_dev_branch "${CMAKE_MATCH_1}")
         endif()
         set(hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE)
-        message(" ----> hypre_VERSION = ${hypre_VERSION}")
     endif()
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
@@ -772,8 +765,6 @@ if(DEFINED VTK_DIR)
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> VTK_VERSION=${VTK_VERSION}")
-
     set( VTK_TARGETS
          VTK::FiltersParallelDIY2
          VTK::IOLegacy
@@ -810,8 +801,6 @@ if(DEFINED FMT_DIR)
     find_package(fmt REQUIRED
                  PATHS ${FMT_DIR}
                  NO_DEFAULT_PATH)
-
-    message( " ----> fmt_VERSION = ${fmt_VERSION}")
 
     get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
 
@@ -859,7 +848,6 @@ endif()
 ################################
 # Python
 ################################
-message(" CMAKE_VERSION ${CMAKE_VERSION} ")
 if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
@@ -870,8 +858,6 @@ endif()
 if(ENABLE_PYGEOSX)
     find_package(${PYTHON_AND_VERSION} REQUIRED
                  COMPONENTS Development NumPy)
-
-    message( " ----> $Python3_VERSION = ${Python3_VERSION}")
 
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
@@ -927,10 +913,31 @@ message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   find_package(CUDAToolkit REQUIRED)
 
-  message( " ----> $CUDAToolkit_VERSION = ${CUDAToolkit_VERSION}")
-
   set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
 endif()
 
+message(STATUS "TPL Versions:")
+
+set(unique_base_lib_names)
+
+# Extract unique base library names
+foreach( lib IN LISTS thirdPartyLibs )
+  string( REGEX REPLACE "::.*" "" base_lib_name ${lib} )
+  list(APPEND unique_base_lib_names ${base_lib_name})
+endforeach( )
+
+# Remove duplicates from the list
+list( REMOVE_DUPLICATES unique_base_lib_names )
+
+foreach( lib IN LISTS unique_base_lib_names )
+    set(version_var "${lib}_VERSION")
+    if( NOT DEFINED ${version_var} )
+        set( ${version_var} "unkmown" )
+    endif( )
+    message(STATUS "  > ${lib}\@${${version_var}}")
+endforeach()
+
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
+message(STATUS "Leaving SetupGeosxThirdParty.cmake" )
+message(STATUS "===================================================")

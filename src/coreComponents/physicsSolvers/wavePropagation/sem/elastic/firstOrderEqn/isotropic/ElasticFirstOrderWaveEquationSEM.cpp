@@ -175,10 +175,10 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 
 
-void ElasticFirstOrderWaveEquationSEM::postProcessInput()
+void ElasticFirstOrderWaveEquationSEM::postInputInitialization()
 {
 
-  WaveSolverBase::postProcessInput();
+  WaveSolverBase::postInputInitialization();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceElem.resize( numSourcesGlobal );
@@ -233,7 +233,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( GEOS_FMT("/{}/Events", dataRepository::keys::ProblemManager ) );
 
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
@@ -304,7 +304,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );

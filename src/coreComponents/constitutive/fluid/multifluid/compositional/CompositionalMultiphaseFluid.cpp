@@ -115,9 +115,9 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateCons
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessInput()
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();

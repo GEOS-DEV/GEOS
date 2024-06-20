@@ -221,8 +221,12 @@ set( physicsSolvers_sources
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
      wavePropagation/sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp )
 
+if ( NOT DISABLE_KERNEL_COMPILATION )
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+else( )
+  message( STATUS "Kernel generation and compilation disabled!" )
+endif( )
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )

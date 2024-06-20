@@ -271,7 +271,7 @@ public:
    */
   static string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -324,7 +324,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// Material parameter: The default value of yield stress
   real64 m_defaultYieldStress;

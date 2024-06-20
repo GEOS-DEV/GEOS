@@ -49,7 +49,7 @@ public:
 
   static string catalogName() { return "BlackOilFluid"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Kernel wrapper class for BlackOilFluid
@@ -261,7 +261,7 @@ private:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
 private:
 

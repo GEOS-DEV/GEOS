@@ -44,7 +44,7 @@ public:
   /**
    * @return Get the final class Catalog name
    */
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
@@ -135,7 +135,7 @@ protected:
   void constructFaultStressProjectionTensors( real64 ( &faultNormalProjectionTensor )[6],
                                               real64 ( &faultShearProjectionTensor )[6] ) const;
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// pointer to stress solver
   SolverBase * m_stressSolver;

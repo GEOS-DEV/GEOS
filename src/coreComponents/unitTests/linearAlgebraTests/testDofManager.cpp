@@ -26,6 +26,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/GeosxState.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
 #include "unitTests/linearAlgebraTests/testDofManagerUtils.hpp"
 
 #include "gtest/gtest.h"
@@ -74,7 +76,7 @@ protected:
     domain( state.getProblemManager().getDomainPartition() ),
     dofManager( "test" )
   {
-    geos::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     dofManager.setDomain( domain );
   }
 

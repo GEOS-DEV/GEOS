@@ -165,11 +165,11 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 
 
-void ElasticWaveEquationSEM::postProcessInput()
+void ElasticWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postProcessInput();
+  WaveSolverBase::postInputInitialization();
 
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( GEOS_FMT("/{}/Events", dataRepository::keys::ProblemManager ) );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 dt = 0;
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -250,7 +250,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
 
   real64 dt = 0;
-  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( GEOS_FMT("/{}/Events", dataRepository::keys::ProblemManager ) );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
@@ -352,7 +352,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   applyFreeSurfaceBC( 0.0, domain );
 

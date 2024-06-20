@@ -169,7 +169,7 @@ IS_VALID_EXPRESSION( HasEnumStrings, ENUM, getEnumStrings( std::declval< ENUM >(
  * @tparam ENUM the type of enumeration
  */
 template< typename ENUM >
-struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
+struct TypeRegex< ENUM, std::enable_if_t< geos::internal::HasEnumStrings< ENUM > > >
 {
   /**
    * @brief @return Regex for validating enumeration inputs for @p ENUM type.

@@ -102,7 +102,7 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the EmbeddedSurfaceNodeManager catalog name
    */
-  string getCatalogName() const override final
+  string const getCatalogName() const override final
   { return catalogName(); }
 
   ///@}

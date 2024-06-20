@@ -121,6 +121,14 @@ public:
   bool initializeDataRepository();
 
   /**
+   * @brief Perform command-line processing and input file parsing.
+   * @return True iff initialization can be continue.
+   * @pre This is called internally by @c initializeDataRepository(), and should not be called
+   *      otherwise except in specific circumstances (usually testing)
+   */
+  bool initializeInputParsing();
+
+  /**
    * @brief Apply initial conditions and if performing a restart overwrites the data repository.
    * @pre This must be called after @c initializeDataRepository() when @c getState()
    *   is @c State::INITIALIZED.
@@ -218,6 +226,8 @@ public:
   { return m_runTime; }
 
 private:
+
+  void parseInputFiles();
 
   /// The current State.
   State m_state;

@@ -21,6 +21,9 @@
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/InputProcessing.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshManager.hpp"
 
 namespace geos
 {
@@ -49,7 +52,6 @@ class ParticleBlockManagerABC;
 class ProblemManager : public dataRepository::Group
 {
 public:
-
   /**
    * @brief Create a new ProblemManager, it must be created from the root conduit node.
    * @param root The root conduit node.
@@ -108,25 +110,8 @@ public:
    */
   void generateDocumentation();
 
-  /**
-   * @brief Parses the input xml file
-   * @details The name of the input file is indicated via the -i option on the command line
-   */
-  void parseInputFile();
-
-  /**
-   * @brief Parses the input xml string
-   * @param xmlString the contents of the xml file as a string
-   * @details This is used primarily for testing purposes
-   */
-  void parseInputString( string const & xmlString );
-
-  /**
-   * @brief Parses the input xml document. Also add the includes content to the xmlDocument when
-   * `Include` nodes are encountered.
-   * @param xmlDocument The parsed xml document handle
-   */
-  void parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument );
+  template < typename T >
+  void applyStaticExtensions( inputParsing::input_document_type &, T &);
 
   /**
    * @brief Generates numerical meshes used throughout the code
@@ -231,26 +216,39 @@ public:
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
     dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
                                                                                      ///< memory key
+    dataRepository::ViewKey preprocessOnly           = {"preprocessOnly"};           ///< preprocess on flag key
   } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys
   struct groupKeysStruct
   {
     /// @return Numerical methods string
+    static constexpr char const * commandLineString() { return "commandLine"; }
+    static constexpr char const * constitutiveManagerString() { return "Constitutive"; }
+    static constexpr char const * domainString() { return "domain"; }
+    static constexpr char const * eventManagerString() { return "Events"; }
+    static constexpr char const * fieldSpecificationManagerString() { return "FieldSpecifications"; }
+    static constexpr char const * functionManagerString() { return "Functions"; }
+    static constexpr char const * geometricObjectManagerString() { return "Geometry"; }
+    static constexpr char const * meshManagerString() { return "Mesh"; }
     static constexpr char const * numericalMethodsManagerString() { return "NumericalMethods"; }
-    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
-    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
-    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
-    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
-    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
-    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
-    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
+    static constexpr char const * outputManagerString() { return "Outputs"; }
+    static constexpr char const * physicsSolverManagerString() { return "Solvers"; }
+    static constexpr char const * tasksManagerString() { return "Tasks"; }
+    dataRepository::GroupKey commandLine    = { commandLineString() };                          ///< Command line key
+    dataRepository::GroupKey constitutiveManager = { constitutiveManagerString() };                    ///< Constitutive key
+    dataRepository::GroupKey domain    = { domainString() };                                    ///< Domain key
+    dataRepository::GroupKey eventManager = { eventManagerString() };                                 ///< Events key
+    dataRepository::GroupKey fieldSpecificationManager = { fieldSpecificationManagerString() };       ///< Field specification key
+    dataRepository::GroupKey functionManager = { functionManagerString() };                           ///< Functions key
+    dataRepository::GroupKey geometricObjectManager = { geometricObjectManagerString() };                     ///< Geometry key
+    dataRepository::GroupKey meshManager = { meshManagerString() };                                    ///< Mesh key
+    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString()}; ///< Numerical methods key
+    dataRepository::GroupKey outputManager = { outputManagerString() };                               ///< Outputs key
+    dataRepository::GroupKey physicsSolverManager = { physicsSolverManagerString() };                        ///< Solvers key
+    dataRepository::GroupKey tasksManager = { tasksManagerString() };                                  ///< Tasks key
   } groupKeys; ///< Child group viewKeys
+
 
   /**
    * @brief Returns the PhysicsSolverManager
@@ -328,7 +326,7 @@ protected:
   /**
    * @brief Post process the command line input
    */
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
 private:
 

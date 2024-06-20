@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ContactMechanics_UnstructuredCrack_base.xml"/>
   </Included>
@@ -70,7 +70,7 @@
       xMin="{39.9, -40.1, -0.001}"
       xMax="{40.1,  40.1, 0.051}"/>
   </Geometry>
-  
+
   <Events
     maxTime="2.0">
     <SoloEvent

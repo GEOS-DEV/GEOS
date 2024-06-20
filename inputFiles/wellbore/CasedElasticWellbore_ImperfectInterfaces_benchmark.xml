@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./CasedElasticWellbore_ImperfectInterfaces_base.xml"/>
   </Included>
 
@@ -116,7 +116,7 @@
       name="outputs"
       forceDt="0.1"
       target="/Outputs/vtkOutput"/>
-    
+
     <!--PeriodicEvent
       name="restarts"
       timeFrequency="1.0"

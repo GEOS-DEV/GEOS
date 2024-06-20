@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./fractureMatrixFlow_edfm_base.xml" />
   </Included>
 
@@ -17,7 +17,7 @@
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-  
+
   <Geometry>
     <Box
       name="source"
@@ -54,7 +54,7 @@
       name="outputs"
       target="/Outputs/vtkOutput"/>
   </Events>
- 
+
   <Outputs>
     <VTK
       name="vtkOutput"

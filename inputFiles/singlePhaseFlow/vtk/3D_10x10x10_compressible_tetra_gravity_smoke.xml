@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./3D_10x10x10_compressible_tetra_gravity_base.xml"/>
   </Included>
 

@@ -19,6 +19,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 
@@ -473,7 +475,7 @@ protected:
   void SetUp() override
   {
     writeTableToFile( "obl_3comp_static.txt", oblInput );
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     removeFile( "obl_3comp_static.txt" );
 
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< ReactiveCompositionalMultiphaseOBL >( "compflow" );

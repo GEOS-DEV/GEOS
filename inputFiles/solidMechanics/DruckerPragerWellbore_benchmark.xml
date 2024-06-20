@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./DruckerPragerWellbore_base.xml"/>
   </Included>
 
@@ -22,7 +22,7 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_DP_WELLBORE_MESH_END -->
-  
+
   <!--Solver application-->
   <Events
     maxTime="1.02">
@@ -68,5 +68,5 @@
       name="outputs"
       target="/Outputs/vtkOutput"/>
   </Events>
- 
+
 </Problem>

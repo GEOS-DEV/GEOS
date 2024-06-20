@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+ <Included name="primary_includes">
     <File
       name="./Sneddon_contactMechanics_base.xml"/>
   </Included>
@@ -86,6 +86,6 @@
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-  </Events> 
+  </Events>
   <!-- SPHINX_SNEDDON_EVENTS_END -->
 </Problem>

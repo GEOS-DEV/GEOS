@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-   <Included>
+   <Included name="primary_includes">
     <File name="./kgdValidation_base.xml"/>
    </Included>
-  
+
    <Mesh>
     <!-- SPHINX_MESH -->
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ 0, 0.1525 }"
@@ -15,7 +15,7 @@
       zCoords="{ 0.037, 0.092 }"
       nx="{ 80 }"
       ny="{ 4, 2, 6, 2, 4 }"
-      nz="{ 10 }"	  
+      nz="{ 10 }"
       cellBlockNames="{cb1}"/>
     <!-- SPHINX_MESH_END -->
   </Mesh>
@@ -44,9 +44,9 @@
   </Geometry>
 
   <Events
-    maxTime="100.1"> 
+    maxTime="100.1">
 
-    <SoloEvent 
+    <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
@@ -69,58 +69,58 @@
     <PeriodicEvent
       name="timeHistoryCollection2"
       targetExactTimestep="0"
-      target="/Tasks/hydraulicApertureCollection" /> 
+      target="/Tasks/hydraulicApertureCollection" />
 
     <PeriodicEvent
       name="timeHistoryCollection3"
       targetExactTimestep="0"
-      target="/Tasks/areaCollection" />      
+      target="/Tasks/areaCollection" />
 
     <PeriodicEvent
       name="timeHistoryOutput"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
+      target="/Outputs/timeHistoryOutput"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
       endTime="1.0"
       forceDt="0.1000000000001"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications2"
       beginTime="1.0"
       endTime="2.0"
       forceDt="0.2"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications3"
       beginTime="2.0"
       endTime="8.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications4"
       beginTime="8.0"
       endTime="20.0"
       forceDt="2.0"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications5"
       beginTime="20.0"
       endTime="60.0"
       forceDt="4.0"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications6"
       beginTime="60.0"
       forceDt="4.0"
-      target="/Solvers/hydrofracture" />     
+      target="/Solvers/hydrofracture" />
   </Events>
-  
+
 </Problem>

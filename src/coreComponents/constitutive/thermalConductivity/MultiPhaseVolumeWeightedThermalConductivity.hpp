@@ -135,7 +135,7 @@ public:
 
   static string catalogName() { return "MultiPhaseVolumeWeightedThermalConductivity"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiPhaseVolumeWeightedThermalConductivityUpdate;
@@ -160,7 +160,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
 private:
 
