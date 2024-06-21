@@ -1228,7 +1228,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
                                                              &cindex,
                                                              &unity,
                                                              1 );
-              localRhs[cindex] = 0.0;
+              localRhs[rindex] = 0.0;
             }
           }
         } );
