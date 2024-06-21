@@ -70,8 +70,5 @@ if(ENABLE_CUDA)
 
 endif()
 
-# Temporary argument for python module change testing
-set(GEOS_PYTHON_PACKAGES_BRANCH "feature/packaging" CACHE STRING "" FORCE)
-
 set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
