@@ -89,6 +89,12 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
+  registerWrapper( viewKeyStruct::writeMatrixString(), &m_writeMatrix ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( >= 2)." );
+
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
@@ -1169,8 +1175,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeMatrix == 1,
+                       m_writeMatrix >= 2 );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1178,8 +1184,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeMatrix == 1,
+                       m_writeMatrix >= 2 );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1193,8 +1199,8 @@ void SolverBase::debugOutputSolution( real64 const & time,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeMatrix == 1,
+                       m_writeMatrix >= 2 );
 }
 
 real64
