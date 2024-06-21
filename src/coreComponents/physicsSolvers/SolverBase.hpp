@@ -584,7 +584,7 @@ public:
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
     static constexpr char const * meshTargetsString() { return "meshTargets"; }
-    static constexpr char const * writeMatrixString() { return "writeMatrix"; }
+    static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
   };
 
   struct groupKeyStruct
@@ -805,7 +805,7 @@ protected:
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
 
   /// flag for debug output of matrix, rhs, and solution
-  integer m_writeMatrix;
+  integer m_writeLinearSystem;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;

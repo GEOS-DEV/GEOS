@@ -89,11 +89,11 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  registerWrapper( viewKeyStruct::writeMatrixString(), &m_writeMatrix ).
+  registerWrapper( viewKeyStruct::writeLinearSystemString(), &m_writeLinearSystem ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( >= 2)." );
+    setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -1008,13 +1008,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // Solve the linear system
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+      // Increment the solver statistics for reporting purposes
+      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
+      // Output the linear system solution for debugging purposes
+      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
     }
-
-    // Increment the solver statistics for reporting purposes
-    m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
-
-    // Output the linear system solution for debugging purposes
-    debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
     {
       Timer timer( m_timers["apply solution"] );
@@ -1169,14 +1169,18 @@ void SolverBase::debugOutputSystem( real64 const & time,
                                     ParallelMatrix const & matrix,
                                     ParallelVector const & rhs ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( matrix,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       m_writeMatrix == 1,
-                       m_writeMatrix >= 2 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1184,8 +1188,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       m_writeMatrix == 1,
-                       m_writeMatrix >= 2 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1193,14 +1197,18 @@ void SolverBase::debugOutputSolution( real64 const & time,
                                       integer const nonlinearIteration,
                                       ParallelVector const & solution ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( solution,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       m_writeMatrix == 1,
-                       m_writeMatrix >= 2 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 real64
