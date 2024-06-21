@@ -109,7 +109,13 @@ set( physicsSolvers_headers
      multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
+     simplePDE/LaplaceVEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
+     simplePDE/LaplaceVEMKernels.hpp
+     simplePDE/temporaryUtilities/BasisFunctionUtilities.hpp
+     simplePDE/temporaryUtilities/CellUtilities.hpp
+     simplePDE/temporaryUtilities/SubRegionMeshUtilities.hpp
+     simplePDE/temporaryUtilities/QuadratureUtilities.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsFields.hpp
@@ -214,6 +220,7 @@ set( physicsSolvers_sources
      multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
+     simplePDE/LaplaceVEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp

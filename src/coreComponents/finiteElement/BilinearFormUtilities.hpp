@@ -264,6 +264,31 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
 };
 
 template<>
+struct Helper< PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::FunctionSpace::H1,
+               PDEUtilities::DifferentialOperator::Gradient,
+               PDEUtilities::DifferentialOperator::Gradient >
+{
+  // symmetric second-order tensor A
+  template< int numTestDOF, int numTrialDOF >
+  GEOS_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNvdX)[numTestDOF][3],
+                       real64 const A,
+                       real64 const (&dNudX)[numTrialDOF][3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      for( int b = 0; b < numTrialDOF; ++b )
+      {
+        mat[a][b] = mat[a][b] + A * ( dNvdX[a][0] * dNudX[b][0] + dNvdX[a][1] * dNudX[b][1] + dNvdX[a][2] * dNudX[b][2] ) * weight;
+      }
+    }
+  }
+};
+
+template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
                PDEUtilities::FunctionSpace::H1vector,
                PDEUtilities::DifferentialOperator::SymmetricGradient,
