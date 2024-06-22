@@ -1033,7 +1033,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           NodeGlbIdx const ngi = convert.toNodeGlbIdx( extractedIndices[ii] );
-          integer const ord = integer( extractedValues[ii] - 1 );
+          TriScalarInt const ord = extractedValues[ii] - 1;
           GEOS_ASSERT( ord == 0 or ord == 1 );
           order[ord] = ngi;
         }
@@ -1056,7 +1056,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extractedIndices[ii] );
-          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, std::size_t( extractedValues[ii] - 1 ) );
+          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, extractedValues[ii] - 1 );
           order[decoded[1]] = { egi, intConv< std::uint8_t >( decoded[0] ) };
           GEOS_ASSERT( decoded[0] == 0 or decoded[0] == 1 );
         }
@@ -1083,7 +1083,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           FaceGlbIdx const fgi = convert.toFaceGlbIdx( extractedIndices[ii] );
-          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, std::size_t( extractedValues[ii] - 1 ) );
+          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, extractedValues[ii] - 1 );
           order[decoded[2]] = { fgi, intConv< bool >( decoded[0] ), intConv< std::uint8_t >( decoded[1] ) };
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numFaces ) );
