@@ -57,7 +57,6 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       needsNeighborList="0"
       boundaryConditionTypes="{0, 0, 0, 0, 1, 1}"
       neighborRadius="-1.01">
-
     </SolidMechanics_MPM>
   </Solvers>
 
@@ -67,13 +66,11 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       defaultDensity="1000"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"/>
-    
     <ElasticIsotropic
     	name="aluminum"
     	defaultDensity="2.7"
     	defaultBulkModulus="70.0"
     	defaultShearModulus="24.0"/>
-    
   </Constitutive>
 
   <Events
