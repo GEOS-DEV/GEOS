@@ -20,19 +20,16 @@
 
 #include "Pods.hpp"
 
+#include "Indices.hpp"
+
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 
-#include <EpetraExt_MatrixMatrix.h>
-#include <EpetraExt_RowMatrixOut.h>
-#include <EpetraExt_VectorOut.h>
-#include <Epetra_CrsMatrix.h>
-#include <Epetra_Map.h>
-#include <Epetra_MpiComm.h>
-#include <Epetra_RowMatrixTransposer.h>
-#include <Epetra_Vector.h>
-
-#include "Indices.hpp"
+#include <Tpetra_Map.hpp>
+#include <Tpetra_CrsMatrix.hpp>
+#include <Teuchos_Comm.hpp>
+#include <TpetraExt_MatrixMatrix.hpp>
+#include <MatrixMarket_Tpetra.hpp>
 
 #include <vtkCellData.h>
 #include <vtkPointData.h>
@@ -311,16 +308,29 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
   return { std::move( owned ), std::move( present ) };
 }
 
-std::unique_ptr< Epetra_CrsMatrix > makeTranspose( Epetra_CrsMatrix & input,
-                                                   bool makeDataContiguous = true )
-{
-  Epetra_RowMatrixTransposer transposer( &input );  // This process does not modify the original `ghosted` matrix.
-  Epetra_CrsMatrix * tr = nullptr;  // The transposer returns a pointer we must handle ourselves.
-  transposer.CreateTranspose( makeDataContiguous, tr );
+//using TriLocIdx = fluent::NamedType< localIndex, struct TagTriLocIdx, fluent::Arithmetic, fluent::ImplicitlyConvertibleTo >;
+//using TriGlbIdx = fluent::NamedType< globalIndex, struct TagTriGlbIdx, fluent::Arithmetic, fluent::ImplicitlyConvertibleTo >;
+//template<>
+//struct ::std::is_signed< TriLocIdx > : ::std::is_signed< typename TriLocIdx::UnderlyingType >
+//{
+//};
 
-  std::unique_ptr< Epetra_CrsMatrix > ptr;
-  ptr.reset( tr );
-  return ptr;
+using TriLocIdx = localIndex;
+using TriGlbIdx = globalIndex;
+
+using TriMap = Tpetra::Map< TriLocIdx, TriGlbIdx >;
+// We use matrices of integers for some of our usages
+// But it seems that Tpetra wants *signed* integers (at least the way we install it).
+// Consider using *unsigned* integers if you manage to make it work/link.
+using TriScalarInt = std::int32_t;
+using TriCrsMatrix = Tpetra::CrsMatrix< TriScalarInt , TriLocIdx, TriGlbIdx >;
+using TriDblCrsMatrix = Tpetra::CrsMatrix< double, TriLocIdx, TriGlbIdx >;
+using TriComm = Teuchos::Comm< int >;
+
+template< typename T, typename... ARGS >
+Teuchos::RCP< T > make_rcp( ARGS && ... args )
+{
+  return Teuchos::rcp( new T( std::forward< ARGS >( args )... ) );
 }
 
 void to_json( json & j,
@@ -342,48 +352,48 @@ void to_json( json & j,
 }
 
 
-Epetra_CrsMatrix multiply( int commSize,
-                           Epetra_CrsMatrix const & indicator,
-                           Epetra_CrsMatrix & upward )
+TriCrsMatrix multiply( int commSize,
+                       TriCrsMatrix const & indicator,
+                       TriCrsMatrix const & upward )
 {
-  Epetra_Map const & ownedMap = upward.RowMap();
-  Epetra_Map const & mpiMap = indicator.RangeMap();
+  Teuchos::RCP< TriMap const > ownedMap = upward.getRowMap();
+  Teuchos::RCP< TriMap const > mpiMap = indicator.getRangeMap();
 
   // Upward (n -> e -> f -> c)
 
-  Epetra_CrsMatrix result_u0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( upward, false, indicator, true, result_u0_0, false );
-  result_u0_0.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-0.mat", result_u0_0 );
+  TriCrsMatrix result_u0_0( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, false, indicator, true, result_u0_0, false );
+  result_u0_0.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
-  Epetra_CrsMatrix result_u0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( upward, false, result_u0_0, false, result_u0_1, false );
-  result_u0_1.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-1.mat", result_u0_1 );
+  TriCrsMatrix result_u0_1( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, false, result_u0_0, false, result_u0_1, false );
+  result_u0_1.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-1.mat", result_u0_1 );
 
-  Epetra_CrsMatrix result_u0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( upward, false, result_u0_1, false, result_u0_2, false );
-  result_u0_2.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-2.mat", result_u0_2 );
+  TriCrsMatrix result_u0_2( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, false, result_u0_1, false, result_u0_2, false );
+  result_u0_2.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
   // Downward (c -> f -> e -> n)
-  auto tDownward = makeTranspose( upward );  // TODO check the algorithm to understand what's more relevant.
-  // TODO why do we have to perform the transposition ourselves instead of using the flag from `EpetraExt::MatrixMatrix::Multiply`.
 
-  Epetra_CrsMatrix result_d0_0( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_u0_2, false, result_d0_0, false );
-  result_d0_0.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-4.mat", result_d0_0 );
+  TriCrsMatrix result_d0_0( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, true, result_u0_2, false, result_d0_0, false );
+  result_d0_0.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-4.mat", result_d0_0 );
 
-  Epetra_CrsMatrix result_d0_1( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_d0_0, false, result_d0_1, false );
-  result_d0_1.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-5.mat", result_d0_1 );
+  TriCrsMatrix result_d0_1( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, true, result_d0_0, false, result_d0_1, false );
+  result_d0_1.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-5.mat", result_d0_1 );
 
-  Epetra_CrsMatrix result_d0_2( Epetra_DataAccess::Copy, ownedMap, commSize, false );
-  EpetraExt::MatrixMatrix::Multiply( *tDownward, false, result_d0_1, false, result_d0_2, false );
-  result_d0_2.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/result-6.mat", result_d0_2 );
+  TriCrsMatrix result_d0_2( ownedMap, commSize );
+  Tpetra::MatrixMatrix::Multiply( upward, true, result_d0_1, false, result_d0_2, false );
+  result_d0_2.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-6.mat", result_d0_2 );
+
+  MpiWrapper::barrier();
 
   return result_d0_2;
 }
@@ -404,17 +414,17 @@ public:
                        FaceGlbIdx const & maxFaceGlbIdx,
                        CellGlbIdx const & maxCellGlbIdx )
     : m_edgeOffset( intConv< int >( maxNodeGlbIdx.get() + 1 ) ),
-      m_faceOffset( intConv< int >( m_edgeOffset + maxEdgeGlbIdx.get() + 1 ) ),
-      m_cellOffset( intConv< int >( m_faceOffset + maxFaceGlbIdx.get() + 1 ) ),
-      m_numEntries( intConv< int >( m_cellOffset + maxCellGlbIdx.get() + 1 ) )
+      m_faceOffset( intConv< int >( m_edgeOffset + TriGlbIdx( maxEdgeGlbIdx.get() ) + TriGlbIdx( 1 ) ) ),
+      m_cellOffset( intConv< int >( m_faceOffset + TriGlbIdx( maxFaceGlbIdx.get() ) + TriGlbIdx( 1 ) ) ),
+      m_numEntries( intConv< int >( m_cellOffset + TriGlbIdx( maxCellGlbIdx.get() ) + TriGlbIdx( 1 ) ) )
   { }
 
-  [[nodiscard]] int numEntries() const
+  [[nodiscard]] TriGlbIdx numEntries() const
   {
     return m_numEntries;
   }
 
-  [[nodiscard]] Geom getGeometricalType( int const & index ) const
+  [[nodiscard]] Geom getGeometricalType( TriGlbIdx const & index ) const
   {
     if( index < m_edgeOffset )
     {
@@ -434,51 +444,51 @@ public:
     }
   }
 
-  [[nodiscard]] NodeGlbIdx toNodeGlbIdx( int const & index ) const
+  [[nodiscard]] NodeGlbIdx toNodeGlbIdx( TriGlbIdx const & index ) const
   {
     return NodeGlbIdx{ intConv< NodeGlbIdx::UnderlyingType >( index ) };
   }
 
-  [[nodiscard]] EdgeGlbIdx toEdgeGlbIdx( int const & index ) const
+  [[nodiscard]] EdgeGlbIdx toEdgeGlbIdx( TriGlbIdx const & index ) const
   {
     return EdgeGlbIdx{ intConv< EdgeGlbIdx::UnderlyingType >( index - m_edgeOffset ) };
   }
 
-  [[nodiscard]] FaceGlbIdx toFaceGlbIdx( int const & index ) const
+  [[nodiscard]] FaceGlbIdx toFaceGlbIdx( TriGlbIdx const & index ) const
   {
     return FaceGlbIdx{ intConv< FaceGlbIdx::UnderlyingType >( index - m_faceOffset ) };
   }
 
-  [[nodiscard]] CellGlbIdx toCellGlbIdx( int const & index ) const
+  [[nodiscard]] CellGlbIdx toCellGlbIdx( TriGlbIdx const & index ) const
   {
     return CellGlbIdx{ intConv< CellGlbIdx::UnderlyingType >( index - m_cellOffset ) };
   }
 
-  [[nodiscard]] int fromNodeGlbIdx( NodeGlbIdx const & ngi ) const
+  [[nodiscard]] TriGlbIdx fromNodeGlbIdx( NodeGlbIdx const & ngi ) const
   {
-    return intConv< int >( ngi.get() );
+    return TriGlbIdx( ngi.get() );
   }
 
-  [[nodiscard]] int fromEdgeGlbIdx( EdgeGlbIdx const & egi ) const
+  [[nodiscard]] TriGlbIdx fromEdgeGlbIdx( EdgeGlbIdx const & egi ) const
   {
-    return intConv< int >( egi.get() + m_edgeOffset );
+    return TriGlbIdx( egi.get() ) + m_edgeOffset;
   }
 
-  [[nodiscard]] int fromFaceGlbIdx( FaceGlbIdx const & fgi ) const
+  [[nodiscard]] TriGlbIdx fromFaceGlbIdx( FaceGlbIdx const & fgi ) const
   {
-    return intConv< int >( fgi.get() + m_faceOffset );
+    return TriGlbIdx( fgi.get() ) + m_faceOffset;
   }
 
-  [[nodiscard]] int fromCellGlbIdx( CellGlbIdx const & cgi ) const
+  [[nodiscard]] TriGlbIdx fromCellGlbIdx( CellGlbIdx const & cgi ) const
   {
-    return intConv< int >( cgi.get() + m_cellOffset );
+    return TriGlbIdx( cgi.get() ) + m_cellOffset;
   }
 
 private:
-  int const m_edgeOffset;
-  int const m_faceOffset;
-  int const m_cellOffset;
-  int const m_numEntries;
+  TriGlbIdx const m_edgeOffset;
+  TriGlbIdx const m_faceOffset;
+  TriGlbIdx const m_cellOffset;
+  TriGlbIdx const m_numEntries;
 };
 
 template< std::uint8_t N >
@@ -518,12 +528,12 @@ std::array< std::size_t, N > decode( std::size_t const & basis,
 
 struct Adjacency
 {
-  std::vector< int > ownedNodesIdcs;  // TODO Use some strongly typed ints.
-  std::vector< int > ownedGlbIdcs;  // TODO Use some strongly typed ints.
-  std::vector< int > otherGlbIdcs;  // TODO Use some strongly typed ints.
-  std::vector< int > numEntriesPerRow;
-  std::vector< std::vector< int > > indices;
-  std::vector< std::vector< double > > values;
+  std::vector< TriGlbIdx > ownedNodesIdcs;
+  std::vector< TriGlbIdx > ownedGlbIdcs;
+  std::vector< TriGlbIdx > otherGlbIdcs;
+  Teuchos::Array< std::size_t > numEntriesPerRow;
+  std::vector< std::vector< TriGlbIdx > > indices;
+  std::vector< std::vector< TriScalarInt > > values;
 };
 
 Adjacency buildAdjacency( MeshGraph const & owned,
@@ -536,12 +546,12 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   std::size_t const numOther = std::size( present.n2pos ) + std::size( present.e2n ) + std::size( present.f2e );
 
   // Aliases
-  std::vector< int > & ownedNodesIdcs = adjacency.ownedNodesIdcs;
-  std::vector< int > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
-  std::vector< int > & otherGlbIdcs = adjacency.otherGlbIdcs;
-  std::vector< int > & numEntriesPerRow = adjacency.numEntriesPerRow;
-  std::vector< std::vector< int > > & indices = adjacency.indices;
-  std::vector< std::vector< double > > & values = adjacency.values;
+  std::vector< TriGlbIdx > & ownedNodesIdcs = adjacency.ownedNodesIdcs;
+  std::vector< TriGlbIdx > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
+  std::vector< TriGlbIdx > & otherGlbIdcs = adjacency.otherGlbIdcs;
+  Teuchos::Array< std::size_t > & numEntriesPerRow = adjacency.numEntriesPerRow;
+  std::vector< std::vector< TriGlbIdx > > & indices = adjacency.indices;
+  std::vector< std::vector< TriScalarInt > > & values = adjacency.values;
 
   ownedNodesIdcs.reserve( std::size( owned.n2pos ) );
   ownedGlbIdcs.reserve( numOwned );
@@ -570,10 +580,10 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     // Nodes depend on no other geometrical entity,
     // so we only have one entry `1` in the diagonal of the matrix,
     // because we add the identity to the adjacency matrix.
-    int const i = convert.fromNodeGlbIdx( ngi );
+    TriGlbIdx const i = convert.fromNodeGlbIdx( ngi );
     ownedNodesIdcs.emplace_back( i );
     ownedGlbIdcs.emplace_back( i );
-    numEntriesPerRow.emplace_back( 0 + 1 );  // `+1` comes from the diagonal
+    numEntriesPerRow.push_back( 0 + 1 );  // `+1` comes from the diagonal
     indices.emplace_back( 1, ownedGlbIdcs.back() );
     values.emplace_back( 1, ownedGlbIdcs.back() );
   }
@@ -588,14 +598,14 @@ Adjacency buildAdjacency( MeshGraph const & owned,
 
     ownedGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
 
-    numEntriesPerRow.emplace_back( numNodes + 1 );  // `+1` comes from the diagonal
-    indices.emplace_back( std::vector< int >{ convert.fromNodeGlbIdx( std::get< 0 >( nodes ) ),
-                                              convert.fromNodeGlbIdx( std::get< 1 >( nodes ) ),
-                                              ownedGlbIdcs.back() } );
+    numEntriesPerRow.push_back( numNodes + 1 );  // `+1` comes from the diagonal
+    indices.emplace_back( std::vector< TriGlbIdx >{ convert.fromNodeGlbIdx( std::get< 0 >( nodes ) ),
+                                                    convert.fromNodeGlbIdx( std::get< 1 >( nodes ) ),
+                                                    ownedGlbIdcs.back() } );
     // Note that when storing a value that can be `0`, we always add `1`,
     // (for edges but also later for faces and cells),
     // to be sure that there will always be some a noticeable figure where we need one.
-    values.emplace_back( std::vector< double >{ 0 + 1., 1 + 1., numNodes } );
+    values.emplace_back( std::vector< TriScalarInt >{ 0 + 1, 1 + 1, numNodes } );
   }
   for( auto const & [fgi, edges]: owned.f2e )
   {
@@ -610,18 +620,18 @@ Adjacency buildAdjacency( MeshGraph const & owned,
 
     ownedGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
 
-    numEntriesPerRow.emplace_back( numEdges + 1 );  // `+1` comes from the diagonal
-    std::vector< int > & ind = indices.emplace_back( numEntriesPerRow.back() );
-    std::vector< double > & val = values.emplace_back( numEntriesPerRow.back() );
+    numEntriesPerRow.push_back( numEdges + 1 );  // `+1` comes from the diagonal
+    std::vector< TriGlbIdx > & ind = indices.emplace_back( numEntriesPerRow.back() );
+    std::vector< TriScalarInt > & val = values.emplace_back( numEntriesPerRow.back() );
     for( std::size_t i = 0; i < numEdges; ++i )
     {
       EdgeInfo const & edgeInfo = edges[i];
       ind[i] = convert.fromEdgeGlbIdx( edgeInfo.index );
       std::size_t const v = 1 + encode< 2 >( numEdges, { edgeInfo.start, i } );
-      val[i] = double( v );
+      val[i] = intConv< TriScalarInt >( v );
     }
     ind.back() = ownedGlbIdcs.back();
-    val.back() = double( numEdges );
+    val.back() = intConv< TriScalarInt >( numEdges );
   }
   for( auto const & [cgi, faces]: owned.c2f )
   {
@@ -633,23 +643,23 @@ Adjacency buildAdjacency( MeshGraph const & owned,
 
     ownedGlbIdcs.emplace_back( convert.fromCellGlbIdx( cgi ) );
 
-    numEntriesPerRow.emplace_back( numFaces + 1 );  // `+1` comes from the diagonal
-    std::vector< int > & ind = indices.emplace_back( numEntriesPerRow.back() );
-    std::vector< double > & val = values.emplace_back( numEntriesPerRow.back() );
+    numEntriesPerRow.push_back( numFaces + 1 );  // `+1` comes from the diagonal
+    std::vector< TriGlbIdx > & ind = indices.emplace_back( numEntriesPerRow.back() );
+    std::vector< TriScalarInt > & val = values.emplace_back( numEntriesPerRow.back() );
     for( std::size_t i = 0; i < numFaces; ++i )
     {
       FaceInfo const & faceInfo = faces[i];
       ind[i] = convert.fromFaceGlbIdx( faceInfo.index );
       std::size_t const v = 1 + encode< 3 >( numFaces, { faceInfo.isFlipped, faceInfo.start, i } );
-      val[i] = double( v );
+      val[i] = intConv< TriScalarInt >( v );
     }
     ind.back() = ownedGlbIdcs.back();
-    val.back() = double( numFaces );  // TODO This should be Hex and the not the number of faces...
+    val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
   std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) );
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
-  GEOS_ASSERT_EQ( numOwned, std::size( numEntriesPerRow ) );
+  GEOS_ASSERT_EQ( numOwned, intConv< std::size_t >( numEntriesPerRow.size() ) );
   GEOS_ASSERT_EQ( numOwned, std::size( indices ) );
   GEOS_ASSERT_EQ( numOwned, std::size( values ) );
   for( std::size_t i = 0; i < numOwned; ++i )
@@ -665,6 +675,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
                                                                MaxGlbIdcs const & gis,
                                                                MpiRank curRank )
 {
+  using Teuchos::RCP;
+
   FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
   using Geom = FindGeometricalType::Geom;
 
@@ -675,31 +687,31 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::size_t const numOther = std::size( adjacency.otherGlbIdcs );
 
   // Aliases
-  std::vector< int > const & ownedNodesIdcs = adjacency.ownedNodesIdcs;
-  std::vector< int > const & ownedGlbIdcs = adjacency.ownedGlbIdcs;
-  std::vector< int > const & otherGlbIdcs = adjacency.otherGlbIdcs;
-  std::vector< int > const & numEntriesPerRow = adjacency.numEntriesPerRow;
-  std::vector< std::vector< int > > const & indices = adjacency.indices;
-  std::vector< std::vector< double > > const  & values = adjacency.values;
+  std::vector< TriGlbIdx > const & ownedNodesIdcs = adjacency.ownedNodesIdcs;
+  std::vector< TriGlbIdx > const & ownedGlbIdcs = adjacency.ownedGlbIdcs;
+  std::vector< TriGlbIdx > const & otherGlbIdcs = adjacency.otherGlbIdcs;
+  Teuchos::Array< std::size_t > const & numEntriesPerRow = adjacency.numEntriesPerRow;
+  std::vector< std::vector< TriGlbIdx > > const & indices = adjacency.indices;
+  std::vector< std::vector< TriScalarInt > > const  & values = adjacency.values;
 
-  Epetra_MpiComm const & comm = Epetra_MpiComm( MPI_COMM_GEOSX );
-  Epetra_Map const ownedMap( n, numOwned, ownedGlbIdcs.data(), 0, comm );
+  RCP< TriComm const > const comm = make_rcp< Teuchos::MpiComm< int > const >( MPI_COMM_GEOSX );
+  auto const ownedMap = make_rcp< TriMap const >( Tpetra::global_size_t( n ), ownedGlbIdcs.data(), TriLocIdx( numOwned ), TriGlbIdx{ 0 }, comm );
 
   // The `upward` matrix offers a representation of the graph connections.
   // The matrix is square. Each size being the number of geometrical entities.
-  Epetra_CrsMatrix upward( Epetra_DataAccess::Copy, ownedMap, numEntriesPerRow.data(), true );
+  TriCrsMatrix upward( ownedMap, numEntriesPerRow() );
 
   for( std::size_t i = 0; i < numOwned; ++i )
   {
-    std::vector< int > const & rowIndices = indices[i];
-    std::vector< double > const & rowValues = values[i];
-    GEOS_ASSERT_EQ( std::size( rowIndices ), std::size_t( numEntriesPerRow[i] ) );
-    GEOS_ASSERT_EQ( std::size( rowValues ), std::size_t( numEntriesPerRow[i] ) );
-    upward.InsertGlobalValues( ownedGlbIdcs[i], std::size( rowIndices ), rowValues.data(), rowIndices.data() );
+    std::vector< TriGlbIdx > const & rowIndices = indices[i];
+    std::vector< TriScalarInt > const & rowValues = values[i];
+    GEOS_ASSERT_EQ( std::size( rowIndices ), numEntriesPerRow[i] );
+    GEOS_ASSERT_EQ( std::size( rowValues ), numEntriesPerRow[i] );
+    upward.insertGlobalValues( ownedGlbIdcs[i], TriLocIdx( std::size( rowIndices ) ), rowValues.data(), rowIndices.data() );
   }
 
-  upward.FillComplete( ownedMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/adj.mat", upward );
+  upward.fillComplete( ownedMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/upward.mat", upward );
 
   int const commSize( MpiWrapper::commSize() );
 
@@ -709,37 +721,36 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // ie the number of geometrical entities in the mesh.
   // It contains one for every time the geometrical entity is present on the rank.
   // By present, we do not meant that the ranks owns it: just that it's already available on the rank.
-  Epetra_Map const mpiMap( commSize, 0, comm );  // Let the current rank get the appropriate index in this map.
-  Epetra_CrsMatrix indicator( Epetra_DataAccess::Copy, mpiMap, numOwned + numOther, true );
+  auto const mpiMap = make_rcp< TriMap const >( Tpetra::global_size_t( commSize ), TriGlbIdx{ 0 }, comm );  // Let the current rank get the appropriate index in this map.
+  TriCrsMatrix indicator( mpiMap, numOwned + numOther );
 
-  std::vector< double > const ones( n, 1. );
-  indicator.InsertGlobalValues( curRank.get(), numOwned, ones.data(), ownedGlbIdcs.data() );
-  indicator.InsertGlobalValues( curRank.get(), numOther, ones.data(), otherGlbIdcs.data() );
-  indicator.FillComplete( ownedMap, mpiMap );
+  std::vector< TriScalarInt > const ones( std::max( { numOwned, numOther, std::size_t( 1 ) } ), 1 );
+  indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOwned ), ones.data(), ownedGlbIdcs.data() );
+  indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOther ), ones.data(), otherGlbIdcs.data() );
+  indicator.fillComplete( ownedMap, mpiMap );
 
   // The `ownership` matrix is a diagonal square matrix.
   // Each size being the number of geometrical entities.
   // The value of the diagonal term will be the owning rank.
   // By means of matrices multiplications, it will be possible to exchange the ownerships information across the ranks.
   // TODO Could we use an Epetra_Vector as a diagonal matrix?
-  std::vector< double > myRank( 1, curRank.get() );
-  Epetra_CrsMatrix ownership( Epetra_DataAccess::Copy, ownedMap, 1, true );
-  for( auto const & i: ownedGlbIdcs )
+  std::vector< TriScalarInt > myRank( 1, curRank.get() );
+  TriCrsMatrix ownership( ownedMap, 1 );
+  for( TriGlbIdx const & i: ownedGlbIdcs )
   {
-    ownership.InsertGlobalValues( i, 1, myRank.data(), &i );
+    ownership.insertGlobalValues( i, TriLocIdx{ 1 }, myRank.data(), &i );
   }
-  ownership.FillComplete( ownedMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ownership.mat", ownership );
+  ownership.fillComplete( ownedMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ownership.mat", ownership );
 
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.NumGlobalCols() );
-    GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.NumGlobalRows() );
-    GEOS_LOG_RANK( "ownership.NumGlobalCols() = " << ownership.NumGlobalCols() );
-    GEOS_LOG_RANK( "ownership.NumGlobalRows() = " << ownership.NumGlobalRows() );
-    GEOS_LOG_RANK( "ownership diag = " << std::boolalpha << ownership.LowerTriangular() and ownership.UpperTriangular() );
+    GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.getGlobalNumCols() );
+    GEOS_LOG_RANK( "indicator.NumGlobalRows() = " << indicator.getGlobalNumRows() );
+    GEOS_LOG_RANK( "ownership.NumGlobalCols() = " << ownership.getGlobalNumCols() );
+    GEOS_LOG_RANK( "ownership.NumGlobalRows() = " << ownership.getGlobalNumRows() );
   }
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/indicator.mat", indicator );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/indicator.mat", indicator );
 
   // The `ghostingFootprint` matrix is rectangular,
   // the number of columns being the number of MPI ranks,
@@ -750,10 +761,11 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // for the ghosting to be effective.
   //
   // From `ghostingFootprint` we can extract where the current rank has to send any owned graph node.
-  Epetra_CrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
-  ghostingFootprint.PutScalar( 1. );  // This can be done after the `FillComplete`, but not with Tpetra!
-  ghostingFootprint.FillComplete( mpiMap, ownedMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostingFootprint.mat", ghostingFootprint );
+  TriCrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
+  ghostingFootprint.resumeFill();
+  ghostingFootprint.setAllToScalar( 1. );
+  ghostingFootprint.fillComplete( mpiMap, ownedMap );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostingFootprint.mat", ghostingFootprint );
   // We put `1` everywhere there's a non-zero entry, so we'll be able to compose with the `ownership` matrix.
 
   // FIXME TODO WARNING From `ghostingFootprint` extract where I have to send
@@ -762,8 +774,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghostingFootprint.NumGlobalCols() );
-    GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghostingFootprint.NumGlobalRows() );
+    GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghostingFootprint.getGlobalNumCols() );
+    GEOS_LOG_RANK( "ghosted->NumGlobalRows() = " << ghostingFootprint.getGlobalNumRows() );
   }
 
   // The `ghostExchange` matrix is rectangular,
@@ -775,36 +787,37 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // the value of the `ghostExchange` matrix term will provide the actual owning rank for all the .
   //
   // From `ghostExchange` we can extract which other rank will send to the current rank any graph node.
-  Epetra_CrsMatrix ghostExchange( Epetra_DataAccess::Copy, mpiMap, 1, false );
-  EpetraExt::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
-  ghostExchange.FillComplete( ownedMap, mpiMap );
+  TriCrsMatrix ghostExchange( mpiMap, 10000 ); // TODO having `0` there should be working!
+  Tpetra::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
+  ghostExchange.fillComplete( ownedMap, mpiMap );
+
   // TODO Do I have to work with `ghostingFootprint` if I already have `ghostExchange` which may convey more information?
   // TODO Maybe because of the ownership of the ranks: one is also the "scaled" transposed of the other.
 
   if( curRank == 0_mpi )
   {
-    GEOS_LOG_RANK( "ghostExchange->NumGlobalCols() = " << ghostExchange.NumGlobalCols() );
-    GEOS_LOG_RANK( "ghostExchange->NumGlobalRows() = " << ghostExchange.NumGlobalRows() );
+    GEOS_LOG_RANK( "ghostExchange->NumGlobalCols() = " << ghostExchange.getGlobalNumCols() );
+    GEOS_LOG_RANK( "ghostExchange->NumGlobalRows() = " << ghostExchange.getGlobalNumRows() );
   }
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/ghostInfo.mat", ghostingFootprint );
+  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostInfo.mat", ghostExchange );
 
-  int extracted = 0;
-  std::vector< double > extractedValues;
-  std::vector< int > extractedIndices;
+  std::size_t extracted = 0;
+  Teuchos::Array< TriScalarInt > extractedValues;
+  Teuchos::Array< TriGlbIdx > extractedIndices;
 
   GhostSend send;
-  for( int const & index: ownedGlbIdcs )
+  for( TriGlbIdx const & index: ownedGlbIdcs )
   {
-    int const length = ghostingFootprint.NumGlobalEntries( index );
+    std::size_t const length = ghostingFootprint.getNumEntriesInGlobalRow( index );
     extractedValues.resize( length );
     extractedIndices.resize( length );
-    ghostingFootprint.ExtractGlobalRowCopy( index, length, extracted, extractedValues.data(), extractedIndices.data() );
+    ghostingFootprint.getGlobalRowCopy( index, extractedIndices(), extractedValues(), extracted );
     GEOS_ASSERT_EQ( extracted, length );
 
     std::set< MpiRank > neighbors;
-    for( int i = 0; i < extracted; ++i )
+    for( std::size_t i = 0; i < extracted; ++i )
     {
-      MpiRank const rank{ extractedIndices[i] };
+      MpiRank const rank( extractedIndices[i] );
       if( rank != curRank )
       {
         neighbors.insert( rank );
@@ -845,39 +858,39 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     }
   }
 
-  int const numNeededIndices = ghostExchange.NumGlobalEntries( curRank.get() );
+  std::size_t const numNeededIndices = ghostExchange.getNumEntriesInGlobalRow( TriGlbIdx( curRank.get() ) );
   extractedValues.resize( numNeededIndices );
   extractedIndices.resize( numNeededIndices );
-  ghostExchange.ExtractGlobalRowCopy( curRank.get(), numNeededIndices, extracted, extractedValues.data(), extractedIndices.data() );
+  ghostExchange.getGlobalRowCopy( TriGlbIdx( curRank.get() ), extractedIndices(), extractedValues(), extracted );
   GEOS_ASSERT_EQ( extracted, numNeededIndices );
 
-  std::set< int > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
-  std::set< int > receivedIndices;  // The graph nodes that my neighbors will send me.
+  std::set< TriGlbIdx > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
+  std::set< TriGlbIdx > receivedIndices;  // The graph nodes that my neighbors will send me.
   std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
                        std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
                        std::inserter( receivedIndices, std::end( receivedIndices ) ) );
-  std::vector< int > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
+  std::vector< TriGlbIdx > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
-  std::vector< int > notPresentNodes;
+  std::vector< TriGlbIdx > notPresentNodes;
   std::copy_if( std::cbegin( notPresentIndices ), std::cend( notPresentIndices ),
-                std::back_inserter( notPresentNodes ), [&]( int const & i )
+                std::back_inserter( notPresentNodes ), [&]( TriGlbIdx const & i )
                 {
                   return convert.getGeometricalType( i ) == Geom::NODE;
                 } );
-  GEOS_ASSERT_EQ( intConv< int >( std::size( allNeededIndices ) ), numNeededIndices );
+  GEOS_ASSERT_EQ( std::size( allNeededIndices ), numNeededIndices );
 
   GhostRecv recv;
-  for( int i = 0; i < extracted; ++i )
+  for( std::size_t i = 0; i < extracted; ++i )
   {
-    int const & index = extractedIndices[i];
+    TriGlbIdx const & index = extractedIndices[i];
     if( receivedIndices.find( index ) == std::cend( receivedIndices ) )  // TODO make a map `receivedIndices -> mpi rank`
     {
       continue;
     }
 
-    MpiRank const sender{ int( extractedValues[i] ) };
+    MpiRank const sender( extractedValues[i] );
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
@@ -929,7 +942,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   //
   // Combining `missingIndicator` with the adjacency matrix which conveys a lot of connections information,
   // we'll be able to create the final `missingIndices` matrix,
-  // with `range` and `domain` maps (MPI ranks ownerships and offsets) appropriately defined
+  // with `range` and `domain` maps (MPI ranks ownerships and offsets) are appropriately defined
   // such that the rows will be available to any ranks that need them (nothing more, nothing less).
   //
   // To get the `missingNodePos` matrix which will convey the ghosted nodes positions that are missing on the rank,
@@ -951,71 +964,72 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   MpiWrapper::allReduce( numLocMissingCompound, numGlbMissingCompound, 2, MPI_SUM );
   std::size_t const & numLocMissingIndices = numLocMissingCompound[0];
   std::size_t const & numLocMissingNodes = numLocMissingCompound[1];
-  std::size_t const & numGlbMissingIndices = numGlbMissingCompound[0];
-  std::size_t const & numGlbMissingNodes = numGlbMissingCompound[1];
+  Tpetra::global_size_t const numGlbMissingIndices = numGlbMissingCompound[0];
+  Tpetra::global_size_t const numGlbMissingNodes = numGlbMissingCompound[1];
 
-  std::size_t const numGlbNodes = gis.nodes.get() + 1;
-  std::size_t const numOwnedNodes = std::size( ownedNodesIdcs );
+  std::size_t const numGlbNodes = gis.nodes.get() + 1;  // TODO Use strongly typed integers
+  std::size_t const numOwnedNodes = std::size( ownedNodesIdcs );  // TODO Use strongly typed integers
 
-  Epetra_Map const missingIndicesMap( intConv< int >( numGlbMissingIndices ), intConv< int >( numLocMissingIndices ), 0, comm );
-  Epetra_Map const missingNodesMap( intConv< int >( numGlbMissingNodes ), intConv< int >( numLocMissingNodes ), 0, comm );
+  auto const missingIndicesMap = make_rcp< TriMap const >( numGlbMissingIndices, numGlbMissingIndices, TriGlbIdx{ 0 }, comm );
+  auto const missingNodesMap = make_rcp< TriMap const >( numGlbMissingNodes, numLocMissingNodes, TriGlbIdx{ 0 }, comm );
 
   // Following information is needed to compute the global row.
-  int const missingIndicesOffset = *missingIndicesMap.MyGlobalElements();
-  int const missingNodesOffset = *missingNodesMap.MyGlobalElements();
+  TriGlbIdx const missingIndicesOffset = missingIndicesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
+  TriGlbIdx const missingNodesOffset = missingNodesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
 
   // Indicator matrix for the all the missing quantities (nodes, edges, faces and cells).
-  Epetra_CrsMatrix missingIndicator( Epetra_DataAccess::Copy, missingIndicesMap, 1, true );
+  TriCrsMatrix missingIndicator( missingIndicesMap, 1 );
   for( std::size_t i = 0; i < numLocMissingIndices; ++i )
   {
-    missingIndicator.InsertGlobalValues( missingIndicesOffset + i, 1, ones.data(), &notPresentIndices[i] );
+    missingIndicator.insertGlobalValues( missingIndicesOffset + TriGlbIdx( i ), TriLocIdx( 1 ), ones.data(), &notPresentIndices[i] );
   }
-  missingIndicator.FillComplete( ownedMap, missingIndicesMap );
+  missingIndicator.fillComplete( ownedMap, missingIndicesMap );
+
+  // `missingIndices` will contain the missing connectivity information.
+  TriCrsMatrix missingIndices( missingIndicesMap, 1000 ); // TODO having `0` there should be working!
+  Tpetra::MatrixMatrix::Multiply( missingIndicator, false, upward, false, missingIndices, false );
+  missingIndices.fillComplete( ownedMap, missingIndicesMap );
 
   // Indicator matrix only for the nodes.
-  Epetra_CrsMatrix missingNodesIndicator( Epetra_DataAccess::Copy, missingNodesMap, 1, true );
-  for( int i = 0; i < intConv< int >( numLocMissingNodes ); ++i )
+  // Note that it should be an integer matrix full of ones,
+  // but it's a double matrix because it's going to be multiplied a double matrix.
+  TriDblCrsMatrix missingNodesIndicator( missingNodesMap, 1 );
+  for( std::size_t i = 0; i < numLocMissingNodes; ++i )
   {
-    missingNodesIndicator.InsertGlobalValues( missingNodesOffset + i, 1, ones.data(), &notPresentNodes[i] );
+    double const o = 1.;
+    missingNodesIndicator.insertGlobalValues( missingNodesOffset + TriGlbIdx( i ), TriLocIdx( 1 ), &o, &notPresentNodes[i] );
   }
-  Epetra_Map const ownedNodesMap( numGlbNodes, numOwnedNodes, ownedNodesIdcs.data(), 0, comm );
-  missingNodesIndicator.FillComplete( ownedNodesMap, missingNodesMap );
+  auto const ownedNodesMap = make_rcp< TriMap const >( Tpetra::global_size_t( numGlbNodes ), ownedNodesIdcs.data(), TriLocIdx( numOwnedNodes ), TriGlbIdx{ 0 }, comm );
+  missingNodesIndicator.fillComplete( ownedNodesMap, missingNodesMap );
 
   // The `nodePositions` matrix is rectangular.
   // - Its number of rows is the total number of nodes in the mesh.
   // - Its number of columns is 3: the x, y, and z coordinates of the nodes.
-  Epetra_CrsMatrix nodePositions( Epetra_DataAccess::Copy, ownedNodesMap, 3, true );
-  std::vector< int > const zot{ 0, 1, 2 };  // zot: zero, one, two.
+  TriDblCrsMatrix nodePositions( ownedNodesMap, 3 );
+  std::vector< TriGlbIdx > const zot{ TriGlbIdx( 0 ), TriGlbIdx( 1 ), TriGlbIdx( 2 ) };  // zot: zero, one, two.
   for( auto const & [ngi, pos]: owned.n2pos )
   {
-    nodePositions.InsertGlobalValues( convert.fromNodeGlbIdx( ngi ), 3, pos.data(), zot.data() );
+    nodePositions.insertGlobalValues( convert.fromNodeGlbIdx( ngi ), TriLocIdx( 3 ), pos.data(), zot.data() );
   }
-  Epetra_Map const threeMap = Epetra_Map( 3, 0, comm );
-  nodePositions.FillComplete( threeMap, ownedNodesMap );
-
-  // `missingIndices` will contain the missing connectivity information.
-  auto tDownward = makeTranspose( upward );  // TODO give it to multiply!
-  Epetra_CrsMatrix missingIndices( Epetra_DataAccess::Copy, missingIndicesMap, 1, false );
-  EpetraExt::MatrixMatrix::Multiply( missingIndicator, false, *tDownward, true, missingIndices, false );
-  missingIndices.FillComplete( ownedMap, missingIndicesMap );
-  EpetraExt::RowMatrixToMatrixMarketFile( "/tmp/matrices/missingMappings.mat", missingIndices );
+  auto const threeMap = make_rcp< TriMap const >( Tpetra::global_size_t( 3 ), TriGlbIdx( 0 ), comm );
+  nodePositions.fillComplete( threeMap, ownedNodesMap );
 
   // `missingNodePos` will contain the missing node positions.
-  Epetra_CrsMatrix missingNodePos( Epetra_DataAccess::Copy, missingNodesMap, 1, false );
-  EpetraExt::MatrixMatrix::Multiply( missingNodesIndicator, false, nodePositions, false, missingNodePos, false );
-  missingNodePos.FillComplete( threeMap, missingNodesMap );
+  TriDblCrsMatrix missingNodePos( missingNodesMap, 1000 ); // TODO having `0` there should be working!
+  Tpetra::MatrixMatrix::Multiply( missingNodesIndicator, false, nodePositions, false, missingNodePos, false );
+  missingNodePos.fillComplete( threeMap, missingNodesMap );
 
   MeshGraph ghosts;
-
-  for( int i = 0; i < int( numLocMissingIndices ); ++i )
+  Teuchos::Array< double > extractedNodePos( 3 );
+  for( std::size_t i = 0; i < numLocMissingIndices; ++i )
   {
-    int const index = notPresentIndices[i];
+    TriGlbIdx const index = notPresentIndices[i];
     Geom const geometricalType = convert.getGeometricalType( index );
 
-    int const length = missingIndices.NumGlobalEntries( missingIndicesOffset + i );
+    std::size_t const length = missingIndices.getNumEntriesInGlobalRow( missingIndicesOffset + TriGlbIdx( i ) );
     extractedValues.resize( length );
     extractedIndices.resize( length );
-    missingIndices.ExtractGlobalRowCopy( missingIndicesOffset + i, length, extracted, extractedValues.data(), extractedIndices.data() );
+    missingIndices.getGlobalRowCopy( missingIndicesOffset + TriGlbIdx( i ), extractedIndices(), extractedValues(), extracted );
     GEOS_ASSERT_EQ( extracted, length );
     if( geometricalType == Geom::NODE )
     {
@@ -1024,35 +1038,33 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       // but we need to extract the position of the node instead.
       // In order to extract these positions, we use the other matrix `missingNodePos`.
       GEOS_ASSERT_EQ( length, 1 );
-      int const lengthPos = missingNodePos.NumGlobalEntries( missingNodesOffset + i );
-      extractedValues.resize( lengthPos );
-      extractedIndices.resize( lengthPos );
-      missingNodePos.ExtractGlobalRowCopy( missingNodesOffset + i, lengthPos, extracted, extractedValues.data(), extractedIndices.data() );
-      GEOS_ASSERT_EQ( extracted, lengthPos );
+      std::size_t const lengthPos = missingNodePos.getNumEntriesInGlobalRow( missingNodesOffset + TriGlbIdx( i ) );
       GEOS_ASSERT_EQ( lengthPos, 3 );
-      GEOS_ASSERT_EQ( index, notPresentNodes[i] );
+      extractedIndices.resize( lengthPos );
+      missingNodePos.getGlobalRowCopy( missingNodesOffset + TriGlbIdx( i ), extractedIndices(), extractedNodePos(), extracted );
+      GEOS_ASSERT_EQ( extracted, lengthPos );
       std::array< double, 3 > & pos = ghosts.n2pos[convert.toNodeGlbIdx( index )];
       for( auto dim = 0; dim < 3; ++dim )
       {
-        pos[extractedIndices[dim]] = extractedValues[dim];
+        pos[extractedIndices[dim]] = extractedNodePos[dim];
       }
       continue;
     }
 
     auto const cit = std::find( std::cbegin( extractedIndices ), std::cend( extractedIndices ), index );
-    std::ptrdiff_t const numGeomQuantitiesIdx = std::distance( std::cbegin( extractedIndices ), cit );
-    int const numGeomQuantities = int( extractedValues[numGeomQuantitiesIdx] );
-    GEOS_ASSERT_EQ( extracted, numGeomQuantities + 1 );
+    std::size_t const numGeomQuantitiesIdx = intConv< std::size_t >( std::distance( std::cbegin( extractedIndices ), cit ) );
+    TriScalarInt const & numGeomQuantities = extractedValues[numGeomQuantitiesIdx];
+    GEOS_ASSERT_EQ( extracted, intConv< std::size_t >( numGeomQuantities + 1 ) );
 
     switch( geometricalType )
     {
       case Geom::EDGE:
       {
-        int const & numNodes = numGeomQuantities;  // Alias
+        TriScalarInt const & numNodes = numGeomQuantities;  // Alias
         GEOS_ASSERT_EQ( numNodes, 2 );
         std::array< NodeGlbIdx, 2 > order{};
 
-        for( int ii = 0; ii < extracted; ++ii )
+        for( std::size_t ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
@@ -1060,7 +1072,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           NodeGlbIdx const ngi = convert.toNodeGlbIdx( extractedIndices[ii] );
-          integer const ord = integer( extractedValues[ii] - 1 );
+          TriScalarInt const ord = extractedValues[ii] - 1;
           GEOS_ASSERT( ord == 0 or ord == 1 );
           order[ord] = ngi;
         }
@@ -1073,9 +1085,9 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
       case Geom::FACE:
       {
-        int const & numEdges = numGeomQuantities;  // Alias
+        TriScalarInt const & numEdges = numGeomQuantities;  // Alias
         std::map< integer, EdgeInfo > order;
-        for( int ii = 0; ii < extracted; ++ii )
+        for( std::size_t ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
@@ -1083,7 +1095,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extractedIndices[ii] );
-          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, std::size_t( extractedValues[ii] - 1 ) );
+          std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, extractedValues[ii] - 1 );
           order[decoded[1]] = { egi, intConv< std::uint8_t >( decoded[0] ) };
           GEOS_ASSERT( decoded[0] == 0 or decoded[0] == 1 );
         }
@@ -1100,9 +1112,9 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
       case Geom::CELL:
       {
-        int const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
+        TriScalarInt const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
         std::map< integer, FaceInfo > order;
-        for( int ii = 0; ii < extracted; ++ii )
+        for( std::size_t ii = 0; ii < extracted; ++ii )
         {
           if( ii == numGeomQuantitiesIdx )
           {
@@ -1110,7 +1122,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
           }
 
           FaceGlbIdx const fgi = convert.toFaceGlbIdx( extractedIndices[ii] );
-          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, std::size_t( extractedValues[ii] - 1 ) );
+          std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, extractedValues[ii] - 1 );
           order[decoded[2]] = { fgi, intConv< bool >( decoded[0] ), intConv< std::uint8_t >( decoded[1] ) };
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numFaces ) );
@@ -1121,7 +1133,6 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
         {
           tmp[ord] = faceInfo;
         }
-//        GEOS_LOG_RANK( "cells ; index, extIndices, extValues, order = " << index << " | " << json( extIndices ) << " | " << json( extValues ) << " | " << json( order ) );
         break;
       }
       default:

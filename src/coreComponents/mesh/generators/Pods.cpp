@@ -19,15 +19,13 @@ namespace geos
 
 NodeMgrImpl::NodeMgrImpl( localIndex numNodes,
                           array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
-                          array1d< integer > && ghostRank,
                           ArrayOfArrays< localIndex > const & n2e,
                           ArrayOfArrays< localIndex > const & n2f,
                           ArrayOfArrays< localIndex > const & n2c,
-                          array1d< globalIndex > && l2g,
                           unordered_map< globalIndex, localIndex > && g2l,
                           std::map< integer, array1d< localIndex > > && send,
                           std::map< integer, array1d< localIndex > > && recv )
-  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+  : m_ghost{ std::move( g2l ), std::move( send ), std::move( recv ) },
     m_numNodes( numNodes ),
     m_positions( positions ),
     m_n2e( n2e ),
@@ -52,29 +50,25 @@ ToCellRelation< ArrayOfArrays< localIndex > > NodeMgrImpl::getNodeToElements() c
 }
 
 EdgeMgrImpl::EdgeMgrImpl( std::size_t numEdges,
-                          array1d< integer > && ghostRank,
                           array2d< localIndex > && e2n,
                           ArrayOfArrays< localIndex > && e2f,
                           unordered_map< globalIndex, localIndex > && g2l,
-                          array1d< globalIndex > && l2g,
                           std::map< integer, array1d< localIndex > > && send,
                           std::map< integer, array1d< localIndex > > && recv )
-  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+  : m_ghost{ std::move( g2l ), std::move( send ), std::move( recv ) },
     m_numEdges( numEdges ),
     m_e2n( e2n ),
     m_e2f( e2f )
 { }
 
 FaceMgrImpl::FaceMgrImpl( std::size_t numFaces,
-                          array1d< integer > && ghostRank,
                           ArrayOfArrays< localIndex > && f2n,
                           ArrayOfArrays< localIndex > && f2e,
                           array2d< localIndex > && f2c,
                           unordered_map< globalIndex, localIndex > && g2l,
-                          array1d< globalIndex > && l2g,
                           std::map< integer, array1d< localIndex > > && send,
                           std::map< integer, array1d< localIndex > > && recv )
-  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+  : m_ghost{ std::move( g2l ), std::move( send ), std::move( recv ) },
     m_numFaces( numFaces ),
     m_f2n( f2n ),
     m_f2e( f2e ),
@@ -98,15 +92,13 @@ ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
 }
 
 CellBlkImpl::CellBlkImpl( localIndex numCells,
-                          array1d< integer > && ghostRank,
                           array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                           array2d< localIndex > const & c2e,
                           array2d< localIndex > const & c2f,
-                          array1d< globalIndex > && l2g,
                           unordered_map< globalIndex, localIndex > && g2l,
                           std::map< integer, array1d< localIndex > > && send,
                           std::map< integer, array1d< localIndex > > && recv )
-  : m_ghost{ std::move( ghostRank ), std::move( l2g ), std::move( g2l ), std::move( send ), std::move( recv ) },
+  : m_ghost{ std::move( g2l ), std::move( send ), std::move( recv ) },
     m_numCells( numCells ),
     m_c2n( c2n ),
     m_c2e( c2e ),

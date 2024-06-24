@@ -30,8 +30,6 @@ namespace geos
 
 struct GhostMapping
 {
-  array1d< integer > m_ghostRank;
-  array1d< globalIndex > m_l2g;
   unordered_map< globalIndex, localIndex > m_g2l;
   std::map< integer, array1d< localIndex > > m_send;
   std::map< integer, array1d< localIndex > > m_recv;
@@ -44,11 +42,9 @@ public:
 
   NodeMgrImpl( localIndex numNodes,
                array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
-               array1d< integer > && ghostRank,
                ArrayOfArrays< localIndex > const & n2e,
                ArrayOfArrays< localIndex > const & n2f,
                ArrayOfArrays< localIndex > const & n2c,
-               array1d< globalIndex > && l2g,
                unordered_map< globalIndex, localIndex > && g2l,
                std::map< integer, array1d< localIndex > > && send,
                std::map< integer, array1d< localIndex > > && recv );
@@ -81,16 +77,6 @@ public:
   }
 
   // Diamond
-  [[nodiscard]] array1d< integer > getGhostRank() const override
-  {
-    return m_ghost.m_ghostRank;
-  }
-
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
-  {
-    return m_ghost.m_l2g;
-  }
-
   [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
   {
     return m_ghost.m_g2l;
@@ -121,11 +107,9 @@ public:
   EdgeMgrImpl() = default;
 
   EdgeMgrImpl( std::size_t numEdges,
-               array1d< integer > && ghostRank,
                array2d< localIndex > && e2n,
                ArrayOfArrays< localIndex > && e2f,
                unordered_map< globalIndex, localIndex > && g2l,
-               array1d< globalIndex > && l2g,
                std::map< integer, array1d< localIndex > > && send,
                std::map< integer, array1d< localIndex > > && recv );
 
@@ -145,16 +129,6 @@ public:
   }
 
   // Diamond
-  [[nodiscard]] array1d< integer > getGhostRank() const override
-  {
-    return m_ghost.m_ghostRank;
-  }
-
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
-  {
-    return m_ghost.m_l2g;
-  }
-
   [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
   {
     return m_ghost.m_g2l;
@@ -183,12 +157,10 @@ public:
   FaceMgrImpl() = default;
 
   FaceMgrImpl( std::size_t numFaces,
-               array1d< integer > && ghostRank,
                ArrayOfArrays< localIndex > && f2n,
                ArrayOfArrays< localIndex > && f2e,
                array2d< localIndex > && f2c,
                unordered_map< globalIndex, localIndex > && g2l,
-               array1d< globalIndex > && l2g,
                std::map< integer, array1d< localIndex > > && send,
                std::map< integer, array1d< localIndex > > && recv );
 
@@ -210,16 +182,6 @@ public:
   [[nodiscard]] ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
   // Diamond
-  [[nodiscard]] array1d< integer > getGhostRank() const override
-  {
-    return m_ghost.m_ghostRank;
-  }
-
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
-  {
-    return m_ghost.m_l2g;
-  }
-
   [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
   {
     return m_ghost.m_g2l;
@@ -248,11 +210,9 @@ public:
   CellBlkImpl() = default;
 
   CellBlkImpl( localIndex numCells,
-               array1d< integer > && ghostRank,
                array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                array2d< localIndex > const & c2e,
                array2d< localIndex > const & c2f,
-               array1d< globalIndex > && l2g,
                unordered_map< globalIndex, localIndex > && m_g2l,
                std::map< integer, array1d< localIndex > > && send,
                std::map< integer, array1d< localIndex > > && recv );
@@ -286,16 +246,6 @@ public:
   }
 
   // Diamond
-  [[nodiscard]] array1d< integer > getGhostRank() const override
-  {
-    return m_ghost.m_ghostRank;
-  }
-
-  [[nodiscard]] array1d< globalIndex > getLocalToGlobal() const override
-  {
-    return m_ghost.m_l2g;
-  }
-
   [[nodiscard]] unordered_map< globalIndex, localIndex > getGlobalToLocal() const override
   {
     return m_ghost.m_g2l;

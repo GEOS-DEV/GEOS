@@ -37,16 +37,55 @@ OUTPUT intConv( INPUT input )
   return LvArray::integerConversion< OUTPUT >( input );
 }
 
-using NodeLocIdx = fluent::NamedType< localIndex, struct NodeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
-using NodeGlbIdx = fluent::NamedType< globalIndex, struct NodeGlbIdxTag, fluent::Comparable, fluent::Printable >;
-using EdgeLocIdx = fluent::NamedType< localIndex, struct EdgeLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
-using EdgeGlbIdx = fluent::NamedType< globalIndex, struct EdgeGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using FaceLocIdx = fluent::NamedType< localIndex, struct FaceLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
-using FaceGlbIdx = fluent::NamedType< globalIndex, struct FaceGlbIdxTag, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
-using CellLocIdx = fluent::NamedType< localIndex, struct CellLocIdxTag, fluent::Comparable, fluent::Printable, fluent::PreIncrementable >;
-using CellGlbIdx = fluent::NamedType< globalIndex, struct CellGlbIdxTag, fluent::Comparable, fluent::Printable >;
+using NodeLocIdx = fluent::NamedType< localIndex, struct TagNodeLocIdx, fluent::Comparable, fluent::Printable, fluent::PostIncrementable >;
+using NodeGlbIdx = fluent::NamedType< globalIndex, struct TagNodeGlbIdx, fluent::Comparable, fluent::Printable >;
+using EdgeLocIdx = fluent::NamedType< localIndex, struct TagEdgeLocIdx, fluent::Comparable, fluent::Printable, fluent::PostIncrementable >;
+using EdgeGlbIdx = fluent::NamedType< globalIndex, struct TagEdgeGlbIdx, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
+using FaceLocIdx = fluent::NamedType< localIndex, struct TagFaceLocIdx, fluent::Comparable, fluent::Printable, fluent::PostIncrementable >;
+using FaceGlbIdx = fluent::NamedType< globalIndex, struct TagFaceGlbIdx, fluent::Comparable, fluent::Printable, fluent::Addable, fluent::Subtractable, fluent::PreIncrementable >;
+using CellLocIdx = fluent::NamedType< localIndex, struct TagCellLocIdx, fluent::Comparable, fluent::Printable, fluent::PostIncrementable >;
+using CellGlbIdx = fluent::NamedType< globalIndex, struct TagCellGlbIdx, fluent::Comparable, fluent::Printable >;
 
 using MpiRank = fluent::NamedType< int, struct MpiRankTag, fluent::Comparable, fluent::Printable, fluent::Addable >;
+
+namespace  // anonymous
+{
+
+template< typename GI >
+struct toLocIdx
+{
+  static_assert( sizeof( GI ) == 0, "Please specialize your traits class." );
+};
+
+template<>
+struct toLocIdx< NodeGlbIdx >
+{
+  using type = NodeLocIdx;
+};
+
+template<>
+struct toLocIdx< EdgeGlbIdx >
+{
+  using type = EdgeLocIdx;
+};
+
+template<>
+struct toLocIdx< FaceGlbIdx >
+{
+  using type = FaceLocIdx;
+};
+
+template<>
+struct toLocIdx< CellGlbIdx >
+{
+  using type = CellLocIdx;
+};
+
+}  // end of namespace
+
+template< typename GI >
+using toLocIdx_t = typename toLocIdx< GI >::type;
+
 
 inline NodeLocIdx operator "" _nli( unsigned long long int i )
 {

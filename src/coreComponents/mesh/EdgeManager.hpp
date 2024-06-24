@@ -130,10 +130,9 @@ public:
 
   /**
    * @brief Initialise the current @c EdgeManager with the information from @c edgeMgr.
-   * @param[in] neighbors The ranks of the neighbors.
    * @param[in] edgeMgr Provides the geometrical mappings at stake for the @c EdgeManager.
    */
-  void setGeometricalRelations( std::set< integer > const & neighbors, generators::EdgeMgr const & edgeMgr );
+  void setGeometricalRelations( generators::EdgeMgr const & edgeMgr );
 
   /**
    * @brief Link the current manager to other managers.
