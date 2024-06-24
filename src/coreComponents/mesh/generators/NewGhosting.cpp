@@ -84,6 +84,9 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
                          EdgeGlbIdx const & maxEdgeId,
                          FaceGlbIdx const & maxFaceId )
 {
+  // MaxGlbIdcs is just a struct of the 4 index types (ints under the hood)
+  // edge and face max (global) index values are passed in, 
+  // we use a little lambda below to get the node and cell max indices
   MaxGlbIdcs offsets{ NodeGlbIdx{ 0 }, maxEdgeId, maxFaceId, CellGlbIdx{ 0 } };
 
   auto const extract = []( vtkDataArray * globalIds ) -> vtkIdType
@@ -96,6 +99,9 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   offsets.nodes = NodeGlbIdx{ extract( mesh->GetPointData()->GetGlobalIds() ) };
   offsets.cells = CellGlbIdx{ extract( mesh->GetCellData()->GetGlobalIds() ) };
 
+  // I would have to look in detail about what these MPI lines do,
+  // But im fairly sure they are just handling type stuff so that you can do communications
+  // with the MaxGlbIdcs type
   // Otherwise, use `MPI_Type_create_struct`.
   static_assert( std::is_same_v< NodeGlbIdx::UnderlyingType, EdgeGlbIdx::UnderlyingType > );
   static_assert( std::is_same_v< NodeGlbIdx::UnderlyingType, FaceGlbIdx::UnderlyingType > );
@@ -110,6 +116,8 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
   MPI_Op op;
   MPI_Op_create( g, true, &op );
 
+  // Do an allReduce so that every rank knows the max index for (nodes, edges, faces, cells)
+  // g is the custom reduction function which takes max for each (nodes, edges, faces, cells)
   MaxGlbIdcs result( offsets );
 
   MPI_Allreduce( &offsets, &result, 1, t, op, MPI_COMM_WORLD );
@@ -170,13 +178,25 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
                                                    BucketOffsets const & offsets,
                                                    MpiRank curRank )
 {
+  // MeshGraph (defined in BuildPods.hpp) is just a struct of maps which map: 
+  // cell global index to vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
+  // face global index to vector of entries of type (edge global index plus orientation) for each of the adjacent edges
+  // edge global index to tuple of node global indices
+  // node global index to 3d array of position
+  // We distinguish between the owned data and the present data
+  // present data is stuff that is owned by another rank, but is already present on the current rank because of the boundary exchange done previously.
+  // Note that present just includes the 2D boundary between ranks, we still need the cell info, the other faces, edges, nodes which make up that cell
+  // (and further if we wanted deeper ghosting)
   MeshGraph owned, present;
 
+  // Any (node, edge, face, cell) is owned by the lowest rank on which it appears
+  // so we define a lambda to compute if the current rank owns some piece of data
   auto const isCurrentRankOwning = [&curRank]( std::set< MpiRank > const & ranks ) -> bool
   {
     return curRank == *std::min_element( std::cbegin( ranks ), std::cend( ranks ) );
   };
 
+  // Get the nodal positions for nodes on current rank mesh and store in appropriate MeshGraph (owned/present)
   std::map< NodeGlbIdx, vtkIdType > const n2vtk = buildNgiToVtk( mesh );
   for( auto const & [ranks, nodes]: buckets.nodes )
   {
@@ -188,10 +208,13 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
     }
   }
 
+  // Loop through edge data and assign to the owned/present graph
   for( auto const & [ranks, edges]: buckets.edges )
   {
     auto & e2n = isCurrentRankOwning( ranks ) ? owned.e2n : present.e2n;
-    EdgeGlbIdx egi = offsets.edges.at( ranks );  // TODO hack
+    // im not sure why this is a 'hack', this seems like the way I would do it
+    // namely get the edge offset for this bucket, then count upwards in global Id for each edge in bucket
+    EdgeGlbIdx egi = offsets.edges.at( ranks );  // TODO hack 
     for( Edge const & edge: edges )
     {
       e2n[egi] = edge;
@@ -206,33 +229,40 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
     e2n.insert( std::cbegin( m ), std::cend( m ) );
   }
 
-  // Simple inversion
+  // Simple inversion of the e2n (which didnt care about ownership) to a node2edge (which therefore also doesnt care about ownership)
+  // this is used in constructing the face2edge data below
   std::map< std::tuple< NodeGlbIdx, NodeGlbIdx >, EdgeGlbIdx > n2e;
   for( auto const & [e, n]: e2n )
   {
     n2e[n] = e;  // TODO what about ownership?
   }
 
+  // Loop through the face data to assign to owned/present graph
   for( auto const & [ranks, faces]: buckets.faces )
   {
     auto & f2e = isCurrentRankOwning( ranks ) ? owned.f2e : present.f2e;
 
+    // grab initial index for faces in this bucket and then loop over these faces
     FaceGlbIdx fgi = offsets.faces.at( ranks );
     for( Face face: faces )  // Intentional copy for the future `emplace_back`.
     {
-      face.emplace_back( face.front() );  // Trick to build the edges.
+      face.emplace_back( face.front() );  // Trick to build the edges. Namely you need to build the edge that connects the last node to the first
       for( std::size_t i = 0; i < face.size() - 1; ++i )
       {
+        // An edge is just the pair of node global indices, plus a boolean telling you the order
+        // This is placed into an EdgeInfo struct (defined in buildPods.hpp, but its just this info)
         NodeGlbIdx const & n0 = face[i], & n1 = face[i + 1];
         std::pair< NodeGlbIdx, NodeGlbIdx > const p0 = std::make_pair( n0, n1 );
         std::pair< NodeGlbIdx, NodeGlbIdx > const p1 = std::minmax( n0, n1 );
-        EdgeInfo const info = { n2e.at( p1 ), std::uint8_t{ p0 != p1 } };
-        f2e[fgi].emplace_back( info );
+        EdgeInfo const info = { n2e.at( p1 ), std::uint8_t{ p0 != p1 } }; // n2e is used to get the edge global index from the node global indices
+        f2e[fgi].emplace_back( info ); // assign data to proper graph
       }
-      ++fgi;
+      ++fgi; // increment the offset for the bucket
     }
   }
 
+  // create a map from node global indices to face global index which does not care about ownership, similar to n2e above
+  // this will be used in generating cell2face data, like how n2e was used in generating face2edge
   std::map< std::vector< NodeGlbIdx >, FaceGlbIdx > n2f;
   for( auto const & [ranks, faces]: buckets.faces )
   {
@@ -253,6 +283,7 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
     // TODO copy paste?
     for( auto f = 0; f < cell->GetNumberOfFaces(); ++f )
     {
+      // for each of the faces in the cell, get the global ids of the nodes
       vtkCell * face = cell->GetFace( f );
       vtkIdList * pids = face->GetPointIds();
       std::vector< NodeGlbIdx > faceNodes( pids->GetNumberOfIds() );
@@ -262,9 +293,17 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
         vtkIdType const ngi = globalPtIds->GetValue( nli );
         faceNodes[i] = NodeGlbIdx{ ngi };
       }
+
+      // these nodes will be in the vtk ordering, we want a consistent ordering for each face
+      // reorderFaceNodes (defined in NewGlobalNumbering) does this by starting with the smallest node index,
+      // and then iterating in the direction of the smaller of its neighbors
       bool isFlipped;
       std::uint8_t start;
       std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes, isFlipped, start );
+
+      // add the face data to the vector for this cell in owned graph.
+      // note there will never be any 'present' cells, as the earlier exchange only communicates the 2D boundary btwn ranks
+      // note we are using the n2f built above to go from the vector of nodes (properly ordered) to the face global ID
       owned.c2f[gci].emplace_back( FaceInfo{ n2f.at( reorderedFaceNodes ), isFlipped, start } );
     }
   }
@@ -1131,10 +1170,20 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 
   GEOS_LOG_RANK( "offsets on rank " << curRank << " -> " << json( offsets ) );
 
+  // Now we grab the biggest global indices for each (nodes, edges, faces, cells) as this will help build the adjacency matrix
+  // gatherOffset does an allReduce of max indices on each rank
+  // note we use the extra entry in the offsets for the next rank which specifies where it starts to get the max index on this rank
+  // so we dont have to do any extra counting or anything in the current rank buckets
   MpiRank const nextRank = curRank + 1_mpi;
   MaxGlbIdcs const matrixOffsets = gatherOffset( mesh, offsets.edges.at( { nextRank } ) - 1_egi, offsets.faces.at( { nextRank } ) - 1_fgi );
   std::cout << "matrixOffsets on rank " << curRank << " -> " << json( matrixOffsets ) << std::endl;
 
+  // Now we build to data to describe the mesh data on the current rank. 
+  // owned and present are struct of maps which map: 
+  // cell global index to vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
+  // face global index to vector of entries of type (edge global index plus orientation) for each of the adjacent edges
+  // edge global index to tuple of node global indices
+  // node global index to 3d array of position
   auto const [owned, present] = buildMeshGraph( mesh, buckets, offsets, curRank );  // TODO change into buildOwnedMeshGraph?
 //  if( curRank == 1_mpi )
 //  {

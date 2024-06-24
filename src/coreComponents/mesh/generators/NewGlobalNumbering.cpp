@@ -99,22 +99,27 @@ namespace geos::ghosting
 
     return boundaryCellIdxs;
   }
-
+  // Reorder nodes by starting with the smallest node index, and then iterating in the direction of the smaller of its neighbors
   Face reorderFaceNodes(std::vector<NodeGlbIdx> const &nodes, bool &isFlipped, std::uint8_t &start) // TODO unit test
   {
     std::size_t const n = nodes.size();
 
     std::vector<NodeGlbIdx> f(nodes);
 
+    // Get the smallest global node Id in the face
     auto const cit = std::min_element(std::cbegin(nodes), std::cend(nodes));
     auto const minIdx = std::distance(std::cbegin(nodes), cit);
 
+    // get the adjecent node gloabl IDs in he vector (treated as a circular buffer)
     std::size_t const prevIdx = minIdx == 0 ? n - 1 : minIdx - 1;
     std::size_t const nextIdx = minIdx == intConv<int>(n) - 1 ? 0 : minIdx + 1;
 
+    // we will order by starting with the smallest ID and then iterating in the direction of its smaller neighbor
+    // this is encoded by isFlipped boolean (true if we iterate "left" from the start)
     start = intConv<std::uint8_t>(minIdx);
     isFlipped = nodes[prevIdx] < nodes[nextIdx];
 
+    // return the re-ordered nodes vector, isFlipped and start have also been set by this function
     std::size_t const pivot = isFlipped ? n - 1 - minIdx : minIdx;
     if (isFlipped)
     {
