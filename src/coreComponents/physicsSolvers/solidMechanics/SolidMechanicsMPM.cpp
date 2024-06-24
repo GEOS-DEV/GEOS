@@ -7443,10 +7443,18 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
                               normalStress,
                               shearStress );
       break;
+    case CohesiveLawOption::Polymer:
+      polymerCohesiveLaw( totalNormalDisplacement,
+                          totalTangentialDisplacement,
+                          normalStress,
+                          shearStress );
+      break;
     default:
       GEOS_ERROR( "No cohesive law of the kind specified!" );
       break;
   }
+
+  // GEOS_LOG_RANK("dn: " << totalNormalDisplacement << ", " << "dt: " << totalTangentialDisplacement << ", " << "sigma_n: " << normalStress << ", " << "sigma_t: " << shearStress );
 
   // Mass-weighted average of the projected area
   // Do we want to add choice of weighting as we do in contact calculations for normals?
@@ -7548,6 +7556,55 @@ void SolidMechanicsMPM::needlemanXuCohesiveLaw( real64 normalDisplacement,
   shearStress = -( shearWorkOfSeparation / tangentialCharacteristicDisplacement ) * ( 2 * normalCharacteristicDisplacement / tangentialCharacteristicDisplacement ) * normalizedTangentialDisplacement * 
                         ( q + ( r - q ) / ( r - 1.0 ) * normalizedNormalDisplacement ) *  
                         exp( -normalizedNormalDisplacement ) * exp( -pow( normalizedTangentialDisplacement, 2) );
+}
+
+void SolidMechanicsMPM::polymerCohesiveLaw( real64 normalDisplacement,
+                                            real64 tangentialDisplacement,
+                                            real64 & normalStress,
+                                            real64 & shearStress )
+{
+  real64 t = m_characteristicNormalDisplacement;
+  real64 tSqr = t * t;
+
+  real64 normalDisplacementSqr = normalDisplacement * normalDisplacement;
+  real64 shearDisplacementSqr = tangentialDisplacement * tangentialDisplacement;
+
+  // These should eventually be user inputs
+  real64 k = 0.8; // Polymer bulk modulus
+  real64 g = 0.2; // Polymer shear modulus
+  real64 gSqr = g * g;
+  real64 yieldStrength0 = 0.003;
+  real64 r0 = 0.0225;
+  real64 r1 = 0.0108;
+  real64 r2 = 0.177;
+  real64 Gr = 0.00174;
+  real64 lambdaMax = 2.14; // Polymer max stretch
+
+  real64 lambda = sqrt(pow(normalDisplacement + t,2) + shearDisplacementSqr)/t; // Stretch
+
+  real64 sigma_H = Gr*pow(lambda * lambda - 1/lambda,2);
+
+  real64 tau = sqrt(gSqr*(4*t*normalDisplacement*(normalDisplacementSqr + shearDisplacementSqr)+pow(normalDisplacementSqr+shearDisplacementSqr,2)+tSqr * (4*normalDisplacementSqr+3*shearDisplacementSqr))/(pow(t*(t+normalDisplacement),2)));
+  
+  real64 gamma_p = fmax(0.0, (tau-(yieldStrength0+sigma_H))/(k + (4.0/3.0)*g) );
+
+  real64 R_gamma = r0*exp(-pow(gamma_p/r1, r2));
+
+  real64 yieldStrength = yieldStrength0 + R_gamma + sigma_H;
+
+  real64 scale  = 1.0;
+  if( tau > yieldStrength )
+  {
+    scale = yieldStrength / tau;
+  }
+
+  if( lambda >= lambdaMax )
+  {
+    return;
+  }
+
+  normalStress = -scale * (normalDisplacement*(k*(t+normalDisplacement)+g*(2*t+normalDisplacement)))/(t*(t+normalDisplacement));
+  shearStress = -g * tangentialDisplacement / t;
 }
 
 void SolidMechanicsMPM::particleToGrid( real64 const time_n,
