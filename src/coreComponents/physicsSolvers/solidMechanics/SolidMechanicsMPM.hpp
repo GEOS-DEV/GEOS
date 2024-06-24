@@ -749,7 +749,7 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
-  int m_enablePrescribedBoundaryTransverseVelocities;
+  array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces 
 
   array1d< real64 > m_globalFaceReactions;
