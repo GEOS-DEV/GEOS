@@ -1119,6 +1119,11 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
                        std::set< MpiRank > const & neighbors,
                        MeshMappingImpl & meshMappings )
 {
+
+  // First step in ghosting is to have each rank create the global IDs for each entry appearing on it
+  // buckets is a group of maps from sets of mpi ranks to shared (nodes, edges, faces)
+  // offsets has the same keys but the values are now the global index for the first entry in the bucket
+  // the rest of the items in a bucket are numered sequentially following the value of offset
   auto const [buckets, offsets] = doTheNewGlobalNumbering( mesh, neighbors );
 
   // Now we exchange the data with our neighbors.

@@ -216,7 +216,7 @@ std::map< integer, array1d< localIndex > > toFlavorlessMapping( std::map< MpiRan
   }
 
   return output;
-};
+}
 
 EdgeMgrImpl makeFlavorlessEdgeMgrImpl( std::size_t const & numEdges,
                                        std::vector< integer > const & ghostRank,
