@@ -83,8 +83,8 @@ public:
   R1Tensor32 getThicknessMaxXYZ() const { return m_thicknessMaxXYZ; }
 
   /**
-   * 
-  */
+   *
+   */
   real32 getTaperCoeff() const { return m_taperCoeff; }
 
   /**

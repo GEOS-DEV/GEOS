@@ -199,35 +199,30 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
 
-   registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+  registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to apply taper" );
 
-   registerWrapper( viewKeyStruct::xMinTaperString(), &m_xMinTaper ).
+  registerWrapper( viewKeyStruct::xMinTaperString(), &m_xMinTaper ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( {0,0,0} ).
+    setApplyDefaultValue( {0, 0, 0} ).
     setDescription( "Minimal coordinates for taper (left,bottom,front)" );
 
-     registerWrapper( viewKeyStruct::xMaxTaperString(), &m_xMaxTaper ).
+  registerWrapper( viewKeyStruct::xMaxTaperString(), &m_xMaxTaper ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( {0,0,0} ).
+    setApplyDefaultValue( {0, 0, 0} ).
     setDescription( "Maximal coordinates for taper (right,top,back)" );
 
-     registerWrapper( viewKeyStruct::thicknessMinXYZTaperString(), &m_thicknessMinXYZTaper ).
+  registerWrapper( viewKeyStruct::thicknessMinXYZTaperString(), &m_thicknessMinXYZTaper ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( {0,0,0} ).
+    setApplyDefaultValue( {0, 0, 0} ).
     setDescription( "Size for the taper layer (left,bottom,front)" );
 
-     registerWrapper( viewKeyStruct::thicknessMaxXYZTaperString(), &m_thicknessMaxXYZTaper ).
+  registerWrapper( viewKeyStruct::thicknessMaxXYZTaperString(), &m_thicknessMaxXYZTaper ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( {0,0,0} ).
+    setApplyDefaultValue( {0, 0, 0} ).
     setDescription( "Size for the taper layer (left,bottom,front)" );
-
-     registerWrapper( viewKeyStruct::taperConstantString(), &m_taperConstant ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Minimal coordinates for taper (left,bottom,front)" );
 
   registerWrapper( viewKeyStruct::slsReferenceAngularFrequenciesString(), &m_slsReferenceAngularFrequencies ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -283,8 +278,8 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
       }
     }
 
- 
-      nodeManager.registerField<fields::taperCoeff > (this->getName());
+
+    nodeManager.registerField< fields::taperCoeff >( this->getName());
 
   } );
 }

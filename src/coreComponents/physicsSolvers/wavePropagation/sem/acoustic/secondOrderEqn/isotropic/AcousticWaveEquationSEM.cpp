@@ -159,10 +159,10 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
-  if (m_useTaper==1)
+  if( m_useTaper==1 )
   {
-    arrayView1d< real32 > const taperCoeff = nodeManager.getField<fields::taperCoeff>();
-    TaperKernel::computeTaperCoeff< EXEC_POLICY > (nodeManager.size(),nodeCoords32,m_xMinTaper, m_xMaxTaper,m_thicknessMinXYZTaper,m_thicknessMaxXYZTaper,m_taperConstant,taperCoeff);
+    arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, taperCoeff );
   }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -948,7 +948,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
   arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
-  arrayView1d< real32 > const taperCoeff = nodeManager.getField<fields::taperCoeff>();
+  arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
 
   arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
@@ -979,11 +979,12 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     GEOS_MARK_SCOPE ( updateP );
     AcousticTimeSchemeSEM::LeapFrogWithoutPML( dt, p_np1, p_n, p_nm1, mass, stiffnessVector, damping,
                                                rhs, freeSurfaceNodeIndicator, solverTargetNodesSet );
-    
-    
-    if(m_useTaper==1)
+
+
+    if( m_useTaper==1 )
     {
-      TaperKernel::multiplyByTaperCoeff<EXEC_POLICY>(nodeManager.size(),taperCoeff,p_np1);
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_np1 );
+      TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, p_n );
     }
   }
   else
