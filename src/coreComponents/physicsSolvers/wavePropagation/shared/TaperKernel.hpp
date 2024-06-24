@@ -66,27 +66,27 @@ struct TaperKernel
     {
       if( xMin[0]>nodeCoords[a][0] )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
       }
       else if( nodeCoords[a][0] > xMax[0] )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
       }
       else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
       }
       else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
       }
       else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
       }
       else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000001*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
+        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
       }
 
     } );
