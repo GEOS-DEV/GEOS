@@ -3383,152 +3383,161 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   real64 localFaceReactions[6] = {0.0};
   for( int face = 0; face < 6; face++ )
   {
-    if( m_boundaryConditionTypes[face] == 1 )
+    // TODO Eventually perform cast to BC enum type!
+    switch(m_boundaryConditionTypes[face])
     {
-      // CC: TODO add gridDVelocity update to theses for XPIC
-      singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridDVelocity, gridPosition, nodeSets );
-
-      //Dumby paramter, we do not need the change in grid acceleration
-      array3d< real64 > gridDAcceleration( gridAcceleration.size(0), gridAcceleration.size(1), gridAcceleration.size(2)); //CC: TODO Probably want to avoid allocating a lot of memory just for the dummy variable
-      singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridDAcceleration, gridPosition, nodeSets );
-    }
-    else if( ( m_boundaryConditionTypes[face] == 2 || m_boundaryConditionTypes[face] == 3 )  && ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1) ) // Double check stress control (think we only need to check if stress control for the direction of faces are on not all them)
-    {
-      for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
-      {
-        // Face-associated quantities
-        int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
-        int dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
-        int dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
-        int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
-
-        // Enforce BCs on boundary nodes using F-table
-        SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
-        int const numBoundaryNodes = boundaryNodes.size();
-        forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) // Probably
-                                                                                                                                             // not a big
-                                                                                                                                             // enough loop
-                                                                                                                                             // to warrant
-                                                                                                                                             // parallelization
+      case 0: // Outflow
+        break; // Do nothing
+      case 1: // Symmetry 
         {
-          int const g = boundaryNodes[gg];
+          // CC: TODO add gridDVelocity update to theses for XPIC
+          singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridDVelocity, gridPosition, nodeSets );
 
-          // If boundary condition type is 3 (e.g. contact, default is sticky), performs a check if normal grid component of grid velocity is moving into plane, if so flips component and adds domain velocity
-          real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
-          if( m_boundaryConditionTypes[face] == 3 )
+          //Dumby paramter, we do not need the change in grid acceleration
+          array3d< real64 > gridDAcceleration( gridAcceleration.size(0), gridAcceleration.size(1), gridAcceleration.size(2)); //CC: TODO Probably want to avoid allocating a lot of memory just for the dummy variable
+          singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridDAcceleration, gridPosition, nodeSets );
+        }
+        break;
+      case 2: // Moving
+      case 3: // Contact
+        if ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 || m_boundaryConditionTypes[face] == 3) // Double check stress control (think we only need to check if stress control for the direction of faces are on not all them)
+        {
+          for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
           {
-            // Currently fails if contact is only enforced when surface position  is at 0 for inContact condition on grid boundary too, likely needs some soft scaling
-            real64 surfacePosition = gridCenterOfVolume[g][fieldIndex][dir0];
-            if( gridSurfaceFieldMass[g][fieldIndex] > m_smallMass )
+            // Face-associated quantities
+            int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+            int dir1 = (dir0 + 1) % 3;     // 1, 1, 2, 2, 0, 0
+            int dir2 = (dir0 + 2) % 3;     // 2, 2, 0, 0, 1, 1
+            int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+
+            // Enforce BCs on boundary nodes using F-table
+            SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
+            int const numBoundaryNodes = boundaryNodes.size();
+            forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) // Probably
+                                                                                                                                                 // not a big
+                                                                                                                                                 // enough loop
+                                                                                                                                                 // to warrant
+                                                                                                                                                 // parallelization
             {
-              surfacePosition = gridSurfacePosition[g][fieldIndex][dir0];
-            }
-            bool inContact = m_boundaryConditionTypes[face] == 3 && ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) && ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 );
+              int const g = boundaryNodes[gg];
 
-            // GEOS_LOG_RANK( "g: " << g << ", " << 
-            //                "face: " << face << ", " << 
-            //                "contact: " << inContact << ", " << 
-            //                "norm: " << ( -1.0 + 2.0 * positiveNormal ) << ", " << 
-            //                "v_c: " << ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) << ", " << 
-            //                "sPos: " << surfacePosition << ", " << 
-            //                "x_c: " << ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) );
+              // If boundary condition type is 3 (e.g. contact, default is sticky), performs a check if normal grid component of grid velocity is moving into plane, if so flips component and adds domain velocity
+              real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
+              if( m_boundaryConditionTypes[face] == 3 )
+              {
+                // Currently fails if contact is only enforced when surface position is at 0 for inContact condition on grid boundary too, likely needs some soft scaling
+                real64 surfacePosition = gridCenterOfVolume[g][fieldIndex][dir0];
+                if( gridSurfaceFieldMass[g][fieldIndex] > m_smallMass )
+                {
+                  surfacePosition = gridSurfacePosition[g][fieldIndex][dir0];
+                }
+                bool inContact = ( gridVelocity[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ) > 0.0 ) && ( surfacePosition * ( -1.0 + 2.0 * positiveNormal ) > 0.0 );
 
-            prescribedVelocity = inContact * ( -m_boundaryFaceCoefficientsOfRestitution[face]*gridVelocity[g][fieldIndex][dir0] + m_domainL[dir0] * gridPosition[g][dir0] );
+                if( inContact )
+                {
+                  prescribedVelocity = inContact * ( m_domainL[dir0] * gridPosition[g][dir0] );
+                // prescribedVelocity = inContact * ( -m_boundaryFaceCoefficientsOfRestitution[face]*gridVelocity[g][fieldIndex][dir0] + m_domainL[dir0] * gridPosition[g][dir0] );
+                }            
 
-            // Enforce friction in transverse directions
-            real64 mu = m_boundaryFaceFrictionCoefficients[face];
-            real64 frictionalForce = mu * fmax(-gridAcceleration[g][face][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0);
+                // Enforce friction in transverse directions
+                real64 mu = m_boundaryFaceFrictionCoefficients[face];
+                real64 frictionalForce = mu * fmax(-gridAcceleration[g][face][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0);
 
-            real64 inPlaneSpeed = std::sqrt( gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] + gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
-            real64 r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
-            real64 r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
+                real64 inPlaneSpeed = std::sqrt( gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] + gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
+                real64 r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
+                real64 r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
 
-            real64 da1 = r1 * frictionalForce;
-            real64 da2 = r2 * frictionalForce;
+                real64 da1 = r1 * frictionalForce;
+                real64 da2 = r2 * frictionalForce;
 
-            gridDVelocity[g][fieldIndex][dir1] = da1 * dt;
-            gridDVelocity[g][fieldIndex][dir2] = da2 * dt;
+                gridDVelocity[g][fieldIndex][dir1] = da1 * dt;
+                gridDVelocity[g][fieldIndex][dir2] = da2 * dt;
 
-            gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1];
-            gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir2];
+                gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1];
+                gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir2];
 
-            gridAcceleration[g][fieldIndex][dir1] -= da1;
-            gridAcceleration[g][fieldIndex][dir2] -= da2;
+                gridAcceleration[g][fieldIndex][dir1] -= da1;
+                gridAcceleration[g][fieldIndex][dir2] -= da2;
+              }
+              else 
+              {
+                prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
+
+                if(m_enablePrescribedBoundaryTransverseVelocities[face] == 1)
+                {
+                  real64 prescribedTransverseVelocity1 = m_prescribedBoundaryTransverseVelocities[face][0];
+                  gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
+                  real64 accelerationForTransverseBC1 = gridDVelocity[g][fieldIndex][dir1] / dt; // acceleration needed to satisfy BC along transverse directions
+                  gridVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1;
+                  gridAcceleration[g][fieldIndex][dir1] += accelerationForTransverseBC1;
+
+                  real64 prescribedTransverseVelocity2 = m_prescribedBoundaryTransverseVelocities[face][1];
+                  gridDVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
+                  real64 accelerationForTransverseBC2 = gridDVelocity[g][fieldIndex][dir2] / dt; // acceleration needed to satisfy BC along transverse directions
+                  gridVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2;
+                  gridAcceleration[g][fieldIndex][dir2] += accelerationForTransverseBC2;            
+                }           
+              }
+
+              gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this, because it overrides the change in velocity that might have been written during enforceContact
+              real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
+              gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
+              gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
+                            
+              if( gridGhostRank[g] <= -1 ) // so we don't double count reactions at partition boundaries
+              {
+                localFaceReactions[face] += accelerationForBC * gridMass[g][fieldIndex];
+              }
+            } );
+
+            // Perform field reflection on buffer nodes - accounts for moving boundary effects
+            SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
+            int const numBufferNodes = bufferNodes.size();
+            // Possibly not a big enough loop to warrant parallelization
+            forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
+              {
+                int const g = bufferNodes[gg];
+
+                // Initialize grid ijk indices
+                int ijk[3];
+                ijk[dir1] = std::round((gridPosition[g][dir1] - m_xLocalMin[dir1]) / m_hEl[dir1] );
+                ijk[dir2] = std::round((gridPosition[g][dir2] - m_xLocalMin[dir2]) / m_hEl[dir2] );
+
+                // Grab the node index that we're copying from
+                ijk[dir0] = positiveNormal * (m_nEl[dir0] - 2) + (1 - positiveNormal) * (2);
+                localIndex gFrom = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+                // Grab the associated boundary node index for moving boundary correction
+                ijk[dir0] = positiveNormal * (m_nEl[dir0] - 1) + (1 - positiveNormal) * (1);
+                localIndex gBoundary = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+                //Store previous velocity to compute change in velocity
+                real64 gridPreviousVelocity[3] = { 0 };
+                gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
+                gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
+                gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
+
+                // Calculate velocity, Negate component aligned with surface normal and correct for moving boundary
+                gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
+                gridVelocity[g][fieldIndex][dir1] = gridVelocity[gFrom][fieldIndex][dir1];
+                gridVelocity[g][fieldIndex][dir2] = gridVelocity[gFrom][fieldIndex][dir2];
+
+                // Compute change in velocity for XPIC calculations
+                gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
+                gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
+                gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
+
+                // Calculate acceleration, Negate component aligned with surface normal and correct for moving boundary
+                gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
+                gridAcceleration[g][fieldIndex][dir1] = gridAcceleration[gFrom][fieldIndex][dir1];
+                gridAcceleration[g][fieldIndex][dir2] = gridAcceleration[gFrom][fieldIndex][dir2];
+              } );
           }
-          else 
-          {
-            prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
-          }
-
-          gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this, because it overrides the change in velocity that might have been written during enforceContact
-          real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
-          gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
-          gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
-          
-          if(m_enablePrescribedBoundaryTransverseVelocities[face] == 1)
-          {
-            real64 prescribedTransverseVelocity1 = m_prescribedBoundaryTransverseVelocities[face][0];
-            gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
-            real64 accelerationForTransverseBC1 = gridDVelocity[g][fieldIndex][dir1] / dt; // acceleration needed to satisfy BC along transverse directions
-            gridVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1;
-            gridAcceleration[g][fieldIndex][dir1] += accelerationForTransverseBC1;
-
-            real64 prescribedTransverseVelocity2 = m_prescribedBoundaryTransverseVelocities[face][1];
-            gridDVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2 - gridVelocity[g][fieldIndex][dir2];
-            real64 accelerationForTransverseBC2 = gridDVelocity[g][fieldIndex][dir2] / dt; // acceleration needed to satisfy BC along transverse directions
-            gridVelocity[g][fieldIndex][dir2] = prescribedTransverseVelocity2;
-            gridAcceleration[g][fieldIndex][dir2] += accelerationForTransverseBC2;            
-          }            
-          
-          if( gridGhostRank[g] <= -1 ) // so we don't double count reactions at partition boundaries
-          {
-            localFaceReactions[face] += accelerationForBC * gridMass[g][fieldIndex];
-          }
-        } );
-
-        // Perform field reflection on buffer nodes - accounts for moving boundary effects
-        SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
-        int const numBufferNodes = bufferNodes.size();
-        // Possibly not a big enough loop to warrant parallelization
-        forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
-          {
-            int const g = bufferNodes[gg];
-
-            // Initialize grid ijk indices
-            int ijk[3];
-            ijk[dir1] = std::round((gridPosition[g][dir1] - m_xLocalMin[dir1]) / m_hEl[dir1] );
-            ijk[dir2] = std::round((gridPosition[g][dir2] - m_xLocalMin[dir2]) / m_hEl[dir2] );
-
-            // Grab the node index that we're copying from
-            ijk[dir0] = positiveNormal * (m_nEl[dir0] - 2) + (1 - positiveNormal) * (2);
-            localIndex gFrom = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-            // Grab the associated boundary node index for moving boundary correction
-            ijk[dir0] = positiveNormal * (m_nEl[dir0] - 1) + (1 - positiveNormal) * (1);
-            localIndex gBoundary = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
-
-            //Store previous velocity to compute change in velocity
-            real64 gridPreviousVelocity[3] = { 0 };
-            gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
-            gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
-            gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
-
-            // Calculate velocity, Negate component aligned with surface normal and correct for moving boundary
-            gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
-            gridVelocity[g][fieldIndex][dir1] = gridVelocity[gFrom][fieldIndex][dir1];
-            gridVelocity[g][fieldIndex][dir2] = gridVelocity[gFrom][fieldIndex][dir2];
-
-            // Compute change in velocity for XPIC calculations
-            gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
-            gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
-            gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
-
-            // Calculate acceleration, Negate component aligned with surface normal and correct for moving boundary
-            gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
-            gridAcceleration[g][fieldIndex][dir1] = gridAcceleration[gFrom][fieldIndex][dir1];
-            gridAcceleration[g][fieldIndex][dir2] = gridAcceleration[gFrom][fieldIndex][dir2];
-          } );
-      }
+        }
+        break;
+      default:
+        GEOS_ERROR("Unrecognized boundary condition type in MPM Solver!");
+        break;
     }
   }
 
