@@ -157,7 +157,8 @@ public:
   {
     Uncoupled,
     PPR,
-    NeedlemanXu
+    NeedlemanXu,
+    Polymer
   };
 
   /**
@@ -544,15 +545,20 @@ public:
                                 arraySlice1d< real64 > const tA,
                                 arraySlice1d< real64 > const tB );
 
-void uncoupledCohesiveLaw( real64 normalDisplacement,
+  void uncoupledCohesiveLaw( real64 normalDisplacement,
+                            real64 tangentialDisplacement,
+                            real64 & normalStress,
+                            real64 & shearStress );
+
+  void needlemanXuCohesiveLaw( real64 normalDisplacement,
+                              real64 tangentialDisplacement,
+                              real64 & normalStress,
+                              real64 & shearStress );
+
+  void polymerCohesiveLaw( real64 normalDisplacement,
                            real64 tangentialDisplacement,
                            real64 & normalStress,
                            real64 & shearStress );
-
-void needlemanXuCohesiveLaw( real64 normalDisplacement,
-                             real64 tangentialDisplacement,
-                             real64 & normalStress,
-                             real64 & shearStress );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -964,7 +970,8 @@ ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
 ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
               "Uncoupled",
               "PPR",
-              "NeedlemanXu" );
+              "NeedlemanXu",
+              "Polymer" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
