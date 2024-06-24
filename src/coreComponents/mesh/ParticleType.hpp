@@ -30,14 +30,17 @@ namespace geos
 enum class ParticleType : integer
 {
   SinglePoint,          ///< Single-point (delta dirac characteristic function)
+  SinglePointBSpline,   ///< Single-point with B-spline shape functions
   CPDI,                 ///< Convected particle domain interpolation, parallelepiped domain
   CPTI,                 ///< Convected particle tetrahedral-domain interpolation, tet domain
-  CPDI2                 ///< "2nd-order" CPDI, hexahedral domain
+  CPDI2,                 ///< "2nd-order" CPDI, hexahedral domain
+  Count
 };
 
 /// Strings for ParticleType
 ENUM_STRINGS( ParticleType,
               "SinglePoint",
+              "SinglePointBSpline",
               "CPDI",
               "CPTI",
               "CPDI2" );

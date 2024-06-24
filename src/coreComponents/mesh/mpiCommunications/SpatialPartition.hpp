@@ -167,6 +167,10 @@ public:
     return m_gridMax;
   }
 
+  void setCoords( array1d< int > coords ) {
+    m_coords = coords;
+  }
+
   /**
    * @brief Get the ijk coordinates of the partition in the domain.
    * @return An array containing number of partition in X, Y and Z directions.
