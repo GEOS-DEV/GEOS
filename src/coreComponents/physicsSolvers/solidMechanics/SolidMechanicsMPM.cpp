@@ -980,7 +980,7 @@ void SolidMechanicsMPM::postProcessInput()
   if( m_enablePrescribedBoundaryTransverseVelocities.size() == 0 )
   {
     m_enablePrescribedBoundaryTransverseVelocities.resize( 6 );
-    LvArray::tensorOps::fill< 6 >( m_boundaryConditionTypes, 0 );
+    LvArray::tensorOps::fill< 6 >( m_enablePrescribedBoundaryTransverseVelocities, 0 );
   }
   else
   {
