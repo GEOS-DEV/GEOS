@@ -3,6 +3,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT
+                          GRPC
                           HIP
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
