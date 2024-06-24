@@ -160,6 +160,7 @@ if( ENABLE_VTK )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
+         generators/VTKEmbeddedSurfaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKWellGenerator.hpp
@@ -168,6 +169,7 @@ if( ENABLE_VTK )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
+         generators/VTKEmbeddedSurfaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp

@@ -65,6 +65,16 @@ void EmbeddedSurfaceBlock::setEmbeddedSurfElemTangentialWidthVectors( ArrayOfArr
   m_embeddedSurfElemWidthVectors= _widthVectors;
 }
 
+void EmbeddedSurfaceBlock::setEmbeddedSurfElemAperture( array1d< real64 > && _apertures )
+{
+  m_embeddedSurfElemApertures= _apertures;
+}
+
+void EmbeddedSurfaceBlock::setEmbeddedSurfElemPermeability( array1d< real64 > && _perms )
+{
+  m_embeddedSurfElemPermeability= _perms;
+}
+
 void EmbeddedSurfaceBlock::setNumEmbeddedSurfElem( localIndex _numEmbeddedSurfaces )
 {
 

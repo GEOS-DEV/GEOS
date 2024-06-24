@@ -56,27 +56,16 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    // bool experiment =false;
-    // if (experiment)
-    // {
-
-    //   EmbeddedSurfaceSubRegion &subRegion = elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>(m_faceBlockName);
-    //   if (faceBlocks.hasGroup("EmbeddedSurface"))
-    //   {
-    //     EmbeddedSurfaceBlockABC const &source = faceBlocks.getGroup<EmbeddedSurfaceBlockABC>("EmbeddedSurface");
-    //     subRegion.copyFromCellBlock(source);
-    //   }
-    //   else
-    //   {
-    //     GEOS_LOG_RANK_0("No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created.");
-    //   }
-    // }
-    // else
-    // {
-    //   elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>(m_faceBlockName);
-    // }
-
-    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( "EmbeddedSurface" );
+     EmbeddedSurfaceSubRegion &subRegion = elementSubRegions.registerGroup<EmbeddedSurfaceSubRegion>(m_faceBlockName);
+     if (faceBlocks.hasGroup(m_faceBlockName))
+     {
+       EmbeddedSurfaceBlockABC const &source = faceBlocks.getGroup<EmbeddedSurfaceBlockABC>(m_faceBlockName);
+       subRegion.copyFromCellBlock(source);
+     }
+     else
+     {
+       GEOS_LOG_RANK_0("No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty embedded surface region was created.");
+     }
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {

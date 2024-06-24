@@ -90,6 +90,18 @@ public:
    */
   void setEmbeddedSurfElemTangentialWidthVectors( ArrayOfArrays< real64 > && _widthVectors );
 
+  /**
+   * @brief Sets the embedded elements Apertures
+   * @param _apertures the aperture values of embedded elements.
+   */
+  void setEmbeddedSurfElemAperture( array1d< real64 > && _apertures );
+
+  /**
+   * @brief Sets the embedded elements Permeabilities
+   * @param _perms the permeability values of embedded elements.
+   */
+  void setEmbeddedSurfElemPermeability( array1d< real64 > && _perms );
+
 private:
 
   localIndex m_numEmbeddedSurfaces;
@@ -99,6 +111,8 @@ private:
   ArrayOfArrays< real64 > m_embeddedSurfElemNormals;
   ArrayOfArrays< real64 > m_embeddedSurfElemLengthVectors;
   ArrayOfArrays< real64 > m_embeddedSurfElemWidthVectors;
+  array1d< real64 > m_embeddedSurfElemApertures;
+  array1d< real64 > m_embeddedSurfElemPermeability;
 };
 
 }

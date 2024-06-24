@@ -565,18 +565,24 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         array1d< string > const & faceBlockNames,
+                          array1d< string > const & edfmSurfBlockNames)
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
   std::map< string, vtkSmartPointer< vtkDataSet > > faces;
+  std::map< string, vtkSmartPointer< vtkDataSet > > edfmSurfaces;
 
   for( string const & faceBlockName: faceBlockNames )
   {
     faces[faceBlockName] = loadMesh( filePath, faceBlockName, lastRank );
   }
 
-  return AllMeshes( main, faces );
+  for( string const & edfmSurfBlockName: edfmSurfBlockNames )
+  {
+    edfmSurfaces[edfmSurfBlockName] = loadMesh( filePath, edfmSurfBlockName, lastRank );
+  }
+  return AllMeshes( main, faces, edfmSurfaces );
 }
 
 
@@ -687,8 +693,10 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
     vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOS );
     finalFractures[fractureName] = finalFracMesh;
   }
-
-  return AllMeshes( finalMesh, finalFractures );
+  
+  // Ouassim: just add the edfm mesh at the moment and see.
+  auto edfmMesh = input.getEmbeddedSurfaceBlocks(); 
+  return AllMeshes( finalMesh, finalFractures, edfmMesh );
 }
 
 /**
@@ -900,6 +908,7 @@ AllMeshes
 redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToEdfmFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
@@ -913,6 +922,12 @@ redistributeMeshes( integer const logLevel,
     fractures.push_back( nameToFracture.second );
   }
 
+  std::vector< vtkSmartPointer< vtkDataSet > > edfms;
+  for( auto & nameToEdfm: namesToEdfmFractures )
+  {
+    edfms.push_back( nameToEdfm.second );
+  }
+
   // Generate global IDs for vertices and cells, if needed
   vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds, !std::empty( fractures ) );
 
@@ -921,6 +936,11 @@ redistributeMeshes( integer const logLevel,
     for( auto nameToFracture: namesToFractures )
     {
       GEOS_ASSERT_EQ( nameToFracture.second->GetNumberOfCells(), 0 );
+    }
+
+    for( auto nameToEdfm: namesToEdfmFractures )
+    {
+      GEOS_ASSERT_EQ( nameToEdfm.second->GetNumberOfCells(), 0 );
     }
   }
 
@@ -944,13 +964,14 @@ redistributeMeshes( integer const logLevel,
   // Redistribute the mesh again using higher-quality graph partitioner
   if( partitionRefinement > 0 )
   {
-    AllMeshes input( mesh, namesToFractures );
+    AllMeshes input( mesh, namesToFractures, namesToEdfmFractures );
     result = redistributeByCellGraph( input, method, comm, partitionRefinement - 1 );
   }
   else
   {
     result.setMainMesh( mesh );
     result.setFaceBlocks( namesToFractures );
+    result.setEmbeddedSurfaceBlocks( namesToEdfmFractures);
   }
 
   // Logging some information about the redistribution.
@@ -961,6 +982,10 @@ redistributeMeshes( integer const logLevel,
     for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
     {
       messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
+    }
+    for( auto const & [edfmName, edfmMesh]: result.getEmbeddedSurfaceBlocks() )
+    {
+      messages.push_back( GEOS_FMT( pattern, edfmName, edfmMesh->GetNumberOfCells() ) );
     }
     if( logLevel >= 5 )
     {

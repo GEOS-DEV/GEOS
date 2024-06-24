@@ -138,23 +138,16 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
 
   this->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & elemRegion )
   {
-    // testing only
-    //
-
-    bool experiment = false;
-    if( experiment )
+    
+     if( elemRegion.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+     {
+       Group const * fracBlocks = &cellBlockManager.getFaceBlocks();
+       elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
+     }
+    else if( elemRegion.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
-
-      CellBlockManagerABC & cellBlockManagerNoConst = const_cast< CellBlockManagerABC & >(cellBlockManager);
-      CellBlockManager & cellBlockManagerConcrete = dynamic_cast< CellBlockManager & >(cellBlockManagerNoConst);
-
-      string name = "EmbeddedSurface";
-      createDummyEmbeddedSurfaceBlockOrig( name, cellBlockManagerConcrete );
+      Group const * edfmBlocks = &cellBlockManager.getEmbeddedSurfaceBlocks();
       elemRegion.generateMesh( cellBlockManager.getEmbeddedSurfaceBlocks() );
-    }
-    else
-    {
-      elemRegion.generateMesh( cellBlockManager.getFaceBlocks() );
     }
 
   } );
