@@ -123,7 +123,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_fTable(),
   m_domainF(),
   m_domainL(),
-  m_enablePrescribedBoundaryTransverseVelocities( 0 ),
+  m_enablePrescribedBoundaryTransverseVelocities(),
   m_prescribedBoundaryTransverseVelocities(),
   m_globalFaceReactions(),
   m_bodyForce(),
@@ -354,8 +354,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "enablePrescribedBoundaryTransverseVelocities", &m_enablePrescribedBoundaryTransverseVelocities ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setApplyDefaultValue( m_enablePrescribedBoundaryTransverseVelocities ).
-    setDescription( "Array storing the transverse velocity boundary conditions for each face of domain" );
+    setDescription( "Array storing a flag to enable transverse velocity boundary conditions for each face of domain" );
 
   registerWrapper( "prescribedBoundaryTransverseVelocities", &m_prescribedBoundaryTransverseVelocities ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -975,6 +974,20 @@ void SolidMechanicsMPM::postProcessInput()
     // Should probably use enum for boundary conditions instead of integers (or at least unsigned, negative values shouldn't mean anything)
     GEOS_ERROR_IF( std::any_of( m_boundaryConditionTypes.begin(), m_boundaryConditionTypes.end(), []( int & bc ){ return bc < 0 || bc > 3; } ), 
                   "Unknown boundary condition type specified, possible values are 0 (Outflow), 1 (Symmetry), 2 (Moving), and 3 (Contact)." );
+  }
+
+  // Initialize boundary condition types if they're not specified by the user
+  if( m_enablePrescribedBoundaryTransverseVelocities.size() == 0 )
+  {
+    m_enablePrescribedBoundaryTransverseVelocities.resize( 6 );
+    LvArray::tensorOps::fill< 6 >( m_boundaryConditionTypes, 0 );
+  }
+  else
+  {
+    // Throw error if boundary conditions are incorrectly specified
+    GEOS_ERROR_IF( m_enablePrescribedBoundaryTransverseVelocities.size() != 6,
+                   "enablePrescribedBoundaryTransverseVelocities must be of length 6. "
+                   "The 6 entries correspond to transverse velocity BCs on the x-, x+, y-, y+, z- and z+ faces." );
   }
 
   // Initialize boundary condition types if they're not specified by the user
@@ -3452,7 +3465,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
           gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
           gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
           
-          if(m_enablePrescribedBoundaryTransverseVelocities == 1)
+          if(m_enablePrescribedBoundaryTransverseVelocities[face] == 1)
           {
             real64 prescribedTransverseVelocity1 = m_prescribedBoundaryTransverseVelocities[face][0];
             gridDVelocity[g][fieldIndex][dir1] = prescribedTransverseVelocity1 - gridVelocity[g][fieldIndex][dir1];
