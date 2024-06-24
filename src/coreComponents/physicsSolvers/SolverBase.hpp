@@ -734,6 +734,7 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+  SolverStatistics const & getSolverStatistics() const { return m_solverStatistics; }
 
   /**
    * @brief Return PySolver type.

@@ -10,7 +10,7 @@ set( fieldSpecification_headers
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
-     TaperLayer.hpp
+     SourceFluxStatistics.hpp
    )
 
 #
@@ -25,7 +25,7 @@ set( fieldSpecification_sources
      TractionBoundaryCondition.cpp
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
-     TaperLayer.cpp
+     SourceFluxStatistics.cpp
    )
 
 set( dependencyList ${parallelDeps} functions linearAlgebra )
