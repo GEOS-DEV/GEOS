@@ -35,7 +35,8 @@ namespace compositional
 
 struct StabilityTest
 {
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+private:
+  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
 public:
   /**
    * @brief Perform a two-phase stability test
@@ -58,7 +59,6 @@ public:
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64 > const & kValues )
   {
-    constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
     constexpr integer numTrials = 2;    // Trial compositions
     stackArray1d< real64, maxNumComps > logFugacity( numComps );
     stackArray1d< real64, maxNumComps > normalizedComposition( numComps );
@@ -176,12 +176,11 @@ private:
    * @param[out] presentComponents the list of present components
    * @return the number of present components
    */
-  template< typename ARRAY >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static integer calculatePresentComponents( integer const numComps,
                                              arraySlice1d< real64 const > const & composition,
-                                             ARRAY & presentComponents )
+                                             stackArray1d< integer, maxNumComps > & presentComponents )
   {
     // Check for machine-zero feed values
     integer presentCount = 0;
@@ -213,7 +212,8 @@ private:
     {
       totalMoles += composition[ic];
     }
-    real64 const oneOverTotalMoles = 1.0 / (totalMoles + MultiFluidConstants::epsilon);
+    GEOS_ASSERT( MultiFluidConstants::epsilon < totalMoles );
+    real64 const oneOverTotalMoles = 1.0 / totalMoles;
     for( integer ic = 0; ic < numComps; ++ic )
     {
       composition[ic] *= oneOverTotalMoles;
