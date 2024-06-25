@@ -379,6 +379,36 @@ void matrixLeastSquaresSolutionSolve( arraySlice2d< real64, USD > const & A,
   GEOS_ERROR_IF( INFO != 0, "The algorithm computing matrix linear system failed to converge." );
 }
 
+template< int USD1, int USD2 >
+GEOS_FORCE_INLINE
+void matrixCopy( int const N,
+                 int const M,
+                 arraySlice2d< real64, USD1 > const & A,
+                 arraySlice2d< real64, USD2 > const & B )
+{
+  for( int i = 0; i < N; i++ )
+  {
+    for( int j = 0; j < M; j++ )
+    {
+      B( i, j ) = A( i, j );
+    }
+  }
+}
+
+template< int USD >
+GEOS_FORCE_INLINE
+void matrixTranspose( int const N,
+                      arraySlice2d< real64, USD > const & A )
+{
+  for( int i = 0; i < N; i++ )
+  {
+    for( int j = i+1; j < N; j++ )
+    {
+      std::swap( A( i, j ), A( j, i ) );
+    }
+  }
+}
+
 template< typename T, int USD >
 void solveLinearSystem( arraySlice2d< T, USD > const & A,
                         arraySlice2d< real64 const, USD > const & B,
@@ -447,24 +477,12 @@ void solveLinearSystem( arraySlice2d< T, USD > const & A,
     if( 1 < M && M == N )
     {
       // Square case: swap in place
-      for( int i = 0; i < N; i++ )
-      {
-        for( int j = i+1; j < N; j++ )
-        {
-          std::swap( X( i, j ), X( j, i ) );
-        }
-      }
+      matrixTranspose( N, X );
     }
     else if( 1 < M )
     {
       X0.resize( N, M );
-      for( int i = 0; i < N; i++ )
-      {
-        for( int j = 0; j < M; j++ )
-        {
-          X0( i, j ) = X( i, j );
-        }
-      }
+      matrixCopy( N, M, X, X0.toSlice() );
       solutionData = X0.data();
     }
   }
@@ -478,23 +496,11 @@ void solveLinearSystem( arraySlice2d< T, USD > const & A,
     if( 1 < M && M == N )
     {
       // Square case: swap in place
-      for( int i = 0; i < N; i++ )
-      {
-        for( int j = i+1; j < N; j++ )
-        {
-          std::swap( X( i, j ), X( j, i ) );
-        }
-      }
+      matrixTranspose( N, X );
     }
     else if( 1 < M )
     {
-      for( int i = 0; i < N; i++ )
-      {
-        for( int j = 0; j < M; j++ )
-        {
-          X( i, j ) = X0( i, j );
-        }
-      }
+      matrixCopy( N, M, X0.toSlice(), X );
     }
   }
 }
