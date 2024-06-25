@@ -9,13 +9,13 @@ Overview
 
 This model represents a full composition description of a multiphase multicomponent fluid.
 Phase behavior is modeled by an equation of state (EOS) and partitioning of components into
-phases is computed based on instantaneous chemical equilibrium via a two- or three-phase flash.
+phases is computed based on instantaneous chemical equilibrium via a two-phase flash.
 Each component (species) is characterized by molar weight and critical properties that
 serve as input parameters for the EOS.
 See `Petrowiki`_ for more information.
 
 In this model the fluid is described by :math:`N_c` components with :math:`z_c` being the total
-mole fration of component :math:`c`. The fluid can partition into a liquid phase, denoted :math:`\ell`
+mole fraction of component :math:`c`. The fluid can partition into a liquid phase, denoted :math:`\ell`,
 and a vapor phase denoted by :math:`v`. Therefore, by taking into account the molar phase component
 fractions, (which is the fraction of the molar mass of phase :math:`p` represented by component 
 :math:`c`), the following partition matrix establishes the component distribution within the two
@@ -66,16 +66,16 @@ Wilson K-values, to get both a lighter and a heavier trial mixture. The two tria
 calculated as :math:`y_i = z_i/K_i` and :math:`y_i = z_iK_i` where :math:`K_i` are defined by
 
 .. math::
-  K_i = \frac{P_{ci}}{p}\exp\left( 5.37 * ( 1 + \omega_i ) \left(1-\frac{T_{ci}}{T}\right)\right)
+  K_i = \frac{P_{ci}}{p}\exp\left( 5.37( 1 + \omega_i ) \left(1-\frac{T_{ci}}{T}\right)\right)
   
-where :math:`P_{ci}` and :math:`T_{ci}` are respectively the critical pressure and temperature of
-component :math:`i` and :math:`\omega_i` is the acentric factor of component :math:`i`.
+where :math:`P_{ci}` and :math:`T_{ci}` are respectively, the critical pressure and temperature of
+component :math:`i` and :math:`\omega_i` is the accentric factor of component :math:`i`.
 
 The stability problem is solved by observing that a necessary condition is that :math:`g(y)` must
 be non-negative at all its stationary points. The stationarity criterion can be expressed as
 
 .. math::
-  \ln y_i + \ln \phi_i(y) - h_i = k
+  \ln y_i + \ln \phi_i(y) - h_i = k \hspace{1cm} i=1,2,3,\ldots,N_c
 
 where :math:`h_i = \ln z_i + \ln \phi_i(z)` is a constant parameter dependent on the feed composition
 :math:`z` and :math:`k` is an undetermined constant. This constant can be further incorporated into
@@ -102,14 +102,14 @@ Phase labeling
 ----------------------------------------
 Once it is confirmed that the fluid with composition :math:`z` is stable as a single phase at the current
 pressure and temperature, it must be labeled as either 'liquid' or 'vapor'. This is necessary only to apply
-the correct relative permeability table for calculating the phase's flow properties. The properties of the
+the correct relative permeability function for calculating the phase's flow properties. The properties of the
 fluid (density, viscosity, enthalpy) are unchaged by the assignment of the label.
 
 Determining the mixture's true critical point is the most rigorous method for labeling. It is however expensive
 and may not always be necessary. As such, a simple correlation for pseudo-critical temperature is used and this
 is expected to be sufficiently accurate for correct phase labeling, except under some specific conditions.
 
-The Li-correlation is a weighted average of the component critical temperatures is used to determine the label
+The Li-correlation is a weighted average of the component critical temperatures and is used to determine the label
 applied to the mixture. The Li pseudo-critical temperature is calcaulated as
 
 .. math::
