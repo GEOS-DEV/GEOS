@@ -19,7 +19,7 @@ free -g
 # exits the program in case of non zero error code
 function or_die () {
     echo "Executing: $@"
-    "$@"
+    eval "$@"
     local status=$?
 
     if [[ $status != 0 ]] ; then
