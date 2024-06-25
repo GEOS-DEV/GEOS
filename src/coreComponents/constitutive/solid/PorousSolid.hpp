@@ -51,12 +51,9 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      ConstantPermeability const & permModel,
-                      real64 const dThermalExpansionCoefficient_dTemperature,
-                      real64 const referenceTemperature ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel ),
-    m_dThermalExpansionCoefficient_dTemperature( dThermalExpansionCoefficient_dTemperature ),
-    m_referenceTemperature( referenceTemperature )
+                      ConstantPermeability const & permModel
+                       ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
   {}
 
   GEOS_HOST_DEVICE
@@ -170,8 +167,11 @@ public:
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     //real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
-    real64 const referenceThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-	real64 const thermalExpansionCoefficient  = referenceThermalExpansionCoefficient + m_dThermalExpansionCoefficient_dTemperature * (temperature - m_referenceTemperature);
+    real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
+real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+
+	real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
 
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
@@ -300,9 +300,12 @@ private:
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const referenceThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    
+real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
+real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
 
-	real64 const thermalExpansionCoefficient  = referenceThermalExpansionCoefficient + m_dThermalExpansionCoefficient_dTemperature * (temperature - m_referenceTemperature);
+	real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
 
 
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
@@ -311,7 +314,6 @@ private:
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
 
     // Compute derivatives of total stress
-    real64 const dThermalExpansionCoefficient_dTemperature = m_dThermalExpansionCoefficient_dTemperature; 
     real64 const dThermalExpansionCoefficient_dTemperatureTimesBulkModulus = dThermalExpansionCoefficient_dTemperature * bulkModulus;
 
     real64 const dDiagonalStressComponent_dTemperature = -3 * thermalExpansionCoefficientTimesBulkModulus - 3 * dThermalExpansionCoefficient_dTemperatureTimesBulkModulus * temperature;
@@ -331,13 +333,6 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
-
-protected:
-  /// The thermal expansion coefficient derivative w.r.t. temperature.
-  real64 m_dThermalExpansionCoefficient_dTemperature = 0;
-
-  /// The reference temperature.
-  real64 m_referenceTemperature = 0;
 };
 
 /**
@@ -398,9 +393,7 @@ public:
   {
     return KernelWrapper( getSolidModel(),
                           getPorosityModel(),
-                          getPermModel(),
-                          m_dThermalExpansionCoefficient_dTemperature,
-                          m_referenceTemperature );
+                          getPermModel());
   }
 
   /**
@@ -449,13 +442,6 @@ private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
-
-protected:
-  /// The thermal expansion coefficient derivative w.r.t. temperature.
-  real64 m_dThermalExpansionCoefficient_dTemperature = 0.0082e-5;
-
-  /// The reference temperature.
-  real64 m_referenceTemperature = 0.0;
 };
 
 
