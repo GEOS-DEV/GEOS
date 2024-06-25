@@ -19,7 +19,8 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "PartitionDescriptor.hpp"
+#include "PartitionDescriptorABC.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -54,7 +55,7 @@ public:
                               Group * const parent );
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void expandObjectCatalogs() override;
+  void expandObjectCatalogs() override;
 
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
@@ -65,7 +66,7 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Accessor for the singleton Catalog object
@@ -78,7 +79,7 @@ public:
    * @param parent The parent group of the CellBlockManager.
    * @param[in] partition The reference to spatial partition
    */
-  void generateMesh( Group & parent, SpatialPartition & partition );
+  void generateMesh( Group & parent, array1d< int > const & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -124,6 +125,11 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
+  PartitionDescriptorABC const & getPartitionDescriptor() const
+  {
+    return m_partition;
+  }
+
 protected:
   /// Mapping from volumic field source to GEOSX field.
   std::map< string, string > m_volumicFields;
@@ -131,35 +137,18 @@ protected:
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
 
+  /// The partition information
+  PartitionDescriptor m_partition;
+
 private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
-   * @param[in] partition The reference to spatial partition
+   * @param[in] partition The (x, y , y) MPI split (in case we need it)
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
-  {
-    GEOS_UNUSED_VAR( cellBlockManager );
-    GEOS_UNUSED_VAR( partition );
-    GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
-  }
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
-
-  /**
-   * @brief Fill the particleBlockManager object .
-   * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
-   * @param[in] particleManager The reference to the particle manager
-   * @param[in] partition The reference to spatial partition
-   */
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
-  {
-    GEOS_UNUSED_VAR( particleBlockManager );
-    GEOS_UNUSED_VAR( particleManager );
-    GEOS_UNUSED_VAR( partition );
-    GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
-  }
-
 };
 }
 

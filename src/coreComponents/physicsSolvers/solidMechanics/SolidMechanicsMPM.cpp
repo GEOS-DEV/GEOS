@@ -951,7 +951,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     initialize( nodeManager, particleManager, partition );
   }
 
-
   //#######################################################################################
   solverProfiling( "Set grid multi-field labels to avoid a VTK output bug" );
   //#######################################################################################

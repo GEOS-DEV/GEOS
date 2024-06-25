@@ -15,8 +15,8 @@
 #ifndef GEOS_MESH_CELLBLOCK_HPP_
 #define GEOS_MESH_CELLBLOCK_HPP_
 
-#include "dataRepository/Group.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
+#include "dataRepository/Group.hpp"
 #include "mesh/ElementType.hpp"
 
 namespace geos

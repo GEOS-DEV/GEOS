@@ -19,8 +19,8 @@
 #ifndef GEOSX_MESH_PARTICLEREGIONMANAGER_HPP
 #define GEOSX_MESH_PARTICLEREGIONMANAGER_HPP
 
-#include "generators/ParticleBlock.hpp"
-#include "generators/ParticleBlockManager.hpp"
+#include "particleGenerators/ParticleBlock.hpp"
+#include "particleGenerators/ParticleBlockManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "ParticleRegion.hpp"
 #include "ParticleSubRegion.hpp"

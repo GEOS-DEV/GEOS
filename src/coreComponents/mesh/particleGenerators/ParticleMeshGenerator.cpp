@@ -31,10 +31,7 @@ namespace geos
 using namespace dataRepository;
 
 ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
-  m_dim( 3 ),
-  m_min(),
-  m_max()
+  ParticleMeshGeneratorBase( name, parent )
 {
   registerWrapper( viewKeyStruct::particleFilePathString(), &m_particleFilePath ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -331,19 +328,6 @@ void ParticleMeshGenerator::postProcessInput()
   //GEOS_LOG_RANK_0( "Someone called ParticleMeshGenerator::postProcessInput!" );
 }
 
-void ParticleMeshGenerator::importFieldOnArray( Block block,
-                                                string const & blockName,
-                                                string const & meshFieldName,
-                                                bool isMaterialField,
-                                                dataRepository::WrapperBase & wrapper ) const
-{
-  GEOS_UNUSED_VAR( block );
-  GEOS_UNUSED_VAR( blockName );
-  GEOS_UNUSED_VAR( meshFieldName );
-  GEOS_UNUSED_VAR( isMaterialField );
-  GEOS_UNUSED_VAR( wrapper );
-}
-
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ParticleMeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
 
 } /* namespace geos */

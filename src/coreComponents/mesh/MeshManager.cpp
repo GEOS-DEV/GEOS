@@ -20,6 +20,7 @@
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "generators/CellBlockManagerABC.hpp"
 #include "generators/MeshGeneratorBase.hpp"
+#include "particleGenerators/ParticleMeshGeneratorBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -40,18 +41,39 @@ MeshManager::MeshManager( string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::createChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( string const & childKey,
+                                  string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
-  std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
-  return &this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
+  if( MeshGeneratorBase::CatalogInterface::hasKeyName( childKey ) )
+  {
+    GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
+    std::unique_ptr< MeshGeneratorBase > meshGen = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
+    return &this->registerGroup< MeshGeneratorBase >( childName, std::move( meshGen ) );
+  }
+  else if( ParticleMeshGeneratorBase::CatalogInterface::hasKeyName( childKey ) )
+  {
+    GEOS_LOG_RANK_0( "Adding ParticleMesh: " << childKey << ", " << childName );
+    std::unique_ptr< ParticleMeshGeneratorBase > partMeshGen = ParticleMeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
+    return &this->registerGroup< ParticleMeshGeneratorBase >( childName, std::move( partMeshGen ) );
+  }
+  else
+  {
+    GEOS_ERROR( "Internal error. Mesh or ParticleMesh type was not found." );
+  }
+
+  return nullptr;
 }
 
 
 void MeshManager::expandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: MeshGeneratorBase::getCatalog())
+  // During schema generation, register one of each type derived from MeshGeneratorBase...
+  for( auto & catalogIter: MeshGeneratorBase::getCatalog() )
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
+  // ... and ParticleMeshGeneratorBase.
+  for( auto & catalogIter: ParticleMeshGeneratorBase::getCatalog() )
   {
     createChild( catalogIter.first, catalogIter.first );
   }
@@ -66,21 +88,35 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
+    meshGen.generateMesh( meshBody, partition.getPartitions() );
+
+    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
+    meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+
+    PartitionDescriptorABC const & pd = meshGen.getPartitionDescriptor();
+    partition.setMetisNeighborList( pd.getMetisNeighborList() );
+    partition.m_coords = pd.getCoords();
+    partition.m_Periodic = pd.getPeriodic();
+    partition.setGrid( pd.getGrid() );
+    partition.setBlockSize( pd.getBlockSize() );
+    partition.setBoundingBox( pd.getBoundingBox() );
+    partition.initializeNeighbors();
+  } );
+
+  forSubGroups< ParticleMeshGeneratorBase >( [&]( ParticleMeshGeneratorBase & meshGen )
+  {
+    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    meshBody.createMeshLevel( 0 );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
     meshGen.generateMesh( meshBody, partition );
-
-    if( !meshBody.hasParticles() )
-    {
-      CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
-
-      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
-    }
   } );
 }
 
 
 void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
-  this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
+  this->forSubGroups< MeshGeneratorBase, ParticleMeshGeneratorBase >( [&]( auto & meshGen )
   {
     string const & meshName = meshGen.getName();
     domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
