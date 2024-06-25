@@ -52,7 +52,7 @@ public:
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
                       ConstantPermeability const & permModel
-                       ):
+                      ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
   {}
 
@@ -168,10 +168,10 @@ public:
     //real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
-real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+    real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
+    real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
 
-	real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
+    real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
 
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
@@ -300,12 +300,12 @@ private:
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    
-real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
-real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
 
-	real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
+    real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
+    real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+
+    real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
 
 
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );

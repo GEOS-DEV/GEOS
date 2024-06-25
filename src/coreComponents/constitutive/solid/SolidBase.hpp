@@ -64,8 +64,8 @@ protected:
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
-    m_dThermalExpansionCoefficient_dTemperature(dThermalExpansionCoefficient_dTemperature),
-    m_referenceTemperature(referenceTemperature),
+    m_dThermalExpansionCoefficient_dTemperature( dThermalExpansionCoefficient_dTemperature ),
+    m_referenceTemperature( referenceTemperature ),
     m_disableInelasticity ( disableInelasticity )
   {}
 

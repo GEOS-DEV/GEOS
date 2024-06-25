@@ -57,9 +57,9 @@ public:
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
-                      oldStress, 
-                      thermalExpansionCoefficient, 
+    SolidBaseUpdates( newStress,
+                      oldStress,
+                      thermalExpansionCoefficient,
                       dThermalExpansionCoefficient_dTemperature,
                       referenceTemperature,
                       disableInelasticity ),
