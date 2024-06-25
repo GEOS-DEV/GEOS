@@ -617,7 +617,6 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
-  std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) );
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, intConv< std::size_t >( numEntriesPerRow.size() ) );
@@ -827,9 +826,12 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
   std::set< TriGlbIdx > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
   std::set< TriGlbIdx > receivedIndices;  // The graph nodes that my neighbors will send me.
-  std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
-                       std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
-                       std::inserter( receivedIndices, std::end( receivedIndices ) ) );
+  {
+    std::set< TriGlbIdx > tmp( std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ) );
+    std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
+                         std::cbegin( tmp ), std::cend( tmp ),
+                         std::inserter( receivedIndices, std::end( receivedIndices ) ) );
+  }
   std::vector< TriGlbIdx > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
