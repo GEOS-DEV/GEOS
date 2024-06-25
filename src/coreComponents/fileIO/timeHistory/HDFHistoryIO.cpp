@@ -221,7 +221,6 @@ void HDFHistoryIO::init( bool existsOkay )
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
-      H5Pset_dxpl_mpio( dataset, H5FD_MPIO_COLLECTIVE );
       H5Dclose( dataset );
       H5Sclose( space );
       H5Pclose( dcplId );
@@ -293,7 +292,10 @@ void HDFHistoryIO::write()
         hid_t fileHyperslab = filespace;
         H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
 
-        H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, H5P_DEFAULT, dataBuffer );
+        hid_t dxplId = H5Pcreate( H5P_DATASET_XFER );
+        H5Pset_dxpl_mpio( dxplId, H5FD_MPIO_COLLECTIVE );
+        H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, dxplId, dataBuffer );
+        H5Pclose( dxplId );
 
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )

@@ -84,7 +84,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
     }
   };
 
-  // FIXME Why stop (pseudo) recursion at one single level?
   registerBufferCalls( collector );
 
   for( localIndex metaIdx = 0; metaIdx < collector.numMetaDataCollectors(); ++metaIdx )
