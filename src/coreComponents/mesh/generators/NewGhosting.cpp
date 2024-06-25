@@ -398,6 +398,9 @@ TriCrsMatrix multiply( int commSize,
   return result_d0_2;
 }
 
+// Helper class which converts between matrix indices and (node, edge, face, cell) indices. 
+// The matrix rows/cols represent all the nodes, then all the edges, then all the faces, then all the cells
+// so conversion just means adding/subtracting the proper offsets
 class FindGeometricalType
 {
 public:
@@ -491,6 +494,14 @@ private:
   TriGlbIdx const m_numEntries;
 };
 
+// Helper function to encode geometrical information into ints which can be entered into adjacency matrix
+// For example, a face is connected to multiple edges, so in the face row, there will be a nonzero entry in the col for each edge
+// But if we just put a 1 in each we lose the information like what order the edges were in and what order the nodes were in
+// So instead we put in a value such that we can reconstruct this info if needed later
+// For encoding the edges within a face, N = 2, basis = NumEdges, array = {start node (0,1), index of edge within face},
+// so that result = start_node*numEdges+index_in_face
+// For encoding faces within a cell, N = 3, basis = numFaces,  array =  { isFlipped, start_index, index of face in cell },
+// so that result = (isFlipped*numFaces + start_index)*numFaces + index_in_cell
 template< std::uint8_t N >
 std::size_t encode( std::size_t const & basis,
                     std::array< std::size_t, N > const & array )
@@ -526,6 +537,7 @@ std::array< std::size_t, N > decode( std::size_t const & basis,
   return result;
 }
 
+// Structure which describes the adjacency matrix for the mesh graph with the data on current rank
 struct Adjacency
 {
   std::vector< TriGlbIdx > ownedNodesIdcs;
@@ -536,16 +548,20 @@ struct Adjacency
   std::vector< std::vector< TriScalarInt > > values;
 };
 
+// Function to populate the adjacency struct defined directly above
+// Note that we really build I+A, as in the end we will essentially be doing graph traversal by multiplying by (I+A)^n, ((I+A)^T)^n
+// Inlcuding I gives you everything in the graph 'up to' n steps away, without it you only get things 'exactly' n steps away
 Adjacency buildAdjacency( MeshGraph const & owned,
                           MeshGraph const & present,
                           FindGeometricalType const & convert )
 {
   Adjacency adjacency;
 
+  // Num matrix indices owned by the current rank, and the num indices corresponding to the 'present' data
   std::size_t const numOwned = std::size( owned.n2pos ) + std::size( owned.e2n ) + std::size( owned.f2e ) + std::size( owned.c2f );
   std::size_t const numOther = std::size( present.n2pos ) + std::size( present.e2n ) + std::size( present.f2e );
 
-  // Aliases
+  // Aliases for the data in adjacency
   std::vector< TriGlbIdx > & ownedNodesIdcs = adjacency.ownedNodesIdcs;
   std::vector< TriGlbIdx > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
   std::vector< TriGlbIdx > & otherGlbIdcs = adjacency.otherGlbIdcs;
@@ -553,6 +569,7 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   std::vector< std::vector< TriGlbIdx > > & indices = adjacency.indices;
   std::vector< std::vector< TriScalarInt > > & values = adjacency.values;
 
+  // we can go ahead and set sizes for the current rank matrix data
   ownedNodesIdcs.reserve( std::size( owned.n2pos ) );
   ownedGlbIdcs.reserve( numOwned );
   otherGlbIdcs.reserve( numOther );
@@ -560,6 +577,9 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   indices.reserve( numOwned );
   values.reserve( numOwned );
 
+  // fill the matrix index data for the 'present' gemetrical entities (nodes, edges, faces)
+  // Note that here we just note the indices, we dont fill any matrix entry or anything
+  // The filling of the matrix entries is done by the owning rank
   for( auto const & [ngi, _]: present.n2pos )
   {
     otherGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
@@ -572,9 +592,10 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   {
     otherGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
   }
-  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) );
-  GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) );
+  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) ); // I think that the data in n2pos, e2n, f2e was not necessarily sorted
+  GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) ); // ensure we added the correct amount of stuff
 
+  // Now do owned data
   for( auto const & [ngi, _]: owned.n2pos )
   {
     // Nodes depend on no other geometrical entity,
@@ -594,11 +615,15 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     // To keep the symmetry with the faces (see below),
     // - we store the local index (0 or 1) to express this information.
     // - we store the number of underlying nodes (2) on the diagonal.
-    size_t constexpr numNodes = std::tuple_size_v< decltype( nodes ) >;
+    size_t constexpr numNodes = std::tuple_size_v< decltype( nodes ) >; // should always be 2
 
+    // This rank owns this row of the matrix
     ownedGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
 
     numEntriesPerRow.push_back( numNodes + 1 );  // `+1` comes from the diagonal
+    
+    // for the row correxponding to this edge global index, have entries in col corresponding to the
+    // node global indices it connects, and an entry on the diagonal
     indices.emplace_back( std::vector< TriGlbIdx >{ convert.fromNodeGlbIdx( std::get< 0 >( nodes ) ),
                                                     convert.fromNodeGlbIdx( std::get< 1 >( nodes ) ),
                                                     ownedGlbIdcs.back() } );
@@ -612,24 +637,33 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     // Faces point to multiple edges, but their edges can be flipped w.r.t. the canonical edges
     // (ie minimal node global index comes first).
     // In order not to lose this information (held by an `EdgeInfo` instance), we serialise
-    // - the `EdgeInfo` instance,
+    // - the `EdgeInfo` instance, (recall `EdgeInfo` is just struct with edge global ID and start node (0,1), see BuildPods.hpp)
     // - plus the order in which the edges are appearing,
     // as an integer and store it as an entry in the matrix.
     // On the diagonal, we'll store the number of edges of the face.
     std::size_t const numEdges = std::size( edges );
 
+    // This rank owns this row of the matrix
     ownedGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
 
     numEntriesPerRow.push_back( numEdges + 1 );  // `+1` comes from the diagonal
+
+    // go ahead and add a vector of the correct size to represent the col indices and values for this row of the matrix (not yet populated)
     std::vector< TriGlbIdx > & ind = indices.emplace_back( numEntriesPerRow.back() );
     std::vector< TriScalarInt > & val = values.emplace_back( numEntriesPerRow.back() );
+
+    // populate the data for this row of the matrix
     for( std::size_t i = 0; i < numEdges; ++i )
     {
+      // col index is just obtained from edge global id in EdgeInfo for this edge
       EdgeInfo const & edgeInfo = edges[i];
       ind[i] = convert.fromEdgeGlbIdx( edgeInfo.index );
+      // use a single int for each edge col index to represent if the edge is flipped and position of edge in face
+      // in this case v = 1 + start_node*numEdges + index_in_face (again add 1 so that zero indexing becomes 1 indexing)
       std::size_t const v = 1 + encode< 2 >( numEdges, { edgeInfo.start, i } );
       val[i] = intConv< TriScalarInt >( v );
     }
+    // Add diagonal data
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numEdges );
   }
@@ -637,26 +671,40 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   {
     // The same comment as for faces and edges applies for cells and faces (see above).
     // The main differences being that
-    // - the `FaceInfo` as a little more information,
-    // - the diagonal stores the type of the cell which conveys the number of face, nodes, ordering...
+    // - the `FaceInfo` as a little more information, 
+    //     (recall FaceInfo is a struct which holds the global face index, the starting node index, and boolean telling which direction the nodes should be traversed)
+    // - the diagonal stores the type of the cell which conveys the number of face, nodes, ordering... (note this is still a TODO, right now its just numFaces)
     std::size_t const numFaces = std::size( faces );
 
+    // This rank owns this row of the matrix
     ownedGlbIdcs.emplace_back( convert.fromCellGlbIdx( cgi ) );
 
     numEntriesPerRow.push_back( numFaces + 1 );  // `+1` comes from the diagonal
+
+    // go ahead and add a vector of the correct size to represent the col indices and values for this row of the matrix (not yet populated)
     std::vector< TriGlbIdx > & ind = indices.emplace_back( numEntriesPerRow.back() );
     std::vector< TriScalarInt > & val = values.emplace_back( numEntriesPerRow.back() );
+
+    // populate the data for this row of the matrix
     for( std::size_t i = 0; i < numFaces; ++i )
     {
+      // col index is just gotten from the global id in FaceInfo for this face
       FaceInfo const & faceInfo = faces[i];
       ind[i] = convert.fromFaceGlbIdx( faceInfo.index );
+
+      // Encode data with a single int like above, but now int tells us start_node, direction (flipped), and position of face in cell
+      // in this case v = 1 + (isFlipped*numFaces + start_index)*numFaces + index_in_cell (again add 1 so that zero indexing becomes 1 indexing)
       std::size_t const v = 1 + encode< 3 >( numFaces, { faceInfo.isFlipped, faceInfo.start, i } );
       val[i] = intConv< TriScalarInt >( v );
     }
+    // add diagonal data
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
-  std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) );
+  std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) ); 
+  // I think that the data in n2pos, e2n, f2e was not necessarily sorted
+  // Im not sure why you dont need to sort the other data? - Ask Thomas
+
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, intConv< std::size_t >( numEntriesPerRow.size() ) );
@@ -677,14 +725,18 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 {
   using Teuchos::RCP;
 
+  // instantiate class which converts between matrix index and (node, edge, face, cell) index
+  // the max global indices of (node, edge, face, cell) describe where we change geometrical elements in the matrix indices,
+  // where all the geometrical entities are stacked one after the other
   FindGeometricalType const convert( gis.nodes, gis.edges, gis.faces, gis.cells );
   using Geom = FindGeometricalType::Geom;
 
   std::size_t const n = convert.numEntries();  // Total number of entries in the graph.
 
+  // Build the adjacency matrix data for this rank (each rank fills in the values for geometry that it 'owns', but notes the geometry that is 'present')
   Adjacency const adjacency = buildAdjacency( owned, present, convert );
   std::size_t const numOwned = std::size( adjacency.ownedGlbIdcs );
-  std::size_t const numOther = std::size( adjacency.otherGlbIdcs );
+  std::size_t const numOther = std::size( adjacency.otherGlbIdcs ); // Corresponds to the `present` geometrical entities
 
   // Aliases
   std::vector< TriGlbIdx > const & ownedNodesIdcs = adjacency.ownedNodesIdcs;
