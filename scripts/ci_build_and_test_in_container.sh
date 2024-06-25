@@ -18,9 +18,7 @@ free -g
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
-    local cmd="$@"
-    echo "Executing: $cmd"
-    eval "$cmd"
+    "$@"
     local status=$?
 
     if [[ $status != 0 ]] ; then
