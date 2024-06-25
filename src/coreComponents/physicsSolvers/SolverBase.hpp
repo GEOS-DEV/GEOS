@@ -49,8 +49,6 @@ public:
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
 
-  static string catalogName() { return "SolverBase"; }
-
   /**
    * @return Get the final class Catalog name
    */
@@ -665,6 +663,10 @@ public:
     return m_nonlinearSolverParameters;
   }
 
+  virtual void
+  synchronizeNonlinearSolverParameters()
+  { /* empty here, overriden in CoupledSolver */ }
+
   /**
    * @brief Get position of a given region within solver's target region list
    * @param regionName the region name to find
@@ -732,6 +734,7 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+  SolverStatistics const & getSolverStatistics() const { return m_solverStatistics; }
 
   /**
    * @brief Return PySolver type.

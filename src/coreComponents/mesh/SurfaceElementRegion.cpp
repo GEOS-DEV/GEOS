@@ -76,7 +76,7 @@ void SurfaceElementRegion::initializePreSubGroups()
 {
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
-    subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::elementApertureString() ).
+    subRegion.getWrapper< array1d< real64 > >( fields::elementAperture::key() ).
       setApplyDefaultValue( m_defaultAperture );
   } );
 }
@@ -170,9 +170,9 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
-    localIndex const & er = faceToElementRegion[faceIndices[ke]][ke];
-    localIndex const & esr = faceToElementSubRegion[faceIndices[ke]][ke];
-    localIndex const & ei = faceToElementIndex[faceIndices[ke]][ke];
+    localIndex const er = faceToElementRegion[faceIndices[ke]][ke];
+    localIndex const esr = faceToElementSubRegion[faceIndices[ke]][ke];
+    localIndex const ei = faceToElementIndex[faceIndices[ke]][ke];
 
     if( er != -1 && esr != -1 && ei != -1 )
     {

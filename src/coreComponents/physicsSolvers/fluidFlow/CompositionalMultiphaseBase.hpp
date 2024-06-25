@@ -134,6 +134,18 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
   /**
+   * @brief Update components mass/moles
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateCompAmount( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Update energy
+   * @param subRegion the subregion storing the required fields
+   */
+  void updateEnergy( ElementSubRegionBase & subRegion ) const;
+
+  /**
    * @brief Update all relevant solid internal energy models using current values of temperature
    * @param dataGroup the group storing the required fields
    */
@@ -145,7 +157,7 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ElementSubRegionBase & subRegion ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
@@ -170,6 +182,12 @@ public:
    * @return the name of the reference fluid
    */
   string referenceFluidModelName() const { return m_referenceFluidModelName; }
+
+  /**
+   * @return The unit in which we evaluate the amount of fluid per element (Mass or Mole, depending on useMass).
+   */
+  virtual units::Unit getMassUnit() const override
+  { return m_useMass ? units::Unit::Mass : units::Unit::Mole; }
 
   /**
    * @brief assembles the accumulation and volume balance terms for all cells
@@ -223,11 +241,9 @@ public:
 
     // inputs
 
-    static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * useMassFlagString() { return "useMass"; }
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
     static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
     static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
@@ -238,6 +254,7 @@ public:
     static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
     static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
     static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+    static constexpr char const * targetRelativeCompDensChangeString() { return "targetRelativeCompDensChangeInTimeStep"; }
     static constexpr char const * targetFlowCFLString() { return "targetFlowCFL"; }
 
 
@@ -246,11 +263,13 @@ public:
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
+    static constexpr char const * maxRelativeCompDensChangeString() { return "maxRelativeCompDensChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
     static constexpr char const * minCompDensString() { return "minCompDens"; }
     static constexpr char const * maxSequentialCompDensChangeString() { return "maxSequentialCompDensChange"; }
+    static constexpr char const * minScalingFactorString() { return "minScalingFactor"; }
 
   };
 
@@ -316,14 +335,6 @@ public:
                                DomainPartition & domain,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
-
-  /**
-   * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
-   * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
-   */
-  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { m_keepFlowVariablesConstantDuringInitStep = keepFlowVariablesConstantDuringInitStep; }
 
   /**
    * @brief Function to fix the initial state during the initialization step in coupled problems
@@ -419,9 +430,6 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the input temperature
-  real64 m_inputTemperature;
-
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
@@ -434,9 +442,6 @@ protected:
   /// flag to determine whether or not to apply dispersion
   integer m_hasDispersion;
 
-  /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepFlowVariablesConstantDuringInitStep;
-
   /// maximum (absolute) change in a component fraction in a Newton iteration
   real64 m_maxCompFracChange;
 
@@ -445,6 +450,9 @@ protected:
 
   /// maximum (relative) change in temperature in a Newton iteration
   real64 m_maxRelativeTempChange;
+
+  /// maximum (relative) change in component density in a Newton iteration
+  real64 m_maxRelativeCompDensChange;
 
   /// damping factor for solution change targets
   real64 m_solutionChangeScalingFactor;
@@ -457,6 +465,9 @@ protected:
 
   /// target (absolute) change in phase volume fraction in a time step
   real64 m_targetPhaseVolFracChange;
+
+  /// target (relative) change in component density in a time step
+  real64 m_targetRelativeCompDensChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;
@@ -520,8 +531,8 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                 fs.getName(), setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
     }
 
     // Specify the bc value of the field

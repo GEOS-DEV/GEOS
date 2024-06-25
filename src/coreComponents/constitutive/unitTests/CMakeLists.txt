@@ -1,12 +1,15 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testCompositionalDensity.cpp
      testCompositionalProperties.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
      testKValueInitialization.cpp
+     testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
      testNegativeTwoPhaseFlash.cpp
+     testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
      testCubicEOS.cpp
@@ -14,7 +17,7 @@ set( gtest_geosx_tests
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 

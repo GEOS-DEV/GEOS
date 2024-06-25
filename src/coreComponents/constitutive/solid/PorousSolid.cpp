@@ -46,6 +46,12 @@ PorousSolid< SOLID_TYPE >::PorousSolid( string const & name, Group * const paren
 template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 
+template< typename SOLID_TYPE >
+void PorousSolid< SOLID_TYPE >::initializeState() const
+{
+  CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::initializeState();
+}
+
 // Register all PorousSolid model types.
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
 typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;

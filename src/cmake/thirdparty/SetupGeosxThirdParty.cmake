@@ -636,7 +636,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
     endif()
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} )
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         find_package( rocblas REQUIRED )
         find_package( rocsolver REQUIRED )
@@ -900,24 +900,6 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
-################################
-# Fesapi
-################################
-# if(DEFINED FESAPI_DIR)
-#     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
-
-#     find_and_import(NAME FesapiCpp
-#                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
-#                  HEADER fesapi/nsDefinitions.h
-#                  LIBRARIES FesapiCpp
-#                  DEPENDS hdf5)
-
-#     set(FESAPI_DIR ON CACHE BOOL "")
-#     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
-# else()
-    message(STATUS "Not using Fesapi")
-# endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
