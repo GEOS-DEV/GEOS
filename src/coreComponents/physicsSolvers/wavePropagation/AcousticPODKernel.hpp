@@ -144,7 +144,6 @@ struct PrecomputeSourceAndReceiverKernel
 		sourceNodeIds[isrc][a] = elemsToNodes( k, a );
 		sourceConstants[isrc][m] += phimV[sourceNodeIds[isrc][a]] * Ntest[a];
 	      }
-	      
 	      if( computeSourceValue && m == countPhi-1)
 	      {
 		for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )

@@ -26,8 +26,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "AcousticMatricesSEMKernel.hpp"
-#include "PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {
@@ -213,9 +211,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      PreComputeSourcesAndReceivers::
-        Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
-      < EXEC_POLICY, FE_TYPE >
+      acousticFirstOrderWaveEquationSEMKernels::
+        PrecomputeSourceAndReceiverKernel::
+        launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
         numFacesPerElem,
@@ -267,7 +265,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// get table containing face to nodes map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -297,26 +295,25 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
-        kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                          nodeCoords,
-                                                                          elemsToNodes,
-                                                                          velocity,
-                                                                          density,
-                                                                          mass );
+        acousticFirstOrderWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-        AcousticMatricesSEM::DampingMatrix< FE_TYPE > kernelD( finiteElement );
-        kernelD.template computeDampingMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                             nodeCoords,
-                                                                             elemsToFaces,
-                                                                             facesToNodes,
-                                                                             facesDomainBoundaryIndicator,
-                                                                             freeSurfaceFaceIndicator,
-                                                                             velocity,
-                                                                             density,
-                                                                             damping );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               density,
+                                                               mass );
 
+        acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X,
+                                                               elemsToFaces,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               damping );
       } );
     } );
   } );
