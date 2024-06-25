@@ -263,7 +263,7 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  or_die ninja -j1 coreComponents_coverage
+  or_die ninja coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
 fi
 

@@ -236,11 +236,7 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      RUNS_ON: streak2
-      NPROC: 8
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=128g -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
-      DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
-      DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
+      RUNS_ON: Runner_4core_16GB
 
   # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
