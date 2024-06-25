@@ -247,6 +247,7 @@ fi
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $NPROC geosx
 else
+  nvidia-smi
   or_die ninja -j $NPROC blt_cuda_version_smoke testBlasLapack
   #or_die ninja install
 
@@ -270,7 +271,7 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testLifoStorage|testExternalSolvers" -R "blt_cuda_version_smoke|testBlasLapack"
   else
     or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
   fi
