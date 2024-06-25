@@ -58,10 +58,14 @@ protected:
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                    real64 const & dThermalExpansionCoefficient_dTemperature,
+                    real64 const & referenceTemperature,
                     const bool & disableInelasticity ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
+    m_dThermalExpansionCoefficient_dTemperature(dThermalExpansionCoefficient_dTemperature),
+    m_referenceTemperature(referenceTemperature),
     m_disableInelasticity ( disableInelasticity )
   {}
 
@@ -97,6 +101,12 @@ public:
   /// A reference to the ArrayView holding the thermal expansion coefficient for each element.
   arrayView1d< real64 const > const m_thermalExpansionCoefficient;
 
+  /// The derivative of the thermal expansion coefficient w.r.t. temperature.
+  real64 m_dThermalExpansionCoefficient_dTemperature = 0;
+
+  /// The reference temperature at which default thermal expansion coefficient is defined.
+  real64 m_referenceTemperature = 0;
+
   /// Flag to disable inelasticity
   const bool m_disableInelasticity;
 
@@ -123,6 +133,26 @@ public:
   real64 getThermalExpansionCoefficient( localIndex const k ) const
   {
     return m_thermalExpansionCoefficient[k];
+  }
+
+  /**
+   * @brief Get derivative of Thermal Expansion Coefficient w.r.t. temperature
+   * @return the derivative of Thermal Expansion Coefficient w.r.t. temperature
+   */
+  GEOS_HOST_DEVICE
+  real64 getDThermalExpansionCoefficient_dTemperature() const
+  {
+    return m_dThermalExpansionCoefficient_dTemperature;
+  }
+
+  /**
+   * @brief Get reference temperature
+   * @return the reference temperature
+   */
+  GEOS_HOST_DEVICE
+  real64 getReferenceTemperature() const
+  {
+    return m_referenceTemperature;
   }
 
   /**
