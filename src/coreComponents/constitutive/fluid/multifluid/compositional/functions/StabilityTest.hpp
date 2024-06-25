@@ -72,7 +72,10 @@ public:
 
     // Calculate the hyperplane parameter
     // h_i = log( z_i ) + log( phi_i )
-    hyperplane.zero();
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      hyperplane[ic] = 0.0;
+    }
     EOS_TYPE::computeLogFugacityCoefficients( numComps,
                                               pressure,
                                               temperature,
@@ -85,7 +88,6 @@ public:
     }
 
     // Initialise the trial compositions using Wilson k-Values
-    // Use fugacity space as temporary storage
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
                                                         temperature,
@@ -143,7 +145,7 @@ public:
         if( error < MultiFluidConstants::fugacityTolerance )
         {
           // Calculate modified tangent plane distance (Michelsen, 1982b) of trial composition relative to input composition
-          double tpd = 1.0;
+          real64 tpd = 1.0;
           for( integer const ic : presentComponents )
           {
             tpd += trialComposition( trialIndex, ic ) * (logTrialComposition[ic] + logFugacity[ic] - hyperplane[ic] - 1.0);
