@@ -564,6 +564,9 @@ public:
                                                                                                                    // expansion
                                                                                                                    // coefficient
                                                                                                                    // key
+
+    static constexpr char const * dThermalExpansionCoefficient_dTemperatureString() { return "dDrainedLinearTEC_dT"; }
+    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
   };
 
   /**
@@ -696,6 +699,12 @@ protected:
 
   /// The default value of the thermal expansion coefficient for any new allocations.
   real64 m_defaultThermalExpansionCoefficient = 0;
+
+  /// The derivative of the thermal expansion coefficient w.r.t. temperature.
+  real64 m_dThermalExpansionCoefficient_dTemperature = 0;
+
+  /// The reference temperature at which default thermal expansion coefficient is defined.
+  real64 m_referenceTemperature = 0;
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
