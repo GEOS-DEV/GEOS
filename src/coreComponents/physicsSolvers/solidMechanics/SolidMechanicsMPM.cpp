@@ -7454,8 +7454,6 @@ void SolidMechanicsMPM::computeCohesiveTraction( int g,
       break;
   }
 
-  // GEOS_LOG_RANK("dn: " << totalNormalDisplacement << ", " << "dt: " << totalTangentialDisplacement << ", " << "sigma_n: " << normalStress << ", " << "sigma_t: " << shearStress );
-
   // Mass-weighted average of the projected area
   // Do we want to add choice of weighting as we do in contact calculations for normals?
   real64 areaA[3] = { 0 };
