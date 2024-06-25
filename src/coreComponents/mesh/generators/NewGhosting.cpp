@@ -359,13 +359,27 @@ TriCrsMatrix multiply( int commSize,
   Teuchos::RCP< TriMap const > ownedMap = upward.getRowMap();
   Teuchos::RCP< TriMap const > mpiMap = indicator.getRangeMap();
 
-  // Upward (n -> e -> f -> c)
+  // row j of indicator was just ones in columns corresponding to present entities on rank j
+  // row i of upward was constructed as having nonzeros in the columns of entities on which the entity corresponding to row i directly depended 
 
+  // Begin graph traversal by matrix matrix multiplying
+  // Trilinos matrix matrix multiply https://docs.trilinos.org/dev/packages/tpetra/doc/html/namespaceTpetra_1_1MatrixMatrix.html#a4c3132fa56ba6d5b071f053486529111
+
+  // Upward (n -> e -> f -> c) 
+
+  // u0_0 (num_entities x num_rank) = upward (num_entities x num_entities) * indicator^T (num_entities x num_rank)
+  // Using the `upward` interpretation, multiplying upward by each column of indicator^T would give 
+  // a column vector noting the all the faces in the global mesh which contain the edges owned by that rank, all the global cells which contain the owned faces, etc
+  // These are the colums of the result `result_u0_0`
   TriCrsMatrix result_u0_0( ownedMap, commSize );
   Tpetra::MatrixMatrix::Multiply( upward, false, indicator, true, result_u0_0, false );
   result_u0_0.fillComplete( mpiMap, ownedMap );
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-0.mat", result_u0_0 );
 
+  // We repeat this process to make sure we catch all the dependencies, but im not convinced once isnt enough
+  // In theory, you iterate until the matrix stops changing
+  // TODO: test this hypothesis
+  // TODO: you might also be able to just do one multiplication with upward + upward^T to do everything at once, but perhaps decoding becomes an issue
   TriCrsMatrix result_u0_1( ownedMap, commSize );
   Tpetra::MatrixMatrix::Multiply( upward, false, result_u0_0, false, result_u0_1, false );
   result_u0_1.fillComplete( mpiMap, ownedMap );
@@ -376,8 +390,14 @@ TriCrsMatrix multiply( int commSize,
   result_u0_2.fillComplete( mpiMap, ownedMap );
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-2.mat", result_u0_2 );
 
-  // Downward (c -> f -> e -> n)
+  // Now we know, for each rank, all the geometrical quantities in the global mesh which include something from that rank
 
+  // Downward (c -> f -> e -> n)
+  // Note that we still need to do a traversal in the "opposite direction"
+  // Consider starting with some edge, and applying the process above. 
+  // You will recover the faces containing it, and the cells which contain those
+  // What you wont get, for example, is any other (faces, edges, nodes) in that cell
+  // Thus we repeat the process with downward = upward^T
   TriCrsMatrix result_d0_0( ownedMap, commSize );
   Tpetra::MatrixMatrix::Multiply( upward, true, result_u0_2, false, result_d0_0, false );
   result_d0_0.fillComplete( mpiMap, ownedMap );
@@ -394,6 +414,10 @@ TriCrsMatrix multiply( int commSize,
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/result-6.mat", result_d0_2 );
 
   MpiWrapper::barrier();
+
+  // Now we know, for each rank, the set of all global geometric entities which are included by any geometric entity that includes something from that rank
+  // (what a mouthful)
+  // Note that we have NOT made a distinction between present and owned on the rank though
 
   return result_d0_2;
 }
@@ -550,7 +574,7 @@ struct Adjacency
 
 // Function to populate the adjacency struct defined directly above
 // Note that we really build I+A, as in the end we will essentially be doing graph traversal by multiplying by (I+A)^n, ((I+A)^T)^n
-// Inlcuding I gives you everything in the graph 'up to' n steps away, without it you only get things 'exactly' n steps away
+// Including I gives you everything in the graph 'up to' n steps away, without it you only get things 'exactly' n steps away
 Adjacency buildAdjacency( MeshGraph const & owned,
                           MeshGraph const & present,
                           FindGeometricalType const & convert )
@@ -704,6 +728,10 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) ); 
   // I think that the data in n2pos, e2n, f2e was not necessarily sorted
   // Im not sure why you dont need to sort the other data? - Ask Thomas
+  // TODO: this may be a mistake, what we should do is make a copy and sort that, or sort the other data in the same order
+  // The sorted version is used later to compared the needed indices with the already available indices to determine what needs to be ghosted.
+  // However, sorting here I think makes it so that you no longer know which row in the global matrix each entry in the vectors corresponds to
+  // May have been working if everything was already sorted, so the sort was a no-op
 
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
@@ -723,6 +751,9 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
                                                                MaxGlbIdcs const & gis,
                                                                MpiRank curRank )
 {
+  // Trilinos tools package smart reference counting pointer, see
+  // https://docs.trilinos.org/dev/packages/teuchos/doc/html/classTeuchos_1_1RCP.html#details
+  // https://docs.trilinos.org/dev/packages/teuchos/doc/html/RefCountPtrBeginnersGuideSAND.pdf
   using Teuchos::RCP;
 
   // instantiate class which converts between matrix index and (node, edge, face, cell) index
@@ -746,45 +777,68 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::vector< std::vector< TriGlbIdx > > const & indices = adjacency.indices;
   std::vector< std::vector< TriScalarInt > > const  & values = adjacency.values;
 
+  // Makes a Trilinos tools MPI communicator and return smart pointer to it
   RCP< TriComm const > const comm = make_rcp< Teuchos::MpiComm< int > const >( MPI_COMM_GEOSX );
+  // Makes a const TriMap, passing the arguments to the constructor of TriMap, returns smart pointer to it 
+  // note TriMap = Tpetra::Map< TriLocIdx, TriGlbIdx >, created using this constructor https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1Map.html#a4a21c6654fc9fb6db05644a52cc0128d
+  // Ultimately just collecting who owns what parts of the global matrix
   auto const ownedMap = make_rcp< TriMap const >( Tpetra::global_size_t( n ), ownedGlbIdcs.data(), TriLocIdx( numOwned ), TriGlbIdx{ 0 }, comm );
 
   // The `upward` matrix offers a representation of the graph connections.
   // The matrix is square. Each size being the number of geometrical entities.
+  // The matrix is just the assembed, global adjacency.
+  // Note that the matrix will end up being lower triangular, and banded because edge rows only have nonzeros in the node columns, faces only have nonzeros with edges, etc
+  // Quick note on why we call it upward:
+  // Consider a vector where we put a 1 in the row corresponding to some edge with matrix index i. 
+  // Then multiply upward times this vector. The result has nonzeros in the same row I (because we filled the diagonal of the matrix)
+  // and also any other rows where column i had nonzeros, which is exactly the indices of the faces containing the edge.
+  // Note TriCrsMatrix = Tpetra::CrsMatrix< TriScalarInt , TriLocIdx, TriGlbIdx >; https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1CrsMatrix.html
   TriCrsMatrix upward( ownedMap, numEntriesPerRow() );
 
+  // Fill the global matrix rows that this rank owns 
+  //(note that this is where the sorting things I mentioned above becomes an issue, if you reorder only the ownedGlobalIDs you assign the wrong rows)
   for( std::size_t i = 0; i < numOwned; ++i )
   {
     std::vector< TriGlbIdx > const & rowIndices = indices[i];
     std::vector< TriScalarInt > const & rowValues = values[i];
     GEOS_ASSERT_EQ( std::size( rowIndices ), numEntriesPerRow[i] );
     GEOS_ASSERT_EQ( std::size( rowValues ), numEntriesPerRow[i] );
+    //https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1CrsMatrix.html#a8d4784081c59f27391ad825c4dae5e86
     upward.insertGlobalValues( ownedGlbIdcs[i], TriLocIdx( std::size( rowIndices ) ), rowValues.data(), rowIndices.data() );
   }
 
+  // Signal that we are done changing the values/structure of the global adjacency matrix
+  // https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1CrsMatrix.html#aa985b225a24d2f74602e25b38b4430af
   upward.fillComplete( ownedMap, ownedMap );
+
+  // Note this can cause some issues if /tmp doesnt exist, etc (at least it did in my codespace)
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/upward.mat", upward );
 
   int const commSize( MpiWrapper::commSize() );
 
+  // Now we are going to build the various other matrices which will be used in conjunction with the adjacency to ghost
+
   // Now let's build the domain indicator matrix.
-  // It's rectangular, number of rows being the number of MPI ranks,
-  // number of columns being the number of nodes in the mesh graph,
-  // ie the number of geometrical entities in the mesh.
+  // It's rectangular, number of rows being the number of MPI ranks (so each rank builds its row),
+  // number of columns being the number of nodes in the mesh graph, ie the number of geometrical entities in the mesh.
   // It contains one for every time the geometrical entity is present on the rank.
-  // By present, we do not meant that the ranks owns it: just that it's already available on the rank.
-  auto const mpiMap = make_rcp< TriMap const >( Tpetra::global_size_t( commSize ), TriGlbIdx{ 0 }, comm );  // Let the current rank get the appropriate index in this map.
+  // By present, we do not mean that the ranks owns it: just that it's already available on the rank.
+  auto const mpiMap = make_rcp< TriMap const >( Tpetra::global_size_t( commSize ), TriGlbIdx{ 0 }, comm );  // Let the current rank get the appropriate index in this map, total size is just num ranks.
   TriCrsMatrix indicator( mpiMap, numOwned + numOther );
 
+  // ones is a vector of size numOwned of 1s, a vector of size numOther of 1s, or a vector with a single entry of 1, whichever is biggest
+  // this is just a little trick to ensure you have a long enough vector or 1 to enter into the matrix
   std::vector< TriScalarInt > const ones( std::max( { numOwned, numOther, std::size_t( 1 ) } ), 1 );
+
+  // Insert into the row corresponding to my rank, putting ones in column for every owned and present geometrical entity
   indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOwned ), ones.data(), ownedGlbIdcs.data() );
   indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOther ), ones.data(), otherGlbIdcs.data() );
-  indicator.fillComplete( ownedMap, mpiMap );
+  indicator.fillComplete( ownedMap, mpiMap ); // Done modifying the entries/structure of matrix
 
   // The `ownership` matrix is a diagonal square matrix.
-  // Each size being the number of geometrical entities.
+  // Each size being the number of geometrical entities (so same size as adjacency).
   // The value of the diagonal term will be the owning rank.
-  // By means of matrices multiplications, it will be possible to exchange the ownerships information across the ranks.
+  // By means of matrix multiplications, it will be possible to exchange the ownerships information across the ranks.
   // TODO Could we use an Epetra_Vector as a diagonal matrix?
   std::vector< TriScalarInt > myRank( 1, curRank.get() );
   TriCrsMatrix ownership( ownedMap, 1 );
@@ -795,6 +849,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   ownership.fillComplete( ownedMap, ownedMap );
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ownership.mat", ownership );
 
+  // Log some info on these last 2 matrices created for debugging
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "indicator.NumGlobalCols() = " << indicator.getGlobalNumCols() );
@@ -806,24 +861,27 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
   // The `ghostingFootprint` matrix is rectangular,
   // the number of columns being the number of MPI ranks,
-  // the number of rows being the number of nodes in the mesh graph.
+  // the number of rows being the number of nodes in the mesh graph, ie the total number of mesh geometric quantities
+  // (So it is the same size as the transpose of the domain indicator matrix)
   //
-  // For any MPI rank (ie column), a non-zero entry means
+  // For any MPI rank (ie column), a non-zero entry in a row means
   // that the corresponding geometrical entry has to be eventually present onto the rank
   // for the ghosting to be effective.
   //
   // From `ghostingFootprint` we can extract where the current rank has to send any owned graph node.
+  // Computed using the custom multiply function defined above,
+  // which does the equivalent of graph tranversal by repeated multiplications of upward and upward^T
   TriCrsMatrix ghostingFootprint( multiply( commSize, indicator, upward ) );
   ghostingFootprint.resumeFill();
-  ghostingFootprint.setAllToScalar( 1. );
+  ghostingFootprint.setAllToScalar( 1. ); // We put `1` everywhere there's a non-zero entry, so we'll be able to compose with the `ownership` matrix.
   ghostingFootprint.fillComplete( mpiMap, ownedMap );
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostingFootprint.mat", ghostingFootprint );
-  // We put `1` everywhere there's a non-zero entry, so we'll be able to compose with the `ownership` matrix.
 
   // FIXME TODO WARNING From `ghostingFootprint` extract where I have to send
   // Then, perform the ghostingFootprint * ownership matrix multiplication,
   // so I get to know from whom I'll receive.
 
+  // just some output for sanity checks
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "ghosted->NumGlobalCols() = " << ghostingFootprint.getGlobalNumCols() );
@@ -831,7 +889,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   }
 
   // The `ghostExchange` matrix is rectangular,
-  // the number of columns being the number of nodes in the mesh graph,
+  // the number of columns being the number of nodes in the mesh graph, ie the total number of mesh geometric quantities
   // the number of rows being the number of MPI ranks.
   //
   // As the result of the multiplication between the `ghostingFootprint` matrix and the `ownership` matrix,
