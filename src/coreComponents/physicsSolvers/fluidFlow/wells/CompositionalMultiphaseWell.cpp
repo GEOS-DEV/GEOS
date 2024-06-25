@@ -84,6 +84,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
 
+  this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
+
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -114,6 +120,9 @@ void CompositionalMultiphaseWell::postProcessInput()
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction must larger or equal to 0.0" );
 
+  GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
+                        ": The maximum relative change in component density must be larger than 0.0" );
 }
 
 void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
@@ -1279,6 +1288,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      wellDofKey,
