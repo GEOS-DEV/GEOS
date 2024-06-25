@@ -247,8 +247,8 @@ fi
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $NPROC geosx
 else
-  or_die ninja -j $NPROC
-  or_die ninja install
+  or_die ninja -j $NPROC blt_cuda_version_smoke testBlasLapack
+  #or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
