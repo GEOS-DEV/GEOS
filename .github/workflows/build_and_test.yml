@@ -314,7 +314,7 @@ jobs:
       if: inputs.CODE_COVERAGE
       uses: codecov/codecov-action@v4.3.1
       with:
-        files: geos_coverage.info.cleaned
+        files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
