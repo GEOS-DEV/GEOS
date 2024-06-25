@@ -47,9 +47,9 @@ Step 1: Computation of the phase fractions and phase component fractions (flash)
 ================================================================================
 Stability test
 -------------------------------
-The first step is to determine if provided mixture with total molar fractions :math:`z_c` is stable
+The first step is to determine if the provided mixture with total molar fractions :math:`z_c` is stable
 as a single phase at the current pressure :math:`p` and temperature :math:`T`. However, this can only
-be confirmed with through stability testing.
+be confirmed through stability testing.
 
 The stability of a mixture is traditionally assessed using the Tangent Plane Distance (TPD) criterion
 developed by Michelsen (1982a). This criterion states that a phase with composition :math:`z` is stable
@@ -103,7 +103,7 @@ Phase labeling
 Once it is confirmed that the fluid with composition :math:`z` is stable as a single phase at the current
 pressure and temperature, it must be labeled as either 'liquid' or 'vapor'. This is necessary only to apply
 the correct relative permeability function for calculating the phase's flow properties. The properties of the
-fluid (density, viscosity, enthalpy) are unchaged by the assignment of the label.
+fluid (density, viscosity) are unchanged by the assignment of the label.
 
 Determining the mixture's true critical point is the most rigorous method for labeling. It is however expensive
 and may not always be necessary. As such, a simple correlation for pseudo-critical temperature is used and this
