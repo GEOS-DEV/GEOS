@@ -104,7 +104,8 @@ deliverClone( string const & name, Group * const parent ) const
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
 
-  newConstitutiveRelation.createPVTModels( true );
+  newConstitutiveRelation.setIsClone( true );
+  newConstitutiveRelation.createPVTModels( newConstitutiveRelation.isClone() );
 
   return clone;
 }
@@ -130,16 +131,11 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
 
-  if( getParent().getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString() )
-  {
-    m_isClone = true;
-  }
-
-  createPVTModels( m_isClone );
+  createPVTModels( isClone() );
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone )
+void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone)
 {
 
   // TODO: get rid of these external files and move into XML, this is too error prone

@@ -309,19 +309,18 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
 
   if( numDimensions == 1 )
   {
-    //1.
     TableData tableData;
     arraySlice1d< real64 const > const coords = coordinates[0];
     for( integer idx = 0; idx < values.size(); idx++ )
     {
       tableData.addRow( coords[idx], values[idx] );
     }
-    //2.
+
     TableLayout const tableLayout( {
         string( units::getDescription( tableFunction.getDimUnit( 0 ))),
         string( units::getDescription( valueUnit ))
       }, filename );
-    //3.
+
     TableTextFormatter const logTable( tableLayout );
     logOutput = logTable.toString( tableData );
   }
@@ -331,7 +330,6 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     integer const nY = coordinates[1].size();
     if( nX * nY <= 500 )
     {
-      //1.
       TableData2D tableData2D;
       TableData2D::TableConversionData tableConverted;
       tableConverted = tableData2D.convertTable2D( values,
@@ -339,9 +337,9 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
                                                    coordinates,
                                                    units::getDescription( tableFunction.getDimUnit( 0 ) ),
                                                    units::getDescription( tableFunction.getDimUnit( 1 ) ));
-      //2.
+
       TableLayout tableLayout( tableConverted.headerNames, filename );
-      //3.
+
       TableTextFormatter const table2DLog( tableLayout );
       logOutput =  table2DLog.toString( tableConverted.tableData );
     }

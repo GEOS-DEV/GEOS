@@ -29,7 +29,8 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( string const & name,
                                     Group * const parent ):
   Group( name, parent ),
-  m_numQuadraturePoints( 1 )
+  m_numQuadraturePoints( 1 ),
+  m_isClone( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }

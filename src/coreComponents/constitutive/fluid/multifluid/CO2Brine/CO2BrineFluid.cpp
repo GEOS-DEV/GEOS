@@ -138,7 +138,8 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_p1Index = m_p1Index;
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation.createPVTModels( true );
+  newConstitutiveRelation.setIsClone( true );
+  newConstitutiveRelation.createPVTModels( newConstitutiveRelation.isClone() );
 
   return clone;
 }
@@ -240,13 +241,18 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
-
-  createPVTModels( false );
+  createPVTModels( isClone() );
 }
 
+/**
+ * @brief Create a PVT Model and output them
+ * @param isClone If we are in the case of a clone of a constitutive mode, never the output
+ */
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
 {
+
+    std::cout << " ISCLONE " << isClone <<std::endl;
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;

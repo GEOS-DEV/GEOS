@@ -171,7 +171,7 @@ private:
 
   /**
    * @brief Create a PVT Model and output them
-   * @param isClone If we are in the case of a clone of a constitutive mode, don't regenerate the output
+   * @param isClone If we are in the case of a clone of a constitutive mode, never the output
    */
   void createPVTModels( bool isClone );
 

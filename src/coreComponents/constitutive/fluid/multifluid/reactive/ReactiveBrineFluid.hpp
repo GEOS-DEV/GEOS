@@ -162,11 +162,9 @@ private:
 
   /**
    * @brief Create a PVT Model and output them
-   * @param isClone If we are in the case of a clone of a constitutive mode, don't regenerate the output
+   * @param isClone If we are in the case of a clone of a constitutive mode, never the output
    */
   void createPVTModels( bool isClone );
-
-  bool m_isClone = true;
 
   /// Names of the files defining the viscosity and density models
   path_array m_phasePVTParaFiles;

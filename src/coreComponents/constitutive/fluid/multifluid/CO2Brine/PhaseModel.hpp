@@ -55,7 +55,7 @@ struct PhaseModel
    * @param[in] inputParams input parameters read from files
    * @param[in] componentNames names of the components
    * @param[in] componentMolarWeight molar weights of the components
-   * @param[in] pvtOutputOpts Struct output options
+   * @param[in] pvtOutputOpts Output struct options
    */
   PhaseModel( string const & phaseModelName,
               array1d< array1d< string > > const & inputParams,
