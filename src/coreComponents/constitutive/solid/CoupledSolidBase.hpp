@@ -209,7 +209,7 @@ public:
   /**
    * @brief initialize the constitutive models fields.
    */
-  void initializeState() const
+  virtual void initializeState() const
   {
     getBasePorosityModel().initializeState();
     getBasePermModel().initializeState();
