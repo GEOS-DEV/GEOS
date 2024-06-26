@@ -136,7 +136,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlLastError(),
   m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
+  m_boxAverageWriteInterval( 0.0 ),
   m_reactionHistory( 0 ),
+  m_writeParticleData( 0 ).
+  m_reactionWriteInterval( 0.0 ),
+  m_particleDataWriteInterval( 0.0 ),
   m_explicitSurfaceNormalInfluence( 0.0 ),
   m_computeSurfaceNormalsOnlyOnInitialization( 0 ),
   m_referenceCohesiveZone( 0 ),
@@ -188,6 +192,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_damageFieldPartitioning( 0 ),
   m_useSurfacePositionForContact( 0 ),
   m_contactNormalType( ContactNormalTypeOption::MassWeighted ),
+  m_contactNormalExponent( 1.0 ),
   m_contactGapCorrection( ContactGapCorrectionOption::Simple ),
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_plotUnscaledParticles( 0 ),
@@ -283,7 +288,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "reactionWriteInterval", &m_reactionWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( m_reactionWriteInterval ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing reactions to files" );
 
@@ -292,6 +297,24 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Next time to write reactions" );
+
+  registerWrapper( "writeParticleData", &m_writeParticleData ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_writeParticleData ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable writing particle data to file" );
+
+  registerWrapper( "particleDataWriteInterval", &m_particleDataWriteInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_particleDataWriteInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Interval to write particle data to file" );
+
+  registerWrapper( "nextParticleDataWriteTime", &m_nextParticleDataWriteTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Next time to write particle data" );
 
   registerWrapper( "explicitSurfaceNormalInfluence", &m_explicitSurfaceNormalInfluence ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -737,6 +760,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for contact normal type" );
+
+  registerWrapper( "contactNormalExponent", &m_contactNormalExponent ).
+    setApplyDefaultValue( m_contactNormalExponent ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Exponent value for surface normal weights in contact normal type aligned" );
 
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1427,10 +1456,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds weights of surface normals at nodes." );
 
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the number of particles mapping to each field of a grid node." );
+        setDescription( "An array that holds the normalization factor for grid surface normal weights of each field." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
@@ -1589,6 +1618,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     neighborList.setParticleManager( particleManager );
   } );
 
+  // GEOS_LOG_RANK_0( "Initialized neighbor list");
+
   // Get nodal position
   arrayView1d< int const > const periodic = partition.getPeriodic();
   int numNodes = nodeManager.size();
@@ -1623,6 +1654,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       }
     }
   }
+
+  // GEOS_LOG_RANK_0( "Fix periodic nodes");
 
   // Get local domain extent
   m_xLocalMin.resize(3);
@@ -1721,6 +1754,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_ijkMap[i][j][k] = g;
   }
 
+  // GEOS_LOG_RANK_0( "Get grid information from partition");
+
   // Identify node sets for applying boundary conditions. We need boundary nodes and buffer nodes.
   Group & nodeSets = nodeManager.sets();
   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
@@ -1759,6 +1794,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_boundaryNodes[face].insert( tmpBoundaryNodes.begin(), tmpBoundaryNodes.end() );
     m_bufferNodes[face].insert( tmpBufferNodes.begin(), tmpBufferNodes.end() );
   }
+
+  // GEOS_LOG_RANK_0( "Get boundary nodes");
 
   // Initialize particle fields that weren't intialized by reading the particle input file
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -1894,11 +1931,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
   } );
 
+  // GEOS_LOG_RANK_0( "Initialized particle fields");
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     subRegion.setActiveParticleIndices(); // Needed for computeAndWriteBoxAverage().
   } );
+
+  // GEOS_LOG_RANK_0( "Set active particle indices");
   
   // Initialize reaction force history file and write its header
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
@@ -1961,6 +2001,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
   }
 
+  // GEOS_LOG_RANK_0( "Initialized files");
+
   // Resize grid arrays according to number of velocity fields
   int maxLocalGroupNumber = 0; // Maximum contact group number on this partition.
   int maxGlobalGroupNumber; // Maximum contact group number on global domain.
@@ -2011,7 +2053,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -2029,12 +2071,18 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveTractionString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() ).resize( numNodes );
 
+  // GEOS_LOG_RANK_0( "Initialized grid fields");
+
   // Precompute the square to save on computation later
   m_maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity;
 
   initializeConstitutiveModelDependencies( particleManager );
 
+  // GEOS_LOG_RANK_0( "Initialized constitutive model dependencies");
+
   initializeFrictionCoefficients();
+
+  // GEOS_LOG_RANK_0( "Finished initialization");
 }
 
 localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
@@ -2578,6 +2626,19 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {
       computeAndWriteBoxAverage( time_n, dt, particleManager );
       m_nextBoxAverageWriteTime += m_boxAverageWriteInterval;
+    }
+  }
+
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_writeParticleData == 1, "Write particle data to file" );
+  solverProfilingIf( "Write particle data to file", m_writeParticleData == 1 );
+  //#######################################################################################
+  if( m_writeParticleData == 1 )
+  {
+    if( time_n + dt >= m_nextParticleDataWriteTime )
+    {
+      writeParticleData( dt, particleManager );
+      m_nextParticleDataWriteTime += m_particleDataWriteInterval;
     }
   }
 
@@ -3606,7 +3667,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
 {
   // Grid fields
   // arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
-  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
+  // arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
@@ -3678,6 +3739,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
         }
 
         // Also maps explicit particle surface normals which will dominate if m_explicitSurfaceNormalInfluence is large
+        // If particle surface normal was disabled due to damage or CPDI domain scaling (e.g. zeroed) then the following does not add anything to gridSurfaceNormal
         if( particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ) // Update this with enum type for type safety to specifically only implement 2 and 3 for now (those with explicit surface normals)
         {
           for( int i = 0; i < numDims; i++ )
@@ -3834,6 +3896,89 @@ void SolidMechanicsMPM::normalizeGridSurfacePositions( NodeManager & nodeManager
   } );
 }
 
+void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & particleManager,
+                                                         NodeManager & nodeManager )
+{
+  // Grid fields
+  arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
+  arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  // arrayView1d< real64 const > const gridSurfaceMass = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() );
+  arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Particle fields
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+    
+    // arrayView1d< int const > particleSurfaceFlag = subRegion.getParticleSurfaceFlag(); 
+    arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+
+    // Get views to mapping arrays
+    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
+    // arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    // int const numDims = m_numDims;
+    int const damageFieldPartitioning = m_damageFieldPartitioning;
+    int const numContactGroups = m_numContactGroups;
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can parallelize with atomics
+    {
+      localIndex const p = activeParticleIndices[pp];
+
+      // Map to grid
+      for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
+      {
+        localIndex const mappedNode = mappedNodes[pp][g];
+
+        int const fieldIndex = partitionField( numContactGroups,
+                                               damageFieldPartitioning,
+                                               particleGroup[p],
+                                               particleDamageGradient[p],
+                                               particleSurfaceNormal[p],
+                                               gridDamageGradient[mappedNode] );
+
+        real64 surfaceNormal[3] = { 0 };
+        LvArray::tensorOps::copy< 3 >( surfaceNormal, particleSurfaceNormal[p] );
+
+        gridSurfaceNormalWeights[mappedNode][fieldIndex] += LvArray::tensorOps::AiBi< 3 >( gridSurfaceNormal[mappedNode][fieldIndex], surfaceNormal ) * shapeFunctionValues[pp][g] * particleMass[p];
+
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) )
+        {
+          gridSurfaceNormalWeightNormalization[mappedNode][fieldIndex] += shapeFunctionValues[pp][g] * particleMass[p];
+        }
+      }
+    } ); // particle loop
+
+    // Increment subregion index
+    subRegionIndex++;
+  } ); // subregion loop
+
+  // Loop over grid nodes and their fields to normalize the grid surface normal weights
+  int const numNodes = nodeManager.size();
+  int const numVelocityFields = m_numVelocityFields;
+  real64 const smallMass = m_smallMass;
+
+  forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; fieldIndex++ )
+    {
+      if( gridSurfaceNormalWeightNormalization[g][fieldIndex] > smallMass ) // small mass threshold
+      {
+        gridSurfaceNormalWeights[g][fieldIndex] /= gridSurfaceNormalWeightNormalization[g][fieldIndex];
+        continue;
+      }
+
+      gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
+    }
+  } );
+}
+
 void SolidMechanicsMPM::initializeFrictionCoefficients()
 {
   if( m_frictionCoefficientTable.size(0) != 0 )
@@ -3885,6 +4030,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                               arrayView3d< real64 const > const & gridCenterOfMass,
                                               arrayView3d< real64 const > const & gridCenterOfVolume,
                                               arrayView2d< int const > const & gridCohesiveFieldFlag,
+                                              arrayView2d< real64 const > const & gridSurfaceNormalWeights,
                                               arrayView3d< real64 > const & gridContactForce )
 {
   // Get number of nodes
@@ -3970,6 +4116,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                                 gridCenterOfMass[g][B],
                                                 gridCenterOfVolume[g][A],
                                                 gridCenterOfVolume[g][B],
+                                                gridSurfaceNormalWeights[g][A],
+                                                gridSurfaceNormalWeights[g][B],
                                                 gridContactForce[g][A],
                                                 gridContactForce[g][B] );
             }
@@ -3999,8 +4147,10 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
                                                           arraySlice1d< real64 const > const spB, // Surface position of field B
                                                           arraySlice1d< real64 const > const xA, // Center of mass of field A
                                                           arraySlice1d< real64 const > const xB, // Center of mass of field B
-                                                          arraySlice1d< real64 const > const centerOfVolumeA, // Center of volume of field A
-                                                          arraySlice1d< real64 const > const centerOfVolumeB, // Center of volume of field B
+                                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( centerOfVolumeA ), // Center of volume of field A
+                                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( centerOfVolumeB ), // Center of volume of field B
+                                                          real64 const & wA, // Surface normal weights of field A
+                                                          real64 const & wB, // Surface normal weights of field A
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
@@ -4060,6 +4210,21 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
         }
         break;
       }
+    case ContactNormalTypeOption::Aligned:
+      {
+        real64 tempA[3] = { 0 };
+        real64 tempB[3] = { 0 };
+        // LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, pow(wA, m_contactNormalExponent) );
+        // LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, pow(wB, m_contactNormalExponent) );
+        real64 threshold = 0.9;
+        real64 xxA = fmin(fmax((wA-threshold)/threshold, 0.0),1.0);
+        real64 xxB = fmin(fmax((wB-threshold)/threshold, 0.0),1.0);
+        LvArray::tensorOps::scaledCopy< 3 >(tempA, nA, 3*pow(xxA,2)-2*pow(xxA,3));
+        LvArray::tensorOps::scaledCopy< 3 >(tempB, nB, 3*pow(xxB,2)-2*pow(xxB,3));
+        LvArray::tensorOps::copy< 3 >( nAB, tempA );
+        LvArray::tensorOps::subtract< 3 >( nAB, tempB );
+      }
+      break;
     default:
       GEOS_ERROR( "Unrecognized contact normal type!" );
       break;
@@ -4079,23 +4244,85 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
 
   real64 norm = sqrt( nAB[0] * nAB[0] + nAB[1] * nAB[1] + nAB[2] * nAB[2] );
  
-  // CC: Is this the best solution?
-  // Need to prevent crashing from randomly defined normals that might arise when running with damage field gradient partitioning
-  // If the normal is small, then assume no separation force and return
-  if ( norm < 1e-20 )
+  // // CC: Is this the best solution?
+  // // Need to prevent crashing from randomly defined normals that might arise when running with damage field gradient partitioning
+  // // If the normal is small, then assume no separation force and return
+  // if ( norm < 1e-20 )
+  // {
+  //     fA[0] = 0.0;
+  //     fA[1] = 0.0;
+  //     fA[2] = 0.0;
+  //     fB[0] = 0.0;
+  //     fB[1] = 0.0;
+  //     fB[2] = 0.0;
+  //     return;
+  // }
+
+  // nAB[0] /= norm;
+  // nAB[1] /= norm;
+  // nAB[2] /= norm;
+
+  if( norm > 1e-20 )
   {
-      fA[0] = 0.0;
-      fA[1] = 0.0;
-      fA[2] = 0.0;
-      fB[0] = 0.0;
-      fB[1] = 0.0;
-      fB[2] = 0.0;
-      return;
+    LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
+  }
+  else
+  {
+    // If normals are randomly defined as in the case of a fully damaged region, just default to normal A
+    // since the two fields should not be separable
+    LvArray::tensorOps::copy< 3 >( nAB, nA );
+    nAB[2] = 0.0;
   }
 
-  nAB[0] /= norm;
-  nAB[1] /= norm;
-  nAB[2] /= norm;
+  // Total momentum for the contact pair.
+  real64 qAB[3];
+  qAB[0] = qA[0] + qB[0];
+  qAB[1] = qA[1] + qB[1];
+  qAB[2] = qA[2] + qB[2];
+
+  // Center-of-mass velocity for the contact pair.
+  real64 vAB[3];
+  vAB[0] = qAB[0] / mAB;
+  vAB[1] = qAB[1] / mAB;
+  vAB[2] = qAB[2] / mAB;
+
+  // Compute s1AB and s2AB, to form an orthonormal basis. This uses the method by E. Herbold
+  // to ensure consistency between surfaces.
+  real64 s1AB[3], s2AB[3]; // Tangential vectors for the contact pair
+  computeOrthonormalBasis( nAB, s1AB, s2AB );
+
+  // Compute force decomposition, declare increment in fA from "this" contact pair
+  real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] ),
+         ftan1 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] ),
+         ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
+  real64 dfA[3];
+
+  // // CC: to fix field partitioning with explicit surface normals at sharp tips such as nanoindenter tip
+  // // TODO: confirm this works
+  // real64 dC[3] = { 0 };
+  // LvArray::tensorOps::copy< 3 >( dC, centerOfVolumeA );
+  // LvArray::tensorOps::subtract< 3 >(dC, centerOfVolumeB );
+  // separable |= LvArray::tensorOps::AiBi< 3 >(dC, nAB) > 0; 
+
+  // Check for separability, and enforce either slip, or no-slip contact, accordingly
+  if( separable == 0 )
+  {
+    // Surfaces are bonded, treat as single velocity field by applying normal force to prevent
+    // interpenetration, and tangential force to prevent slip.
+    dfA[0] = fnor * nAB[0] + ftan1 * s1AB[0] + ftan2 * s2AB[0];
+    dfA[1] = fnor * nAB[1] + ftan1 * s1AB[1] + ftan2 * s2AB[1];
+    dfA[2] = fnor * nAB[2] + ftan1 * s1AB[2] + ftan2 * s2AB[2];
+    fA[0] += dfA[0];
+    fA[1] += dfA[1];
+    fA[2] += dfA[2];
+    fB[0] -= dfA[0];
+    fB[1] -= dfA[1];
+    fB[2] -= dfA[2];
+    return;
+  }
+
+  // Surfaces are separable. For frictional contact, apply a normal force to
+  // prevent interpenetration, and tangential force to prevent slip unless f_tan > mu*f_nor
 
   // Calculate the contact gap between the fields
   real64 gap0;
@@ -4112,7 +4339,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
     // gap0 = (m_hEl[0]*m_hEl[1]*m_hEl[2]) /
     //        sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
 
-    // Ellipse solution
+    // Elliptical solution
     // Gives element sizes in each direction and reasonable approximations in others
     gap0 = 1/sqrt(std::pow(nAB[0]/m_hEl[0],2) + std::pow(nAB[1]/m_hEl[1],2) + std::pow(nAB[2]/m_hEl[2],2));
 
@@ -4121,9 +4348,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
   // TODO: A fudge factor of 0.67 on gap0 makes diagonal surfaces (wrt grid) close better I think, but this is more general
   // real64 gap = (xB[0] - xA[0]) * nAB[0] + (xB[1] - xA[1]) * nAB[1] + (xB[2] - xA[2]) * nAB[2] - gap0;
 
-  // if( m_useSurfacePositionForContact )
-  // {
-    // In case of asymmetric interfaces (explicit normals and positions only on one side) use the center of mass instead of surface position
+  // In case of asymmetric interfaces (explicit normals and positions only on one side) use the center of mass instead of surface position
   real64 gapScale = 0.0;
   real64 surfacePosA[3] = { 0 };
   if ( spmA > m_smallMass && m_useSurfacePositionForContact )
@@ -4151,155 +4376,104 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
 
   real64 gap = (surfacePosB[0] - surfacePosA[0]) * nAB[0] + (surfacePosB[1] - surfacePosA[1]) * nAB[1] + (surfacePosB[2] - surfacePosA[2]) * nAB[2] - gapScale*gap0;
 
-  // Total momentum for the contact pair.
-  real64 qAB[3];
-  qAB[0] = qA[0] + qB[0];
-  qAB[1] = qA[1] + qB[1];
-  qAB[2] = qA[2] + qB[2];
+  real64 contact = 0.0;
+  real64 temp[3] = { 0 };
+  LvArray::tensorOps::copy< 3 >( temp, vA );
+  LvArray::tensorOps::subtract< 3 >( temp, vAB );
+  real64 test = LvArray::tensorOps::AiBi< 3 >( temp, nAB);
+  
+  // real64 test = (vA[0] - vAB[0]) * nAB[0] + (vA[1] - vAB[1]) * nAB[1] + (vA[2] - vAB[2]) * nAB[2];
 
-  // Center-of-mass velocity for the contact pair.
-  real64 vAB[3];
-  vAB[0] = qAB[0] / mAB;
-  vAB[1] = qAB[1] / mAB;
-  vAB[2] = qAB[2] / mAB;
-
-  // Compute s1AB and s2AB, to form an orthonormal basis. This uses the method by E. Herbold
-  // to ensure consistency between surfaces.
-  real64 s1AB[3], s2AB[3]; // Tangential vectors for the contact pair
-  computeOrthonormalBasis( nAB, s1AB, s2AB );
-
-  // Compute force decomposition, declare increment in fA from "this" contact pair
-  real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] ),
-         ftan1 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] ),
-         ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
-  real64 dfA[3];
-
-  // CC: to fix field partitioning with explicit surface normals at sharp tips such as nanoindenter tip
-  // TODO: confirm this works
-  real64 dC[3] = { 0 };
-  LvArray::tensorOps::copy< 3 >( dC, centerOfVolumeA );
-  LvArray::tensorOps::subtract< 3 >(dC, centerOfVolumeB );
-
-  // separable |= LvArray::tensorOps::AiBi< 3 >(dC, nAB) > 0; 
-
-  // Check for separability, and enforce either slip, or no-slip contact, accordingly
-  if( separable == 0 )
+  switch( m_contactGapCorrection )
   {
-    // Surfaces are bonded, treat as single velocity field by applying normal force to prevent
-    // interpenetration, and tangential force to prevent slip.
-    dfA[0] = fnor * nAB[0] + ftan1 * s1AB[0] + ftan2 * s2AB[0];
-    dfA[1] = fnor * nAB[1] + ftan1 * s1AB[1] + ftan2 * s2AB[1];
-    dfA[2] = fnor * nAB[2] + ftan1 * s1AB[2] + ftan2 * s2AB[2];
-    fA[0] += dfA[0];
-    fA[1] += dfA[1];
-    fA[2] += dfA[2];
-    fB[0] -= dfA[0];
-    fB[1] -= dfA[1];
-    fB[2] -= dfA[2];
+    // Simplely check if component of field velocities will result in interpenetration if uncorrected
+    case ContactGapCorrectionOption::Simple:
+      contact = test > 0.0 ? 1.0 : 0.0;
+      break;
+    // Check materials are interpenetrating and velocities will results in further interpenetration
+    case ContactGapCorrectionOption::Implicit:
+      contact = test > 0.0 && gap < 0.0 ? 1.0 : 0.0;
+      break;
+    // 
+    case ContactGapCorrectionOption::Softened:
+      if ( test > 0 )
+      {
+        // realT gap0 = normalSpacing*cellSpacing;
+        if (gap <= 0.0)
+        {
+          contact = 1.0;
+        }
+        else if (gap < gap0)
+        {
+          contact = 1.0 - gap/gap0;
+        }
+      }
+      break;
+    default:
+      GEOS_ERROR( "Unknown contact gap correction type specified" );
+      break;
+  }
+
+  // Modify normal contact force
+  fnor *= contact;
+
+  // Additional compressive normal force added to correct overlap, this is added only to the normal force and
+  // doesn't affect the shear calculation (which in FEM cuts down on spurious stress oscillations).
+  real64 fgap = 0.0;
+  if( m_overlapCorrection == OverlapCorrectionOption::NormalForce )
+  {
+    real64 cellSpacing[3];
+    LvArray::tensorOps::copy< 3 >( cellSpacing, m_hEl);
+
+    real64 normalSpacing[3];
+    normalSpacing[0] = fabs( nAB[0] );
+    normalSpacing[1] = fabs( nAB[1] );
+    normalSpacing[2] = fabs( nAB[2] );
+
+    real64 cellVolume = m_hEl[0] * m_hEl[1] * m_hEl[2];
+    real64 cellLength = LvArray::tensorOps::AiBi< 3 >( normalSpacing, cellSpacing );
+    real64 cellArea = cellVolume / cellLength;
+    real64 overlap = m_planeStrain ? ( VA + VB - 0.5*cellVolume ) / cellArea : ( VA + VB - cellVolume ) / cellArea;
+    if( overlap > 0.0 )
+    {
+      fgap = -1.0 * overlap * fmin( mA, mB ) / ( dt * dt ); // This could be -0.5*overlap*mAB/dt**2, but that might be less stable if one mass tiny
+    }
+  }
+
+  // Determine force for tangential sticking
+  real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
+
+  // Get direction of tangential contact force
+  real64 sAB[3];
+  if( ftanMag > 0.0 )
+  {
+    sAB[0] = (s1AB[0] * ftan1 + s2AB[0] * ftan2) / ftanMag;
+    sAB[1] = (s1AB[1] * ftan1 + s2AB[1] * ftan2) / ftanMag;
+    sAB[2] = (s1AB[2] * ftan1 + s2AB[2] * ftan2) / ftanMag;
   }
   else
   {
-    // Surfaces are separable. For frictional contact, apply a normal force to
-    // prevent interpenetration, and tangential force to prevent slip unless f_tan > mu*f_nor
-    real64 contact = 0.0;
-    real64 temp[3] = { 0 };
-    LvArray::tensorOps::copy< 3 >( temp, vA );
-    LvArray::tensorOps::subtract< 3 >( temp, vAB );
-    real64 test = LvArray::tensorOps::AiBi< 3 >( temp, nAB);
-    
-    // real64 test = (vA[0] - vAB[0]) * nAB[0] + (vA[1] - vAB[1]) * nAB[1] + (vA[2] - vAB[2]) * nAB[2];
-
-    switch( m_contactGapCorrection )
-    {
-      // Simplely check if component of field velocities will result in interpenetration if uncorrected
-      case ContactGapCorrectionOption::Simple:
-        contact = test > 0.0 ? 1.0 : 0.0;
-        break;
-      // Check materials are interpenetrating and velocities will results in further interpenetration
-      case ContactGapCorrectionOption::Implicit:
-        contact = test > 0.0 && gap < 0.0 ? 1.0 : 0.0;
-        break;
-      // 
-      case ContactGapCorrectionOption::Softened:
-        if ( test > 0 )
-        {
-          // realT gap0 = normalSpacing*cellSpacing;
-          if (gap <= 0.0)
-          {
-            contact = 1.0;
-          }
-          else if (gap < gap0)
-          {
-            contact = 1.0 - gap/gap0;
-          }
-        }
-        break;
-      default:
-        GEOS_ERROR( "Unknown contact gap correction type specified" );
-        break;
-    }
-  
-    // Modify normal contact force
-    fnor *= contact;
-
-	  // Additional compressive normal force added to correct overlap, this is added only to the normal force and
-	  // doesn't affect the shear calculation (which in FEM cuts down on spurious stress oscillations).
-	  real64 fgap = 0.0;
-	  if( m_overlapCorrection == OverlapCorrectionOption::NormalForce )
-	  {
-      real64 cellSpacing[3];
-      LvArray::tensorOps::copy< 3 >( cellSpacing, m_hEl);
-
-      real64 normalSpacing[3];
-      normalSpacing[0] = fabs( nAB[0] );
-      normalSpacing[1] = fabs( nAB[1] );
-      normalSpacing[2] = fabs( nAB[2] );
-
-		  real64 cellVolume = m_hEl[0] * m_hEl[1] * m_hEl[2];
-		  real64 cellLength = LvArray::tensorOps::AiBi< 3 >( normalSpacing, cellSpacing );
-		  real64 cellArea = cellVolume / cellLength;
-		  real64 overlap = m_planeStrain ? ( VA + VB - 0.5*cellVolume ) / cellArea : ( VA + VB - cellVolume ) / cellArea;
-		  if( overlap > 0.0 )
-		  {
-			  fgap = -1.0 * overlap * fmin( mA, mB ) / ( dt * dt ); // This could be -0.5*overlap*mAB/dt**2, but that might be less stable if one mass tiny
-		  }
-	  }
-
-    // Determine force for tangential sticking
-    real64 ftanMag = sqrt( ftan1 * ftan1 + ftan2 * ftan2 );
-
-    // Get direction of tangential contact force
-    real64 sAB[3];
-    if( ftanMag > 0.0 )
-    {
-      sAB[0] = (s1AB[0] * ftan1 + s2AB[0] * ftan2) / ftanMag;
-      sAB[1] = (s1AB[1] * ftan1 + s2AB[1] * ftan2) / ftanMag;
-      sAB[2] = (s1AB[2] * ftan1 + s2AB[2] * ftan2) / ftanMag;
-    }
-    else
-    {
-      sAB[0] = 0.0;
-      sAB[1] = 0.0;
-      sAB[2] = 0.0;
-    }
-
-    if( useCohesiveTangentialForces == 1)
-    {
-      ftan1 = 0.0;
-      ftan2 = 0.0;
-    }
-
-    real64 ftan = std::min( frictionCoefficient * std::abs( fnor ), ftanMag ); // This goes to zero when contact=0 due to the std::min
-    dfA[0] = ( fnor + fgap ) * nAB[0] + ftan * sAB[0];
-    dfA[1] = ( fnor + fgap ) * nAB[1] + ftan * sAB[1];
-    dfA[2] = ( fnor + fgap ) * nAB[2] + ftan * sAB[2];
-    fA[0] += dfA[0];
-    fA[1] += dfA[1];
-    fA[2] += dfA[2];
-    fB[0] -= dfA[0];
-    fB[1] -= dfA[1];
-    fB[2] -= dfA[2];
+    sAB[0] = 0.0;
+    sAB[1] = 0.0;
+    sAB[2] = 0.0;
   }
+
+  if( useCohesiveTangentialForces == 1)
+  {
+    ftan1 = 0.0;
+    ftan2 = 0.0;
+  }
+
+  real64 ftan = std::min( frictionCoefficient * std::abs( fnor ), ftanMag ); // This goes to zero when contact=0 due to the std::min
+  dfA[0] = ( fnor + fgap ) * nAB[0] + ftan * sAB[0];
+  dfA[1] = ( fnor + fgap ) * nAB[1] + ftan * sAB[1];
+  dfA[2] = ( fnor + fgap ) * nAB[2] + ftan * sAB[2];
+  fA[0] += dfA[0];
+  fA[1] += dfA[1];
+  fA[2] += dfA[2];
+  fB[0] -= dfA[0];
+  fB[1] -= dfA[1];
+  fB[2] -= dfA[2];
 }
 
 void SolidMechanicsMPM::computeOrthonormalBasis( const real64 * e1, // input "normal" unit vector.
@@ -5621,6 +5795,41 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   }
 }
 
+void SolidMechanicsMPM::writeParticleData( const real64, time_n, 
+                                           ParticleManager & particleManager )
+{
+  GEOS_LOG_RANK_0( "Particle data writing to file is not currently implemented!" );
+  // // Each particle writes to separate file to avoid race condition (only one rank should possess the particle as a master)
+  // particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  // {
+  //   // Get fields
+  //   arrayView1d< real64 const > const particleID = subRegion.getParticleID();
+  //   arrayView1d< real64 const > const particlePosition = subRegion.getParticleCenter();
+  //   arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+
+  //   SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+  //   for( int pp = 0; pp < activeParticleIndices.size(); pp++)
+  //   {
+  //     localIndex const p = activeParticleIndices[pp];
+
+  //     std::ofstream file;
+  //     file.open( "reactionHistory.csv", std::ios::out); // | std::ios::app );
+  //     if( file.fail() )
+  //       throw std::ios_base::failure( std::strerror( errno ) );
+  //     //make sure write fails with exception if something is wrong
+  //     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+  //     file << "time, F00, F11, F22, length_x, length_y, length_z, Rx-, Rx+, Ry-, Ry+, Rz-, Rz+, L00, L11, L22" << std::endl;
+  //     file << std::setprecision( std::numeric_limits< long double >::digits10 )
+  //         << 0.0 << ","
+  //         << 1.0 << "," << 1.0 << "," << 1.0 << ","
+  //         << m_domainExtent[0] << "," << m_domainExtent[1] << "," << m_domainExtent[2] << ","
+  //         << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << ","
+  //         << 0.0 << "," << 0.0 << "," << 0.0
+  //         << std::endl;
+  //   }
+  // } );
+}
+
 void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
                                            arrayView1d< real64 > currentStress,
                                            real64 & boxMaterialVolume )
@@ -5806,7 +6015,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 	real64 dedt[3] = {0};
   LvArray::tensorOps::copy< 3 >( dedt, error);
   LvArray::tensorOps::subtract< 3 >( dedt, m_stressControlLastError);
-  LvArray::tensorOps::scale< 3 >( dedt, dt);
+  LvArray::tensorOps::scale< 3 >( dedt, 1.0/dt);
 
 	real64 stressControlPTerm[3] = {0}; 
   LvArray::tensorOps::copy< 3 >( stressControlPTerm, error);
@@ -5915,7 +6124,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
   arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
-  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
+  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
 
@@ -5962,7 +6171,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridMaxDamage[g][fieldIndex] = 0.0;
         gridMassWeightedDamage[g][fieldIndex] = 0.0;
         
-        gridNumMappedParticles[g][fieldIndex] = 0;
+        gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0;
         gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
 
         for( int i = 0; i < 3; i++ )
@@ -6097,7 +6306,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
   
         real64 index = ( LvArray::tensorOps::AiBi< 3 >( gridPrincipalExplicitSurfaceNormal[g], particleSurfaceNormal[p] ) < 0.0 ) ? -1.0 : 1.0;
 
-        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 0.0 ) // particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 )
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 1e-12 )
         {
           gridSurfaceMass[g] += particleMass[p] * shapeFunctionValues[pp][gg];
           for(int i=0; i < 3; i++)
@@ -7813,6 +8022,8 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView3d< real64 > const & gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
   arrayView3d< real64 const > const & gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
 
+
+  arrayView2d< real64 const > const & gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
   // arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
   arrayView3d< real64 > const & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
@@ -7830,6 +8041,11 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
   // Normalize grid surface normals
   normalizeGridSurfaceNormals( nodeManager );
+
+  // CC: Testing idea
+  // Compute grid surface normal weights
+  computeGridSurfaceNormalWeights( particleManager,
+                                   nodeManager );
 
   // Apply symmetry boundary conditions to material position
   enforceGridVectorFieldSymmetryBC( gridCenterOfMass, gridPosition, nodeManager.sets() );
@@ -7858,6 +8074,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
                         gridCenterOfMass,
                         gridCenterOfVolume,
                         gridCohesiveFieldFlag,
+                        gridSurfaceNormalWeights,
                         gridContactForce );
 
   // Update grid momenta and velocities based on contact forces
