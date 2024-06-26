@@ -838,7 +838,6 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
