@@ -891,19 +891,26 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // The `ghostExchange` matrix is rectangular,
   // the number of columns being the number of nodes in the mesh graph, ie the total number of mesh geometric quantities
   // the number of rows being the number of MPI ranks.
+  // ghostExchange (num_ranks x num_entities) = ghostingFootprint^T (num_ranks x num_entities) * ownership (num_entities x num_entities, diagonal)
+  // recall that ghostExchange has all the nonzeros set to 1
+  // diagonal matrix just multiplies each col of ghostingFootprint^T (row of ghostingFootprint) by the corresponding diagonal entry
+  // So each column of ghostExchange will have nonzeros which are all the same value, with the value being the rank owning that entity
+  // Thus the nonzeros in row i tell us the ranks which own the entities "adjacent" to the entities on rank i
   //
   // As the result of the multiplication between the `ghostingFootprint` matrix and the `ownership` matrix,
   // for each row owned (ie at the current MPI rank index),
-  // the value of the `ghostExchange` matrix term will provide the actual owning rank for all the .
+  // the value of the `ghostExchange` matrix term will provide the actual owning rank for all the needed geometric entities.
   //
   // From `ghostExchange` we can extract which other rank will send to the current rank any graph node.
-  TriCrsMatrix ghostExchange( mpiMap, 10000 ); // TODO having `0` there should be working!
+  TriCrsMatrix ghostExchange( mpiMap, 10000 ); // TODO having `0` there should be working! We need to get a better estimate of number of entries
   Tpetra::MatrixMatrix::Multiply( ghostingFootprint, true, ownership, false, ghostExchange, false );
   ghostExchange.fillComplete( ownedMap, mpiMap );
 
   // TODO Do I have to work with `ghostingFootprint` if I already have `ghostExchange` which may convey more information?
+  // As we shall see, below we go back to working with ghostingFootprint
   // TODO Maybe because of the ownership of the ranks: one is also the "scaled" transposed of the other.
 
+  // debug output
   if( curRank == 0_mpi )
   {
     GEOS_LOG_RANK( "ghostExchange->NumGlobalCols() = " << ghostExchange.getGlobalNumCols() );
@@ -911,20 +918,32 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   }
   Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostInfo.mat", ghostExchange );
 
+  // Now, for each of the entities owned by this current rank, we collect all the other ranks to which this entity is sent
+
+  // GhostSend defined in BuildPods.hpp, 
+  // struct of maps for each (node, edge, face, cell) giving the set of ranks each entity (given by node, edge, face, cell global index) must be sent to
+  GhostSend send;
+  
+  // temp data structures used in process
   std::size_t extracted = 0;
   Teuchos::Array< TriScalarInt > extractedValues;
   Teuchos::Array< TriGlbIdx > extractedIndices;
 
-  GhostSend send;
+  // Loop over the owned indiced in global matrix (owned geometric entities)
   for( TriGlbIdx const & index: ownedGlbIdcs )
   {
+    // get the number of ranks which needed this entity and resize our temp data storage
     std::size_t const length = ghostingFootprint.getNumEntriesInGlobalRow( index );
-    extractedValues.resize( length );
+    extractedValues.resize( length ); // note we never actually use the values, just needed the indices where the nonzeros were
     extractedIndices.resize( length );
+    // copy data into temp https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1RowMatrix.html#a5fd9651c8e5d1cc7dead6cadac342978
     ghostingFootprint.getGlobalRowCopy( index, extractedIndices(), extractedValues(), extracted );
     GEOS_ASSERT_EQ( extracted, length );
 
+    // neighbors will be the set of mpi ranks which need this entity
     std::set< MpiRank > neighbors;
+
+    // the ranks are the columns of ghostingFootprint, we just extracted the nonzeros
     for( std::size_t i = 0; i < extracted; ++i )
     {
       MpiRank const rank( extractedIndices[i] );
@@ -934,11 +953,14 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
     }
 
+    // if this entity is not needed by anyone else, great, we're done
     if( std::empty( neighbors ) )
     {
       continue;
     }
 
+    // if there ranks which need this entity, we convert the global matrix index back to the (node, edge, face cell) global index
+    // and add to the GhostSend struct
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
@@ -966,41 +988,69 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
         GEOS_ERROR( "Internal error" );
       }
     }
-  }
+  } // end loop over owned entities
 
+  // Now we can look at the dual problem, namely for this current rank, what data is needed from other ranks
+  // Now we also have to pay attention to what non-owned data was already present on the rank
+
+  // Note that we are back to working with ghostExchange, not ghostingFootprint
+  // recall that the nonzeros in each row of this matrix told us which other ranks' data was needed for the current row rank
   std::size_t const numNeededIndices = ghostExchange.getNumEntriesInGlobalRow( TriGlbIdx( curRank.get() ) );
+
+  // copy into same temp vars as above
   extractedValues.resize( numNeededIndices );
   extractedIndices.resize( numNeededIndices );
   ghostExchange.getGlobalRowCopy( TriGlbIdx( curRank.get() ), extractedIndices(), extractedValues(), extracted );
   GEOS_ASSERT_EQ( extracted, numNeededIndices );
 
+  // create a set containing the indices needed, i.e. the geometric entities belonging to other ranks (we use a set so we can later use set operations)
   std::set< TriGlbIdx > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
-  std::set< TriGlbIdx > receivedIndices;  // The graph nodes that my neighbors will send me.
+  // create a set which will contain the geometric entities that my neighbors will send me.
+  std::set< TriGlbIdx > receivedIndices;
+
+    GEOS_ASSERT_EQ( std::size( allNeededIndices ), numNeededIndices ); // we should not have lost anythng by converting to a set
+
+  // Fill receivedIndices by finding the needed indices for this rank which were not owned by this rank
   std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
                        std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
                        std::inserter( receivedIndices, std::end( receivedIndices ) ) );
-  std::vector< TriGlbIdx > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
+
+  // of course, some of these indices were already communicated, they were the `present` data
+  // create a set of entities which are needed, but neither owned nor present by/on the current rank.
+  std::vector< TriGlbIdx > notPresentIndices;
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
+
+  // a bit below we will see that we need to actually send the positions of the ghosted nodes (everything else is just indices so far)
+  // so here we go through the notPresentIndices and make note of which are nodes (as opposed to edges, faces, cells)
   std::vector< TriGlbIdx > notPresentNodes;
   std::copy_if( std::cbegin( notPresentIndices ), std::cend( notPresentIndices ),
                 std::back_inserter( notPresentNodes ), [&]( TriGlbIdx const & i )
                 {
                   return convert.getGeometricalType( i ) == Geom::NODE;
                 } );
-  GEOS_ASSERT_EQ( std::size( allNeededIndices ), numNeededIndices );
+  
 
+  // Finally we can construct our received entity information
+  // GhostRecv defined in BuildPods.hpp, 
+  // struct of maps for each (node, edge, face, cell) giving the rank each entity (given by node, edge, face, cell global index) is coming from
   GhostRecv recv;
   for( std::size_t i = 0; i < extracted; ++i )
   {
+    // matrix index of required entity
     TriGlbIdx const & index = extractedIndices[i];
+
+    // TODO: should this be notPresentIndices??
     if( receivedIndices.find( index ) == std::cend( receivedIndices ) )  // TODO make a map `receivedIndices -> mpi rank`
     {
       continue;
     }
 
-    MpiRank const sender( extractedValues[i] );
+    // get the owning rank of the required entity
+    MpiRank const sender( extractedValues[i] ); // finally making use of the values from ghostExchange
+
+    // convert matrix index to geometry index and populate GhostRecv
     switch( convert.getGeometricalType( index ) )
     {
       case Geom::NODE:
@@ -1030,13 +1080,14 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     }
   }
 
+ // debug output
 //  if( curRank == 1_mpi or curRank == 2_mpi )
 //  {
 //    GEOS_LOG_RANK( "recv.edges = " << json( recv.edges ) );
 //    GEOS_LOG_RANK( "send.edges = " << json( send.edges ) );
 //  }
 
-  // At this point, each rank knows what it has to send to and what it is going to receive from the other ranks.
+  // At this point, each rank knows what it has to send and to whom and what it is going to receive from the other ranks.
   //
   // The remaining action is about
   // - retrieving the additional graph information
