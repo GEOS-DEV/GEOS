@@ -80,14 +80,15 @@ char const * xmlInput =
     <ElementRegions>
       <CellElementRegion name="region"
                          cellBlocks="{ cb }"
-                         materialList="{ water, rock, thermalCond }" />
+                         materialList="{ water, rock }" />
     </ElementRegions>
     <Constitutive>
       <CompressibleSolidConstantPermeability name="rock"
                                              solidModelName="nullSolid"
                                              porosityModelName="rockPorosity"
                                              permeabilityModelName="rockPerm"
-                                             solidInternalEnergyModelName="rockInternalEnergy" />
+                                             solidInternalEnergyModelName="rockInternalEnergy"
+                                             singlePhaseThermalConductivityModelName="thermalCond" />
       <NullModel name="nullSolid" />
       <PressurePorosity name="rockPorosity"
                         defaultReferencePorosity="0.05"
