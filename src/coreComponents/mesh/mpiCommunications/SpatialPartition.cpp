@@ -603,7 +603,8 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     {
       if( outOfDomainParticleRequests[i] != 1 )
       {
-        std::cout << "Rank " << m_rank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
+        localIndex p = outOfDomainParticleLocalIndices[i];
+        std::cout << "Rank " << m_rank << " particle at {" << particleCenter[p][0] << ", " << particleCenter[p][1] << ", " << particleCenter[p][2] << "} has " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
       }
     }
   }
