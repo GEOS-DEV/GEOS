@@ -120,7 +120,8 @@ public:
     Difference,
     MassWeighted,
     LargerMass,
-    Mixed
+    Mixed,
+    Aligned
   };
 
   /**
@@ -287,7 +288,7 @@ public:
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
     static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
-    static constexpr char const * gridNumMappedParticlesString() { return "gridNumMappedParticles"; }
+    static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
     static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
     static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
 
@@ -382,6 +383,9 @@ public:
 
   void normalizeGridSurfacePositions( NodeManager & nodeManager );
 
+  void computeGridSurfaceNormalWeights( ParticleManager & particleManager,
+                                        NodeManager & nodeManager );
+
   void computeContactForces( real64 const dt,
                              NodeManager & nodeManager,
                              arrayView2d< real64 const > const & gridMass,
@@ -396,6 +400,7 @@ public:
                              arrayView3d< real64 const > const & gridCenterOfMass,
                              arrayView3d< real64 const > const & gridCenterOfVolume,
                              arrayView2d< int const > const & gridCohesiveFieldFlag,
+                             arrayView2d< real64 const > const & gridSurfaceNormalWeights,
                              arrayView3d< real64 > const & gridContactForce );
 
   void initializeFrictionCoefficients();
@@ -426,6 +431,8 @@ public:
                                          arraySlice1d< real64 const > const xB, // Position of field B
                                          arraySlice1d< real64 const > const centerOfVolumeA,
                                          arraySlice1d< real64 const > const centerOfVolumeB,
+                                         real64 const & wA, // Surface normal weights of field A
+                                         real64 const & wB, // Surface normal weights of field A
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
@@ -495,6 +502,9 @@ public:
   void computeAndWriteBoxAverage( const real64 dt,
                                   const real64 time_n,
                                   ParticleManager & particleManager );
+
+  void writeParticleData( const real64, time_n, 
+                          ParticleManager & particleManager );
 
   void computeBoxMetrics( ParticleManager & particleManager,
                           arrayView1d< real64 > boxStress,
@@ -782,6 +792,10 @@ protected:
   real64 m_reactionWriteInterval;
   real64 m_nextReactionWriteTime;
 
+  int m_writeParticleData;
+  real64 m_particleDataWriteInterval;
+  real64 m_nextParticleDataWriteTime;
+
   real64 m_explicitSurfaceNormalInfluence;
   int m_computeSurfaceNormalsOnlyOnInitialization;
 
@@ -856,6 +870,7 @@ protected:
 
   int m_useSurfacePositionForContact;
   ContactNormalTypeOption m_contactNormalType;
+  real64 m_contactNormalExponent;
   ContactGapCorrectionOption m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
 
@@ -955,7 +970,8 @@ ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
               "Difference",
               "MassWeighted",
               "LargerMass",
-              "Mixed" );
+              "Mixed",
+              "Aligned" );
 
 ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
               "Simple",
@@ -980,4 +996,4 @@ ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_ */
