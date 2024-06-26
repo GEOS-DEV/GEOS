@@ -870,7 +870,7 @@ if(DEFINED GRPC_DIR)
     find_and_register(NAME grpc
                       INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
                       LIBRARY_DIRECTORIES ${GRPC_DIR}/lib
-                      HEADER grpc/grpcpp/grpcpp.h
+                      HEADER grpcpp/grpcpp.h
                       LIBRARIES grpc)
 
     set(ENABLE_GRPC ON CACHE BOOL "")
