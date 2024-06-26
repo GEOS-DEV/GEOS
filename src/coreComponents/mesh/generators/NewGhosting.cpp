@@ -1041,7 +1041,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     // matrix index of required entity
     TriGlbIdx const & index = extractedIndices[i];
 
-    // TODO: should this be notPresentIndices??
+    // Note this is not notPresentIndices, as information which is defined on geometric entities 
+    // which happen to already be present will still need to be communicated in the future
     if( receivedIndices.find( index ) == std::cend( receivedIndices ) )  // TODO make a map `receivedIndices -> mpi rank`
     {
       continue;
@@ -1096,10 +1097,13 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   //   knowing the index of the nodes is not enough.
   //
   // In order to do that, we build the `missingIndicator` matrix, which is rectangular:
-  // - The number of columns is the number of graph nodes in the mesh graph.
+  // - The number of columns is the number of graph nodes in the mesh graph, ie the total number of geometrical entities in the mesh.
   // - The number of rows is the total number of graph nodes that are missing on ranks.
+  //   For me this was confusing, as its a little different from what we've done before
+  //   Each rank is missing some quantity of mesh entities, and we are going to MpiAllreduce to get the total across all ranks, and this is the number of rows in the global matrix
+  //   Its going to be incredible sparse, in fact only one nonzero per row marking the index of the entity in the graph
   //   Note that the same quantity can be missing on multiple ranks, and that's handled.
-  // - The non-zero terms equal `1`, meaning that a given quantity (column) is missing on a given rank (row).
+  // - The non-zero terms equal `1`, meaning that a given quantity (column) is missing on a given rank (row, each rank owns a chunk of rows).
   //
   // Combining `missingIndicator` with the adjacency matrix which conveys a lot of connections information,
   // we'll be able to create the final `missingIndices` matrix,
@@ -1120,21 +1124,31 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   //   that actually are physical nodes in the mesh.
   // - The number of rows is the total number of graph nodes (that actually are physical nodes in the mesh) that are missing on ranks.
   // - The non-zero terms equal `1`, meaning that a given quantity (column) is missing on a given rank (row).
+
+  // Group together the number of missing mesh entities and the number of missing mesh nodes in particular for this rank
   std::size_t const numLocMissingCompound[2] = { std::size( notPresentIndices ), std::size( notPresentNodes ) };
+  // Now we can communicate to get the sum over missing entities and missing mesh nodes over all the ranks with simple reduction
   std::size_t numGlbMissingCompound[2] = { 0, 0 };
   MpiWrapper::allReduce( numLocMissingCompound, numGlbMissingCompound, 2, MPI_SUM );
+
+  // break the above back into individual variables now that parallel reduction is done
   std::size_t const & numLocMissingIndices = numLocMissingCompound[0];
   std::size_t const & numLocMissingNodes = numLocMissingCompound[1];
   Tpetra::global_size_t const numGlbMissingIndices = numGlbMissingCompound[0];
   Tpetra::global_size_t const numGlbMissingNodes = numGlbMissingCompound[1];
 
-  std::size_t const numGlbNodes = gis.nodes.get() + 1;  // TODO Use strongly typed integers
+  std::size_t const numGlbNodes = gis.nodes.get() + 1;  // TODO Use strongly typed integers, note gis was the input variable desribing global index offsets
   std::size_t const numOwnedNodes = std::size( ownedNodesIdcs );  // TODO Use strongly typed integers
 
-  auto const missingIndicesMap = make_rcp< TriMap const >( numGlbMissingIndices, numGlbMissingIndices, TriGlbIdx{ 0 }, comm );
+  // Now we are going to make new ownership maps for the new matrices describing missing indices/nodes
+  // Different constructor, just using sizes
+  // https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1Map.html#a7984262c1e6ab71ad3717fd96ed76052
+  auto const missingIndicesMap = make_rcp< TriMap const >( numGlbMissingIndices, numGlbMissingIndices, TriGlbIdx{ 0 }, comm ); // TODO: Should second one be local??
   auto const missingNodesMap = make_rcp< TriMap const >( numGlbMissingNodes, numLocMissingNodes, TriGlbIdx{ 0 }, comm );
 
   // Following information is needed to compute the global row.
+  // https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1Map.html#a0124c1b96f046c824123fb0ff5a9c978
+  // getting the index in the global matrix corresponding to local index 0 on current rank
   TriGlbIdx const missingIndicesOffset = missingIndicesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
   TriGlbIdx const missingNodesOffset = missingNodesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
 
@@ -1142,18 +1156,30 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   TriCrsMatrix missingIndicator( missingIndicesMap, 1 );
   for( std::size_t i = 0; i < numLocMissingIndices; ++i )
   {
-    missingIndicator.insertGlobalValues( missingIndicesOffset + TriGlbIdx( i ), TriLocIdx( 1 ), ones.data(), &notPresentIndices[i] );
+    // every row corresponds to a missing entity on this rank
+    // simply insert a 1 into the column of the entity given by notPresentIndices
+    // note each rank owns a chunk of consecutive rows
+    // https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1CrsMatrix.html#a8d4784081c59f27391ad825c4dae5e86
+    missingIndicator.insertGlobalValues( missingIndicesOffset + TriGlbIdx( i ), TriLocIdx( 1 ), ones.data(), &notPresentIndices[i] ); // note we are re-using ones from wayy back, just need a pointer to something with 1
   }
   missingIndicator.fillComplete( ownedMap, missingIndicesMap );
 
-  // `missingIndices` will contain the missing connectivity information.
-  TriCrsMatrix missingIndices( missingIndicesMap, 1000 ); // TODO having `0` there should be working!
+  // Now build `missingIndices` which will contain the missing connectivity information. Same size as missingIndicator
+  // missingIndices (num_global_missing_indices x num_entities) = missingIndicator (num_global_missing_indices x num_entities) * upward (num_entities x num_entities)
+  // every row of missingIndicator just had a 1 in the column which denotes the missing entity, upward is or adjacency matrix
+  // Similar to how if we do upward * (col indicator vector) we go up the topological chain (1 in edge slot yields faces containing edge)
+  // when we do (indicator row vector) * upward we get the row of upward corresponding to the indicated column, i.e. the indicated mesh entitiy and everything it depends on
+  // so if the indicator was on a face, you would get back the edges it is composed of as these are the nonzeros in the result vector
+  // So the full matrix just has this for every row, where each row is one of the missing entities for one of the ranks
+  // Complete tangent (sort of) - these pictures always help me with the visualizations of matrix omultiplcations that are very helpful here: https://dzone.com/articles/visualizing-matrix
+  TriCrsMatrix missingIndices( missingIndicesMap, 1000 ); // TODO having `0` there should be working! (epetra could dynamically resize) This is the same TODO as before, need a way to tell tpetra how many nonzeros
   Tpetra::MatrixMatrix::Multiply( missingIndicator, false, upward, false, missingIndices, false );
   missingIndices.fillComplete( ownedMap, missingIndicesMap );
 
+  // Now we can repeat the process but only consider the nodes, as discussed before
   // Indicator matrix only for the nodes.
   // Note that it should be an integer matrix full of ones,
-  // but it's a double matrix because it's going to be multiplied a double matrix.
+  // but it's a double matrix because it's going to be multiplied by a double matrix (nodal coordinates).
   TriDblCrsMatrix missingNodesIndicator( missingNodesMap, 1 );
   for( std::size_t i = 0; i < numLocMissingNodes; ++i )
   {
@@ -1168,6 +1194,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // - Its number of columns is 3: the x, y, and z coordinates of the nodes.
   TriDblCrsMatrix nodePositions( ownedNodesMap, 3 );
   std::vector< TriGlbIdx > const zot{ TriGlbIdx( 0 ), TriGlbIdx( 1 ), TriGlbIdx( 2 ) };  // zot: zero, one, two.
+
+  // each rank fills the nodePositions for the nodes it owns
   for( auto const & [ngi, pos]: owned.n2pos )
   {
     nodePositions.insertGlobalValues( convert.fromNodeGlbIdx( ngi ), TriLocIdx( 3 ), pos.data(), zot.data() );
@@ -1176,22 +1204,36 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   nodePositions.fillComplete( threeMap, ownedNodesMap );
 
   // `missingNodePos` will contain the missing node positions.
-  TriDblCrsMatrix missingNodePos( missingNodesMap, 1000 ); // TODO having `0` there should be working!
+  // Analogous to missingIndices, each row is a node missing from one of the ranks, and the cols are the position of that node
+  TriDblCrsMatrix missingNodePos( missingNodesMap, 1000 ); // TODO having `0` there should be working! Same TODO for sizing
   Tpetra::MatrixMatrix::Multiply( missingNodesIndicator, false, nodePositions, false, missingNodePos, false );
   missingNodePos.fillComplete( threeMap, missingNodesMap );
 
+  // Okie dokie, with all that we can finally construct the last output, which is the MeshGraph corresponding to ghosted info
+  // (recall we already had MeshGraphs for the owned and present info)
+  // (and recall a MeshGraph is just a struct of maps which take you from node/edge/face/cell global index to its data,
+  //  ex: face global id maps to a vector of edges, each of which are encoded by EdgeInfo (so it has id, start node))
+  // Notice that this information is exactly what is in missingIndices and missingNodePos!
+  // Moreoever, we will be able to get back 'all' the information by decoding the entries of missingIndices!
   MeshGraph ghosts;
   Teuchos::Array< double > extractedNodePos( 3 );
+
+  // Loop over the missing mesh entities
   for( std::size_t i = 0; i < numLocMissingIndices; ++i )
   {
+    // This is the missing entity that will be ghosted, this will be the key in one of the ghosted maps
     TriGlbIdx const index = notPresentIndices[i];
     Geom const geometricalType = convert.getGeometricalType( index );
 
+    // get the number of entities the missing one depends on (downward, c -> f -> e -> n)
     std::size_t const length = missingIndices.getNumEntriesInGlobalRow( missingIndicesOffset + TriGlbIdx( i ) );
+
+    // reuse same temp vars from before to store the row data
     extractedValues.resize( length );
     extractedIndices.resize( length );
     missingIndices.getGlobalRowCopy( missingIndicesOffset + TriGlbIdx( i ), extractedIndices(), extractedValues(), extracted );
     GEOS_ASSERT_EQ( extracted, length );
+
     if( geometricalType == Geom::NODE )
     {
       // The case of nodes is a bit different from the other cases,
@@ -1212,32 +1254,40 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       continue;
     }
 
-    auto const cit = std::find( std::cbegin( extractedIndices ), std::cend( extractedIndices ), index );
+    // Now we are either edge, face, or cell
+
+    // Find the index of the current missing entity in the data from the row of the matrix
+    auto const cit = std::find( std::cbegin( extractedIndices ), std::cend( extractedIndices ), index ); // I kind of think it should always be the last one, since upward is (lower) triangular
+    // Get the diagonal value
     std::size_t const numGeomQuantitiesIdx = intConv< std::size_t >( std::distance( std::cbegin( extractedIndices ), cit ) );
     TriScalarInt const & numGeomQuantities = extractedValues[numGeomQuantitiesIdx];
-    GEOS_ASSERT_EQ( extracted, intConv< std::size_t >( numGeomQuantities + 1 ) );
+    GEOS_ASSERT_EQ( extracted, intConv< std::size_t >( numGeomQuantities + 1 ) ); // extracted is the output from Tilinos telling you how many entries were pulled out when we copy row
 
     switch( geometricalType )
     {
       case Geom::EDGE:
       {
         TriScalarInt const & numNodes = numGeomQuantities;  // Alias
-        GEOS_ASSERT_EQ( numNodes, 2 );
+        GEOS_ASSERT_EQ( numNodes, 2 ); // an edge always has 2 nodes
         std::array< NodeGlbIdx, 2 > order{};
 
+        // loop over the entries extracted from the row of the matrix
         for( std::size_t ii = 0; ii < extracted; ++ii )
         {
+          // skip diagonal
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
+          // use `order` to store [start node index, end node index]
           NodeGlbIdx const ngi = convert.toNodeGlbIdx( extractedIndices[ii] );
           TriScalarInt const ord = extractedValues[ii] - 1;
           GEOS_ASSERT( ord == 0 or ord == 1 );
           order[ord] = ngi;
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numNodes ) );
+        // populate this info into ghosts
         EdgeGlbIdx const egi = convert.toEdgeGlbIdx( index );
         std::tuple< NodeGlbIdx, NodeGlbIdx > & tmp = ghosts.e2n[egi];
         std::get< 0 >( tmp ) = order[0];
@@ -1248,19 +1298,27 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       {
         TriScalarInt const & numEdges = numGeomQuantities;  // Alias
         std::map< integer, EdgeInfo > order;
+
+        // loop over the entries extracted from the row of the matrix
         for( std::size_t ii = 0; ii < extracted; ++ii )
         {
+          // skip diagonal
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
+          // get the edge global index and decode the matrix entry to get each edge's start node and the edges index in the face
           EdgeGlbIdx const egi = convert.toEdgeGlbIdx( extractedIndices[ii] );
+          // array is [start node, index within face]
           std::array< std::size_t, 2 > const decoded = decode< 2 >( numEdges, extractedValues[ii] - 1 );
+          // `order` holds all the edge infos in the order the edges appeared in the original face
           order[decoded[1]] = { egi, intConv< std::uint8_t >( decoded[0] ) };
           GEOS_ASSERT( decoded[0] == 0 or decoded[0] == 1 );
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numEdges ) );
+
+        // use face global index and `order` to populate ghosts
         FaceGlbIdx const fgi = convert.toFaceGlbIdx( index );
         std::vector< EdgeInfo > & tmp = ghosts.f2e[fgi];
         tmp.resize( numEdges );
@@ -1275,18 +1333,26 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       {
         TriScalarInt const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
         std::map< integer, FaceInfo > order;
+
+        // loop over the entries extracted from the row of the matrix
         for( std::size_t ii = 0; ii < extracted; ++ii )
         {
+          // skip diagonal
           if( ii == numGeomQuantitiesIdx )
           {
             continue;
           }
 
+          // get the face global index and decode the entries to get isFlipped, start index, and index of face within cell
           FaceGlbIdx const fgi = convert.toFaceGlbIdx( extractedIndices[ii] );
+          // array is [isFlipped, start index, and index of face within cell]
           std::array< std::size_t, 3 > const decoded = decode< 3 >( numFaces, extractedValues[ii] - 1 );
+          // `order` holds the face info in the order the faces appeared in the original cell
           order[decoded[2]] = { fgi, intConv< bool >( decoded[0] ), intConv< std::uint8_t >( decoded[1] ) };
         }
         GEOS_ASSERT_EQ( std::size( order ), intConv< std::size_t >( numFaces ) );
+
+        // use cell global index and `order` to populate ghosts
         CellGlbIdx const cgi = convert.toCellGlbIdx( index );
         std::vector< FaceInfo > & tmp = ghosts.c2f[cgi];
         tmp.resize( numFaces );
@@ -1298,7 +1364,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
       default:
       {
-        GEOS_ERROR( "Internal error." );
+        GEOS_ERROR( "Internal error in performGhosting. Could not recognize geometric type of mesh entity" );
       }
     }
   }
@@ -1322,6 +1388,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 //  {
 //    GEOS_LOG_RANK( "ghosts_n2ps = " << json( ghosts.n2pos ) );
 //  }
+
+  // Now we are done!!!
 
   return { std::move( ghosts ), std::move( recv ), std::move( send ) };
 }
@@ -1364,6 +1432,11 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 //  }
 //  MpiWrapper::barrier();
 
+  // Next do the atual ghosting - i.e. figure out the information each rank must send to and receive from other ranks
+  // This is where we use parallel linear algebra package (right now, Trilinos) to build an adjacency matrix for the entire mesh (treated as a graph)
+  // By doing some clever matrix products we can figure out which ranks need what automagically
+  // `ghosts` is also a MeshGraph like owned and present, but described the geometric entities which are ghosted onto the rank from another owner
+  // recv and send are of type GhostRecv and GhostSend (in BuildPods.hpp) and describe what (nodes, edges, faces, cells) each rank needs to receive from and send to others
   auto const [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
 
   buildPods( owned, present, ghosts, recv, send, meshMappings );
