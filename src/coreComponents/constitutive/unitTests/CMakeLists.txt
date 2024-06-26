@@ -2,6 +2,7 @@
 set( gtest_geosx_tests
      testCompositionalDensity.cpp
      testCompositionalProperties.cpp
+     testCubicEOS.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
@@ -12,7 +13,8 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash9Comp.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
-     testCubicEOS.cpp
+     testStabilityTest2Comp.cpp
+     testStabilityTest9Comp.cpp
      testRachfordRice.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
