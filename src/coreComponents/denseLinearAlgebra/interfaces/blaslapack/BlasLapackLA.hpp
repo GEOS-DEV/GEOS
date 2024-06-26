@@ -30,6 +30,7 @@ namespace geos
  * \class BlasLapackLA
  * \brief This class contains a collection of BLAS and LAPACK linear
  *        algebra operations for GEOSX array1d and array2d
+ * \warning These methods are currently not supported on GPUs
  */
 struct BlasLapackLA
 {
