@@ -139,7 +139,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
   newConstitutiveRelation.setIsClone( true );
-  newConstitutiveRelation.createPVTModels( newConstitutiveRelation.isClone() );
+  newConstitutiveRelation.createPVTModels();
 
   return clone;
 }
@@ -241,7 +241,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
 
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
   m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
-  createPVTModels( isClone() );
+  createPVTModels();
 }
 
 /**
@@ -249,10 +249,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postProcessInput()
  * @param isClone If we are in the case of a clone of a constitutive mode, never the output
  */
 template< typename PHASE1, typename PHASE2, typename FLASH >
-void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 {
-
-    std::cout << " ISCLONE " << isClone <<std::endl;
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
@@ -342,6 +340,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
                  InputError );
 
   // then, we are ready to instantiate the phase models
+  bool const isClone = this->isClone();
   PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
@@ -415,6 +414,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels( bool isClone )
     {
       strs[2] = m_solubilityTables[0];
     }
+
     FlashModelBase::TableOutputOptions const flashOutputOpts = {
       !isClone && m_writeCSV,// writeCSV
       !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog

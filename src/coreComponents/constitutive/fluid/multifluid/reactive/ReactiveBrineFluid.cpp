@@ -105,7 +105,7 @@ deliverClone( string const & name, Group * const parent ) const
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
 
   newConstitutiveRelation.setIsClone( true );
-  newConstitutiveRelation.createPVTModels( newConstitutiveRelation.isClone() );
+  newConstitutiveRelation.createPVTModels();
 
   return clone;
 }
@@ -131,13 +131,12 @@ void ReactiveBrineFluid< PHASE > ::postProcessInput()
                         GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
                         InputError );
 
-  createPVTModels( isClone() );
+  createPVTModels();
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone)
+void ReactiveBrineFluid< PHASE > ::createPVTModels()
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
@@ -201,6 +200,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels( bool isClone)
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
+  bool const isClone = this->isClone();
   PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
     !isClone && m_writeCSV,// writeCSV
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
