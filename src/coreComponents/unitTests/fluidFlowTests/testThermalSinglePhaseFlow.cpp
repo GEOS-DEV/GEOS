@@ -110,7 +110,7 @@ char const * xmlInput =
                                            viscosibility="0.0"
                                            specificHeatCapacity="4.5e3" />
       <SinglePhaseThermalConductivity name="thermalCond"
-                                      thermalConductivityComponents="{ 0.6, 0.6, 0.6 }" />
+                                      defaultThermalConductivityComponents="{ 0.6, 0.6, 0.6 }" />
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification name="initialPressure"
