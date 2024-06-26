@@ -188,6 +188,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_damageFieldPartitioning( 0 ),
   m_useSurfacePositionForContact( 0 ),
   m_contactNormalType( ContactNormalTypeOption::MassWeighted ),
+  m_contactNormalExponent( 1.0 ),
   m_contactGapCorrection( ContactGapCorrectionOption::Simple ),
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_plotUnscaledParticles( 0 ),
@@ -737,6 +738,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for contact normal type" );
+
+  registerWrapper( "contactNormalExponent", &m_contactNormalExponent ).
+    setApplyDefaultValue( m_contactNormalExponent ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Exponent value for surface normal weights in contact normal type aligned" );
 
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1427,10 +1434,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds weights of surface normals at nodes." );
 
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the number of particles mapping to each field of a grid node." );
+        setDescription( "An array that holds the normalization factor for grid surface normal weights of each field." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
@@ -2011,7 +2018,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -3606,7 +3613,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
 {
   // Grid fields
   // arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
-  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
+  // arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
@@ -3678,6 +3685,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
         }
 
         // Also maps explicit particle surface normals which will dominate if m_explicitSurfaceNormalInfluence is large
+        // If particle surface normal was disabled due to damage or CPDI domain scaling (e.g. zeroed) then the following does not add anything to gridSurfaceNormal
         if( particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 ) // Update this with enum type for type safety to specifically only implement 2 and 3 for now (those with explicit surface normals)
         {
           for( int i = 0; i < numDims; i++ )
@@ -3834,6 +3842,89 @@ void SolidMechanicsMPM::normalizeGridSurfacePositions( NodeManager & nodeManager
   } );
 }
 
+void SolidMechanicsMPM::computeGridSurfaceNormalWeights( ParticleManager & particleManager,
+                                                         NodeManager & nodeManager )
+{
+  // Grid fields
+  arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
+  arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  // arrayView1d< real64 const > const gridSurfaceMass = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() );
+  arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    // Particle fields
+    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
+    
+    // arrayView1d< int const > particleSurfaceFlag = subRegion.getParticleSurfaceFlag(); 
+    arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+
+    // Get views to mapping arrays
+    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
+    // arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    // int const numDims = m_numDims;
+    int const damageFieldPartitioning = m_damageFieldPartitioning;
+    int const numContactGroups = m_numContactGroups;
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can parallelize with atomics
+    {
+      localIndex const p = activeParticleIndices[pp];
+
+      // Map to grid
+      for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
+      {
+        localIndex const mappedNode = mappedNodes[pp][g];
+
+        int const fieldIndex = partitionField( numContactGroups,
+                                               damageFieldPartitioning,
+                                               particleGroup[p],
+                                               particleDamageGradient[p],
+                                               particleSurfaceNormal[p],
+                                               gridDamageGradient[mappedNode] );
+
+        real64 surfaceNormal[3] = { 0 };
+        LvArray::tensorOps::copy< 3 >( surfaceNormal, particleSurfaceNormal[p] );
+
+        gridSurfaceNormalWeights[mappedNode][fieldIndex] += LvArray::tensorOps::AiBi< 3 >( gridSurfaceNormal[mappedNode][fieldIndex], surfaceNormal ) * shapeFunctionValues[pp][g] * particleMass[p];
+
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) )
+        {
+          gridSurfaceNormalWeightNormalization[mappedNode][fieldIndex] += shapeFunctionValues[pp][g] * particleMass[p];
+        }
+      }
+    } ); // particle loop
+
+    // Increment subregion index
+    subRegionIndex++;
+  } ); // subregion loop
+
+  // Loop over grid nodes and their fields to normalize the grid surface normal weights
+  int const numNodes = nodeManager.size();
+  int const numVelocityFields = m_numVelocityFields;
+  real64 const smallMass = m_smallMass;
+
+  forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; fieldIndex++ )
+    {
+      if( gridSurfaceNormalWeightNormalization[g][fieldIndex] > smallMass ) // small mass threshold
+      {
+        gridSurfaceNormalWeights[g][fieldIndex] /= gridSurfaceNormalWeightNormalization[g][fieldIndex];
+        continue;
+      }
+
+      gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
+    }
+  } );
+}
+
 void SolidMechanicsMPM::initializeFrictionCoefficients()
 {
   if( m_frictionCoefficientTable.size(0) != 0 )
@@ -3885,6 +3976,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                               arrayView3d< real64 const > const & gridCenterOfMass,
                                               arrayView3d< real64 const > const & gridCenterOfVolume,
                                               arrayView2d< int const > const & gridCohesiveFieldFlag,
+                                              arrayView2d< real64 const > const & gridSurfaceNormalWeights,
                                               arrayView3d< real64 > const & gridContactForce )
 {
   // Get number of nodes
@@ -3970,6 +4062,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                                 gridCenterOfMass[g][B],
                                                 gridCenterOfVolume[g][A],
                                                 gridCenterOfVolume[g][B],
+                                                gridSurfaceNormalWeights[g][A],
+                                                gridSurfaceNormalWeights[g][B],
                                                 gridContactForce[g][A],
                                                 gridContactForce[g][B] );
             }
@@ -4001,6 +4095,8 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
                                                           arraySlice1d< real64 const > const xB, // Center of mass of field B
                                                           arraySlice1d< real64 const > const centerOfVolumeA, // Center of volume of field A
                                                           arraySlice1d< real64 const > const centerOfVolumeB, // Center of volume of field B
+                                                          real64 const & wA, // Surface normal weights of field A
+                                                          real64 const & wB, // Surface normal weights of field A
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
@@ -4060,6 +4156,21 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int & separable,
         }
         break;
       }
+    case ContactNormalTypeOption::Aligned:
+      {
+        real64 tempA[3] = { 0 };
+        real64 tempB[3] = { 0 };
+        // LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, pow(wA, m_contactNormalExponent) );
+        // LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, pow(wB, m_contactNormalExponent) );
+        real64 threshold = 0.9;
+        real64 xxA = fmin(fmax((wA-threshold)/threshold, 0.0),1.0);
+        real64 xxB = fmin(fmax((wB-threshold)/threshold, 0.0),1.0);
+        LvArray::tensorOps::scaledCopy< 3 >(tempA, nA, 3*pow(xxA,2)-2*pow(xxA,3));
+        LvArray::tensorOps::scaledCopy< 3 >(tempB, nB, 3*pow(xxB,2)-2*pow(xxB,3));
+        LvArray::tensorOps::copy< 3 >( nAB, tempA );
+        LvArray::tensorOps::subtract< 3 >( nAB, tempB );
+      }
+      break;
     default:
       GEOS_ERROR( "Unrecognized contact normal type!" );
       break;
@@ -5915,7 +6026,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
   arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
-  arrayView2d< real64 > const gridNumMappedParticles = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridNumMappedParticlesString() );
+  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
 
@@ -5962,7 +6073,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridMaxDamage[g][fieldIndex] = 0.0;
         gridMassWeightedDamage[g][fieldIndex] = 0.0;
         
-        gridNumMappedParticles[g][fieldIndex] = 0;
+        gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0;
         gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
 
         for( int i = 0; i < 3; i++ )
@@ -6097,7 +6208,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
   
         real64 index = ( LvArray::tensorOps::AiBi< 3 >( gridPrincipalExplicitSurfaceNormal[g], particleSurfaceNormal[p] ) < 0.0 ) ? -1.0 : 1.0;
 
-        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 0.0 ) // particleSurfaceFlag[p] == 2 || particleSurfaceFlag[p] == 3 )
+        if( LvArray::tensorOps::l2NormSquared< 3 >( particleSurfaceNormal[p] ) > 0.0 )
         {
           gridSurfaceMass[g] += particleMass[p] * shapeFunctionValues[pp][gg];
           for(int i=0; i < 3; i++)
@@ -7813,6 +7924,8 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView3d< real64 > const & gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
   arrayView3d< real64 const > const & gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
 
+
+  arrayView2d< real64 const > const & gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
   // arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
 
   arrayView3d< real64 > const & gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
@@ -7830,6 +7943,11 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
   // Normalize grid surface normals
   normalizeGridSurfaceNormals( nodeManager );
+
+  // CC: Testing idea
+  // Compute grid surface normal weights
+  computeGridSurfaceNormalWeights( particleManager,
+                                   nodeManager );
 
   // Apply symmetry boundary conditions to material position
   enforceGridVectorFieldSymmetryBC( gridCenterOfMass, gridPosition, nodeManager.sets() );
@@ -7858,6 +7976,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
                         gridCenterOfMass,
                         gridCenterOfVolume,
                         gridCohesiveFieldFlag,
+                        gridSurfaceNormalWeights,
                         gridContactForce );
 
   // Update grid momenta and velocities based on contact forces
