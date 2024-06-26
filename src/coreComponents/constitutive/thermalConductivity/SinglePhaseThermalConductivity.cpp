@@ -36,7 +36,7 @@ SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & n
 
   registerWrapper( viewKeyStruct::thermalConductivityGradientComponentsString(), &m_thermalConductivityGradientComponents ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( {0.0,0.0,0.0} ).
     setDescription( "xx, yy, and zz diagonal components of the thermal conductivity gradient tensor w.r.t. temperature [J/(s.m.K^2)]" );
 
   registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
