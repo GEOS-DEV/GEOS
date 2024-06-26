@@ -52,6 +52,10 @@ if(EXISTS ${GEOSX_TPL_DIR}/fesapi)
   set(FESAPI_DIR ${GEOSX_TPL_DIR}/fesapi CACHE PATH "" FORCE)
 endif()
 
+if(EXISTS ${GEOSX_TPL_DIR}/grpc)
+  set(GRPC_DIR ${GEOSX_TPL_DIR}/grpc CACHE PATH "" FORCE)
+endif()
+
 #
 # Math TPLs
 #
