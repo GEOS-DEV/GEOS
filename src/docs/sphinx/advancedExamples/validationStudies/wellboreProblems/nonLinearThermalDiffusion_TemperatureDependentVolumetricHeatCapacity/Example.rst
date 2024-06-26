@@ -25,7 +25,7 @@ and
 
 .. code-block:: console
 
-  inputFiles/singlePhaseFlow/thermalCompressible_nonLinear_2d_benchmark.xml
+  inputFiles/singlePhaseFlow/thermalCompressible_temperatureDependentVolumetricHeatCapacity_benchmark.xml
 
 
 In this example, we focus on the ``Constitutive`` tag.

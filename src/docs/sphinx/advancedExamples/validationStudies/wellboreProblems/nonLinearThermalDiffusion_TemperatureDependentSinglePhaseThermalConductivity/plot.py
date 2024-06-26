@@ -105,17 +105,24 @@ def getLoadingFromXML(xmlFilePath):
 				Tin = float(fsParam.get('scale'))
 			if fsParam.get('setNames') == "{ rpos }":
 				Tout = float(fsParam.get('scale'))
-            
-	tree_thermalConductivity = tree.find('Constitutive/SinglePhaseThermalConductivity')
-	defaultThermalConductivity = float( extractDataFromXMLList( tree_thermalConductivity.get('defaultThermalConductivityComponents') )[0] )
 
-	thermalConductivityGradient = float( extractDataFromXMLList( tree_thermalConductivity.get('thermalConductivityGradientComponents') )[0] )
-	referenceTemperature = float( tree_thermalConductivity.get('referenceTemperature') )
 
-	tree_SolidInternalEnergy = tree.find('Constitutive/SolidInternalEnergy')
+	tree_SinglePhaseThermalConductivities = tree.findall('Constitutive/SinglePhaseThermalConductivity')
 
-	volumetricHeatCapacity = float( tree_SolidInternalEnergy.get('volumetricHeatCapacity') )
-	dVolumetricHeatCapacity_dTemperature = 0.0
+	for tree_SinglePhaseThermalConductivity in tree_SinglePhaseThermalConductivities:
+		if tree_SinglePhaseThermalConductivity.get('name') == "thermalCond_nonLinear":
+			defaultThermalConductivity = float( extractDataFromXMLList( tree_SinglePhaseThermalConductivity.get('defaultThermalConductivityComponents') )[0] )
+
+			thermalConductivityGradient = float( extractDataFromXMLList( tree_SinglePhaseThermalConductivity.get('thermalConductivityGradientComponents') )[0] )
+			referenceTemperature = float( tree_SinglePhaseThermalConductivity.get('referenceTemperature') )
+
+
+	tree_SolidInternalEnergies = tree.findall('Constitutive/SolidInternalEnergy')
+
+	for tree_SolidInternalEnergy in tree_SolidInternalEnergies:
+		if tree_SolidInternalEnergy.get('name') == "rockInternalEnergy_linear":
+			volumetricHeatCapacity = float( tree_SolidInternalEnergy.get('referenceVolumetricHeatCapacity') )
+			dVolumetricHeatCapacity_dTemperature = float( tree_SolidInternalEnergy.get('dVolumetricHeatCapacity_dTemperature') )
 	
 	
 	permeability = float( extractDataFromXMLList( tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents') )[0] )

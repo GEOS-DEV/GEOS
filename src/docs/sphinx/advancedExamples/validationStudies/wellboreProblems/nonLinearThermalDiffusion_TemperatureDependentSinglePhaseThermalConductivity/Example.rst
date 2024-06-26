@@ -19,13 +19,13 @@ contained within two GEOS xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/???_base.xml
+  inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
 
 and
 
 .. code-block:: console
 
-  inputFiles/???_benchmark.xml
+  inputFiles/singlePhaseFlow/thermalCompressible_temperatureDependentSinglePhaseThermalConductivity_benchmark.xml
 
 
 In this example, we focus on the ``Constitutive`` tag.
@@ -36,10 +36,10 @@ Constitutive
 
 The reference value of the single phase thermal conductivity of the porous medium around the wellbore and its derivative with respect to temperature are defined in the ``SolidInternalEnergy`` XML block:  
 
-.. literalinclude:: ../../../../../../../inputFiles/???_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/singlePhaseFlow/thermalCompressible_2d_base.xml
   :language: xml
-  :start-after: <!--  -->
-  :end-before: <!--  -->
+  :start-after: <!-- SPHINX_SinglePhaseThermalConductivity_nonLinear -->
+  :end-before: <!-- SPHINX_SinglePhaseThermalConductivity_nonLinearEnd -->
 
 
 ---------------------------------
