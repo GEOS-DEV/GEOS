@@ -33,14 +33,12 @@ string NegativeTwoPhaseFlashModel::catalogName()
   return "TwoPhase";
 }
 
-template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
-NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
-NegativeTwoPhaseFlashModel( string const & name,
-                            ComponentProperties const & componentProperties,
-                            ModelParameters const & modelParameters ):
+NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
+                                                        ComponentProperties const & componentProperties,
+                                                        ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
 {
-  GEOS_UNUSED_VAR( modelParameters );
+  m_parameters = modelParameters.get< EquationOfState >();
 }
 
 NegativeTwoPhaseFlashModel::KernelWrapper
