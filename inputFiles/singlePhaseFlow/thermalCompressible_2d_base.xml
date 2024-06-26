@@ -32,15 +32,23 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy_linear"
-      singlePhaseThermalConductivityModelName="thermalCond"/>
+      singlePhaseThermalConductivityModelName="thermalCond_linear"/>
 
     <CompressibleSolidConstantPermeability
-      name="rock_nonLinear"
+      name="rock_temperatureDependentSinglePhaseThermalConductivity"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy_linear"
+      singlePhaseThermalConductivityModelName="thermalCond_nonLinear"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock_temperatureDependentVolumetricHeatCapacity"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy_nonLinear"
-      singlePhaseThermalConductivityModelName="thermalCond"/>
+      singlePhaseThermalConductivityModelName="thermalCond_linear"/>
 
     <NullModel
       name="nullSolid"/>
@@ -51,13 +59,13 @@
       referencePressure="0.0"
       compressibility="3.0e-11"/>
 
-	<!-- SPHINX_SolidInternalEnergy -->
+	<!-- SPHINX_SolidInternalEnergy_linear -->
     <SolidInternalEnergy
       name="rockInternalEnergy_linear"
-      referenceVolumetricHeatCapacity="4.56e6"
+      referenceVolumetricHeatCapacity="1.0e6"
       referenceTemperature="0"
       referenceInternalEnergy="0"/>
-	<!-- SPHINX_SolidInternalEnergyEnd -->
+	<!-- SPHINX_SolidInternalEnergyEnd_linear -->
 
     <!-- SPHINX_SolidInternalEnergy_nonLinear -->
     <SolidInternalEnergy
@@ -86,13 +94,21 @@
       referenceInternalEnergy="0.99"/>
 	<!-- SPHINX_ThermalCompressibleSinglePhaseFluidEnd -->
 
-	<!-- SPHINX_SinglePhaseThermalConductivity -->
+    <!-- SPHINX_SinglePhaseThermalConductivity_linear -->
     <SinglePhaseThermalConductivity
       name="thermalCond"
       defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
       thermalConductivityGradientComponents="{ 0, 0, 0 }"
       referenceTemperature="0"/>
-	<!-- SPHINX_SinglePhaseThermalConductivityEnd -->    
+    <!-- SPHINX_SinglePhaseThermalConductivityEnd_linear -->    
+
+	<!-- SPHINX_SinglePhaseThermalConductivity_nonLinear -->
+    <SinglePhaseThermalConductivity
+      name="thermalCond_nonLinear"
+      defaultThermalConductivityComponents="{ 1.5, 1.5, 1.5 }"
+      thermalConductivityGradientComponents="{ -12e-4, -12e-4, -12e-4 }"
+      referenceTemperature="20"/>
+	<!-- SPHINX_SinglePhaseThermalConductivityEnd_nonLinear -->    
 	
   </Constitutive>
 

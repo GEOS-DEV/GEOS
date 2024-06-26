@@ -9,41 +9,41 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock_nonLinear }"/>
+      materialList="{ fluid, rock_temperatureDependentVolumetricHeatCapacity }"/>
   </ElementRegions>
 
   <Mesh>
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.1, 0.106, 0.133, 0.17 }"
+      radius="{ 0.1, 0.106, 0.133, 1.0 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 0.1 }"
-      nr="{ 1, 2, 2 }"
-      nt="{ 10 }"
+      nr="{ 3, 10, 50 }"
+      nt="{ 8 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 0.1 } }"
-      autoSpaceRadialElems="{ 0, 0, 0 }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
       cellBlockNames="{ cb }"
       />
   </Mesh>
 
   <Events
-    maxTime="1e5">
+    maxTime="3e3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e4"
+      timeFrequency="1e3"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e4"
+      maxEventDt="1e3"
       target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e4"
+      timeFrequency="1e3"
       target="/Outputs/restartOutput"/>
   </Events>
 
