@@ -14,7 +14,6 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
@@ -66,8 +65,13 @@ public:
     : m_fluid( FluidData< NC >::createFluid() )
   {
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
-    m_parameters = CompositionalDensity< EOS_TYPE >::createParameters( std::make_unique< ModelParameters >() );
-    m_density = std::make_unique< CompositionalDensity< EOS_TYPE > >( "PhaseDensity", componentProperties, 0, *m_parameters );
+    m_parameters = CompositionalDensity::createParameters( std::make_unique< ModelParameters >() );
+
+    auto equationOfState = const_cast< EquationOfState * >(m_parameters->get< EquationOfState >());
+    string const eosName = EnumStrings< EquationOfStateType >::toString( EOS_TYPE );
+    equationOfState->m_equationsOfStateNames.emplace_back( eosName );
+
+    m_density = std::make_unique< CompositionalDensity >( "PhaseDensity", componentProperties, 0, *m_parameters );
   }
 
   ~CompositionalDensityTestFixture() = default;
