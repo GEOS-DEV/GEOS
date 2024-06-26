@@ -1,9 +1,9 @@
-.. _AdvancedExampleNonLinearThermalDiffusionWellbore:
+.. _AdvancedWellboreExampleNonLinearThermalDiffusionTemperatureDependentVolumetricHeatCapacity:
 
 
-####################################################
-Non-Linear Thermal Diffusion Around a Wellbore
-####################################################
+############################################################################################################
+Non-Linear Thermal Diffusion Around a Wellbore: The Case with Temperature Dependent Volumetric Heat Capacity
+############################################################################################################
 
 ------------------------------------------------------------------
 Problem description
@@ -49,7 +49,7 @@ Results and benchmark
 A good agreement between the results obtained using GEOS and the analytical results is shown in the figure below:
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion/nonLinearThermalDiffusionAroundWellbore.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion_TemperatureDependentVolumetricHeatCapacity/plot.py
 
 
 ------------------------------------------------------------------
@@ -58,5 +58,5 @@ To go further
 
 **Feedback on this example**
 
-This concludes the example of a non-linear thermal diffusion problem around a wellbore.
+This concludes the example of a non-linear thermal diffusion problem around a wellbore due to temperature dependent volumetric heat capacity of rock.
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.

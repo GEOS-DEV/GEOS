@@ -35,7 +35,9 @@ Wellbore Problems
 
    casedContactThermoElasticWellbore/Example
 
-   nonLinearThermalDiffusion/Example
+   nonLinearThermalDiffusion_TemperatureDependentVolumetricHeatCapacity/Example
+   
+   nonLinearThermalDiffusion_TemperatureDependentSinglePhaseThermalConductivity/Example
 
 
 
