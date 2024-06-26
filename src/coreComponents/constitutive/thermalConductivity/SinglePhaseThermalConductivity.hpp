@@ -46,9 +46,9 @@ public:
                                         real64 const referenceTemperature )
     : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity,
                                                 dEffectiveConductivity_dT ),
-    m_defaultThermalConductivityComponents(defaultThermalConductivityComponents),
-    m_thermalConductivityGradientComponents(thermalConductivityGradientComponents),
-    m_referenceTemperature(referenceTemperature)
+    m_defaultThermalConductivityComponents( defaultThermalConductivityComponents ),
+    m_thermalConductivityGradientComponents( thermalConductivityGradientComponents ),
+    m_referenceTemperature( referenceTemperature )
   {}
 
   GEOS_HOST_DEVICE
@@ -61,16 +61,16 @@ public:
   virtual void updateFromTemperature( localIndex const k,
                                       localIndex const q,
                                       real64 const & temperature ) const
-  {  
+  {
     real64 const deltaTemperature = temperature - m_referenceTemperature;
 
     m_effectiveConductivity[k][q][0] = m_defaultThermalConductivityComponents[0] + m_thermalConductivityGradientComponents[0] * deltaTemperature;
     m_effectiveConductivity[k][q][1] = m_defaultThermalConductivityComponents[1] + m_thermalConductivityGradientComponents[1] * deltaTemperature;
     m_effectiveConductivity[k][q][2] = m_defaultThermalConductivityComponents[2] + m_thermalConductivityGradientComponents[2] * deltaTemperature;
 
-    for(localIndex i=0; i<=2; i++)
+    for( localIndex i=0; i<=2; i++ )
     {
-      if(m_effectiveConductivity[k][q][i] <1e-2)
+      if( m_effectiveConductivity[k][q][i] <1e-2 )
       {
         m_effectiveConductivity[k][q][i] = 1e-2; // W/m/K To avoid negative conductivity
       }

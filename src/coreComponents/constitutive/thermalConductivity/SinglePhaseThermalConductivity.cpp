@@ -47,13 +47,13 @@ SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & n
 
 std::unique_ptr< ConstitutiveBase >
 SinglePhaseThermalConductivity::deliverClone( string const & name,
-                                                      Group * const parent ) const
+                                              Group * const parent ) const
 {
   return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
 }
 
 void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                       localIndex const numConstitutivePointsPerParentIndex )
+                                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

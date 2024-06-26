@@ -59,12 +59,12 @@ protected:
   SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
                                             arrayView3d< real64 > const & dEffectiveConductivity_dT )
     : m_effectiveConductivity( effectiveConductivity ),
-      m_dEffectiveConductivity_dT( dEffectiveConductivity_dT )
+    m_dEffectiveConductivity_dT( dEffectiveConductivity_dT )
   {}
 
   /// View on the cell-wise effective conductivities
   arrayView3d< real64 > m_effectiveConductivity;
-  
+
   /// View on the derivative of effective conductivities w.r.t. temperature
   arrayView3d< real64 > m_dEffectiveConductivity_dT;
 private:

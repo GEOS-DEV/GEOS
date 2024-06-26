@@ -333,9 +333,9 @@ public:
     // We follow how the thermal compositional multi-phase solver does to update the thermal transmissibility
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_dThermalCond_dT, 
+                                     m_dThermalCond_dT,
                                      stack.thermalTransmissibility,
-                                     stack.dThermalTrans_dT ); 
+                                     stack.dThermalTrans_dT );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -602,7 +602,7 @@ public:
     m_dEnthalpy_dPres( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dPressure {} ) ),
     m_dEnthalpy_dTemp( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy_dTemperature {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) ) 
+    m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
 
 
@@ -693,14 +693,14 @@ public:
 
       // Contribution of energy conduction through the solid phase
       real64 thermalTrans = 0.0;
-      real64 dThermalTrans_dThermalCond[3]{}; 
+      real64 dThermalTrans_dThermalCond[3]{};
       m_stencilWrapper.computeWeights( iconn,
                                        m_thermalConductivity,
                                        thermalTrans,
                                        dThermalTrans_dThermalCond );
 
       real64 const dThermalTrans_dT = LvArray::tensorOps::AiBi< 3 >( dThermalTrans_dThermalCond, m_dThermalCond_dT[er][esr][ei][0] );
- 
+
       real64 const deltaT = m_temp[er][esr][ei] - m_faceTemp[kf];
       stack.energyFlux += thermalTrans * deltaT;
       stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;
