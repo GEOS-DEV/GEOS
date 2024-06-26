@@ -827,7 +827,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   std::set< TriGlbIdx > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
   std::set< TriGlbIdx > receivedIndices;  // The graph nodes that my neighbors will send me.
   {
-    std::set< TriGlbIdx > tmp( std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ) );
+    std::set< TriGlbIdx > const tmp( std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ) );
     std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
                          std::cbegin( tmp ), std::cend( tmp ),
                          std::inserter( receivedIndices, std::end( receivedIndices ) ) );
