@@ -44,9 +44,9 @@ public:
    * @brief Select the user-requested mesh cell-blocks for the specified cell-blocks.
    * @throw an InputError if the selection is incoherent (already selected cell-block, no selection...).
    * @param region the region for which we want to select the cell-blocks.
-   * @return the selected cell-blocks.
+   * @return the selected cell-blocks names.
    * @todo For now, multiple regions per cell is not supported (ElementRegionManager::getCellBlockToSubRegionMap()).
-   *       We could refactor the CellElementRegion & Mesh classes so regions are mapped to cell-blocks IN the mesh (and potencially
+   *       We could refactor the CellElementRegion & Mesh classes so regions are mapped to cell-blocks IN the mesh (and potentially
    *       to multiple regions per cell). So, for external meshes, the cell-blocks would no longer be exposed to the final user.
    */
   std::set< string > selectRegionCellBlocks( CellElementRegion const & region );
