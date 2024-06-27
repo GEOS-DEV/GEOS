@@ -41,43 +41,33 @@ public:
   CellElementRegionSelector( dataRepository::Group const & cellBlocks );
 
   /**
-   * @brief Select the user-requested mesh cell-blocks for the specified cell-blocks.
-   * @throw an InputError if the selection is incoherent (already selected cell-block, no selection...).
+   * @brief Select the mesh cell-blocks for the specified region following the user inputs.
+   * @throw an InputError if the user setting are inconsistant.
    * @param region the region for which we want to select the cell-blocks.
    * @return the selected cell-blocks names.
-   * @todo For now, multiple regions per cell is not supported (ElementRegionManager::getCellBlockToSubRegionMap()).
-   *       We could refactor the CellElementRegion & Mesh classes so regions are mapped to cell-blocks IN the mesh (and potentially
-   *       to multiple regions per cell). So, for external meshes, the cell-blocks would no longer be exposed to the final user.
    */
   std::set< string > selectRegionCellBlocks( CellElementRegion const & region );
 
   /**
-   * @brief Throw an InputError if not all cell-blocks has been added to a region.
+   * @throw An InputError if region cell-blocks selections is inconsistent:
+   *        - cellBlock is in more than one region,
+   *        - orphan cellBlock
+   * @todo For now, multiple regions per cell is not supported (ElementRegionManager::getCellBlockToSubRegionMap()).
+   *       We could refactor the CellElementRegion & Mesh classes so regions are mapped to cell-blocks IN the mesh (and potentially
+   *       to multiple regions per cell). So, for external meshes, the cell-blocks would no longer be exposed to the final user.
    */
-  void checkForNoOrphanCellBlocks() const;
+  void checkSelectionConsistency() const;
 
 private:
 
   /// @brief The Group containing all the available cell-blocks.
   dataRepository::Group const & m_cellBlocks;
 
-  /// @brief A set of all available cell-block names.
-  std::set< string > m_cellBlockNames;
+  /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it (0 -> n).
+  std::map< string, std::vector< CellElementRegion const * > > m_cellBlocksOwners;
 
-  /// @brief A set of all available region attribute values.
-  std::set< string > m_regionAttributeValues;
-
-  /// @brief A set of the cell-blocks names that have never been selected
-  std::set< string > m_orphanCellBlockNames;
-
-  /// @brief A set of the region attributes that have never been selected
-  std::set< string > m_orphanRegionAttributes;
-
-  /// @brief A map that link every cell-block name to the CellElementRegion that references it.
-  std::map< string, CellElementRegion const * > m_cellBlocksOwner;
-
-  /// @brief A map that link every region attribute values to the CellElementRegion that references it.
-  std::map< string, CellElementRegion const * > m_regionAttributeOwner;
+  /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it (0 -> n).
+  std::map< string, std::vector< CellElementRegion const * > > m_regionAttributeOwners;
 
 
   std::set< string > getFNMatchPatterns( CellElementRegion const & region,
@@ -92,7 +82,6 @@ private:
 
   /**
    * @brief Select the specified cell-blocks & region for the specified region.
-   * @return the cell-block selection.
    * @param region The region for which when want to select cell-blocks
    * @param attributeValues The attribute values we want to select (can be empty).
    * @param cellBlockNames The cell-block names we want to select (can be empty).

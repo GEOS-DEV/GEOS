@@ -136,7 +136,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     } );
 
     // selecting all cellblocks is mandatory
-    cellBlockSelector.checkForNoOrphanCellBlocks();
+    cellBlockSelector.checkSelectionConsistency();
   }
 
 

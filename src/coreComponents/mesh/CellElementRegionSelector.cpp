@@ -39,16 +39,25 @@ CellElementRegionSelector::CellElementRegionSelector( Group const & cellBlocks )
   cellBlocks.forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
   {
     string const name = cellBlock.getName();
-    m_cellBlockNames.emplace( name );
+    m_cellBlocksOwners.emplace( name, std::vector< CellElementRegion const * >() );
 
     std::optional< string > regionAttributeValue = getCellBlockAttributeValue( name );
     if( regionAttributeValue )
     {
-      m_regionAttributeValues.emplace( *regionAttributeValue );
+      m_regionAttributeOwners.emplace( *regionAttributeValue, std::vector< CellElementRegion const * >() );
     }
   } );
-  m_orphanCellBlockNames = m_cellBlockNames;
-  m_orphanRegionAttributes = m_regionAttributeValues;
+}
+
+
+template< typename Map, typename S = char >
+string joinMapKeys( Map map, S const & delim = S() )
+{
+  std::vector< string_view > keys;
+  keys.reserve( map.size() );
+  std::transform( map.begin(), map.end(), back_inserter( keys ),
+                  []( auto const & pair ) { return pair.first; } );
+  return stringutilities::join( keys, delim );
 }
 
 
@@ -63,12 +72,12 @@ CellElementRegionSelector::getFNMatchPatterns( CellElementRegion const & region,
   for( integer attributeValue : requestedAttributeValues )
   {
     string attributeValueStr = std::to_string( attributeValue );
-
-    GEOS_THROW_IF( m_regionAttributeValues.count( attributeValueStr ) == 0,
+    // if attribute value does not exist in the mesh
+    GEOS_THROW_IF( m_regionAttributeOwners.count( attributeValueStr ) == 0,
                    GEOS_FMT( "{}: Region attribute value '{}' not found.\nAvailable region attribute list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::cellBlockAttributeValuesString() ),
                              attributeValueStr,
-                             stringutilities::join( m_regionAttributeValues, ", " ) ),
+                             joinMapKeys( m_regionAttributeOwners, ", " ) ),
                    InputError );
 
     // for each desired attribute values, we add the following the match patterns:
@@ -93,7 +102,7 @@ CellElementRegionSelector::getFNMatchSelection( CellElementRegion const & region
   for( string const & matchPattern : requestedMatchPatterns )
   {
     bool matching = false;
-    for( auto const & cellBlockName : m_cellBlockNames )
+    for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
     {
       // if the pattern matches the tested cellBlock name
       if( fnmatch( matchPattern.c_str(), cellBlockName.c_str(), 0 ) == 0 )
@@ -107,7 +116,7 @@ CellElementRegionSelector::getFNMatchSelection( CellElementRegion const & region
                    GEOS_FMT( "{}: No cellBlock name is satisfying the pattern '{}'.\nAvailable cellBlock list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::cellBlockMatchPatternsString() ),
                              matchPattern,
-                             stringutilities::join( m_cellBlockNames, ", " ) ),
+                             joinMapKeys( m_cellBlocksOwners, ", " ) ),
                    InputError );
   }
   return matchedCellBlocks;
@@ -120,11 +129,12 @@ CellElementRegionSelector::getOneByOneSelection( CellElementRegion const & regio
   std::set< string > oneByOneCellBlocks;
   for( string const & requestedCellBlockName : requestedCellBlocks )
   {
-    GEOS_THROW_IF( m_cellBlockNames.count( requestedCellBlockName ) == 0,
+    // if cell block does not exist in the mesh
+    GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
                    GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                              region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                              requestedCellBlockName,
-                             stringutilities::join( m_cellBlockNames, ", " ) ),
+                             joinMapKeys( m_cellBlocksOwners, ", " ) ),
                    InputError );
     oneByOneCellBlocks.insert( requestedCellBlockName );
   }
@@ -180,45 +190,67 @@ void CellElementRegionSelector::selectRegionCellBlocks( CellElementRegion const 
   for( integer attributeValue : attributeValues )
   {
     string attributeValueStr = std::to_string( attributeValue );
-
-    auto const [existingOwnerIt, isNewOwner] = m_regionAttributeOwner.emplace( attributeValueStr, &region );
-    GEOS_THROW_IF( !isNewOwner && ( existingOwnerIt->second != &region ),
-                   GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n- {}\n- {}",
-                             attributeValueStr, CellElementRegion::catalogName(),
-                             existingOwnerIt->second->getDataContext(), region.getDataContext() ),
-                   InputError );
-
-    // the regionAttribute is now selected by the region
-    m_orphanRegionAttributes.erase( attributeValueStr );
+    m_regionAttributeOwners[attributeValueStr].push_back( &region );
   }
 
   for( string const & cellBlockName : cellBlockNames )
   {
-    auto const [existingOwnerIt, isNewOwner] = m_cellBlocksOwner.emplace( cellBlockName, &region );
-    GEOS_THROW_IF( !isNewOwner && ( existingOwnerIt->second != &region ),
-                   GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}\n- {}",
-                             cellBlockName, CellElementRegion::catalogName(),
-                             existingOwnerIt->second->getDataContext(), region.getDataContext() ),
-                   InputError );
-
-    // the cellBlocks is now selected by the region
-    m_orphanCellBlockNames.erase( cellBlockName );
+    m_cellBlocksOwners[cellBlockName].push_back( &region );
   }
 }
 
-void CellElementRegionSelector::checkForNoOrphanCellBlocks() const
+void CellElementRegionSelector::checkSelectionConsistency() const
 {
-  if( !m_orphanCellBlockNames.empty() )
+  auto const getDataContextsStr = []( auto const & groupList ) -> string {
+    std::ostringstream oss;
+    for( Group const * group : groupList )
+    {
+      oss << GEOS_FMT( "- {}\n", group->getDataContext() );
+    }
+    return oss.str();
+  };
+
+  // Search of never or multiple selected attribute values
+  std::set< string > orphanRegionAttributes;
+  for( auto const & [attributeValueStr, owningRegions] : m_regionAttributeOwners )
+  {
+    if( owningRegions.size() == 0 )
+    {
+      orphanRegionAttributes.insert( attributeValueStr );
+    }
+    GEOS_THROW_IF( owningRegions.size() > 1,
+                   GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n- {}\n- {}",
+                             attributeValueStr, CellElementRegion::catalogName(),
+                             getDataContextsStr( owningRegions ) ),
+                   InputError );
+  }
+
+  // Search of never or multiple selected cell-blocks names
+  std::set< string > orphanCellBlockNames;
+  for( auto const & [cellBlockName, owningRegions] : m_cellBlocksOwners )
+  {
+    if( owningRegions.size() == 0 )
+    {
+      orphanCellBlockNames.insert( cellBlockName );
+    }
+    GEOS_THROW_IF( owningRegions.size() > 1,
+                   GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}\n- {}",
+                             cellBlockName, CellElementRegion::catalogName(),
+                             getDataContextsStr( owningRegions ) ),
+                   InputError );
+  }
+
+  if( !orphanCellBlockNames.empty() )
   {
     std::ostringstream oss;
-    if( !m_orphanRegionAttributes.empty() )
+    if( !orphanRegionAttributes.empty() )
     {
       oss << GEOS_FMT( "The {} {{ {} }} has not been referenced in any region.\n",
                        ViewKeys::cellBlockAttributeValuesString(),
-                       stringutilities::join( m_orphanRegionAttributes, ", " ));
+                       stringutilities::join( orphanRegionAttributes, ", " ));
     }
     oss << GEOS_FMT( "The following cell-blocks has not been referenced in any region: {{ {} }}.\n",
-                     stringutilities::join( m_orphanCellBlockNames, ", " ));
+                     stringutilities::join( orphanCellBlockNames, ", " ));
     oss << GEOS_FMT( "Please add it in an existing {} (through {}, {} or {}), or consider creating a new one to describe your model.",
                      CellElementRegion::catalogName(),
                      ViewKeys::cellBlockAttributeValuesString(),
