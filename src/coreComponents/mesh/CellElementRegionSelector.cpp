@@ -132,15 +132,13 @@ CellElementRegionSelector::getOneByOneSelection( CellElementRegion const & regio
 }
 
 
-template< typename T >
-std::set< T > toStdSet( arrayView1d< T const > const & array )
-{
-  return std::set< T >( array.begin(), array.end() );
-}
-
-
 std::set< string > CellElementRegionSelector::selectRegionCellBlocks( CellElementRegion const & region )
 {
+  auto toStdSet = []( auto const & array ) {
+    using ArrayElementType = std::decay_t< decltype( *array.data() ) >;
+    return std::set< ArrayElementType >( array.begin(), array.end());
+  };
+
   std::set< integer > const requestedAttributeValues = toStdSet(
     region.getReference< integer_array >( ViewKeys::cellBlockAttributeValuesString() ) );
   std::set< string > const requestedMatchPatterns = toStdSet(
