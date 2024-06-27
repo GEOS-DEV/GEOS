@@ -46,6 +46,8 @@ option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
 option( ENABLE_HYPRE_MIXINT "Enables mixed int32/int64 local/global" ON )
 
+option( ENABLE_GRPC "Enables GRPC" ON )
+
 set( HYPRE_DEVICE_OPTIONS CPU CUDA HIP )
 if( NOT ENABLE_HYPRE_DEVICE )
   set( ENABLE_HYPRE_DEVICE CPU )

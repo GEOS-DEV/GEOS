@@ -861,6 +861,53 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
     message(STATUS "Not using Fesapi")
 # endif()
 
+################################
+# GRPC
+################################
+if(DEFINED GRPC_DIR)
+    message(STATUS "GRPC_DIR = ${GRPC_DIR}")
+
+    # gRPC always requires Thread support.
+    find_package(Threads REQUIRED)
+    find_package(absl REQUIRED CONFIG
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(utf8_range REQUIRED CONFIG
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(protobuf REQUIRED CONFIG
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+    find_package(gRPC REQUIRED CONFIG
+                 PATHS ${GRPC_DIR}
+                 NO_DEFAULT_PATH)
+
+    message( " ----> gRPC_VERSION=${gRPC_VERSION}")
+    message( " ----> gRPC_DIR=${gRPC_DIR}")
+    message( " ----> protobuf_VERSION=${protobuf_VERSION}")
+    message( " ----> protobuf_DIR=${protobuf_DIR}")
+    message( " ----> absl_VERSION=${absl_VERSION}")
+    message( " ----> absl_DIR=${absl_DIR}")
+
+    get_target_property(includeDirs
+                        gRPC::grpc++
+                        INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET gRPC::grpc++
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
+
+    set(ENABLE_GRPC ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} gRPC::grpc++)
+else()
+    if(ENABLE_GRPC)
+        message(WARNING "ENABLE_GRPC is ON but GRPC_DIR isn't defined.")
+    endif()
+
+    set(ENABLE_GRPC OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using grpc.")
+endif()
+
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
 ###############################

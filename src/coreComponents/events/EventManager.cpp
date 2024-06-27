@@ -22,6 +22,8 @@
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
+#include <grpcpp/grpcpp.h>
+
 namespace geos
 {
 
@@ -141,6 +143,12 @@ bool EventManager::run( DomainPartition & domain )
     //       because it is done in an unusual fashion
     m_time = m_minTime;
   }
+
+  grpc::ChannelArguments args;
+  args.SetInt("grpc.enable_http_proxy", 0);
+
+  auto channel = grpc::CreateCustomChannel(
+      "localhost:50051", grpc::InsecureChannelCredentials(), args);
 
   // Run problem
   // Note: if currentSubEvent > 0, then we are resuming from a restart file
