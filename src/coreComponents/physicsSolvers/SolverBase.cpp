@@ -764,12 +764,10 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
 
       outputConfigurationStatistics( domain );
-
       bool const isNewtonConverged = solveNonlinearSystem( time_n,
                                                            stepDt,
                                                            cycleNumber,
                                                            domain );
-
       if( isNewtonConverged )
       {
         isConfigurationLoopConverged = updateConfiguration( domain );
@@ -866,10 +864,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // used. We want to propagate the info to subsolvers. It can be important for solvers that
       // have special treatment for specific iterations.
       synchronizeNonlinearSolverParameters();
-
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
       m_rhs.zero();
+
 
       arrayView1d< real64 > const localRhs = m_rhs.open();
 

@@ -148,6 +148,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::prekernelWrapper" );
   KERNEL_WRAPPER kernelWrapper( dispDofNumber,
                                 dofManager.rankOffset(),
                                 localMatrix,
@@ -158,6 +159,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                 m_performStressInitialization,
                                 FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::postkernelWrapper/preregionBasedKernelApplication" );
   real64 const maxForce =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< >,
@@ -168,6 +170,9 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                                             materialNamesString,
                                                             kernelWrapper );
 
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::postregionBasedKernelApplication" );
+
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::preEFEMkernelWrapper" );
   EFEM_KERNEL_WRAPPER EFEMkernelWrapper( subRegion,
                                          dispDofNumber,
                                          jumpDofNumber,
@@ -179,6 +184,9 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                          gravityVectorData,
                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
+
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::postkEFEMkernelWrapper/preregionBasedKernelApplication" );
+
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy< >,
                                   CONSTITUTIVE_BASE,
@@ -188,6 +196,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                                           materialNamesString,
                                                           EFEMkernelWrapper );
 
+  GEOS_LOG_RANK( " SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch::postregionBasedEFEMKernelApplication" );
   return maxForce;
 
 }

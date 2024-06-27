@@ -569,7 +569,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                               { solidMechanics::velocity::key(),
                                 solidMechanics::acceleration::key() } );
     m_iComm.resize( domain.getNeighbors().size() );
-    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
+    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm );
 
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, solidMechanics::acceleration::key() );
 
@@ -626,11 +626,11 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, solidMechanics::velocity::key() );
 
     parallelDeviceEvents packEvents;
-    CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+    CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, packEvents );
 
     waitAllDeviceEvents( packEvents );
 
-    CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
+    CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, packEvents );
 
     waitAllDeviceEvents( packEvents );
 
@@ -646,7 +646,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     // this includes  a device sync after launching all the unpacking kernels
     parallelDeviceEvents unpackEvents;
-    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
+    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, unpackEvents, MPI_REPLACE );
 
   } );
 
@@ -1310,8 +1310,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 }
 

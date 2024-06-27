@@ -31,8 +31,8 @@ namespace bufferOps
 {
 
 template< bool DO_PACKING, typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Pack( buffer_unit_type * & buffer, T const & var )
+typename std::enable_if< is_host_packable_scalar_v< T >, localIndex >::type
+PackData( buffer_unit_type * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   if( DO_PACKING )
@@ -43,38 +43,26 @@ Pack( buffer_unit_type * & buffer, T const & var )
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Pack( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, INDEX_TYPE const length )
+
+template< bool DO_PACKING, typename T >
+typename std::enable_if< is_host_packable_scalar_v< T >, localIndex >::type
+Pack( buffer_unit_type * & buffer, T const & var )
 {
-  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-
-  sizeOfPackedChars += length * sizeof(T);
-  if( DO_PACKING )
-  {
-    memcpy( buffer, var, length * sizeof(T) );
-    buffer += length * sizeof(T);
-  }
-
-  return sizeOfPackedChars;
+  return PackData< DO_PACKING >( buffer, var );
 }
 
-template< typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Unpack( buffer_unit_type const * & buffer, T * const GEOS_RESTRICT var, INDEX_TYPE const expectedLength )
+template< bool DO_PACKING >
+localIndex PackData( buffer_unit_type * & buffer, const string & var )
 {
-  INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
-  GEOS_DEBUG_VAR( expectedLength );
-
-  memcpy( var, buffer, length * sizeof(T) );
-  sizeOfUnpackedChars += length * sizeof(T);
-  buffer += length * sizeof(T);
-
-  return sizeOfUnpackedChars;
+  localIndex sizeOfPackedChars = 0;
+  const string::size_type varSize = var.size();
+  if( DO_PACKING )
+  {
+    memcpy( buffer, var.data(), varSize );
+    buffer += varSize;
+  }
+  sizeOfPackedChars += varSize;
+  return sizeOfPackedChars;
 }
 
 template< bool DO_PACKING >
@@ -82,14 +70,17 @@ localIndex Pack( buffer_unit_type * & buffer, const string & var )
 {
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
+  return sizeOfPackedChars + PackData< DO_PACKING >( buffer, var );
+}
 
-  if( DO_PACKING )
+template< bool DO_PACKING, typename T >
+localIndex PackData( buffer_unit_type * & buffer, SortedArray< T > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( T const & val : var )
   {
-    memcpy( buffer, var.data(), varSize );
-    buffer += varSize;
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, val );
   }
-
-  sizeOfPackedChars += varSize;
   return sizeOfPackedChars;
 }
 
@@ -98,23 +89,37 @@ localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
 {
   const localIndex length = LvArray::integerConversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  for( T const & val : var )
-  {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, val );
-  }
-  return sizeOfPackedChars;
+  return sizeOfPackedChars + PackData< DO_PACKING >( buffer, var );
 }
 
 template< bool DO_PACKING, typename T, int SIZE >
-localIndex Pack( buffer_unit_type * & buffer, Tensor< T, SIZE > const & var )
+localIndex PackData( buffer_unit_type * & buffer, Tensor< T, SIZE > const & var )
 {
   localIndex sizeOfPackedChars = 0;
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, var.data, SIZE );
   return sizeOfPackedChars;
 }
 
+template< bool DO_PACKING, typename T, int SIZE >
+localIndex Pack( buffer_unit_type * & buffer, Tensor< T, SIZE > const & var )
+{
+  return PackData< DO_PACKING >( buffer, var );
+}
+
 template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< is_packable< T >, localIndex >::type
+typename std::enable_if< is_host_packable_v< T >, localIndex >::type
+PackData( buffer_unit_type * & buffer,
+          ArrayView< T, NDIM, USD > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+  const localIndex length = var.size();
+  T const * const data = var.data();
+  sizeOfPackedChars += PackPointerData< DO_PACKING >( buffer, data, length );
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T, int NDIM, int USD >
+typename std::enable_if< is_host_packable_v< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       ArrayView< T, NDIM, USD > const & var )
 {
@@ -123,6 +128,19 @@ Pack( buffer_unit_type * & buffer,
   const localIndex length = var.size();
   T const * const data = var.data();
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, length );
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T >
+localIndex PackData( buffer_unit_type * & buffer,
+                     ArrayOfArrays< T > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( localIndex a=0; a<var.size(); ++a )
+  {
+    T const * const data = var[a];
+    sizeOfPackedChars += PackPointerData< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
+  }
   return sizeOfPackedChars;
 }
 
@@ -137,6 +155,19 @@ localIndex Pack( buffer_unit_type * & buffer,
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
     T const * const data = var[a];
     sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
+  }
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T >
+localIndex PackData( buffer_unit_type * & buffer,
+                     ArrayOfSets< T > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( localIndex a=0; a<var.size(); ++a )
+  {
+    T const * const data = var[a];
+    sizeOfPackedChars += PackPointerData< DO_PACKING >( buffer, data, var.sizeOfSet( a ) );
   }
   return sizeOfPackedChars;
 }
@@ -157,7 +188,20 @@ localIndex Pack( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING, typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_v< MAP_TYPE >, localIndex >::type
+PackData( buffer_unit_type * & buffer, MAP_TYPE const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( typename MAP_TYPE::const_iterator i = var.begin(); i != var.end(); ++i )
+  {
+    sizeOfPackedChars += PackData< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += PackData< DO_PACKING >( buffer, i->second );
+  }
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename MAP_TYPE >
+typename std::enable_if< is_host_packable_map_v< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var )
 {
   const typename MAP_TYPE::size_type length = var.size();
@@ -172,11 +216,26 @@ Pack( buffer_unit_type * & buffer, MAP_TYPE const & var )
 
 template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
 localIndex
+PackData( buffer_unit_type * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
+{
+  localIndex sizeOfPackedChars = PackData< DO_PACKING >( buffer, var.first );
+  sizeOfPackedChars += PackData< DO_PACKING >( buffer, var.second );
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
+localIndex
 Pack( buffer_unit_type * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.first );
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.second );
   return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T >
+localIndex PackData( buffer_unit_type * & buffer, InterObjectRelation< T > const & var )
+{
+  return PackData< DO_PACKING >( buffer, static_cast< T const & >(var));
 }
 
 template< bool DO_PACKING, typename T >
@@ -188,16 +247,39 @@ localIndex Pack( buffer_unit_type * & buffer, InterObjectRelation< T > const & v
 //------------------------------------------------------------------------------
 // PackArray(buffer,var,length)
 //------------------------------------------------------------------------------
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+PackPointerData( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, INDEX_TYPE const length )
+{
+  localIndex sizeOfPackedChars = length * sizeof(T);
+  if( DO_PACKING )
+  {
+    memcpy( buffer, var, length * sizeof(T) );
+    buffer += length * sizeof(T);
+  }
+  return sizeOfPackedChars;
+}
+
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 PackPointer( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, INDEX_TYPE const length )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  sizeOfPackedChars += length * sizeof(T);
-  if( DO_PACKING )
+  return sizeOfPackedChars + PackPointerData< DO_PACKING >( buffer, var, length );
+}
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+PackPointerData( buffer_unit_type * & buffer,
+                 T const * const GEOS_RESTRICT var,
+                 INDEX_TYPE const length )
+
+{
+  localIndex sizeOfPackedChars = 0;
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    memcpy( buffer, var, length * sizeof(T) );
-    buffer += length * sizeof(T);
+    sizeOfPackedChars += PackData< DO_PACKING >( buffer, var[ a ] );
   }
   return sizeOfPackedChars;
 }
@@ -214,7 +296,6 @@ PackPointer( buffer_unit_type * & buffer,
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
   }
-
   return sizeOfPackedChars;
 }
 
@@ -255,8 +336,27 @@ PackArray( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 // PackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------
+
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
-typename std::enable_if< is_packable< T >, localIndex >::type
+typename std::enable_if< is_host_packable_v< T >, localIndex >::type
+PackDataByIndex( buffer_unit_type * & buffer,
+                 ArrayView< T, NDIM, USD > const & var,
+                 const T_indices & indices )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    LvArray::forValuesInSlice( var[ indices[ a ] ],
+                               [&sizeOfPackedChars, &buffer]( T const & value )
+    {
+      sizeOfPackedChars += PackData< DO_PACKING >( buffer, value );
+    } );
+  }
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_indices >
+typename std::enable_if< is_host_packable_v< T >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
              ArrayView< T, NDIM, USD > const & var,
              const T_indices & indices )
@@ -268,8 +368,21 @@ PackByIndex( buffer_unit_type * & buffer,
                                [&sizeOfPackedChars, &buffer]( T const & value )
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer, value );
-    }
-                               );
+    } );
+  }
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename T, typename T_indices >
+localIndex PackDataByIndex( buffer_unit_type * & buffer,
+                            ArrayOfArrays< T > const & var,
+                            T_indices const & indices )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    T const * const data = var[indices[a]];
+    sizeOfPackedChars += PackPointerData< DO_PACKING >( buffer, data, var.sizeOfArray( indices[a] ) );
   }
   return sizeOfPackedChars;
 }
@@ -291,17 +404,32 @@ localIndex PackByIndex( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index_v< MAP_TYPE >, localIndex >::type
+PackDataByIndex( buffer_unit_type * & buffer,
+                 MAP_TYPE const & var,
+                 T_INDICES const & indices )
+{
+  localIndex sizeOfPackedChars = 0;
+  for( typename MAP_TYPE::const_iterator i = var.begin(); i != var.end(); ++i )
+  {
+    sizeOfPackedChars += PackData< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += PackDataByIndex< DO_PACKING >( buffer, i->second, indices );
+  }
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
+typename std::enable_if< is_host_packable_map_by_index_v< MAP_TYPE >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
              MAP_TYPE const & var,
-             T_INDICES const & packIndices )
+             T_INDICES const & indices )
 {
   const typename MAP_TYPE::size_type length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( typename MAP_TYPE::const_iterator i = var.begin(); i != var.end(); ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
-    sizeOfPackedChars += PackByIndex< DO_PACKING >( buffer, i->second, packIndices );
+    sizeOfPackedChars += PackByIndex< DO_PACKING >( buffer, i->second, indices );
   }
   return sizeOfPackedChars;
 }
@@ -310,11 +438,43 @@ PackByIndex( buffer_unit_type * & buffer,
 // Unpack(buffer,var)
 //------------------------------------------------------------------------------
 template< typename T >
-typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+typename std::enable_if< is_host_packable_scalar_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        T & var )
+        T & var,
+        MPI_Op op )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
+  T const castValue = *reinterpret_cast< T const * > ( buffer );
+  if ( op == MPI_REPLACE )
+  {
+    var = castValue;
+  }
+  else if ( op == MPI_SUM )
+  {
+    if constexpr( traits::has_plus_equal_v< T > )
+    {
+      var += castValue;
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported unpack operator+= for type {}!", typeid(T).name() ) );
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    if constexpr( traits::has_less_than_v< T > ) // && traits::has_equality_v< T >
+    {
+      var = std::max( var, castValue );
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported unpack operator< for type {}!", typeid(T).name() ) );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
+  }
   memcpy( &var, buffer, sizeOfUnpackedChars );
   buffer += sizeOfUnpackedChars;
   return sizeOfUnpackedChars;
@@ -323,12 +483,26 @@ Unpack( buffer_unit_type const * & buffer,
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        string & var )
+        string & var,
+        MPI_Op op )
 {
   string::size_type stringsize = 0;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize, MPI_REPLACE );
   var.resize( stringsize );
-  memcpy( &var[0], buffer, stringsize );
+  string castValue( stringsize, ' ' );
+  memcpy( &castValue[0], buffer, stringsize );
+  if ( op == MPI_REPLACE )
+  {
+    var = castValue;
+  }
+  else if ( op == MPI_SUM )
+  {
+    var += castValue;
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM and MPI_REPLACE are supported." );
+  }
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
   return sizeOfUnpackedChars;
@@ -337,65 +511,69 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename T, int SIZE >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        Tensor< T, SIZE > & var )
+        Tensor< T, SIZE > & var,
+        MPI_Op op )
 {
   localIndex sizeOfUnpackedChars = 0;
-  sizeOfUnpackedChars += UnpackPointer( buffer, var.data, SIZE );
+  sizeOfUnpackedChars += UnpackPointer( buffer, var.data, SIZE, op );
   return sizeOfUnpackedChars;
 }
 
 template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        SortedArray< T > & var )
+        SortedArray< T > & var,
+        MPI_Op op )
 {
   var.clear();
   localIndex set_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length, MPI_REPLACE );
   for( localIndex a=0; a<set_length; ++a )
   {
     T temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
+    sizeOfUnpackedChars += Unpack( buffer, temp, op );
     var.insert( temp );
   }
   return sizeOfUnpackedChars;
 }
 
 template< typename T, int NDIM, typename PERMUTATION >
-typename std::enable_if< is_packable< T >, localIndex >::type
+typename std::enable_if< is_host_packable_v< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        Array< T, NDIM, PERMUTATION > & var )
+        Array< T, NDIM, PERMUTATION > & var,
+        MPI_Op op )
 {
   localIndex dims[NDIM];
-  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, dims, NDIM );
+  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, dims, NDIM, MPI_REPLACE );
   var.resize( NDIM, dims );
 
   localIndex strides[NDIM];
-  sizeOfUnpackedChars += UnpackPointer( buffer, strides, NDIM );
+  sizeOfUnpackedChars += UnpackPointer( buffer, strides, NDIM, MPI_REPLACE );
   for( int i=0; i<NDIM; ++i )
   {
     GEOS_ASSERT_EQ( strides[i], var.strides()[i] );
   }
 
-  sizeOfUnpackedChars += UnpackPointer( buffer, var.data(), var.size() );
+  sizeOfUnpackedChars += UnpackPointer( buffer, var.data(), var.size(), op );
   return sizeOfUnpackedChars;
 }
 
 template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfArrays< T > & var )
+                   ArrayOfArrays< T > & var,
+                   MPI_Op op )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex numOfArrays;
-  sizeOfUnpackedChars += Unpack( buffer, numOfArrays );
+  sizeOfUnpackedChars += Unpack( buffer, numOfArrays, op );
   var.resize( numOfArrays );
   for( localIndex a=0; a<numOfArrays; ++a )
   {
     localIndex sizeOfArray;
-    sizeOfUnpackedChars += Unpack( buffer, sizeOfArray );
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfArray, op );
     var.resizeArray( a, sizeOfArray );
     T * data = var[a];
-    sizeOfUnpackedChars += UnpackPointer( buffer, data, sizeOfArray );
+    sizeOfUnpackedChars += UnpackPointer( buffer, data, sizeOfArray, op );
   }
   return sizeOfUnpackedChars;
 }
@@ -404,17 +582,18 @@ inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< array1d< globalIndex > > & var,
-        localIndex const subArrayIndex )
+        localIndex const subArrayIndex,
+        MPI_Op op )
 {
   localIndex length;
-  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, length, op );
 
   var.resizeArray( subArrayIndex, length );
 
   for( localIndex a = 0; a < length; ++a )
   {
     array1d< globalIndex > & tmp = var( subArrayIndex, a );
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, tmp );
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, tmp, op );
   }
 
   return sizeOfUnpackedChars;
@@ -423,28 +602,30 @@ Unpack( buffer_unit_type const * & buffer,
 
 template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfSets< T > & var )
+                   ArrayOfSets< T > & var,
+                   MPI_Op op )
 {
   ArrayOfArrays< T > varAsArray;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray, op );
   var.template assimilate< parallelHostPolicy >( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
   return sizeOfUnpackedChars;
 }
 
 template< typename MAP_TYPE >
-typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_v< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        MAP_TYPE & map )
+        MAP_TYPE & map,
+        MPI_Op op )
 {
   map.clear();
   typename MAP_TYPE::size_type map_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length, MPI_REPLACE );
   for( typename MAP_TYPE::size_type a = 0; a < map_length; ++a )
   {
     typename MAP_TYPE::key_type key;
     typename MAP_TYPE::mapped_type value;
-    sizeOfUnpackedChars += Unpack( buffer, key );
-    sizeOfUnpackedChars += Unpack( buffer, value );
+    sizeOfUnpackedChars += Unpack( buffer, key, MPI_REPLACE );
+    sizeOfUnpackedChars += Unpack( buffer, value, op );
     map[key] = std::move( value );
   }
   return sizeOfUnpackedChars;
@@ -452,18 +633,20 @@ Unpack( buffer_unit_type const * & buffer,
 
 template< typename T_FIRST, typename T_SECOND >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   std::pair< T_FIRST, T_SECOND > & var )
+                   std::pair< T_FIRST, T_SECOND > & var,
+                   MPI_Op op )
 {
-  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first );
-  sizeOfUnpackedChars += Unpack( buffer, var.second );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first, op );
+  sizeOfUnpackedChars += Unpack( buffer, var.second, op );
   return sizeOfUnpackedChars;
 }
 
 template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
-                   InterObjectRelation< T > & var )
+                   InterObjectRelation< T > & var,
+                   MPI_Op op )
 {
-  return Unpack( buffer, static_cast< T & >(var));
+  return Unpack( buffer, static_cast< T & >(var), op );
 }
 
 //------------------------------------------------------------------------------
@@ -473,14 +656,40 @@ template< typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 UnpackPointer( buffer_unit_type const * & buffer,
                T * const GEOS_RESTRICT var,
-               INDEX_TYPE const expectedLength )
+               INDEX_TYPE const expectedLength,
+               MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
   GEOS_DEBUG_VAR( expectedLength );
-  memcpy( var, buffer, length * sizeof(T) );
+  T const * castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( var[ii], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
+  }
   sizeOfUnpackedChars += length * sizeof(T);
   buffer += length * sizeof(T);
   return sizeOfUnpackedChars;
@@ -490,16 +699,16 @@ template< typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 UnpackPointer( buffer_unit_type const * & buffer,
                T * const GEOS_RESTRICT var,
-               INDEX_TYPE const expectedLength )
+               INDEX_TYPE const expectedLength,
+               MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_ASSERT_EQ( length, expectedLength );
   GEOS_DEBUG_VAR( expectedLength );
-
   for( INDEX_TYPE a=0; a<length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[a] );
+    sizeOfUnpackedChars += Unpack( buffer, var[a], op );
   }
 
   return sizeOfUnpackedChars;
@@ -509,17 +718,39 @@ template< typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 UnpackArray( buffer_unit_type const * & buffer,
              arraySlice1d< T, USD > const & var,
-             INDEX_TYPE const expectedLength )
+             INDEX_TYPE const expectedLength,
+             MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
-  for( INDEX_TYPE i = 0; i < length; ++i )
+  T const * castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
   {
-    var[ i ] = buffer_T[ i ];
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( int ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( var[ii], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
   }
 
   buffer += length * sizeof(T);
@@ -531,16 +762,17 @@ template< typename T, typename INDEX_TYPE, int USD >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 UnpackArray( buffer_unit_type const * & buffer,
              arraySlice1d< T, USD > const & var,
-             INDEX_TYPE const expectedLength )
+             INDEX_TYPE const expectedLength,
+             MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[a] );
+    sizeOfUnpackedChars += Unpack( buffer, var[a], op );
   }
 
   return sizeOfUnpackedChars;
@@ -553,19 +785,19 @@ template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
                ArrayView< T, NDIM, USD > const & var,
-               const T_indices & indices )
+               const T_indices & indices,
+               MPI_Op op )
 {
   localIndex strides[NDIM];
-  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM );
+  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM, MPI_REPLACE );
 
   for( localIndex a=0; a<indices.size(); ++a )
   {
     LvArray::forValuesInSlice( var[ indices[ a ] ],
-                               [&sizeOfUnpackedChars, &buffer] ( T & value )
+                               [&sizeOfUnpackedChars, &buffer, &op] ( T & value )
     {
-      sizeOfUnpackedChars += Unpack( buffer, value );
-    }
-                               );
+      sizeOfUnpackedChars += Unpack( buffer, value, op );
+    } );
   }
   return sizeOfUnpackedChars;
 }
@@ -574,37 +806,39 @@ template< typename T, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
                ArrayOfArrays< T > & var,
-               T_indices const & indices )
+               T_indices const & indices,
+               MPI_Op op )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex numUnpackedIndices = 0;
-  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
   GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
   for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex sizeOfSubArray;
-    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray );
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray, MPI_REPLACE );
     var.resizeArray( indices[a], sizeOfSubArray );
-    sizeOfUnpackedChars += UnpackArray( buffer, var[indices[a]], sizeOfSubArray );
+    sizeOfUnpackedChars += UnpackArray( buffer, var[indices[a]], sizeOfSubArray, op );
   }
   return sizeOfUnpackedChars;
 }
 
 template< typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index_v< MAP_TYPE >, localIndex >::type
 UnpackByIndex( buffer_unit_type const * & buffer,
                MAP_TYPE & map,
-               T_INDICES const & unpackIndices )
+               T_INDICES const & unpackIndices,
+               MPI_Op op )
 {
   map.clear();
   typename MAP_TYPE::size_type map_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length, MPI_REPLACE );
   for( typename MAP_TYPE::size_type a = 0; a < map_length; ++a )
   {
     typename MAP_TYPE::key_type key;
     typename MAP_TYPE::mapped_type value;
-    sizeOfUnpackedChars += Unpack( buffer, key );
-    sizeOfUnpackedChars += UnpackByIndex( buffer, value, unpackIndices );
+    sizeOfUnpackedChars += Unpack( buffer, key, MPI_REPLACE );
+    sizeOfUnpackedChars += UnpackByIndex( buffer, value, unpackIndices, op );
     map[key] = std::move( value );
   }
   return sizeOfUnpackedChars;
@@ -630,13 +864,14 @@ template< typename T, typename INDEX_TYPE >
 localIndex Unpack( buffer_unit_type const * & buffer,
                    T * const GEOS_RESTRICT var,
                    arraySlice1d< INDEX_TYPE const > const & indices,
-                   INDEX_TYPE & length )
+                   INDEX_TYPE & length,
+                   MPI_Op op )
 {
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ], op );
   }
 
   return sizeOfUnpackedChars;
@@ -664,17 +899,39 @@ template< typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T > & var,
-        INDEX_TYPE const expectedLength )
+        INDEX_TYPE const expectedLength,
+        MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
-  for( INDEX_TYPE i = 0; i < length; ++i )
+  T const * const GEOS_RESTRICT castBuffer = reinterpret_cast< T const * >( buffer );
+  if ( op == MPI_REPLACE )
   {
-    var[ i ] = buffer_T[ i ];
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_SUM )
+  {
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] += castBuffer[ ii ];
+    }
+  }
+  else if ( op == MPI_MAX )
+  {
+    for( INDEX_TYPE ii = 0; ii < length; ++ii )
+    {
+      var[ ii ] = std::max( bar[ ii ], castBuffer[ ii ] );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Unsupported MPI operator! MPI_SUM, MPI_REPLACE and MPI_MAX are supported." );
   }
 
   buffer += length * sizeof(T);
@@ -687,16 +944,17 @@ template< typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T > & var,
-        INDEX_TYPE const expectedLength )
+        INDEX_TYPE const expectedLength,
+        MPI_Op op )
 {
   INDEX_TYPE length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[a] );
+    sizeOfUnpackedChars += Unpack( buffer, var[a], op );
   }
 
   return sizeOfUnpackedChars;
@@ -727,15 +985,16 @@ localIndex
 Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T > & var,
         arraySlice1d< INDEX_TYPE > const & indices,
-        INDEX_TYPE & length )
+        INDEX_TYPE & length,
+        MPI_Op op )
 {
   localIndex sizeOfUnpackedChars = 0;
 
-  sizeOfUnpackedChars += Unpack( buffer, length );
+  sizeOfUnpackedChars += Unpack( buffer, length, MPI_REPLACE );
 
   for( INDEX_TYPE a=0; a<length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ], op );
   }
 
   return sizeOfUnpackedChars;
@@ -779,12 +1038,12 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     var.clear();
   }
   localIndex set_length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length, MPI_REPLACE );
 
   for( localIndex a=0; a<set_length; ++a )
   {
     globalIndex temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
+    sizeOfUnpackedChars += Unpack( buffer, temp, MPI_REPLACE );
     typename mapBase< globalIndex, localIndex, SORTED >::const_iterator iter = globalToLocalMap.find( temp );
     if( iter==globalToLocalMap.end() )
     {
@@ -887,16 +1146,16 @@ Unpack( buffer_unit_type const * & buffer,
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex numUnpackedIndices;
-  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
 
   GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
 
   for( localIndex a=0; a<indices.size(); ++a )
   {
     localIndex sizeOfSubArray;
-    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray );
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray, MPI_REPLACE );
     var.resizeArray( indices[a], sizeOfSubArray );
-    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], sizeOfSubArray );
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], sizeOfSubArray, MPI_REPLACE );
   }
 
 
@@ -943,7 +1202,7 @@ Unpack( buffer_unit_type const * & buffer,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
 {
   localIndex length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   var.resize( length );
   unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
@@ -952,7 +1211,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<length; ++a )
   {
     globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex, MPI_REPLACE );
 
     typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
       iter = globalToLocalMap.find( unpackedGlobalIndex );
@@ -982,13 +1241,13 @@ UnpackSyncList( buffer_unit_type const * & buffer,
                 std::unordered_map< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
   var.resize( length );
 
   for( localIndex a=0; a<length; ++a )
   {
     globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex, MPI_REPLACE );
     var[a] = globalToLocalMap.at( unpackedGlobalIndex );
   }
 
@@ -1005,7 +1264,7 @@ Unpack( buffer_unit_type const * & buffer,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
 {
   localIndex length;
-  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length, MPI_REPLACE );
 
   var.resizeArray( subArrayIndex, length );
   unmappedGlobalIndices.resize( length );
@@ -1015,7 +1274,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<length; ++a )
   {
     globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex, MPI_REPLACE );
 
     typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
       iter = globalToLocalMap.find( unpackedGlobalIndex );
@@ -1050,7 +1309,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex length;
-  sizeOfUnpackedChars += Unpack( buffer, length );
+  sizeOfUnpackedChars += Unpack( buffer, length, MPI_REPLACE );
 
   GEOS_ASSERT_EQ( length, expectedLength );
   GEOS_DEBUG_VAR( expectedLength );
@@ -1062,7 +1321,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<length; ++a )
   {
     globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex, MPI_REPLACE );
 
     typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
       iter = globalToLocalMap.find( unpackedGlobalIndex );
@@ -1151,7 +1410,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
-  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
@@ -1160,7 +1419,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<indices.size(); ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
@@ -1174,7 +1433,7 @@ Unpack( buffer_unit_type const * & buffer,
     }
 
     globalIndex mappedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, mappedGlobalIndex );
+    sizeOfUnpackedChars += Unpack( buffer, mappedGlobalIndex, MPI_REPLACE );
     if( mappedGlobalIndex != -1 )
     {
       var[li] = relatedObjectGlobalToLocalMap.at( mappedGlobalIndex );
@@ -1236,7 +1495,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
-  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
@@ -1247,7 +1506,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<indices.size(); ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1358,7 +1617,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
-  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
@@ -1370,7 +1629,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<indices.size(); ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1410,7 +1669,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
-  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, numIndicesUnpacked );
+  localIndex sizeOfUnpackedChars = bufferOps::Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
                  "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
@@ -1422,7 +1681,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<indices.size(); ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, gi );
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1439,7 +1698,8 @@ Unpack( buffer_unit_type const * & buffer,
     unmappedIndices.resize( 0 );
     sizeOfUnpackedChars += Unpack( buffer,
                                    var,
-                                   li );
+                                   li,
+                                   MPI_REPLACE );
   }
   return sizeOfUnpackedChars;
 }
@@ -1494,7 +1754,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
@@ -1505,7 +1765,7 @@ Unpack( buffer_unit_type const * & buffer,
   {
 
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1546,7 +1806,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
@@ -1573,7 +1833,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1593,7 +1853,7 @@ Unpack( buffer_unit_type const * & buffer,
     }
 
     localIndex set_length;
-    sizeOfUnpackedChars += Unpack( buffer, set_length );
+    sizeOfUnpackedChars += Unpack( buffer, set_length, MPI_REPLACE );
 
     mapped.clear();
     mappedNew.clear();
@@ -1605,7 +1865,7 @@ Unpack( buffer_unit_type const * & buffer,
     for( localIndex b = 0; b < set_length; ++b )
     {
       globalIndex temp;
-      sizeOfUnpackedChars += Unpack( buffer, temp );
+      sizeOfUnpackedChars += Unpack( buffer, temp, MPI_REPLACE );
       auto iter = relatedObjectGlobalToLocalMap.find( temp );
       // if we have no existing global-to-local information
       //  for the recv'd global index
@@ -1718,7 +1978,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
@@ -1729,7 +1989,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1744,7 +2004,7 @@ Unpack( buffer_unit_type const * & buffer,
     }
 
     localIndex * const varSlice = var[li];
-    sizeOfUnpackedChars += UnpackPointer( buffer, varSlice, var.size( 1 ) );
+    sizeOfUnpackedChars += UnpackPointer( buffer, varSlice, var.size( 1 ), MPI_REPLACE );
   }
 
   return sizeOfUnpackedChars;
@@ -1801,7 +2061,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
@@ -1812,7 +2072,7 @@ Unpack( buffer_unit_type const * & buffer,
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
     globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
+    sizeOfUnpackedChars += Unpack( buffer, gi, MPI_REPLACE );
 
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
@@ -1846,7 +2106,7 @@ Unpack( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index_v< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packIndices )
 {
   typename MAP_TYPE::size_type const length = var.size();
@@ -1863,20 +2123,20 @@ Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packI
 
 
 template< typename MAP_TYPE, typename T_INDICES >
-typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+typename std::enable_if< is_host_packable_map_by_index_v< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unpackIndices )
 {
   map.clear();
   typename MAP_TYPE::size_type map_length;
 
-  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length, MPI_REPLACE );
 
   for( typename MAP_TYPE::size_type a=0; a<map_length; ++a )
   {
     typename MAP_TYPE::key_type key;
     typename MAP_TYPE::mapped_type value;
-    sizeOfUnpackedChars += Unpack( buffer, key );
-    sizeOfUnpackedChars += Unpack( buffer, value, unpackIndices );
+    sizeOfUnpackedChars += Unpack( buffer, key, MPI_REPLACE );
+    sizeOfUnpackedChars += Unpack( buffer, value, unpackIndices, MPI_REPLACE );
 
     map[key] = value;
   }

@@ -237,8 +237,7 @@ void SolidMechanicsLagrangeContact::implicitStepComplete( real64 const & time_n,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
 
   } );
 }
@@ -1809,8 +1808,7 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 }
 
