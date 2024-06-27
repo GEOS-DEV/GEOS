@@ -52,14 +52,6 @@ public:
   std::set< string > selectRegionCellBlocks( CellElementRegion const & region );
 
   /**
-   * @return Get the reference to a cell-block, or nullptr.
-   * @param region The requesting region.
-   * @param name The name of the requested cell-block.
-   * @throw An InputError if no cell-block with the specified name was found.
-   */
-  CellBlockABC const & getCellBlock( CellElementRegion const & region, string const & name ) const;
-
-  /**
    * @brief Throw an InputError if not all cell-blocks has been added to a region.
    */
   void checkForNoOrphanCellBlocks() const;

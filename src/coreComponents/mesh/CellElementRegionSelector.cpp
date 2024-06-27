@@ -206,22 +206,6 @@ void CellElementRegionSelector::selectRegionCellBlocks( CellElementRegion const 
   }
 }
 
-
-CellBlockABC const & CellElementRegionSelector::getCellBlock( CellElementRegion const & region,
-                                                              string const & cellBlockName ) const
-{
-  CellBlockABC const * cellBlock = m_cellBlocks.getGroupPointer< CellBlockABC >( string( cellBlockName ) );
-
-  // Error should never be called as every cell-block names should already be checked.
-  GEOS_ERROR_IF( cellBlock == nullptr,
-                 GEOS_FMT( "{}: Unexpected error, {} not found.\nAvailable cell-block list: {{ {} }}",
-                           region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
-                           cellBlockName, stringutilities::join( m_cellBlockNames, ", " ) ) );
-
-  return *cellBlock;
-}
-
-
 void CellElementRegionSelector::checkForNoOrphanCellBlocks() const
 {
   if( !m_orphanCellBlockNames.empty() )

@@ -123,13 +123,6 @@ public:
   arrayView1d< string const > getCellBlockNames() const
   { return m_cellBlockNames.toViewConst(); }
 
-  /**
-   * @param cellBlockName the cellBlock name
-   * @return if we are in the form "1_tetrahedra", we return the region attribute value.
-   * Elsewise, we return an empty string.
-   */
-  static string getCellBlockAttributeValue( string_view cellBlockName );
-
 
   /**
    * @brief register every cellBlocks that is requested in the cellBlockNames list.
