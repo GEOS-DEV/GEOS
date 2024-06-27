@@ -595,8 +595,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors());
   } );
 
 }
