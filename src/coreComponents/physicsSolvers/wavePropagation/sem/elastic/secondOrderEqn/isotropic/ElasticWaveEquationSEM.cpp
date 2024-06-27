@@ -30,6 +30,7 @@
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
+#include "physicsSolvers/wavePropagation/shared/TaperKernel.hpp"
 #include "events/EventManager.hpp"
 
 namespace geos
@@ -224,7 +225,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 
 void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X =
@@ -264,6 +265,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
+  }
+
+  if( m_useTaper==1 )
+  {
+    arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), X, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, taperCoeff );
   }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -605,6 +612,8 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticfields::Displacementy_np1 >();
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticfields::Displacementz_np1 >();
 
+  arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+
   arrayView1d< real32 > const rhsx = nodeManager.getField< elasticfields::ForcingRHSx >();
   arrayView1d< real32 > const rhsy = nodeManager.getField< elasticfields::ForcingRHSy >();
   arrayView1d< real32 > const rhsz = nodeManager.getField< elasticfields::ForcingRHSz >();
@@ -678,6 +687,18 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
                                     mass, dampingx, dampingy, dampingz, stiffnessVectorx, stiffnessVectory,
                                     stiffnessVectorz, rhsx, rhsy, rhsz, solverTargetNodesSet );
   }
+
+  if( m_useTaper==1 )
+  {
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, ux_n );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uy_n );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_np1 );
+    TaperKernel::multiplyByTaperCoeff< EXEC_POLICY >( nodeManager.size(), taperCoeff, uz_n );
+  }
+
+
 }
 
 void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
