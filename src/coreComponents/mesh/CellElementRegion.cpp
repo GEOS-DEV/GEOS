@@ -15,7 +15,6 @@
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
-#include "mesh/CellElementRegionSelector.hpp"
 
 #include <fnmatch.h>
 
@@ -75,32 +74,16 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-void CellElementRegion::registerSubRegion( CellBlockABC const & cellBlock )
+void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
-  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-  // For now, subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
-  CellElementSubRegion & subRegion =
-    elementSubRegions.registerGroup< CellElementSubRegion >( cellBlock.getName() );
-
-  subRegion.copyFromCellBlock( cellBlock );
-}
-
-
-void CellElementRegion::generateMesh( CellElementRegionSelector & cellBlockSelector )
-{
-  std::set< string > selectedCellBlocks = cellBlockSelector.selectRegionCellBlocks( *this );
-
-  m_cellBlockNames.clear();
-  m_cellBlockNames.insert( 0, selectedCellBlocks.cbegin(), selectedCellBlocks.cend() );
-
-  for( string const & cellBlockName : m_cellBlockNames )
+  Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
+  for( string const & cbName : m_cellBlockNames )
   {
-    registerSubRegion( cellBlockSelector.getCellBlock( *this, cellBlockName ) );
+    CellBlockABC const & cellBlock = cellBlocks.getGroup< CellBlockABC >( cbName );
+    // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
+    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );
+    subRegion.copyFromCellBlock( cellBlock );
   }
-}
-void CellElementRegion::generateMesh( Group const & )
-{
-  GEOS_ERROR( "Not implemented, use the public version of this method." );
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )

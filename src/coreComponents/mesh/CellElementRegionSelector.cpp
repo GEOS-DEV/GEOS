@@ -154,7 +154,6 @@ std::set< string > CellElementRegionSelector::selectRegionCellBlocks( CellElemen
                            ViewKeys::cellBlockAttributeValuesString(),
                            ViewKeys::cellBlockMatchPatternsString() ),
                  InputError );
-
   // only one selection method allowed for now
   GEOS_THROW_IF( ( !requestedAttributeValues.empty() + !requestedMatchPatterns.empty() + !requestedCellBlock.empty() ) != 1,
                  GEOS_FMT( "{}: Only one setting must be used to select cellBlocks ({}, {} or {}).",

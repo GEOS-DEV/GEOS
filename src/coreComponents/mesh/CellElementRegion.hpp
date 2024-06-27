@@ -24,10 +24,6 @@
 namespace geos
 {
 
-// helper class for CellElementRegion to select cellBlocks
-class CellElementRegionSelector;
-
-
 /**
  * @class CellElementRegion
  *
@@ -88,16 +84,7 @@ public:
 
 
   /**
-   * @brief Getter for m_cellBlockNames
-   * @return The array of cell block names.
-   */
-  arrayView1d< string const > getCellBlockNames() const
-  {
-    return m_cellBlockNames.toViewConst();
-  }
-
-  /**
-   * @brief Add a cellBlockRegion name to the list.
+   * @brief Select a cellBlock by its name for generateMesh().
    * @param cellBlockName string containing the cell block region name.
    */
   void addCellBlockName( string const & cellBlockName )
@@ -106,10 +93,11 @@ public:
   }
 
   /**
-   * @brief Add an array cellBlockRegion name to the list.
+   * @brief Select cellBlocks by their names for generateMesh().
    * @param cellBlockNames array of string containing the cell block region names.
    */
-  void addCellBlockNames( arrayView1d< string const > const & cellBlockNames )
+  template<typename StringContainerType>
+  void addCellBlockNames( StringContainerType const & cellBlockNames )
   {
     for( auto const & name: cellBlockNames )
     {
@@ -118,12 +106,38 @@ public:
   }
 
   /**
-   * @brief register every cellBlocks that is in the provided list.
-   * After the call, the content of m_cellBlockNames no longer contain duplicates, and takes into account
-   * m_cellBlockAttributeValues and m_cellBlockMatchPatterns.
+   * @brief Free all lists of cellBlocks requests.
+   */
+  void clearCellBlockNames()
+  {
+    m_cellBlockAttributeValues.clear();
+    m_cellBlockMatchPatterns.clear();
+    m_cellBlockNames.clear();
+  }
+
+  /**
+   * @return List of user-requested mesh cellBlocks names.
+   * @note the list may be incomplete / invalid if CellElementRegionSelectorhas not been used on
+   *       the instance.
+   */
+  arrayView1d< string const > getCellBlockNames() const
+  { return m_cellBlockNames.toViewConst(); }
+
+  /**
+   * @param cellBlockName the cellBlock name
+   * @return if we are in the form "1_tetrahedra", we return the region attribute value.
+   * Elsewise, we return an empty string.
+   */
+  static string getCellBlockAttributeValue( string_view cellBlockName );
+
+
+  /**
+   * @brief register every cellBlocks that is requested in the cellBlockNames list.
+   * @note Assume that the cellBlockNames list is filled valid `cellBlocks` children names
+   *       (CellElementRegionSelector verify & fill this list after the user-requests).
    * @param cellBlockSelector the selector for this problem cell element regions.
    */
-  void generateMesh( CellElementRegionSelector & cellBlockSelector );
+  virtual void generateMesh( Group const & cellBlocks ) override;
 
   ///@}
 
@@ -145,13 +159,6 @@ public:
     /// @return String key for the cell block matches
     static constexpr char const * cellBlockMatchPatternsString() {return "cellBlocksMatch"; }
   };
-
-  /**
-   * @param cellBlockName the cellBlock name
-   * @return if we are in the form "1_tetrahedra", we return the region attribute value.
-   * Elsewise, we return an empty string.
-   */
-  static string getCellBlockAttributeValue( string_view cellBlockName );
 
 private:
 
@@ -181,9 +188,6 @@ private:
    * @param cellBlocks the input mesh cellBlock list
    */
   std::set< string > computeSelectedCellBlocks( std::set< string > const & cellBlocksNames ) const;
-
-
-  virtual void generateMesh( Group const & cellBlocks ) override;
 
 };
 

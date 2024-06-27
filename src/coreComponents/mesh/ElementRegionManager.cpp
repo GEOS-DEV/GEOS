@@ -121,32 +121,18 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 }
 
 
-std::set< string > getCellBlocksNamesSet( CellBlockManagerABC const & cellBlockManager )
-{
-  std::set< string > cellBlockNames;
-  cellBlockManager.getCellBlocks().forSubGroups< CellBlockABC >( [&] ( CellBlockABC const & cellBlock )
-  {
-    cellBlockNames.insert( cellBlock.getName() );
-  } );
-  return cellBlockNames;
-}
-
-
 void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockManager )
 {
-  // cellBlock loading
-  {
-    CellElementRegionSelector cellBlockSelector{ cellBlockManager.getCellBlocks() };
-    // std::set< string > cellBlockNames = getCellBlocksNamesSet( cellBlockManager );
-    // std::set< string > selectedCellBlocks;
-    // std::map< string, CellElementRegion const * > cellBlocksMatchers;
-
+  { // cellBlocks loading
+    Group const & cellBlocks = cellBlockManager.getCellBlocks();
+    CellElementRegionSelector cellBlockSelector{ cellBlocks };
     this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
     {
-      // std::set selected = elemRegion.generateMesh( cellBlockManager.getCellBlocks(),
-      //                                              cellBlockNames, cellBlocksMatchers );
-      // selectedCellBlocks.insert( selected.begin(), selected.end() );
-      elemRegion.generateMesh( cellBlockSelector );
+      std::set< string > selectedCellBlocks = cellBlockSelector.selectRegionCellBlocks( elemRegion );
+      elemRegion.clearCellBlockNames();
+      elemRegion.addCellBlockNames( selectedCellBlocks );
+
+      elemRegion.generateMesh( cellBlocks );
     } );
 
     // selecting all cellblocks is mandatory
