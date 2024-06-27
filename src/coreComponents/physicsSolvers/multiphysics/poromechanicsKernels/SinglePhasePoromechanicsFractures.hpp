@@ -48,10 +48,11 @@ struct StateUpdateKernel
    * @param[out] hydraulicAperture the effecture aperture
    * @param[in] fractureTraction the fracture traction
    */
-  template< typename POLICY, typename POROUS_WRAPPER >
+  template< typename POLICY, typename POROUS_WRAPPER, typename CONTACT_WRAPPER >
   static void
   launch( localIndex const size,
           POROUS_WRAPPER const & porousMaterialWrapper,
+          CONTACT_WRAPPER const & contactWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
           arrayView1d< real64 const > const & area,
@@ -69,10 +70,14 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      hydraulicAperture[k] = minimumHydraulicAperture[k] + aperture[k];
-      real64 const dHydraulicAperture_dNormalJump = 1.0;
+// TODO check negative
+      real64 dHydraulicAperture_dNormalJump = 0.0;
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture(aperture[k], dHydraulicAperture_dNormalJump);
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
+
+      if(k<2)
+        std::cout << "dV = " << deltaVolume[k] << " " << hydraulicAperture[k] << " " << area[k] << " " << volume[k] << " " << minimumHydraulicAperture[k] << " " << aperture[k] << std::endl;
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
       real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );

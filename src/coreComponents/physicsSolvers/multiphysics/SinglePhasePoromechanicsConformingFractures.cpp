@@ -19,6 +19,7 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
@@ -217,7 +218,9 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleCouplin
   {
     /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
     assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
+//            std::cout << "assembleForceResidualDerivativeWrtPressure RHS " << localRhs[96609] << std::endl;
     assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
+//            std::cout << "assembleFluidMassResidualDerivativeWrtDisplacement RHS " << localRhs[96609] << std::endl;
   } );
 }
 
@@ -736,6 +739,14 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
+    string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
+    ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
+
+    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    {
+      using ContactType = TYPEOFREF( castedContact );
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {
 
@@ -744,6 +755,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
         poromechanicsFracturesKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             porousMaterialWrapper,
+                                            contactWrapper,
                                             dispJump,
                                             pressure,
                                             area,
@@ -756,6 +768,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
                                             fractureTraction );
 
       } );
+    } );
     } );
   } );
 }

@@ -278,6 +278,10 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
     mass[ei] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * density[ei][0];
     if( isZero( mass_n[ei] ) ) // this is a hack for hydrofrac cases
       mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0]; // initialize newly created element mass
+
+    if(ei<2)
+      std::cout << "mass = " << mass[ei] << " " << porosity[ei][0] << " " << volume[ei] << " " << deltaVolume[ei] << " " << density[ei][0] << " "
+                << mass_n[ei] << " " << porosity_n[ei][0] << " " << volume[ei] << " " << density_n[ei][0] << std::endl;
   } );
 }
 
@@ -750,12 +754,15 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
 
-      arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
+      arrayView1d< real64 > const dVol = subRegion.getField< fields::flow::deltaVolume >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
+        if(ei<2)
+          std::cout << "vol = " << vol[ei] << " " << dVol[ei] << std::endl;
         vol[ei] += dVol[ei];
+        dVol[ei] = 0.0;
       } );
 
       SingleFluidBase const & fluid =
@@ -772,6 +779,8 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       {
         porousSolid.saveConvergedState(); // porosity_n <- porosity
       }
+
+        updateMass(subRegion);
 
       if( m_isThermal )
       {
