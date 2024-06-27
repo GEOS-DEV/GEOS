@@ -1487,13 +1487,6 @@ public:
   ///@}
 
   /**
-   * @brief Add an entry to the description map
-   * @param level The log level key
-   * @param description The log description value
-   */
-  void addLogLevelEntry( string_view level, string_view description );
-
-  /**
    * @brief Performs re-initialization of certain variable depending on the solver being used.
    */
   virtual void reinit() {}

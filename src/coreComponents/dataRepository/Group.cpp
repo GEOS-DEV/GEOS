@@ -79,11 +79,6 @@ void Group::deregisterWrapper( string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::addLogLevelEntry( string_view level, string_view description )
-{
-  m_logLevelsDescriptions[ string( level ) ].push_back( string( description ) );
-}
-
 void Group::appendLogLevelDescription( string_view levelCondition, string_view logDescription )
 {
   Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
@@ -93,7 +88,7 @@ void Group::appendLogLevelDescription( string_view levelCondition, string_view l
     wrapper->setApplyDefaultValue( 0 );
     wrapper->setInputFlag( InputFlags::OPTIONAL );
   }
-  addLogLevelEntry( levelCondition, logDescription );
+  m_logLevelsDescriptions[ string( levelCondition ) ].push_back( string( logDescription ) );
   wrapper->buildLogLevelDescription( m_logLevelsDescriptions );
 }
 
