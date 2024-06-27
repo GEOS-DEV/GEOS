@@ -233,12 +233,12 @@ TEST_P( LohrenzBrayClarkViscosity9, testViscosity )
 {
   testViscosity( GetParam() );
 }
-/**
+
 TEST_P( LohrenzBrayClarkViscosity9, testViscosityDerivatives )
 {
   testViscosityDerivatives( GetParam() );
 }
-*/
+
 //-------------------------------------------------------------------------------
 // Data
 //-------------------------------------------------------------------------------

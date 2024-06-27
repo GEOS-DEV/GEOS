@@ -80,16 +80,7 @@ public:
   CompositionalDensity( string const & name,
                         ComponentProperties const & componentProperties,
                         integer const phaseIndex,
-                        ModelParameters const & modelParameters )
-    : FunctionBase( name, componentProperties )
-  {
-    GEOS_UNUSED_VAR( phaseIndex, modelParameters );
-    // Calculate the dimensional volume shift
-    m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
-    calculateDimensionalVolumeShift( componentProperties,
-                                     m_equationOfState,
-                                     m_componentDimensionalVolumeShift );
-  }
+                        ModelParameters const & modelParameters );
 
   static string catalogName() { return "CompositionalDensity"; }
 
@@ -122,16 +113,16 @@ private:
 
 template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
-void CompositionalDensityUpdate::
-  compute( ComponentProperties::KernelWrapper const & componentProperties,
-           real64 const & pressure,
-           real64 const & temperature,
-           arraySlice1d< real64 const, USD1 > const & phaseComposition,
-           real64 & molarDensity,
-           arraySlice1d< real64, USD2 > const & dMolarDensity,
-           real64 & massDensity,
-           arraySlice1d< real64, USD2 > const & dMassDensity,
-           bool useMass ) const
+void CompositionalDensityUpdate::compute(
+  ComponentProperties::KernelWrapper const & componentProperties,
+  real64 const & pressure,
+  real64 const & temperature,
+  arraySlice1d< real64 const, USD1 > const & phaseComposition,
+  real64 & molarDensity,
+  arraySlice1d< real64, USD2 > const & dMolarDensity,
+  real64 & massDensity,
+  arraySlice1d< real64, USD2 > const & dMassDensity,
+  bool useMass ) const
 {
   GEOS_UNUSED_VAR( useMass );
 

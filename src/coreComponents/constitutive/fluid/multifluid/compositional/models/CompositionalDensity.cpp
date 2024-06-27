@@ -26,6 +26,22 @@ namespace constitutive
 
 namespace compositional
 {
+CompositionalDensity::CompositionalDensity( string const & name,
+                                            ComponentProperties const & componentProperties,
+                                            integer const phaseIndex,
+                                            ModelParameters const & modelParameters )
+  : FunctionBase( name, componentProperties )
+{
+  EquationOfState const * equationOfState = modelParameters.get< EquationOfState >();
+  string const eosName = equationOfState->m_equationsOfStateNames[phaseIndex];
+  m_equationOfState = EnumStrings< EquationOfStateType >::fromString( eosName );
+
+  // Calculate the dimensional volume shift
+  m_componentDimensionalVolumeShift.resize( componentProperties.getNumberOfComponents());
+  calculateDimensionalVolumeShift( componentProperties,
+                                   m_equationOfState,
+                                   m_componentDimensionalVolumeShift );
+}
 
 CompositionalDensity::KernelWrapper
 CompositionalDensity::createKernelWrapper() const
