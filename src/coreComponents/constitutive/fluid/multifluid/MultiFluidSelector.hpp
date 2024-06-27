@@ -41,16 +41,21 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
-                               CompositionalTwoPhasePengRobinsonConstantViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid
-//                               ,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
+                               CO2BrinePhillipsThermalFluid,
+// Including these in a CUDA build will lead to compiler segfault.
+// Need to split compilation units for all the options
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
+                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+#endif
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -60,16 +65,21 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 {
   ConstitutivePassThruHandler< DeadOilFluid,
                                BlackOilFluid,
-                               CompositionalTwoPhasePengRobinsonConstantViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluidPVTPackage,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid
-                               //,CO2BrineEzrokhiThermalFluid   "Uncommenting this will lead to compiler segfault. Need to split compilation
-// units for all the options"
+                               CO2BrinePhillipsThermalFluid,
+// Including these in a CUDA build will lead to compiler segfault.
+// Need to split compilation units for all the options"
+#if !defined(GEOS_DEVICE_COMPILE)
+                               CO2BrineEzrokhiThermalFluid,
+                               CompositionalTwoPhasePengRobinsonLBCViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+#endif
+                               CompositionalTwoPhasePengRobinsonConstantViscosity,
+                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 

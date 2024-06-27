@@ -94,6 +94,8 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
       subRegion.registerField< fields::contact::fractureState >( getName() );
 
       subRegion.registerField< fields::contact::oldFractureState >( getName() );
+
+      subRegion.registerField< fields::contact::slip >( getName() );
     } );
 
   } );

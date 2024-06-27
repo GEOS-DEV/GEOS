@@ -1,6 +1,15 @@
 ####################################
+#
 # 3rd Party Dependencies
+#
+# Setup all GEOS TPL
+#
 ####################################
+
+
+################################
+# Helper macros & functions
+################################
 
 macro(find_and_import)
     set(singleValueArgs NAME HEADER)
@@ -101,7 +110,21 @@ macro(extract_version_from_header)
 
 endmacro( extract_version_from_header)
 
+
+macro(mandatory_tpl_doesnt_exist
+      CURRENT_TPL_NAME
+      CURRENT_TPL_DIR_VAR)
+
+    message(FATAL_ERROR
+            "GEOSX requires ${CURRENT_TPL_NAME}, either :\n"
+            "  - Verify that you provided a valid TPL installation directory (GEOSX_TPL_DIR = \"${GEOSX_TPL_DIR}\"),\n"
+            "  - Or set ${CURRENT_TPL_DIR_VAR} to the ${CURRENT_TPL_NAME} installation directory (${CURRENT_TPL_DIR_VAR} = \"${${CURRENT_TPL_DIR_VAR}}\").\n")
+
+endmacro(mandatory_tpl_doesnt_exist)
+
+
 set(thirdPartyLibs "")
+
 
 ################################
 # BLAS/LAPACK
@@ -163,7 +186,7 @@ if(DEFINED CONDUIT_DIR)
 
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
 else()
-    message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
+    mandatory_tpl_doesnt_exist("Conduit" CONDUIT_DIR)
 endif()
 
 ################################
@@ -194,7 +217,7 @@ if(DEFINED HDF5_DIR)
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
-    message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
+    mandatory_tpl_doesnt_exist("hdf5" HDF5_DIR)
 endif()
 
 ################################
@@ -238,7 +261,7 @@ if(DEFINED PUGIXML_DIR)
       set(thirdPartyLibs ${thirdPartyLibs} pugixml)
     endif()
 else()
-    message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
+    mandatory_tpl_doesnt_exist("pugixml" PUGIXML_DIR)
 endif()
 
 ################################
@@ -270,7 +293,7 @@ if(DEFINED RAJA_DIR)
     set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
-    message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
+    mandatory_tpl_doesnt_exist("RAJA" RAJA_DIR)
 endif()
 
 ################################
@@ -301,7 +324,7 @@ if(DEFINED UMPIRE_DIR)
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
-    message(FATAL_ERROR "GEOSX requires Umpire, set UMPIRE_DIR to the Umpire installation directory.")
+    mandatory_tpl_doesnt_exist("Umpire" UMPIRE_DIR)
 endif()
 
 
@@ -324,7 +347,7 @@ if(DEFINED CHAI_DIR)
     set(ENABLE_CHAI ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} chai)
 else()
-    message(FATAL_ERROR "GEOSX requires CHAI, set CHAI_DIR to the CHAI installation directory.")
+    mandatory_tpl_doesnt_exist("CHAI" CHAI_DIR)
 endif()
 
 ################################
@@ -581,7 +604,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
     endif()
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} )
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         find_package( rocblas REQUIRED )
         find_package( rocsolver REQUIRED )
@@ -768,7 +791,7 @@ if(DEFINED FMT_DIR)
 
     set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
 else()
-    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
+    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
 endif()
 
 ################################
@@ -845,24 +868,6 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
-################################
-# Fesapi
-################################
-# if(DEFINED FESAPI_DIR)
-#     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
-
-#     find_and_import(NAME FesapiCpp
-#                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
-#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
-#                  HEADER fesapi/nsDefinitions.h
-#                  LIBRARIES FesapiCpp
-#                  DEPENDS hdf5)
-
-#     set(FESAPI_DIR ON CACHE BOOL "")
-#     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
-# else()
-    message(STATUS "Not using Fesapi")
-# endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
