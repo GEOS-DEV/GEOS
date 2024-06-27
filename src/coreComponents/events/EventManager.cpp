@@ -21,6 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include <grpcpp/grpcpp.h>
 
 namespace geos
 {
@@ -177,6 +178,9 @@ bool EventManager::run( DomainPartition & domain )
 
       // Calculate the event and sub-event forecasts
       subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
+
+      auto channel =
+          grpc::CreateChannel("host", grpc::InsecureChannelCredentials());
 
       // Print debug information for logLevel >= 1
       GEOS_LOG_LEVEL_RANK_0( 1,

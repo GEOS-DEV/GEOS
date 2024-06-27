@@ -26,6 +26,10 @@ set( events_sources
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )
 
+if( ENABLE_GRPC )
+   set( dependencyList ${dependencyList} grpc )
+endif()
+
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}
                  HEADERS    ${events_headers}
