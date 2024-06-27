@@ -616,7 +616,7 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   {
     otherGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
   }
-  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) ); // I think that the data in n2pos, e2n, f2e was not necessarily sorted
+  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) ); // I think that the data in n2pos, e2n, f2e was not necessarily sorted, should double check this as sorting caused a bug in owned data
   GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) ); // ensure we added the correct amount of stuff
 
   // Now do owned data
@@ -725,13 +725,6 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
-  
-  // I think that the data in n2pos, e2n, f2e was not necessarily sorted
-  // Im not sure why you dont need to sort the other data? - Ask Thomas
-  // TODO: this may be a mistake, what we should do is make a copy and sort that, or sort the other data in the same order
-  // The sorted version is used later to compared the needed indices with the already available indices to determine what needs to be ghosted.
-  // However, sorting here I think makes it so that you no longer know which row in the global matrix each entry in the vectors corresponds to
-  // May have been working if everything was already sorted, so the sort was a no-op
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, intConv< std::size_t >( numEntriesPerRow.size() ) );
