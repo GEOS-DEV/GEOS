@@ -861,6 +861,29 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
     message(STATUS "Not using Fesapi")
 # endif()
 
+################################
+# GRPC
+################################
+if(DEFINED GRPC_DIR)
+    message(STATUS "GRPC_DIR = ${GRPC_DIR}")
+
+    find_and_register(NAME grpc
+                      INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
+                      LIBRARY_DIRECTORIES ${GRPC_DIR}/lib ${GRPC_DIR}/lib64
+                      HEADER grpcpp/grpcpp.h
+                      LIBRARIES grpc++ grpc++_reflection absl_log_internal_check_op absl_log_internal_message protobuf)
+
+    set(ENABLE_GRPC ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} grpc)
+else()
+    if(ENABLE_GRPC)
+        message(WARNING "ENABLE_GRPC is ON but GRPC_DIR isn't defined.")
+    endif()
+
+    set(ENABLE_GRPC OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using grpc.")
+endif()
+
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
 ###############################
