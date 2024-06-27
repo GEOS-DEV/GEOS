@@ -725,14 +725,13 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
   }
-  std::sort( std::begin( ownedGlbIdcs ), std::end( ownedGlbIdcs ) ); 
+  
   // I think that the data in n2pos, e2n, f2e was not necessarily sorted
   // Im not sure why you dont need to sort the other data? - Ask Thomas
   // TODO: this may be a mistake, what we should do is make a copy and sort that, or sort the other data in the same order
   // The sorted version is used later to compared the needed indices with the already available indices to determine what needs to be ghosted.
   // However, sorting here I think makes it so that you no longer know which row in the global matrix each entry in the vectors corresponds to
   // May have been working if everything was already sorted, so the sort was a no-op
-
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
   GEOS_ASSERT_EQ( numOwned, intConv< std::size_t >( numEntriesPerRow.size() ) );
@@ -1005,19 +1004,16 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
   // create a set containing the indices needed, i.e. the geometric entities belonging to other ranks (we use a set so we can later use set operations)
   std::set< TriGlbIdx > const allNeededIndices( std::cbegin( extractedIndices ), std::cend( extractedIndices ) );
-  // create a set which will contain the geometric entities that my neighbors will send me.
-  std::set< TriGlbIdx > receivedIndices;
 
-    GEOS_ASSERT_EQ( std::size( allNeededIndices ), numNeededIndices ); // we should not have lost anythng by converting to a set
-
-  // Fill receivedIndices by finding the needed indices for this rank which were not owned by this rank
-  std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
-                       std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ),
-                       std::inserter( receivedIndices, std::end( receivedIndices ) ) );
-
+  std::set< TriGlbIdx > receivedIndices;  // The graph nodes that my neighbors will send me.
+  {
+    std::set< TriGlbIdx > const tmp( std::cbegin( ownedGlbIdcs ), std::cend( ownedGlbIdcs ) );
+    std::set_difference( std::cbegin( allNeededIndices ), std::cend( allNeededIndices ),
+                         std::cbegin( tmp ), std::cend( tmp ),
+                         std::inserter( receivedIndices, std::end( receivedIndices ) ) );
+  }
   // of course, some of these indices were already communicated, they were the `present` data
-  // create a set of entities which are needed, but neither owned nor present by/on the current rank.
-  std::vector< TriGlbIdx > notPresentIndices;
+  std::vector< TriGlbIdx > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
                        std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
