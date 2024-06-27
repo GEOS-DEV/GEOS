@@ -450,6 +450,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
