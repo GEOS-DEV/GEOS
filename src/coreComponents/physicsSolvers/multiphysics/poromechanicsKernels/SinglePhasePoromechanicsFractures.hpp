@@ -43,7 +43,6 @@ struct StateUpdateKernel
    * @param[in] volume the volume
    * @param[out] deltaVolume the change in volume
    * @param[out] aperture the aperture
-   * @param[in] minimumHydraulicAperture the
    * @param[in] oldHydraulicAperture the old hydraulic aperture
    * @param[out] hydraulicAperture the effecture aperture
    * @param[in] fractureTraction the fracture traction
@@ -59,7 +58,6 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
-          arrayView1d< real64 const > const & minimumHydraulicAperture,
           arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 const > const & fractureTraction )
