@@ -197,7 +197,9 @@ void HDFHistoryIO::init( bool existsOkay )
   // create a dataset in the file if needed, don't erase file
   if( subcomm != MPI_COMM_NULL )
   {
+    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
     HDFFile target( m_filename, false, true, subcomm );
+    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
     bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
@@ -221,6 +223,7 @@ void HDFHistoryIO::init( bool existsOkay )
       maxFileDims[1] = H5S_UNLIMITED;
       hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
+      GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: {}, created hdf5 dataset {}.", m_filename, m_name ) );
       H5Dclose( dataset );
       H5Sclose( space );
       H5Pclose( dcplId );
@@ -233,6 +236,7 @@ void HDFHistoryIO::init( bool existsOkay )
     {
       GEOS_ERROR("Dataset (" + m_name + ") already exists in output file: " + m_filename);
     }
+    GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: closed file {}.", m_filename ) );
   }
 }
 
@@ -266,7 +270,10 @@ void HDFHistoryIO::write()
 
       if( m_subcomm != MPI_COMM_NULL )
       {
+        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opening file {}.", m_filename ) );
         HDFFile target( m_filename, false, true, m_subcomm );
+        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
+
         if ( !target.hasDataset( m_name ) )
         {
           GEOS_ERROR( "Attempted to write to a non-existent dataset: " + m_name );
@@ -295,6 +302,7 @@ void HDFHistoryIO::write()
         hid_t dxplId = H5Pcreate( H5P_DATASET_XFER );
         H5Pset_dxpl_mpio( dxplId, H5FD_MPIO_COLLECTIVE );
         H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, dxplId, dataBuffer );
+        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: wrote row {} of dataset '{}'.", m_writeHead, m_name ) );
         H5Pclose( dxplId );
 
         // forward the data buffer pointer to the start of the next row
@@ -312,14 +320,15 @@ void HDFHistoryIO::write()
         H5Sclose( memspace );
         H5Sclose( filespace );
         H5Dclose( dataset );
+        GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: closing file {}.", m_filename ) );
       }
-
       m_writeHead++;
     }
   }
   m_sizeChanged = false;
   m_localIdxCounts_buffered.clear( );
   emptyBuffer( );
+  MpiWrapper::barrier( m_comm );
 }
 
 void HDFHistoryIO::compressInFile()
@@ -357,6 +366,7 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
     H5Dset_extent( dataset, &maxFileDims[0] );
     H5Dclose( dataset );
   }
+  MpiWrapper::barrier( m_comm );
 }
 
 size_t HDFHistoryIO::getRowBytes()

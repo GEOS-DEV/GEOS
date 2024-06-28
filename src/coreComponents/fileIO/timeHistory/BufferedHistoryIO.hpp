@@ -72,6 +72,11 @@ public:
    *             is a shortcut that should eventually be fixed by keeping this information in the HDF5 buffer.
    */
   virtual localIndex getBufferedCount() = 0;
+
+  int getLogLevel() { return m_logLevel; }
+  void setLogLevel( int logLevel ) { m_logLevel = logLevel; }
+private:
+  int m_logLevel = 0;
 };
 
 }
