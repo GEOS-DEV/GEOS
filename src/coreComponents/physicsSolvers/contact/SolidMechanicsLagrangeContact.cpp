@@ -620,13 +620,10 @@ void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
   {
     /// assemble Kut
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
-//            std::cout << "assembleForceResidualDerivativeWrtTraction RHS " << localRhs[96609] << std::endl;
     /// assemble Ktu, Ktt blocks.
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
-//            std::cout << "assembleTractionResidualDerivativeWrtDisplacementAndTraction RHS " << localRhs[96609] << std::endl;
     /// assemble stabilization
     assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
-//        std::cout << "assembleStabilization RHS " << localRhs[96609] << std::endl;
   } );
 }
 
@@ -1808,8 +1805,6 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
                                                                                 nDof[1 - kf] );
               }
 
-//if(l  ocalRow==96609)
-//std::cout << "stab " <<localRhs[localRow + idof] << " " << rhs[idof] << std::endl;
               // residual
               RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow + idof], rhs[idof] );
             }
@@ -1948,7 +1943,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] )
               {
                 fractureState[kfe] = FractureState::Stick;
-                if( getLogLevel() >= 3 )
+                if( getLogLevel() >= 10 )
                   GEOS_LOG( GEOS_FMT( "{}: {} -> {}: dispJump = {}, normalDisplacementTolerance = {}",
                                       kfe, originalFractureState, fractureState[kfe],
                                       dispJump[kfe][0], normalDisplacementTolerance[kfe] ) );
@@ -1957,7 +1952,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
               fractureState[kfe] = FractureState::Open;
-              if( getLogLevel() >= 3 )
+              if( getLogLevel() >= 10 )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
                                     kfe, originalFractureState, fractureState[kfe],
                                     traction[kfe][0], normalTractionTolerance[kfe] ) );
@@ -1994,7 +1989,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               {
                 fractureState[kfe] = FractureState::Stick;
               }
-              if( getLogLevel() >= 3 && fractureState[kfe] != originalFractureState )
+              if( getLogLevel() >= 10 && fractureState[kfe] != originalFractureState )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: currentTau = {}, limitTau = {}",
                                     kfe, originalFractureState, fractureState[kfe],
                                     currentTau, limitTau ) );
