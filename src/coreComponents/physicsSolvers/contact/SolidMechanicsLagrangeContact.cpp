@@ -419,14 +419,14 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         minSlidingTolerance = std::min( minSlidingTolerance, minSubRegionSlidingTolerance.get() );
         maxSlidingTolerance = std::max( maxSlidingTolerance, maxSubRegionSlidingTolerance.get() );
         minNormalTractionTolerance = std::min( minNormalTractionTolerance, minSubRegionNormalTractionTolerance.get() );
-        maxNormalTractionTolerance = std::max( maxNormalTractionTolerance, maxSubRegionNormalTractionTolerance.get() );        
+        maxNormalTractionTolerance = std::max( maxNormalTractionTolerance, maxSubRegionNormalTractionTolerance.get() );
       }
     } );
   } );
 
   GEOS_LOG_LEVEL_RANK_0( 2, GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
-                                      this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance, 
-                                      minSlidingTolerance, maxSlidingTolerance, 
+                                      this->getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
+                                      minSlidingTolerance, maxSlidingTolerance,
                                       minNormalTractionTolerance, maxNormalTractionTolerance ) );
 }
 
@@ -776,8 +776,6 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
                 for( localIndex dim = 0; dim < 3; ++dim )
                 {
                   real64 const norm = localRhs[localRow + dim] / area[k];
-                  if(k<10)
-                    std::cout << localRow << " " << dim << " norm = " << " " << norm << " " << localRhs[localRow + dim] << " " << area[k] << std::endl;
                   stickSum += norm * norm;
                 }
                 break;
@@ -1253,8 +1251,6 @@ void SolidMechanicsLagrangeContact::
                   {
                     elemRHS[i] = Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
                   }
-                    if(kfe<10)
-                    std::cout << "elemRHS = " << elemRHS[i] << " " << Ja << " " << dispJump[kfe][i] << " " << previousDispJump[kfe][i] << std::endl;
                 }
 
                 for( localIndex kf = 0; kf < 2; ++kf )
@@ -1387,9 +1383,6 @@ void SolidMechanicsLagrangeContact::
           for( localIndex idof = 0; idof < 3; ++idof )
           {
             localRhs[localRow + idof] += elemRHS[idof];
-
-                  if(kfe<10)
-            std::cout << localRow << " " << idof << " " << localRhs[localRow + idof] << " " << elemRHS[idof] << std::endl;
 
             if( fractureState[kfe] != contact::FractureState::Open )
             {
@@ -1955,19 +1948,19 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               if( dispJump[kfe][0] <= -normalDisplacementTolerance[kfe] )
               {
                 fractureState[kfe] = FractureState::Stick;
-                if(getLogLevel() >= 3)
-                  GEOS_LOG(GEOS_FMT("{}: {} -> {}: dispJump = {}, normalDisplacementTolerance = {}", 
-                    kfe, originalFractureState, fractureState[kfe],
-                    dispJump[kfe][0], normalDisplacementTolerance[kfe]) );
+                if( getLogLevel() >= 3 )
+                  GEOS_LOG( GEOS_FMT( "{}: {} -> {}: dispJump = {}, normalDisplacementTolerance = {}",
+                                      kfe, originalFractureState, fractureState[kfe],
+                                      dispJump[kfe][0], normalDisplacementTolerance[kfe] ) );
               }
             }
             else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
               fractureState[kfe] = FractureState::Open;
-              if(getLogLevel() >= 3)
-                GEOS_LOG(GEOS_FMT("{}: {} -> {}: traction = {}, normalTractionTolerance = {}", 
-                  kfe, originalFractureState, fractureState[kfe],
-                  traction[kfe][0], normalTractionTolerance[kfe]) );
+              if( getLogLevel() >= 3 )
+                GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
+                                    kfe, originalFractureState, fractureState[kfe],
+                                    traction[kfe][0], normalTractionTolerance[kfe] ) );
             }
             else
             {
@@ -2001,10 +1994,10 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               {
                 fractureState[kfe] = FractureState::Stick;
               }
-              if(getLogLevel() >= 3 && fractureState[kfe] != originalFractureState)
-                GEOS_LOG(GEOS_FMT("{}: {} -> {}: currentTau = {}, limitTau = {}", 
-                  kfe, originalFractureState, fractureState[kfe],
-                  currentTau, limitTau) );
+              if( getLogLevel() >= 3 && fractureState[kfe] != originalFractureState )
+                GEOS_LOG( GEOS_FMT( "{}: {} -> {}: currentTau = {}, limitTau = {}",
+                                    kfe, originalFractureState, fractureState[kfe],
+                                    currentTau, limitTau ) );
             }
 
             changed += faceArea[kfe] * !compareFractureStates( originalFractureState, fractureState[kfe] );

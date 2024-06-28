@@ -70,14 +70,10 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-// TODO check negative
       real64 dHydraulicAperture_dNormalJump = 0.0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture(aperture[k], dHydraulicAperture_dNormalJump);
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
-
-      if(k<2)
-        std::cout << "dV = " << deltaVolume[k] << " " << hydraulicAperture[k] << " " << area[k] << " " << volume[k] << " " << minimumHydraulicAperture[k] << " " << aperture[k] << std::endl;
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
       real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );

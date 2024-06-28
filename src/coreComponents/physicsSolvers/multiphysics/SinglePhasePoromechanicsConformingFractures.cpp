@@ -739,36 +739,36 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-    string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
-    ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
+      string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
 
-    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
-    {
-      using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
-
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+        constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+        {
 
-        poromechanicsFracturesKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            porousMaterialWrapper,
-                                            contactWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            minimumHydraulicAperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction );
+          typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
+          poromechanicsFracturesKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              porousMaterialWrapper,
+                                              contactWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              minimumHydraulicAperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction );
+
+        } );
       } );
-    } );
     } );
   } );
 }
