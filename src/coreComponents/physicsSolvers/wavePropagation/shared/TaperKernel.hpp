@@ -72,44 +72,36 @@ struct TaperKernel
       real32 const dy = (3*vMax/2*dMin[1])*log(r)*pow(nodeCoords[a][1]/dMin[1],2);
       real32 const dz = (3*vMax/2*dMin[2])*log(r)*pow(nodeCoords[a][2]/dMin[2],2);
 
-      real32 d = dx;
-
-      if(dy < d)
+      if( xMin[0]>nodeCoords[a][0] )
       {
-        d = dy;
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
+        taperCoeff[a] = LvArray::math::exp(-dx*dt);
       }
-      if(dz < d)
+      else if( nodeCoords[a][0] > xMax[0] )
       {
-        d = dz;
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
+        taperCoeff[a] = LvArray::math::exp(-dx*dt);
       }
-
-      taperCoeff[a] = LvArray::math::exp(-d*dt);
-
-      // if( xMin[0]>nodeCoords[a][0] )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
-      //   taperCoeff[a] = LvArray::math::exp(-dx*dt);
-      // }
-      // else if( nodeCoords[a][0] > xMax[0] )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
-      // }
-      // else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
-      // }
-      // else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
-      // }
-      // else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
-      // }
-      // else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
-      // {
-      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
-      // }
+      else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
+      {
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
+        taperCoeff[a] = LvArray::math::exp(-dy*dt);
+      }
+      else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
+      {
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
+        taperCoeff[a] = LvArray::math::exp(-dy*dt);
+      }
+      else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
+      {
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
+        taperCoeff[a] = LvArray::math::exp(-dz*dt);
+      }
+      else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
+      {
+        //taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
+        taperCoeff[a] = LvArray::math::exp(-dz*dt);
+      }
 
     } );
   }
