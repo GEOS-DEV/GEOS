@@ -13,11 +13,11 @@
  */
 
 /**
- * @file ContactBase.hpp
+ * @file FrictionBase.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
-#define GEOS_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
@@ -31,15 +31,15 @@ namespace constitutive
 {
 
 /**
- * @class ContactBaseUpdates
+ * @class FrictionBaseUpdates
  *
  * This class is used for in-kernel contact relation updates
  */
-class ContactBaseUpdates
+class FrictionBaseUpdates
 {
 public:
 
-  ContactBaseUpdates( real64 const & penaltyStiffness,
+  FrictionBaseUpdates( real64 const & penaltyStiffness,
                       real64 const & shearStiffness,
                       real64 const & displacementJumpThreshold,
                       TableFunction const & apertureTable )
@@ -50,19 +50,19 @@ public:
   {}
 
   /// Default copy constructor
-  ContactBaseUpdates( ContactBaseUpdates const & ) = default;
+  FrictionBaseUpdates( FrictionBaseUpdates const & ) = default;
 
   /// Default move constructor
-  ContactBaseUpdates( ContactBaseUpdates && ) = default;
+  FrictionBaseUpdates( FrictionBaseUpdates && ) = default;
 
   /// Deleted default constructor
-  ContactBaseUpdates() = default;
+  FrictionBaseUpdates() = default;
 
   /// Deleted copy assignment operator
-  ContactBaseUpdates & operator=( ContactBaseUpdates const & ) = delete;
+  FrictionBaseUpdates & operator=( FrictionBaseUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  ContactBaseUpdates & operator=( ContactBaseUpdates && ) =  delete;
+  FrictionBaseUpdates & operator=( FrictionBaseUpdates && ) =  delete;
 
   /**
    * @brief Evaluate the effective aperture, and its derivative wrt aperture
@@ -148,13 +148,13 @@ protected:
 
 
 /**
- * @class ContactBase
+ * @class FrictionBase
  *
  * This class serves as the interface for implementing contact enforcement constitutive relations.
  * This does not include the actual enforcement algorithm, but only the constitutive relations that
  * govern the behavior of the contact. So things like penalty, or friction, or kinematic constraint.
  */
-class ContactBase : public ConstitutiveBase
+class FrictionBase : public ConstitutiveBase
 {
 public:
 
@@ -163,13 +163,13 @@ public:
    * @param name The name of the relation in the data repository
    * @param parent The name of the parent Group that holds this relation object.
    */
-  ContactBase( string const & name,
+  FrictionBase( string const & name,
                Group * const parent );
 
   /**
    * @brief default destructor
    */
-  virtual ~ContactBase() override;
+  virtual ~FrictionBase() override;
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -182,7 +182,7 @@ public:
 
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = ContactBaseUpdates;
+  using KernelWrapper = FrictionBaseUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -244,7 +244,7 @@ protected:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
+real64 FrictionBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
@@ -252,7 +252,7 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
+void FrictionBaseUpdates::addPressureToTraction( real64 const & pressure,
                                                 arraySlice1d< real64 > const & tractionVector,
                                                 real64 & dTraction_dPressure ) const
 {
@@ -265,4 +265,4 @@ void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_FRICTIONBASE_HPP_ */

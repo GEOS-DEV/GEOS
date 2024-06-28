@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file CoulombContact.cpp
+ *  @file CoulombFriction.cpp
  */
 
-#include "CoulombContact.hpp"
+#include "CoulombFriction.hpp"
 
 namespace geos
 {
@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CoulombContact::CoulombContact( string const & name, Group * const parent ):
+CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
   ContactBase( name, parent ),
   m_cohesion(),
   m_frictionCoefficient(),
@@ -48,10 +48,10 @@ CoulombContact::CoulombContact( string const & name, Group * const parent ):
 
 }
 
-CoulombContact::~CoulombContact()
+CoulombFriction::~CoulombFriction()
 {}
 
-void CoulombContact::postProcessInput()
+void CoulombFriction::postProcessInput()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
                  getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
@@ -59,7 +59,7 @@ void CoulombContact::postProcessInput()
 
 }
 
-void CoulombContact::allocateConstitutiveData( Group & parent,
+void CoulombFriction::allocateConstitutiveData( Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_elasticSlip.resize( 0, 2 );
@@ -68,9 +68,9 @@ void CoulombContact::allocateConstitutiveData( Group & parent,
 }
 
 
-CoulombContactUpdates CoulombContact::createKernelWrapper() const
+CoulombFrictionUpdates CoulombFriction::createKernelWrapper() const
 {
-  return CoulombContactUpdates( m_penaltyStiffness,
+  return CoulombFrictionUpdates( m_penaltyStiffness,
                                 m_shearStiffness,
                                 m_displacementJumpThreshold,
                                 *m_apertureTable,
@@ -79,7 +79,7 @@ CoulombContactUpdates CoulombContact::createKernelWrapper() const
                                 m_elasticSlip );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombFriction, string const &, Group * const )
 
 } /* namespace constitutive */
 

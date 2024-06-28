@@ -13,14 +13,16 @@
  */
 
 /**
- * @file ApertureTableContact.hpp
+ * @file HydraulicApertureTable.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
-#define GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_HYDRAULICAPERTURETABLE_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_HYDRAULICAPERTURETABLE_HPP_
 
-#include "constitutive/contact/ContactBase.hpp"
+#include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "physicsSolvers/contact/ContactFields.hpp"
+
 
 namespace geos
 {
@@ -29,65 +31,64 @@ namespace constitutive
 {
 
 /**
- * @class ApertureTableContactUpdates
+ * @class HydraulicApertureTableUpdates
  *
  * This class is used for in-kernel contact relation updates
  */
-class ApertureTableContactUpdates : public ContactBaseUpdates
+class HydraulicApertureTableUpdates
 {
 public:
 
-  ApertureTableContactUpdates( real64 const & penaltyStiffness,
-                               TableFunction const & apertureTable )
-    : ContactBaseUpdates( penaltyStiffness ),
+  HydraulicApertureTableUpdates( real64 const & penaltyStiffness,
+                      real64 const & shearStiffness,
+                      real64 const & displacementJumpThreshold,
+                      TableFunction const & apertureTable )
+    : m_penaltyStiffness( penaltyStiffness ),
+    m_shearStiffness( shearStiffness ),
+    m_displacementJumpThreshold( displacementJumpThreshold ),
     m_apertureTable( apertureTable.createKernelWrapper() )
   {}
 
   /// Default copy constructor
-  ApertureTableContactUpdates( ApertureTableContactUpdates const & ) = default;
+  HydraulicApertureTableUpdates( HydraulicApertureTableUpdates const & ) = default;
 
   /// Default move constructor
-  ApertureTableContactUpdates( ApertureTableContactUpdates && ) = default;
+  HydraulicApertureTableUpdates( HydraulicApertureTableUpdates && ) = default;
 
   /// Deleted default constructor
-  ApertureTableContactUpdates() = delete;
+  HydraulicApertureTableUpdates() = default;
 
   /// Deleted copy assignment operator
-  ApertureTableContactUpdates & operator=( ApertureTableContactUpdates const & ) = delete;
+  HydraulicApertureTableUpdates & operator=( HydraulicApertureTableUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  ApertureTableContactUpdates & operator=( ApertureTableContactUpdates && ) =  delete;
+  HydraulicApertureTableUpdates & operator=( HydraulicApertureTableUpdates && ) =  delete;
 
+  /**
+   * @brief Evaluate the effective aperture, and its derivative wrt aperture
+   * @param[in] aperture the model aperture/gap
+   * @param[out] dHydraulicAperture_dAperture the derivative of the effective aperture wrt aperture
+   * @return The hydraulic aperture that is always > 0
+   */
   GEOS_HOST_DEVICE
-  inline
-  virtual real64 computeEffectiveAperture( real64 const aperture,
-                                           real64 & dEffectiveAperture_dAperture ) const;
+  virtual real64 computeHydraulicAperture( real64 const aperture,
+                                           real64 & dHydraulicAperture_dAperture ) const;
 
-  GEOS_HOST_DEVICE
-  inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
-                                arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const;
-
-  GEOS_HOST_DEVICE
-  inline
-  void addPressureToTraction( real64 const & pressure,
-                              bool const isOpen,
-                              arraySlice1d< real64 >const & tractionVector,
-                              real64 & dTraction_dPressure ) const;
-
-private:
+protected:
 
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
-
 };
 
 
 /**
- * @class ApertureTableContact
+ * @class HydraulicApertureTable
+ *
+ * This class serves as the interface for implementing contact enforcement constitutive relations.
+ * This does not include the actual enforcement algorithm, but only the constitutive relations that
+ * govern the behavior of the contact. So things like penalty, or friction, or kinematic constraint.
  */
-class ApertureTableContact : public ContactBase
+class HydraulicApertureTable : public ConstitutiveBase
 {
 public:
 
@@ -96,30 +97,21 @@ public:
    * @param name The name of the relation in the data repository
    * @param parent The name of the parent Group that holds this relation object.
    */
-  ApertureTableContact( string const & name,
-                        Group * const parent );
+  HydraulicApertureTable( string const & name,
+               Group * const parent );
 
   /**
    * @brief default destructor
    */
-  virtual ~ApertureTableContact() override;
+  virtual ~HydraulicApertureTable() override;
 
-  /**
-   * @brief Name that is used to register this a type of "ApertureTableContact" in the object catalog
-   * @return See description
-   */
-  static string catalogName() { return "Contact"; }
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual string getCatalogName() const override { return catalogName(); }
 
-  /**
-   * @brief accessor for aperture tolerance
-   * @return the aperture tolerance
-   */
-  real64 apertureTolerance() const { return m_apertureTolerance; }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = ApertureTableContactUpdates;
+  using KernelWrapper = HydraulicApertureTableUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -140,7 +132,6 @@ public:
   };
 
 protected:
-
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
@@ -151,6 +142,8 @@ protected:
    */
   void validateApertureTable( TableFunction const & apertureTable ) const;
 
+
+
   /// The aperture tolerance to avoid floating point errors in expressions involving aperture
   real64 m_apertureTolerance;
 
@@ -159,19 +152,18 @@ protected:
 
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
-
 };
 
 GEOS_HOST_DEVICE
-real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const aperture,
-                                                              real64 & dEffectiveAperture_dAperture ) const
+GEOS_FORCE_INLINE
+real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const aperture,
+                                                     real64 & dHydraulicAperture_dAperture ) const
 {
-  return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
-
 
 } /* namespace constitutive */
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_HYDRAULICAPERTURETABLE_HPP_ */

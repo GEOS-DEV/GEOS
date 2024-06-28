@@ -13,11 +13,11 @@
  */
 
 /**
- *  @file CoulombContact.hpp
+ *  @file CoulombFriction.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
-#define GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_
 
 #include "ContactBase.hpp"
 
@@ -28,15 +28,15 @@ namespace constitutive
 {
 
 /**
- * @class CoulombContactUpdates
+ * @class CoulombFrictionUpdates
  *
  * This class is used for in-kernel contact relation updates
  */
-class CoulombContactUpdates : public ContactBaseUpdates
+class CoulombFrictionUpdates : public ContactBaseUpdates
 {
 public:
 
-  CoulombContactUpdates( real64 const & penaltyStiffness,
+  CoulombFrictionUpdates( real64 const & penaltyStiffness,
                          real64 const & shearStiffness,
                          real64 const & displacementJumpThreshold,
                          TableFunction const & apertureTable,
@@ -50,19 +50,19 @@ public:
   {}
 
   /// Default copy constructor
-  CoulombContactUpdates( CoulombContactUpdates const & ) = default;
+  CoulombFrictionUpdates( CoulombFrictionUpdates const & ) = default;
 
   /// Default move constructor
-  CoulombContactUpdates( CoulombContactUpdates && ) = default;
+  CoulombFrictionUpdates( CoulombFrictionUpdates && ) = default;
 
   /// Deleted default constructor
-  CoulombContactUpdates() = delete;
+  CoulombFrictionUpdates() = delete;
 
   /// Deleted copy assignment operator
-  CoulombContactUpdates & operator=( CoulombContactUpdates const & ) = delete;
+  CoulombFrictionUpdates & operator=( CoulombFrictionUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  CoulombContactUpdates & operator=( CoulombContactUpdates && ) =  delete;
+  CoulombFrictionUpdates & operator=( CoulombFrictionUpdates && ) =  delete;
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -104,11 +104,11 @@ private:
 
 
 /**
- * @class CoulombContact
+ * @class CoulombFriction
  *
- * Class to provide a CoulombContact friction model.
+ * Class to provide a CoulombFriction friction model.
  */
-class CoulombContact : public ContactBase
+class CoulombFriction : public ContactBase
 {
 public:
 
@@ -117,12 +117,12 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  CoulombContact( string const & name, Group * const parent );
+  CoulombFriction( string const & name, Group * const parent );
 
   /**
    * Default Destructor
    */
-  virtual ~CoulombContact() override;
+  virtual ~CoulombFriction() override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -156,7 +156,7 @@ public:
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = CoulombContactUpdates;
+  using KernelWrapper = CoulombFrictionUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -198,7 +198,7 @@ private:
 
 
 GEOS_HOST_DEVICE
-real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
   dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
@@ -207,7 +207,7 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 
 
 GEOS_HOST_DEVICE
-inline void CoulombContactUpdates::computeTraction( localIndex const k,
+inline void CoulombFrictionUpdates::computeTraction( localIndex const k,
                                                     arraySlice1d< real64 const > const & oldDispJump,
                                                     arraySlice1d< real64 const > const & dispJump,
                                                     integer const & fractureState,
@@ -290,7 +290,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline void CoulombContactUpdates::updateFractureState( localIndex const k,
+inline void CoulombFrictionUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & dispJump,
                                                         arraySlice1d< real64 const > const & tractionVector,
                                                         integer & fractureState ) const
@@ -324,4 +324,4 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_ */

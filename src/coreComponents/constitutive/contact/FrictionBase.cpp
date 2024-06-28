@@ -13,10 +13,10 @@
  */
 
 /**
- * @file ContactBase.cpp
+ * @file FrictionBase.cpp
  */
 
-#include "ContactBase.hpp"
+#include "FrictionBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -28,7 +28,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ContactBase::ContactBase( string const & name,
+FrictionBase::FrictionBase( string const & name,
                           Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_apertureTable( nullptr )
@@ -63,11 +63,11 @@ ContactBase::ContactBase( string const & name,
     setDescription( "Name of the aperture table" );
 }
 
-ContactBase::~ContactBase()
+FrictionBase::~FrictionBase()
 {}
 
 
-void ContactBase::postProcessInput()
+void FrictionBase::postProcessInput()
 {
 
   GEOS_THROW_IF( m_apertureTableName.empty(),
@@ -75,11 +75,11 @@ void ContactBase::postProcessInput()
 
 }
 
-void ContactBase::initializePreSubGroups()
+void FrictionBase::initializePreSubGroups()
 {}
 
 
-void ContactBase::allocateConstitutiveData( Group & parent,
+void FrictionBase::allocateConstitutiveData( Group & parent,
                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -132,7 +132,7 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 }
 
 
-void ContactBase::validateApertureTable( TableFunction const & apertureTable ) const
+void FrictionBase::validateApertureTable( TableFunction const & apertureTable ) const
 {
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();
   arrayView1d< real64 const > const & hydraulicApertureValues = apertureTable.getValues();
@@ -162,9 +162,9 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
 
 
 
-ContactBaseUpdates ContactBase::createKernelWrapper() const
+FrictionBaseUpdates FrictionBase::createKernelWrapper() const
 {
-  return ContactBaseUpdates( m_penaltyStiffness,
+  return FrictionBaseUpdates( m_penaltyStiffness,
                              m_shearStiffness,
                              m_displacementJumpThreshold,
                              *m_apertureTable );
