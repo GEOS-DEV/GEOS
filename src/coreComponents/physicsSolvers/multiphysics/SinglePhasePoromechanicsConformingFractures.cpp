@@ -218,9 +218,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::assembleCouplin
   {
     /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
     assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
-//            std::cout << "assembleForceResidualDerivativeWrtPressure RHS " << localRhs[96609] << std::endl;
     assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
-//            std::cout << "assembleFluidMassResidualDerivativeWrtDisplacement RHS " << localRhs[96609] << std::endl;
   } );
 }
 
