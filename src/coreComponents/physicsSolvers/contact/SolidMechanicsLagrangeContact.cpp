@@ -750,12 +750,6 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
       arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
-//    string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-//    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
-//
-//    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
-//    {
-
       RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
       RAJA::ReduceSum< parallelHostReduce, real64 > slipSum( 0.0 );
       RAJA::ReduceMax< parallelHostReduce, real64 > slipMax( 0.0 );
@@ -805,7 +799,6 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
       slipNormalizer = LvArray::math::max( slipNormalizer, slipMax.get());
       openResidual += openSum.get();
       openNormalizer = LvArray::math::max( openNormalizer, openMax.get());
-//            } );
     } );
   } );
 
