@@ -46,12 +46,12 @@ public:
    * @param region the region for which we want to select the cell-blocks.
    * @return the selected cell-blocks names.
    */
-  std::set< string > selectRegionCellBlocks( CellElementRegion const & region );
+  std::set< string > buildRegionCellBlocksSelection( CellElementRegion const & region );
 
   /**
    * @throw An InputError if region cell-blocks selections is inconsistent:
-   *        - cellBlock is in more than one region,
-   *        - orphan cellBlock
+   *        - cell-block is in more than one region,
+   *        - orphan cell-block
    * @todo For now, multiple regions per cell is not supported (ElementRegionManager::getCellBlockToSubRegionMap()).
    *       We could refactor the CellElementRegion & Mesh classes so regions are mapped to cell-blocks IN the mesh (and potentially
    *       to multiple regions per cell). So, for external meshes, the cell-blocks would no longer be exposed to the final user.
@@ -70,25 +70,45 @@ private:
   std::map< string, std::vector< CellElementRegion const * > > m_regionAttributeOwners;
 
 
-  std::set< string > getFNMatchPatterns( CellElementRegion const & region,
-                                         std::set< integer > const & requestedAttributeValues,
-                                         std::set< string > const & requestedMatchPatterns ) const;
-
-  std::set< string > getFNMatchSelection( CellElementRegion const & region,
-                                          std::set< string > const & requestedMatchPatterns ) const;
-
-  std::set< string > getOneByOneSelection( CellElementRegion const & region,
-                                           std::set< string > const & requestedCellBlockNames ) const;
+  /**
+   * @return A set of the FNMatch pattern from the provided lists.
+   * @param region The region for which we collect the match-patterns.
+   * @param requestedAttributeValues The user requested attribute values. They will get converted to
+   *                                 match-pattern that select the coresponding cell-blocks.
+   * @param requestedMatchPatterns The match patterns that the user requested explicitely.
+   * @throw An InputError if the attribute values does not exist in the mesh.
+   */
+  std::set< string > buildMatchPatterns( CellElementRegion const & region,
+                                         std::set< integer > const & attributeValues,
+                                         std::set< string > const & matchPatterns ) const;
 
   /**
-   * @brief Select the specified cell-blocks & region for the specified region.
+   * @return A set of the cell-blocks that the provided match-patterns select.
+   * @param region The region for which we collect the cell-blocks.
+   * @param matchPatterns The FNMatch pattern set.
+   * @throw An InputError if a FNMatch pattern does not select any cell-block.
+   */
+  std::set< string > getMatchingCellblocks( CellElementRegion const & region,
+                                            std::set< string > const & matchPatterns ) const;
+
+  /**
+   * @brief A set of the cell-blocks that the provided match-patterns select.
+   * @param region The region for which we collect the cell-blocks.
+   * @param matchPatterns The FNMatch pattern set.
+   * @throw An InputError if a FNMatch pattern does not select any cell-block.
+   */
+  void verifyRequestedCellBlocks( CellElementRegion const & region,
+                                  std::set< string > const & cellBlockNames ) const;
+
+  /**
+   * @brief Effectively select the specified cell-blocks & region attribute for the specified region.
    * @param region The region for which when want to select cell-blocks
    * @param attributeValues The attribute values we want to select (can be empty).
    * @param cellBlockNames The cell-block names we want to select (can be empty).
    */
-  void selectRegionCellBlocks( CellElementRegion const & region,
-                               std::set< integer > const & attributeValues,
-                               std::set< string > const & cellBlockNames );
+  void registerRegionSelection( CellElementRegion const & region,
+                                std::set< integer > const & attributeValues,
+                                std::set< string > const & cellBlockNames );
 
 };
 

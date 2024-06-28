@@ -128,7 +128,7 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     CellElementRegionSelector cellBlockSelector{ cellBlocks };
     this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
     {
-      std::set< string > selectedCellBlocks = cellBlockSelector.selectRegionCellBlocks( elemRegion );
+      std::set< string > selectedCellBlocks = cellBlockSelector.buildRegionCellBlocksSelection( elemRegion );
       elemRegion.clearCellBlockNames();
       elemRegion.addCellBlockNames( selectedCellBlocks );
 

@@ -62,7 +62,7 @@ string joinMapKeys( Map map, S const & delim = S() )
 
 
 std::set< string >
-CellElementRegionSelector::getFNMatchPatterns( CellElementRegion const & region,
+CellElementRegionSelector::buildMatchPatterns( CellElementRegion const & region,
                                                std::set< integer > const & requestedAttributeValues,
                                                std::set< string > const & requestedMatchPatterns ) const
 {
@@ -95,11 +95,11 @@ CellElementRegionSelector::getFNMatchPatterns( CellElementRegion const & region,
 }
 
 std::set< string >
-CellElementRegionSelector::getFNMatchSelection( CellElementRegion const & region,
-                                                std::set< string > const & requestedMatchPatterns ) const
+CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
+                                                  std::set< string > const & matchPatterns ) const
 {
   std::set< string > matchedCellBlocks;
-  for( string const & matchPattern : requestedMatchPatterns )
+  for( string const & matchPattern : matchPatterns )
   {
     bool matching = false;
     for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
@@ -122,12 +122,11 @@ CellElementRegionSelector::getFNMatchSelection( CellElementRegion const & region
   return matchedCellBlocks;
 }
 
-std::set< string >
-CellElementRegionSelector::getOneByOneSelection( CellElementRegion const & region,
-                                                 std::set< string > const & requestedCellBlocks ) const
+void
+CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & region,
+                                                      std::set< string > const & cellBlockNames ) const
 {
-  std::set< string > oneByOneCellBlocks;
-  for( string const & requestedCellBlockName : requestedCellBlocks )
+  for( string const & requestedCellBlockName : cellBlockNames )
   {
     // if cell block does not exist in the mesh
     GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
@@ -136,13 +135,30 @@ CellElementRegionSelector::getOneByOneSelection( CellElementRegion const & regio
                              requestedCellBlockName,
                              joinMapKeys( m_cellBlocksOwners, ", " ) ),
                    InputError );
-    oneByOneCellBlocks.insert( requestedCellBlockName );
   }
-  return oneByOneCellBlocks;
 }
 
 
-std::set< string > CellElementRegionSelector::selectRegionCellBlocks( CellElementRegion const & region )
+void
+CellElementRegionSelector::registerRegionSelection( CellElementRegion const & region,
+                                                    std::set< integer > const & attributeValues,
+                                                    std::set< string > const & cellBlockNames )
+{
+  for( integer attributeValue : attributeValues )
+  {
+    string attributeValueStr = std::to_string( attributeValue );
+    m_regionAttributeOwners[attributeValueStr].push_back( &region );
+  }
+
+  for( string const & cellBlockName : cellBlockNames )
+  {
+    m_cellBlocksOwners[cellBlockName].push_back( &region );
+  }
+}
+
+
+std::set< string >
+CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion const & region )
 {
   auto toStdSet = []( auto const & array ) {
     using ArrayElementType = std::decay_t< decltype( *array.data() ) >;
@@ -173,30 +189,15 @@ std::set< string > CellElementRegionSelector::selectRegionCellBlocks( CellElemen
                            ViewKeys::cellBlockMatchPatternsString() ),
                  InputError );
 
-  std::set< string > const matchPatterns = getFNMatchPatterns( region, requestedAttributeValues, requestedMatchPatterns );
-  std::set< string > const matchedCellBlocks = getFNMatchSelection( region, matchPatterns );
-  std::set< string > cellBlocksSelection = getOneByOneSelection( region, requestedCellBlock );
+  std::set< string > const matchPatterns = buildMatchPatterns( region, requestedAttributeValues, requestedMatchPatterns );
+  std::set< string > const matchedCellBlocks = getMatchingCellblocks( region, matchPatterns );
+  std::set< string > cellBlocksSelection = requestedCellBlock;
   cellBlocksSelection.insert( matchedCellBlocks.begin(), matchedCellBlocks.end() );
+  verifyRequestedCellBlocks( region, cellBlocksSelection );
 
-  selectRegionCellBlocks( region, requestedAttributeValues, cellBlocksSelection );
+  registerRegionSelection( region, requestedAttributeValues, cellBlocksSelection );
 
   return cellBlocksSelection;
-}
-
-void CellElementRegionSelector::selectRegionCellBlocks( CellElementRegion const & region,
-                                                        std::set< integer > const & attributeValues,
-                                                        std::set< string > const & cellBlockNames )
-{
-  for( integer attributeValue : attributeValues )
-  {
-    string attributeValueStr = std::to_string( attributeValue );
-    m_regionAttributeOwners[attributeValueStr].push_back( &region );
-  }
-
-  for( string const & cellBlockName : cellBlockNames )
-  {
-    m_cellBlocksOwners[cellBlockName].push_back( &region );
-  }
 }
 
 void CellElementRegionSelector::checkSelectionConsistency() const

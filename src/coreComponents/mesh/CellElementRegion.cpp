@@ -77,12 +77,19 @@ CellElementRegion::~CellElementRegion()
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
   Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
-  for( string const & cbName : m_cellBlockNames )
+  for( string const & cellBlockName : m_cellBlockNames )
   {
-    CellBlockABC const & cellBlock = cellBlocks.getGroup< CellBlockABC >( cbName );
+    CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cellBlockName );
+    GEOS_THROW_IF( cellBlock == nullptr,
+                   GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
+                             getWrapperDataContext( viewKeyStruct::sourceCellBlockNamesString() ),
+                             cellBlockName,
+                             stringutilities::join( m_cellBlockNames, ", " ) ),
+                   InputError );
+
     // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
-    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );
-    subRegion.copyFromCellBlock( cellBlock );
+    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cellBlockName );
+    subRegion.copyFromCellBlock( *cellBlock );
   }
 }
 
