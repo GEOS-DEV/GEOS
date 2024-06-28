@@ -159,11 +159,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     }
   }
 
-  if( m_useTaper==1 )
-  {
-    arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, taperCoeff );
-  }
+ 
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
@@ -176,6 +172,14 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
     arrayView1d< integer const > const elemGhostRank = elementSubRegion.ghostRank();
+
+    if( m_useTaper==1 )
+    {
+      //arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+      //real32 vMax = LvArray::math::max(velocity);
+      arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, 1500.0, m_reflectivityCoeff, taperCoeff );
+    } 
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );

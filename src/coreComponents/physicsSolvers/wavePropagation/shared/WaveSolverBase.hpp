@@ -119,6 +119,7 @@ public:
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
     static constexpr char const * useTaperString() {return "useTaper";}
+    static constexpr char const * reflectivityCoeffString() {return "reflectivityCoeff";}
     static constexpr char const * xMinTaperString() {return "xMinTaper";}
     static constexpr char const * xMaxTaperString() {return "xMaxTaper";}
     static constexpr char const * thicknessMinXYZTaperString() {return "thicknessMinXYZTaper";}
@@ -373,6 +374,8 @@ protected:
   /// Thickness of the PML region, used to compute the damping profile
   R1Tensor32 m_thicknessMinXYZTaper;
   R1Tensor32 m_thicknessMaxXYZTaper;
+
+  real32 m_reflectivityCoeff;
 
   struct parametersPML
   {

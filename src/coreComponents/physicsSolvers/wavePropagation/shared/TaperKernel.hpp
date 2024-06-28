@@ -58,36 +58,58 @@ struct TaperKernel
                      R1Tensor32 const xMax,
                      R1Tensor32 const dMin,
                      R1Tensor32 const dMax,
+                     real32 const dt,
+                     real32 const vMax,
+                     real32 const r,
                      arrayView1d< real32 > const taperCoeff )
   {
     /// Loop over elements in the subregion, 'l' is the element index within the target set
-    real32 tmp=0.0001;
+
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      if( xMin[0]>nodeCoords[a][0] )
+
+      real32 const dx = (3*vMax/2*dMin[0])*log(r)*pow(nodeCoords[a][0]/dMin[0],2);
+      real32 const dy = (3*vMax/2*dMin[1])*log(r)*pow(nodeCoords[a][1]/dMin[1],2);
+      real32 const dz = (3*vMax/2*dMin[2])*log(r)*pow(nodeCoords[a][2]/dMin[2],2);
+
+      real32 d = dx;
+
+      if(dy < d)
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
+        d = dy;
       }
-      else if( nodeCoords[a][0] > xMax[0] )
+      if(dz < d)
       {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
+        d = dz;
       }
-      else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
-      }
-      else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
-      }
-      else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
-      }
-      else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
-      {
-        taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
-      }
+
+      taperCoeff[a] = LvArray::math::exp(-d*dt);
+
+      // if( xMin[0]>nodeCoords[a][0] )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[0]-nodeCoords[a][0])*(dMin[0]-nodeCoords[a][0]));
+      //   taperCoeff[a] = LvArray::math::exp(-dx*dt);
+      // }
+      // else if( nodeCoords[a][0] > xMax[0] )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[0]-nodeCoords[a][0])*(xMax[0]-nodeCoords[a][0]));
+      // }
+      // else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[1]-nodeCoords[a][1])*(dMin[1]-nodeCoords[a][1]));
+      // }
+      // else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[1]-nodeCoords[a][1])*(xMax[1]-nodeCoords[a][1]));
+      // }
+      // else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(dMin[2]-nodeCoords[a][2])*(dMin[2]-nodeCoords[a][2]));
+      // }
+      // else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
+      // {
+      //   taperCoeff[a] = LvArray::math::exp( -0.0000003*(xMax[2]-nodeCoords[a][2])*(xMax[2]-nodeCoords[a][2]));
+      // }
 
     } );
   }
