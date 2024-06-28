@@ -55,11 +55,14 @@ std::map< GI, toLocIdx_t< GI > > buildGlobalToLocalMap( std::set< GI > const & g
   return g2l;
 }
 
+// Consolidate the mesh graphs on the current rank into one object
 MeshGraph mergeMeshGraph( MeshGraph const & owned,
                           MeshGraph const & present,
                           MeshGraph const & ghosts )
 {
+  // inititalize the consolidated version with owned
   MeshGraph result{ owned };
+  // insert the present and ghost data
   for( MeshGraph const & graph: { present, ghosts } )
   {
     result.c2f.insert( std::cbegin( graph.c2f ), std::cend( graph.c2f ) );
@@ -89,6 +92,7 @@ struct UpwardMappings
   std::map< NodeLocIdx, std::vector< CellLocIdx > > n2c;
 };
 
+// converts generic map to arrayOfArrays
 template< class T, class U >
 ArrayOfArrays< localIndex > convertToAoA( std::map< T, std::vector< U > > const & t2u )
 {
@@ -138,6 +142,7 @@ array2d< localIndex, P > convertToA2d( std::map< T, std::vector< U > > const & t
   return t2u_;
 }
 
+// converts map to unordered map
 template< class GI >
 unordered_map< globalIndex, localIndex > convertGlobalToLocalMap( std::map< GI, toLocIdx_t< GI > > const & g2l )
 {
@@ -150,6 +155,7 @@ unordered_map< globalIndex, localIndex > convertGlobalToLocalMap( std::map< GI, 
   return g2l_;
 }
 
+// removes MPIRank typed int, changes from std::vector to array1d
 template< typename LI >
 std::map< integer, array1d< localIndex > > toFlavorlessMapping( std::map< MpiRank, std::vector< LI > > const & input )
 {
@@ -219,6 +225,8 @@ FaceMgrImpl makeFlavorlessFaceMgrImpl( std::size_t const & numFaces,
                       toFlavorlessMapping( recv ) );
 }
 
+// Function to create a nodeManager from our local upward mapping data
+// By flavorless, we are indicating that we are changing data-structures to GEOS ones, etc
 NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
                                        std::map< NodeGlbIdx, std::array< double, 3 > > const & n2pos,
                                        std::map< NodeLocIdx, std::vector< EdgeLocIdx > > const & n2e,
@@ -282,6 +290,7 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
   DownwardMappings res;
 
   // Building the `e2n` (edges to nodes) mapping
+  // Simply looping through the meshgraph and converting to local indices
   for( auto const & [egi, ngis]: graph.e2n )
   {
     NodeLocIdx const nli0 = g2l.nodes.at( std::get< 0 >( ngis ) );
@@ -290,8 +299,10 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
   }
 
   // Building the `f2n` (face to nodes) and `f2e` (faces to edges) mappings
+  // Loop through meshgraph
   for( auto const & [fgi, edgeInfos]: graph.f2e )
   {
+    // convert to face local index
     FaceLocIdx const & fli = g2l.faces.at( fgi );
 
     std::vector< NodeLocIdx > & nodes = res.f2n[fli];
@@ -300,18 +311,23 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
     nodes.reserve( std::size( edgeInfos ) );
     edges.reserve( std::size( edgeInfos ) );
 
+    // Loop over the edges connected to the face
     for( EdgeInfo const & edgeInfo: edgeInfos )
     {
+      // use the meshgraph again to go from edge to node, convert to local indices to fill face2node
       std::tuple< NodeGlbIdx, NodeGlbIdx > const & ngis = graph.e2n.at( edgeInfo.index );
       nodes.emplace_back( edgeInfo.start == 0 ? g2l.nodes.at( std::get< 0 >( ngis ) ) : g2l.nodes.at( std::get< 1 >( ngis ) ) );
 
+      // just convert edge global id to local to fill face2edge
       edges.emplace_back( g2l.edges.at( edgeInfo.index ) );
     }
   }
 
   // Building the `c2n` (cell to nodes), `c2e` (cell to edges) and `c2f` (cell to faces) mappings
+  // loop thorugh meshgraph cells2face
   for( auto const & [cgi, faceInfos]: graph.c2f )
   {
+    // convert to cell local index
     CellLocIdx const & cli = g2l.cells.at( cgi );
 
     std::vector< FaceLocIdx > & faces = res.c2f[cli];
@@ -321,12 +337,14 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
     edges.reserve( std::size( faceInfos ) );
 
     // c2f
+    // simple conversion of global to local index is all thats needed
     for( FaceInfo const & faceInfo: faceInfos )
     {
       faces.emplace_back( g2l.faces.at( faceInfo.index ) );
     }
 
     // c2e
+    // loop over the faces in the cell and collect all their edges
     std::set< EdgeLocIdx > tmpEdges;
     for( FaceLocIdx const & fli: faces )
     {
@@ -336,16 +354,19 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
     edges.assign( std::cbegin( tmpEdges ), std::cend( tmpEdges ) );
 
     // c2n
+    // Note how we are hard-coded for hexs
     FaceInfo const & bottomFace = faceInfos.at( 4 ); // (0, 3, 2, 1) // TODO depends on element type.
     FaceInfo const & topFace = faceInfos.at( 5 ); // (4, 5, 6, 7)
 
     std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( g2l.faces.at( bottomFace.index ) );
     std::vector< NodeLocIdx > const & topNodes = res.f2n.at( g2l.faces.at( topFace.index ) );
 
+    // reserFaceNodes resets the order using the flipped and start info
     std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
     std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
 
     // TODO carefully check the ordering...
+    // looks like this is geos order
     std::array< NodeLocIdx, 8 > const tmp{ bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
     res.c2n[cli] = { tmp[0], tmp[1], tmp[3], tmp[2], tmp[4], tmp[5], tmp[7], tmp[6] };
   }
@@ -494,8 +515,12 @@ void buildPods( MeshGraph const & owned,
                 GhostSend const & send,
                 MeshMappingImpl & meshMappings )
 {
+  // start by merging the 3 mesh graphs for the different types of data on the graph into 1 struct
   MeshGraph const graph = mergeMeshGraph( owned, present, ghosts );
 
+  // create GlobalToLocal, which maps global IDs to rank local IDs for (nodes, edges, faces, cells)
+  // mapKeys is just a utility which extracts keys
+  // buildGlobalToLocalMap just takes the global ids and maps them to 1, 2, 3, ...
   GlobalToLocal const g2l{
     buildGlobalToLocalMap( mapKeys< std::set >( graph.n2pos ) ),
     buildGlobalToLocalMap( mapKeys< std::set >( graph.e2n ) ),
@@ -503,9 +528,17 @@ void buildPods( MeshGraph const & owned,
     buildGlobalToLocalMap( mapKeys< std::set >( graph.c2f ) )
   };
 
+  // Now we build the mappings used by GEOS
+  // Downward - edges2nodes, faces2edges, faces2nodes, cells2faces, cells2edges, cells2nodes
+  // The difference is that these use local indices, thus we built g2l
+  // there are assumptions that we are working on hexs here
   DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
+  // invert to downward mappings to get e2f, f2c, n2e, n2f, n2c
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
 
+  // Now we can make our node manager
+  // NodeMgrImpl inherits from nodeManager (see pods.hpp) (interface with getters and setters)
+  // We basically have all the data, this function just casts it into the proper GEOS types
   NodeMgrImpl nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
                                                    graph.n2pos,
                                                    upwardMappings.n2e,
@@ -514,14 +547,14 @@ void buildPods( MeshGraph const & owned,
                                                    g2l.nodes,
                                                    invertGhostSend( send.nodes, g2l.nodes ),
                                                    invertGhostRecv( recv.nodes, g2l.nodes ) );
-
+  // same for edge manager
   EdgeMgrImpl edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
                                                    downwardMappings.e2n,
                                                    upwardMappings.e2f,
                                                    g2l.edges,
                                                    invertGhostSend( send.edges, g2l.edges ),
                                                    invertGhostRecv( recv.edges, g2l.edges ) );
-
+  // same for face manager
   FaceMgrImpl faceMgr = makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
                                                    downwardMappings.f2n,
                                                    downwardMappings.f2e,
@@ -529,7 +562,7 @@ void buildPods( MeshGraph const & owned,
                                                    g2l.faces,
                                                    invertGhostSend( send.faces, g2l.faces ),
                                                    invertGhostRecv( recv.faces, g2l.faces ) );
-
+  // same for cell block
   CellBlkImpl cellBlock = makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
                                                      downwardMappings.c2n,
                                                      downwardMappings.c2e,
@@ -537,9 +570,9 @@ void buildPods( MeshGraph const & owned,
                                                      g2l.cells,
                                                      invertGhostSend( send.cells, g2l.cells ),
                                                      invertGhostRecv( recv.cells, g2l.cells ) );
-
   CellMgrImpl cellMgr( std::move( cellBlock ) );
 
+  // populate meshMappings with the created managers
   meshMappings.setCellMgr( std::move( cellMgr ) );
   meshMappings.setEdgeMgr( std::move( edgeMgr ) );
   meshMappings.setFaceMgr( std::move( faceMgr ) );

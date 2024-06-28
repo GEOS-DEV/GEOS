@@ -1432,13 +1432,17 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 //  }
 //  MpiWrapper::barrier();
 
-  // Next do the atual ghosting - i.e. figure out the information each rank must send to and receive from other ranks
+  // Next do the actual ghosting - i.e. figure out the information each rank must send to and receive from other ranks
   // This is where we use parallel linear algebra package (right now, Trilinos) to build an adjacency matrix for the entire mesh (treated as a graph)
   // By doing some clever matrix products we can figure out which ranks need what automagically
   // `ghosts` is also a MeshGraph like owned and present, but described the geometric entities which are ghosted onto the rank from another owner
   // recv and send are of type GhostRecv and GhostSend (in BuildPods.hpp) and describe what (nodes, edges, faces, cells) each rank needs to receive from and send to others
   auto const [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
 
+  // Finally, we use everything we have to populate the mappings that interface with the rest of GEOS
+  // Note that we have already done the ghosting, so these mappings are set once and for all
+  // Unlike previous implementation, where we populated these based on the current rank info, and then tried to fix any inconsistencies with ghosting
+  // output is the populated meshMappings, which contains node manager, edge manager, etc. as well as the ghost send/recv
   buildPods( owned, present, ghosts, recv, send, meshMappings );
 }
 
