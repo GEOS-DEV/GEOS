@@ -78,7 +78,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   registerWrapper( viewKeyStruct::isLaggingFractureStencilWeightsUpdateString(), &m_isLaggingFractureStencilWeightsUpdate ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. ");
+    setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. " );
 
   m_numResolves[0] = 0;
 
