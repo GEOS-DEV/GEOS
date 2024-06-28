@@ -234,7 +234,7 @@ void HDFHistoryIO::init( bool existsOkay )
     }
     else
     {
-      GEOS_ERROR("Dataset (" + m_name + ") already exists in output file: " + m_filename);
+      GEOS_ERROR( "Dataset (" + m_name + ") already exists in output file: " + m_filename );
     }
     GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: closed file {}.", m_filename ) );
   }
@@ -274,7 +274,7 @@ void HDFHistoryIO::write()
         HDFFile target( m_filename, false, true, m_subcomm );
         GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: opened file {}.", m_filename ) );
 
-        if ( !target.hasDataset( m_name ) )
+        if( !target.hasDataset( m_name ) )
         {
           GEOS_ERROR( "Attempted to write to a non-existent dataset: " + m_name );
         }
