@@ -291,7 +291,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
             RUNS_ON: streak2
             NPROC: 2
-            DOCKER_RUN_ARGS: "--cpus=2 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            DOCKER_RUN_ARGS: "--cpus=1 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
 
