@@ -21,6 +21,7 @@ set( constitutive_headers
      contact/CoulombFriction.hpp
      contact/FrictionSelector.hpp
      contact/FrictionBase.hpp
+     contact/FrictionlessContact.hpp
      contact/HydraulicApertureBase.hpp
      contact/HydraulicApertureTable.hpp
      diffusion/ConstantDiffusion.hpp
@@ -190,6 +191,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/CoulombFriction.cpp
      contact/FrictionBase.cpp
+     contact/FrictionlessContact.cpp
      contact/HydraulicApertureTable.cpp
      diffusion/ConstantDiffusion.cpp
      diffusion/DiffusionBase.cpp

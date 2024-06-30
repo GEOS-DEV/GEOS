@@ -32,15 +32,12 @@ namespace constitutive
  *
  * This class is used for in-kernel contact relation updates
  */
-class FrictionlessContactUpdates : public ContactBaseUpdates
+class FrictionlessContactUpdates : public FrictionBaseUpdates
 {
 public:
 
-  FrictionlessContactUpdates( real64 const & penaltyStiffness,
-                              real64 const & shearStiffness,
-                              real64 const & displacementJumpThreshold,
-                              TableFunction const & apertureTable )
-    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable )
+  FrictionlessContactUpdates( real64 const & displacementJumpThreshold )
+    : FrictionBaseUpdates( displacementJumpThreshold )
   {}
 
   /// Default copy constructor
@@ -57,16 +54,6 @@ public:
 
   /// Deleted move assignment operator
   FrictionlessContactUpdates & operator=( FrictionlessContactUpdates && ) =  delete;
-
-  GEOS_HOST_DEVICE
-  inline
-  virtual void computeTraction( localIndex const k,
-                                arraySlice1d< real64 const > const & oldDispJump,
-                                arraySlice1d< real64 const > const & dispJump,
-                                integer const & fractureState,
-                                arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
-
 
   GEOS_HOST_DEVICE
   inline
@@ -99,7 +86,7 @@ private:
  * This does not include the actual enforcement algorithm, but only the constitutive relations that
  * govern the behavior of the contact. So things like penalty, or friction, or kinematic constraint.
  */
-class FrictionlessContact : public ContactBase
+class FrictionlessContact : public FrictionBase
 {
 public:
 
@@ -145,25 +132,6 @@ protected:
 
 };
 
-GEOS_HOST_DEVICE
-inline void FrictionlessContactUpdates::computeTraction( localIndex const k,
-                                                         arraySlice1d< real64 const > const & oldDispJump,
-                                                         arraySlice1d< real64 const > const & dispJump,
-                                                         integer const & fractureState,
-                                                         arraySlice1d< real64 > const & tractionVector,
-                                                         arraySlice2d< real64 > const & dTractionVector_dJump ) const
-{
-  GEOS_UNUSED_VAR( k, oldDispJump );
-
-  bool const isOpen = fractureState == fields::contact::FractureState::Open;
-
-  tractionVector[0] = isOpen ? 0.0 : m_penaltyStiffness * dispJump[0];
-  tractionVector[1] = 0.0;
-  tractionVector[2] = 0.0;
-
-  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
-  dTractionVector_dJump( 0, 0 ) = isOpen ? 0.0 : m_penaltyStiffness;
-}
 
 GEOS_HOST_DEVICE
 inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
