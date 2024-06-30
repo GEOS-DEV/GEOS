@@ -1377,7 +1377,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-        ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+        FrictionBase const & contact = getConstitutiveModel< FrictionBase >( subRegion, m_contactRelationName );
 
         real64 const contactStiffness = contact.stiffness();
 

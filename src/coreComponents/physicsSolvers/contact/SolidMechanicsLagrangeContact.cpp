@@ -21,7 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -1150,7 +1150,7 @@ void SolidMechanicsLagrangeContact::
                                                                  FaceElementSubRegion const & subRegion )
   {
     string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+    FrictionBase const & contact = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
 
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
@@ -1870,7 +1870,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
                                                                                 FaceElementSubRegion & subRegion )
     {
       string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      FrictionBase const & contact = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();

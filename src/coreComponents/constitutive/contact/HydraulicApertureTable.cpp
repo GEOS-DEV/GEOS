@@ -29,8 +29,8 @@ namespace constitutive
 {
 
 HydraulicApertureTable::HydraulicApertureTable( string const & name,
-                          Group * const parent ):
-  ConstitutiveBase( name, parent ),
+                                                Group * const parent ):
+  HydraulicApertureBase( name, parent ),
   m_apertureTable( nullptr )
 {
   registerWrapper( viewKeyStruct::apertureToleranceString(), &m_apertureTolerance ).
@@ -66,7 +66,7 @@ void HydraulicApertureTable::initializePreSubGroups()
 
 
 void HydraulicApertureTable::allocateConstitutiveData( Group & parent,
-                                            localIndex const numConstitutivePointsPerParentIndex )
+                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 

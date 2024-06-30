@@ -19,14 +19,8 @@
 #include "ContactSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/solid/ElasticIsotropic.hpp"
-#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "constitutive/contact/FrictionBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -241,8 +235,8 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
       setSizedFromParent( 0 );
 
     string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-    contactRelationName = SolverBase::getConstitutiveName< ContactBase >( subRegion );
-    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: ContactBase model not found on subregion {}",
+    contactRelationName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
+    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
                                                           getDataContext(), subRegion.getDataContext() ) );
   }
 }

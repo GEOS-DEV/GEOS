@@ -39,11 +39,8 @@ class ContactUpdates
 {
 public:
 
-  ContactUpdates( real64 const & penaltyStiffness,
-                      real64 const & shearStiffness,
-                      real64 const & displacementJumpThreshold,
-                      TableFunction const & apertureTable )
-    : 
+  ContactUpdates( real64 const & displacementJumpThreshold )
+    :
   {}
 
   /// Default copy constructor
@@ -61,11 +58,48 @@ public:
   /// Deleted move assignment operator
   ContactUpdates & operator=( ContactBaseUpdates && ) =  delete;
 
-  protected:
-  
-   typename FRICTION_TYPE::KernelWrapper const m_frictionUpdate;
+  /**
+   * @brief Update the traction with the pressure term
+   * @param[in] pressure the pressure term
+   * @param[in] isOpen a flag specifying whether the fracture is open or closed
+   * @param[inout] traction the current tractionVector
+   * @param[out] dTraction_dPressure the derivative of the fist component of traction wrt pressure
+   * @return the updated traction
+   */
+  GEOS_HOST_DEVICE
+  virtual void addPressureToTraction( real64 const & pressure,
+                                      arraySlice1d< real64 >const & tractionVector,
+                                      real64 & dTraction_dPressure ) const;
 
-   typename APERTURE_TYPE::KernelWrapper const m_apertureUpdate;
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFractures object through the object
+   * catalog.
+   */
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FRICTION_TYPE, CoulombFriction > )
+    {
+      return "Coulomb";
+    }
+    else
+    {
+      return FLOW_SOLVER::catalogName() + "PoromechanicsConformingFractures";
+    }
+  }
+
+  /**
+   * @brief Get catalog name
+   * @return Catalog name string
+   */
+  virtual string getCatalogName() const override { return catalogName(); }
+
+
+protected:
+
+  typename FRICTION_TYPE::KernelWrapper const m_frictionUpdate;
+
+  typename APERTURE_TYPE::KernelWrapper const m_apertureUpdate;
 };
 
 
@@ -87,7 +121,7 @@ public:
    * @param parent The name of the parent Group that holds this relation object.
    */
   Contact( string const & name,
-               Group * const parent );
+           Group * const parent );
 
   /**
    * @brief default destructor
@@ -127,10 +161,10 @@ public:
 
 private:
 
-  /// the name of the solid model
+  /// the name of the friction model
   string m_frictionModelName;
 
-  /// the name of the porosity model
+  /// the name of the hydraulic aperture model
   string m_apertureModelName;
 
   /**
@@ -149,9 +183,19 @@ private:
 
 };
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ContactUpdates::addPressureToTraction( real64 const & pressure,
+                                            arraySlice1d< real64 > const & tractionVector,
+                                            real64 & dTraction_dPressure ) const
+{
+  tractionVector[0] -= pressure;
+  dTraction_dPressure = -1.0;
+}
+
 
 } /* namespace constitutive */
 
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_CONTACT_HPP_ */

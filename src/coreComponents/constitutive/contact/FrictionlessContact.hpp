@@ -19,7 +19,7 @@
 #ifndef GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
 #define GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
 
-#include "constitutive/contact/ContactBase.hpp"
+#include "constitutive/contact/FrictionBase.hpp"
 
 namespace geos
 {

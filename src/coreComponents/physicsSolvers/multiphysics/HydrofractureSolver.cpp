@@ -19,7 +19,7 @@
 
 #include "HydrofractureSolver.hpp"
 
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -276,7 +276,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
 
-    ContactBase const & contact = this->template getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+    FrictionBase const & contact = this->template getConstitutiveModel< FrictionBase >( subRegion, m_contactRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
@@ -797,7 +797,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      ContactBase const & contact = this->template getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+      FrictionBase const & contact = this->template getConstitutiveModel< FrictionBase >( subRegion, m_contactRelationName );
 
       string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );

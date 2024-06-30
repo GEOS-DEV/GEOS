@@ -27,11 +27,15 @@ namespace constitutive
 {
 
 CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
-  ContactBase( name, parent ),
+  FrictionBase( name, parent ),
   m_cohesion(),
   m_frictionCoefficient(),
   m_elasticSlip()
 {
+  registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
+
   registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -60,23 +64,21 @@ void CoulombFriction::postProcessInput()
 }
 
 void CoulombFriction::allocateConstitutiveData( Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   m_elasticSlip.resize( 0, 2 );
 
-  ContactBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
 CoulombFrictionUpdates CoulombFriction::createKernelWrapper() const
 {
-  return CoulombFrictionUpdates( m_penaltyStiffness,
-                                m_shearStiffness,
-                                m_displacementJumpThreshold,
-                                *m_apertureTable,
-                                m_cohesion,
-                                m_frictionCoefficient,
-                                m_elasticSlip );
+  return CoulombFrictionUpdates( m_displacementJumpThreshold,
+                                 m_shearStiffness,
+                                 m_cohesion,
+                                 m_frictionCoefficient,
+                                 m_elasticSlip );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombFriction, string const &, Group * const )

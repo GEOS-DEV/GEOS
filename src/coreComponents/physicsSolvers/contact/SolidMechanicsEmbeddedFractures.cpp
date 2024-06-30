@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
@@ -50,6 +50,10 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
+
+  registerWrapper( viewKeyStruct::contactPenaltyStiffnessString(), &m_contactPenaltyStiffness ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -717,8 +721,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
 
       arrayView2d< real64 const > const & jump = subRegion.getField< contact::dispJump >();
 
@@ -732,14 +736,15 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
       arrayView1d< real64 > const & slip = subRegion.getField< fields::contact::slip >();
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using ContactType = TYPEOFREF( castedFrictionLaw );
+        typename ContactType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelWrapper();
 
         solidMechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            contactWrapper,
+                                            frictionWrapper,
+                                            m_contactPenaltyStiffness
                                             oldJump,
                                             jump,
                                             fractureTraction,
@@ -764,13 +769,13 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
-      string const & contactRelationName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using ContactType = TYPEOFREF( castedFrictionLaw );
+        typename ContactType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelWrapper();
 
         RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
 
@@ -779,7 +784,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            contactWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
+            frictionWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );

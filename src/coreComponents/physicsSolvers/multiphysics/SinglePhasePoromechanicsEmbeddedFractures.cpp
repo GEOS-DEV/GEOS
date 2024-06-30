@@ -17,7 +17,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/ContactSelector.hpp"
+#include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -496,7 +496,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
         subRegion.template getField< fields::flow::pressure >();
 
       string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
-      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, contactRelationName );
+      FrictionBase const & contact = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
 
       ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
 
