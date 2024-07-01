@@ -108,7 +108,7 @@ public:
   /**
    * @brief Free all lists of cellBlocks requests.
    */
-  void clearCellBlockNames()
+  void clearCellBlockInputs()
   {
     m_cellBlockAttributeValues.clear();
     m_cellBlockMatchPatterns.clear();
