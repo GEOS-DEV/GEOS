@@ -76,6 +76,49 @@ string join( CONTAINER const & cont, S const & delim = S() )
 }
 
 /**
+ * @brief Join strings or other printable objects with a delimiter.
+ * @tparam IT      type of iterator into the range of objects to join
+ * @tparam S       type of delimiter, usually char, char const * or string
+ * @tparam Lambda  type of lambda function, usually `[]( auto it ) -> string`
+ * @param valueLambda  lambda function to get each values from the provided iterator
+ * @param first         iterator to start of the range
+ * @param last          iterator past-the-end of the range
+ * @param delim         delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
+ */
+template< typename IT, typename S = char, typename Lambda >
+string joinLamda( Lambda valueLambda, IT first, IT last, S const & delim = S() )
+{
+  if( first == last )
+  {
+    return {};
+  }
+  std::ostringstream oss;
+  oss << valueLambda( first );
+  while( ++first != last )
+  {
+    oss << delim << valueLambda( first );
+  }
+  return oss.str();
+}
+
+/**
+ * @brief Join strings or other printable objects with a delimiter.
+ * @tparam CONTAINER type of container to join
+ * @tparam S    type of delimiter, usually char, char const * or string
+ * @tparam Lambda  type of lambda function, usually `[]( auto it ) -> string`
+ * @param valueLambda  lambda function to get each values from the provided container iterator
+ * @param container container to join
+ * @param delim delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
+ */
+template< typename CONTAINER, typename S = char, typename Lambda >
+string joinLamda( Lambda valueLambda, CONTAINER const & cont, S const & delim = S() )
+{
+  return joinLamda( valueLambda, std::begin( cont ), std::end( cont ), delim );
+}
+
+/**
  * @brief Concatenate variadic arguments into a string with a delimiter.
  * @tparam S type of delimiter (printable to std::ostringstream)
  * @tparam T type of first argument (printable to std::ostringstream)
