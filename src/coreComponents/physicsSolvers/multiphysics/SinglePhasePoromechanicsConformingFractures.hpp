@@ -106,7 +106,7 @@ public:
 
 private:
 
-  static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
+  static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
 
   void assembleElementBasedContributions( real64 const time_n,
                                           real64 const dt,

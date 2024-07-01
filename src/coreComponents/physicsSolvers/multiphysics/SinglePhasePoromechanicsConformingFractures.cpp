@@ -36,7 +36,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-const localIndex geos::SinglePhasePoromechanicsConformingFractures::m_maxFaceNodes = 11;
 
 template< typename FLOW_SOLVER >
 SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromechanicsConformingFractures( const string & name,
@@ -507,14 +506,14 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                                        nodePosition,
-                                                        faceToNodeMap,
-                                                        faceToEdgeMap,
-                                                        edgeToNodeMap,
-                                                        faceCenters,
-                                                        faceNormal,
-                                                        faceAreas,
-                                                        nodalArea );
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );
@@ -626,14 +625,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                                        nodePosition,
-                                                        faceToNodeMap,
-                                                        faceToEdgeMap,
-                                                        edgeToNodeMap,
-                                                        faceCenters,
-                                                        faceNormal,
-                                                        faceAreas,
-                                                        nodalArea );
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
 
           // TODO: move to something like this plus a static method.
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
@@ -685,14 +684,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
           //TODO: We should avoid allocating LvArrays inside kernel
           array1d< real64 > nodalArea;
           this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
-                                                        nodePosition,
-                                                        faceToNodeMap,
-                                                        faceToEdgeMap,
-                                                        edgeToNodeMap,
-                                                        faceCenters,
-                                                        faceNormal,
-                                                        faceAreas,
-                                                        nodalArea );
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
