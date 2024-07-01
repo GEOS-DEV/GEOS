@@ -23,7 +23,6 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       particleFile="mpmParticleFile_periodicBoundaries"
       headerFile="mpmHeaderFile_periodicBoundaries"
       particleBlockNames="{ pb1 }"
-      particleMaterialNames="{ aluminum }"
       particleTypes="{ CPDI }"/>
   </Mesh>
 

@@ -394,62 +394,74 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::massString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the mass on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::velocityString() ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the current velocity on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::momentumString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the current momentum on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::accelerationString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the current acceleration on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceExternalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                         " conditions as well as coupling forces such as hydraulic forces." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceInternalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the internal forces on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::forceContactString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the contact force on the nodes." );
 
       nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::damageString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the result of mapping particle damage to the nodes." );
 
       nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::damageGradientString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the result of mapping particle damage gradients to the nodes." );
 
       nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::maxDamageString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the maximum damage of any particle mapping to a given node." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::surfaceNormalString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the contact surface normals on the nodes." );
 
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::materialPositionString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
         setDescription( "An array that holds the result of mapping particle positions to the nodes." );
 
       Group & nodeSets = nodes.sets();
@@ -632,7 +644,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_domainF.resize( 3 );
   LvArray::tensorOps::fill< 3 >( m_domainF, 1.0 );
   m_domainL.resize( 3 );
-  LvArray::tensorOps::fill< 3 >( m_domainF, 0.0 );
+  LvArray::tensorOps::fill< 3 >( m_domainL, 0.0 );
 
   if( m_prescribedBoundaryFTable == 1 )
   {
