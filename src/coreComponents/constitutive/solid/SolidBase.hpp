@@ -60,12 +60,14 @@ protected:
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     real64 const & dThermalExpansionCoefficient_dTemperature,
                     real64 const & referenceTemperature,
+                    string const & drainedLinearTECTableName,
                     const bool & disableInelasticity ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_dThermalExpansionCoefficient_dTemperature( dThermalExpansionCoefficient_dTemperature ),
     m_referenceTemperature( referenceTemperature ),
+    m_drainedLinearTECTableName( drainedLinearTECTableName ),
     m_disableInelasticity ( disableInelasticity )
   {}
 
@@ -106,6 +108,9 @@ public:
 
   /// The reference temperature at which default thermal expansion coefficient is defined.
   real64 m_referenceTemperature = 0;
+
+  /// The drained linear thermal expansion coefficient (TEC) table name.
+  string m_drainedLinearTECTableName;
 
   /// Flag to disable inelasticity
   const bool m_disableInelasticity;
@@ -597,6 +602,8 @@ public:
 
     static constexpr char const * dThermalExpansionCoefficient_dTemperatureString() { return "dDrainedLinearTEC_dT"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
+
+    static constexpr char const * drainedLinearTECTableNameString() { return "drainedLinearTECTableName"; }
   };
 
   /**
@@ -735,6 +742,9 @@ protected:
 
   /// The reference temperature at which default thermal expansion coefficient is defined.
   real64 m_referenceTemperature = 0;
+
+  /// The drained linear thermal expansion coefficient (TEC) table name.
+  string m_drainedLinearTECTableName;
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;

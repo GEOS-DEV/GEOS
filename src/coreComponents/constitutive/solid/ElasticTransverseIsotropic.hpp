@@ -61,6 +61,7 @@ public:
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      real64 const & dThermalExpansionCoefficient_dTemperature,
                                      real64 const & referenceTemperature,
+                                     string const & drainedLinearTECTableName,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                                      bool const & disableInelasticity ):
@@ -69,6 +70,7 @@ public:
                       thermalExpansionCoefficient,
                       dThermalExpansionCoefficient_dTemperature,
                       referenceTemperature,
+                      drainedLinearTECTableName,
                       disableInelasticity ),
     m_c11( c11 ),
     m_c13( c13 ),
@@ -554,6 +556,7 @@ public:
                                               m_thermalExpansionCoefficient,
                                               m_dThermalExpansionCoefficient_dTemperature,
                                               m_referenceTemperature,
+                                              m_drainedLinearTECTableName,
                                               m_newStress,
                                               m_oldStress,
                                               m_disableInelasticity );
@@ -579,6 +582,7 @@ public:
                           m_thermalExpansionCoefficient,
                           m_dThermalExpansionCoefficient_dTemperature,
                           m_referenceTemperature,
+                          m_drainedLinearTECTableName,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity );

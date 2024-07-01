@@ -67,7 +67,11 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Reference temperature at wich the default Thermal Expansion Coefficient is defined [K]" );
+    setDescription( "Reference temperature at which the default Thermal Expansion Coefficient is defined [K]" );
+
+  registerWrapper( viewKeyStruct::drainedLinearTECTableNameString(), &m_drainedLinearTECTableName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the Thermal Expansion Coefficient table" );
 
   registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
     setApplyDefaultValue( -1.0 ). // will be overwritten

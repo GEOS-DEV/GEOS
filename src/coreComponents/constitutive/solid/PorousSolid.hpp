@@ -365,13 +365,6 @@ public:
   /// Destructor
   virtual ~PorousSolid() override;
 
-  /// Keys for data in this class
-  struct viewKeyStruct : public SolidBase::viewKeyStruct
-  {
-    static constexpr char const * dThermalExpansionCoefficient_dTemperatureString() { return "dDrainedLinearTEC_dT"; }
-    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
-  };
-
   /**
    * @brief Catalog name
    * @return Static catalog string
