@@ -76,14 +76,14 @@ string join( CONTAINER const & cont, S const & delim = S() )
 }
 
 /**
- * @brief Join strings or other printable objects with a delimiter.
+ * @brief Join strings or other printable objects returned by a lambda.
  * @tparam IT      type of iterator into the range of objects to join
  * @tparam S       type of delimiter, usually char, char const * or string
  * @tparam Lambda  type of lambda function, usually `[]( auto it ) -> string`
- * @param valueLambda  lambda function to get each values from the provided iterator
- * @param first         iterator to start of the range
- * @param last          iterator past-the-end of the range
- * @param delim         delimiter used to glue together strings
+ * @param valueLambda  lambda function to get each values from the provided container iterator
+ * @param first        iterator to start of the range
+ * @param last         iterator past-the-end of the range
+ * @param delim        delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char, typename Lambda >
@@ -103,13 +103,13 @@ string joinLamda( Lambda valueLambda, IT first, IT last, S const & delim = S() )
 }
 
 /**
- * @brief Join strings or other printable objects with a delimiter.
- * @tparam CONTAINER type of container to join
- * @tparam S    type of delimiter, usually char, char const * or string
- * @tparam Lambda  type of lambda function, usually `[]( auto it ) -> string`
+ * @brief Join strings or other printable objects returned by a lambda.
+ * @tparam CONTAINER  type of container to join
+ * @tparam S          type of delimiter, usually char, char const * or string
+ * @tparam Lambda     type of lambda function, usually `[]( auto it ) -> string`
  * @param valueLambda  lambda function to get each values from the provided container iterator
- * @param container container to join
- * @param delim delimiter used to glue together strings
+ * @param container    container to join
+ * @param delim        delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S = char, typename Lambda >
