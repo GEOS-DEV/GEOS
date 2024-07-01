@@ -69,7 +69,7 @@ void ConstantViscosity::Parameters::registerParametersImpl( MultiFluidBase * flu
     setDescription( "Constant phase viscosity" );
 }
 
-void ConstantViscosity::Parameters::postProcessInputImpl( MultiFluidBase const * fluid,
+void ConstantViscosity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                           ComponentProperties const & componentProperties )
 {
   GEOS_UNUSED_VAR( componentProperties );

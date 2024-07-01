@@ -83,7 +83,7 @@ void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBa
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
-void LohrenzBrayClarkViscosity::Parameters::postProcessInputImpl( MultiFluidBase const * fluid,
+void LohrenzBrayClarkViscosity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                                   ComponentProperties const & componentProperties )
 {
   integer const numComponents = fluid->numFluidComponents();

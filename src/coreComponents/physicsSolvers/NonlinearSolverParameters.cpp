@@ -178,7 +178,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 }
 
-void NonlinearSolverParameters::postProcessInput()
+void NonlinearSolverParameters::postInputInitialization()
 {
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
