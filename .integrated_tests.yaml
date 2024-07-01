@@ -1,6 +1,6 @@
 baselines:
   bucket: geosx
-  baseline: integratedTests/baseline_integratedTests-pr3196-5835-6563552.tar.gz
+  baseline: integratedTests/baseline_integratedTests-pr3196-5835-6563552
 
 allow_fail:
   all: ''
