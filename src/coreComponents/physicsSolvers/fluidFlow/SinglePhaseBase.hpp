@@ -286,7 +286,7 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param subRegion subregion that contains the fields
    */
-  void
+  real64
   updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
