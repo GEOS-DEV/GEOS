@@ -99,7 +99,6 @@ TEST( FieldSpecification, Recursive )
     reg1Tet.resize( nbTetReg1 );
 
     Group const & cellBlocks = cellBlockManager.getCellBlocks();
-    CellElementRegionSelector cellBlockSelector( cellBlocks );
 
     reg0.addCellBlockName( reg0Hex.getName() );
     reg0.addCellBlockName( reg0Tet.getName() );
