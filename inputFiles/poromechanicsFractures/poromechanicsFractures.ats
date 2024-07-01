@@ -94,7 +94,8 @@ decks = [
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(atol=1e-05,
+                                                   rtol=1e-04))
 ]
 
 generate_geos_tests(decks)
