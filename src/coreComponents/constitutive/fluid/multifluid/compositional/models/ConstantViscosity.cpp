@@ -70,7 +70,7 @@ void ConstantViscosity::Parameters::registerParametersImpl( MultiFluidBase * flu
 }
 
 void ConstantViscosity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
-                                                          ComponentProperties const & componentProperties )
+                                                                 ComponentProperties const & componentProperties )
 {
   GEOS_UNUSED_VAR( componentProperties );
 

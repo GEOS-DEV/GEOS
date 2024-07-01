@@ -84,7 +84,7 @@ void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBa
 }
 
 void LohrenzBrayClarkViscosity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
-                                                                  ComponentProperties const & componentProperties )
+                                                                         ComponentProperties const & componentProperties )
 {
   integer const numComponents = fluid->numFluidComponents();
 
