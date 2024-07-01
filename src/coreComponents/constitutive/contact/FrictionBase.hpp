@@ -135,10 +135,6 @@ public:
    */
   virtual ~FrictionBase() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = FrictionBaseUpdates;
 
@@ -158,9 +154,6 @@ public:
   };
 
 protected:
-  virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
 
   /// A threshold valued to determine whether a fracture is open or not.
   real64 m_displacementJumpThreshold;

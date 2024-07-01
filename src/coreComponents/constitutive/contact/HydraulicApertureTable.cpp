@@ -61,9 +61,6 @@ void HydraulicApertureTable::postProcessInput()
 
 }
 
-void HydraulicApertureTable::initializePreSubGroups()
-{}
-
 
 void HydraulicApertureTable::allocateConstitutiveData( Group & parent,
                                                        localIndex const numConstitutivePointsPerParentIndex )

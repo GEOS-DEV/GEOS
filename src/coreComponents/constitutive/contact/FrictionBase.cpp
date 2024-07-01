@@ -41,16 +41,6 @@ FrictionBase::FrictionBase( string const & name,
 FrictionBase::~FrictionBase()
 {}
 
-void FrictionBase::initializePreSubGroups()
-{}
-
-
-void FrictionBase::allocateConstitutiveData( Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
 FrictionBaseUpdates FrictionBase::createKernelWrapper() const
 {
   return FrictionBaseUpdates( m_displacementJumpThreshold );

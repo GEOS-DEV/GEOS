@@ -193,6 +193,7 @@ set( constitutive_sources
      contact/CoulombFriction.cpp
      contact/FrictionBase.cpp
      contact/FrictionlessContact.cpp
+     contact/HydraulicApertureBase.cpp
      contact/HydraulicApertureTable.cpp
      diffusion/ConstantDiffusion.cpp
      diffusion/DiffusionBase.cpp

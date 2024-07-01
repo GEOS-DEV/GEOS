@@ -128,8 +128,6 @@ public:
 private:
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
-
   /**
    * @brief Validate the values provided in the aperture table
    * @param[in] apertureTable the effective aperture vs aperture table

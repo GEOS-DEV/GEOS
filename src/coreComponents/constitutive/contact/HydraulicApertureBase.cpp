@@ -13,34 +13,29 @@
  */
 
 /**
- * @file FrictionlessContact.cpp
+ * @file HydraulicApertureBase.cpp
  */
 
-#include "FrictionlessContact.hpp"
+
+#include "HydraulicApertureBase.hpp"
+
 
 namespace geos
 {
 
-using namespace dataRepository;
-
 namespace constitutive
 {
 
-FrictionlessContact::FrictionlessContact( string const & name,
-                                          Group * const parent ):
-  FrictionBase( name, parent )
+HydraulicApertureBase::HydraulicApertureBase( string const & name,
+                                                Group * const parent ):
+  ConstitutiveBase( name, parent )
 {}
 
-FrictionlessContact::~FrictionlessContact()
+HydraulicApertureBase::~HydraulicApertureBase()
 {}
 
-FrictionlessContactUpdates FrictionlessContact::createKernelWrapper() const
-{
-  return FrictionlessContactUpdates( m_displacementJumpThreshold );
-}
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FrictionlessContact, string const &, Group * const )
 
-} /* end namespace constitutive */
+} /* namespace constitutive */
 
-} /* end namespace geos */
+} /* namespace geos */
