@@ -142,11 +142,11 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
-  m_useNewGhosting = 1;
-//  registerWrapper( viewKeysStruct::useNewGhostingString(), &m_useNewGhosting ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setApplyDefaultValue( 0 ).
-//    setDescription( "Controls the use of the new ghosting implementation." );
+  commandLine.registerWrapper< integer >( viewKeys.useNewGhosting.key( ) ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Whether to use new ghosting strategy" );
+
 }
 
 ProblemManager::~ProblemManager()
@@ -191,6 +191,7 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
   commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
+  commandLine.getReference< integer >( viewKeys.useNewGhosting ) = opts.useNewGhosting;
 
   string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
@@ -633,10 +634,12 @@ void ProblemManager::generateMesh()
   GEOS_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
 
+  Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
+
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-  GEOS_LOG_RANK( "m_useNewGhosting = " << m_useNewGhosting );
-  meshManager.generateMeshes( m_useNewGhosting, domain );
+  GEOS_LOG_RANK( "useNewGhosting = " << commandLine.getReference< integer >( viewKeys.useNewGhosting ) );
+  meshManager.generateMeshes( commandLine.getReference< integer >( viewKeys.useNewGhosting ), domain );
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
@@ -658,7 +661,7 @@ void ProblemManager::generateMesh()
     }
     else
     {
-      if( m_useNewGhosting )
+      if( commandLine.getReference< integer >( viewKeys.useNewGhosting ) )
       {
         GEOS_LOG_RANK_0( "Generating the mesh levels for the new ghosting." );
         generateMeshLevelFreeFct( meshBody.getMeshMappings(),
@@ -685,7 +688,6 @@ void ProblemManager::generateMesh()
     }
   } );
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
 //  domain.setupBaseLevelMeshGlobalInfo();
 
