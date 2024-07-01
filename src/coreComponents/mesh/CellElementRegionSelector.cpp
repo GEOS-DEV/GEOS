@@ -194,24 +194,28 @@ CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion con
 
 void CellElementRegionSelector::checkSelectionConsistency() const
 {
-  auto const getDataContextStr = []( auto groupPtrIterator ) -> string {
-    return GEOS_FMT( "- {}\n", (*groupPtrIterator)->getDataContext() );
+  auto const getRegionStr = []( auto regionPtrIterator ) -> string {
+    return GEOS_FMT( "- {}\n", (*regionPtrIterator)->getDataContext() );
   };
 
   // Search of never or multiple selected attribute values
   std::set< string > orphanRegionAttributes;
+  std::vector< string > multipleRefsErrors;
   for( auto const & [attributeValueStr, owningRegions] : m_regionAttributeOwners )
   {
     if( owningRegions.size() == 0 )
     {
       orphanRegionAttributes.insert( attributeValueStr );
     }
-    GEOS_THROW_IF( owningRegions.size() > 1,
-                   GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n{}",
-                             attributeValueStr, CellElementRegion::catalogName(),
-                             stringutilities::joinLamda( getDataContextStr, owningRegions ) ),
-                   InputError );
+    else if( owningRegions.size() > 1 )
+    {
+      multipleRefsErrors.push_back(
+        GEOS_FMT( "The region attribute '{}' has been referenced in multiple {}:\n- {}",
+                  attributeValueStr, CellElementRegion::catalogName(),
+                  stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
+    }
   }
+  GEOS_THROW_IF( !multipleRefsErrors.empty(), stringutilities::join( multipleRefsErrors ), InputError );
 
   // Search of never or multiple selected cell-blocks names
   std::set< string > orphanCellBlockNames;
@@ -221,12 +225,15 @@ void CellElementRegionSelector::checkSelectionConsistency() const
     {
       orphanCellBlockNames.insert( cellBlockName );
     }
-    GEOS_THROW_IF( owningRegions.size() > 1,
-                   GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n{}",
-                             cellBlockName, CellElementRegion::catalogName(),
-                             stringutilities::joinLamda( getDataContextStr, owningRegions ) ),
-                   InputError );
+    else if( owningRegions.size() > 1 )
+    {
+      multipleRefsErrors.push_back(
+        GEOS_FMT( "The cellBlock '{}' has been referenced in multiple {}:\n- {}",
+                  cellBlockName, CellElementRegion::catalogName(),
+                  stringutilities::joinLamda( getRegionStr, owningRegions ) ) );
+    }
   }
+  GEOS_THROW_IF( multipleRefsErrors.size() > 1, stringutilities::join( multipleRefsErrors ), InputError );
 
   if( !orphanCellBlockNames.empty() )
   {
