@@ -75,6 +75,11 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
+  registerWrapper( viewKeyStruct::isLaggingFractureStencilWeightsUpdateString(), &m_isLaggingFractureStencilWeightsUpdate ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. " );
+
   m_numResolves[0] = 0;
 
   // This may need to be different depending on whether poroelasticity is on or not.
@@ -112,6 +117,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
     } );
   } );
 #endif
+
+  if( m_isLaggingFractureStencilWeightsUpdate )
+  {
+    flowSolver()->enableLaggingFractureStencilWeightsUpdate();
+  }
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -848,13 +858,19 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 
   Base::updateState( domain );
 
-  // remove the contribution of the hydraulic aperture from the stencil weights
-  flowSolver()->prepareStencilWeights( domain );
+  if( !m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // remove the contribution of the hydraulic aperture from the stencil weights
+    flowSolver()->prepareStencilWeights( domain );
+  }
 
   updateHydraulicApertureAndFracturePermeability( domain );
 
-  // update the stencil weights using the updated hydraulic aperture
-  flowSolver()->updateStencilWeights( domain );
+  if( !m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // update the stencil weights using the updated hydraulic aperture
+    flowSolver()->updateStencilWeights( domain );
+  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -870,6 +886,23 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
       flowSolver()->updateFluidState( subRegion );
     } );
   } );
+}
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 const & time_n,
+                                                                        real64 const & dt,
+                                                                        DomainPartition & domain )
+{
+  Base::implicitStepComplete( time_n, dt, domain );
+
+  if( m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // remove the contribution of the hydraulic aperture from the stencil weights
+    flowSolver()->prepareStencilWeights( domain );
+
+    // update the stencil weights using the updated hydraulic aperture
+    flowSolver()->updateStencilWeights( domain );
+  }
 }
 
 template< typename POROMECHANICS_SOLVER >
