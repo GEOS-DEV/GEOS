@@ -90,7 +90,11 @@ protected:
   MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels];     ///< Coarse grid method for each level
   MGRGlobalSmootherType m_levelGlobalSmootherType[numLevels]; ///< Global smoother type for each level
   HYPRE_Int m_levelGlobalSmootherIters[numLevels]{ -1 };      ///< Number of global smoother iterations for each level
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU
   HYPRE_Real m_coarseGridThreshold{ 1.0e-20 };                ///< Coarse grid truncation threshold
+#else
+  HYPRE_Real m_coarseGridThreshold{ 0.0 };                    ///< Coarse grid truncation threshold
+#endif
 
   // TODO: the following options are currently commented out in MGR's code.
   //       Let's consider their use when re-enable in hypre
