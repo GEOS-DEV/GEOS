@@ -23,6 +23,7 @@ set( constitutive_headers
      contact/FrictionBase.hpp
      contact/FrictionlessContact.hpp
      contact/HydraulicApertureBase.hpp
+     contact/HydraulicApertureRelationSelector.hpp
      contact/HydraulicApertureTable.hpp
      diffusion/ConstantDiffusion.hpp
      diffusion/DiffusionBase.hpp

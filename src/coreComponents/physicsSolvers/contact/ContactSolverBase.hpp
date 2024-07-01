@@ -53,6 +53,9 @@ public:
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
+
+    constexpr static char const * frictionLawNameString() { return "frictionLawName"; }
+
   };
 
 protected:

@@ -17,7 +17,7 @@
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -496,16 +496,20 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
         subRegion.template getField< fields::flow::pressure >();
 
       string const & contactRelationName = subRegion.template getReference< string >( ContactSolverBase::viewKeyStruct::contactRelationNameString() );
-      FrictionBase const & contact = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
-
-      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+      HydraulicApertureBase const & contact = getConstitutiveModel< HydraulicApertureBase >( subRegion, contactRelationName );
 
       string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion, &contact] ( auto & castedPorousSolid )
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+      
+      constitutiveUpdatePassThru( contact, [=, &subRegion] ( auto & castedContact )
+      {
+
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
         poromechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
@@ -522,6 +526,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
                                             fractureTraction,
                                             dTdpf );
 
+      } );
       } );
 
       // update the stencil weights using the updated hydraulic aperture

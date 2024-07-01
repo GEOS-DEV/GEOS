@@ -721,8 +721,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView2d< real64 const > const & jump = subRegion.getField< contact::dispJump >();
 
@@ -744,7 +744,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
         solidMechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             frictionWrapper,
-                                            m_contactPenaltyStiffness
+                                            m_contactPenaltyStiffness,
                                             oldJump,
                                             jump,
                                             fractureTraction,
@@ -769,8 +769,8 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView2d< real64 const > const & traction = subRegion.getField< fields::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getField< fields::contact::fractureState >();
 
-      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::contactRelationNameString() );
-      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, contactRelationName );
+      string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
+      FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {

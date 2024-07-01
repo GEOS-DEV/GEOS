@@ -250,6 +250,9 @@ public:
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
     static constexpr char const * forceString() { return "Force";}
+
+    static constexpr  char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
+
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
@@ -302,6 +305,9 @@ private:
 
   SolverBase * m_surfaceGenerator;
   string m_surfaceGeneratorName;
+
+  real64 m_contactPenaltyStiffness;
+
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,

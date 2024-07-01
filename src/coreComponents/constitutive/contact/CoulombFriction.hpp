@@ -75,7 +75,7 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  virtual void computeTraction( localIndex const k,
+  virtual void computeShearTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 integer const & fractureState,

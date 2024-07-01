@@ -229,14 +229,14 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
   }
   else if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    subRegion.registerWrapper< string >( viewKeyStruct::frictionLawNameString() ).
       setPlotLevel( PlotLevel::NOPLOT ).
       setRestartFlags( RestartFlags::NO_WRITE ).
       setSizedFromParent( 0 );
 
-    string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-    contactRelationName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
-    GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
+    string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
+    frictionLawName = SolverBase::getConstitutiveName< FrictionBase >( subRegion );
+    GEOS_ERROR_IF( frictionLawName.empty(), GEOS_FMT( "{}: FrictionBase model not found on subregion {}",
                                                           getDataContext(), subRegion.getDataContext() ) );
   }
 }

@@ -19,7 +19,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_HPP_
 
-#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geos
@@ -330,10 +329,10 @@ struct StateUpdateKernel
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
    */
-  template< typename POLICY, typename POROUS_WRAPPER >
+  template< typename POLICY, typename POROUS_WRAPPER, typename CONTACT_WRAPPER >
   static void
   launch( localIndex const size,
-          constitutive::ContactBase::KernelWrapper const & contactWrapper,
+          CONTACT_WRAPPER const & contactWrapper,
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
@@ -358,9 +357,8 @@ struct StateUpdateKernel
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
-      contactWrapper.addPressureToTraction( pressure[k],
-                                            fractureTraction[k],
-                                            dFractureTraction_dPressure[k] );
+      fractureTraction[k][0] -= pressure[k];
+      dFractureTraction_dPressure[k] = -1.0;
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
       real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fractureTraction[k] );

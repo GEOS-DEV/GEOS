@@ -125,7 +125,7 @@ public:
     static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
   };
 
-protected:
+private:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;

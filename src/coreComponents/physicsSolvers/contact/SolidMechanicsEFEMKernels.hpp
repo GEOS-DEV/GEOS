@@ -292,7 +292,7 @@ struct StateUpdateKernel
    * @tparam POLICY the type of policy used in the kernel launch
    * @tparam FRICTION_WRAPPER the type of contact wrapper doing the fracture traction updates
    * @param[in] size the size of the subregion
-   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] frictionWrapper the wrapper implementing the contact relationship
    * @param[in] jump the displacement jump
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
@@ -312,18 +312,18 @@ struct StateUpdateKernel
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // Initialize traction and derivatives to 0
-      LvArray::forValuesInSlice( tractionVector[k], []( real64 & val ){ val = 0.0; } );
-      LvArray::forValuesInSlice( dTractionVector_dJump[k], []( real64 & val ){ val = 0.0; } );
+      LvArray::forValuesInSlice( fractureTraction[k], []( real64 & val ){ val = 0.0; } );
+      LvArray::forValuesInSlice( dFractureTraction_dJump[k], []( real64 & val ){ val = 0.0; } );
 
       // If the fracture is open the traction is 0 and so are its derivatives so there is nothing to do
-      bool const isOpen = fractureState == fields::contact::FractureState::Open;
+      bool const isOpen = fractureState[k] == fields::contact::FractureState::Open;
 
       if( !isOpen )
       {
         // normal component of the traction
         fractureTraction[k][0] = contactPenaltyStiffness * jump[k][0];
         // derivative of the normal component w.r.t. to the nomral dispJump
-        dTractionVector_dJump[k][0][0] = contactPenaltyStiffness;
+        dFractureTraction_dJump[k][0][0] = contactPenaltyStiffness;
 
         frictionWrapper.computeShearTraction( k, oldJump[k], jump[k],
                                               fractureState[k],
