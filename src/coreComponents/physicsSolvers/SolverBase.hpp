@@ -774,8 +774,6 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle
-                                                                                                                          // overload
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -840,7 +838,6 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
