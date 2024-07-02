@@ -1081,11 +1081,32 @@ Element: SinglePhasePoromechanicsConformingFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
+.. _XML_SinglePhasePoromechanicsConformingFracturesInitialization:
+
+Element: SinglePhasePoromechanicsConformingFracturesInitialization
+==================================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesInitialization.rst
+
+
+.. _XML_SinglePhasePoromechanicsConformingFracturesReservoir:
+
+Element: SinglePhasePoromechanicsConformingFracturesReservoir
+=============================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesReservoir.rst
+
+
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
 
 Element: SinglePhasePoromechanicsEmbeddedFractures
 ==================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
+.. _XML_SinglePhasePoromechanicsEmbeddedFracturesInitialization:
+
+Element: SinglePhasePoromechanicsEmbeddedFracturesInitialization
+================================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFracturesInitialization.rst
 
 
 .. _XML_SinglePhasePoromechanicsInitialization:
@@ -1156,6 +1177,13 @@ Element: SlipDependentPermeability
 Element: SolidInternalEnergy
 ============================
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy.rst
+
+
+.. _XML_SolidMechanicsAugmentedLagrangianContact:
+
+Element: SolidMechanicsAugmentedLagrangianContact
+=================================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsAugmentedLagrangianContact.rst
 
 
 .. _XML_SolidMechanicsEmbeddedFractures:
@@ -2534,11 +2562,32 @@ Datastructure: SinglePhasePoromechanicsConformingFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesInitialization:
+
+Datastructure: SinglePhasePoromechanicsConformingFracturesInitialization
+========================================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesInitialization_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesReservoir:
+
+Datastructure: SinglePhasePoromechanicsConformingFracturesReservoir
+===================================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesReservoir_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
 
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFracturesInitialization:
+
+Datastructure: SinglePhasePoromechanicsEmbeddedFracturesInitialization
+======================================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFracturesInitialization_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsInitialization:
@@ -2609,6 +2658,13 @@ Datastructure: SlipDependentPermeability
 Datastructure: SolidInternalEnergy
 ==================================
 .. include:: ../../coreComponents/schema/docs/SolidInternalEnergy_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsAugmentedLagrangianContact:
+
+Datastructure: SolidMechanicsAugmentedLagrangianContact
+=======================================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanicsAugmentedLagrangianContact_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
