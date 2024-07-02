@@ -12,6 +12,8 @@ PVTDriver                                                   node :ref:`DATASTRUC
 PackCollection                                              node :ref:`DATASTRUCTURE_PackCollection`                                              
 ReactiveFluidDriver                                         node :ref:`DATASTRUCTURE_ReactiveFluidDriver`                                         
 RelpermDriver                                               node :ref:`DATASTRUCTURE_RelpermDriver`                                               
+SinglePhasePoromechanicsConformingFracturesInitialization   node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesInitialization`   
+SinglePhasePoromechanicsEmbeddedFracturesInitialization     node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFracturesInitialization`     
 SinglePhasePoromechanicsInitialization                      node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsInitialization`                      
 SinglePhaseReservoirPoromechanicsInitialization             node :ref:`DATASTRUCTURE_SinglePhaseReservoirPoromechanicsInitialization`             
 SinglePhaseStatistics                                       node :ref:`DATASTRUCTURE_SinglePhaseStatistics`                                       
