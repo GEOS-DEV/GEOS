@@ -277,7 +277,9 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   {
     mass[ei] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * density[ei][0];
     if( isZero( mass_n[ei] ) ) // this is a hack for hydrofrac cases
+    {
       mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0]; // initialize newly created element mass
+    }
   } );
 }
 
@@ -462,14 +464,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-        ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
-        real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-
         subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
           setApplyDefaultValue( region.getDefaultAperture() );
 
         subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
-          setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
+          setApplyDefaultValue( 0.0 );
       } );
     } );
 
@@ -773,8 +772,6 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       {
         porousSolid.saveConvergedState(); // porosity_n <- porosity
       }
-
-      updateMass( subRegion );
 
       if( m_isThermal )
       {
@@ -1257,9 +1254,6 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  if( m_keepFlowVariablesConstantDuringInitStep )
-    return;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
