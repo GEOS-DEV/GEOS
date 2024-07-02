@@ -317,9 +317,9 @@ private:
   void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
-   * @copydoc Group::postProcessInput()
+   * @copydoc Group::postInputInitialization()
    */
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
                                                                   string_view fluxName,
