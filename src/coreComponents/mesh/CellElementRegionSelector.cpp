@@ -161,11 +161,11 @@ CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion con
     region.getReference< integer_array >( ViewKeys::cellBlockAttributeValuesString() ) );
   std::set< string > const requestedMatchPatterns = toStdSet(
     region.getReference< string_array >( ViewKeys::cellBlockMatchPatternsString() ) );
-  std::set< string > const requestedCellBlock = toStdSet(
+  std::set< string > const requestedCellBlocks = toStdSet(
     region.getReference< string_array >( ViewKeys::sourceCellBlockNamesString() ) );
 
   // at least one selection method is needed
-  GEOS_THROW_IF( requestedAttributeValues.empty() && requestedMatchPatterns.empty() && requestedCellBlock.empty(),
+  GEOS_THROW_IF( requestedAttributeValues.empty() && requestedMatchPatterns.empty() && requestedCellBlocks.empty(),
                  GEOS_FMT( "{}: cellBlocks must be selected to fill this region (using {}, {} or {}).",
                            region.getDataContext(),
                            ViewKeys::sourceCellBlockNamesString(),
@@ -173,7 +173,7 @@ CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion con
                            ViewKeys::cellBlockMatchPatternsString() ),
                  InputError );
   // only one selection method allowed for now
-  GEOS_THROW_IF( ( !requestedAttributeValues.empty() + !requestedMatchPatterns.empty() + !requestedCellBlock.empty() ) != 1,
+  GEOS_THROW_IF( ( !requestedAttributeValues.empty() + !requestedMatchPatterns.empty() + !requestedCellBlocks.empty() ) != 1,
                  GEOS_FMT( "{}: Only one setting must be used to select cellBlocks ({}, {} or {}).",
                            region.getDataContext(),
                            ViewKeys::sourceCellBlockNamesString(),
@@ -181,12 +181,13 @@ CellElementRegionSelector::buildRegionCellBlocksSelection( CellElementRegion con
                            ViewKeys::cellBlockMatchPatternsString() ),
                  InputError );
 
+  // gathering the requested cell-blocks in cellBlocksSelection (this code would not change if multiple input are allowed)
   std::set< string > const matchPatterns = buildMatchPatterns( region, requestedAttributeValues, requestedMatchPatterns );
   std::set< string > const matchedCellBlocks = getMatchingCellblocks( region, matchPatterns );
-  std::set< string > cellBlocksSelection = requestedCellBlock;
+  std::set< string > cellBlocksSelection = requestedCellBlocks;
   cellBlocksSelection.insert( matchedCellBlocks.begin(), matchedCellBlocks.end() );
-  verifyRequestedCellBlocks( region, cellBlocksSelection );
 
+  verifyRequestedCellBlocks( region, cellBlocksSelection );
   registerRegionSelection( region, requestedAttributeValues, cellBlocksSelection );
 
   return cellBlocksSelection;

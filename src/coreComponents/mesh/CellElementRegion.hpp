@@ -106,7 +106,7 @@ public:
   }
 
   /**
-   * @brief Free all lists of cellBlocks requests.
+   * @brief Free all lists of cellBlocks user-requests.
    */
   void clearCellBlockInputs()
   {
