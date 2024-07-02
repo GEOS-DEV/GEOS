@@ -242,16 +242,14 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
   }
 }
 
-void Group::postProcessInputRecursive()
+void Group::postInputInitializationRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
   {
-    subGroupIter.second->postProcessInputRecursive();
+    subGroupIter.second->postInputInitializationRecursive();
   }
-  postProcessInput();
+  postInputInitialization();
 }
-
-
 
 void Group::registerDataOnMeshRecursive( Group & meshBodies )
 {
@@ -262,7 +260,6 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
   }
 }
 
-
 Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
@@ -271,7 +268,6 @@ Group * Group::createChild( string const & childKey, string const & childName )
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
-
 
 void Group::printDataHierarchy( integer const indent ) const
 {

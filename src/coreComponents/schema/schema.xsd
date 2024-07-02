@@ -2101,6 +2101,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="filename" type="string" default="TimeHistory" />
 		<!--format => The output file format for time history output.-->
 		<xsd:attribute name="format" type="string" default="hdf" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--sources => A list of collectors from which to collect and output time history information.-->
@@ -2927,6 +2929,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isLaggingFractureStencilWeightsUpdate => Flag to determine whether or not to apply lagging update for the fracture stencil weights. -->
+		<xsd:attribute name="isLaggingFractureStencilWeightsUpdate" type="integer" default="0" />
 		<!--isMatrixPoroelastic => (no description available)-->
 		<xsd:attribute name="isMatrixPoroelastic" type="integer" default="0" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->

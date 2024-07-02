@@ -361,7 +361,7 @@ public:
                               NodeManager & nodeManager );
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
                                                       // # of particles, # of nodes a particle on the subregion maps to}

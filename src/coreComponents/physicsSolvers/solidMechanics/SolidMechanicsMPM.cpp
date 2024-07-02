@@ -289,9 +289,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "number of elements along partition directions" );
 }
 
-void SolidMechanicsMPM::postProcessInput()
+void SolidMechanicsMPM::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   // Activate neighbor list if necessary
   if( m_damageFieldPartitioning == 1 || m_surfaceDetection == 1 /*|| m_directionalOverlapCorrection == 1*/ )

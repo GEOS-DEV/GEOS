@@ -181,7 +181,7 @@ MultiFluidCO2BrineTest< BRINE, FLASH, THERMAL >::makeCO2BrineFluid( string const
   auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = pvtFlashFileName;
 
-  co2BrineFluid.postProcessInputRecursive();
+  co2BrineFluid.postInputInitializationRecursive();
 
   return &co2BrineFluid;
 }

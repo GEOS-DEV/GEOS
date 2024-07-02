@@ -319,7 +319,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
 
