@@ -53,7 +53,8 @@ HydraulicApertureTable::~HydraulicApertureTable()
 {}
 
 
-void HydraulicApertureTable::postProcessInput()
+
+void HydraulicApertureTable::postInputInitialization()
 {
 
   GEOS_THROW_IF( m_apertureTableName.empty(),

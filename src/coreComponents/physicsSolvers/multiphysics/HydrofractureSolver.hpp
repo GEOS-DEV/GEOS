@@ -184,7 +184,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling

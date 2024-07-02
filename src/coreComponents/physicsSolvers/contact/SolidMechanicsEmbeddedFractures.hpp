@@ -125,7 +125,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
 private:
 

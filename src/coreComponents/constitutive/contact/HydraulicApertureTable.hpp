@@ -125,8 +125,10 @@ public:
     static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
   };
 
-private:
-  virtual void postProcessInput() override;
+
+protected:
+
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Validate the values provided in the aperture table
