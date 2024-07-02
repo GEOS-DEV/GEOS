@@ -98,7 +98,7 @@ public:
    */
   static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   void print() const;
 
