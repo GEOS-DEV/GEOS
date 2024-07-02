@@ -200,9 +200,9 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 
 
-void ElasticWaveEquationSEM::postProcessInput()
+void ElasticWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postProcessInput();
+  WaveSolverBase::postInputInitialization();
 
   if( m_useDAS == WaveSolverUtils::DASType::none )
   {

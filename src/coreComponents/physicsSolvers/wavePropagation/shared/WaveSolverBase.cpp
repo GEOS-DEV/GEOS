@@ -258,7 +258,7 @@ WaveSolverBase::~WaveSolverBase()
 void WaveSolverBase::reinit()
 {
   initializePreSubGroups();
-  postProcessInput();
+  postInputInitialization();
   initializePostInitialConditionsPreSubGroups();
 }
 
@@ -307,9 +307,9 @@ void WaveSolverBase::initializePreSubGroups()
 
 }
 
-void WaveSolverBase::postProcessInput()
+void WaveSolverBase::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   /// set flag PML to one if a PML field is specified in the xml
   /// if counter>1, an error will be thrown as one single PML field is allowed
