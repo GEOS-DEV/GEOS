@@ -361,7 +361,7 @@ public:
                               NodeManager & nodeManager );
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 
@@ -456,6 +456,8 @@ private:
              ^ (std::hash< localIndex >()( k.binIndex ) << 1);
     }
   };
+
+  void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
