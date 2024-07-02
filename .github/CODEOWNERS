@@ -18,7 +18,7 @@
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin
 /src/coreComponents/denseLinearAlgebra                @rrsettgast
 /src/coreComponents/discretizationMethods             @rrsettgast
-/src/coreComponents/events                            @rrsettgast
+/src/coreComponents/events                            @rrsettgast @cssherman 
 /src/coreComponents/fieldSpecification                @rrsettgast
 /src/coreComponents/fileIO                            @rrsettgast @wrtobin
 /src/coreComponents/finiteElement                     @rrsettgast
