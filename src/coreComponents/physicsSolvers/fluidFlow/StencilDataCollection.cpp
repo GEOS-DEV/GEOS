@@ -115,7 +115,7 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     {
       // gather
       auto const stencilWrapper = stencil.createKernelWrapper();
-      array1d< KernelConnectionData > const kernelData = gatherTimeStepData( mesh, stencilWrapper );
+      array1d< KernelConnectionData > const kernelData = gatherConnectionData( mesh, stencilWrapper );
       // output
       storeTimeStepData( mesh, fluxApprox.getName(), kernelData.toView() );
     } );
@@ -171,13 +171,12 @@ public:
   }
 
 private:
-  Kernel()
-  {}
+  Kernel() = delete;
 };
 
 template< typename STENCILWRAPPER_T >
 array1d< StencilDataCollection::KernelConnectionData >
-StencilDataCollection::gatherTimeStepData( MeshLevel const & mesh,
+StencilDataCollection::gatherConnectionData( MeshLevel const & mesh,
                                            STENCILWRAPPER_T const & stencilWrapper ) const
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();

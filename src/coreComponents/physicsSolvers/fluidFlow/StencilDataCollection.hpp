@@ -128,8 +128,8 @@ private:
 //   * @return Return the gathered data in an LvArray
 //   */
 //  template< typename STENCILWRAPPER_T >
-//  array1d< KernelConnectionData > gatherTimeStepData( MeshLevel const & mesh,
-//                                                      STENCILWRAPPER_T const & stencilWrapper ) const;
+//  array1d< KernelConnectionData > gatherConnectionData( MeshLevel const & mesh,
+//                                                        STENCILWRAPPER_T const & stencilWrapper ) const;
 //
 //  /**
 //   * @brief Output the element-element connection data of the current timestep.
@@ -180,8 +180,8 @@ private:
    * @return Return the gathered data in an LvArray
    */
   template< typename STENCILWRAPPER_T >
-  array1d< KernelConnectionData > gatherTimeStepData( MeshLevel const & mesh,
-                                                      STENCILWRAPPER_T const & stencilWrapper ) const;
+  array1d< KernelConnectionData > gatherConnectionData( MeshLevel const & mesh,
+                                                        STENCILWRAPPER_T const & stencilWrapper ) const;
 
   /**
    * @brief Output the element-element connection data of the current timestep.
@@ -189,8 +189,8 @@ private:
    * @param stencil the specific mesh for which we output the data.
    * @param kernelData the connection data, gathered by a kernel.
    */
-  void storeTimeStepData( MeshLevel const & mesh, string_view stencilName,
-                          arrayView1d< KernelConnectionData > const & kernelData );
+  void storeConnectionData( MeshLevel const & mesh, string_view stencilName,
+                            arrayView1d< KernelConnectionData > const & kernelData );
 
   void logStoredConnections( string_view stencilName );
 };
