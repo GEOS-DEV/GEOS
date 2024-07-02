@@ -109,9 +109,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 }
 
-void CompositionalMultiphaseWell::postProcessInput()
+void CompositionalMultiphaseWell::postInputInitialization()
 {
-  WellSolverBase::postProcessInput();
+  WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
