@@ -2929,6 +2929,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isLaggingFractureStencilWeightsUpdate => Flag to determine whether or not to apply lagging update for the fracture stencil weights. -->
+		<xsd:attribute name="isLaggingFractureStencilWeightsUpdate" type="integer" default="0" />
 		<!--isMatrixPoroelastic => (no description available)-->
 		<xsd:attribute name="isMatrixPoroelastic" type="integer" default="0" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
