@@ -912,7 +912,7 @@ redistributeMeshes( integer const logLevel,
   }
 
   // Generate global IDs for vertices and cells, if needed
-  vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds, fractures.size() );
+  vtkSmartPointer< vtkDataSet > mesh = manageGlobalIds( loadedMesh, useGlobalIds, fractures.size() > 0 ? true : false );
 
   if( MpiWrapper::commRank( comm ) != ( MpiWrapper::commSize( comm ) - 1 ) )
   {
