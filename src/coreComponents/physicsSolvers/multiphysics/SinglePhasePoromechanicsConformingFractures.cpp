@@ -502,22 +502,21 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
       {
         localIndex const faceIndex = elemsToFaces[kfe][kf];
 
+        // Compute local area contribution for each node
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+        this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
+                                                            nodePosition,
+                                                            faceToNodeMap,
+                                                            faceToEdgeMap,
+                                                            edgeToNodeMap,
+                                                            faceCenters,
+                                                            faceNormal,
+                                                            faceAreas,
+                                                            nodalArea );
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                                              nodePosition,
-                                                              faceToNodeMap,
-                                                              faceToEdgeMap,
-                                                              edgeToNodeMap,
-                                                              faceCenters,
-                                                              faceNormal,
-                                                              faceAreas,
-                                                              nodalArea );
-
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
-          array1d< real64 > globalNodalForce( 3 );
+          real64 globalNodalForce[ 3 ];
           LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
           for( localIndex i=0; i<3; ++i )
@@ -624,7 +623,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         for( localIndex kf=0; kf<2; ++kf )
         {
           // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
           this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
                                                               nodePosition,
                                                               faceToNodeMap,
@@ -683,7 +682,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         for( localIndex kf=0; kf<2; ++kf )
         {
           //TODO: We should avoid allocating LvArrays inside kernel
-          array1d< real64 > nodalArea;
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
           this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
                                                               nodePosition,
                                                               faceToNodeMap,
