@@ -479,7 +479,8 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
           // Contact constraints
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
-          array1d< real64 > nodalArea0, nodalArea1;
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea0;
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea1;
           computeFaceNodalArea( elemsToFaces[kfe][0],
                                 nodePosition,
                                 faceToNodeMap,
@@ -670,23 +671,22 @@ void SolidMechanicsLagrangeContact::
       for( localIndex kf=0; kf<2; ++kf )
       {
         localIndex const faceIndex = elemsToFaces[kfe][kf];
+        // Compute local area contribution for each node
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+        computeFaceNodalArea( elemsToFaces[kfe][kf],
+                              nodePosition,
+                              faceToNodeMap,
+                              faceToEdgeMap,
+                              edgeToNodeMap,
+                              faceCenters,
+                              faceNormal,
+                              faceAreas,
+                              nodalArea );
 
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          computeFaceNodalArea( elemsToFaces[kfe][kf],
-                                nodePosition,
-                                faceToNodeMap,
-                                faceToEdgeMap,
-                                edgeToNodeMap,
-                                faceCenters,
-                                faceNormal,
-                                faceAreas,
-                                nodalArea );
-
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
-          array1d< real64 > globalNodalForce( 3 );
+          real64 globalNodalForce[ 3 ];
           LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
           for( localIndex i=0; i<3; ++i )
@@ -959,7 +959,7 @@ void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 co
                                                           arrayView2d< localIndex const > const & edgeToNodes,
                                                           real64 const & invCellDiameter,
                                                           real64 const (&cellCenter)[3],
-                                                          array1d< real64 > & basisIntegrals,
+                                                          stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals,
                                                           real64 (& threeDMonomialIntegrals)[3] ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1168,7 +1168,7 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
                                                           arrayView2d< real64 const > const faceCenters,
                                                           arrayView2d< real64 const > const faceNormals,
                                                           arrayView1d< real64 const > const faceAreas,
-                                                          array1d< real64 > & basisIntegrals ) const
+                                                          stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals ) const
 {
   GEOS_MARK_FUNCTION;
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
@@ -1332,7 +1332,7 @@ void SolidMechanicsLagrangeContact::
       {
         constexpr int normalSign[2] = { 1, -1 };
         // Testing the face integral on polygonal faces
-        array1d< real64 > nodalArea;
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
         localIndex const faceIndex = elemsToFaces[kfe][kf];
         computeFaceNodalArea( faceIndex,
                               nodePosition,
@@ -1484,7 +1484,7 @@ void SolidMechanicsLagrangeContact::
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
                   // Compute local area contribution for each node
-                  array1d< real64 > nodalArea;
+                  stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
                   computeFaceNodalArea( elemsToFaces[kfe][kf],
                                         nodePosition,
                                         faceToNodeMap,
@@ -1518,7 +1518,7 @@ void SolidMechanicsLagrangeContact::
                 for( localIndex kf = 0; kf < 2; ++kf )
                 {
                   // Compute local area contribution for each node
-                  array1d< real64 > nodalArea;
+                  stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
                   computeFaceNodalArea( elemsToFaces[kfe][kf],
                                         nodePosition,
                                         faceToNodeMap,
@@ -1567,7 +1567,7 @@ void SolidMechanicsLagrangeContact::
                   for( localIndex kf = 0; kf < 2; ++kf )
                   {
                     // Compute local area contribution for each node
-                    array1d< real64 > nodalArea;
+                    stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
                     computeFaceNodalArea( elemsToFaces[kfe][kf],
                                           nodePosition,
                                           faceToNodeMap,
@@ -1743,7 +1743,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
       if( numFluxElems == 2 )
       {
         // Find shared edge (pair of nodes)
-        array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
+        real64 Nbar0[3];
+        real64 Nbar1[3];
         Nbar0[ 0 ] = faceRotationMatrix[ sei[iconn][0] ][0][0];
         Nbar0[ 1 ] = faceRotationMatrix[ sei[iconn][0] ][1][0];
         Nbar0[ 2 ] = faceRotationMatrix[ sei[iconn][0] ][2][0];
@@ -1811,7 +1812,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             node1index1 = i;
           }
         }
-        array1d< real64 > nodalArea0, nodalArea1;
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea0;
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea1;
         localIndex const faceIndex0 = elem2dToFaces[sei[iconn][0]][0];
         localIndex const faceIndex1 = elem2dToFaces[sei[iconn][1]][id1];
 
@@ -1921,13 +1923,13 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
         // otherwise, compute the average rotation matrix
         else
         {
-          array1d< real64 > avgNbar( 3 );
+          real64 avgNbar[3];
           avgNbar[ 0 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[0] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[0];
           avgNbar[ 1 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[1] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[1];
           avgNbar[ 2 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[2] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[2];
           LvArray::tensorOps::normalize< 3 >( avgNbar );
 
-          computationalGeometry::RotationMatrix_3D( avgNbar.toSliceConst(), avgRotationMatrix );
+          computationalGeometry::RotationMatrix_3D( avgNbar, avgRotationMatrix );
         }
 
         // Compute R^T * (invK) * R

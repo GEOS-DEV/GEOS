@@ -153,7 +153,7 @@ public:
                              arrayView2d< real64 const > const faceCenters,
                              arrayView2d< real64 const > const faceNormals,
                              arrayView1d< real64 const > const faceAreas,
-                             array1d< real64 > & basisIntegrals ) const;
+                             stackArray1d< real64, FaceManager::maxFaceNodes() > & nodalArea ) const;
 
   void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                              localIndex const (&faceToNodes)[11],
@@ -165,7 +165,7 @@ public:
                              arrayView2d< localIndex const > const & edgeToNodes,
                              real64 const & invCellDiameter,
                              real64 const (&cellCenter)[3],
-                             array1d< real64 > & basisIntegrals,
+                             stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals,
                              real64 ( &threeDMonomialIntegrals )[3] ) const;
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
