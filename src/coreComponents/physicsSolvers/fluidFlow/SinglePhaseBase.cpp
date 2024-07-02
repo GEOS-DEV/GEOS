@@ -259,6 +259,7 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
 
   arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
   arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
+  arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
@@ -272,6 +273,7 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
     getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   arrayView2d< real64 const > const density = fluid.density();
   arrayView2d< real64 const > const density_n = fluid.density_n();
+  real64 const defaultDensity = fluid.defaultDensity();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
@@ -279,6 +281,7 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
     if( isZero( mass_n[ei] ) ) // this is a hack for hydrofrac cases
     {
       mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0]; // initialize newly created element mass
+      creationMass[ei] = defaultDensity * volume[ei];
     }
   } );
 }
@@ -803,7 +806,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
           if( volume[ei] * density_n[ei][0] > 1.1 * creationMass[ei] )
           {
             creationMass[ei] *= 0.75;
-            if( creationMass[ei]<1.0e-20 )
+            if( creationMass[ei] < 1.0e-20 )
             {
               creationMass[ei] = 0.0;
             }
