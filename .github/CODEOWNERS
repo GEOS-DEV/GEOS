@@ -32,7 +32,7 @@
 /src/coreComponents/physicsSolvers/contact            @CusiniM
 /src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin 
 /src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM
-/src/coreComponents/physicsSolvers/multiphysics       @CusiniM
+/src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 
 /src/coreComponents/physicsSolvers/python             @cssherman
 /src/coreComponents/physicsSolvers/simplePDE          
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
