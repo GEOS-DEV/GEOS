@@ -208,7 +208,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap().toViewConst();
-  ArrayOfArraysView< localIndex const > const  facesToNodes = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -274,6 +275,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         facesToNodes,
         X,
         nodeLocalToGlobal,
+        nodesToElements,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,

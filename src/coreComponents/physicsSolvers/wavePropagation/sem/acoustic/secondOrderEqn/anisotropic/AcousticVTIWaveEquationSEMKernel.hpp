@@ -67,6 +67,7 @@ struct PrecomputeSourceAndReceiverKernel
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< globalIndex const > const nodeLocalToGlobal,
+          ArrayOfArraysView< localIndex const > const nodesToElements,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -104,13 +105,15 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][1],
                                      sourceCoordinates[isrc][2] };
 
-          bool const sourceFound = 
-              computationalGeometry::isPointInsideConvexPolyhedronRobust( nodeCoords,
-                                                                    elemsToFaces[ k ],
-                                                                    facesToNodes,
-                                                                    nodeLocalToGlobal,
-                                                                  center,  
-                                                                    coords ); 
+          bool const sourceFound =
+            computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
+                                                                        nodeCoords,
+                                                                        elemsToFaces,
+                                                                        facesToNodes,
+                                                                        nodesToElements,
+                                                                        nodeLocalToGlobal,
+                                                                        center,
+                                                                        coords );
           if( sourceFound )
           {
             real64 coordsOnRefElem[3]{};
@@ -153,13 +156,15 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 coordsOnRefElem[3]{};
 
-          bool const receiverFound = 
-              computationalGeometry::isPointInsideConvexPolyhedronRobust( nodeCoords,
-                                                                    elemsToFaces[ k ],
-                                                                    facesToNodes,
-                                                                    nodeLocalToGlobal,
-                                                                  center,  
-                                                                    coords ); 
+          bool const receiverFound =
+            computationalGeometry::isPointInsideConvexPolyhedronRobust( k,
+                                                                        nodeCoords,
+                                                                        elemsToFaces,
+                                                                        facesToNodes,
+                                                                        nodesToElements,
+                                                                        nodeLocalToGlobal,
+                                                                        center,
+                                                                        coords );
           if( receiverFound && elemGhostRank[k] < 0 )
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,

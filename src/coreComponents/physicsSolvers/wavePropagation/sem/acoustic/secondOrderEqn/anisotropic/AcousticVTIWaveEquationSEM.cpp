@@ -120,6 +120,7 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 =
     nodeManager.getField< fields::referencePosition32 >().toViewConst();
   arrayView1d< globalIndex const > const nodeLocalToGlobalMap = nodeManager.localToGlobalMap().toViewConst();
+  ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
   ArrayOfArraysView< localIndex const > const facesToNodesMap = faceManager.nodeList().toViewConst();
 
 
@@ -179,6 +180,7 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
         facesToNodesMap,
         nodeCoords32,
         nodeLocalToGlobalMap,
+        nodesToElements,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
