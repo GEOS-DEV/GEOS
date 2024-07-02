@@ -73,9 +73,9 @@ void WellSolverBase::expandObjectCatalogs()
 
 WellSolverBase::~WellSolverBase() = default;
 
-void WellSolverBase::postProcessInput()
+void WellSolverBase::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   // create dir for rates output
   if( m_writeCSV > 0 )
