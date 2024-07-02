@@ -148,7 +148,7 @@ public:
   void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                              localIndex const kf0,
-                             array1d< real64 > & nodalArea ) const;
+                             stackArray1d< real64, FaceManager::maxFaceNodes() > & nodalArea ) const;
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
