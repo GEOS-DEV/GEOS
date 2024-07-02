@@ -148,6 +148,7 @@ public:
   void computeFaceNodalArea( localIndex const kf0,
                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
                              arrayView2d< localIndex const > const & edgeToNodeMap,
                              arrayView2d< real64 const > const faceCenters,
                              arrayView2d< real64 const > const faceNormals,

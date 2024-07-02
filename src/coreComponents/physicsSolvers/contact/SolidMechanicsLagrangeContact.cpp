@@ -1332,7 +1332,7 @@ void SolidMechanicsLagrangeContact::
       {
         constexpr int normalSign[2] = { 1, -1 };
         // Testing the face integral on polygonal faces
-        array1d< real64 > nodalArea;
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
         localIndex const faceIndex = elemsToFaces[kfe][kf];
         computeFaceNodalArea( faceIndex,
                               nodePosition,
