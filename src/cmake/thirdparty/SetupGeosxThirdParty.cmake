@@ -867,11 +867,20 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 if(DEFINED GRPC_DIR)
     message(STATUS "GRPC_DIR = ${GRPC_DIR}")
 
-    find_and_register(NAME grpc
-                      INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
-                      LIBRARY_DIRECTORIES ${GRPC_DIR}/lib ${GRPC_DIR}/lib64
-                      HEADER grpcpp/grpcpp.h
-                      LIBRARIES grpc++ grpc++_reflection absl_log_internal_check_op absl_log_internal_message protobuf)
+    # find_and_register(NAME grpc
+    #                   INCLUDE_DIRECTORIES ${GRPC_DIR}/include/
+    #                   LIBRARY_DIRECTORIES ${GRPC_DIR}/lib ${GRPC_DIR}/lib64
+    #                   HEADER grpcpp/grpcpp.h
+    #                   LIBRARIES grpc++ grpc++_reflection absl_log_internal_check_op absl_log_internal_message protobuf)
+
+    find_package( grpc REQUIRED
+                  PATHS ${GRPC_DIR}
+                  NO_DEFAULT_PATH )
+
+    set_property( TARGET grpc
+                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                  ${grpc_INCLUDE_PATH} )
+ 
 
     set(ENABLE_GRPC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} grpc)
