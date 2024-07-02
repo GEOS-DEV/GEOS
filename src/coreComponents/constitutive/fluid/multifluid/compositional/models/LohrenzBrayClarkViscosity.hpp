@@ -300,7 +300,7 @@ public:
 
 private:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
-    void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
+    void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
 
     struct viewKeyStruct
     {

@@ -49,12 +49,12 @@ public:
     }
   }
 
-  void postProcessInput( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
+  void postInputInitialization( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
   {
-    postProcessInputImpl( fluid, componentProperties );
+    postInputInitializationImpl( fluid, componentProperties );
     if( baseParameters )
     {
-      baseParameters->postProcessInput( fluid, componentProperties );
+      baseParameters->postInputInitialization( fluid, componentProperties );
     }
   }
 
@@ -75,7 +75,7 @@ private:
     GEOS_UNUSED_VAR( fluid );
   }
 
-  virtual void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
+  virtual void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties )
   {
     GEOS_UNUSED_VAR( fluid );
     GEOS_UNUSED_VAR( componentProperties );

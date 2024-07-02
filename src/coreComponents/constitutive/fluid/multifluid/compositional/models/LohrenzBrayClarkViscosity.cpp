@@ -82,8 +82,8 @@ void LohrenzBrayClarkViscosity::Parameters::registerParametersImpl( MultiFluidBa
                     EnumStrings< LohrenzBrayClarkViscosityUpdate::MixingType >::concat( "\n* " ) );
 }
 
-void LohrenzBrayClarkViscosity::Parameters::postProcessInputImpl( MultiFluidBase const * fluid,
-                                                                  ComponentProperties const & componentProperties )
+void LohrenzBrayClarkViscosity::Parameters::postInputInitializationImpl( MultiFluidBase const * fluid,
+                                                                         ComponentProperties const & componentProperties )
 {
   GEOS_UNUSED_VAR( fluid, componentProperties );
   // If the value is invalid, this will throw
