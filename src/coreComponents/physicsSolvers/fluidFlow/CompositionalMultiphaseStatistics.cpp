@@ -61,9 +61,9 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
 }
 
-void CompositionalMultiphaseStatistics::postProcessInput()
+void CompositionalMultiphaseStatistics::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
