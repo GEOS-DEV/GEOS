@@ -536,47 +536,39 @@ void buildPods( MeshGraph const & owned,
   // invert to downward mappings to get e2f, f2c, n2e, n2f, n2c
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
 
-  // Now we can make our node manager
+  // Now we can make our node/edge/face/cell manager
   // NodeMgrImpl inherits from nodeManager (see pods.hpp) (interface with getters and setters)
   // We basically have all the data, this function just casts it into the proper GEOS types
-  NodeMgrImpl nodeMgr = makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
-                                                   graph.n2pos,
-                                                   upwardMappings.n2e,
-                                                   upwardMappings.n2f,
-                                                   upwardMappings.n2c,
-                                                   g2l.nodes,
-                                                   invertGhostSend( send.nodes, g2l.nodes ),
-                                                   invertGhostRecv( recv.nodes, g2l.nodes ) );
-  // same for edge manager
-  EdgeMgrImpl edgeMgr = makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
-                                                   downwardMappings.e2n,
-                                                   upwardMappings.e2f,
-                                                   g2l.edges,
-                                                   invertGhostSend( send.edges, g2l.edges ),
-                                                   invertGhostRecv( recv.edges, g2l.edges ) );
-  // same for face manager
-  FaceMgrImpl faceMgr = makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
-                                                   downwardMappings.f2n,
-                                                   downwardMappings.f2e,
-                                                   upwardMappings.f2c,
-                                                   g2l.faces,
-                                                   invertGhostSend( send.faces, g2l.faces ),
-                                                   invertGhostRecv( recv.faces, g2l.faces ) );
-  // same for cell block
-  CellBlkImpl cellBlock = makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
-                                                     downwardMappings.c2n,
-                                                     downwardMappings.c2e,
-                                                     downwardMappings.c2f,
-                                                     g2l.cells,
-                                                     invertGhostSend( send.cells, g2l.cells ),
-                                                     invertGhostRecv( recv.cells, g2l.cells ) );
-  CellMgrImpl cellMgr( std::move( cellBlock ) );
-
-  // populate meshMappings with the created managers
-  meshMappings.setCellMgr( std::move( cellMgr ) );
-  meshMappings.setEdgeMgr( std::move( edgeMgr ) );
-  meshMappings.setFaceMgr( std::move( faceMgr ) );
-  meshMappings.setNodeMgr( std::move( nodeMgr ) );
+  // same for edges, faces, cells
+  
+  meshMappings.setEdgeMgr( makeFlavorlessEdgeMgrImpl( std::size( g2l.edges ),
+                                                      downwardMappings.e2n,
+                                                      upwardMappings.e2f,
+                                                      g2l.edges,
+                                                      invertGhostSend( send.edges, g2l.edges ),
+                                                      invertGhostRecv( recv.edges, g2l.edges ) ) );
+  meshMappings.setFaceMgr( makeFlavorlessFaceMgrImpl( std::size( g2l.faces ),
+                                                      downwardMappings.f2n,
+                                                      downwardMappings.f2e,
+                                                      upwardMappings.f2c,
+                                                      g2l.faces,
+                                                      invertGhostSend( send.faces, g2l.faces ),
+                                                      invertGhostRecv( recv.faces, g2l.faces ) ) );
+  meshMappings.setNodeMgr( makeFlavorlessNodeMgrImpl( std::size( g2l.nodes ),
+                                                      graph.n2pos,
+                                                      upwardMappings.n2e,
+                                                      upwardMappings.n2f,
+                                                      upwardMappings.n2c,
+                                                      g2l.nodes,
+                                                      invertGhostSend( send.nodes, g2l.nodes ),
+                                                      invertGhostRecv( recv.nodes, g2l.nodes ) ) );
+  meshMappings.setCellMgr( CellMgrImpl( makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
+                                                                   downwardMappings.c2n,
+                                                                   downwardMappings.c2e,
+                                                                   downwardMappings.c2f,
+                                                                   g2l.cells,
+                                                                   invertGhostSend( send.cells, g2l.cells ),
+                                                                   invertGhostRecv( recv.cells, g2l.cells ) ) ) );
 
   meshMappings.setNeighbors( getNeighbors( recv, send ) );
 }

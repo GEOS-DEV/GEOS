@@ -81,11 +81,6 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
                          EdgeGlbIdx const & maxEdgeId,
                          FaceGlbIdx const & maxFaceId )
 {
-  // MaxGlbIdcs is just a struct of the 4 index types (ints under the hood)
-  // edge and face max (global) index values are passed in, 
-  // we use a little lambda below to get the node and cell max indices
-  MaxGlbIdcs offsets{ NodeGlbIdx{ 0 }, maxEdgeId, maxFaceId, CellGlbIdx{ 0 } };
-
   auto const extract = []( vtkDataArray * globalIds ) -> vtkIdType
   {
     vtkIdTypeArray * gids = vtkIdTypeArray::FastDownCast( globalIds );
@@ -93,8 +88,13 @@ MaxGlbIdcs gatherOffset( vtkSmartPointer< vtkDataSet > mesh,
     return *std::max_element( s.begin(), s.end() );
   };
 
-  offsets.nodes = NodeGlbIdx{ extract( mesh->GetPointData()->GetGlobalIds() ) };
-  offsets.cells = CellGlbIdx{ extract( mesh->GetCellData()->GetGlobalIds() ) };
+  // MaxGlbIdcs is just a struct of the 4 index types (ints under the hood)
+  // edge and face max (global) index values are passed in, 
+  // we use a little lambda to get the node and cell max indices
+  MaxGlbIdcs const offsets{ NodeGlbIdx{ extract( mesh->GetPointData()->GetGlobalIds() ) },
+                            maxEdgeId,
+                            maxFaceId,
+                            CellGlbIdx{ extract( mesh->GetCellData()->GetGlobalIds() ) } };
 
   // I would have to look in detail about what these MPI lines do,
   // But im fairly sure they are just handling type stuff so that you can do communications
@@ -305,7 +305,9 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
     }
   }
 
-  return { std::move( owned ), std::move( present ) };
+  GEOS_ASSERT( std::empty( present.c2f ) );
+
+  return { owned, present };
 }
 
 //using TriLocIdx = fluent::NamedType< localIndex, struct TagTriLocIdx, fluent::Arithmetic, fluent::ImplicitlyConvertibleTo >;
@@ -566,7 +568,7 @@ struct Adjacency
 {
   std::vector< TriGlbIdx > ownedNodesIdcs;
   std::vector< TriGlbIdx > ownedGlbIdcs;
-  std::vector< TriGlbIdx > otherGlbIdcs;
+  std::vector< TriGlbIdx > presentGlbIdcs;
   Teuchos::Array< std::size_t > numEntriesPerRow;
   std::vector< std::vector< TriGlbIdx > > indices;
   std::vector< std::vector< TriScalarInt > > values;
@@ -588,7 +590,7 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   // Aliases for the data in adjacency
   std::vector< TriGlbIdx > & ownedNodesIdcs = adjacency.ownedNodesIdcs;
   std::vector< TriGlbIdx > & ownedGlbIdcs = adjacency.ownedGlbIdcs;
-  std::vector< TriGlbIdx > & otherGlbIdcs = adjacency.otherGlbIdcs;
+  std::vector< TriGlbIdx > & presentGlbIdcs = adjacency.presentGlbIdcs;
   Teuchos::Array< std::size_t > & numEntriesPerRow = adjacency.numEntriesPerRow;
   std::vector< std::vector< TriGlbIdx > > & indices = adjacency.indices;
   std::vector< std::vector< TriScalarInt > > & values = adjacency.values;
@@ -596,7 +598,7 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   // we can go ahead and set sizes for the current rank matrix data
   ownedNodesIdcs.reserve( std::size( owned.n2pos ) );
   ownedGlbIdcs.reserve( numOwned );
-  otherGlbIdcs.reserve( numOther );
+  presentGlbIdcs.reserve( numOther );
   numEntriesPerRow.reserve( numOwned );
   indices.reserve( numOwned );
   values.reserve( numOwned );
@@ -606,18 +608,19 @@ Adjacency buildAdjacency( MeshGraph const & owned,
   // The filling of the matrix entries is done by the owning rank
   for( auto const & [ngi, _]: present.n2pos )
   {
-    otherGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
+    presentGlbIdcs.emplace_back( convert.fromNodeGlbIdx( ngi ) );
   }
   for( auto const & [egi, _]: present.e2n )
   {
-    otherGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
+    presentGlbIdcs.emplace_back( convert.fromEdgeGlbIdx( egi ) );
   }
   for( auto const & [fgi, _]: present.f2e )
   {
-    otherGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
+    presentGlbIdcs.emplace_back( convert.fromFaceGlbIdx( fgi ) );
   }
-  std::sort( std::begin( otherGlbIdcs ), std::end( otherGlbIdcs ) ); // I think that the data in n2pos, e2n, f2e was not necessarily sorted, should double check this as sorting caused a bug in owned data
-  GEOS_ASSERT_EQ( numOther, std::size( otherGlbIdcs ) ); // ensure we added the correct amount of stuff
+
+  std::sort( std::begin( presentGlbIdcs ), std::end( presentGlbIdcs ) ); // I think that the data in n2pos, e2n, f2e was not necessarily sorted, should double check this as sorting caused a bug in owned data
+  GEOS_ASSERT_EQ( numOther, std::size( presentGlbIdcs ) ); // ensure we added the correct amount of stuff
 
   // Now do owned data
   for( auto const & [ngi, _]: owned.n2pos )
@@ -759,12 +762,12 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // Build the adjacency matrix data for this rank (each rank fills in the values for geometry that it 'owns', but notes the geometry that is 'present')
   Adjacency const adjacency = buildAdjacency( owned, present, convert );
   std::size_t const numOwned = std::size( adjacency.ownedGlbIdcs );
-  std::size_t const numOther = std::size( adjacency.otherGlbIdcs ); // Corresponds to the `present` geometrical entities
+  std::size_t const numPresent = std::size( adjacency.presentGlbIdcs );
 
   // Aliases
   std::vector< TriGlbIdx > const & ownedNodesIdcs = adjacency.ownedNodesIdcs;
   std::vector< TriGlbIdx > const & ownedGlbIdcs = adjacency.ownedGlbIdcs;
-  std::vector< TriGlbIdx > const & otherGlbIdcs = adjacency.otherGlbIdcs;
+  std::vector< TriGlbIdx > const & presentGlbIdcs = adjacency.presentGlbIdcs;
   Teuchos::Array< std::size_t > const & numEntriesPerRow = adjacency.numEntriesPerRow;
   std::vector< std::vector< TriGlbIdx > > const & indices = adjacency.indices;
   std::vector< std::vector< TriScalarInt > > const  & values = adjacency.values;
@@ -814,18 +817,17 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // It's rectangular, number of rows being the number of MPI ranks (so each rank builds its row),
   // number of columns being the number of nodes in the mesh graph, ie the number of geometrical entities in the mesh.
   // It contains one for every time the geometrical entity is present on the rank.
-  // By present, we do not mean that the ranks owns it: just that it's already available on the rank.
-  auto const mpiMap = make_rcp< TriMap const >( Tpetra::global_size_t( commSize ), TriGlbIdx{ 0 }, comm );  // Let the current rank get the appropriate index in this map, total size is just num ranks.
-  TriCrsMatrix indicator( mpiMap, numOwned + numOther );
+  // By present, we do not meant that the ranks owns it: just that it's already available on the rank.
+  auto const mpiMap = make_rcp< TriMap const >( Tpetra::global_size_t( commSize ), TriGlbIdx{ 0 }, comm );  // Let the current rank get the appropriate index in this map.
+  TriCrsMatrix indicator( mpiMap, numOwned + numPresent );
 
   // ones is a vector of size numOwned of 1s, a vector of size numOther of 1s, or a vector with a single entry of 1, whichever is biggest
   // this is just a little trick to ensure you have a long enough vector or 1 to enter into the matrix
-  std::vector< TriScalarInt > const ones( std::max( { numOwned, numOther, std::size_t( 1 ) } ), 1 );
-
-  // Insert into the row corresponding to my rank, putting ones in column for every owned and present geometrical entity
+  std::vector< TriScalarInt > const ones( std::max( { numOwned, numPresent, std::size_t( 1 ) } ), 1 );
+  
   indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOwned ), ones.data(), ownedGlbIdcs.data() );
-  indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numOther ), ones.data(), otherGlbIdcs.data() );
-  indicator.fillComplete( ownedMap, mpiMap ); // Done modifying the entries/structure of matrix
+  indicator.insertGlobalValues( TriGlbIdx( curRank.get() ), TriLocIdx( numPresent ), ones.data(), presentGlbIdcs.data() );
+  indicator.fillComplete( ownedMap, mpiMap );
 
   // The `ownership` matrix is a diagonal square matrix.
   // Each size being the number of geometrical entities (so same size as adjacency).
@@ -1008,7 +1010,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // of course, some of these indices were already communicated, they were the `present` data
   std::vector< TriGlbIdx > notPresentIndices;  // The graphs nodes that are nor owned neither present by/on the current rank.
   std::set_difference( std::cbegin( receivedIndices ), std::cend( receivedIndices ),
-                       std::cbegin( otherGlbIdcs ), std::cend( otherGlbIdcs ),
+                       std::cbegin( presentGlbIdcs ), std::cend( presentGlbIdcs ),
                        std::back_inserter( notPresentIndices ) );
 
   // a bit below we will see that we need to actually send the positions of the ghosted nodes (everything else is just indices so far)
@@ -1138,8 +1140,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
   // Following information is needed to compute the global row.
   // https://docs.trilinos.org/dev/packages/tpetra/doc/html/classTpetra_1_1Map.html#a0124c1b96f046c824123fb0ff5a9c978
   // getting the index in the global matrix corresponding to local index 0 on current rank
-  TriGlbIdx const missingIndicesOffset = missingIndicesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
-  TriGlbIdx const missingNodesOffset = missingNodesMap->getGlobalElement( TriLocIdx{ 0 } );  // TODO Hocus Pocus
+  TriGlbIdx const missingIndicesOffset = missingIndicesMap->getGlobalElement( TriLocIdx{ 0 } );  // Let trilinos provide the offset.
+  TriGlbIdx const missingNodesOffset = missingNodesMap->getGlobalElement( TriLocIdx{ 0 } );  // Let trilinos provide the offset.
 
   // Indicator matrix for the all the missing quantities (nodes, edges, faces and cells).
   TriCrsMatrix missingIndicator( missingIndicesMap, 1 );
@@ -1379,8 +1381,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 //  }
 
   // Now we are done!!!
-
-  return { std::move( ghosts ), std::move( recv ), std::move( send ) };
+  return { ghosts, recv, send };
 }
 
 void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
