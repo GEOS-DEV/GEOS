@@ -14,7 +14,7 @@
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin
 /src/coreComponents/codingUtilities                   @rrsettgast
 /src/coreComponents/common                            @rrsettgast
-/src/coreComponents/constitutive                      @rrsettgast
+/src/coreComponents/constitutive                      @rrsettgast @CusiniM @dkachuma 
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin
 /src/coreComponents/denseLinearAlgebra                @rrsettgast
 /src/coreComponents/discretizationMethods             @rrsettgast
@@ -24,13 +24,13 @@
 /src/coreComponents/finiteElement                     @rrsettgast
 /src/coreComponents/finiteVolume                      @rrsettgast
 /src/coreComponents/functions                         @rrsettgast
-/src/coreComponents/linearAlgebra                     @rrsettgast
+/src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm 
 /src/coreComponents/mainInterface                     @rrsettgast
 /src/coreComponents/math                              @rrsettgast
 /src/coreComponents/mesh                              @rrsettgast @wrtobin
 /src/coreComponents/physicsSolvers                    @rrsettgast
 /src/coreComponents/physicsSolvers/contact            @CusiniM
-/src/coreComponents/physicsSolvers/fluidFlow          @CusiniM
+/src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin 
 /src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM
 /src/coreComponents/physicsSolvers/multiphysics       @CusiniM
 /src/coreComponents/physicsSolvers/python             @cssherman
