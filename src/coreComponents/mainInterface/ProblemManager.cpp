@@ -150,8 +150,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
-
-  postProcessInputRecursive();
+  postInputInitializationRecursive();
 
   generateMesh();
 
@@ -491,7 +490,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 }
 
 
-void ProblemManager::postProcessInput()
+void ProblemManager::postInputInitialization()
 {
   DomainPartition & domain = getDomainPartition();
 

@@ -80,7 +80,7 @@ public:
    */
   /**@{*/
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
