@@ -130,7 +130,7 @@ DeadOilFluid * MultiFluidDeadOilTest< false >::makeDeadOilFluid( string const & 
   path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   fill< 3 >( tableNames, {"pvdo.txt", "pvdw.txt", "pvdg.txt"} );
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return &fluid;
 }
 
@@ -198,7 +198,7 @@ DeadOilFluid * MultiFluidDeadOilTest< true >::makeDeadOilFluid( string const & n
   real64 & waterViscosity = fluid.getReference< real64 >( DeadOilFluid::viewKeyStruct::waterViscosityString() );
   waterViscosity = 0.0003;
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return &fluid;
 }
 

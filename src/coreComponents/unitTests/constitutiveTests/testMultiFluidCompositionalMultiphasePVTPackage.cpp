@@ -159,7 +159,7 @@ makeFluid( string const & name, Group * parent )
 
   Fluid< NUM_COMP >::fillProperties( fluid );
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return &fluid;
 }
 
