@@ -10,6 +10,7 @@ MultiphasePoromechanicsInitialization                       node :ref:`DATASTRUC
 PVTDriver                                                   node :ref:`DATASTRUCTURE_PVTDriver`                                                   
 PackCollection                                              node :ref:`DATASTRUCTURE_PackCollection`                                              
 ReactiveFluidDriver                                         node :ref:`DATASTRUCTURE_ReactiveFluidDriver`                                         
+RegionMultiphaseStatistics                                  node :ref:`DATASTRUCTURE_RegionMultiphaseStatistics`                                  
 RelpermDriver                                               node :ref:`DATASTRUCTURE_RelpermDriver`                                               
 SinglePhasePoromechanicsConformingFracturesInitialization   node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesInitialization`   
 SinglePhasePoromechanicsEmbeddedFracturesInitialization     node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFracturesInitialization`     
