@@ -180,15 +180,12 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-
       {
         GEOS_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
         PreComputeSourcesAndReceivers::
           Compute1DSourceAndReceiverConstants
         < EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-          numFacesPerElem,
           facesToNodes,
           nodeCoords32,
           nodeLocalToGlobalMap,

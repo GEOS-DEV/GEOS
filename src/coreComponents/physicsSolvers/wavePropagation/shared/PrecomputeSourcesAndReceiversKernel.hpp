@@ -32,7 +32,6 @@ struct PreComputeSourcesAndReceivers
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
@@ -58,7 +57,6 @@ struct PreComputeSourcesAndReceivers
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   Compute1DSourceAndReceiverConstants( localIndex const size,
-                                       localIndex const numFacesPerElem,
                                        ArrayOfArraysView< localIndex const > const facesToNodes,
                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                        arrayView1d< globalIndex const > const nodeLocalToGlobal,
@@ -194,7 +192,6 @@ struct PreComputeSourcesAndReceivers
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
@@ -223,7 +220,6 @@ struct PreComputeSourcesAndReceivers
   static void
   Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage( localIndex const size,
                                                                    localIndex const regionIndex,
-                                                                   localIndex const numFacesPerElem,
                                                                    ArrayOfArraysView< localIndex const > const facesToNodes,
                                                                    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                                                    arrayView1d< globalIndex const > const nodeLocalToGlobal,
@@ -367,7 +363,6 @@ struct PreComputeSourcesAndReceivers
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of face on an element
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
@@ -401,7 +396,6 @@ struct PreComputeSourcesAndReceivers
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   Compute3DSourceAndReceiverConstantsWithDAS( localIndex const size,
-                                              localIndex const numFacesPerElem,
                                               ArrayOfArraysView< localIndex const > const facesToNodes,
                                               arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                               arrayView1d< globalIndex const > const nodeLocalToGlobal,

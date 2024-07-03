@@ -39,7 +39,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numFacesPerElem number of faces per element
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global map for nodes
@@ -65,7 +64,6 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numFacesPerElem,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< globalIndex const > const nodeLocalToGlobal,

@@ -214,14 +214,11 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-
       PreComputeSourcesAndReceivers::
         Compute1DSourceAndReceiverConstantsWithElementsAndRegionStorage
       < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
-        numFacesPerElem,
         facesToNodes,
         X,
         nodeLocalToGlobal,
