@@ -27,6 +27,8 @@
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "codingUtilities/EnumStrings.hpp"
 
+#include <variant>
+
 using namespace LvArray;
 
 namespace geos
@@ -97,19 +99,19 @@ public:
   using UPDATE_BASE::m_shearModulus;
 
   // Lorentz type degradation functions
-  template< int DISSIPATION_ORDER = 1 >
+  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationValue( localIndex const k,
                               localIndex const q ) const
   {
-    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
+    static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m = 0;
-    if constexpr ( DISSIPATION_ORDER == 2 )
+    if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
       m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
     }
-    else if constexpr ( DISSIPATION_ORDER == 1 )
+    else if constexpr ( DISSIPATION_ORDER::value == 1 )
     {
       m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     }
@@ -117,18 +119,18 @@ public:
     return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
   }
 
-  template< int DISSIPATION_ORDER = 1 >
+  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationDerivative( real64 const d ) const
   {
-    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
+    static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m;
-    if constexpr ( DISSIPATION_ORDER == 2 )
+    if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
       m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
     }
-    else if constexpr ( DISSIPATION_ORDER == 1 )
+    else if constexpr ( DISSIPATION_ORDER::value == 1 )
     {
       m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     }
@@ -136,18 +138,18 @@ public:
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
-  template< int DISSIPATION_ORDER = 1 >
+  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
+    static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m = 0;
-    if constexpr ( DISSIPATION_ORDER == 2 )
+    if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
       m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
     }
-    else if constexpr ( DISSIPATION_ORDER == 1 )
+    else if constexpr ( DISSIPATION_ORDER::value == 1 )
     {
       m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     }
@@ -189,11 +191,11 @@ public:
     real64 damageFactor = 0;
     if( m_dissipationFuctionType == 1 )
     {
-      damageFactor =  getDegradationValue< 1 >( k, q );
+      damageFactor =  getDegradationValue< std::integral_constant<int, 1> >( k, q );
     }
     else if( m_dissipationFuctionType == 2 )
     {
-      damageFactor =  getDegradationValue< 2 >( k, q );
+      damageFactor =  getDegradationValue< std::integral_constant<int, 2> >( k, q );
     }
 
     // get eigenvalues and eigenvectors
