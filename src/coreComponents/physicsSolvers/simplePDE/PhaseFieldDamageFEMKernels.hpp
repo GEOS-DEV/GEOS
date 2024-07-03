@@ -246,7 +246,8 @@ public:
           else
           {
             stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                      + N[a] * N[b] * (1 + m_constitutiveUpdate.template getDegradationSecondDerivative< DISSIPATION_FUNCTION_ORDER >( qp_damage ) * ell * strainEnergyDensity/Gc ) );
+                                                      + N[a] * N[b] *
+                                                      (1 + m_constitutiveUpdate.template getDegradationSecondDerivative< DISSIPATION_FUNCTION_ORDER >( qp_damage ) * ell * strainEnergyDensity/Gc ) );
           }
         }
       }
@@ -304,9 +305,9 @@ protected:
 };
 
 template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-using LinearPhaseFieldDamageKernel = DamageKernel< std::integral_constant<int, 1> >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+using LinearPhaseFieldDamageKernel = DamageKernel< std::integral_constant< int, 1 > >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-using QuadraticPhaseFieldDamageKernel = DamageKernel< std::integral_constant<int, 2>  >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+using QuadraticPhaseFieldDamageKernel = DamageKernel< std::integral_constant< int, 2 > >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 
 using LinearPhaseFieldDamageKernelFactory = finiteElement::KernelFactory< LinearPhaseFieldDamageKernel,
                                                                           arrayView1d< globalIndex const > const,

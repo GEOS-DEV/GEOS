@@ -99,7 +99,7 @@ public:
   using UPDATE_BASE::m_shearModulus;
 
   // Lorentz type degradation functions
-  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
+  template< typename DISSIPATION_ORDER = std::integral_constant< int, 1 > >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationValue( localIndex const k,
@@ -119,7 +119,7 @@ public:
     return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
   }
 
-  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
+  template< typename DISSIPATION_ORDER = std::integral_constant< int, 1 > >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationDerivative( real64 const d ) const
@@ -138,7 +138,7 @@ public:
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
-  template< typename DISSIPATION_ORDER = std::integral_constant<int, 1> >
+  template< typename DISSIPATION_ORDER = std::integral_constant< int, 1 > >
   inline
   GEOS_HOST_DEVICE
   real64 getDegradationSecondDerivative( real64 const d ) const
@@ -191,11 +191,11 @@ public:
     real64 damageFactor = 0;
     if( m_dissipationFuctionType == 1 )
     {
-      damageFactor =  getDegradationValue< std::integral_constant<int, 1> >( k, q );
+      damageFactor =  getDegradationValue< std::integral_constant< int, 1 > >( k, q );
     }
     else if( m_dissipationFuctionType == 2 )
     {
-      damageFactor =  getDegradationValue< std::integral_constant<int, 2> >( k, q );
+      damageFactor =  getDegradationValue< std::integral_constant< int, 2 > >( k, q );
     }
 
     // get eigenvalues and eigenvectors
