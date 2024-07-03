@@ -57,9 +57,6 @@ public:
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
-  using DamageUpdates< UPDATE_BASE >::getDegradationValue;
-  using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
-  using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
@@ -109,7 +106,7 @@ public:
     // degrade shear stiffness always
     // degrade volumetric stiffness when in tension
 
-    real64 factor = getDegradationValue( k, q );
+    real64 const factor = this->template getDegradationValue( k, q );
 
     stiffness.m_shearModulus *= factor;
 

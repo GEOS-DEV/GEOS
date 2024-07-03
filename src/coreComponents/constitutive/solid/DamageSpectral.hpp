@@ -25,8 +25,7 @@
 #include "PropertyConversions.hpp"
 #include "SolidBase.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
-
-#define QUADRATIC_DISSIPATION 0
+#include "codingUtilities/EnumStrings.hpp"
 
 using namespace LvArray;
 
@@ -34,6 +33,20 @@ namespace geos
 {
 namespace constitutive
 {
+
+namespace damageSpectral
+{
+enum class LocalDissipation : integer
+{
+  Linear = 1,
+  Quadratic = 2,
+};
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LocalDissipation,
+              "Linear",
+              "Quadratic" );
+}
 
 template< typename UPDATE_BASE >
 class DamageSpectralUpdates : public DamageUpdates< UPDATE_BASE >
@@ -51,11 +64,13 @@ public:
                          real64 const & inputTensileStrength,
                          real64 const & inputCompressStrength,
                          real64 const & inputDeltaCoefficient,
+                         damageSpectral::LocalDissipation const dissipationFuctionType,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
                                   inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
-                                  std::forward< PARAMS >( baseParams )... )
+                                  std::forward< PARAMS >( baseParams )... ),
+    m_dissipationFuctionType( static_cast<int>( dissipationFuctionType ) )                             
   {}
 
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
@@ -63,9 +78,6 @@ public:
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
-  using DamageUpdates< UPDATE_BASE >::getDegradationValue;
-  using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
-  using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
@@ -170,11 +182,19 @@ public:
     strain[4] = strain[4]/2;
     strain[5] = strain[5]/2;
 
-    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    real64 const traceOfStrain = strain[0] + strain[1] + strain[2];
 
-    real64 mu = m_shearModulus[k];
-    real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
-    real64 damageFactor = getDegradationValue( k, q );
+    real64 const mu = m_shearModulus[k];
+    real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 damageFactor = 0;
+    if( m_dissipationFuctionType == 1 )
+    {
+      damageFactor =  getDegradationValue< 1 >( k, q );
+    }
+    else if ( m_dissipationFuctionType == 2 )
+    {
+      damageFactor =  getDegradationValue< 2 >( k, q );
+    }
 
     // get eigenvalues and eigenvectors
 
@@ -295,6 +315,9 @@ public:
     return m_criticalStrainEnergy;
   }
 
+  private:
+
+  integer const m_dissipationFuctionType;
 };
 
 
@@ -324,6 +347,10 @@ public:
   static string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
+  struct viewKeyStruct : public BASE::viewKeyStruct
+  {
+    static constexpr char const * dissipationFuncitonTypeString() { return "dissipationFuctionType"; }
+  };
 
   KernelWrapper createKernelUpdates() const
   {
@@ -337,13 +364,18 @@ public:
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength,
                                                                        m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_deltaCoefficient,
+                                                                       m_dissipationFuctionType );
   }
+
+  private:
+
+  damageSpectral::LocalDissipation m_dissipationFuctionType;
 
 };
 
-
 }
+
 } /* namespace geos */
 
 #endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRAL_HPP_ */
