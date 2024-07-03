@@ -593,20 +593,12 @@
 					<xsd:selector xpath="CompositionalMultiphaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidPengRobinsonUniqueName">
-					<xsd:selector xpath="CompositionalTwoPhaseFluidPengRobinson" />
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidPengRobinsonLBCUniqueName">
-					<xsd:selector xpath="CompositionalTwoPhaseFluidPengRobinsonLBC" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidSoaveRedlichKwongUniqueName">
-					<xsd:selector xpath="CompositionalTwoPhaseFluidSoaveRedlichKwong" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidSoaveRedlichKwongLBCUniqueName">
-					<xsd:selector xpath="CompositionalTwoPhaseFluidSoaveRedlichKwongLBC" />
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidLohrenzBrayClarkUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseFluidLohrenzBrayClark" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
@@ -4147,10 +4139,8 @@ Local- Add jump stabilization on interior of macro elements-->
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
-			<xsd:element name="CompositionalTwoPhaseFluidPengRobinson" type="CompositionalTwoPhaseFluidPengRobinsonType" />
-			<xsd:element name="CompositionalTwoPhaseFluidPengRobinsonLBC" type="CompositionalTwoPhaseFluidPengRobinsonLBCType" />
-			<xsd:element name="CompositionalTwoPhaseFluidSoaveRedlichKwong" type="CompositionalTwoPhaseFluidSoaveRedlichKwongType" />
-			<xsd:element name="CompositionalTwoPhaseFluidSoaveRedlichKwongLBC" type="CompositionalTwoPhaseFluidSoaveRedlichKwongLBCType" />
+			<xsd:element name="CompositionalTwoPhaseFluid" type="CompositionalTwoPhaseFluidType" />
+			<xsd:element name="CompositionalTwoPhaseFluidLohrenzBrayClark" type="CompositionalTwoPhaseFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -4471,7 +4461,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalTwoPhaseFluidPengRobinsonType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentAcentricFactor => Component acentric factors-->
@@ -4490,12 +4480,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--constantPhaseViscosity => Constant phase viscosity-->
 		<xsd:attribute name="constantPhaseViscosity" type="real64_array" default="{0}" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* pr
+* srk-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalTwoPhaseFluidPengRobinsonLBCType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidLohrenzBrayClarkType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentAcentricFactor => Component acentric factors-->
@@ -4514,59 +4508,10 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
-		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
-		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
-* HerningZipperer
-* Wilke
-* Brokaw-->
-		<xsd:attribute name="viscosityMixingRule" type="string" default="HerningZipperer" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongType">
-		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
-		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentAcentricFactor => Component acentric factors-->
-		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
-		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
-		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
-		<!--componentCriticalPressure => Component critical pressures-->
-		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
-		<!--componentCriticalTemperature => Component critical temperatures-->
-		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
-		<!--componentMolarWeight => Component molar weights-->
-		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" use="required" />
-		<!--componentVolumeShift => Component volume shifts-->
-		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
-		<!--constantPhaseViscosity => Constant phase viscosity-->
-		<xsd:attribute name="constantPhaseViscosity" type="real64_array" default="{0}" />
-		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongLBCType">
-		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
-		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentAcentricFactor => Component acentric factors-->
-		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
-		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
-		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
-		<!--componentCriticalPressure => Component critical pressures-->
-		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
-		<!--componentCriticalTemperature => Component critical temperatures-->
-		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
-		<!--componentCriticalVolume => Component critical volumes-->
-		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
-		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" use="required" />
-		<!--componentVolumeShift => Component volume shifts-->
-		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--equationsOfState => List of equation of state types for each phase. Valid options:
+* pr
+* srk-->
+		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--viscosityMixingRule => Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:
