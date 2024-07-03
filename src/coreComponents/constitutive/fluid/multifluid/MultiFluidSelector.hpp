@@ -51,11 +51,9 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 // Need to split compilation units for all the options
 #if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
-                               CompositionalTwoPhasePengRobinsonLBCViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+                               CompositionalTwoPhaseLohrenzBrayClarkViscosity,
 #endif
-                               CompositionalTwoPhasePengRobinsonConstantViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
+                               CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -75,11 +73,9 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 // Need to split compilation units for all the options"
 #if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
-                               CompositionalTwoPhasePengRobinsonLBCViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+                               CompositionalTwoPhaseLohrenzBrayClarkViscosity,
 #endif
-                               CompositionalTwoPhasePengRobinsonConstantViscosity,
-                               CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity
+                               CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
