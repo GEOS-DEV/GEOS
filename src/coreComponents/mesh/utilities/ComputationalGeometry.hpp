@@ -547,8 +547,12 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
-int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1, arraySlice1d< localIndex const > const & nodeElements2 )
+int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1, 
+                        arraySlice1d< localIndex const > const & nodeElements2,
+                        arrayView1d< globalIndex const > const & elementGlobalIndex )
 {
+  localIndex minElement = -1;
+  globalIndex minElementGID = std::numeric_limits< globalIndex >::max();
   for( int i = 0; i < nodeElements1.size(); i++ )
   {
     localIndex e1 = nodeElements1( i );
@@ -556,10 +560,16 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1, 
     {
       localIndex e2 = nodeElements2( j );
       if( e1 == e2 )
-        return e1;
+      {
+        if( elementGlobalIndex[ e1 ] < minElementGID )
+        {
+          minElementGID = elementGlobalIndex[ e1 ];
+          minElement = e1;
+        }  
+      }
     }
   }
-  return -1;
+  return minElement;
 }
 
 /**
@@ -572,8 +582,13 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1, 
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
-int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElements1, arraySlice1d< localIndex const > const & nodeElements2, arraySlice1d< localIndex const > const & nodeElements3 )
+int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElements1,                                   
+                            arraySlice1d< localIndex const > const & nodeElements2,
+                            arraySlice1d< localIndex const > const & nodeElements3,
+                            arrayView1d< globalIndex const > const & elementGlobalIndex )
 {
+  localIndex minElement = -1;
+  globalIndex minElementGID = std::numeric_limits< globalIndex >::max();
   for( int i = 0; i < nodeElements1.size(); i++ )
   {
     localIndex e1 = nodeElements1( i );
@@ -584,11 +599,17 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
       {
         localIndex e3 = nodeElements3( k );
         if( e1 == e2 && e2 == e3 )
-          return e1;
+        {
+          if( elementGlobalIndex[ e1 ] < minElementGID )
+          {
+            minElementGID = elementGlobalIndex[ e1 ];
+            minElement = e1;
+          }  
+        }
       }
     }
   }
-  return -1;
+  return minElement;
 }
 
 
@@ -622,6 +643,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                           ArrayOfArraysView< localIndex const > const & facesToNodes,
                                           ArrayOfArraysView< localIndex const > const & nodesToElements,
                                           arrayView1d< globalIndex const > const & nodeLocalToGlobal,
+                                          arrayView1d< globalIndex const > const & elementLocalToGlobal,
                                           POINT_TYPE const & elemCenter,
                                           POINT_TYPE const & point )
 {
@@ -705,7 +727,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v2x, v2y, v2z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ] ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], elementLocalToGlobal ) == element ? true : false;
           }
           facecmp += sign * edgecmp;
         }
@@ -716,7 +738,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v3x, v3y, v3z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ] ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
           }
           facecmp += sign * edgecmp;
         }
@@ -727,7 +749,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v1x, v1y, v1z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 2 ] ] ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
           }
           facecmp += sign * edgecmp;
         }
@@ -741,7 +763,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
 
         if( facecmp == 0 )
         {
-          return findTriangleRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ] ) == element ? true : false;
+          return findTriangleRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
         }
         omega += sign * facecmp;
       }

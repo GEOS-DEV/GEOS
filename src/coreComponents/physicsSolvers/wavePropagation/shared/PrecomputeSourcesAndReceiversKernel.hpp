@@ -36,6 +36,7 @@ struct PreComputeSourcesAndReceivers
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
+   * @param[in] elementLocalToGlobal local to global index map for elements
    * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -61,6 +62,7 @@ struct PreComputeSourcesAndReceivers
                                        ArrayOfArraysView< localIndex const > const facesToNodes,
                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                        arrayView1d< globalIndex const > const nodeLocalToGlobal,
+                                       arrayView1d< globalIndex const > const elementLocalToGlobal,
                                        ArrayOfArraysView< localIndex const > const nodesToElements,
                                        arrayView1d< integer const > const elemGhostRank,
                                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
@@ -105,11 +107,11 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
           if( sourceFound )
           {
-            printf( "source fund in element %i, with center %f, %f, %f\n", k, center[0], center[1], center[2] );
             real64 coordsOnRefElem[3]{};
 
 
@@ -156,6 +158,7 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
 
@@ -195,6 +198,7 @@ struct PreComputeSourcesAndReceivers
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
+   * @param[in] elementLocalToGlobal local to global index map for elements
    * @param[in] elemGhostRank rank of the ghost element
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -223,6 +227,7 @@ struct PreComputeSourcesAndReceivers
                                                                    ArrayOfArraysView< localIndex const > const facesToNodes,
                                                                    arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                                                    arrayView1d< globalIndex const > const nodeLocalToGlobal,
+                                                                   arrayView1d< globalIndex const > const elementLocalToGlobal,
                                                                    ArrayOfArraysView< localIndex const > const nodesToElements,
                                                                    arrayView1d< integer const > const elemGhostRank,
                                                                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
@@ -272,6 +277,7 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
           if( sourceFound )
@@ -323,6 +329,7 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
 
@@ -364,6 +371,7 @@ struct PreComputeSourcesAndReceivers
    * @param[in] facesToNodes face to node map
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] nodeLocalToGlobal local to global index map for nodes
+   * @param[in] elementLocalToGlobal local to global index map for elements
    * @param[in] elemGhostRank array containing the ghost rank
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -397,6 +405,7 @@ struct PreComputeSourcesAndReceivers
                                               ArrayOfArraysView< localIndex const > const facesToNodes,
                                               arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                               arrayView1d< globalIndex const > const nodeLocalToGlobal,
+                                              arrayView1d< globalIndex const > const elementLocalToGlobal,
                                               ArrayOfArraysView< localIndex const > const nodesToElements,
                                               arrayView1d< integer const > const elemGhostRank,
                                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
@@ -465,6 +474,7 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
 
@@ -573,6 +583,7 @@ struct PreComputeSourcesAndReceivers
                                                                         facesToNodes,
                                                                         nodesToElements,
                                                                         nodeLocalToGlobal,
+                                                                        elementLocalToGlobal,
                                                                         center,
                                                                         coords );
           if( sampleFound && elemGhostRank[k] < 0 )
@@ -622,6 +633,7 @@ struct PreComputeSourcesAndReceivers
                                                                       facesToNodes,
                                                                       nodesToElements,
                                                                       nodeLocalToGlobal,
+                                                                      elementLocalToGlobal,
                                                                       center,
                                                                       coords );
         if( receiverFound && elemGhostRank[k] < 0 )
