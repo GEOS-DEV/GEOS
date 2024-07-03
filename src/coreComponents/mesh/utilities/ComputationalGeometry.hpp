@@ -540,10 +540,9 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
 /**
  * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosent.
  * list.
- * @param[in] nodeElements1 the list of elements adjacent to the first node
- * @param[in] nodeElements2 the list of elements adjacent to the second node
+ * @param[in] nodeElements the list of elements adjacent to the vertex
  * @param[in] elementGlobalIndex the global IDs for elements
- * @return the first shared element or -1 if the nodes do not share any element
+ * @return element touching the vertex with the least global index
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
@@ -570,7 +569,7 @@ int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] elementGlobalIndex the global IDs for elements
- * @return the first shared element or -1 if the nodes do not share any element
+ * @return the element shared by the two nodes, with the minimal global index
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
@@ -606,7 +605,7 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] nodeElements3 the list of elements adjacent to the third node
  * @param[in] elementGlobalIndex the global IDs for elements
- * @return the first shared element or -1 if the nodes do not share any element
+ * @return the element shared by the three nodes, with the minimal global index
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
@@ -653,12 +652,15 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
  *  - these comparisons are made consistent across MPI ranks by consistently arranging items based on global indices (GIDs). In particular:
  *    - Faces are triangulated using the vertex with the smallest GID as root;
  *    - Edges and faces are described by vertices in increasing GID order
- *  - Finally, if the point lies on a (vertex, edge, face), it is assigned to the first element appearing in all the node-to-element maps
+ *  - Finally, if the point lies on a (vertex, edge, face), it is assigned to the first shared element with the least global index
  * @tparam POINT_TYPE type of @p point
+ * @param[in] element the element to be checked
  * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] faceIndices global indices of the faces of the cell
- * @param[in] facesToNodes map from face to nodes
- * @param[in] nodesLocalToGobal global indices of nodes
+ * @param[in] elementsToFaces map from elements to faces
+ * @param[in] facesToNodes map from faces to nodes
+ * @param[in] nodesToElements map from nodes to elements
+ * @param[in] nodeLocalToGobal global indices of nodes
+ * @param[in] elementLocalToGobal global indices of elements
  * @param[in] elemCenter coordinates of the element centroid
  * @param[in] point coordinates of the query point
  * @return whether the point is inside
