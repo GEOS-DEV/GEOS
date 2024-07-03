@@ -156,10 +156,10 @@ private:
   /// Pointer to the physics solver
   FlowSolverBase * m_solver;
 
-  array1d< globalIndex > m_cellAGlobalId; // TODO: mettre ça dans un MeshLevelData + document (size : 2 x N connection)
-  array1d< globalIndex > m_cellBGlobalId; // TODO: mettre ça dans un MeshLevelData + document (size : 2 x N connection)
-  array1d< real64 > m_transmissibilityAB; // TODO: mettre ça dans un MeshLevelData + document (size : 2 x N connection)
-  array1d< real64 > m_transmissibilityBA; // TODO: mettre ça dans un MeshLevelData + document (size : 2 x N connection)
+  array1d< globalIndex > m_cellAGlobalId; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
+  array1d< globalIndex > m_cellBGlobalId; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
+  array1d< real64 > m_transmissibilityAB; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
+  array1d< real64 > m_transmissibilityBA; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
   // array1d< ConnectionData > m_currentConnData; // TODO gérer les multiples MeshLevel
 
   /// Name of the solver

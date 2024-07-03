@@ -177,7 +177,7 @@ private:
 template< typename STENCILWRAPPER_T >
 array1d< StencilDataCollection::KernelConnectionData >
 StencilDataCollection::gatherConnectionData( MeshLevel const & mesh,
-                                           STENCILWRAPPER_T const & stencilWrapper ) const
+                                             STENCILWRAPPER_T const & stencilWrapper ) const
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -206,9 +206,9 @@ StencilDataCollection::ConnectionData::fromKernel( KernelConnectionData const & 
 }
 
 
-void StencilDataCollection::storeTimeStepData( MeshLevel const & mesh,
-                                               string_view stencilName,
-                                               arrayView1d< KernelConnectionData > const & kernelData )
+void StencilDataCollection::storeConnectionData( MeshLevel const & mesh,
+                                                 string_view stencilName,
+                                                 arrayView1d< KernelConnectionData > const & kernelData )
 {
   std::set< ConnectionData > sortedData;
 
