@@ -108,7 +108,7 @@ BlackOilFluid * MultiFluidLiveOilTest::makeLiveOilFluid( string const & name, Gr
   path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   fill< 3 >( tableNames, {pvtoFileName, pvdgFileName, pvtwFileName} );
 
-  fluid.postProcessInputRecursive();
+  fluid.postInputInitializationRecursive();
   return &fluid;
 }
 

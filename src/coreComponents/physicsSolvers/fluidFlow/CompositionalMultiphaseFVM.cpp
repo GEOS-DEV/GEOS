@@ -88,9 +88,9 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 }
 
-void CompositionalMultiphaseFVM::postProcessInput()
+void CompositionalMultiphaseFVM::postInputInitialization()
 {
-  CompositionalMultiphaseBase::postProcessInput();
+  CompositionalMultiphaseBase::postInputInitialization();
 
   if( m_scalingType == ScalingType::Local && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
@@ -487,6 +487,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      m_maxAbsolutePresChange,
                                                      m_maxRelativeTempChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
@@ -497,6 +498,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                      m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
                                                      dofKey,
