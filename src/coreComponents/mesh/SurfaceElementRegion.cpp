@@ -103,7 +103,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
-  arrayView1d< real64 const > const elemArea = subRegion.getElementArea().toViewConst();
 
   arrayView1d< integer > const subRegionGhostRank = subRegion.ghostRank();
 
