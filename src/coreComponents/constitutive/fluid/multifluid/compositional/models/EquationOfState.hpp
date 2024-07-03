@@ -72,7 +72,7 @@ protected:
                       EnumStrings< EquationOfStateType >::concat( "\n* " ) );
   }
 
-  void postProcessInputImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override
+  void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override
   {
     GEOS_UNUSED_VAR( componentProperties );
 

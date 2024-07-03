@@ -62,9 +62,9 @@ public:
     parent.resize( 1 );
 
     string fluidName = GEOS_FMT( "fluid{}{}{}",
+                                 NUM_COMP,
                                  EnumStrings< EquationOfStateType >::toString( EOS ),
-                                 EnumStrings< VISCOSITY_TYPE >::toString( VISCOSITY ),
-                                 NUM_COMP );
+                                 EnumStrings< VISCOSITY_TYPE >::toString( VISCOSITY ) );
     this->m_model = makeFluid( fluidName, &parent );
 
     parent.initialize();
@@ -170,12 +170,18 @@ makeFluid( string const & name, Group * parent )
 }
 
 using PengRobinson4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::CONSTANT, 4 >;
+using PengRobinsonLBC4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::LBC, 4 >;
 //using SoaveRedlichKwong4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::So, 4 >;
 
 TEST_F( PengRobinson4Test, numericalDerivativesMolar )
 {
   testNumericalDerivatives( false );
 }
+TEST_F( PengRobinsonLBC4Test, numericalDerivativesMolar )
+{
+  testNumericalDerivatives( false );
+}
+
 /**
    TEST_F( PengRobinson4Test, numericalDerivativesMass )
    {

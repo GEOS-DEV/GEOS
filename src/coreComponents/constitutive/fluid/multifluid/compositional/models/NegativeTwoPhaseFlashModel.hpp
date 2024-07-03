@@ -52,7 +52,7 @@ public:
                                     integer const vapourIndex,
                                     EquationOfStateType const liquidEos,
                                     EquationOfStateType const vapourEos,
-                                    arrayView1d< real64 const > const & componentCriticalVolume );
+                                    arrayView1d< real64 const > const componentCriticalVolume );
 
   // Mark as a 2-phase flash
   GEOS_HOST_DEVICE
@@ -98,6 +98,7 @@ public:
                                                                phaseFraction.value[m_vapourIndex],
                                                                phaseCompFraction.value[m_liquidIndex],
                                                                phaseCompFraction.value[m_vapourIndex] );
+
       GEOS_ERROR_IF( !flashStatus,
                      GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e} and temperature {:.3f}",
                                pressure, temperature ));
@@ -130,6 +131,8 @@ public:
       LvArray::forValuesInSlice( phaseCompFraction.derivs[m_vapourIndex], setZero );
       for( integer ic = 0; ic < m_numComponents; ++ic )
       {
+        phaseCompFraction.value( m_vapourIndex, ic ) = compFraction[ic];
+        phaseCompFraction.value( m_liquidIndex, ic ) = compFraction[ic];
         phaseCompFraction.derivs( m_vapourIndex, ic, Deriv::dC + ic ) = 1.0;
         phaseCompFraction.derivs( m_liquidIndex, ic, Deriv::dC + ic ) = 1.0;
       }
@@ -176,7 +179,7 @@ private:
   integer const m_vapourIndex;
   EquationOfStateType const m_liquidEos;
   EquationOfStateType const m_vapourEos;
-  arrayView1d< real64 const > const & m_componentCriticalVolume;
+  arrayView1d< real64 const > const m_componentCriticalVolume;
 };
 
 class NegativeTwoPhaseFlashModel : public FunctionBase

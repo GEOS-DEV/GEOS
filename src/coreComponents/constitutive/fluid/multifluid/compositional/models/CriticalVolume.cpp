@@ -50,8 +50,8 @@ void CriticalVolume::registerParametersImpl( MultiFluidBase * fluid )
     setDescription( "Component critical volumes" );
 }
 
-void CriticalVolume::postProcessInputImpl( MultiFluidBase const * fluid,
-                                           ComponentProperties const & componentProperties )
+void CriticalVolume::postInputInitializationImpl( MultiFluidBase const * fluid,
+                                                  ComponentProperties const & componentProperties )
 {
   integer const numComponents = fluid->numFluidComponents();
 

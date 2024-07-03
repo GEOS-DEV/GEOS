@@ -67,7 +67,7 @@ NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
   integer const vapourIndex,
   EquationOfStateType const liquidEos,
   EquationOfStateType const vapourEos,
-  arrayView1d< real64 const > const & componentCriticalVolume ):
+  arrayView1d< real64 const > const componentCriticalVolume ):
   m_numComponents( numComponents ),
   m_liquidIndex( liquidIndex ),
   m_vapourIndex( vapourIndex ),
