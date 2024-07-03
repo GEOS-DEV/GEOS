@@ -17,7 +17,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
@@ -38,7 +37,7 @@ using FlashData = std::tuple<
   real64 const              // expected tangent plane distance
   >;
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 class StabilityTestTest9CompFixture :  public ::testing::TestWithParam< FlashData >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -65,13 +64,14 @@ public:
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray1d< real64, numComps > kValues( numComps );
 
-    bool const stabilityStatus = StabilityTest::compute< EOS_TYPE >( numComps,
-                                                                     pressure,
-                                                                     temperature,
-                                                                     composition.toSliceConst(),
-                                                                     componentProperties,
-                                                                     tangentPlaneDistance,
-                                                                     kValues.toSlice() );
+    bool const stabilityStatus = StabilityTest::compute( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         composition.toSliceConst(),
+                                                         componentProperties,
+                                                         EOS_TYPE,
+                                                         tangentPlaneDistance,
+                                                         kValues.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );
@@ -92,25 +92,28 @@ public:
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray2d< real64, numComps > kValues( 1, numComps );
 
-    StabilityTest::compute< EOS_TYPE >( numComps,
-                                        pressure,
-                                        temperature,
-                                        composition.toSliceConst(),
-                                        componentProperties,
-                                        tangentPlaneDistance,
-                                        kValues[0] );
+    StabilityTest::compute( numComps,
+                            pressure,
+                            temperature,
+                            composition.toSliceConst(),
+                            componentProperties,
+                            EOS_TYPE,
+                            tangentPlaneDistance,
+                            kValues[0] );
 
     // Now perform the nagative flash
     real64 vapourFraction = -1.0;
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
 
-    bool const status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+    bool const status = NegativeTwoPhaseFlash::compute(
       numComps,
       pressure,
       temperature,
       composition.toSliceConst(),
       componentProperties,
+      EOS_TYPE,
+      EOS_TYPE,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -143,7 +146,7 @@ private:
   static std::unique_ptr< TestFluid< numComps > > createFluid();
 };
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 std::unique_ptr< TestFluid< numComps > > StabilityTestTest9CompFixture< EOS_TYPE >::createFluid()
 {
   std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {0, 0, 0, 0, 0, 0, 0, 0, 0} );
@@ -167,8 +170,8 @@ std::unique_ptr< TestFluid< numComps > > StabilityTestTest9CompFixture< EOS_TYPE
   return fluid;
 }
 
-using PengRobinson = StabilityTestTest9CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
-using SoaveRedlichKwong = StabilityTestTest9CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using PengRobinson = StabilityTestTest9CompFixture< EquationOfStateType::PengRobinson >;
+using SoaveRedlichKwong = StabilityTestTest9CompFixture< EquationOfStateType::SoaveRedlichKwong >;
 TEST_P( PengRobinson, testStabilityTest )
 {
   testStability( GetParam() );
