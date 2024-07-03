@@ -659,8 +659,8 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
  * @param[in] elementsToFaces map from elements to faces
  * @param[in] facesToNodes map from faces to nodes
  * @param[in] nodesToElements map from nodes to elements
- * @param[in] nodeLocalToGobal global indices of nodes
- * @param[in] elementLocalToGobal global indices of elements
+ * @param[in] nodeLocalToGlobal global indices of nodes
+ * @param[in] elementLocalToGlobal global indices of elements
  * @param[in] elemCenter coordinates of the element centroid
  * @param[in] point coordinates of the query point
  * @return whether the point is inside
