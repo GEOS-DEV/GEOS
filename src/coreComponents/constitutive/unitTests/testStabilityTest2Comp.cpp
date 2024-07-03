@@ -38,7 +38,7 @@ using StabilityData = std::tuple<
   real64 const    // expected tangent plane distance
   >;
 
-template< typename EOS_TYPE >
+template< EquationOfStateType EOS_TYPE >
 class StabilityTestTest2CompFixture :  public ::testing::TestWithParam< StabilityData >
 {
   static constexpr real64 relTol = 1.0e-5;
@@ -67,13 +67,14 @@ public:
     real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
     stackArray1d< real64, numComps > kValues( numComps );
 
-    bool const stabilityStatus = StabilityTest::compute< EOS_TYPE >( numComps,
-                                                                     pressure,
-                                                                     temperature,
-                                                                     composition.toSliceConst(),
-                                                                     componentProperties,
-                                                                     tangentPlaneDistance,
-                                                                     kValues.toSlice() );
+    bool const stabilityStatus = StabilityTest::compute( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         composition.toSliceConst(),
+                                                         componentProperties,
+                                                         EOS_TYPE,
+                                                         tangentPlaneDistance,
+                                                         kValues.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );
@@ -94,8 +95,8 @@ private:
   }
 };
 
-using PengRobinson = StabilityTestTest2CompFixture< CubicEOSPhaseModel< PengRobinsonEOS > >;
-using SoaveRedlichKwong = StabilityTestTest2CompFixture< CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using PengRobinson = StabilityTestTest2CompFixture< EquationOfStateType::PengRobinson >;
+using SoaveRedlichKwong = StabilityTestTest2CompFixture< EquationOfStateType::SoaveRedlichKwong >;
 TEST_P( PengRobinson, testStabilityTest )
 {
   testStability( GetParam() );
