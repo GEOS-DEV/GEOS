@@ -16,7 +16,7 @@
 /src/coreComponents/common                            @rrsettgast
 /src/coreComponents/constitutive                      @rrsettgast @CusiniM @dkachuma 
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin
-/src/coreComponents/denseLinearAlgebra                @rrsettgast
+/src/coreComponents/denseLinearAlgebra                @rrsettgast @CusiniM @castelletto1 
 /src/coreComponents/discretizationMethods             @rrsettgast
 /src/coreComponents/events                            @rrsettgast @cssherman 
 /src/coreComponents/fieldSpecification                @rrsettgast
@@ -38,7 +38,7 @@
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
 /src/coreComponents/physicsSolvers/wavePropagation    @rrsettgast @sframba
-/src/coreComponents/schema                            @rrsettgast
+!/src/coreComponents/schema
 /src/coreComponents/unitTests                         @rrsettgast
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
