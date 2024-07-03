@@ -210,7 +210,7 @@ public:
       real64 qp_damage = 0.0;
       real64 qp_grad_damage[3] = {0, 0, 0};
       FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
-      
+
       real64 D = 0;
       if constexpr ( DISSIPATION_FUNCTION_ORDER::value == 1 )
       {
