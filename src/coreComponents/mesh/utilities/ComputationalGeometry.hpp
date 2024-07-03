@@ -539,7 +539,7 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
 }
 /**
  * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosent.
- *list.
+ * list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] elementGlobalIndex the global IDs for elements
@@ -547,8 +547,8 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
-int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements, 
-                        arrayView1d< globalIndex const > const & elementGlobalIndex )
+int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
+                          arrayView1d< globalIndex const > const & elementGlobalIndex )
 {
   localIndex minElement = -1;
   globalIndex minElementGID = std::numeric_limits< globalIndex >::max();
@@ -559,14 +559,14 @@ int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
     {
       minElementGID = elementGlobalIndex[ e ];
       minElement = e;
-    }  
+    }
   }
   return minElement;
 }
 
 /**
  * @brief Method to find the reference element for an edge. The element with the lowest global ID is chosen.
- *list.
+ * list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] elementGlobalIndex the global IDs for elements
@@ -574,7 +574,7 @@ int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
-int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1, 
+int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
                         arraySlice1d< localIndex const > const & nodeElements2,
                         arrayView1d< globalIndex const > const & elementGlobalIndex )
 {
@@ -592,7 +592,7 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
         {
           minElementGID = elementGlobalIndex[ e1 ];
           minElement = e1;
-        }  
+        }
       }
     }
   }
@@ -601,7 +601,7 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
 
 /**
  * @brief Method to find the reference element for a triangle. The element with the lowest global ID is chosen.
- *list.
+ * list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] nodeElements3 the list of elements adjacent to the third node
@@ -610,7 +610,7 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
  */
 template< typename ... LIST_TYPE >
 GEOS_HOST_DEVICE
-int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElements1,                                   
+int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElements1,
                             arraySlice1d< localIndex const > const & nodeElements2,
                             arraySlice1d< localIndex const > const & nodeElements3,
                             arrayView1d< globalIndex const > const & elementGlobalIndex )
@@ -632,7 +632,7 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
           {
             minElementGID = elementGlobalIndex[ e1 ];
             minElement = e1;
-          }  
+          }
         }
       }
     }
@@ -647,9 +647,9 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
  *  to avoid ambiguity when the point lies on an interface.
  *  This method is based on the following method:
  *  - the winding number omega of the point with respect to the cell is used to determine if the point is inside (omega=1) or not (omega=0)
- *point is
+ * point is
  *  - corner cases (point lying on a face, edge or vertex of the cell) are detected using a robust method based on lexicographical
- *comparisons
+ * comparisons
  *  - these comparisons are made consistent across MPI ranks by consistently arranging items based on global indices (GIDs). In particular:
  *    - Faces are triangulated using the vertex with the smallest GID as root;
  *    - Edges and faces are described by vertices in increasing GID order
