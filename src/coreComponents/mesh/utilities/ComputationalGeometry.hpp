@@ -734,17 +734,17 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
         int cmp1 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v1x, v1y, v1z );
         if( cmp1 == 0 )
         {
-          return findVertexRefElement( nodesToElements[ vi[ 0 ] ], elementLocalToGlobal );
+          return findVertexRefElement( nodesToElements[ vi[ 0 ] ], elementLocalToGlobal ) == element;
         }
         int cmp2 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v2x, v2y, v2z );
         if( cmp2 == 0 )
         {
-          return findVertexRefElement( nodesToElements[ vi[ 1 ] ], elementLocalToGlobal );
+          return findVertexRefElement( nodesToElements[ vi[ 1 ] ], elementLocalToGlobal ) == element;
         }
         int cmp3 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v3x, v3y, v3z );
         if( cmp3 == 0 )
         {
-          return findVertexRefElement( nodesToElements[ vi[ 2 ] ], elementLocalToGlobal );
+          return findVertexRefElement( nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element;
         }
         int facecmp = 0;
         int edgecmp = 0;
@@ -755,7 +755,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v2x, v2y, v2z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], elementLocalToGlobal ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], elementLocalToGlobal ) == element;
           }
           facecmp += sign * edgecmp;
         }
@@ -766,7 +766,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v3x, v3y, v3z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element;
           }
           facecmp += sign * edgecmp;
         }
@@ -777,7 +777,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
                                                 v1x, v1y, v1z );
           if( edgecmp == 0 )
           {
-            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
+            return findEdgeRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element;
           }
           facecmp += sign * edgecmp;
         }
@@ -791,7 +791,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
 
         if( facecmp == 0 )
         {
-          return findTriangleRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element ? true : false;
+          return findTriangleRefElement( nodesToElements[ vi[ 0 ] ], nodesToElements[ vi[ 1 ] ], nodesToElements[ vi[ 2 ] ], elementLocalToGlobal ) == element;
         }
         omega += sign * facecmp;
       }
