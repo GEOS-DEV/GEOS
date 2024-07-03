@@ -129,15 +129,10 @@ public:
         {
           tangentPlaneDistance = tpd;
         }
-std::cout << "PHASEFRAC " << std::setw(3) << iterationCount
-<< " " << composition[2]
-<< " " << normalizedComposition
-<< " " << tpd
-<< "\n";
-        //if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
-        //{
-        //  break;
-        //}
+        if( tangentPlaneDistance < -MultiFluidConstants::fugacityTolerance )
+        {
+          break;
+        }
 
         // Check stationarity
         real64 error = 0.0;

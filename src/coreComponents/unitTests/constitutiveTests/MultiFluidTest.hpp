@@ -256,8 +256,6 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     fluidWrapper.update( 0, 0, pressure, temperature, composition );
   } );
 
-  std::cout << "FRACTION: " << phaseFrac.value[0] << " " << phaseFrac.value[1] << "\n";
-
   if( isThermal )
   {
     scaleEnthalpy( phaseEnthalpy.value );
@@ -265,8 +263,6 @@ testNumericalDerivatives( MultiFluidBase & fluid,
     scaleEnthalpy( phaseInternalEnergy.value );
     scaleEnthalpy( phaseInternalEnergy.derivs );
   }
-
-std::cout << std::scientific << std::setprecision(6);
 
   // now perturb variables and update the copied fluid's state
   constitutive::constitutiveUpdatePassThru( fluidCopy, [&] ( auto & castedFluid )
@@ -376,12 +372,6 @@ std::cout << std::scientific << std::setprecision(6);
       string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseFrac", var, phases );
-std::cout << "PHASEFRAC: " << jc << " " << compNew[0][jc]
-<< " " << phaseFracCopy[0] << " " << phaseFrac.value[0]
-<< " " << (phaseFracCopy[0] - phaseFrac.value[0])/dC
-<< " " << dPhaseFrac[Deriv::dC+jc][0]
-<< "\n";
-/**
       checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseDens", var, phases );
       checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC+jc].toSliceConst(),
@@ -389,7 +379,7 @@ std::cout << "PHASEFRAC: " << jc << " " << compNew[0][jc]
       checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC+jc],
                        dC, relTol, absTol, "totalDens", var );
       checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
-                       dC, relTol, absTol, "phaseCompFrac", var, phases, components );*/
+                       dC, relTol, absTol, "phaseCompFrac", var, phases, components );
       if( isThermal )
       {
         scaleEnthalpy( phaseEnthCopy );

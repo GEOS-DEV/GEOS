@@ -87,10 +87,8 @@ public:
 
     real64 constexpr eps = 1.0e-6;
 
-    //constexpr real64 pressures[] = { 1.0e5, 50.0e5, 100.0e5, 600.0e5 };
-    //constexpr real64 temperatures[] = { 15.5, 24.0, 40.0, 80.0 };
-    constexpr real64 pressures[] = { 1.0e5 };
-    constexpr real64 temperatures[] = { 24.0 };
+    constexpr real64 pressures[] = { 1.0e5, 50.0e5, 100.0e5, 600.0e5 };
+    constexpr real64 temperatures[] = { 15.5, 24.0, 40.0, 80.0 };
 
     for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
     {
@@ -142,16 +140,16 @@ struct Fluid< FluidModel, 4 >
     fill< 4 >( criticalTemperature, {126.2, 622.0, 782.0, 647.0} );
     array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentAcentricFactorString() );
     fill< 4 >( acentricFactor, {0.04, 0.443, 0.816, 0.344} );
+    array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( FluidModel::viewKeyStruct::componentBinaryCoeffString() );
+    fillBinaryCoeffs< 4 >( binaryCoeff, {0.0, 0.1, 0.0, 0.0, 0.0, 0.0} );
   }
 
   static void getSamples( array2d< real64 > & samples )
   {
-    samples.resize( 1, 4 );
-    fill< 4 >( samples[0], {1.000, 0.000, 0.000, 0.000} );
-    //fill< 4 >( samples[0], {0.099, 0.300, 0.600, 0.001} );
-    //fill< 4 >( samples[1], {0.350, 0.350, 0.200, 0.100} );
-    //fill< 4 >( samples[2], {0.000, 0.000, 0.000, 1.000} );
-    //fill< 4 >( samples[3], {1.000, 0.000, 0.000, 0.000} );
+    samples.resize( 3, 4 );
+    fill< 4 >( samples[0], {0.099, 0.300, 0.600, 0.001} );
+    fill< 4 >( samples[1], {0.350, 0.350, 0.200, 0.100} );
+    fill< 4 >( samples[2], {0.000, 0.000, 0.000, 1.000} );
   }
 };
 
@@ -175,13 +173,13 @@ struct Fluid< FluidModel, 5 >
     array1d< real64 > & volumeShift = fluid.getReference< array1d< real64 > >( FluidModel::viewKeyStruct::componentVolumeShiftString() );
     fill< 5 >( volumeShift, {1.845465e-01, -1.283880e-01, 9.225800e-02, 6.458060e-02, 0.000000e+00} );
     array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( FluidModel::viewKeyStruct::componentBinaryCoeffString() );
-    fillBinaryCoeffs< 5 >( binaryCoeff, {0.000000, 0.100000, 0.030000, 0.139000, 0.032000, 0.000000, 0.120000, 0.030000, 0.000000, 0.000000} );
+    fillBinaryCoeffs< 5 >( binaryCoeff, {0.0, 0.1, 0.03, 0.139, 0.032, 0.0, 0.12, 0.03, 0.0, 0.0} );
   }
 
   static void getSamples( array2d< real64 > & samples )
   {
     samples.resize( 1, 5 );
-    fill< 5 >( samples[0], {0.050, 0.050, 0.550, 0.150, 0.200} );
+    fill< 5 >( samples[0], {0.050, 0.150, 0.550, 0.150, 0.100} );
   }
 };
 template< EquationOfStateType EOS, VISCOSITY_TYPE VISCOSITY, integer NUM_COMP >
@@ -205,14 +203,13 @@ makeFluid( string const & name, Group * parent )
 }
 
 using PengRobinson4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::CONSTANT, 4 >;
-//using PengRobinsonLBC4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::LBC, 4 >;
-//using SoaveRedlichKwong4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::CONSTANT, 4 >;
-//using SoaveRedlichKwongLBC4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::LBC, 4 >;
-
+using PengRobinsonLBC4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::PengRobinson, VISCOSITY_TYPE::LBC, 4 >;
+using SoaveRedlichKwong4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::CONSTANT, 4 >;
+using SoaveRedlichKwongLBC4Test = MultiFluidCompositionalMultiphaseTest< EquationOfStateType::SoaveRedlichKwong, VISCOSITY_TYPE::LBC, 4 >;
 TEST_F( PengRobinson4Test, numericalDerivativesMolar )
 {
   testNumericalDerivatives( false );
-}/**
+}
 TEST_F( PengRobinsonLBC4Test, numericalDerivativesMolar )
 {
   testNumericalDerivatives( false );
@@ -236,7 +233,7 @@ TEST_F( SoaveRedlichKwongLBC5Test, numericalDerivativesMolar )
 {
   testNumericalDerivatives( false );
 }
-*/
+
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
