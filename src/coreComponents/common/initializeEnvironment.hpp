@@ -88,6 +88,9 @@ struct CommandLineOptions
 
   /// Print memory usage in data repository
   real64 printMemoryUsage = -1.0;
+
+  /// Use new ghosting strategy
+  integer useNewGhosting = 0; 
 };
 
 /**
