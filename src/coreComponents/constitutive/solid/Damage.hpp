@@ -105,7 +105,7 @@ public:
   using UPDATE_BASE::m_disableInelasticity;
 
   //Standard quadratic degradation functions
-  
+
   template< int DISSIPATION_ORDER = 1 >
   GEOS_HOST_DEVICE
   real64 getDegradationValue( localIndex const k,
@@ -136,7 +136,7 @@ public:
     return -2*(1 - d);
   }
 
-  
+
   template< int DISSIPATION_ORDER = 1 >
   inline
   GEOS_HOST_DEVICE

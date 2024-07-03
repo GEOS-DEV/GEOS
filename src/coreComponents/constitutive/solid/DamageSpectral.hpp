@@ -70,7 +70,7 @@ public:
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
                                   inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
                                   std::forward< PARAMS >( baseParams )... ),
-    m_dissipationFuctionType( static_cast<int>( dissipationFuctionType ) )                             
+    m_dissipationFuctionType( static_cast< int >( dissipationFuctionType ) )
   {}
 
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
@@ -98,19 +98,19 @@ public:
 
   // Lorentz type degradation functions
   template< int DISSIPATION_ORDER = 1 >
-  inline 
+  inline
   GEOS_HOST_DEVICE
   real64 getDegradationValue( localIndex const k,
                               localIndex const q ) const
   {
-    static_assert(DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2");     
+    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m = 0;
     if constexpr ( DISSIPATION_ORDER == 2 )
     {
       m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
     }
     else if constexpr ( DISSIPATION_ORDER == 1 )
-    {  
+    {
       m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
     }
     real64 const p = 1;
@@ -122,7 +122,7 @@ public:
   GEOS_HOST_DEVICE
   real64 getDegradationDerivative( real64 const d ) const
   {
-    static_assert(DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2");     
+    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m;
     if constexpr ( DISSIPATION_ORDER == 2 )
     {
@@ -141,11 +141,11 @@ public:
   GEOS_HOST_DEVICE
   real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );     
+    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );
     real64 m = 0;
     if constexpr ( DISSIPATION_ORDER == 2 )
     {
-     m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
     }
     else if constexpr ( DISSIPATION_ORDER == 1 )
     {
@@ -191,7 +191,7 @@ public:
     {
       damageFactor =  getDegradationValue< 1 >( k, q );
     }
-    else if ( m_dissipationFuctionType == 2 )
+    else if( m_dissipationFuctionType == 2 )
     {
       damageFactor =  getDegradationValue< 2 >( k, q );
     }
@@ -315,7 +315,7 @@ public:
     return m_criticalStrainEnergy;
   }
 
-  private:
+private:
 
   integer const m_dissipationFuctionType;
 };
@@ -368,7 +368,7 @@ public:
                                                                        m_dissipationFuctionType );
   }
 
-  private:
+private:
 
   damageSpectral::LocalDissipation m_dissipationFuctionType;
 
