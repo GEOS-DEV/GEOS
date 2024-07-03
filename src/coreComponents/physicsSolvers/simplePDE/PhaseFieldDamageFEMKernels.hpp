@@ -200,7 +200,6 @@ public:
       real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
       real64 const ell = m_constitutiveUpdate.getRegularizationLength();
       real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
-      real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
 
       //Interpolate d and grad_d
       real64 N[ numNodesPerElem ];
@@ -212,11 +211,10 @@ public:
       real64 qp_grad_damage[3] = {0, 0, 0};
       FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
-      real64 D = 0;                                                                 //max between threshold and
-                                                                                    // Elastic energy
       if constexpr ( DISSIPATION_FUNCTION_ORDER::value == 1 )
       {
-        D = fmax( threshold, strainEnergyDensity );
+        real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
+        real64 const D = fmax( threshold, strainEnergyDensity ); //max between threshold and Elastic energy
       }
 
       for( localIndex a = 0; a < numNodesPerElem; ++a )
