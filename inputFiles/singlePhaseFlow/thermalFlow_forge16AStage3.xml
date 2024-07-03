@@ -94,7 +94,7 @@
 
   <Constitutive>
 
-    <CompressibleSolidConstantPermeability
+    <CompressibleSolidPressurePermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
@@ -112,15 +112,16 @@
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="2.4e6"
+      referenceVolumetricHeatCapacity="2.4e6"
       referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
 
-    <ConstantPermeability
+    <PressurePermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"
-      pressureDependenceConstant="3e-7"
-      defaultReferencePressure="20e6"/>
+      referencePermeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"
+      pressureDependenceConstants="{ 3e-7, 3e-7, 3e-7 }"
+      defaultReferencePressure="20e6"
+      pressureModelType="Exponential"/>
 
     <ThermalCompressibleSinglePhaseFluid
       name="fluid"
@@ -149,7 +150,7 @@
        component="0"
        setNames="{ all }"
        objectPath="ElementRegions/region/cb"
-       fieldName="rockPerm_initialPermeability"
+       fieldName="rockPerm_referencePermeability"
        scale="1"
        functionName="permxFunc"/>
 
@@ -159,7 +160,7 @@
        component="1"
        setNames="{ all }"
        objectPath="ElementRegions/region/cb"
-       fieldName="rockPerm_initialPermeability"
+       fieldName="rockPerm_referencePermeability"
        scale="1"
        functionName="permyFunc"/>
 
@@ -169,7 +170,7 @@
        component="2"
        setNames="{ all }"
        objectPath="ElementRegions/region/cb"
-       fieldName="rockPerm_initialPermeability"
+       fieldName="rockPerm_referencePermeability"
        scale="1"
        functionName="permzFunc"/>
 

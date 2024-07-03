@@ -31,62 +31,12 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ConstantPermeabilityUpdate( R1Tensor const pressureDependenceConstant,
-                              arrayView1d< real64 const > const & maxPermeability, 
-                              arrayView1d< real64 const > const & referencePressure,
-                              arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 > const & initialPermeability,
+  ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                               arrayView3d< real64 > const & dPerm_dPressure )
-    : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_pressureDependenceConstant( pressureDependenceConstant ),
-    m_maxPermeability( maxPermeability ),
-    m_referencePressure( referencePressure ),
-    m_initialPermeability( initialPermeability )
+    : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
-  GEOS_HOST_DEVICE
-  void compute( real64 const & deltaPressure,
-                R1Tensor const pressureDependenceConstant,
-                real64 const (&initialPermeability)[3],
-                real64 const maxPermeability,
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPressure ) const;
-
-  GEOS_HOST_DEVICE
-  virtual void updateFromPressure( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure_n,
-                                   real64 const & pressure ) const override
-  {
-    GEOS_UNUSED_VAR( q, pressure_n );
-
-    real64 const deltaPressure = pressure - m_referencePressure[k];
-
-    real64 initialPermeability[3];
-
-    initialPermeability[0] = m_initialPermeability[k][0][0];
-    initialPermeability[1] = m_initialPermeability[k][0][1];
-    initialPermeability[2] = m_initialPermeability[k][0][2];
-
-    compute( deltaPressure,
-             m_pressureDependenceConstant,
-             initialPermeability,
-             m_maxPermeability[k],
-             m_permeability[k][0],
-             m_dPerm_dPressure[k][0] );
-  }
-
 private:
-
-  /// Pressure dependence constant
-  R1Tensor m_pressureDependenceConstant;
-
-  arrayView1d< real64 const > const m_maxPermeability;
-
-  /// Reference pressure
-  arrayView1d< real64 const > const m_referencePressure;
-
-  arrayView3d< real64 > m_initialPermeability;
 
 };
 
@@ -116,11 +66,7 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_pressureDependenceConstant,
-                          m_maxPermeability,
-                          m_referencePressure,
-                          m_permeability,
-                          m_initialPermeability,
+    return KernelWrapper( m_permeability,
                           m_dPerm_dPressure );
   }
 
@@ -128,71 +74,19 @@ public:
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * permeabilityComponentsString() { return "permeabilityComponents"; }
-    static constexpr char const * pressureDependenceConstantString() { return "pressureDependenceConstant"; }
-    static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
-    static constexpr char const * referencePressureString() { return "referencePressure"; }
-    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
-    static constexpr char const * defaultMaxPermeabilityString() { return "defaultMaxPermeability"; }
-    static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
 private:
 
   R1Tensor m_permeabilityComponents;
 
-  R1Tensor m_pressureDependenceConstant;
-
-  real64 m_defaultReferencePressure;
-
-  real64 m_defaultMaxPermeability;
-
-  array1d< real64 > m_maxPermeability; 
-
-  array1d< real64 > m_referencePressure;
-
-  array3d< real64 > m_initialPermeability;
-
 };
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void ConstantPermeabilityUpdate::compute( real64 const & deltaPressure,
-                                          R1Tensor const pressureDependenceConstant,
-                                          real64 const (&initialPermeability)[3],
-                                          real64 const maxPermeability,
-                                          arraySlice1d< real64 > const & permeability,
-                                          arraySlice1d< real64 > const & dPerm_dPressure ) const
-{
-  // GEOS_UNUSED_VAR( maxPermeability );
-  
-  for( localIndex i=0; i < permeability.size(); i++ )
-  {
-    // real64 const perm = initialPermeability[i] * std::exp( pressureDependenceConstant[i] * deltaPressure );
-
-    // permeability[i] = (perm < maxPermeability)? perm:maxPermeability;
-    // dPerm_dPressure[i] = 0;
-
-    if( pressureDependenceConstant[i] < 1e-20 )
-    {
-      permeability[i] = initialPermeability[i]; 
-      dPerm_dPressure[i] = 0.0;
-    }
-    else 
-    {
-      real64 const pressureOffSet = log( maxPermeability/initialPermeability[i] - 1 )/pressureDependenceConstant[i]; 
-
-      real64 const perm = maxPermeability/( 1 + exp( -pressureDependenceConstant[i]*( deltaPressure - pressureOffSet ) ) ); 
-      permeability[i] = perm; 
-      dPerm_dPressure[i] = perm*perm/maxPermeability*pressureDependenceConstant[i]*exp( -pressureDependenceConstant[i]*deltaPressure ); 
-    }
-  }
-}
 
 }/* namespace constitutive */
 

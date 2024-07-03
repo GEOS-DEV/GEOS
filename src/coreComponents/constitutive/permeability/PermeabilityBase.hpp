@@ -47,20 +47,12 @@ public:
   localIndex numGauss() const { return m_permeability.size( 1 ); }
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPorosity( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & porosity ) const
+  virtual void updateFromPressureAndPorosity( localIndex const k,
+                                              localIndex const q,
+                                              real64 const & pressure,
+                                              real64 const & porosity ) const
   {
-    GEOS_UNUSED_VAR( k, q, porosity );
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void updateFromPressure( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure_n,
-                                   real64 const & pressure ) const
-  {
-    GEOS_UNUSED_VAR( k, q, pressure_n, pressure );
+    GEOS_UNUSED_VAR( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE
@@ -121,10 +113,6 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
-
-  static string catalogName() { return "PermeabilityBase"; }
-
-  virtual string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Const/non-mutable accessor for permeability.

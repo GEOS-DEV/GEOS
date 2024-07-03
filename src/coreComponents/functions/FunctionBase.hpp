@@ -61,12 +61,6 @@ public:
   virtual ~FunctionBase() override = default;
 
   /**
-   * @brief Static Factory Catalog Functions
-   * @return the catalog name
-   */
-  static string catalogName() { return "FunctionBase"; }
-
-  /**
    * @brief Function initialization
    */
   virtual void initializeFunction() = 0;
@@ -148,7 +142,7 @@ protected:
                   SortedArrayView< localIndex const > const & set,
                   arrayView1d< real64 > const & result ) const;
 
-  virtual void postProcessInput() override { initializeFunction(); }
+  virtual void postInputInitialization() override { initializeFunction(); }
 
 };
 

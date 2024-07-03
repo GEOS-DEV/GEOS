@@ -64,6 +64,7 @@ public:
     m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
     m_lineSearchCutFactor = params.m_lineSearchCutFactor;
     m_lineSearchStartingIteration = params.m_lineSearchStartingIteration;
+    m_lineSearchResidualFactor = params.m_lineSearchResidualFactor;
 
     m_newtonTol = params.m_newtonTol;
     m_maxIterNewton = params.m_maxIterNewton;
@@ -81,6 +82,9 @@ public:
     m_maxTimeStepCuts = params.m_maxTimeStepCuts;
     m_timeStepCutFactor = params.m_timeStepCutFactor;
     m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
+    m_configurationTolerance = params.m_configurationTolerance;
+
+    setLogLevel( params.getLogLevel());
 
     return *this;
   }
@@ -94,7 +98,9 @@ public:
    */
   static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
+
+  void print() const;
 
   struct viewKeysStruct
   {
@@ -103,6 +109,7 @@ public:
     static constexpr char const * lineSearchCutFactorString()     { return "lineSearchCutFactor"; }
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
     static constexpr char const * lineSearchStartingIterationString() { return "lineSearchStartingIteration"; }
+    static constexpr char const * lineSearchResidualFactorString() { return "lineSearchResidualFactor"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
     static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
@@ -120,12 +127,11 @@ public:
 
     static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
     static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
-    static constexpr char const * minNumNewtonIterationsString()  { return "minNumberOfNewtonIterations"; }
     static constexpr char const * timeStepCutFactorString()       { return "timeStepCutFactor"; }
     static constexpr char const * maxAllowedResidualNormString()  { return "maxAllowedResidualNorm"; }
 
-    static constexpr char const * numConfigurationAttemptsString()    { return "numConfigurationAttempts"; }
     static constexpr char const * maxNumConfigurationAttemptsString() { return "maxNumConfigurationAttempts"; }
+    static constexpr char const * configurationToleranceString() { return "configurationTolerance"; }
 
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
@@ -261,6 +267,9 @@ public:
   /// Iteration when line search starts
   integer m_lineSearchStartingIteration;
 
+  /// Factor to determine residual increase
+  real64 m_lineSearchResidualFactor;
+
   /// Norm used to check the nonlinear loop convergence
   solverBaseKernels::NormType m_normType;
 
@@ -311,6 +320,9 @@ public:
 
   /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
+
+  /// Configuration tolerance
+  double m_configurationTolerance;
 
   /// Type of coupling
   CouplingType m_couplingType;

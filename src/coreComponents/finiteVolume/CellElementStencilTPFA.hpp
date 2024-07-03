@@ -220,7 +220,7 @@ CellElementStencilTPFAWrapper::
                   real64 (& dWeight_dVar )[1][2] ) const
 {
   real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2]; 
+  real64 dHalfWeight_dVar[2];
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -277,8 +277,8 @@ CellElementStencilTPFAWrapper::
   dHarmonicWeight_dVar[0] = sum > 0 ? (dHalfWeight_dVar[0]*sum*halfWeight[1] - dHalfWeight_dVar[0]*halfWeight[0]*halfWeight[1]) / ( sum*sum ) : 0.0;
   dHarmonicWeight_dVar[1] = sum > 0 ? (dHalfWeight_dVar[1]*sum*halfWeight[0] - dHalfWeight_dVar[1]*halfWeight[1]*halfWeight[0]) / ( sum*sum ) : 0.0;
 
-  dArithmeticWeight_dVar[0] = dHalfWeight_dVar[0] / 2; 
-  dArithmeticWeight_dVar[1] = dHalfWeight_dVar[1] / 2; 
+  dArithmeticWeight_dVar[0] = dHalfWeight_dVar[0] / 2;
+  dArithmeticWeight_dVar[1] = dHalfWeight_dVar[1] / 2;
 
   real64 const meanPermCoeff = 1.0; //TODO make it a member if it is really necessary
 

@@ -145,21 +145,47 @@ public:
 
   void computeTolerances( DomainPartition & domain ) const;
 
-  void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  void computeFaceNodalArea( localIndex const kf0,
+                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                             localIndex const kf0,
-                             array1d< real64 > & nodalArea ) const;
+                             ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                             arrayView2d< localIndex const > const & edgeToNodeMap,
+                             arrayView2d< real64 const > const faceCenters,
+                             arrayView2d< real64 const > const faceNormals,
+                             arrayView1d< real64 const > const faceAreas,
+                             array1d< real64 > & basisIntegrals ) const;
+
+  void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+                             localIndex const (&faceToNodes)[11],
+                             localIndex const (&faceToEdges)[11],
+                             localIndex const & numFaceVertices,
+                             real64 const & faceArea,
+                             real64 const (&faceCenter)[3],
+                             real64 const (&faceNormal)[3],
+                             arrayView2d< localIndex const > const & edgeToNodes,
+                             real64 const & invCellDiameter,
+                             real64 const (&cellCenter)[3],
+                             array1d< real64 > & basisIntegrals,
+                             real64 ( &threeDMonomialIntegrals )[3] ) const;
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   string getStabilizationName() const { return m_stabilizationName; }
+
+protected:
+
+  real64 calculateContactResidualNorm( DomainPartition const & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localRhs );
 
 private:
   string m_stabilizationName;
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
+  real64 m_stabilitzationScalingCoefficient = 1.0;
+
+  static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
 
   void createPreconditioner( DomainPartition const & domain );
 
@@ -172,10 +198,14 @@ private:
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
+
+    constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
   };
 
 };
