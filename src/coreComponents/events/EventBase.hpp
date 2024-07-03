@@ -45,12 +45,6 @@ public:
   virtual ~EventBase() override;
 
   /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
-  static string catalogName() { return "EventBase"; }
-
-  /**
    * @brief If the event forecast is equal to 1, then signal the targets to prepare for execution
    *        during the next cycle.
    * @param time The current simulation time.
@@ -162,7 +156,7 @@ public:
 
   /**
    * @brief Helper function to validate the consistency of the event input
-   * @note We cannot use postProcessInput here because we can perform the validation only after the m_target pointer is set
+   * @note We cannot use postInputInitialization here because we can perform the validation only after the m_target pointer is set
    */
   virtual void validate() const {};
 

@@ -46,12 +46,6 @@ public:
   WellGeneratorBase( const string & name,
                      Group * const parent );
 
-  /**
-   * @brief Get the catalog name.
-   * @return the name of this type in the catalog
-   */
-  static string catalogName() { return "WellGeneratorBase"; }
-
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
@@ -244,7 +238,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   /**
    * @name Helper functions to construct the geometry of the well

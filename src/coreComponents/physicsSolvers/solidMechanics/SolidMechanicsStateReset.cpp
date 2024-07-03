@@ -21,6 +21,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -55,7 +56,7 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
 SolidMechanicsStateReset::~SolidMechanicsStateReset()
 {}
 
-void SolidMechanicsStateReset::postProcessInput()
+void SolidMechanicsStateReset::postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();

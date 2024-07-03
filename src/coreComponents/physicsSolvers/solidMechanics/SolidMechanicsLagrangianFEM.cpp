@@ -122,9 +122,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 
 }
 
-void SolidMechanicsLagrangianFEM::postProcessInput()
+void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -152,6 +152,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
                                                                    ElementSubRegionBase & subRegion )
     {
       setConstitutiveNamesCallSuper( subRegion );
+
+      subRegion.registerField< solidMechanics::strain >( getName() ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -904,6 +906,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
       nodeManager.getField< solidMechanics::incrementalDisplacement >();
 
+    solidMechanics::arrayView2dLayoutTotalDisplacement const disp =
+      nodeManager.getField< solidMechanics::totalDisplacement >();
+
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
       solidMechanics::arrayView2dLayoutAcceleration const a_n = nodeManager.getField< solidMechanics::acceleration >();
@@ -933,6 +938,23 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
       constitutiveRelation.saveConvergedState();
+
+      solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
+
+      finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = decltype( finiteElement );
+        AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< CellElementSubRegion, FE_TYPE, parallelDevicePolicy<> >( nodeManager,
+                                                                                                                                  mesh.getEdgeManager(),
+                                                                                                                                  mesh.getFaceManager(),
+                                                                                                                                  subRegion,
+                                                                                                                                  finiteElement,
+                                                                                                                                  disp,
+                                                                                                                                  strain );
+      } );
+
+
     } );
   } );
 
@@ -1243,8 +1265,8 @@ SolidMechanicsLagrangianFEM::
     MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
 
-    real64 const residual = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1); // the + 1 is for the first
-                                                                                     // time-step when maxForce = 0;
+    real64 const residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] + 1 ); // the + 1 is for the first
+                                                                                           // time-step when maxForce = 0;
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 

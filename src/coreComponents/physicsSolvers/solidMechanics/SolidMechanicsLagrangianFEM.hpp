@@ -22,6 +22,7 @@
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "kernels/StrainHelper.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
@@ -262,6 +263,7 @@ public:
   }
 
   real64 & getMaxForce() { return m_maxForce; }
+  real64 const & getMaxForce() const { return m_maxForce; }
 
   arrayView1d< ParallelVector > const & getRigidBodyModes() const
   {
@@ -274,7 +276,7 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 

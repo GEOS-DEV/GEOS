@@ -32,7 +32,6 @@
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
-#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geos
 {
@@ -90,7 +89,10 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
-  m_isFixedStressPoromechanicsUpdate( false )
+  m_keepFlowVariablesConstantDuringInitStep( 0 ),
+  m_isFixedStressPoromechanicsUpdate( false ),
+  m_isJumpStabilized( false ),
+  m_isLaggingFractureStencilWeightsUpdate( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -161,6 +163,11 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< fields::flow::temperature_k >( getName() ); // needed for the fixed-stress porosity update
       }
+      if( m_isThermal )
+      {
+        subRegion.registerField< fields::flow::energy >( getName() );
+        subRegion.registerField< fields::flow::energy_n >( getName() );
+      }
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -219,6 +226,13 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
 
+  if( m_isThermal )
+  {
+    arrayView1d< real64 const > const energy = subRegion.template getField< fields::flow::energy >();
+    arrayView1d< real64 > const energy_n = subRegion.template getField< fields::flow::energy_n >();
+    energy_n.setValues< parallelDevicePolicy<> >( energy );
+  }
+
   if( m_isFixedStressPoromechanicsUpdate )
   {
     arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
@@ -276,6 +290,11 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
 {
   m_isFixedStressPoromechanicsUpdate = true;
+}
+
+void FlowSolverBase::enableJumpStabilization()
+{
+  m_isJumpStabilized = true;
 }
 
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
@@ -719,7 +738,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     if( bc.getLogLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
-                                 AquiferBoundaryCondition::catalogName(), bc.getName(),
+                                 bc.getCatalogName(), bc.getName(),
                                  time + dt, dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
@@ -736,6 +755,8 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      m_isLaggingFractureStencilWeightsUpdate ?
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::aperture0::key() ) :
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )

@@ -20,12 +20,13 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
 {
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER = SinglePhaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
@@ -36,6 +37,9 @@ public:
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_stabilizationType;
+  using Base::m_stabilizationRegionNames;
+  using Base::m_stabilizationMultiplier;
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects
@@ -52,7 +56,18 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
-  static string catalogName();
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< FLOW_SOLVER, SinglePhaseBase > ) // special case
+    {
+      return "SinglePhasePoromechanics";
+    }
+    else // default
+    {
+      return FLOW_SOLVER::catalogName() + "Poromechanics";
+    }
+  }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -65,7 +80,7 @@ public:
    */
   /**@{*/
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
