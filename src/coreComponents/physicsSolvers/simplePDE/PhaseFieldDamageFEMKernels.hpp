@@ -51,7 +51,7 @@ namespace geos
  * class.
  */
 
-template< int DISSIPATION_FUNCTION_ORDER >
+template< typename DISSIPATION_FUNCTION_ORDER >
 struct DamageKernel
 {
 
@@ -88,7 +88,6 @@ public:
     /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
     /// will be the actual number of nodes per element.
     static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-    static constexpr int localDissipationOrder = DISSIPATION_FUNCTION_ORDER;
 
     /**
      * @brief Constructor
@@ -215,39 +214,39 @@ public:
 
       real64 D = 0;                                                                 //max between threshold and
                                                                                     // Elastic energy
-      if constexpr ( localDissipationOrder == 1 )
+      if constexpr ( DISSIPATION_FUNCTION_ORDER::value == 1 )
       {
         D = fmax( threshold, strainEnergyDensity );
       }
 
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
-        if constexpr ( localDissipationOrder == 1 )
+        if constexpr ( DISSIPATION_FUNCTION_ORDER::value == 1 )
         {
           stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
                                                + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                               + (0.5 * ell * D/Gc) * m_constitutiveUpdate.template getDegradationDerivative< DISSIPATION_FUNCTION_ORDER >( qp_damage ) * N[a]
+                                               + (0.5 * ell * D/Gc) * m_constitutiveUpdate.template getDegradationDerivative< DISSIPATION_FUNCTION_ORDER::value >( qp_damage ) * N[a]
                                                + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
         }
         else
         {
           stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
                                                + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                   + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.template getDegradationDerivative< DISSIPATION_FUNCTION_ORDER >( qp_damage ) ) );
+                                                   + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.template getDegradationDerivative< DISSIPATION_FUNCTION_ORDER::value >( qp_damage ) ) );
 
         }
         for( localIndex b = 0; b < numNodesPerElem; ++b )
         {
-          if constexpr ( localDissipationOrder == 1 )
+          if constexpr ( DISSIPATION_FUNCTION_ORDER::value == 1 )
           {
             stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                      + (0.5 * ell * D/Gc) * m_constitutiveUpdate.template getDegradationSecondDerivative< 1 >( qp_damage ) * N[a] * N[b] );
+                                                      + (0.5 * ell * D/Gc) * m_constitutiveUpdate.template getDegradationSecondDerivative< DISSIPATION_FUNCTION_ORDER::value >( qp_damage ) * N[a] * N[b] );
 
           }
           else
           {
             stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                      + N[a] * N[b] * (1 + m_constitutiveUpdate.template getDegradationSecondDerivative< 2 >( qp_damage ) * ell * strainEnergyDensity/Gc ) );
+                                                      + N[a] * N[b] * (1 + m_constitutiveUpdate.template getDegradationSecondDerivative< DISSIPATION_FUNCTION_ORDER::value >( qp_damage ) * ell * strainEnergyDensity/Gc ) );
           }
         }
       }
@@ -305,9 +304,9 @@ protected:
 };
 
 template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-using LinearPhaseFieldDamageKernel = DamageKernel< 1 >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+using LinearPhaseFieldDamageKernel = DamageKernel< std::integral_constant<int, 1> >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-using QuadraticPhaseFieldDamageKernel = DamageKernel< 2 >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+using QuadraticPhaseFieldDamageKernel = DamageKernel< std::integral_constant<int, 2>  >::template PhaseFieldDamageKernel< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 
 using LinearPhaseFieldDamageKernelFactory = finiteElement::KernelFactory< LinearPhaseFieldDamageKernel,
                                                                           arrayView1d< globalIndex const > const,
