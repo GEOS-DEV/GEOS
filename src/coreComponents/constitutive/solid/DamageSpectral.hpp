@@ -85,46 +85,61 @@ public:
   using UPDATE_BASE::m_shearModulus;
 
   // Lorentz type degradation functions
-
-  inline
+  template< int DISSIPATION_ORDER = 1 >
+  inline 
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationValue( localIndex const k,
-                                      localIndex const q ) const override
+  real64 getDegradationValue( localIndex const k,
+                              localIndex const q ) const
   {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
+    static_assert(DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2");     
+    real64 m = 0;
+    if constexpr ( DISSIPATION_ORDER == 2 )
+    {
+      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    }
+    else if constexpr ( DISSIPATION_ORDER == 1 )
+    {  
+      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    }
+    real64 const p = 1;
     return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
   }
 
-
+  template< int DISSIPATION_ORDER = 1 >
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationDerivative( real64 const d ) const override
+  real64 getDegradationDerivative( real64 const d ) const
   {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
+    static_assert(DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2");     
+    real64 m;
+    if constexpr ( DISSIPATION_ORDER == 2 )
+    {
+      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    }
+    else if constexpr ( DISSIPATION_ORDER == 1 )
+    {
+      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    }
+    real64 const p = 1;
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
-
+  template< int DISSIPATION_ORDER = 1 >
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const override
+  real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
+    static_assert( DISSIPATION_ORDER == 1 || DISSIPATION_ORDER == 2, "DISSIPATION_ORDER must be either 1 or 2" );     
+    real64 m = 0;
+    if constexpr ( DISSIPATION_ORDER == 2 )
+    {
+     m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    }
+    else if constexpr ( DISSIPATION_ORDER == 1 )
+    {
+      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    }
+    real64 const p = 1;
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
 
