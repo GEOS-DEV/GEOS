@@ -276,9 +276,6 @@ public:
     /// @return Face element to cell indices map string.
     static constexpr char const * surfaceElementsToCellIndexString() { return "fractureElementsToCellIndices"; }
 
-    /// @return Mass creation string.
-    constexpr static char const * creationMassString() { return "creationMass"; }
-
     /// @return surface element to parent plane string.
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };

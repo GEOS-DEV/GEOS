@@ -175,6 +175,8 @@ public:
     static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
     /// @return String key to collocated nodes buckets.
     static constexpr char const * elem2dToCollocatedNodesBucketsString() { return "elem2dToCollocatedNodesBuckets"; }
+    /// @return Mass creation string.
+    constexpr static char const * creationMassString() { return "creationMass"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
