@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_STABILITYTEST_HPP_
 
 #include "KValueInitialization.hpp"
+#include "FugacityCalculator.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
@@ -45,17 +46,19 @@ public:
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
    * @param[in] componentProperties The compositional component properties
+   * @param[in] equationOfState The equation of state
    * @param[out] tangentPlaneDistance the minimum tangent plane distance (TPD)
    * @param[out] kValues the k-values estimated from the stationary points
    * @return a flag indicating that 2 stationary points have been found
    */
-  template< typename EOS_TYPE, integer USD1 >
+  template< integer USD1 >
   GEOS_HOST_DEVICE
   static bool compute( integer const numComps,
                        real64 const pressure,
                        real64 const temperature,
                        arraySlice1d< real64 const, USD1 > const & composition,
                        ComponentProperties::KernelWrapper const & componentProperties,
+                       EquationOfStateType const & equationOfState,
                        real64 & tangentPlaneDistance,
                        arraySlice1d< real64 > const & kValues )
   {
@@ -76,12 +79,13 @@ public:
     {
       hyperplane[ic] = 0.0;
     }
-    EOS_TYPE::computeLogFugacityCoefficients( numComps,
-                                              pressure,
-                                              temperature,
-                                              composition,
-                                              componentProperties,
-                                              logFugacity );
+    FugacityCalculator::computeLogFugacity( numComps,
+                                            pressure,
+                                            temperature,
+                                            composition,
+                                            componentProperties,
+                                            equationOfState,
+                                            logFugacity );
     for( integer const ic : presentComponents )
     {
       hyperplane[ic] = LvArray::math::log( composition[ic] ) + logFugacity[ic];
@@ -109,12 +113,14 @@ public:
         normalizedComposition[ic] = trialComposition( trialIndex, ic );
       }
       normalizeComposition( numComps, normalizedComposition.toSlice() );
-      EOS_TYPE::computeLogFugacityCoefficients( numComps,
-                                                pressure,
-                                                temperature,
-                                                normalizedComposition.toSliceConst(),
-                                                componentProperties,
-                                                logFugacity );
+
+      FugacityCalculator::computeLogFugacity( numComps,
+                                              pressure,
+                                              temperature,
+                                              normalizedComposition.toSliceConst(),
+                                              componentProperties,
+                                              equationOfState,
+                                              logFugacity );
       for( integer const ic : presentComponents )
       {
         logTrialComposition[ic] = LvArray::math::log( trialComposition( trialIndex, ic ) );
@@ -128,12 +134,15 @@ public:
           normalizedComposition[ic] = trialComposition( trialIndex, ic );
         }
         normalizeComposition( numComps, normalizedComposition.toSlice() );
-        EOS_TYPE::computeLogFugacityCoefficients( numComps,
-                                                  pressure,
-                                                  temperature,
-                                                  normalizedComposition.toSliceConst(),
-                                                  componentProperties,
-                                                  logFugacity );
+
+        FugacityCalculator::computeLogFugacity( numComps,
+                                                pressure,
+                                                temperature,
+                                                normalizedComposition.toSliceConst(),
+                                                componentProperties,
+                                                equationOfState,
+                                                logFugacity );
+
         real64 error = 0.0;
         for( integer const ic : presentComponents )
         {
