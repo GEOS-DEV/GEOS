@@ -537,12 +537,39 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
     return -1;
   return 0;
 }
-
 /**
- * @brief Method to find the first element touching an edge. Here, first means the element that appears the earliest in the first vertex
+ * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosent.
  *list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
+ * @param[in] elementGlobalIndex the global IDs for elements
+ * @return the first shared element or -1 if the nodes do not share any element
+ */
+template< typename ... LIST_TYPE >
+GEOS_HOST_DEVICE
+int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements, 
+                        arrayView1d< globalIndex const > const & elementGlobalIndex )
+{
+  localIndex minElement = -1;
+  globalIndex minElementGID = std::numeric_limits< globalIndex >::max();
+  for( int i = 0; i < nodeElements.size(); i++ )
+  {
+    localIndex e = nodeElements( i );
+    if( elementGlobalIndex[ e ] < minElementGID )
+    {
+      minElementGID = elementGlobalIndex[ e ];
+      minElement = e;
+    }  
+  }
+  return minElement;
+}
+
+/**
+ * @brief Method to find the reference element for an edge. The element with the lowest global ID is chosen.
+ *list.
+ * @param[in] nodeElements1 the list of elements adjacent to the first node
+ * @param[in] nodeElements2 the list of elements adjacent to the second node
+ * @param[in] elementGlobalIndex the global IDs for elements
  * @return the first shared element or -1 if the nodes do not share any element
  */
 template< typename ... LIST_TYPE >
@@ -573,11 +600,12 @@ int findEdgeRefElement( arraySlice1d< localIndex const > const & nodeElements1,
 }
 
 /**
- * @brief Method to find the first element touching a triangle. Here, first means the element that appears the earliest in the first vertex
+ * @brief Method to find the reference element for a triangle. The element with the lowest global ID is chosen.
  *list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
  * @param[in] nodeElements3 the list of elements adjacent to the third node
+ * @param[in] elementGlobalIndex the global IDs for elements
  * @return the first shared element or -1 if the nodes do not share any element
  */
 template< typename ... LIST_TYPE >
@@ -706,17 +734,17 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
         int cmp1 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v1x, v1y, v1z );
         if( cmp1 == 0 )
         {
-          return nodesToElements( vi[ 0 ], 0 ) == element ? true : false;
+          return findVertexRefElement( nodesToElements[ vi[ 0 ] ], elementLocalToGlobal );
         }
         int cmp2 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v2x, v2y, v2z );
         if( cmp2 == 0 )
         {
-          return nodesToElements( vi[ 1 ], 0 ) == element ? true : false;
+          return findVertexRefElement( nodesToElements[ vi[ 1 ] ], elementLocalToGlobal );
         }
         int cmp3 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v3x, v3y, v3z );
         if( cmp3 == 0 )
         {
-          return nodesToElements( vi[ 2 ], 0 ) == element ? true : false;
+          return findVertexRefElement( nodesToElements[ vi[ 2 ] ], elementLocalToGlobal );
         }
         int facecmp = 0;
         int edgecmp = 0;
