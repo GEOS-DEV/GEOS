@@ -64,11 +64,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "A map eventually containing all the collocated nodes." ).
     setSizedFromParent( 1 );
 
-  registerWrapper< real64_array >( viewKeyStruct::creationMassString() ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
-    setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
-
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString(), &m_separationCoefficient ).
     setApplyDefaultValue( 0.0 ).

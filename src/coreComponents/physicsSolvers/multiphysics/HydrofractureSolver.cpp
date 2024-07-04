@@ -132,13 +132,33 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
   Base::implicitStepSetup( time_n, dt, domain );
   updateHydraulicApertureAndFracturePermeability( domain );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & faceElemRegion )
   {
     faceElemRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
+      CoupledSolidBase const & porousSolid =
+        this->template getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) );
+      SingleFluidBase & fluid =
+        this->template getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) );
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
+      arrayView2d< real64 const > const porosity_n = porousSolid.getPorosity_n();
+      arrayView2d< real64 const > const density_n = fluid.density_n();
+      arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
+      real64 const defaultDensity = fluid.defaultDensity();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( isZero( mass_n[ei] ) ) // initialize newly created element mass
+        {
+          mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0];
+          creationMass[ei] = defaultDensity * volume[ei];
+        }
+      } );
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       arrayView1d< real64 > const &
       separationCoeff0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::separationCoeff0String() );
       arrayView1d< real64 const > const &
@@ -147,9 +167,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
       {
         separationCoeff0[k] = separationCoeff[k];
       }
+#endif
     } );
   } );
-#endif
 
 }
 

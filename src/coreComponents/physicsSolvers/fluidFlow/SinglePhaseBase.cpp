@@ -277,21 +277,6 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   {
     mass[ei] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * density[ei][0];
   } );
-
-  // this is a hack for hydrofrac cases
-  if( subRegion.hasWrapper( FaceElementSubRegion::viewKeyStruct::creationMassString() ) )
-  {
-    arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
-    real64 const defaultDensity = fluid.defaultDensity();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      if( isZero( mass_n[ei] ) )
-      {
-        mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0]; // initialize newly created element mass
-        creationMass[ei] = defaultDensity * volume[ei];
-      }
-    } );
-  }
 }
 
 void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const

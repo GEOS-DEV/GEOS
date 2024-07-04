@@ -278,6 +278,9 @@ public:
 
     /// @return surface element to parent plane string.
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
+
+    /// @return Mass creation string.
+    constexpr static char const * creationMassString() { return "creationMass"; }
   };
 
 protected:

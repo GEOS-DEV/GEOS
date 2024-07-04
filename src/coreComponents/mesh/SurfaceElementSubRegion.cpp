@@ -58,6 +58,11 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of face element local indices to the cell local indices" );
 
+  registerWrapper< real64_array >( viewKeyStruct::creationMassString() ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
+    setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
+
   registerField( fields::elementAperture{}, &m_elementAperture );
 
   registerField( fields::elementArea{}, &m_elementArea );
