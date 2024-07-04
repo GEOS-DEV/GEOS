@@ -40,6 +40,12 @@ public:
    * @brief Add a description to the section
    * @param description The string value of the description
    */
+  void addDescription( string const & descriptionName, std::vector< string > const & descriptionValues );
+
+  /**
+   * @brief Add a description to the section
+   * @param description The string value of the description
+   */
   void addDescription( string const & description );
 
   /**
@@ -76,6 +82,11 @@ private:
   void buildLineSection( string & lineSection );
 
   /**
+   * @brief Clear all private field related to the current section
+   */
+  void clear();
+
+  /**
    * @brief Build and add the title to the first part of the section
    * @param sectionToBeBuilt The current section being built
    * @param title The section name
@@ -96,7 +107,10 @@ private:
    */
   void addDescriptionRows( string & sectionToBeBuilt, std::vector< string > const & rowsValue );
 
-  std::vector< string > m_vDescriptions;
+  std::vector< string > m_descriptions;
+
+  std::vector< string > m_descriptionNames;
+  std::vector< std::vector< string > > m_descriptionsValues;
 
   string m_sectionTitle;
   integer m_rowLength;

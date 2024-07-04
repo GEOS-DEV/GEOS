@@ -33,7 +33,13 @@ void Section::setName( string_view title )
 
 void Section::addDescription( string const & description )
 {
-  m_vDescriptions.push_back( description );
+  m_descriptions.push_back( description );
+}
+
+void Section::addDescription( string const & descriptionName, std::vector< string > const & descriptionValues )
+{
+  m_descriptionsValues.push_back( descriptionValues );
+  m_descriptionNames.push_back( descriptionName );
 }
 
 void Section::setMinWidth( integer const & minWidth )
@@ -92,19 +98,59 @@ void Section::addDescriptionRows( string & sectionToBeBuilt, std::vector< string
   }
 }
 
+void Section::clear()
+{
+  m_descriptions.clear();
+  m_sectionTitle.clear();
+}
+
 void Section::begin( std::ostream & oss )
 {
   string lineSection;
   string sectionToBeBuilt;
   string const titleToDisplay = "Section : " + m_sectionTitle;
 
-  computeMaxRowSize( titleToDisplay, m_vDescriptions );
+  //TODO function and test and refacto below
+  if( m_descriptionsValues.empty())
+  {
+    int maxLenName = 0;
+    computeMaxRowSize( "", m_descriptionNames );
+    maxLenName = m_rowLength;
+
+    if( m_descriptionsValues.length == 1 )
+    {
+      m_descriptions.push_back( GEOS_FMT( " - {}:{}", m_descriptionNames[0], m_descriptionsValues[0] ));
+    }
+    else
+    {
+      int i = 0;
+      for( std::vector< string > descriptionsValues : m_descriptionsValues )
+      {
+        string description = GEOS_FMT( " - {}:", m_descriptionNames[i] );
+        for( string values: descriptionsValues )
+        {
+          description += GEOS_FMT( "{:-<{}}", values, m_rowLength );
+          m_descriptions.push_back();
+
+        }
+        i++;
+      }
+    }
+  }
+
+  // check if descvalues empty
+  // split descValues into m_descriptions and set marginValues by default 0
+  // marginValues is used to construct m_description so just here (?)
+
+  //and back to normal... just need to format m_descriptions !
+  //don't forget to rename variable and functions et to remove unused  function !
+  computeMaxRowSize( titleToDisplay, m_descriptions );
   buildLineSection( lineSection );
 
   sectionToBeBuilt += '\n' + lineSection;
   addTitleRow( sectionToBeBuilt, titleToDisplay );
   sectionToBeBuilt += lineSection;
-  addDescriptionRows( sectionToBeBuilt, m_vDescriptions );
+  addDescriptionRows( sectionToBeBuilt, m_descriptions );
   sectionToBeBuilt += '\n';
 
   oss << sectionToBeBuilt;
@@ -124,5 +170,7 @@ void Section::end( std::ostream & oss )
   sectionToBeBuilt += '\n';
 
   oss << sectionToBeBuilt;
+
+  clear();
 }
 }

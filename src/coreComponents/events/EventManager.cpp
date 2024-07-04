@@ -22,7 +22,6 @@
 #include "events/EventBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/Units.hpp"
-#include "codingUtilities/Section.hpp"
 
 namespace geos
 {
@@ -170,24 +169,9 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-
-    string timeDescription = "- Time: " +  units::TimeFormatInfo::fromSeconds( m_time ).toString();
-    string deltaDescription = "- Delta time: " +  units::TimeFormatInfo::fromSeconds( m_dt ).toString();
-    string cycleDescription = "- Cycle: " +   std::to_string( m_cycle );
-
     Section section;
-    section.setName( "section name" );
-    section.addDescription( "description name 1" );
-    section.addDescription( "description name 2" );
-    section.setMinWidth( 100 );
-    // section.addDescription( deltaDescription );
-    // section.addDescription( cycleDescription );
- 
-    //  section.setMinWidth(100);
-    // The formating here is a work in progress.
+    outputTime( section );
     section.begin();
-
-    outputTime();
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -242,7 +226,7 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-void EventManager::outputTime() const
+void EventManager::outputTime( Section & section ) const
 {
   const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
   const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();
@@ -262,19 +246,30 @@ void EventManager::outputTime() const
                      m_maxCycle, ( 100.0 * m_cycle ) / m_maxCycle );
   };
 
-  // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
-                             timeInfo.toUnfoldedString(),
-                             isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
-                             timeInfo.toSecondsString(),
-                             isTimeLimited ? timeCompletionSecondsString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
-                             m_cycle,
-                             isCycleLimited ? cycleCompletionString() : "" ) );
-  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
+  string timeCompletionUnfolded = isTimeLimited ? timeCompletionUnfoldedString() : "";
+  string timeCompletionSecond = isTimeLimited ? timeCompletionSecondsString() : "";
+  string cycleLimited = isCycleLimited ? cycleCompletionString() : "";
+
+  string timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
+  string timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
+
+  section.setName( "TIMESTEP START" );
+  section.addDescription( "Time", timeCompletionUnfolded, timeCompletionSeconds );
+  section.addDescription( GEOS_FMT( "- Delta Time: {}", units::TimeFormatInfo::fromSecxonds( m_dt ) ));
+  section.addDescription( GEOS_FMT( "- Cycle: {}{}", m_cycle, cycleLimited ) );
+
+  // GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
+  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
+  //                            timeInfo.toUnfoldedString(),
+  //                            isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
+  // GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
+  //                            timeInfo.toSecondsString(),
+  //                            isTimeLimited ? timeCompletionSecondsString() : "" ) );
+  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
+  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
+  //                            m_cycle,
+  //                            isCycleLimited ? cycleCompletionString() : "" ) );
+  // GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )

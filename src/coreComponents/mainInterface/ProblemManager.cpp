@@ -30,6 +30,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "codingUtilities/Section.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -150,12 +151,16 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+  Section section;
+
   postInputInitializationRecursive();
 
+  section.setName( "Mesh generation" );
+  section.begin();
   generateMesh();
+  section.end();
 
 //  initialize_postMeshGeneration();
-
   applyNumericalMethods();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
