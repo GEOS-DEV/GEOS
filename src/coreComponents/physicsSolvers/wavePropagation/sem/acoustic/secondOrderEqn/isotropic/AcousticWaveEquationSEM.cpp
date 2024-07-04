@@ -118,6 +118,28 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
+real32 AcousticWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView1d< string const > const & regionNames)
+{
+  
+  real32 localMaxWavespeed = 0;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                     CellElementSubRegion & elementSubRegion )
+  {
+     arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+     real32 subRegionMaxWavespeed = *std::max(velocity.begin(),velocity.end());
+     if(localMaxWavespeed < subRegionMaxWavespeed)
+     {
+       localMaxWavespeed = subRegionMaxWavespeed;
+     }
+  } );
+
+  real32 const globalMaxWavespeed = MpiWrapper::max(localMaxWavespeed);
+
+  return globalMaxWavespeed;
+
+}
+
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
 {
@@ -158,8 +180,12 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
   }
-
- 
+  
+  real32 vMax;
+  if(m_useTaper==1)
+  {
+    vMax = getGlobalMaxWavespeed(mesh, regionNames);
+  }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                         CellElementSubRegion & elementSubRegion )
@@ -175,10 +201,13 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
     if( m_useTaper==1 )
     {
-      //arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-      //real32 vMax = LvArray::math::max(velocity);
+      // arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+      // real32 vMax;
+      // MpiWrapper::allReduce(&velocity,&vMax,1,MPI_MAX,MPI_COMM_GEOSX);
+      // MpiWrapper::max()
+      //real32 const vMax = *std::max_element(velocity.begin(),velocity.end());
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, 1500.0, m_reflectivityCoeff, taperCoeff );
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff, taperCoeff );
     } 
 
     finiteElement::FiniteElementBase const &

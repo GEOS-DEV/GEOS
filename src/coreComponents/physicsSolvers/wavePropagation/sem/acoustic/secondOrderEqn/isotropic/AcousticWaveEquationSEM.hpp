@@ -79,6 +79,8 @@ public:
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
 
+  real32 getGlobalMaxWavespeed(MeshLevel & mesh, arrayView1d< string const > const & regionNames);
+
   /**@}*/
 
   /**
