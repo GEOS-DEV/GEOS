@@ -278,7 +278,6 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   }
   else
   {
-    //1.
     TableData2D tableData2D;
     TableData2D::TableConversionData tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
@@ -286,9 +285,9 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
                                                  coordinates,
                                                  units::getDescription( tableFunction.getDimUnit( 0 ) ),
                                                  units::getDescription( tableFunction.getDimUnit( 1 ) ) );
-    //2.
+
     TableLayout tableLayout( tableConverted.headerNames );
-    //3.
+    
     TableCSVFormatter csvFormat( tableLayout );
     formatterStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }
