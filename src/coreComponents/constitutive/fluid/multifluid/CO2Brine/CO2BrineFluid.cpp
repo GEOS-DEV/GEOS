@@ -105,7 +105,7 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Write PVT tables into a CSV file" ).
-    setDefaultValue( 1 );
+    setDefaultValue( 0 );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -138,7 +138,6 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_p1Index = m_p1Index;
   newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation.setIsClone( true );
   newConstitutiveRelation.createPVTModels();
 
   return clone;

@@ -70,6 +70,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Write PVT tables into a CSV file" );
@@ -104,7 +105,6 @@ deliverClone( string const & name, Group * const parent ) const
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
 
-  newConstitutiveRelation.setIsClone( true );
   newConstitutiveRelation.createPVTModels();
 
   return clone;

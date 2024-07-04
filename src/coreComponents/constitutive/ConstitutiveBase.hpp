@@ -114,8 +114,6 @@ public:
 
   bool isClone()  const { return m_isClone; }
 
-  void setIsClone( bool const newState ) { m_isClone = newState; }
-
   virtual std::vector< string > getSubRelationNames() const { return {}; }
 
   /**
@@ -164,6 +162,8 @@ public:
   }
 
 private:
+
+  void setIsClone( bool const newState );
 
   localIndex m_numQuadraturePoints;
 
