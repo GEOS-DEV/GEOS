@@ -130,8 +130,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const nodesToElements = nodeManager.elementList().toViewConst();
 
   ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
