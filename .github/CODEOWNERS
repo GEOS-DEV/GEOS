@@ -10,34 +10,33 @@
 /.github/ @rrsettgast
 
 /inputFiles/ @CusiniM @cssherman @jhuang2601
-
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin @corbett5 @CusiniM 
-/src/coreComponents/codingUtilities                   @rrsettgast
-/src/coreComponents/common                            @rrsettgast
+/src/coreComponents/codingUtilities                   @rrsettgast @untereiner
+/src/coreComponents/common                            @rrsettgast @MelReyCG
 /src/coreComponents/constitutive                      @rrsettgast @CusiniM @dkachuma 
 /src/coreComponents/dataRepository                    @rrsettgast @wrtobin
 /src/coreComponents/denseLinearAlgebra                @rrsettgast @CusiniM @castelletto1 
 /src/coreComponents/discretizationMethods             @rrsettgast
 /src/coreComponents/events                            @rrsettgast @cssherman 
 /src/coreComponents/fieldSpecification                @rrsettgast
-/src/coreComponents/fileIO                            @rrsettgast @wrtobin
-/src/coreComponents/finiteElement                     @rrsettgast
-/src/coreComponents/finiteVolume                      @rrsettgast
-/src/coreComponents/functions                         @rrsettgast
+/src/coreComponents/fileIO                            @rrsettgast @wrtobin @MelReyCG @untereiner
+/src/coreComponents/finiteElement                     @rrsettgast @castelletto1
+/src/coreComponents/finiteVolume                      @rrsettgast @castelletto1
+/src/coreComponents/functions                         @cssherman  @wrtobin
 /src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm 
 /src/coreComponents/mainInterface                     @rrsettgast
-/src/coreComponents/math                              @rrsettgast
-/src/coreComponents/mesh                              @rrsettgast @wrtobin
+/src/coreComponents/math                              @rrsettgast @corbett5
+/src/coreComponents/mesh                              @rrsettgast @wrtobin @untereiner @CusiniM 
 /src/coreComponents/physicsSolvers                    @rrsettgast
 /src/coreComponents/physicsSolvers/contact            @CusiniM
 /src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin 
 /src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM
 /src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 
 /src/coreComponents/physicsSolvers/python             @cssherman
-/src/coreComponents/physicsSolvers/simplePDE          
+/src/coreComponents/physicsSolvers/simplePDE          @castelletto1
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
-/src/coreComponents/physicsSolvers/wavePropagation    @rrsettgast @sframba
+/src/coreComponents/physicsSolvers/wavePropagation    @sframba 
 !/src/coreComponents/schema
 /src/coreComponents/unitTests                         @rrsettgast
 
