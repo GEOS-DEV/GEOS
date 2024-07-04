@@ -23,6 +23,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -276,7 +277,9 @@ private:
    * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
    */
   units::Unit getDimUnit( localIndex const dim ) const
-  { return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown; }
+  {
+    return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown;
+  }
 
   /**
    * @brief Set the interpolation method
@@ -317,11 +320,13 @@ private:
     m_valueUnit = unit;
   }
 
-  /**
-   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
-   * @param filename Filename for output
-   */
-  void print( std::string const & filename ) const;
+/**
+ * @return The table unit
+ */
+  units::Unit getValueUnit() const
+  {
+    return m_valueUnit;
+  }
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -672,6 +677,22 @@ ENUM_STRINGS( TableFunction::InterpolationType,
               "nearest",
               "upper",
               "lower" );
+
+/**
+ * @brief Template specialisation to convert a TableFunction to a CSV string.
+ * @param tableData The TableFunction object to convert.
+ * @return The CSV string representation of the TableFunction.
+ */
+template<>
+string TableTextFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
+
+/**
+ * @brief Template specialisation to convert a TableFunction to a table string.
+ * @param tableData The TableFunction object to convert.
+ * @return The table string representation of the TableFunction.
+ */
+template<>
+string TableCSVFormatter::toString< TableFunction >( TableFunction const & tableData ) const;
 
 } /* namespace geos */
 

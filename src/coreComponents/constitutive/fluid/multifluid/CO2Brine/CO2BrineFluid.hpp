@@ -158,6 +158,7 @@ private:
     static constexpr char const * flashModelParaFileString() { return "flashModelParaFile"; }
     static constexpr char const * solubilityTablesString() { return "solubilityTableNames"; }
     static constexpr char const * phasePVTParaFilesString() { return "phasePVTParaFiles"; }
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 protected:
@@ -168,6 +169,9 @@ protected:
 
 private:
 
+  /**
+   * @brief Create a PVT Model and output them
+   */
   void createPVTModels();
 
   /// Names of the files defining the viscosity and density models
@@ -185,6 +189,10 @@ private:
   /// Index of the gas phase
   integer m_p2Index;
 
+  bool m_isClone = true;
+
+  ///
+  integer m_writeCSV;
 
   /// Brine constitutive models
   std::unique_ptr< PHASE1 > m_phase1;

@@ -9,6 +9,7 @@ componentNames       string_array       {}       List of component names
 name                 groupName          required A name is required for any non-unique nodes                                                                  
 phaseNames           groupNameRef_array {}       List of fluid phases                                                                                         
 phasePVTParaFiles    path_array         required Names of the files defining the parameters of the viscosity and density models                               
+writeCSV             integer            0        Write PVT tables into a CSV file                                                                             
 ==================== ================== ======== ============================================================================================================ 
 
 

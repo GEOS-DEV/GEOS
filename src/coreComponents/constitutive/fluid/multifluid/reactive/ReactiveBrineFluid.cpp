@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -68,6 +69,12 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Write PVT tables into a CSV file" );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -93,6 +100,7 @@ std::unique_ptr< ConstitutiveBase >
 ReactiveBrineFluid< PHASE > ::
 deliverClone( string const & name, Group * const parent ) const
 {
+
   std::unique_ptr< ConstitutiveBase > clone = ReactiveMultiFluid::deliverClone( name, parent );
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
@@ -128,7 +136,6 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
 template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::createPVTModels()
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
@@ -192,9 +199,15 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
                  InputError );
 
+  bool const isClone = this->isClone();
+  PVTFunctionBase::TableOutputOptions const pvtOutputOpts = {
+    !isClone && m_writeCSV,// writeCSV
+    !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
+  };
+
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       getLogLevel() > 0 && logger::internal::rank==0 );
+                                       pvtOutputOpts );
 }
 
 template< typename PHASE >
