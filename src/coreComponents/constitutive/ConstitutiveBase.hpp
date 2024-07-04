@@ -167,6 +167,7 @@ private:
 
   localIndex m_numQuadraturePoints;
 
+  /// Indicate if this constitutive model a clone
   bool m_isClone;
 };
 
