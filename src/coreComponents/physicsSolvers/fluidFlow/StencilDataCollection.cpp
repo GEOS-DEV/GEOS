@@ -67,10 +67,11 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
                              m_solverName ),
                    InputError );
   }
-  //this->getGroup( viewKeyStruct::meshLevelDataString() ).registerGroup< MeshLevelData >( meshLevelData );
 
   { // pre-allocate buffers
+    bool foundStencil = false;
     DomainPartition & domain = problemManager.getDomainPartition();
+
     m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                               [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -82,15 +83,25 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
 
       fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
       {
-        globalIndex connCount = stencil.size();
-        m_cellAGlobalId.resize( connCount );
-        m_cellBGlobalId.resize( connCount );
-        m_transmissibilityAB.resize( connCount );
-        m_transmissibilityBA.resize( connCount );
-        GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                             getDataContext(), connCount, fluxApprox.getName() ) );
+        if( foundStencil )
+        {
+          GEOS_WARNING( GEOS_FMT( "{}: A target was already found, and multiple target is not currently supported, so '{}' will be ignored.",
+                                  getDataContext(), fluxApprox.getName() ) );
+        }
+        else
+        {
+          globalIndex connCount = stencil.size();
+          m_cellAGlobalId.resize( connCount );
+          m_cellBGlobalId.resize( connCount );
+          m_transmissibilityAB.resize( connCount );
+          m_transmissibilityBA.resize( connCount );
+          GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
+                                               getDataContext(), connCount, fluxApprox.getName() ) );
+        }
       } );
     } );
+
+
   }
 }
 
@@ -102,6 +113,7 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                      real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                      DomainPartition & domain )
 {
+  bool foundStencil = false;
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                             [&] ( string const &,
                                                   MeshLevel & mesh,
@@ -113,11 +125,16 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
     fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
     {
-      // gather
-      auto const stencilWrapper = stencil.createKernelWrapper();
-      array1d< KernelConnectionData > const kernelData = gatherConnectionData( mesh, stencilWrapper );
-      // output
-      storeTimeStepData( mesh, fluxApprox.getName(), kernelData.toView() );
+      if( !foundStencil )
+      {
+        foundStencil=true;
+
+        // gather
+        auto const stencilWrapper = stencil.createKernelWrapper();
+        array1d< KernelConnectionData > const kernelData = gatherConnectionData( mesh, stencilWrapper );
+        // output
+        storeConnectionData( mesh, fluxApprox.getName(), kernelData.toView() );
+      }
     } );
   } );
   return false;

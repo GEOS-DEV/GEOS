@@ -112,37 +112,6 @@ private:
     }
   };
 
-//   class MeshLevelData
-//   {
-// public:
-//     MeshLevelData( string const & name, dataRepository::Group * parent );
-// private:
-//     MeslLevel * m_meshLevel;
-//     array1d< ConnectionData > m_currentConnData;
-//
-//  /**
-//   * @brief gather the element-element connection data of the current timestep using a given StencilWrapper.
-//   * @tparam STENCILWRAPPER_T the type of the StencilWrapper
-//   * @param mesh the mesh for which we want the data
-//   * @param stencilWrapper the StencilWrapper to use to compute the element-element connection data
-//   * @return Return the gathered data in an LvArray
-//   */
-//  template< typename STENCILWRAPPER_T >
-//  array1d< KernelConnectionData > gatherConnectionData( MeshLevel const & mesh,
-//                                                        STENCILWRAPPER_T const & stencilWrapper ) const;
-//
-//  /**
-//   * @brief Output the element-element connection data of the current timestep.
-//   * @param mesh the specific mesh for which we output the data. We will also need it to convert the ids to global ids.
-//   * @param stencil the specific mesh for which we output the data.
-//   * @param outputTime the time for when we gathered the data
-//   * @param kernelData the connection data, gathered by a kernel.
-//   */
-//  void storeTimeStepData( MeshLevel const & mesh, string_view stencilName, real64 outputTime,
-//                          arrayView1d< KernelConnectionData > const & kernelData );
-//
-//   };
-
   struct viewKeyStruct
   {
     static constexpr char const * solverNameString() { return "flowSolverName"; }
@@ -156,11 +125,10 @@ private:
   /// Pointer to the physics solver
   FlowSolverBase * m_solver;
 
-  array1d< globalIndex > m_cellAGlobalId; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
-  array1d< globalIndex > m_cellBGlobalId; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
-  array1d< real64 > m_transmissibilityAB; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
-  array1d< real64 > m_transmissibilityBA; // TODO: store that in a MeshLevelData + docs (size : 2 x N connection)
-  // array1d< ConnectionData > m_currentConnData; // TODO gérer les multiples MeshLevel
+  array1d< globalIndex > m_cellAGlobalId;
+  array1d< globalIndex > m_cellBGlobalId;
+  array1d< real64 > m_transmissibilityAB;
+  array1d< real64 > m_transmissibilityBA;
 
   /// Name of the solver
   string m_solverName;
