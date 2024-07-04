@@ -16,9 +16,9 @@
  * @file TableFormatter.cpp
  */
 
+#include "TableFormatter.hpp"
 #include <numeric>
 #include "codingUtilities/StringUtilities.hpp"
-#include "TableFormatter.hpp"
 namespace geos
 {
 
@@ -66,7 +66,8 @@ string TableCSVFormatter::dataToString( TableData const & tableData ) const
   return oss.str();
 }
 
-string TableCSVFormatter::toString( TableData const & tableData ) const
+template<>
+string TableCSVFormatter::toString< TableData >( TableData const & tableData ) const
 {
   return headerToString() + dataToString( tableData );
 }
@@ -150,7 +151,8 @@ string TableTextFormatter::layoutToString() const
   return tableOutput.str();
 }
 
-string TableTextFormatter::toString( TableData const & tableData ) const
+template<>
+string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
   string sectionSeparatingLine;
@@ -398,4 +400,5 @@ void TableTextFormatter::outputSectionRows( std::vector< TableLayout::Column > c
     tableOutput << GEOS_FMT( "{}\n", sectionSeparatingLine );
   }
 }
+
 }
