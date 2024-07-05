@@ -79,17 +79,18 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
-namespace internal
+namespace detail
 {
+
 // Lists the possible numbers of components supported by a fluid type
 // Most of the fluid types support only 2 components so this is the default
-template< typename FluidType >
+template< typename FLUID_TYPE >
 struct Components
 {
   using type = camp::int_seq< integer, 2 >;
 };
 
-// Dead oil fluid models support 2 or 3 components
+// Dead oil fluid model supports 2 or 3 components
 template<>
 struct Components< DeadOilFluid >
 {
@@ -120,15 +121,31 @@ struct Components< CompositionalTwoPhaseConstantViscosity >
   using type = camp::int_seq< integer, 2, 3, 4, 5 >;
 };
 
-template< typename Components >
+/**
+ * @brief Structure to execute a lambda on a fluid model depending on the number of components
+ * @tparam THERMAL_ACTIVE Determines if the call has been deactivated due to the lambda being thermal
+ *         but the fluid model not being thermal
+ * @tparam COMPONENT_LIST Type listing the components to expand over
+ */
+template< bool THERMAL_ACTIVE, typename COMPONENT_LIST >
 struct ComponentSelector
 {};
 
-template< integer ... Is >
-struct ComponentSelector< camp::int_seq< integer, Is ... > >
+/** @brief If the call is deactivated due to the fluid not being thermal
+ */
+template< typename COMPONENT_LIST >
+struct ComponentSelector< false, COMPONENT_LIST >
 {
   template< typename FluidType, typename LAMBDA >
-  static void select( int numComps, FluidType & fluid, LAMBDA && lambda )
+  static void execute( int GEOS_UNUSED_PARAM( numComps ), FluidType & GEOS_UNUSED_PARAM( fluid ), LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
+  {}
+};
+
+template< integer ... Is >
+struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
+{
+  template< typename FluidType, typename LAMBDA >
+  static void execute( int numComps, FluidType & fluid, LAMBDA && lambda )
   {
     bool notSupported = false;
 // With gcc8, the fold expression below issues a spurious warning
@@ -138,7 +155,8 @@ struct ComponentSelector< camp::int_seq< integer, Is ... > >
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
-    ( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...) || (notSupported = true, false);
+    GEOS_UNUSED_VAR(( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...) ||
+                    (notSupported = true, false));
 #if (defined(__GNUC__) && (__GNUC__ < 10))
 #pragma GCC diagnostic pop
 #endif
@@ -156,25 +174,12 @@ void constitutiveComponentUpdatePassThru( MultiFluidBase & fluidBase,
                                           integer const numComps,
                                           LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< DeadOilFluid,
-                               BlackOilFluid,
-#ifdef GEOSX_USE_PVTPackage
-                               CompositionalMultiphaseFluidPVTPackage,
-#endif
-                               CO2BrinePhillipsFluid,
-                               CO2BrineEzrokhiFluid,
-                               CO2BrinePhillipsThermalFluid,
-                               CO2BrineEzrokhiThermalFluid,
-                               CompositionalTwoPhaseLohrenzBrayClarkViscosity,
-                               CompositionalTwoPhaseConstantViscosity
-                               >::execute( fluidBase, [&]( auto & fluid )
+  constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
   {
     using FluidType = TYPEOFREF( fluid );
-    if constexpr (!THERMAL || FluidType::thermal())
-    {
-      using Components = typename internal::Components< FluidType >::type;
-      internal::ComponentSelector< Components >::select( numComps, fluid, std::forward< LAMBDA >( lambda ));
-    }
+    using Components = typename detail::Components< FluidType >::type;
+    constexpr bool active = !THERMAL || FluidType::thermal();
+    detail::ComponentSelector< active, Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
   } );
 }
 

@@ -42,15 +42,18 @@ protected:
 
 using MultiFluidSelectorTestDeadOilFluid = MultiFluidSelectorTest< DeadOilFluid >;
 using MultiFluidSelectorTestCO2BrinePhillipsThermalFluid = MultiFluidSelectorTest< CO2BrinePhillipsThermalFluid >;
+using MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity = MultiFluidSelectorTest< CompositionalTwoPhaseConstantViscosity >;
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
 {
-  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC ){
+  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC )
+  {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 2 );
   } );
 
-  constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto NC ){
+  constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto NC )
+  {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 3 );
   } );
@@ -58,25 +61,29 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testInvalidComponents )
 {
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto ){
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
+  {
     FAIL(); // Shouldn't be called
   } ), SimulationError );
 
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 4, []( auto &, auto ){
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 4, []( auto &, auto )
+  {
     FAIL(); // Shouldn't be called
   } ), SimulationError );
 }
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testThermal )
 {
-  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, []( auto &, auto ){
+  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, []( auto &, auto )
+  {
     FAIL(); // Shouldn't be called
   } );
 }
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testValidComponents )
 {
-  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC ){
+  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC )
+  {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 2 );
   } );
@@ -84,11 +91,13 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testValidComponents 
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testInvalidComponents )
 {
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto ){
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
+  {
     FAIL(); // Shouldn't be called
   } ), SimulationError );
 
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto ){
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto )
+  {
     FAIL(); // Shouldn't be called
   } ), SimulationError );
 }
@@ -96,10 +105,44 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testInvalidComponent
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testThermal )
 {
   bool isTested = false;
-  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto ){
+  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto )
+  {
     isTested = true;
   } );
   EXPECT_TRUE( isTested );
+}
+
+TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testValidComponents )
+{
+  for( integer nc = 2; nc <= 5; nc++ )
+  {
+    constitutiveComponentUpdatePassThru( getFluid(), nc, [&]( auto &, auto NC )
+    {
+      integer constexpr numComps = NC();
+      EXPECT_EQ( numComps, nc );
+    } );
+  }
+}
+
+TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testInvalidComponents )
+{
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
+  {
+    FAIL(); // Shouldn't be called
+  } ), SimulationError );
+
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 6, []( auto &, auto )
+  {
+    FAIL(); // Shouldn't be called
+  } ), SimulationError );
+}
+
+TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testThermal )
+{
+  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto )
+  {
+    FAIL(); // Shouldn't be called
+  } );
 }
 
 int main( int argc, char * * argv )
