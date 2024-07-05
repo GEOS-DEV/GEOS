@@ -22,7 +22,9 @@
 #endif
 
 #ifdef GEOSX_USE_FMT
+#ifndef FMT_HEADER_ONLY
 #define FMT_HEADER_ONLY
+#endif
 // Differentiate between standalone fmt path and umpire's fmt path
 #include "../include/fmt/core.h"
 #include "../include/fmt/chrono.h"
