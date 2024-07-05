@@ -63,6 +63,16 @@ public:
 
   /**@}*/
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * solverNameString() { return "flowSolverName"; }
+    // static constexpr char const * connectionDataString() { return "connectionData"; }
+    static constexpr char const * cellAGlobalIdString() { return "cellAGlobalId"; }
+    static constexpr char const * cellBGlobalIdString() { return "cellBGlobalId"; }
+    static constexpr char const * transmissibilityABString() { return "transmissibilityAB"; }
+    static constexpr char const * transmissibilityBAString() { return "transmissibilityBA"; }
+  };
+
 private:
 
   using Base = TaskBase;
@@ -110,16 +120,6 @@ private:
              m_globalId[0] < other.m_globalId[0] :
              m_globalId[1] < other.m_globalId[1];
     }
-  };
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * solverNameString() { return "flowSolverName"; }
-    // static constexpr char const * connectionDataString() { return "connectionData"; }
-    static constexpr char const * cellAGlobalIdString() { return "cellAGlobalId"; }
-    static constexpr char const * cellBGlobalIdString() { return "cellBGlobalId"; }
-    static constexpr char const * transmissibilityABString() { return "transmissibilityAB"; }
-    static constexpr char const * transmissibilityBAString() { return "transmissibilityBA"; }
   };
 
   /// Pointer to the physics solver

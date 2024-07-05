@@ -128,7 +128,6 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
       if( !foundStencil )
       {
         foundStencil=true;
-
         // gather
         auto const stencilWrapper = stencil.createKernelWrapper();
         array1d< KernelConnectionData > const kernelData = gatherConnectionData( mesh, stencilWrapper );
