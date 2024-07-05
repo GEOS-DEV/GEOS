@@ -38,11 +38,11 @@ string toLower( string const & input );
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam IT   type of iterator into the range of objects to join
- * @tparam S    type of delimiter, usually char, char const * or string
- * @param first iterator to start of the range
- * @param last  iterator past-the-end of the range
- * @param delim delimiter used to glue together strings
+ * @tparam IT    type of iterator into the range of objects to join
+ * @tparam S     type of delimiter, usually char, char const * or string
+ * @param first  iterator to start of the range
+ * @param last   iterator past-the-end of the range
+ * @param delim  delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char >
@@ -63,59 +63,59 @@ string join( IT first, IT last, S const & delim = S() )
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam CONTAINER type of container to join
- * @tparam S    type of delimiter, usually char, char const * or string
- * @param container container to join
- * @param delim delimiter used to glue together strings
+ * @tparam CONTAINER  type of container to join
+ * @tparam S          type of delimiter, usually char, char const * or string
+ * @param container   container to join
+ * @param delim       delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
 template< typename CONTAINER, typename S = char >
-string join( CONTAINER const & cont, S const & delim = S() )
+string join( CONTAINER const & container, S const & delim = S() )
 {
-  return join( std::begin( cont ), std::end( cont ), delim );
+  return join( std::begin( container ), std::end( container ), delim );
 }
 
 /**
- * @brief Join strings or other printable objects returned by a lambda.
- * @tparam IT      type of iterator into the range of objects to join
- * @tparam S       type of delimiter, usually char, char const * or string
- * @tparam Lambda  type of lambda function, usually `[]( auto it ) -> string`
- * @param valueLambda  lambda function to get each values from the provided container iterator
- * @param first        iterator to start of the range
- * @param last         iterator past-the-end of the range
- * @param delim        delimiter used to glue together strings
+ * @brief Join strings or other printable objects returned by a formatter functor.
+ * @tparam IT                type of iterator into the range of objects to join
+ * @tparam S                 type of delimiter, usually char, char const * or string
+ * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
+ * @param iteratorFormatter  formatter function to get a formattable value from a IT iterator
+ * @param first              iterator to start of the range
+ * @param last               iterator past-the-end of the range
+ * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
-template< typename IT, typename S = char, typename Lambda >
-string joinLamda( Lambda valueLambda, IT first, IT last, S const & delim = S() )
+template< typename IT, typename S = char, typename LAMBDA >
+string joinLamda( LAMBDA iteratorFormatter, IT first, IT last, S const & delim = S() )
 {
   if( first == last )
   {
     return {};
   }
   std::ostringstream oss;
-  oss << valueLambda( first );
+  oss << iteratorFormatter( first );
   while( ++first != last )
   {
-    oss << delim << valueLambda( first );
+    oss << delim << iteratorFormatter( first );
   }
   return oss.str();
 }
 
 /**
- * @brief Join strings or other printable objects returned by a lambda.
- * @tparam CONTAINER  type of container to join
- * @tparam S          type of delimiter, usually char, char const * or string
- * @tparam Lambda     type of lambda function, usually `[]( auto it ) -> string`
- * @param valueLambda  lambda function to get each values from the provided container iterator
- * @param container    container to join
- * @param delim        delimiter used to glue together strings
+ * @brief Join strings or other printable objects returned by a formatter functor.
+ * @tparam CONTAINER         type of container to join
+ * @tparam S                 type of delimiter, usually char, char const * or string
+ * @tparam LAMBDA            type of formatter functor, usually `[]( auto it ) -> string`
+ * @param iteratorFormatter  formatter function to get a formattable value from an iterator of the container
+ * @param container          container to join
+ * @param delim              delimiter used to glue together strings
  * @return a string containing input values concatenated with a delimiter
  */
-template< typename CONTAINER, typename S = char, typename Lambda >
-string joinLamda( Lambda valueLambda, CONTAINER const & cont, S const & delim = S() )
+template< typename CONTAINER, typename S = char, typename LAMBDA >
+string joinLamda( LAMBDA iteratorFormatter, CONTAINER const & container, S const & delim = S() )
 {
-  return joinLamda( valueLambda, std::begin( cont ), std::end( cont ), delim );
+  return joinLamda( iteratorFormatter, std::begin( container ), std::end( container ), delim );
 }
 
 /**
