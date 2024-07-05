@@ -154,7 +154,7 @@ struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
-    bool const supported = ( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...) || false;
+    bool const supported = ( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...);
 #if (defined(__GNUC__) && (__GNUC__ < 10))
 #pragma GCC diagnostic pop
 #endif
