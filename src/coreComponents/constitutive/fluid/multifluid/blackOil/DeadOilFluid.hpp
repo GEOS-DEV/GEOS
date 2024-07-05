@@ -132,6 +132,10 @@ private:
    */
   KernelWrapper createKernelWrapper();
 
+protected:
+
+  virtual void postInputInitialization() override;
+
 private:
 
   /**

@@ -89,16 +89,18 @@ struct Components
   using type = camp::int_seq< integer, 2 >;
 };
 
-// Blackoiub fluid models support anything from 2 or 3 components
+// Dead oil fluid models support 2 or 3 components
 template<>
 struct Components< DeadOilFluid >
 {
   using type = camp::int_seq< integer, 2, 3 >;
 };
+
+// Blackoil fluid model supports 3 components
 template<>
 struct Components< BlackOilFluid >
 {
-  using type = camp::int_seq< integer, 2, 3 >;
+  using type = camp::int_seq< integer, 3 >;
 };
 
 // Compositional fluid models support anything from 2 to 5 components
