@@ -271,7 +271,7 @@ public:
                              integer const phaseIndex,
                              ModelParameters const & modelParameters );
 
-  static string catalogName() { return "LBC"; }
+  static string catalogName() { return "LohrenzBrayClark"; }
 
   FunctionType functionType() const override
   {
