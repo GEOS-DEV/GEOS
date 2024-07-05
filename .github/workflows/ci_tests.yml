@@ -142,6 +142,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            ENABLE_PYGEOSX: ON
 
           - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
@@ -177,6 +178,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      ENABLE_PYGEOSX: ${{ matrix.ENABLE_PYGEOSX }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
@@ -198,6 +200,7 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
+      ENABLE_PYGEOSX: ON
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: streak2-32core
       NPROC: 32

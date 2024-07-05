@@ -73,7 +73,7 @@ args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-covera
 # Variables with default values
 BUILD_EXE_ONLY=false
 GEOSX_INSTALL_SCHEMA=true
-BUILD_PYGEOSX=true
+BUILD_PYGEOSX=false
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
@@ -209,7 +209,6 @@ if [[ "${BUILD_PYGEOSX}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y virtualenv python3-dev python3-numpy python3-mpi4py python3-venv
   PYTHON_EXEC=$(which python3)
-  echo "Using python as $PYTHON_EXEC"
   PYGEOSX_ARGS="-DENABLE_PYGEOSX=ON -DPython3_EXECUTABLE=$PYTHON_EXEC"
 fi
 
