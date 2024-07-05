@@ -37,6 +37,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  static constexpr bool thermal(){ return false; }
+
   /**
    * @brief Kernel wrapper class for DeadOilFluid
    *        This kernel can be called on the GPU
