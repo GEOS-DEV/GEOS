@@ -207,8 +207,9 @@ PYGEOSX_ARGS=""
 if [[ "${BUILD_PYGEOSX}" = true ]]; then
   echo "Enabling pygeosx."
   or_die apt-get update
-  or_die apt-get install -y virtualenv python3.11-dev python3-numpy python3-mpi4py
+  or_die apt-get install -y virtualenv python-dev python3-numpy python3-mpi4py
   PYTHON_EXEC=$(which python3)
+  echo "Using python as $PYTHON_EXEC"
   PYGEOSX_ARGS="-DENABLE_PYGEOSX=ON -DPython3_EXECUTABLE=$PYTHON_EXEC"
 fi
 
