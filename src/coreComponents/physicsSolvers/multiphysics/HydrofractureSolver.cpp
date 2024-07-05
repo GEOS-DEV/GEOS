@@ -129,25 +129,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializePostInitialCondition
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
-  {
-    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                     [&]( localIndex const,
-                                                                          SurfaceElementRegion & region )
-    {
-      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-      {
-        SingleFluidBase & fluid =
-          this->template getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) );
-        real64 const defaultDensity = fluid.defaultDensity();
-        subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
-          setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
-      } );
-    } );
-  } );
 }
 
 template< typename POROMECHANICS_SOLVER >

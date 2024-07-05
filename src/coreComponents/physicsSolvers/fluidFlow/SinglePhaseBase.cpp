@@ -465,8 +465,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
         subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
           setApplyDefaultValue( region.getDefaultAperture() );
 
+        SingleFluidBase & fluid =
+          getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) );
+        real64 const defaultDensity = fluid.defaultDensity();
         subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
-          setApplyDefaultValue( 0.0 );
+          setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
       } );
     } );
 
