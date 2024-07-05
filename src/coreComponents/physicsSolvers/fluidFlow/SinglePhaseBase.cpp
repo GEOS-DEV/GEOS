@@ -258,12 +258,10 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
-  arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
 
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
   arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-  arrayView2d< real64 const > const porosity_n = porousSolid.getPorosity_n();
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
@@ -271,7 +269,6 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   arrayView2d< real64 const > const density = fluid.density();
-  arrayView2d< real64 const > const density_n = fluid.density_n();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
