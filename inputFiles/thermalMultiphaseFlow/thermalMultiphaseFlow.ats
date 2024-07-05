@@ -17,7 +17,7 @@ decks = [
         name="co2_thermal_dirichlet",
         description=
         'Thermal compositional co2-brine flow test (2D co2 injection, 2-phase co2-brine, Brooks-Corey relperm curves, thermal, Dirichlet boundary)',
-        partitions=((1, 1, 1), (2, 2, 1)),
+        partitions=((1, 1, 1), (2, 1, 3)),
         restart_step=24,
         check_step=43,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),

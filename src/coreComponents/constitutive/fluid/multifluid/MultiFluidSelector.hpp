@@ -147,7 +147,6 @@ struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
   template< typename FluidType, typename LAMBDA >
   static void execute( int numComps, FluidType & fluid, LAMBDA && lambda )
   {
-    bool notSupported = false;
 // With gcc8, the fold expression below issues a spurious warning
 // warning: suggest parentheses around '&&' within '||' [-Wparentheses]
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94505
@@ -155,12 +154,11 @@ struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
-    GEOS_UNUSED_VAR(( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...) ||
-                    (notSupported = true, false));
+    bool const supported = ( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...) || false;
 #if (defined(__GNUC__) && (__GNUC__ < 10))
 #pragma GCC diagnostic pop
 #endif
-    if( notSupported )
+    if( !supported )
     {
       GEOS_THROW( "Unsupported number of components: " << numComps << " for fluid " << FluidType::catalogName(), SimulationError );
     }
