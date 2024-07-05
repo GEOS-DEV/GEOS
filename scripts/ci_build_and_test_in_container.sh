@@ -206,9 +206,11 @@ fi
 PYGEOSX_ARGS=""
 if [[ "${BUILD_PYGEOSX}" = true ]]; then
   echo "Enabling pygeosx."
-  or_die apt-get install -y python3-dev
+  or_die apt-get install -y python3-dev python3-numpy python3-mpi4py
 
   PYTHON_EXEC=$(which python3)
+  echo "Found python as ${PYTHON_EXEC}."
+
   PYGEOSX_ARGS="-DENABLE_PYGEOSX=ON -DPython3_EXECUTABLE=$PYTHON_EXEC"
 fi
 
