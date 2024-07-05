@@ -675,7 +675,7 @@ void ProblemManager::generateMesh()
     else if( meshBody.hasGroup( keys::cellManager ) )
     {
       // meshBody.deregisterGroup( keys::cellManager );
-      meshBody.deregisterCellBlockManager();
+      //meshBody.deregisterCellBlockManager();
     }
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
