@@ -464,7 +464,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       {
         ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
         real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-        
+
         subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
           setApplyDefaultValue( region.getDefaultAperture() );
 
