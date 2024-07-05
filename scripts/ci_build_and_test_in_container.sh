@@ -73,6 +73,7 @@ args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-covera
 # Variables with default values
 BUILD_EXE_ONLY=false
 GEOSX_INSTALL_SCHEMA=true
+BUILD_PYGEOSX=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
@@ -108,6 +109,7 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
+    --build_pygeosx)         BUILD_PYGEOSX=true;         shift;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
@@ -201,6 +203,15 @@ if [[ "${CODE_COVERAGE}" = true ]]; then
 fi
 
 
+PYGEOSX_ARGS=""
+if [[ "${BUILD_PYGEOSX}" = true ]]; then
+  echo "Enabling pygeosx."
+  or_die apt-get install -y python3-dev
+
+  PYTHON_EXEC=$(which python3)
+  PYGEOSX_ARGS="-DENABLE_PYGEOSX=ON -DPython3_EXECUTABLE=$PYTHON_EXEC"
+fi
+
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -226,7 +237,8 @@ or_die python3 scripts/config-build.py \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
-               ${ATS_CMAKE_ARGS}
+               ${ATS_CMAKE_ARGS} \
+               $PYGEOSX_ARGS
 
 # The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOSX_BUILD_DIR}
