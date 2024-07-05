@@ -150,6 +150,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
     } );
   } );
 #endif
+
 }
 
 template< typename POROMECHANICS_SOLVER >
