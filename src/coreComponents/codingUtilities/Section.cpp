@@ -123,6 +123,7 @@ void Section::begin( std::ostream & oss )
       oss << '\n';
     }
   }
+  oss << '\n';
 }
 
 void Section::end( std::ostream & oss )
