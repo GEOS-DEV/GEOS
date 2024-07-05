@@ -68,7 +68,7 @@ void Section::computeMaxRowSize( string const & title,
 
 void Section::buildAlignDescription()
 {
-  int idxDescription = 0;
+  integer idxDescription = 0;
   for( auto const & descriptionsValues : m_descriptionsValues )
   {
     m_descriptions.push_back( GEOS_FMT( "- {}: {}",
@@ -105,8 +105,8 @@ void Section::begin( std::ostream & oss )
   computeMaxRowSize( m_sectionTitle, m_descriptions );
 
   string const lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_rowLength );
-  int const titleLength = m_rowLength - m_nbSpecialChar * 2;
-  int const descriptionLength = m_rowLength - m_nbSpecialChar * 2 - m_marginBorder;
+  integer const titleLength = m_rowLength - m_nbSpecialChar * 2;
+  integer const descriptionLength = m_rowLength - m_nbSpecialChar * 2 - m_marginBorder;
 
   //section title
   oss << '\n';
@@ -128,7 +128,7 @@ void Section::begin( std::ostream & oss )
 void Section::end( std::ostream & oss )
 {
   string const title = "End : " + m_sectionTitle;
-  int const titleLength = m_rowLength - m_nbSpecialChar * 2;
+  integer const titleLength = m_rowLength - m_nbSpecialChar * 2;
   string lineSection =  GEOS_FMT( "{:#^{}}\n", "", m_rowLength );
 
   oss << '\n';
