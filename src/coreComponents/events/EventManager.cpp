@@ -246,17 +246,18 @@ void EventManager::outputTime( Section & section ) const
                      m_maxCycle, ( 100.0 * m_cycle ) / m_maxCycle );
   };
 
-  string timeCompletionUnfolded = isTimeLimited ? timeCompletionUnfoldedString() : "";
-  string timeCompletionSecond = isTimeLimited ? timeCompletionSecondsString() : "";
-  string cycleLimited = isCycleLimited ? cycleCompletionString() : "";
+  string const timeCompletionUnfolded = isTimeLimited ? timeCompletionUnfoldedString() : "";
+  string const timeCompletionSecond = isTimeLimited ? timeCompletionSecondsString() : "";
+  string const cycleLimited = isCycleLimited ? cycleCompletionString() : "";
 
-  string timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
-  string timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
+  string const timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
+  string const timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
 
   section.setName( "TIMESTEP START" );
-  section.addDescription( "Time", timeCompletionUnfolded, timeCompletionSeconds );
-  section.addDescription( GEOS_FMT( "- Delta Time: {}", units::TimeFormatInfo::fromSecxonds( m_dt ) ));
-  section.addDescription( GEOS_FMT( "- Cycle: {}{}", m_cycle, cycleLimited ) );
+  section.addDescription( "Time", timeInfosUnfolded, timeCompletionSeconds );
+  section.addDescription( "Delta Time", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
+  section.addDescription( "Cycle", m_cycle, cycleLimited );
+  section.setMinWidth(70);
 
   // GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
   // GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",

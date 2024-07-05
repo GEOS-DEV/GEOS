@@ -37,10 +37,13 @@ public:
   void setName( string_view m_sectionTitle );
 
   /**
-   * @brief Add a description to the section
-   * @param description The string value of the description
+   * @brief Add a description to the section and composed by a description name and variadic values.
+   * Use to align variadic values of the same description
+   * @param descriptionName The description name 
+   * @param args Values to be aligned.
    */
-  void addDescription( string const & descriptionName, std::vector< string > const & descriptionValues );
+  template< typename ... Args >
+  void addDescription( string const & descriptionName, Args const & ... args );
 
   /**
    * @brief Add a description to the section
@@ -50,7 +53,7 @@ public:
 
   /**
    * @brief Set the minimal width of a row
-   * @param minWidth the minimal width of the table
+   * @param minWidth The minimal width of the table
    */
   void setMinWidth( integer const & minWidth );
 
@@ -65,57 +68,64 @@ public:
    * @param oss An output stream (by default, std::cout)
    */
   void end( std::ostream & oss = std::cout );
+
 private:
 
   /**
    * @brief Compute the max string size (m_rowLength) between title and the description(s)
-   * @param m_sectionTitle The title of the table
-   * @param vDescriptions The vector of descriptions
+   * @param m_sectionTitle The table title
+   * @param descriptions The descriptions vector
    */
   void computeMaxRowSize( string const & m_sectionTitle,
-                          std::vector< string > const & vDescriptions );
-
+                          std::vector< string > const & descriptions );
   /**
-   * @brief Build the line section in order to build the section
-   * @param lineSection An empty string
+   * @brief Build a description from the name and variadic values descriptions 
    */
-  void buildLineSection( string & lineSection );
+  void buildAlignDescription();
 
   /**
-   * @brief Clear all private field related to the current section
+   * @brief Cleans all buffers used in the construction of a section
    */
   void clear();
 
-  /**
-   * @brief Build and add the title to the first part of the section
-   * @param sectionToBeBuilt The current section being built
-   * @param title The section name
-   */
-  void addTitleRow( string & sectionToBeBuilt, string_view title );
-
-  /**
-   * @brief Build and add the title to the last part of the section
-   * @param sectionToBeBuilt The current section being built
-   * @param title The section name
-   */
-  void addEndSectionRow( string & sectionToBeBuilt, string_view title );
-
-  /**
-   * @brief Build and add the descriptions to the first part of the section
-   * @param sectionToBeBuilt The current section being built
-   * @param rowsValue The vector of descriptions
-   */
-  void addDescriptionRows( string & sectionToBeBuilt, std::vector< string > const & rowsValue );
-
+  /// Vector containing all description
   std::vector< string > m_descriptions;
-
+  /// Used if the variadic addDescription has been called
+  /// Containing all "key" description name
   std::vector< string > m_descriptionNames;
+  /// Used if the variadic addDescription has been called
+  /// Containing all description values
   std::vector< std::vector< string > > m_descriptionsValues;
 
+  /// title of section
   string m_sectionTitle;
+  /// section length
   integer m_rowLength;
+  /// min width of section length
   integer m_rowMinWidth;
+
+  /// description border margin
+  static constexpr integer m_marginBorder = 2;
+  /// character used as border
+  static constexpr integer m_nbSpecialChar = 2;
+  /// (Temporary ?) special char with key name. I.E =>- "name": => 3char
+  static constexpr integer m_embeddingName = 4;
+
 };
+
+template< typename ... Args >
+void Section::addDescription( string const & descriptionName, Args const &... args )
+{
+  std::vector< string > descriptions;
+  ( [&] {
+    static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
+    string const value = GEOS_FMT( "{}", args );
+    descriptions.push_back( value );
+  } (), ...);
+
+  m_descriptionsValues.push_back( descriptions );
+  m_descriptionNames.push_back( descriptionName );
+}
 }
 
 

@@ -36,12 +36,6 @@ void Section::addDescription( string const & description )
   m_descriptions.push_back( description );
 }
 
-void Section::addDescription( string const & descriptionName, std::vector< string > const & descriptionValues )
-{
-  m_descriptionsValues.push_back( descriptionValues );
-  m_descriptionNames.push_back( descriptionName );
-}
-
 void Section::setMinWidth( integer const & minWidth )
 {
   m_rowMinWidth = minWidth;
@@ -50,10 +44,7 @@ void Section::setMinWidth( integer const & minWidth )
 void Section::computeMaxRowSize( string const & title,
                                  std::vector< string > const & rowsDescription )
 {
-  static constexpr integer marginBorder = 2;
-  static constexpr integer nbSpecialChar = 2;
-  integer maxDescriptionLength = 0;
-  integer titleLength = title.length() + marginBorder * 2 + nbSpecialChar * 2;
+  integer const titleLength = title.length() + m_marginBorder * 2 + m_nbSpecialChar * 2;
 
   m_rowLength = std::max( m_rowMinWidth, titleLength );
 
@@ -64,112 +55,86 @@ void Section::computeMaxRowSize( string const & title,
 
   auto it = std::max_element( rowsDescription.begin(),
                               rowsDescription.end(),
-                              []( const auto & a, const auto & b ) {
+                              []( auto const & a, auto const & b ) {
     return a.size() < b.size();
   } );
 
-  string maxDescriptionSize = *it;
+  string const maxDescriptionSize = *it;
 
-  maxDescriptionLength = integer( maxDescriptionSize.length()) + marginBorder * 2 + nbSpecialChar * 2;
+  integer const maxDescriptionLength = integer( maxDescriptionSize.length()) + m_marginBorder * 2 + m_nbSpecialChar * 2;
 
   m_rowLength = std::max( maxDescriptionLength, m_rowLength );
 }
 
-void Section::buildLineSection( string & lineSection )
+void Section::buildAlignDescription()
 {
-  lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_rowLength );
-}
-
-void Section::addTitleRow( string & sectionToBeBuilt, string_view title )
-{
-  sectionToBeBuilt += GEOS_FMT( "##{:^{}}##\n", title, m_rowLength - 4 );
-}
-
-void Section::addEndSectionRow( string & sectionToBeBuilt, string_view title )
-{
-  sectionToBeBuilt += GEOS_FMT( "##{:^{}}##\n", title, m_rowLength - 4 );
-}
-
-void Section::addDescriptionRows( string & sectionToBeBuilt, std::vector< string > const & rowValues )
-{
-  for( string rowValue : rowValues )
+  int idxDescription = 0;
+  for( auto const & descriptionsValues : m_descriptionsValues )
   {
-    sectionToBeBuilt += GEOS_FMT( "##  {:<{}}##\n", rowValue, m_rowLength - 6 );
+    m_descriptions.push_back( GEOS_FMT( "- {}: {}",
+                                        m_descriptionNames[idxDescription],
+                                        descriptionsValues[0] ) );
+    for( size_t idxValue = 1; idxValue < descriptionsValues.size(); idxValue++ )
+    {
+      integer const descriptionLength = m_descriptionNames[idxDescription].length() + m_embeddingName;
+      m_descriptions.push_back( GEOS_FMT( "{:>{}}{}", " ",
+                                          descriptionLength,
+                                          descriptionsValues[idxValue] ) );
+    }
+    idxDescription++;
   }
 }
+
 
 void Section::clear()
 {
   m_descriptions.clear();
+  m_descriptionNames.clear();
+  m_descriptionsValues.clear();
   m_sectionTitle.clear();
+
 }
 
 void Section::begin( std::ostream & oss )
 {
-  string lineSection;
-  string sectionToBeBuilt;
-  string const titleToDisplay = "Section : " + m_sectionTitle;
-
-  //TODO function and test and refacto below
-  if( m_descriptionsValues.empty())
+  if( !m_descriptionsValues.empty())
   {
-    int maxLenName = 0;
-    computeMaxRowSize( "", m_descriptionNames );
-    maxLenName = m_rowLength;
-
-    if( m_descriptionsValues.length == 1 )
-    {
-      m_descriptions.push_back( GEOS_FMT( " - {}:{}", m_descriptionNames[0], m_descriptionsValues[0] ));
-    }
-    else
-    {
-      int i = 0;
-      for( std::vector< string > descriptionsValues : m_descriptionsValues )
-      {
-        string description = GEOS_FMT( " - {}:", m_descriptionNames[i] );
-        for( string values: descriptionsValues )
-        {
-          description += GEOS_FMT( "{:-<{}}", values, m_rowLength );
-          m_descriptions.push_back();
-
-        }
-        i++;
-      }
-    }
+    buildAlignDescription();
   }
 
-  // check if descvalues empty
-  // split descValues into m_descriptions and set marginValues by default 0
-  // marginValues is used to construct m_description so just here (?)
+  computeMaxRowSize( m_sectionTitle, m_descriptions );
 
-  //and back to normal... just need to format m_descriptions !
-  //don't forget to rename variable and functions et to remove unused  function !
-  computeMaxRowSize( titleToDisplay, m_descriptions );
-  buildLineSection( lineSection );
+  string const lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_rowLength );
+  int const titleLength = m_rowLength - m_nbSpecialChar * 2;
+  int const descriptionLength = m_rowLength - m_nbSpecialChar * 2 - m_marginBorder;
 
-  sectionToBeBuilt += '\n' + lineSection;
-  addTitleRow( sectionToBeBuilt, titleToDisplay );
-  sectionToBeBuilt += lineSection;
-  addDescriptionRows( sectionToBeBuilt, m_descriptions );
-  sectionToBeBuilt += '\n';
+  //section title
+  oss << '\n';
+  oss << lineSection;
+  oss << GEOS_FMT( "##{:^{}}##\n", m_sectionTitle, titleLength );
 
-  oss << sectionToBeBuilt;
+  //section descriptions
+  oss << lineSection;
+  for( string & description : m_descriptions )
+  {
+    oss << GEOS_FMT( "##{:<{}}{:<{}}##", " ", m_marginBorder, description, descriptionLength );
+    if( &description != &m_descriptions.back())
+    {
+      oss << '\n';
+    }
+  }
 }
 
 void Section::end( std::ostream & oss )
 {
-  string lineSection;
-  string sectionToBeBuilt;
-  string titleToDisplay = "End : " + m_sectionTitle;
+  string const title = "End : " + m_sectionTitle;
+  int const titleLength = m_rowLength - m_nbSpecialChar * 2;
+  string lineSection =  GEOS_FMT( "{:#^{}}\n", "", m_rowLength );
 
-  buildLineSection( lineSection );
-
-  sectionToBeBuilt += '\n';
-  addTitleRow( sectionToBeBuilt, titleToDisplay );
-  sectionToBeBuilt += lineSection;
-  sectionToBeBuilt += '\n';
-
-  oss << sectionToBeBuilt;
+  oss << '\n';
+  oss << GEOS_FMT( "##{:^{}}##\n", title, titleLength );
+  oss << lineSection;
+  oss << '\n';
 
   clear();
 }
