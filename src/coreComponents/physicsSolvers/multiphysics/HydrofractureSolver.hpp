@@ -186,6 +186,8 @@ protected:
 
   virtual void postInputInitialization() override final;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
    * @param domain the physical domain object
