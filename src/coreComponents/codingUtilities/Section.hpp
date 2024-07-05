@@ -76,7 +76,7 @@ private:
    * @param m_sectionTitle The table title
    * @param descriptions The descriptions vector
    */
-  void computeMaxRowSize( string const & m_sectionTitle,
+  void computeMaxRowSize( string_view m_sectionTitle,
                           std::vector< string > const & descriptions );
   /**
    * @brief Build a description from the name and variadic values descriptions 
