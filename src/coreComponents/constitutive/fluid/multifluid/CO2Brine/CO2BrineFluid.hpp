@@ -64,8 +64,8 @@ public:
 
   static constexpr bool thermal()
   {
-    return !( std::is_same< typename PHASE1::Enthalpy, PVTProps::NoOpPVTFunction >::value ||
-              std::is_same< typename PHASE2::Enthalpy, PVTProps::NoOpPVTFunction >::value );
+    return !( std::is_same_v< typename PHASE1::Enthalpy, PVTProps::NoOpPVTFunction > ||
+              std::is_same_v< typename PHASE2::Enthalpy, PVTProps::NoOpPVTFunction > );
   }
 
   virtual bool isThermal() const override

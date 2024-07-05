@@ -46,17 +46,23 @@ using MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity = MultiFluidS
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
 {
-  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC )
+  bool isExecuted = false;
+  constitutiveComponentUpdatePassThru( getFluid(), 2, [&]( auto &, auto NC )
   {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 2 );
+    isExecuted = true;
   } );
+  EXPECT_TRUE( isExecuted );
 
-  constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto NC )
+  isExecuted = false;
+  constitutiveComponentUpdatePassThru( getFluid(), 3, [&]( auto &, auto NC )
   {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 3 );
+    isExecuted = true;
   } );
+  EXPECT_TRUE( isExecuted );
 }
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testInvalidComponents )
@@ -82,11 +88,14 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testThermal )
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testValidComponents )
 {
-  constitutiveComponentUpdatePassThru( getFluid(), 2, []( auto &, auto NC )
+  bool isExecuted = false;
+  constitutiveComponentUpdatePassThru( getFluid(), 2, [&]( auto &, auto NC )
   {
     integer constexpr numComps = NC();
     EXPECT_EQ( numComps, 2 );
+    isExecuted = true;
   } );
+  EXPECT_TRUE( isExecuted );
 }
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testInvalidComponents )
@@ -104,23 +113,26 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testInvalidComponent
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testThermal )
 {
-  bool isTested = false;
+  bool isExecuted = false;
   constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto )
   {
-    isTested = true;
+    isExecuted = true;
   } );
-  EXPECT_TRUE( isTested );
+  EXPECT_TRUE( isExecuted );
 }
 
 TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testValidComponents )
 {
   for( integer nc = 2; nc <= 5; nc++ )
   {
+    bool isExecuted = false;
     constitutiveComponentUpdatePassThru( getFluid(), nc, [&]( auto &, auto NC )
     {
       integer constexpr numComps = NC();
       EXPECT_EQ( numComps, nc );
+      isExecuted = true;
     } );
+    EXPECT_TRUE( isExecuted );
   }
 }
 
