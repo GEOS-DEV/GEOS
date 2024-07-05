@@ -106,17 +106,17 @@ public:
                               localIndex const q ) const
   {
     static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
-    real64 m = 0;
     if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
-      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      // m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      return DamageUpdates< UPDATE_BASE >::template getDegradationValue<DISSIPATION_ORDER>( k , q );
     }
-    else if constexpr ( DISSIPATION_ORDER::value == 1 )
+    else
     {
-      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    }
-    real64 const p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+      real64 const m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+      real64 const p = 1;
+      return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    }   
   }
 
   template< typename DISSIPATION_ORDER = std::integral_constant< int, 1 > >
@@ -125,17 +125,17 @@ public:
   real64 getDegradationDerivative( real64 const d ) const
   {
     static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
-    real64 m;
     if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
-      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      // m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      return DamageUpdates< UPDATE_BASE >::template getDegradationDerivative<DISSIPATION_ORDER>( d );
     }
-    else if constexpr ( DISSIPATION_ORDER::value == 1 )
+    else 
     {
-      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+      real64 const m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+      real64 const p = 1;
+      return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
     }
-    real64 const p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
   template< typename DISSIPATION_ORDER = std::integral_constant< int, 1 > >
@@ -144,17 +144,17 @@ public:
   real64 getDegradationSecondDerivative( real64 const d ) const
   {
     static_assert( DISSIPATION_ORDER::value == 1 || DISSIPATION_ORDER::value == 2, "DISSIPATION_ORDER must be either 1 or 2" );
-    real64 m = 0;
     if constexpr ( DISSIPATION_ORDER::value == 2 )
     {
-      m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      // m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+      return DamageUpdates< UPDATE_BASE >::template getDegradationSecondDerivative<DISSIPATION_ORDER>( d );
     }
-    else if constexpr ( DISSIPATION_ORDER::value == 1 )
+    else
     {
-      m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+      real64 const m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+      real64 const p = 1;
+      return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
     }
-    real64 const p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
 
 
