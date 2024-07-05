@@ -257,7 +257,7 @@ void EventManager::outputTime( Section & section ) const
   section.addDescription( "Time", timeInfosUnfolded, timeCompletionSeconds );
   section.addDescription( "Delta Time", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   section.addDescription( "Cycle", m_cycle, cycleLimited );
-  section.setMinWidth(70);
+  section.setMinWidth( 70 );
 
   // GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
   // GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",

@@ -39,7 +39,7 @@ public:
   /**
    * @brief Add a description to the section and composed by a description name and variadic values.
    * Use to align variadic values of the same description
-   * @param descriptionName The description name 
+   * @param descriptionName The description name
    * @param args Values to be aligned.
    */
   template< typename ... Args >
@@ -79,7 +79,7 @@ private:
   void computeMaxRowSize( string_view m_sectionTitle,
                           std::vector< string > const & descriptions );
   /**
-   * @brief Build a description from the name and variadic values descriptions 
+   * @brief Build a description from the name and variadic values descriptions
    */
   void buildAlignDescription();
 
