@@ -172,9 +172,9 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setDescription( "Minimum value for solution scaling factor" );
 }
 
-void CompositionalMultiphaseBase::postProcessInput()
+void CompositionalMultiphaseBase::postInputInitialization()
 {
-  FlowSolverBase::postProcessInput();
+  FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
@@ -583,18 +583,15 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       compareMultiphaseModels( fluid, referenceFluid );
       compareMulticomponentModels( fluid, referenceFluid );
 
-      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-      {
-        bool const isFluidModelThermal = castedFluid.isThermal();
-        GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-        GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-      } );
+      bool const isFluidModelThermal = fluid.isThermal();
+      GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
+      GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );

@@ -46,9 +46,9 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
                               SourceFluxBoundaryCondition::catalogName() ) );
 }
 
-void SourceFluxStatsAggregator::postProcessInput()
+void SourceFluxStatsAggregator::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   if( m_fluxNames.size() == 1 && m_fluxNames[0] == "*" )

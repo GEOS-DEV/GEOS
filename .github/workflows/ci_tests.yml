@@ -62,7 +62,7 @@ jobs:
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.1.4
+      uses: actions/checkout@v4.1.7
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -98,7 +98,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v4.1.4
+      uses: actions/checkout@v4.1.7
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -233,7 +233,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4.1.1
+      uses: actions/checkout@v4.1.7
       with:
         submodules: false
         lfs: false
@@ -278,8 +278,8 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             RUNS_ON: streak2
-            NPROC: 16
-            DOCKER_RUN_ARGS: "--cpus=16 --memory=256g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
       
@@ -301,10 +301,21 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             RUNS_ON: streak2
-            NPROC: 16
-            DOCKER_RUN_ARGS: "--cpus=16 --memory=256g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
+          
+          # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
+          # - name: Rockylinux (8, clang 17.0.6, cuda 12.5)
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
+          #   RUNS_ON: streak2
+          #   NPROC: 2
+          #   DOCKER_RUN_ARGS: "--cpus=1 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+          #   DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+          #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
@@ -312,7 +323,11 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-            RUNS_ON: Runner_4core_16GB
+            RUNS_ON: streak2
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
 
           - name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 11.7.1,)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -323,7 +338,11 @@ jobs:
             ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/Sherlock-GPU
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.7.1-sm70.cmake
-            RUNS_ON: Runner_4core_16GB
+            RUNS_ON: streak2
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+            DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
 
     uses: ./.github/workflows/build_and_test.yml
     with:
