@@ -1079,7 +1079,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         {
           fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
           fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
-          createdMass[newElemIndex] =  initialDensity[newElemIndex] * initialAperture * elementArea;
+          createdMass[newElemIndex] =  initialDensity * initialAperture * elementArea;
         }
         else if( m_newFractureInitializationType == InitializationType::Displacement )
         {
