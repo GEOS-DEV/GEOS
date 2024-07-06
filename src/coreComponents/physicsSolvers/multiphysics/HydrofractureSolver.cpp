@@ -1020,7 +1020,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 > const fluidDensity_n = ubRegion.getField< fields::flow::density_n >();
+      arrayView1d< real64 > const fluidDensity_n = subRegion.getField< fields::flow::density_n >();
       arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
 
       arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
