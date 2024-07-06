@@ -238,14 +238,14 @@ jobs:
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: Runner_4core_16GB
 
-  mac_builds:
-    needs:
-      - is_not_draft_pull_request
-    runs-on: macos-14-xlarge
-    steps:
-      - run: sysctl -n hw.physicalcpu
-      - run: sysctl -h hw.memsize
-      - run: sysctl -n machdep.cpu.brand_string
+  # mac_builds:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #   runs-on: macos-14-xlarge
+  #   steps:
+  #     - run: sysctl -n hw.physicalcpu
+  #     - run: sysctl -h hw.memsize
+  #     - run: sysctl -n machdep.cpu.brand_string
 
 
   # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
