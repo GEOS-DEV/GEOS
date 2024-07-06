@@ -94,11 +94,19 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< fields::flow::mass >( getName() );
       subRegion.registerField< fields::flow::mass_n >( getName() );
+      
 
       if( m_isThermal )
       {
         subRegion.registerField< dMobility_dTemperature >( getName() );
       }
+    } );
+
+    elemManager.forElementSubRegions< FaceElmentSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElmentSubRegion & subRegion )
+    {
+      subRegion.registerField< fields::flow::massCreated >( getName() );
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -467,9 +475,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
         subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
           setApplyDefaultValue( region.getDefaultAperture() );
-
-        subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
-          setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
       } );
     } );
 
@@ -790,7 +795,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     {
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
+      arrayView1d< real64 > const creationMass = subRegion.getField< fields::flow::massCreated >();
 
       SingleFluidBase const & fluid =
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );

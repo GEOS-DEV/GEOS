@@ -101,8 +101,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
 
-  arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
-
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
   arrayView1d< real64 const > const elemArea = subRegion.getElementArea().toViewConst();
@@ -206,8 +204,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   }
 
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
-
-  creationMass[kfe] *= elemArea[kfe];
 
   // update the sets
   for( auto const & setIter : faceManager->sets().wrappers() )

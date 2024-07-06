@@ -1020,8 +1020,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 > const fluidDensity_n = ubRegion.getField< fields::flow::density_n >();
+      arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
 
       arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
+      arrayView1d< real64 > const elementArea = subRegion.getElementArea();
 
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
@@ -1038,6 +1041,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         localIndex const newElemIndex = newFractureElements[k];
         real64 initialPressure = 1.0e99;
         real64 initialAperture = 1.0e99;
+        real64 initialDensity = 1.0e99;
   #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
         apertureF[newElemIndex] = aperture[newElemIndex];
   #endif
@@ -1067,6 +1071,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
             {
               initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
               initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
+              initialDensity  = std::min( initialDensity, fluidDensity_n[fractureElementIndex] );
             }
           }
         }
@@ -1074,6 +1079,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         {
           fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
           fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
+          createdMass[newElemIndex] =  fluidPressure[newElemIndex] * initialAperture * elementArea;
         }
         else if( m_newFractureInitializationType == InitializationType::Displacement )
         {

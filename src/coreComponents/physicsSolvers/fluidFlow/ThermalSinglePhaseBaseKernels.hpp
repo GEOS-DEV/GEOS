@@ -331,7 +331,7 @@ public:
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
-    m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
+    m_creationMass( subRegion.getField< fields::flow::massCreated >() )
   {}
 
   /**
