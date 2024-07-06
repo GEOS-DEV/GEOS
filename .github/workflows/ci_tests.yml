@@ -245,6 +245,7 @@ jobs:
     steps:
       - run: sysctl -n hw.physicalcpu
       - run: sysctl -h hw.memsize
+      - run: sysctl -n machdep.cpu.brand_string
 
 
   # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
