@@ -243,7 +243,7 @@ jobs:
       - is_not_draft_pull_request
     runs-on: macos-14-xlarge
     steps:
-      - run: nproc
+      - run: sysctl -n hw.physicalcpu
       - run: sysctl -h hw.memsize
 
 
