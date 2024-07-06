@@ -70,12 +70,12 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testInvalidComponents )
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 4, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 }
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testThermal )
@@ -103,12 +103,12 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testInvalidComponent
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 }
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testThermal )
@@ -141,12 +141,12 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testInvali
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 1, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 
   EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 6, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } ), SimulationError );
+  } ), InputError );
 }
 
 TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testThermal )

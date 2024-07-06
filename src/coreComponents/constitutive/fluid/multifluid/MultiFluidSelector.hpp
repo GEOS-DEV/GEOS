@@ -137,7 +137,9 @@ template< typename COMPONENT_LIST >
 struct ComponentSelector< false, COMPONENT_LIST >
 {
   template< typename FluidType, typename LAMBDA >
-  static void execute( int GEOS_UNUSED_PARAM( numComps ), FluidType & GEOS_UNUSED_PARAM( fluid ), LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
+  static void execute( int GEOS_UNUSED_PARAM( numComps ),
+                       FluidType & GEOS_UNUSED_PARAM( fluid ),
+                       LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {}
 };
 
@@ -154,14 +156,15 @@ struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
+
     bool const supported = ( ((numComps == Is) && (lambda( fluid, std::integral_constant< integer, Is >() ), true)) || ...);
+
 #if (defined(__GNUC__) && (__GNUC__ < 10))
 #pragma GCC diagnostic pop
 #endif
-    if( !supported )
-    {
-      GEOS_THROW( "Unsupported number of components: " << numComps << " for fluid " << FluidType::catalogName(), SimulationError );
-    }
+    GEOS_THROW_IF( !supported,
+                   "Unsupported number of components: " << numComps << " for fluid " << FluidType::catalogName(),
+                   InputError );
   }
 };
 
