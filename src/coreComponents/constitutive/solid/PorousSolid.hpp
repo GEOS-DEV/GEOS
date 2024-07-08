@@ -27,6 +27,8 @@
 #include "dataRepository/ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
+#include "functions/TableFunction.hpp"
+#include "functions/FunctionManager.hpp"
 
 namespace geos
 {
@@ -165,7 +167,6 @@ public:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    //real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
     real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
@@ -301,12 +302,30 @@ private:
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
-    real64 const dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+    string const drainedLinearTECTableName = m_solidUpdate.getDrainedLinearTECTableName();
+    real64 dThermalExpansionCoefficient_dTemperature;
+    real64 thermalExpansionCoefficient;
 
-    real64 const thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
+    if( drainedLinearTECTableName.empty() )
+    {
+      real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+      real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
 
+      dThermalExpansionCoefficient_dTemperature = m_solidUpdate.getDThermalExpansionCoefficient_dTemperature();
+      thermalExpansionCoefficient  = defaultThermalExpansionCoefficient + dThermalExpansionCoefficient_dTemperature * (temperature - referenceTemperature);
+    }
+    else
+    {
+      FunctionManager & functionManager = FunctionManager::getInstance();
+      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( drainedLinearTECTableName );
+      drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();
+
+      real64 const tmpTemperatureArray[1] = {temperature}; 
+      real64 dTEC_dT[1] = {0};
+      thermalExpansionCoefficient = TECWrapper.compute(tmpTemperatureArray, dTEC_dT);
+      dThermalExpansionCoefficient_dTemperature = dTEC_dT[0];
+    }
 
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;

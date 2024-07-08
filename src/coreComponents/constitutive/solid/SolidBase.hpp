@@ -161,6 +161,16 @@ public:
   }
 
   /**
+   * @brief Get Thermal Expansion Coefficient table name
+   * @return the Thermal Expansion Coefficient table name
+   */
+  GEOS_HOST_DEVICE
+  string getDrainedLinearTECTableName() const
+  {
+    return m_drainedLinearTECTableName;
+  }
+
+  /**
    * @brief Get shear modulus
    * @param[in] k Element index.
    * @return the shear modulus of element k
