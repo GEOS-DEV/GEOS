@@ -260,6 +260,10 @@ public:
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void outputWellDebug( DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) override;
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object

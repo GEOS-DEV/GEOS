@@ -127,7 +127,6 @@ public:
   integer getNumDiscardedLinearIterations() const
   { return m_numDiscardedLinearIterations; }
 
-private:
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -139,6 +138,14 @@ private:
     static constexpr char const * numTimeStepsString() { return "numTimeSteps"; }
     /// String key for the number of time step cuts
     static constexpr char const * numTimeStepCutsString() { return "numTimeStepCuts"; }
+
+
+    /// String key for the current number of outer loop iterations
+    static constexpr char const * numCurrentOuterLoopIterationsString() { return "numCurrentOuterLoopIterations"; }
+    /// String key for the current number of nonlinear iterations
+    static constexpr char const * numCurrentNonlinearIterationsString() { return "numCurrentNonlinearIterations"; }
+    /// String key for the current number of linear iterations
+    static constexpr char const * numCurrentLinearIterationsString() { return "numCurrentLinearIterations"; }
 
     /// String key for the successful number of outer loop iterations
     static constexpr char const * numSuccessfulOuterLoopIterationsString() { return "numSuccessfulOuterLoopIterations"; }
@@ -155,6 +162,7 @@ private:
     static constexpr char const * numDiscardedLinearIterationsString() { return "numDiscardedLinearIterations"; }
   };
 
+private:
   /// Number of time steps
   integer m_numTimeSteps;
 

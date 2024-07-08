@@ -39,8 +39,15 @@ WellSolverBase::WellSolverBase( string const & name,
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
-  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) )
+  m_isThermal( 0 ),
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" )),
+  m_writeSegDebug( 1 )
 {
+  registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether the problem is thermal or not." );
+
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
@@ -214,6 +221,8 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then apply a special treatment to the wells that are shut
   shutDownWell( time, dt, domain, dofManager, localMatrix, localRhs );
+
+ outputWellDebug( domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )

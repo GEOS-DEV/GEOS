@@ -238,7 +238,10 @@ public:
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs ) override;
 
-
+  virtual void outputWellDebug( DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )override;
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }

@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 
 namespace geos
 {
@@ -96,6 +97,12 @@ public:
    * @return the number of dofs
    */
   localIndex numDofPerResElement() const { return m_numDofPerResElement; }
+
+  /**
+   * @brief getter for iso/thermal switch
+   * @return True if thermal
+   */
+  integer isThermal() const { return m_isThermal; }
 
   /**
    * @brief get the name of DOF defined on well elements
@@ -252,6 +259,10 @@ public:
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs ) = 0;
 
+  virtual void outputWellDebug( DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) = 0;
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
@@ -273,6 +284,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
@@ -324,10 +336,16 @@ protected:
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
 
+  /// flag indicating whether thermal formulation is used
+  integer m_isThermal;
+
   integer m_writeCSV;
   string const m_ratesOutputDir;
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
 
-};
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
+  };
 
 }
 

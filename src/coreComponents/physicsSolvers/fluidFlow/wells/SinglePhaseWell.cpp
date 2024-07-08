@@ -667,6 +667,16 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
   } );
 }
 
+void SinglePhaseWell::outputWellDebug( DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( dofManager );
+  GEOS_UNUSED_VAR( localMatrix );
+  GEOS_UNUSED_VAR( localRhs );
+}
 
 void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 {
