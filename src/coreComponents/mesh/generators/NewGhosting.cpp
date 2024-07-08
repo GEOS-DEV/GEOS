@@ -36,6 +36,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "VTKUtilities.hpp" // this may be a bad include..., used for converter of vtk to element type
+
 using json = nlohmann::json;
 
 #include <algorithm>
@@ -43,6 +45,27 @@ using json = nlohmann::json;
 
 namespace geos::ghosting
 {
+
+  /**
+ * THIS IS DUPLICATED, SHOULD USE VTK UTILITIES, BUT ENDED UP WITH LINKER ERROR (MULTIPLY DEFINED)
+ * but also dont know what we want to do for non-vtk mesh
+ */
+ElementType convertVtkToGeosxElementTypeGhosting( vtkCell *cell )
+{
+  switch( cell->GetCellType() )
+  {
+    case VTK_WEDGE:            return ElementType::Wedge;
+    case VTK_VOXEL:            return ElementType::Hexahedron;
+    case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
+    default:
+    {
+      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type in ghosting.\n" <<
+                  generalMeshErrorAdvice );
+      return {};
+    }
+  }
+}
+
 
 struct MaxGlbIdcs
 {
@@ -176,7 +199,7 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
                                                    MpiRank curRank )
 {
   // MeshGraph (defined in BuildPods.hpp) is just a struct of maps which map: 
-  // cell global index to vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
+  // cell global index to tuple of element type, and vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
   // face global index to vector of entries of type (edge global index plus orientation) for each of the adjacent edges
   // edge global index to tuple of node global indices
   // node global index to 3d array of position
@@ -275,6 +298,7 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
   vtkIdTypeArray const * globalCellIds = vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() );  // TODO do the mapping beforehand
   for( vtkIdType c = 0; c < mesh->GetNumberOfCells(); ++c )
   {
+    std::vector< FaceInfo > faces;
     vtkCell * cell = mesh->GetCell( c );
     CellGlbIdx const gci{ globalCellIds->GetValue( c ) };
     // TODO copy paste?
@@ -301,7 +325,7 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
       // add the face data to the vector for this cell in owned graph.
       // note there will never be any 'present' cells, as the earlier exchange only communicates the 2D boundary btwn ranks
       // note we are using the n2f built above to go from the vector of nodes (properly ordered) to the face global ID
-      owned.c2f[gci].emplace_back( FaceInfo{ n2f.at( reorderedFaceNodes ), isFlipped, start } );
+      owned.c2f[gci] = {convertVtkToGeosxElementTypeGhosting(cell), faces}; // from vtkUtilities, had to duplicate
     }
   }
 
@@ -694,8 +718,11 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     ind.back() = ownedGlbIdcs.back();
     val.back() = intConv< TriScalarInt >( numEdges );
   }
-  for( auto const & [cgi, faces]: owned.c2f )
+  for( auto const & [cgi, typeAndFaces]: owned.c2f )
   {
+    geos::ElementType const & cellType = std::get<0>(typeAndFaces);
+    std::vector<FaceInfo> const & faces = std::get<1>(typeAndFaces);
+
     // The same comment as for faces and edges applies for cells and faces (see above).
     // The main differences being that
     // - the `FaceInfo` as a little more information, 
@@ -726,7 +753,7 @@ Adjacency buildAdjacency( MeshGraph const & owned,
     }
     // add diagonal data
     ind.back() = ownedGlbIdcs.back();
-    val.back() = intConv< TriScalarInt >( numFaces );  // TODO This should be Hex and the not the number of faces...
+    val.back() = intConv< TriScalarInt >( static_cast<int>(cellType) );  // TODO This should be Hex and the not the number of faces...
   }
 
   GEOS_ASSERT_EQ( numOwned, std::size( ownedGlbIdcs ) );
@@ -1252,7 +1279,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     // Get the diagonal value
     std::size_t const numGeomQuantitiesIdx = intConv< std::size_t >( std::distance( std::cbegin( extractedIndices ), cit ) );
     TriScalarInt const & numGeomQuantities = extractedValues[numGeomQuantitiesIdx];
-    GEOS_ASSERT_EQ( extracted, intConv< std::size_t >( numGeomQuantities + 1 ) ); // extracted is the output from Tilinos telling you how many entries were pulled out when we copy row
+    //GEOS_ASSERT_EQ( extracted, intConv< std::size_t >( numGeomQuantities + 1 ) ); // extracted is the output from Tilinos telling you how many entries were pulled out when we copy row, no longer true for cells
 
     switch( geometricalType )
     {
@@ -1322,7 +1349,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
       case Geom::CELL:
       {
-        TriScalarInt const & numFaces = numGeomQuantities;  // Alias // TODO This should receive the cell type instead.
+        geos::ElementType const cellType = static_cast<geos::ElementType>(numGeomQuantities);
+        int const & numFaces = getNumFaces3D(cellType);
         std::map< integer, FaceInfo > order;
 
         // loop over the entries extracted from the row of the matrix
@@ -1345,7 +1373,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 
         // use cell global index and `order` to populate ghosts
         CellGlbIdx const cgi = convert.toCellGlbIdx( index );
-        std::vector< FaceInfo > & tmp = ghosts.c2f[cgi];
+        std::get<0>(ghosts.c2f[cgi]) = cellType;
+        std::vector< FaceInfo > & tmp = std::get<1>(ghosts.c2f[cgi]);
         tmp.resize( numFaces );
         for( auto const & [ord, faceInfo]: order )
         {
@@ -1410,7 +1439,7 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
 
   // Now we build to data to describe the mesh data on the current rank. 
   // owned and present are struct of maps which map: 
-  // cell global index to vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
+  // cell global index to tuple of cell type and vector of entries of type (face global index, extra stuff defining orientation of face) for each of the adjacent faces
   // face global index to vector of entries of type (edge global index plus orientation) for each of the adjacent edges
   // edge global index to tuple of node global indices
   // node global index to 3d array of position

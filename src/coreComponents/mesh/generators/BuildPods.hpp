@@ -63,7 +63,7 @@ struct EdgeInfo
 
 struct MeshGraph
 {
-  std::map< CellGlbIdx, std::vector< FaceInfo > > c2f;
+  std::map< CellGlbIdx, std::tuple< geos::ElementType, std::vector< FaceInfo > > > c2f; // adding in element type
   std::map< FaceGlbIdx, std::vector< EdgeInfo > > f2e;
   std::map< EdgeGlbIdx, std::tuple< NodeGlbIdx, NodeGlbIdx > > e2n; // TODO use Edge here?
   std::map< NodeGlbIdx, std::array< double, 3 > > n2pos;

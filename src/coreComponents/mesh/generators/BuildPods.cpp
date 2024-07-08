@@ -325,8 +325,11 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
 
   // Building the `c2n` (cell to nodes), `c2e` (cell to edges) and `c2f` (cell to faces) mappings
   // loop thorugh meshgraph cells2face
-  for( auto const & [cgi, faceInfos]: graph.c2f )
+  for( auto const & [cgi, typeAndFaces]: graph.c2f )
   {
+    geos::ElementType const & cellType = std::get<0>(typeAndFaces);
+    std::vector<FaceInfo> const & faceInfos = std::get<1>(typeAndFaces);
+
     // convert to cell local index
     CellLocIdx const & cli = g2l.cells.at( cgi );
 
@@ -354,21 +357,45 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
     edges.assign( std::cbegin( tmpEdges ), std::cend( tmpEdges ) );
 
     // c2n
-    // Note how we are hard-coded for hexs
-    FaceInfo const & bottomFace = faceInfos.at( 4 ); // (0, 3, 2, 1) // TODO depends on element type.
-    FaceInfo const & topFace = faceInfos.at( 5 ); // (4, 5, 6, 7)
+    // Here we need to implement all cell types
+    if (cellType == geos::ElementType::Hexahedron)
+    {
+      FaceInfo const & bottomFace = faceInfos.at( 4 ); // (0, 3, 2, 1) // TODO depends on element type.
+      FaceInfo const & topFace = faceInfos.at( 5 ); // (4, 5, 6, 7)
 
-    std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( g2l.faces.at( bottomFace.index ) );
-    std::vector< NodeLocIdx > const & topNodes = res.f2n.at( g2l.faces.at( topFace.index ) );
+      std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( g2l.faces.at( bottomFace.index ) );
+      std::vector< NodeLocIdx > const & topNodes = res.f2n.at( g2l.faces.at( topFace.index ) );
 
-    // reserFaceNodes resets the order using the flipped and start info
-    std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
-    std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
+      // reserFaceNodes resets the order using the flipped and start info
+      std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
+      std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
 
-    // TODO carefully check the ordering...
-    // looks like this is geos order
-    std::array< NodeLocIdx, 8 > const tmp{ bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
-    res.c2n[cli] = { tmp[0], tmp[1], tmp[3], tmp[2], tmp[4], tmp[5], tmp[7], tmp[6] };
+      // TODO carefully check the ordering...
+      // looks like this is geos order
+      std::array< NodeLocIdx, 8 > const tmp{ bn[0], bn[3], bn[2], bn[1], tn[0], tn[1], tn[2], tn[3] };
+      res.c2n[cli] = { tmp[0], tmp[1], tmp[3], tmp[2], tmp[4], tmp[5], tmp[7], tmp[6] };
+    }
+    else if (cellType == geos::ElementType::Wedge)
+    {
+      FaceInfo const & bottomFace = faceInfos.at( 0 ); // (0, 1, 2) // TODO depends on element type.
+      FaceInfo const & topFace = faceInfos.at( 1 ); // (3, 5, 4)
+
+      std::vector< NodeLocIdx > const & bottomNodes = res.f2n.at( g2l.faces.at( bottomFace.index ) );
+      std::vector< NodeLocIdx > const & topNodes = res.f2n.at( g2l.faces.at( topFace.index ) );
+
+      // reserFaceNodes resets the order using the flipped and start info
+      std::vector< NodeLocIdx > const bn = resetFaceNodes( bottomNodes, bottomFace.isFlipped, bottomFace.start );
+      std::vector< NodeLocIdx > const tn = resetFaceNodes( topNodes, topFace.isFlipped, topFace.start );
+
+      // TODO carefully check the ordering...
+      // looks like this is geos order
+      std::array< NodeLocIdx, 6 > const tmp{ bn[0], bn[1], bn[2], tn[0], tn[2], tn[1] };
+      res.c2n[cli] = { tmp[0], tmp[1], tmp[3], tmp[2], tmp[4], tmp[5]};
+    }
+    else
+    {
+      GEOS_ERROR("c2n not implemented for this element type!");
+    }
   }
 
   return res;
@@ -531,7 +558,7 @@ void buildPods( MeshGraph const & owned,
   // Now we build the mappings used by GEOS
   // Downward - edges2nodes, faces2edges, faces2nodes, cells2faces, cells2edges, cells2nodes
   // The difference is that these use local indices, thus we built g2l
-  // there are assumptions that we are working on hexs here
+  // there are assumptions on what element types can be used here (to define c2n)
   DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
   // invert to downward mappings to get e2f, f2c, n2e, n2f, n2c
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );

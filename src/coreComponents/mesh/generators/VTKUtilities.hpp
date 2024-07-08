@@ -27,6 +27,9 @@
 #include <vtkMultiProcessController.h>
 #include <vtkSmartPointer.h>
 
+#include <vtkPolyData.h> // I just needed this to get vtkCell definition
+
+
 #include <numeric>
 #include <unordered_set>
 
