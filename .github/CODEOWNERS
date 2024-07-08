@@ -11,34 +11,34 @@
 
 /inputFiles/ @CusiniM @cssherman @jhuang2601
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin @corbett5 @CusiniM 
-/src/coreComponents/codingUtilities                   @rrsettgast @untereiner
-/src/coreComponents/common                            @rrsettgast @MelReyCG
+/src/coreComponents/codingUtilities                   @rrsettgast @untereiner @corbett5
+/src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5
 /src/coreComponents/constitutive                      @rrsettgast @CusiniM @dkachuma 
-/src/coreComponents/dataRepository                    @rrsettgast @wrtobin
+/src/coreComponents/dataRepository                    @rrsettgast @wrtobin @corbett5
 /src/coreComponents/denseLinearAlgebra                @rrsettgast @CusiniM @castelletto1 
-/src/coreComponents/discretizationMethods             @rrsettgast
-/src/coreComponents/events                            @rrsettgast @cssherman 
-/src/coreComponents/fieldSpecification                @rrsettgast
+/src/coreComponents/discretizationMethods             @rrsettgast @CusiniM @castelletto1 
+/src/coreComponents/events                            @rrsettgast @corbett5 @cssherman 
+/src/coreComponents/fieldSpecification                @rrsettgast @CusiniM @corbett5
 /src/coreComponents/fileIO                            @rrsettgast @wrtobin @MelReyCG @untereiner
 /src/coreComponents/finiteElement                     @rrsettgast @castelletto1
 /src/coreComponents/finiteVolume                      @rrsettgast @castelletto1
 /src/coreComponents/functions                         @cssherman  @wrtobin
 /src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm 
-/src/coreComponents/mainInterface                     @rrsettgast
+/src/coreComponents/mainInterface                     @rrsettgast @corbett5
 /src/coreComponents/math                              @rrsettgast @corbett5
 /src/coreComponents/mesh                              @rrsettgast @wrtobin @untereiner @CusiniM 
 /src/coreComponents/physicsSolvers                    @rrsettgast
-/src/coreComponents/physicsSolvers/contact            @CusiniM
-/src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin 
-/src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM
+/src/coreComponents/physicsSolvers/contact            @CusiniM @rrsettgast
+/src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin @klevzoff @francoishamon
+/src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM @rrsettgast
 /src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 
-/src/coreComponents/physicsSolvers/python             @cssherman
-/src/coreComponents/physicsSolvers/simplePDE          @castelletto1
+/src/coreComponents/physicsSolvers/python             @cssherman @corbett5
+/src/coreComponents/physicsSolvers/simplePDE          @castelletto1 @rrsettgast
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
-/src/coreComponents/physicsSolvers/wavePropagation    @sframba 
+/src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
 !/src/coreComponents/schema
-/src/coreComponents/unitTests                         @rrsettgast
+/src/coreComponents/unitTests                         @rrsettgast @corbett5 @wrtobin
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name
