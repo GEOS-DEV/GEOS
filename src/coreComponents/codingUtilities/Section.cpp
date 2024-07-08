@@ -80,12 +80,6 @@ void Section::formatAndInsertDescriptions( std::string const & descriptionName,
   }
 }
 
-void Section::clear()
-{
-  m_descriptions.clear();
-  m_sectionTitle.clear();
-}
-
 void Section::begin( std::ostream & oss )
 {
   computeMaxRowSize( m_sectionTitle, m_descriptions );
@@ -122,7 +116,7 @@ void Section::begin( std::ostream & oss )
   }
 }
 
-void Section::end( std::ostream & oss )
+void Section::end( std::ostream & oss ) const
 {
   std::string footerTitle = "End : " + m_sectionTitle;
 
@@ -133,7 +127,5 @@ void Section::end( std::ostream & oss )
   oss << GEOS_FMT( "##{:^{}}##\n", footerTitle, titleLength );
   oss << lineSection;
   oss << '\n';
-
-  clear();
 }
 }

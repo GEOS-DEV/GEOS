@@ -67,7 +67,7 @@ public:
    * @brief Draw the last part of the section. It include the title
    * @param oss An output stream (by default, std::cout)
    */
-  void end( std::ostream & oss = std::cout );
+  void end( std::ostream & oss = std::cout ) const;
 
 private:
 
@@ -87,11 +87,6 @@ private:
    */
   void formatAndInsertDescriptions( std::string const & descriptionName,
                                     std::vector< string > const & decriptionsValues );
-
-  /**
-   * @brief Cleans all buffers used in the construction of a section
-   */
-  void clear();
 
   /// Vector containing all descriptions
   std::vector< string > m_descriptions;
