@@ -12,8 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "../../dataRepository/Group.hpp"
-// TPL includes
+#include "common/DataTypes.hpp"
 #include "codingUtilities/Section.hpp"
 #include <gtest/gtest.h>
 
@@ -26,17 +25,17 @@ TEST( testSection, sectionWithTitle )
   section.setName( "section name" );
   section.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n##############################\n"
-             "##  Section : section name  ##\n"
-             "##############################\n\n"
+             "\n##########################\n"
+             "##     section name     ##\n"
+             "##########################\n\n"
              );
   oss.clear();
   oss.str( "" );
 
   section.end( oss );
   EXPECT_EQ( oss.str(),
-             "\n##    End : section name    ##\n"
-             "##############################\n\n"
+             "\n##  End : section name  ##\n"
+             "##########################\n\n"
              );
   oss.clear();
 }
@@ -49,10 +48,10 @@ TEST( testSection, sectionWithTitleAndOneDescription )
   section.addDescription( "description name" );
   section.begin( oss );
   EXPECT_EQ( oss.str(),
-             "\n##############################\n"
-             "##  Section : section name  ##\n"
-             "##############################\n"
-             "##  description name        ##\n\n"
+             "\n##########################\n"
+             "##     section name     ##\n"
+             "##########################\n"
+             "##  description name    ##\n\n"
              );
   oss.clear();
 }
@@ -68,7 +67,7 @@ TEST( testSection, sectionWithSetWidth )
   section.begin( oss );
   EXPECT_EQ( oss.str(),
              "\n####################################################################################################\n"
-             "##                                     Section : section name                                     ##\n"
+             "##                                          section name                                          ##\n"
              "####################################################################################################\n"
              "##  description name 1                                                                            ##\n"
              "##  description name 2                                                                            ##\n\n"
@@ -80,6 +79,36 @@ TEST( testSection, sectionWithSetWidth )
   EXPECT_EQ( oss.str(),
              "\n##                                       End : section name                                       ##\n"
              "####################################################################################################\n\n"
+             );
+  oss.clear();
+}
+
+TEST( testSection, sectionMultipleDescriptions )
+{
+  std::ostringstream oss;
+  Section section;
+  section.setName( "TIMESTEP START" );
+  section.addDescription( "Time", "00h08m20s out of 2d, 21h26m40s (0% completed)", "500 s / 250000 s" );
+  section.addDescription( "Delta Time", "00h16m40s (1000 s)" );
+  section.addDescription( "- Cycle: 1" );
+  section.setMinWidth( 70 );
+  section.begin( oss );
+  EXPECT_EQ ( oss.str(),
+              "\n######################################################################\n"
+              "##                          TIMESTEP START                          ##\n"
+              "######################################################################\n"
+              "##  - Time: 00h08m20s out of 2d, 21h26m40s (0% completed)           ##\n"
+              "##          500 s / 250000 s                                        ##\n"
+              "##  - Delta Time: 00h16m40s (1000 s)                                ##\n"
+              "##  - Cycle: 1                                                      ##\n\n"
+              );
+  oss.clear();
+  oss.str( "" );
+
+  section.end( oss );
+  EXPECT_EQ( oss.str(),
+             "\n##                       End : TIMESTEP START                       ##\n"
+             "######################################################################\n\n"
              );
   oss.clear();
 }

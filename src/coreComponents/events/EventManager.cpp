@@ -259,19 +259,6 @@ void EventManager::outputTime( Section & section ) const
   section.addDescription( "Cycle", m_cycle, cycleLimited );
   section.setMinWidth( 70 );
 
-  // GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
-  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
-  //                            timeInfo.toUnfoldedString(),
-  //                            isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
-  // GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
-  //                            timeInfo.toSecondsString(),
-  //                            isTimeLimited ? timeCompletionSecondsString() : "" ) );
-  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
-  // GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
-  //                            m_cycle,
-  //                            isCycleLimited ? cycleCompletionString() : "" ) );
-  // GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
-
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
   {

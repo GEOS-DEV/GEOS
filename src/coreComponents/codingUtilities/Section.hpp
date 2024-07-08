@@ -37,10 +37,10 @@ public:
   void setName( string_view m_sectionTitle );
 
   /**
-   * @brief Add a description to the section and composed by a description name and variadic values.
-   * Use to align variadic values of the same description
+   * @brief Add a description to the section by concatening a description name and descriptions values.
    * @param descriptionName The description name
-   * @param args Values to be aligned.
+   * @param args Descriptions values to be aligned.
+   * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
   void addDescription( string const & descriptionName, Args const & ... args );
@@ -75,27 +75,26 @@ private:
    * @brief Compute the max string size (m_rowLength) between title and the description(s)
    * @param m_sectionTitle The table title
    * @param descriptions The descriptions vector
+   * @return The max row length of the section
    */
   void computeMaxRowSize( string_view m_sectionTitle,
-                          std::vector< string > const & descriptions );
+                             std::vector< string > const & descriptions );
+
   /**
-   * @brief Build a description from the name and variadic values descriptions
+   * @brief Build a description from the name and description values
+   * @param descriptionName The decription name
+   * @param decriptionsValues The description values
    */
-  void buildAlignDescription();
+  void formatAndInsertDescriptions( std::string const & descriptionName,
+                                    std::vector< string > const & decriptionsValues );
 
   /**
    * @brief Cleans all buffers used in the construction of a section
    */
   void clear();
 
-  /// Vector containing all description
+  /// Vector containing all descriptions
   std::vector< string > m_descriptions;
-  /// Used if the variadic addDescription has been called
-  /// Containing all "key" description name
-  std::vector< string > m_descriptionNames;
-  /// Used if the variadic addDescription has been called
-  /// Containing all description values
-  std::vector< std::vector< string > > m_descriptionsValues;
 
   /// title of section
   string m_sectionTitle;
@@ -106,9 +105,9 @@ private:
 
   /// description border margin
   static constexpr integer m_marginBorder = 2;
-  /// character used as border
+  /// numbers of character used as border
   static constexpr integer m_nbSpecialChar = 2;
-  /// (Temporary ?) special char with key name. I.E =>- "name": => 3char
+  /// (Temporary ?) special char with key name. I.E =>- "description": => 3char ("-", " ",":")
   static constexpr integer m_embeddingName = 4;
 
 };
@@ -116,18 +115,15 @@ private:
 template< typename ... Args >
 void Section::addDescription( string const & descriptionName, Args const &... args )
 {
-  std::vector< string > descriptions;
+  std::vector< string > descriptionsValues;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) >, "Argument passed in addRow cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
-    descriptions.push_back( value );
+    descriptionsValues.push_back( value );
   } (), ...);
 
-  m_descriptionsValues.push_back( descriptions );
-  m_descriptionNames.push_back( descriptionName );
+  formatAndInsertDescriptions( descriptionName, descriptionsValues );
 }
 }
-
-
 
 #endif
