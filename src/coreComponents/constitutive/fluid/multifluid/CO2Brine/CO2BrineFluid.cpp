@@ -243,10 +243,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
   createPVTModels();
 }
 
-/**
- * @brief Create a PVT Model and output them
- * @param isClone If we are in the case of a clone of a constitutive mode, never the output
- */
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 {

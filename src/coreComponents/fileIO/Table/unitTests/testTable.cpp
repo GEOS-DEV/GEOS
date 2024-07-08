@@ -211,8 +211,8 @@ TEST( testTable, table2DTable )
   string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
   string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
   TableData2D::TableDataHolder tableconverted = tableData.buildTableData( "Viscosity kg*s",
-                                                                              rowFmt,
-                                                                              columnFmt );
+                                                                          rowFmt,
+                                                                          columnFmt );
 
   //format
   TableLayout const tableLayout( tableconverted.headerNames );
@@ -249,8 +249,8 @@ TEST( testTable, table2DColumnMismatch )
     string const rowFmt = GEOS_FMT( "{} = {{}}", "Temperature" );
     string const columnFmt = GEOS_FMT( "{} = {{}}", "Pression" );
     TableData2D::TableDataHolder tableConverted = tableData.buildTableData( "Viscosity kg*s",
-                                                                                rowFmt,
-                                                                                columnFmt );
+                                                                            rowFmt,
+                                                                            columnFmt );
 
     //format
     TableLayout const tableLayout( tableConverted.headerNames );

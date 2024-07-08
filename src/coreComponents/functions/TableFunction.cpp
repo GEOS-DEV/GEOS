@@ -287,7 +287,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
                                                  units::getDescription( tableFunction.getDimUnit( 1 ) ) );
 
     TableLayout tableLayout( tableConverted.headerNames );
-    
+
     TableCSVFormatter csvFormat( tableLayout );
     formatterStream << csvFormat.headerToString() << csvFormat.dataToString( tableConverted.tableData );
   }

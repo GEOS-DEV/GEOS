@@ -189,7 +189,7 @@ private:
   /// Index of the gas phase
   integer m_p2Index;
 
-  /// Output csv file containing informations about PVT 
+  /// Output csv file containing informations about PVT
   integer m_writeCSV;
 
   /// Brine constitutive models
