@@ -67,36 +67,36 @@ struct TaperKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      real32 const dxMin = -((3*vMax)/(2*dMin[0]))*log(r)*pow((dMin[0]-nodeCoords[a][0])/dMin[0],2);
-      real32 const dyMin = -((3*vMax)/(2*dMin[1]))*log(r)*pow((dMin[1]-nodeCoords[a][1])/dMin[1],2);
-      real32 const dzMin = -((3*vMax)/(2*dMin[2]))*log(r)*pow((dMin[2]-nodeCoords[a][2])/dMin[2],2);
-      real32 const dxMax = -((3*vMax)/(2*dMax[0]))*log(r)*pow((xMax[0]-nodeCoords[a][0])/dMin[0],2);
-      real32 const dyMax = -((3*vMax)/(2*dMax[1]))*log(r)*pow((xMax[1]-nodeCoords[a][1])/dMin[1],2);
-      real32 const dzMax = -((3*vMax)/(2*dMax[2]))*log(r)*pow((xMax[2]-nodeCoords[a][2])/dMin[2],2);
+      real32 const dxMin = -((3*vMax)/(2*dMin[0]))*log( r )*pow((dMin[0]-nodeCoords[a][0])/dMin[0], 2 );
+      real32 const dyMin = -((3*vMax)/(2*dMin[1]))*log( r )*pow((dMin[1]-nodeCoords[a][1])/dMin[1], 2 );
+      real32 const dzMin = -((3*vMax)/(2*dMin[2]))*log( r )*pow((dMin[2]-nodeCoords[a][2])/dMin[2], 2 );
+      real32 const dxMax = -((3*vMax)/(2*dMax[0]))*log( r )*pow((xMax[0]-nodeCoords[a][0])/dMin[0], 2 );
+      real32 const dyMax = -((3*vMax)/(2*dMax[1]))*log( r )*pow((xMax[1]-nodeCoords[a][1])/dMin[1], 2 );
+      real32 const dzMax = -((3*vMax)/(2*dMax[2]))*log( r )*pow((xMax[2]-nodeCoords[a][2])/dMin[2], 2 );
 
       if( xMin[0]>nodeCoords[a][0] )
       {
-        taperCoeff[a] = LvArray::math::exp(-dxMin*dt);
+        taperCoeff[a] = LvArray::math::exp( -dxMin*dt );
       }
       else if( nodeCoords[a][0] > xMax[0] )
       {
-        taperCoeff[a] = LvArray::math::exp(-dxMax*dt);
+        taperCoeff[a] = LvArray::math::exp( -dxMax*dt );
       }
       else if( xMin[1]>nodeCoords[a][1] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp(-dyMin*dt);
+        taperCoeff[a] = LvArray::math::exp( -dyMin*dt );
       }
       else if( nodeCoords[a][1] > xMax[1] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp(-dyMax*dt);
+        taperCoeff[a] = LvArray::math::exp( -dyMax*dt );
       }
       else if( xMin[2]>nodeCoords[a][2] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp(-dzMin*dt);
+        taperCoeff[a] = LvArray::math::exp( -dzMin*dt );
       }
       else if( nodeCoords[a][2] > xMax[2] && taperCoeff[a] >= 1.0 )
       {
-        taperCoeff[a] = LvArray::math::exp(-dzMax*dt);
+        taperCoeff[a] = LvArray::math::exp( -dzMax*dt );
       }
 
     } );

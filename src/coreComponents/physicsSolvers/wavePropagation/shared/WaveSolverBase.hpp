@@ -246,10 +246,10 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
-   /**
+  /**
    * @brief Method to get the maximum wavespeed on a mesh (usually the P-wavespeed)
    */
-  virtual real32 getGlobalMaxWavespeed(MeshLevel & mesh, arrayView1d< string const > const & regionNames) = 0;
+  virtual real32 getGlobalMaxWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
 
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;

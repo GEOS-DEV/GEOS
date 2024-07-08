@@ -110,23 +110,23 @@ void AcousticVTIWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
-real32 AcousticVTIWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView1d< string const > const & regionNames)
+real32 AcousticVTIWaveEquationSEM::getGlobalMaxWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  
+
   real32 localMaxWavespeed = 0;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                     CellElementSubRegion & elementSubRegion )
+                                                                                        CellElementSubRegion & elementSubRegion )
   {
-     arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-     real32 subRegionMaxWavespeed = *std::max_element(velocity.begin(),velocity.end());
-     if(localMaxWavespeed < subRegionMaxWavespeed)
-     {
-       localMaxWavespeed = subRegionMaxWavespeed;
-     }
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    real32 subRegionMaxWavespeed = *std::max_element( velocity.begin(), velocity.end());
+    if( localMaxWavespeed < subRegionMaxWavespeed )
+    {
+      localMaxWavespeed = subRegionMaxWavespeed;
+    }
   } );
 
-  real32 const globalMaxWavespeed = MpiWrapper::max(localMaxWavespeed);
+  real32 const globalMaxWavespeed = MpiWrapper::max( localMaxWavespeed );
 
   return globalMaxWavespeed;
 

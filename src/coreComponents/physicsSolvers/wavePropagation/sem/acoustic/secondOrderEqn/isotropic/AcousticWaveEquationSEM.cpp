@@ -118,23 +118,23 @@ void AcousticWaveEquationSEM::postInputInitialization()
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
-real32 AcousticWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView1d< string const > const & regionNames)
+real32 AcousticWaveEquationSEM::getGlobalMaxWavespeed( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
-  
+
   real32 localMaxWavespeed = 0;
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                     CellElementSubRegion & elementSubRegion )
+                                                                                        CellElementSubRegion & elementSubRegion )
   {
-     arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-     real32 subRegionMaxWavespeed = *std::max_element(velocity.begin(),velocity.end());
-     if(localMaxWavespeed < subRegionMaxWavespeed)
-     {
-       localMaxWavespeed = subRegionMaxWavespeed;
-     }
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    real32 subRegionMaxWavespeed = *std::max_element( velocity.begin(), velocity.end());
+    if( localMaxWavespeed < subRegionMaxWavespeed )
+    {
+      localMaxWavespeed = subRegionMaxWavespeed;
+    }
   } );
 
-  real32 const globalMaxWavespeed = MpiWrapper::max(localMaxWavespeed);
+  real32 const globalMaxWavespeed = MpiWrapper::max( localMaxWavespeed );
 
   return globalMaxWavespeed;
 
@@ -180,11 +180,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
   }
-  
+
   real32 vMax;
-  if(m_useTaper==1)
+  if( m_useTaper==1 )
   {
-    vMax = getGlobalMaxWavespeed(mesh, regionNames);
+    vMax = getGlobalMaxWavespeed( mesh, regionNames );
   }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -207,8 +207,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
       // MpiWrapper::max()
       //real32 const vMax = *std::max_element(velocity.begin(),velocity.end());
       arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff, taperCoeff );
-    } 
+      TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff,
+                                                     taperCoeff );
+    }
 
     finiteElement::FiniteElementBase const &
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
