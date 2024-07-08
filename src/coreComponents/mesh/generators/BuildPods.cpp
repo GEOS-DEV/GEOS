@@ -324,7 +324,7 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
   }
 
   // Building the `c2n` (cell to nodes), `c2e` (cell to edges) and `c2f` (cell to faces) mappings
-  // loop thorugh meshgraph cells2face
+  // loop through meshgraph cells2face
   for( auto const & [cgi, typeAndFaces]: graph.c2f )
   {
     geos::ElementType const & cellType = std::get<0>(typeAndFaces);
@@ -545,6 +545,8 @@ void buildPods( MeshGraph const & owned,
   // start by merging the 3 mesh graphs for the different types of data on the graph into 1 struct
   MeshGraph const graph = mergeMeshGraph( owned, present, ghosts );
 
+  GEOS_LOG_RANK("Merged the mesh graphs");
+
   // create GlobalToLocal, which maps global IDs to rank local IDs for (nodes, edges, faces, cells)
   // mapKeys is just a utility which extracts keys
   // buildGlobalToLocalMap just takes the global ids and maps them to 1, 2, 3, ...
@@ -562,6 +564,8 @@ void buildPods( MeshGraph const & owned,
   DownwardMappings const downwardMappings = buildDownwardMappings( g2l, graph );
   // invert to downward mappings to get e2f, f2c, n2e, n2f, n2c
   UpwardMappings const upwardMappings = buildUpwardMappings( downwardMappings );
+
+  GEOS_LOG_RANK("Built upward and downward mappings");
 
   // Now we can make our node/edge/face/cell manager
   // NodeMgrImpl inherits from nodeManager (see pods.hpp) (interface with getters and setters)
@@ -598,6 +602,8 @@ void buildPods( MeshGraph const & owned,
                                                                    invertGhostRecv( recv.cells, g2l.cells ) ) ) );
 
   meshMappings.setNeighbors( getNeighbors( recv, send ) );
+
+  GEOS_LOG_RANK("built mesh mappings");
 }
 
 }

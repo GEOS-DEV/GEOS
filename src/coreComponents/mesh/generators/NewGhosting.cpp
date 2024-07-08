@@ -321,12 +321,12 @@ std::tuple< MeshGraph, MeshGraph > buildMeshGraph( vtkSmartPointer< vtkDataSet >
       bool isFlipped;
       std::uint8_t start;
       std::vector< NodeGlbIdx > const reorderedFaceNodes = reorderFaceNodes( faceNodes, isFlipped, start );
-
       // add the face data to the vector for this cell in owned graph.
       // note there will never be any 'present' cells, as the earlier exchange only communicates the 2D boundary btwn ranks
       // note we are using the n2f built above to go from the vector of nodes (properly ordered) to the face global ID
-      owned.c2f[gci] = {convertVtkToGeosxElementTypeGhosting(cell), faces}; // from vtkUtilities, had to duplicate
+      faces.emplace_back(FaceInfo{n2f.at(reorderedFaceNodes), isFlipped, start});
     }
+    owned.c2f[gci] = {convertVtkToGeosxElementTypeGhosting(cell), faces}; // from vtkUtilities, had to duplicate
   }
 
   GEOS_ASSERT( std::empty( present.c2f ) );
@@ -937,7 +937,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
     GEOS_LOG_RANK( "ghostExchange->NumGlobalCols() = " << ghostExchange.getGlobalNumCols() );
     GEOS_LOG_RANK( "ghostExchange->NumGlobalRows() = " << ghostExchange.getGlobalNumRows() );
   }
-  Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostInfo.mat", ghostExchange );
+  // Tpetra::MatrixMarket::Writer< TriCrsMatrix >::writeSparseFile( "/tmp/matrices/ghostInfo.mat", ghostExchange );
 
   // Now, for each of the entities owned by this current rank, we collect all the other ranks to which this entity is sent
 
@@ -1010,6 +1010,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
     }
   } // end loop over owned entities
+
+  GEOS_LOG_RANK("Created Ghost Send");
 
   // Now we can look at the dual problem, namely for this current rank, what data is needed from other ranks
   // Now we also have to pay attention to what non-owned data was already present on the rank
@@ -1098,6 +1100,8 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
       }
     }
   }
+
+  GEOS_LOG_RANK("Created Ghost Receive");
 
  // debug output
 //  if( curRank == 1_mpi or curRank == 2_mpi )
@@ -1410,6 +1414,7 @@ std::tuple< MeshGraph, GhostRecv, GhostSend > performGhosting( MeshGraph const &
 //  }
 
   // Now we are done!!!
+  GEOS_LOG_RANK("Done with ghosting");
   return { ghosts, recv, send };
 }
 
