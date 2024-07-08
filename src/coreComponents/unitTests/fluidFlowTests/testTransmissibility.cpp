@@ -131,36 +131,47 @@ constexpr string_view xmlInputCommon =
 )xml";
 
 /// Provide the ending of the xml input for the transmissibility tests
-constexpr string_view xmlInputEnd =
+static string_view constexpr xmlInputEnd =
   R"xml(
 </Problem>
 )xml";
 
-constexpr string_view stencilDataCollectionPath = "/Tasks/cellToCellDataCollection";
+/// Path of the StencilDataCollection in the hierarchy
+static string_view constexpr stencilDataCollectionPath = "/Tasks/cellToCellDataCollection";
 
 
+/// a "stack" array to represent 3d data (ie. coords)
 using Vector3 = std::array< real64, 3 >;
-using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, real64 >;
 
+/// Enumeration of the 3D axis to take into account for a structured mesh.
 enum class Axis : integer { X = 0, Y = 1, Z = 2 };
 
+/**
+ * @brief a map of the half transmissibilities, from the first to the second cell identified by the
+ * key global id.
+ */
+using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, real64 >;
+
+/**
+ * @brief the parameters for a given test instance.
+ */
 struct TestParams
 {
   std::array< integer, 3 > cellCount;
   Vector3 cellDistance;
 };
 
-constexpr real64 g_transmissibilityTolerance = 1.0e-11;
-constexpr Vector3 g_testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
-constexpr real64 g_testNetToGross = 1.0;
+static real64 constexpr g_transmissibilityTolerance = 1.0e-11;
+static Vector3 constexpr g_testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
+static real64 constexpr g_testNetToGross = 1.0;
 
 
-void testStencilOutputStructured( string_view xmlInput, TestParams const & params );
+void verifyStencilOutputStructured( string_view xmlInput, TestParams const & params );
 
 
 TEST( TransmissibilityTest, stencilOutputVerificationIso )
 {
-  static constexpr string_view meshInput =
+  static string_view constexpr meshInput =
     R"xml(
   <Mesh>
     <InternalMesh name="mesh1"
@@ -200,12 +211,12 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   std::ostringstream xmlInput;
   xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
 
-  TestParams const params = {
+  TestParams const params {
     { 3, 3, 3 }, // cellCount
     { 10.0, 10.0, 10.0 }, // cellDistance
   };
 
-  testStencilOutputStructured( xmlInput.str(), params );
+  verifyStencilOutputStructured( xmlInput.str(), params );
 }
 
 // TEST_F( TransmissibilityTest, StencilOutputVerificationAniso )
@@ -218,9 +229,9 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
 
 
 /**
- * @return The theorical half transmissiblity (from A to B or B to A)
- * @param params
- * @param axis The axis in which we want to compute the transmissibility
+ * @return The theorical half transmissiblity (from A to B or B to A) within a structured mesh.
+ * @param params The test parameters
+ * @param axis The axis in which we want to compute the transmissibility (structured mesh).
  */
 real64 computeTransmissiblityStructured( TestParams const & params, Axis axis )
 {
@@ -234,8 +245,15 @@ real64 computeTransmissiblityStructured( TestParams const & params, Axis axis )
   return g_testNetToGross * transmissibility * 0.5;
 }
 
-void verifyConnectionsByDim( TransmissibilityMap transmissibilities, Axis axis,
-                             TestParams const & params )
+/**
+ * @brief Verify the transmissibility data from the StencilDataCollection for each connection
+ * within a structured mesh.
+ * @param transmissibilities The transmissibility map
+ * @param axis The axis in which we want to verify the transmissibility (structured mesh).
+ * @param params The test parameters
+ */
+void verifyTransmissibilityDataStructured( TransmissibilityMap transmissibilities, Axis axis,
+                                           TestParams const & params )
 {
   integer const cellBIdOffset = axis == Axis::X ? 1:
                                 axis == Axis::Y ? params.cellCount[0]:
@@ -263,6 +281,12 @@ void verifyConnectionsByDim( TransmissibilityMap transmissibilities, Axis axis,
   }
 }
 
+/**
+ * @brief Verify the source data consistency and return a transmissibility map for easy further data access.
+ * @param stencilData A StencilDataCollection object which contains the data gathered for the stencil.
+ * @param params The test parameters
+ * @return a TransmissibilityMap object containing the stencil data.
+ */
 TransmissibilityMap getTransmissibilityMap( StencilDataCollection const & stencilData,
                                             TestParams const & params )
 {
@@ -292,7 +316,14 @@ TransmissibilityMap getTransmissibilityMap( StencilDataCollection const & stenci
 }
 
 
-void testStencilOutputStructured( string_view xmlInput, TestParams const & params )
+/**
+ * @brief Launch a test to verify if:
+ *        - data of the output of the stencil is consistent,
+ *        - output transmissiblity values are conform to computed expectations.
+ * @param xmlInput The XML input to launch the test on.
+ * @param params The test parameters.
+ */
+void verifyStencilOutputStructured( string_view xmlInput, TestParams const & params )
 {
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
@@ -306,9 +337,9 @@ void testStencilOutputStructured( string_view xmlInput, TestParams const & param
     TransmissibilityMap const transmissibilities = getTransmissibilityMap( stencilData, params );
 
     // let's check each couple of cell in the x direction
-    verifyConnectionsByDim( transmissibilities, Axis::X, params );
-    verifyConnectionsByDim( transmissibilities, Axis::Y, params );
-    verifyConnectionsByDim( transmissibilities, Axis::Z, params );
+    verifyTransmissibilityDataStructured( transmissibilities, Axis::X, params );
+    verifyTransmissibilityDataStructured( transmissibilities, Axis::Y, params );
+    verifyTransmissibilityDataStructured( transmissibilities, Axis::Z, params );
   }
 }
 
