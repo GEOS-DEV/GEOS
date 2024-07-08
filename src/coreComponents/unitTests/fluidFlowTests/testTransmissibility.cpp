@@ -26,19 +26,6 @@ using namespace geos::dataRepository;
 using namespace geos::testing;
 
 
-using Vector3 = std::array< real64, 3 >;
-using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, real64 >;
-
-enum class Axis : integer { X = 0, Y = 1, Z = 2 };
-
-struct TestParams
-{
-  std::array< integer, 3 > cellCount;
-  Vector3 cellDistance;
-};
-
-
-
 CommandLineOptions g_commandLineOptions;
 
 
@@ -149,10 +136,23 @@ constexpr string_view xmlInputEnd =
 </Problem>
 )xml";
 
-
 constexpr string_view stencilDataCollectionPath = "/Tasks/cellToCellDataCollection";
-constexpr Vector3 testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
-constexpr real64 testNetToGross = 1.0;
+
+
+using Vector3 = std::array< real64, 3 >;
+using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, real64 >;
+
+enum class Axis : integer { X = 0, Y = 1, Z = 2 };
+
+struct TestParams
+{
+  std::array< integer, 3 > cellCount;
+  Vector3 cellDistance;
+};
+
+constexpr real64 g_transmissibilityTolerance = 1.0e-11;
+constexpr Vector3 g_testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
+constexpr real64 g_testNetToGross = 1.0;
 
 
 void testStencilOutputStructured( string_view xmlInput, TestParams const & params );
@@ -175,9 +175,9 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
       <InternalWell name="well_producer1"
                     wellRegionName="wellRegion1"
                     wellControlsName="wellControls1"
-                    polylineNodeCoords="{ {4.5, 0,  2  },
-                                            {4.5, 0,  0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
+                    polylineNodeCoords="{ { 4.5, 0, 2   },
+                                          { 4.5, 0, 0.5 } }"
+                    polylineSegmentConn="{ { 0, 1 } }"
                     radius="0.1"
                     numElementsPerSegment="1">
           <Perforation name="producer1_perf1"
@@ -186,9 +186,9 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
       <InternalWell name="well_injector1"
                     wellRegionName="wellRegion2"
                     wellControlsName="wellControls2"
-                    polylineNodeCoords="{ {0.5, 0, 2  },
-                                            {0.5, 0, 0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
+                    polylineNodeCoords="{ { 0.5, 0, 2   },
+                                          { 0.5, 0, 0.5 } }"
+                    polylineSegmentConn="{ { 0, 1 } }"
                     radius="0.1"
                     numElementsPerSegment="1">
           <Perforation name="injector1_perf1"
@@ -201,8 +201,8 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
 
   TestParams const params = {
-    { 3, 3, 3 },
-    { 10.0, 10.0, 10.0 },
+    { 3, 3, 3 }, // cellCount
+    { 10.0, 10.0, 10.0 }, // cellDistance
   };
 
   testStencilOutputStructured( xmlInput.str(), params );
@@ -217,23 +217,21 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
 
 
 
+/**
+ * @return The theorical half transmissiblity (from A to B or B to A)
+ * @param params
+ * @param axis The axis in which we want to compute the transmissibility
+ */
 real64 computeTransmissiblityStructured( TestParams const & params, Axis axis )
 {
-  real64 const faceArea = axis == Axis::X ? params.cellCount[1]*params.cellCount[2]:
-                          axis == Axis::Y ? params.cellCount[0]*params.cellCount[2]:
-                          params.cellCount[0]*params.cellCount[1];
+  real64 const faceArea = axis == Axis::X ? params.cellDistance[1]*params.cellDistance[2]:
+                          axis == Axis::Y ? params.cellDistance[0]*params.cellDistance[2]:
+                          params.cellDistance[0]*params.cellDistance[1];
   real64 const halfDistance = 0.5 * params.cellDistance[integer( axis )];
 
-  real64 const Tij = testPermeability[integer( axis )] * testNetToGross * ( faceArea / halfDistance );
-
-  // TODO: unify this constant
-  static real64 constexpr cDarcy = 0.00852671467191601;
-  // TODO: verify / unify this constants
-  static real64 constexpr TMLT = 1.0;
-
-  // simplification of: T = CDARCY * TMLT / ( 1/Ti + 1/Tj )
-  real64 const transmissibility = cDarcy * TMLT * Tij * 0.5;
-  return transmissibility;
+  real64 const transmissibility = g_testPermeability[integer( axis )] * g_testNetToGross * ( faceArea / halfDistance );
+  // return half transmissibility
+  return g_testNetToGross * transmissibility * 0.5;
 }
 
 void verifyConnectionsByDim( TransmissibilityMap transmissibilities, Axis axis,
@@ -256,7 +254,10 @@ void verifyConnectionsByDim( TransmissibilityMap transmissibilities, Axis axis,
         integer const cellAId = x + params.cellCount[0] * (y + z * params.cellCount[1]);
         integer const cellBId = cellAId + cellBIdOffset;
         real64 const transmissibilityOutput = transmissibilities[std::make_pair( cellAId, cellBId )];
-        EXPECT_EQ( transmissibilityOutput, expectedAxisTransmissibility );
+        real64 const transmissibilityTolerance = g_transmissibilityTolerance * std::abs( transmissibilityOutput );
+        EXPECT_NEAR( transmissibilityOutput, expectedAxisTransmissibility,
+                     transmissibilityTolerance )<< GEOS_FMT( "Transmissibility data from {} does not match with expectation.",
+                                                             StencilDataCollection::catalogName() );
       }
     }
   }
