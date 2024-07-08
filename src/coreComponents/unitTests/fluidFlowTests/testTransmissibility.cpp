@@ -140,8 +140,10 @@ static string_view constexpr xmlInputEnd =
 static string_view constexpr stencilDataCollectionPath = "/Tasks/cellToCellDataCollection";
 
 
-/// a "stack" array to represent 3d data (ie. coords)
-using Vector3 = std::array< real64, 3 >;
+/// a "stack" array to represent 3d floating point data (ie. coords)
+using Float3 = std::array< real64, 3 >;
+/// a "stack" array to represent 3d integer data (ie. cell count / axis)
+using Int3 = std::array< integer, 3 >;
 
 /// Enumeration of the 3D axis to take into account for a structured mesh.
 enum class Axis : integer { X = 0, Y = 1, Z = 2 };
@@ -157,12 +159,21 @@ using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, rea
  */
 struct TestParams
 {
-  std::array< integer, 3 > cellCount;
-  Vector3 cellDistance;
+  Int3 m_cellCount;
+  Float3 m_meshSize;
+  Float3 m_cellDistance;
+
+  constexpr TestParams( Int3 cellCount, Float3 meshSize ):
+    m_cellCount( cellCount ),
+    m_meshSize( meshSize ),
+    m_cellDistance( { meshSize[0] / real64( cellCount[0] ),
+                      meshSize[1] / real64( cellCount[1] ),
+                      meshSize[2] / real64( cellCount[2] ) } )
+  {}
 };
 
 static real64 constexpr g_transmissibilityTolerance = 1.0e-11;
-static Vector3 constexpr g_testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
+static Float3 constexpr g_testPermeability = { 2.0e-16, 2.0e-16, 2.0e-16 };
 static real64 constexpr g_testNetToGross = 1.0;
 
 
@@ -211,9 +222,9 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   std::ostringstream xmlInput;
   xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
 
-  TestParams const params {
+  static TestParams constexpr params {
     { 3, 3, 3 }, // cellCount
-    { 10.0, 10.0, 10.0 }, // cellDistance
+    { 30.0, 30.0, 30.0 }, // meshSize
   };
 
   verifyStencilOutputStructured( xmlInput.str(), params );
@@ -235,13 +246,18 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
  */
 real64 computeTransmissiblityStructured( TestParams const & params, Axis axis )
 {
-  real64 const faceArea = axis == Axis::X ? params.cellDistance[1]*params.cellDistance[2]:
-                          axis == Axis::Y ? params.cellDistance[0]*params.cellDistance[2]:
-                          params.cellDistance[0]*params.cellDistance[1];
-  real64 const halfDistance = 0.5 * params.cellDistance[integer( axis )];
+  real64 const faceArea = axis == Axis::X ? params.m_cellDistance[1]*params.m_cellDistance[2]:
+                          axis == Axis::Y ? params.m_cellDistance[0]*params.m_cellDistance[2]:
+                          params.m_cellDistance[0]*params.m_cellDistance[1];
+  real64 const halfDistance = 0.5 * params.m_cellDistance[integer( axis )];
 
   real64 const transmissibility = g_testPermeability[integer( axis )] * g_testNetToGross * ( faceArea / halfDistance );
   // return half transmissibility
+  GEOS_LOG( "face area =                  "<<faceArea<<" <= "<<stringutilities::join( params.m_cellDistance, " x " ));
+  GEOS_LOG( "halfDistance =               "<<halfDistance );
+  GEOS_LOG( "permeability =               "<<g_testPermeability[integer( axis )] );
+  GEOS_LOG( "Ti =                         "<<transmissibility );
+  GEOS_LOG( "T (no darcy, half transmi) = "<<(g_testNetToGross * transmissibility * 0.5));
   return g_testNetToGross * transmissibility * 0.5;
 }
 
@@ -256,11 +272,11 @@ void verifyTransmissibilityDataStructured( TransmissibilityMap transmissibilitie
                                            TestParams const & params )
 {
   integer const cellBIdOffset = axis == Axis::X ? 1:
-                                axis == Axis::Y ? params.cellCount[0]:
-                                params.cellCount[0]*params.cellCount[1];
-  integer const endX = axis == Axis::X ? params.cellCount[0] - 1 : params.cellCount[0];
-  integer const endY = axis == Axis::Y ? params.cellCount[1] - 1 : params.cellCount[1];
-  integer const endZ = axis == Axis::Z ? params.cellCount[2] - 1 : params.cellCount[2];
+                                axis == Axis::Y ? params.m_cellCount[0]:
+                                params.m_cellCount[0]*params.m_cellCount[1];
+  integer const endX = axis == Axis::X ? params.m_cellCount[0] - 1 : params.m_cellCount[0];
+  integer const endY = axis == Axis::Y ? params.m_cellCount[1] - 1 : params.m_cellCount[1];
+  integer const endZ = axis == Axis::Z ? params.m_cellCount[2] - 1 : params.m_cellCount[2];
   real64 const expectedAxisTransmissibility = computeTransmissiblityStructured( params, axis );
 
   for( integer z = 0; z < endZ; ++z )
@@ -269,7 +285,7 @@ void verifyTransmissibilityDataStructured( TransmissibilityMap transmissibilitie
     {
       for( integer x = 0; x < endX; ++x )
       {
-        integer const cellAId = x + params.cellCount[0] * (y + z * params.cellCount[1]);
+        integer const cellAId = x + params.m_cellCount[0] * (y + z * params.m_cellCount[1]);
         integer const cellBId = cellAId + cellBIdOffset;
         real64 const transmissibilityOutput = transmissibilities[std::make_pair( cellAId, cellBId )];
         real64 const transmissibilityTolerance = g_transmissibilityTolerance * std::abs( transmissibilityOutput );
@@ -297,9 +313,9 @@ TransmissibilityMap getTransmissibilityMap( StencilDataCollection const & stenci
   auto const & transmissibilityBA = stencilData.getReference< array1d< real64 > >( VK::transmissibilityBAString() );
 
   // verify data size
-  integer const nx = params.cellCount[0];
-  integer const ny = params.cellCount[1];
-  integer const nz = params.cellCount[2];
+  integer const nx = params.m_cellCount[0];
+  integer const ny = params.m_cellCount[1];
+  integer const nz = params.m_cellCount[2];
   integer const arraySize = transmissibilityAB.size();
   EXPECT_EQ( arraySize, 3*nx*ny*nz - nx*ny - ny*nz - nx*nz );
   // verify that array size is always equal for all buffers
