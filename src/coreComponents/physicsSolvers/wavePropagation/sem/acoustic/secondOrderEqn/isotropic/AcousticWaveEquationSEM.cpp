@@ -127,7 +127,7 @@ real32 AcousticWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView
                                                                                      CellElementSubRegion & elementSubRegion )
   {
      arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
-     real32 subRegionMaxWavespeed = *std::max(velocity.begin(),velocity.end());
+     real32 subRegionMaxWavespeed = *std::max_element(velocity.begin(),velocity.end());
      if(localMaxWavespeed < subRegionMaxWavespeed)
      {
        localMaxWavespeed = subRegionMaxWavespeed;
