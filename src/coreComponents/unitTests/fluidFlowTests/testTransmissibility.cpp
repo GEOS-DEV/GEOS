@@ -230,12 +230,55 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   verifyStencilOutputStructured( xmlInput.str(), params );
 }
 
-// TEST_F( TransmissibilityTest, StencilOutputVerificationAniso )
-// {
-//   ...
-//
-//    testStencilOutput( { 2.0, 3.0, 4.0 } );
-// }
+TEST( TransmissibilityTest, StencilOutputVerificationAniso )
+{
+  static string_view constexpr meshInput =
+    R"xml(
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{0, 70.0}"
+                  yCoords="{0, 10.0}"
+                  zCoords="{0, 54.321}"
+                  nx="{3}"
+                  ny="{4}"
+                  nz="{5}"
+                  cellBlockNames="{cb1}">
+      <InternalWell name="well_producer1"
+                    wellRegionName="wellRegion1"
+                    wellControlsName="wellControls1"
+                    polylineNodeCoords="{ { 4.5, 0, 2   },
+                                          { 4.5, 0, 0.5 } }"
+                    polylineSegmentConn="{ { 0, 1 } }"
+                    radius="0.1"
+                    numElementsPerSegment="1">
+          <Perforation name="producer1_perf1"
+                        distanceFromHead="1.45"/>
+      </InternalWell>
+      <InternalWell name="well_injector1"
+                    wellRegionName="wellRegion2"
+                    wellControlsName="wellControls2"
+                    polylineNodeCoords="{ { 0.5, 0, 2   },
+                                          { 0.5, 0, 0.5 } }"
+                    polylineSegmentConn="{ { 0, 1 } }"
+                    radius="0.1"
+                    numElementsPerSegment="1">
+          <Perforation name="injector1_perf1"
+                        distanceFromHead="1.45"/>
+      </InternalWell>
+    </InternalMesh>
+  </Mesh>
+)xml";
+  std::ostringstream xmlInput;
+  xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
+
+  static TestParams constexpr params {
+    { 3, 4, 5 }, // cellCount
+    { 70.0, 10.0, 54.321 }, // meshSize
+  };
+
+  verifyStencilOutputStructured( xmlInput.str(), params );
+}
 
 
 
