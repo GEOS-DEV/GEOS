@@ -419,7 +419,7 @@ DECLARE_FIELD( taperCoeff,
                "taperCoeff",
                array1d< real32 >,
                1.0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Array continaing the coefficients for the taper" );
 
