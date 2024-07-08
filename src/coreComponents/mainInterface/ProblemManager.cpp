@@ -718,6 +718,7 @@ void ProblemManager::importFields()
 
 void ProblemManager::applyNumericalMethods()
 {
+
   DomainPartition & domain  = getDomainPartition();
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
@@ -729,9 +730,12 @@ void ProblemManager::applyNumericalMethods()
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
+
+
 map< std::pair< string, Group const * const >, arrayView1d< string const > const >
 ProblemManager::getDiscretizations() const
 {
+  
   map< std::pair< string, Group const * const >, arrayView1d< string const > const > meshDiscretizations;
 
   NumericalMethodsManager const &
