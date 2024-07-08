@@ -38,6 +38,9 @@ on:
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
+      ENABLE_PYGEOSX:
+        required: false
+        type: string
       ENABLE_TRILINOS:
         required: false
         type: string
@@ -200,6 +203,9 @@ jobs:
         fi
         docker_args+=(--name ${CONTAINER_NAME})
 
+        if [ ${{ inputs.ENABLE_PYGEOSX }} == "ON" ]; then
+          script_args+=(--build-pygeosx)
+        fi
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)

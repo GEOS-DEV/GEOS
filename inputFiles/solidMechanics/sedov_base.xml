@@ -90,13 +90,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Blueprint
-      name="blueprint"
-      plotLevel="3"/>
-
-    <Silo
-      name="siloOutput"
-      plotLevel="3"/>
+    <Python
+      name="pythonOutput"/>
 
     <Restart
       name="restartOutput"/>
