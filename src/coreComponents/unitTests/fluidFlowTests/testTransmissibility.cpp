@@ -29,42 +29,16 @@ using namespace geos::testing;
 CommandLineOptions g_commandLineOptions;
 
 
-// TODO remove everything that is not useful (wells? solver application?)
 /// Provide every common xml input for the transmissibility tests
 constexpr string_view xmlInputCommon =
   R"xml(
 <Problem>
   <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
-    <SinglePhaseReservoir name="reservoirSystem"
-                flowSolverName="singlePhaseFlow"
-                wellSolverName="singlePhaseWell"
-                logLevel="1"
-                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters newtonMaxIter="40"/>
-      <LinearSolverParameters solverType="direct"
-                              logLevel="1"/>
-    </SinglePhaseReservoir>
     <SinglePhaseFVM name="singlePhaseFlow"
                     logLevel="1"
                     discretization="singlePhaseTPFA"
                     targetRegions="{Region1}">
     </SinglePhaseFVM>
-    <SinglePhaseWell name="singlePhaseWell"
-                      logLevel="1"
-                      targetRegions="{wellRegion1,wellRegion2}">
-        <WellControls name="wellControls1"
-                      type="producer"
-                      referenceElevation="2"
-                      control="BHP"
-                      targetBHP="5e5"
-                      targetTotalRate="1e-3"/>
-        <WellControls name="wellControls2"
-                      type="injector"
-                      referenceElevation="2"
-                      control="totalVolRate"
-                      targetBHP="2e7"
-                      targetTotalRate="1e-4"/>
-    </SinglePhaseWell>
   </Solvers>
   <NumericalMethods>
     <FiniteVolume>
@@ -75,20 +49,12 @@ constexpr string_view xmlInputCommon =
     <CellElementRegion name="Region1"
                         cellBlocks="{cb1}"
                         materialList="{water, rock}"/>
-    <WellElementRegion name="wellRegion1"
-                        materialList="{water}"/>
-    <WellElementRegion name="wellRegion2"
-                        materialList="{water}"/>
   </ElementRegions>
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   defaultDensity="1000"
                                   defaultViscosity="0.001"
-                                  referencePressure="0.0"
-                                  referenceDensity="1000"
-                                  compressibility="5e-10"
-                                  referenceViscosity="0.001"
-                                  viscosibility="0.0"/>
+                                  compressibility="5e-10"/>
     <CompressibleSolidConstantPermeability name="rock"
         solidModelName="nullSolid"
         porosityModelName="rockPorosity"
@@ -114,7 +80,7 @@ constexpr string_view xmlInputCommon =
     <PeriodicEvent
       name="solverApplications"
       forceDt="10"
-      target="/Solvers/reservoirSystem" />
+      target="/Solvers/singlePhaseFlow" />
     <SoloEvent
       name="cellToCellDataCollectionEvent"
       beginTime="1.0"
@@ -194,28 +160,6 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
                   ny="{3}"
                   nz="{3}"
                   cellBlockNames="{cb1}">
-      <InternalWell name="well_producer1"
-                    wellRegionName="wellRegion1"
-                    wellControlsName="wellControls1"
-                    polylineNodeCoords="{ { 4.5, 0, 2   },
-                                          { 4.5, 0, 0.5 } }"
-                    polylineSegmentConn="{ { 0, 1 } }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="producer1_perf1"
-                        distanceFromHead="1.45"/>
-      </InternalWell>
-      <InternalWell name="well_injector1"
-                    wellRegionName="wellRegion2"
-                    wellControlsName="wellControls2"
-                    polylineNodeCoords="{ { 0.5, 0, 2   },
-                                          { 0.5, 0, 0.5 } }"
-                    polylineSegmentConn="{ { 0, 1 } }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="injector1_perf1"
-                        distanceFromHead="1.45"/>
-      </InternalWell>
     </InternalMesh>
   </Mesh>
 )xml";
@@ -244,28 +188,6 @@ TEST( TransmissibilityTest, StencilOutputVerificationAniso )
                   ny="{4}"
                   nz="{5}"
                   cellBlockNames="{cb1}">
-      <InternalWell name="well_producer1"
-                    wellRegionName="wellRegion1"
-                    wellControlsName="wellControls1"
-                    polylineNodeCoords="{ { 4.5, 0, 2   },
-                                          { 4.5, 0, 0.5 } }"
-                    polylineSegmentConn="{ { 0, 1 } }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="producer1_perf1"
-                        distanceFromHead="1.45"/>
-      </InternalWell>
-      <InternalWell name="well_injector1"
-                    wellRegionName="wellRegion2"
-                    wellControlsName="wellControls2"
-                    polylineNodeCoords="{ { 0.5, 0, 2   },
-                                          { 0.5, 0, 0.5 } }"
-                    polylineSegmentConn="{ { 0, 1 } }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="injector1_perf1"
-                        distanceFromHead="1.45"/>
-      </InternalWell>
     </InternalMesh>
   </Mesh>
 )xml";
@@ -296,11 +218,6 @@ real64 computeTransmissiblityStructured( TestParams const & params, Axis axis )
 
   real64 const transmissibility = g_testPermeability[integer( axis )] * g_testNetToGross * ( faceArea / halfDistance );
   // return half transmissibility
-  GEOS_LOG( "face area =                  "<<faceArea<<" <= "<<stringutilities::join( params.m_cellDistance, " x " ));
-  GEOS_LOG( "halfDistance =               "<<halfDistance );
-  GEOS_LOG( "permeability =               "<<g_testPermeability[integer( axis )] );
-  GEOS_LOG( "Ti =                         "<<transmissibility );
-  GEOS_LOG( "T (no darcy, half transmi) = "<<(g_testNetToGross * transmissibility * 0.5));
   return g_testNetToGross * transmissibility * 0.5;
 }
 
