@@ -78,7 +78,7 @@ private:
    * @return The max row length of the section
    */
   void computeMaxRowSize( string_view m_sectionTitle,
-                             std::vector< string > const & descriptions );
+                          std::vector< string > const & descriptions );
 
   /**
    * @brief Build a description from the name and description values
