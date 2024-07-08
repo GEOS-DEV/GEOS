@@ -222,6 +222,27 @@ void ElasticWaveEquationSEM::postInputInitialization()
   }
 }
 
+real32 ElasticWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView1d< string const > const & regionNames)
+{
+  
+  real32 localMaxWavespeed = 0;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                     CellElementSubRegion & elementSubRegion )
+  {
+     arrayView1d< real32 const > const velocity = elementSubRegion.getField< elasticfields::ElasticVelocityVp >();
+     real32 subRegionMaxWavespeed = *std::max_element(velocity.begin(),velocity.end());
+     if(localMaxWavespeed < subRegionMaxWavespeed)
+     {
+       localMaxWavespeed = subRegionMaxWavespeed;
+     }
+  } );
+
+  real32 const globalMaxWavespeed = MpiWrapper::max(localMaxWavespeed);
+
+  return globalMaxWavespeed;
+
+}
 
 void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {

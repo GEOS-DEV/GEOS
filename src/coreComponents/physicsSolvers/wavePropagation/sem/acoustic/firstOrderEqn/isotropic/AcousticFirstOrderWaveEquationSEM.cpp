@@ -152,6 +152,28 @@ void AcousticFirstOrderWaveEquationSEM::postInputInitialization()
   m_receiverRegion.resize( numReceiversGlobal );
 }
 
+real32 AcousticFirstOrderWaveEquationSEM::getGlobalMaxWavespeed(MeshLevel & mesh,arrayView1d< string const > const & regionNames)
+{
+  
+  real32 localMaxWavespeed = 0;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                     CellElementSubRegion & elementSubRegion )
+  {
+     arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+     real32 subRegionMaxWavespeed = *std::max_element(velocity.begin(),velocity.end());
+     if(localMaxWavespeed < subRegionMaxWavespeed)
+     {
+       localMaxWavespeed = subRegionMaxWavespeed;
+     }
+  } );
+
+  real32 const globalMaxWavespeed = MpiWrapper::max(localMaxWavespeed);
+
+  return globalMaxWavespeed;
+
+}
+
 void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();

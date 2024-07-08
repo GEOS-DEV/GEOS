@@ -155,6 +155,11 @@ public:
 
   void prepareNextTimestep( MeshLevel & mesh );
 
+   /**
+   * @brief Method to get the maximum wavespeed on a mesh (usually the P-wavespeed)
+   */
+  virtual real32 getGlobalMaxWavespeed(MeshLevel & mesh, arrayView1d< string const > const & regionNames) override ;
+
   /**
    * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
    * are usually global parameters

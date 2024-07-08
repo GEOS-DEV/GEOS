@@ -79,7 +79,10 @@ public:
                                        DomainPartition & domain,
                                        bool const computeGradient ) override;
 
-  real32 getGlobalMaxWavespeed(MeshLevel & mesh, arrayView1d< string const > const & regionNames);
+  /**
+   * @brief Method to get the maximum wavespeed on a mesh (usually the P-wavespeed)
+   */
+  virtual real32 getGlobalMaxWavespeed(MeshLevel & mesh, arrayView1d< string const > const & regionNames) override ;
 
   /**@}*/
 
