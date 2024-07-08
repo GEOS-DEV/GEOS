@@ -40,8 +40,7 @@ on:
         type: string
       ENABLE_PYGEOSX:
         required: false
-        type: boolean
-        default: false
+        type: string
       ENABLE_TRILINOS:
         required: false
         type: string
@@ -204,7 +203,7 @@ jobs:
         fi
         docker_args+=(--name ${CONTAINER_NAME})
 
-        if ${{ inputs.ENABLE_PYGEOSX }} == 'true'; then
+        if [ ${{ inputs.ENABLE_PYGEOSX }} == "ON" ]; then
           script_args+=(--build-pygeosx)
         fi
 
