@@ -345,8 +345,16 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     !isClone && (getLogLevel() >= 0 && logger::internal::rank==0), // writeInLog
   };
 
-  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight, pvtOutputOpts );
-  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight, pvtOutputOpts );
+  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1",
+                                         phase1InputParams,
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         pvtOutputOpts );
+  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2",
+                                         phase2InputParams,
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         pvtOutputOpts );
 
 
   // 2) Create the flash model

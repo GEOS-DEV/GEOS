@@ -323,10 +323,7 @@ private:
 /**
  * @return The table unit
  */
-  units::Unit getValueUnit() const
-  {
-    return m_valueUnit;
-  }
+  units::Unit getValueUnit() const { return m_valueUnit; }
 
   /**
    * @brief Create an instance of the kernel wrapper

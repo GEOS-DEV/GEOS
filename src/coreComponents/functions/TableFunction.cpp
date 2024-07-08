@@ -279,7 +279,7 @@ string TableCSVFormatter::toString< TableFunction >( TableFunction const & table
   else
   {
     TableData2D tableData2D;
-    TableData2D::TableConversionData tableConverted;
+    TableData2D::TableDataHolder tableConverted;
     tableConverted = tableData2D.convertTable2D( values,
                                                  valueUnit,
                                                  coordinates,
@@ -330,7 +330,7 @@ string TableTextFormatter::toString< TableFunction >( TableFunction const & tabl
     if( nX * nY <= 500 )
     {
       TableData2D tableData2D;
-      TableData2D::TableConversionData tableConverted;
+      TableData2D::TableDataHolder tableConverted;
       tableConverted = tableData2D.convertTable2D( values,
                                                    valueUnit,
                                                    coordinates,
