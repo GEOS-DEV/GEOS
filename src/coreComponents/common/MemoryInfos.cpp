@@ -27,7 +27,12 @@ MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceTy
     case umpire::MemoryResourceTraits::resource_type::pinned:
       #if defined( _SC_PHYS_PAGES ) && defined( _SC_PAGESIZE )
       m_totalMemory = sysconf( _SC_PHYS_PAGES ) * sysconf( _SC_PAGESIZE );
+      #if defined(_SC_AVPHYS_PAGES)
       m_availableMemory = sysconf( _SC_AVPHYS_PAGES ) * sysconf( _SC_PAGESIZE );
+      #else
+      GEOS_WARNING( "Unknown device avaialable memory size getter for this system." );
+      m_availableMemory = 0;
+      #endif
       #else
       GEOS_WARNING( "Unknown device physical memory size getter for this compiler." );
       m_physicalMemoryHandled = 0;
