@@ -711,7 +711,7 @@ endif()
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
