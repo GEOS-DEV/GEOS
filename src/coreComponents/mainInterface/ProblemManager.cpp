@@ -735,7 +735,7 @@ void ProblemManager::applyNumericalMethods()
 map< std::pair< string, Group const * const >, arrayView1d< string const > const >
 ProblemManager::getDiscretizations() const
 {
-  
+
   map< std::pair< string, Group const * const >, arrayView1d< string const > const > meshDiscretizations;
 
   NumericalMethodsManager const &
