@@ -38,6 +38,7 @@ jobs:
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
+    if: ${{ always() }}
     needs: [semantic_pull_request]
     # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
     # to ensure maximum support of google cloud's sdk.
