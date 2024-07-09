@@ -15,9 +15,14 @@ Preprints and Early-Views
    :header-rows: 0
 
    * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
-       | J Huang, F Hamon, M Cusin, T Gazzola, RR Settgast, JA White, H Gross
+       | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
        | Rock Mechanics and Rock Engineering
        | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
+
+   * - | **Pressure-stabilized fixed-stress iterative solutions of compositional poromechanics**
+       | RM Aronson,N Castelletto, FP Hamon, JA White, HA Tchelepi
+       | Computer Methods in Applied Mechanics and Engineering
+       | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_ 
 
 
 2023
