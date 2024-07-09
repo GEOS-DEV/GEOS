@@ -14,16 +14,20 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
-   * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
-       | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
-       | Rock Mechanics and Rock Engineering
-       | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
-
    * - | **Pressure-stabilized fixed-stress iterative solutions of compositional poromechanics**
        | RM Aronson, N Castelletto, FP Hamon, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_ 
 
+   * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
+       | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
+
+   * - | **Multilevel well modeling in aggregation-based nonlinear multigrid for multiphase flow in porous media**
+       | CS Lee, FP Hamon, N Castelletto, PS Vassilevski, JA White
+       | Journal of Computational Physics
+       | `doi:10.1016/j.jcp.2024.113163 <https://doi.org/10.1016/j.jcp.2024.113163>`_
 
 2023
 ====
@@ -81,7 +85,7 @@ Preprints and Early-Views
        | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_ 
 
    * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
-       | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
+       | CS Lee, FP Hamon, N Castelletto, PS Vassilevski, JA White
        | Computers & Mathematics with Applications
        | `doi:10.1016/j.camwa.2022.03.026 <https://doi.org/10.1016/j.camwa.2022.03.026>`_
 
