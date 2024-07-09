@@ -477,7 +477,7 @@ public:
                               integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
-                              ElementSubRegionBase const & subRegion,
+                              WellElementSubRegion const & subRegion,
                               MultiFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
@@ -638,7 +638,7 @@ public:
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -717,7 +717,7 @@ public:
                            globalIndex const rankOffset,
                            string const wellDofKey,
                            WellControls const & wellControls,
-                           ElementSubRegionBase const & subRegion,
+                           WellElementSubRegion const & subRegion,
                            MultiFluidBase const & fluid,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
@@ -731,6 +731,7 @@ public:
             , localRhs
             , kernelFlags ),
     m_numPhases ( fluid.numFluidPhases()),
+    m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_phaseFraction( fluid.phaseFraction()),
     m_dPhaseFraction( fluid.dPhaseFraction()),
     m_phaseEnthalpy( fluid.phaseEnthalpy()),
@@ -775,42 +776,43 @@ public:
   inline
   void complete( localIndex const iwelem, StackVariables & stack ) const
   {
-
     Base::complete ( iwelem, stack );
 
     using namespace compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
-      if( !m_isProducer )
-      {
-        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
-        // No other energy balance derivatives
-        // Assumption is iwelem =0 is top segment with fixed temp BC
-        for( integer i=0; i< CP_Deriv::nDer; i++ )
-        {
-          stack.localEnergyFluxJacobian[0][i] = 0.0;
-        }
-        stack.localEnergyFluxJacobian_dQ[0][0]=0;
-        stack.localEnergyFlux[0]=0;
-      }
       // Setup Jacobian global row indicies for energy equation
       globalIndex oneSidedEqnRowIndices  = stack.offsetUp + WJ_ROFFSET::ENERGYBAL - m_rankOffset;
 
-      // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
-      globalIndex oneSidedDofColIndices_dRate =   stack.offsetCurrent + WJ_COFFSET::dQ;
-      globalIndex oneSidedDofColIndices_dPresCompTempUp[CP_Deriv::nDer]{};
-
-      int ioff=0;
-      oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dP;
-      oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dT;
-      for( integer jdof = 0; jdof < NC; ++jdof )
-      {
-        oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
-      }
-
-
       if( oneSidedEqnRowIndices  >= 0 && oneSidedEqnRowIndices < m_localMatrix.numRows() )
       {
+
+        if( !m_isProducer  && m_globalWellElementIndex[iwelem] == 0 )
+        {
+          // For top segment energy balance eqn replaced with  T(n+1) - T = 0
+          // No other energy balance derivatives
+          // Assumption is global index == 0 is top segment with fixed temp BC
+          for( integer i=0; i< CP_Deriv::nDer; i++ )
+          {
+            stack.localEnergyFluxJacobian[0][i] = 0.0;
+          }
+          stack.localEnergyFluxJacobian_dQ[0][0]=0;
+          stack.localEnergyFlux[0]=0;
+        }
+
+
+        // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
+        globalIndex oneSidedDofColIndices_dRate =   stack.offsetCurrent + WJ_COFFSET::dQ;
+        globalIndex oneSidedDofColIndices_dPresCompTempUp[CP_Deriv::nDer]{};
+
+        int ioff=0;
+        oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dP;
+        oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dT;
+        for( integer jdof = 0; jdof < NC; ++jdof )
+        {
+          oneSidedDofColIndices_dPresCompTempUp[ioff++] = stack.offsetUp + WJ_COFFSET::dC+ jdof;
+        }
+
         m_localMatrix.template addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndices,
                                                                  &oneSidedDofColIndices_dRate,
                                                                  stack.localEnergyFluxJacobian_dQ[0],
@@ -821,28 +823,34 @@ public:
                                                                                      CP_Deriv::nDer );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[oneSidedEqnRowIndices], stack.localEnergyFlux[0] );
       }
-
     }
-    else // if ( stack.numConnectedElems == 2 )
+    else   // if ( stack.numConnectedElems == 2 )
     {
-      if( iwelem == 1 && !m_isProducer )
+      globalIndex row_current = stack.offsetCurrent + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
+      globalIndex row_next = stack.offsetNext + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
+
+      if( !m_isProducer )
       {
-        // For top segment energy balance eqn replaced with  T(n+1) - T = 0
-        // No upstream energy balance derivatives added to segment with control
-        // Assumption is iwelem =0 is top segment with fixed temp BC
-        for( integer i=0; i<CP_Deriv::nDer; i++ )
-          stack.localEnergyFluxJacobian[TAG::NEXT][i] = 0.0;
-        stack.localEnergyFluxJacobian_dQ[TAG::NEXT][0] =0;
-        stack.localEnergyFluxJacobian[TAG::CURRENT][CP_Deriv::dT] = 0.0;
-        stack.localEnergyFlux[TAG::NEXT] =0;
+        if( row_next >= 0 && row_next <  m_localMatrix.numRows() )
+        {
+          if( m_globalWellElementIndex[stack.iwelemNext] == 0 )
+          {
+            for( integer i=0; i<CP_Deriv::nDer; i++ )
+              stack.localEnergyFluxJacobian[TAG::NEXT][i] = 0.0;
+            stack.localEnergyFluxJacobian_dQ[TAG::NEXT][0] =0;
+            stack.localEnergyFlux[TAG::NEXT] =0;
+          }
+
+        }
       }
       // Setup Jacobian global row indicies
       // equations for COMPONENT  + ENERGY balances
       globalIndex eqnRowIndices[2]{};
 
       // energy balance equations
-      eqnRowIndices[TAG::NEXT ]    = stack.offsetNext + WJ_ROFFSET::ENERGYBAL   - m_rankOffset;
-      eqnRowIndices[TAG::CURRENT ] = stack.offsetCurrent + WJ_ROFFSET::ENERGYBAL  - m_rankOffset;
+      eqnRowIndices[TAG::CURRENT ] = row_current;
+      eqnRowIndices[TAG::NEXT ]    = row_next;
+
 
       // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
       globalIndex dofColIndices[CP_Deriv::nDer]{};
@@ -1040,6 +1048,9 @@ protected:
   /// Number of phases
   integer const m_numPhases;
 
+  /// Global index of local element
+  arrayView1d< globalIndex const > m_globalWellElementIndex;
+
   /// Element phase fraction
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseFraction;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseFraction;
@@ -1079,7 +1090,7 @@ public:
                    integer const useTotalMassEquation,
                    string const dofKey,
                    WellControls const & wellControls,
-                   ElementSubRegionBase const & subRegion,
+                   WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )

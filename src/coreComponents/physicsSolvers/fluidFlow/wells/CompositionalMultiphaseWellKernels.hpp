@@ -875,7 +875,7 @@ public:
                               integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
-                              ElementSubRegionBase const & subRegion,
+                              WellElementSubRegion const & subRegion,
                               MultiFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
@@ -883,6 +883,7 @@ public:
     : m_numPhases( numPhases ),
     m_isProducer( isProducer ),
     m_rankOffset( rankOffset ),
+    m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
@@ -1172,11 +1173,11 @@ public:
 
     if constexpr ( IS_THERMAL)
     {
-      if( ei == 0 && !m_isProducer )
+      if( ei == m_iwelemControl && !m_isProducer )
       {
         // For top segment energy balance eqn replaced with  T(n+1) - T = 0
         // No other energy balance derivatives
-        // Assumption is iwelem =0 is top segment with fixed temp BC
+        // Assumption is global index == 0 is top segment with fixed temp BC
 
         for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
         {
@@ -1256,6 +1257,9 @@ protected:
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
 
+  /// Index of the element where the control is enforced
+  localIndex const m_iwelemControl;
+
   /// View on the dof numbers
   arrayView1d< globalIndex const > const m_dofNumber;
 
@@ -1327,7 +1331,7 @@ public:
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -1400,7 +1404,7 @@ public:
                            globalIndex const rankOffset,
                            string const wellDofKey,
                            WellControls const & wellControls,
-                           ElementSubRegionBase const & subRegion,
+                           WellElementSubRegion const & subRegion,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags )
@@ -1442,6 +1446,9 @@ public:
 
 
     // edge indexes
+    localIndex iwelemUp;
+    localIndex iwelemNext;
+    localIndex iwelemCurrent;
     globalIndex offsetUp;
     globalIndex offsetCurrent;
     globalIndex offsetNext;
@@ -1714,10 +1721,8 @@ public:
         compFracUp[ic] = m_injection[ic];
         for( integer jc = 0; jc < NC; ++jc )
         {
-          //dComp[ic][jc]  = 0.0;
           dComp[ic][jc] =   m_dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
         }
-        //for ( integer jc = 0 ;jc < WJ_COFFSET::nDer ; ++jc)
         for( integer jc = 0; jc < NC; ++jc )
         {
           dCompFlux[ic][WJ_COFFSET::dC+jc] = 0.0;
@@ -1768,7 +1773,10 @@ public:
     }
 
     stack.offsetUp = m_wellElemDofNumber[iwelemUp];
+    stack.iwelemUp = iwelemUp;
     stack.offsetCurrent = m_wellElemDofNumber[iwelem];
+    stack.iwelemCurrent= iwelem;
+
 
     if( iwelemNext < 0 )  // exit connection
     {
@@ -1788,7 +1796,7 @@ public:
                );
       stack.offsetNext = m_wellElemDofNumber[iwelemNext];
     }
-
+    stack.iwelemNext = iwelemNext;
     compFluxKernelOp( iwelemNext, iwelemUp, currentConnRate, dComp );
   }
 
@@ -1881,7 +1889,7 @@ public:
                    integer const useTotalMassEquation,
                    string const dofKey,
                    WellControls const & wellControls,
-                   ElementSubRegionBase const & subRegion,
+                   WellElementSubRegion const & subRegion,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {

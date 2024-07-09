@@ -411,6 +411,7 @@ public:
             numCrossFlowPerforations,
             kernelFlags ),
     m_isProducer( isProducer ),
+    m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >())
 
@@ -435,9 +436,12 @@ public:
                                     localIndex const iwelem )
     {
       // No energy equation if top element and Injector
-      if( iwelem ==0 && !m_isProducer )
+      // Top element defined by global index == 0
+      // Assumption is global index == 0 is top segment with fixed temp BC
+      if( !m_isProducer )
       {
-        return;
+        if( m_globalWellElementIndex[iwelem] == 0 )
+          return;
       }
       // local working variables and arrays
       stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
@@ -514,6 +518,9 @@ protected:
 
   /// Well type
   integer const m_isProducer;
+
+  /// Global index of local element
+  arrayView1d< globalIndex const >  m_globalWellElementIndex;
 
   /// Views on energy flux
   arrayView1d< real64 const > const m_energyPerfFlux;
