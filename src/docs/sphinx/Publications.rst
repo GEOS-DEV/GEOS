@@ -7,13 +7,31 @@ Last updated 5-September-2023
 Preprints and Early-Views
 =========================
 
+2024
+====
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
+       | J Huang, F Hamon, M Cusin, T Gazzola, RR Settgast, JA White, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
+
+
 2023
 ====
 
-* - | **A phase-field model for hydraulic fracture nucleation and propagation in porous media**
-    | F Fei, A Costa, JE Dolbow, R Settgast, M Cusini
-    | International Journal for Numerical and Analytical Methods in Geomechanics
-    | `doi.org/10.1002/nag.3612 <https://doi.org/10.1002/nag.3612>`_
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **A phase-field model for hydraulic fracture nucleation and propagation in porous media**
+       | F Fei, A Costa, JE Dolbow, R Settgast, M Cusini
+       | International Journal for Numerical and Analytical Methods in Geomechanics
+       | `doi.org/10.1002/nag.3612 <https://doi.org/10.1002/nag.3612>`_
+
 
 2022
 ====
