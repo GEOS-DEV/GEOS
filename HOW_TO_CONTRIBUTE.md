@@ -16,17 +16,17 @@ Architecture Committee
 ## 1. General information
 
 - **Committee Overview:**
-  - The architecture committee is responsible for overseeing significant changes to the system architecture.
+  - The architecture committee overseea changes to the system architecture.
   - Prior to opening a Pull Request (PR), developers must present their idea to the committee for initial feedback and approval.
 
 - **Meeting Schedule:**
   - The committee meets bi-weekly and on-demand.
-  - It is the developer's responsibility to request a slot for their presentation via the ``#dev-infrastructure`` Slack channel.
-    If you do not have access to our Slack workspace, you can contact get in contact be mail (if you know a member of the organization) or simply by opening an issue on GitHub.
+  - Developers must request a slot for their presentation via the ``#dev-infrastructure`` Slack channel.
+    If you do not have access to our Slack workspace, you can open an issue on GitHub requesting a review.
 
 - **Committee Members:**
-  - The committee consists of one representative from each entity involved in the project.
-  - Additional members with relevant skill sets and the product owner of affected components are included.
+  - The committee consists of one representative for partner organization.
+  - Additional members with relevant skills and the product owner of affected components are included.
   - Meetings are open for all interested parties to attend.
 
 - **Changes Requiring Committee Review:**
@@ -39,8 +39,8 @@ Architecture Committee
 
 ## 2. Presenting your idea to the committee
 - **Description of Change:**
-  - Clearly describe the proposed change, including the motivation and problem it solves.
-  - If it makes sense, consider making this document using markdown or plantuml so it will be straightforward to include it as part of the official documentation on readthedocs when merged.
+  - Describe the proposed change, including the motivation and problem it solves.
+  - Consider making this proposal using markdown or plantuml to include in the documentation when merged.
 
 - **Impact Analysis:**
   - Analyze and document the impact on the existing system, including dependencies, affected modules, and performance considerations.
@@ -94,8 +94,8 @@ Operations Committee
 
 ## 3. Issue Management
 - **Triaging:**
-  - The committee triages incoming issues, prioritizing them based on urgency and impact.
-  - Regularly review and update the status of tickets to ensure high-priority issues are addressed promptly.
+  - The committee triages incoming issues, prioritizing on urgency and impact.
+  - The committee updates the status of tickets to ensure high-priority issues are addressed promptly.
 
 - **Meeting Frequency:**
   - Meet weekly to manage the current backlog and discuss issue resolution. Frequency may be adjusted based on backlog size.
