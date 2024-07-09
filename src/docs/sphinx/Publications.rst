@@ -20,7 +20,7 @@ Preprints and Early-Views
        | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
 
    * - | **Pressure-stabilized fixed-stress iterative solutions of compositional poromechanics**
-       | RM Aronson,N Castelletto, FP Hamon, JA White, HA Tchelepi
+       | RM Aronson, N Castelletto, FP Hamon, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_ 
 
