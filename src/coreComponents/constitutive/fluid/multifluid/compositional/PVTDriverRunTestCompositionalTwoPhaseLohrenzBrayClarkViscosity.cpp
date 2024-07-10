@@ -13,7 +13,7 @@
  */
 
 /*
- * PVTDriverRunTestCompositionalPRLBC.cpp
+ * PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
  */
 
 #include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
@@ -21,6 +21,6 @@
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalTwoPhasePengRobinsonLBCViscosity >(
-  constitutive::CompositionalTwoPhasePengRobinsonLBCViscosity &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity >(
+  constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity &, arrayView2d< real64 > const & );
 }

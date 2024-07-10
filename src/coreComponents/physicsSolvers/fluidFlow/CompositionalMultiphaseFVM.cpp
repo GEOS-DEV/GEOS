@@ -88,9 +88,9 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 }
 
-void CompositionalMultiphaseFVM::postProcessInput()
+void CompositionalMultiphaseFVM::postInputInitialization()
 {
-  CompositionalMultiphaseBase::postProcessInput();
+  CompositionalMultiphaseBase::postInputInitialization();
 
   if( m_scalingType == ScalingType::Local && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
