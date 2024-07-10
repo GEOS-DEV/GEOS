@@ -825,15 +825,15 @@ if(DEFINED FMT_DIR)
 
     message( " ----> fmt_VERSION = ${fmt_VERSION}")
 
-    get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(includeDirs fmt::fmt-header-only INTERFACE_INCLUDE_DIRECTORIES)
 
-    set_property(TARGET fmt::fmt
+    set_property(TARGET fmt::fmt-header-only
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${includeDirs})
 
     set(ENABLE_FMT ON CACHE BOOL "")
 
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt-header-only )
 else()
     mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
 endif()
