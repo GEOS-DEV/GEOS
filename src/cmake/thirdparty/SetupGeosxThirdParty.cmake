@@ -687,7 +687,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
-    #   if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
+    #   if( GEOS_LA_INTERFACE STREQUAL "Hypre")
     #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_DEVICE not 'CUDA' while ENABLE_CUDA is ON.")
     #   endif()
     # else()
@@ -906,11 +906,11 @@ endif()
 ################################
 # LAI
 ################################
-string(TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI)
+string(TOUPPER "${GEOS_LA_INTERFACE}" upper_LAI)
 if(NOT ENABLE_${upper_LAI})
-  message(FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
+  message(FATAL_ERROR "${GEOS_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
 endif()
-option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
+option(GEOS_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

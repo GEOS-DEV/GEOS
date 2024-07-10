@@ -62,11 +62,11 @@ endif()
 ### LAI SETUP ###
 
 set( supported_LAI Trilinos Hypre Petsc )
-set( GEOSX_LA_INTERFACE "Hypre" CACHE STRING "Linear algebra interface to use in solvers" )
-message( STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
+set( GEOS_LA_INTERFACE "Hypre" CACHE STRING "Linear algebra interface to use in solvers" )
+message( STATUS "GEOS_LA_INTERFACE = ${GEOS_LA_INTERFACE}" )
 
-if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
-  message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
+if( NOT ( GEOS_LA_INTERFACE IN_LIST supported_LAI ) )
+  message( FATAL_ERROR "GEOS_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
 
 ### MPI/OMP/CUDA/HIP SETUP ###

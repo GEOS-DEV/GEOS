@@ -86,14 +86,14 @@
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
 #define GEOS_USE_SCOTCH
 
-/// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Hypre
+/// Choice of global linear algebra interface (CMake option GEOS_LA_INTERFACE)
+#define GEOS_LA_INTERFACE Hypre
 /// Macro defined when Trilinos interface is selected
-/* #undef GEOSX_LA_INTERFACE_TRILINOS */
+/* #undef GEOS_LA_INTERFACE_TRILINOS */
 /// Macro defined when Hypre interface is selected
-#define GEOSX_LA_INTERFACE_HYPRE
+#define GEOS_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected
-/* #undef GEOSX_LA_INTERFACE_PETSC */
+/* #undef GEOS_LA_INTERFACE_PETSC */
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 /* #undef FORTRAN_MANGLE_NO_UNDERSCORE */
