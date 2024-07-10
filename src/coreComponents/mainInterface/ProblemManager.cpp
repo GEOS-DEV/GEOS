@@ -151,14 +151,13 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
-  Section section;
 
   postInputInitializationRecursive();
 
-  section.setName( "Mesh generation" );
-  section.begin();
+  Section section( "Mesh generation" );
+  section.beginSection();
   generateMesh();
-  section.end();
+  section.endSection();
 
 //  initialize_postMeshGeneration();
   applyNumericalMethods();

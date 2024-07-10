@@ -28,13 +28,7 @@ class Section
 {
 public:
 
-  Section();
-
-  /**
-   * @brief Set the name of the section
-   * @param m_sectionTitle The name of the section
-   */
-  void setName( string_view m_sectionTitle );
+  Section( string_view m_sectionTitle );
 
   /**
    * @brief Add a description to the section by concatening a description name and descriptions values.
@@ -43,13 +37,13 @@ public:
    * Descriptions values can be be any types and will be aligned
    */
   template< typename ... Args >
-  void addDescription( string const & descriptionName, Args const & ... args );
+  void addDescription( string_view descriptionName, Args const & ... args );
 
   /**
    * @brief Add a description to the section
    * @param description The string value of the description
    */
-  void addDescription( string const & description );
+  void addDescription( string_view description );
 
   /**
    * @brief Set the minimal width of a row
@@ -61,13 +55,13 @@ public:
    * @brief Draw the first part of the section. It include the title and optionnaly, the description(s);
    * @param os An output stream (by default, std::cout)
    */
-  void begin( std::ostream & os = std::cout );
+  void beginSection( std::ostream & os = std::cout );
 
   /**
    * @brief Draw the last part of the section. It include the title
    * @param oss An output stream (by default, std::cout)
    */
-  void end( std::ostream & oss = std::cout ) const;
+  void endSection( std::ostream & oss = std::cout ) const;
 
 private:
 
@@ -77,15 +71,15 @@ private:
    * @param descriptions The descriptions vector
    * @return The max row length of the section
    */
-  void computeMaxRowSize( string_view m_sectionTitle,
-                          std::vector< string > const & descriptions );
+  void computeMaxWidth( string_view m_sectionTitle,
+                        std::vector< string > const & descriptions );
 
   /**
    * @brief Build a description from the name and description values
    * @param descriptionName The decription name
    * @param decriptionsValues The description values
    */
-  void formatAndInsertDescriptions( std::string const & descriptionName,
+  void formatAndInsertDescriptions( string_view descriptionName,
                                     std::vector< string > const & decriptionsValues );
 
   /// Vector containing all descriptions
@@ -102,13 +96,11 @@ private:
   static constexpr integer m_marginBorder = 2;
   /// numbers of character used as border
   static constexpr integer m_nbSpecialChar = 2;
-  /// (Temporary ?) special char with key name. I.E =>- "description": => 3char ("-", " ",":")
-  static constexpr integer m_embeddingName = 4;
 
 };
 
 template< typename ... Args >
-void Section::addDescription( string const & descriptionName, Args const &... args )
+void Section::addDescription( string_view descriptionName, Args const &... args )
 {
   std::vector< string > descriptionsValues;
   ( [&] {

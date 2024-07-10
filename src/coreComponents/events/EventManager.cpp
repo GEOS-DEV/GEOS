@@ -169,9 +169,9 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    Section section;
+    Section section( "TIMESTEP START" );
     outputTime( section );
-    section.begin();
+    section.beginSection();
 
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
@@ -208,7 +208,7 @@ bool EventManager::run( DomainPartition & domain )
       }
     }
 
-    section.end();
+    section.endSection();
     // Increment time/cycle, reset the subevent counter
     m_time += m_dt;
     ++m_cycle;
@@ -253,7 +253,6 @@ void EventManager::outputTime( Section & section ) const
   string const timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
   string const timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
 
-  section.setName( "TIMESTEP START" );
   section.addDescription( "Time", timeInfosUnfolded, timeCompletionSeconds );
   section.addDescription( "Delta Time", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
   section.addDescription( "Cycle", m_cycle, cycleLimited );
