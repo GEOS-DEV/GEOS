@@ -28,6 +28,10 @@ class Section
 {
 public:
 
+  /**
+   * @brief Construct a new Section
+   * @param m_sectionTitle The section title
+   */
   Section( string_view m_sectionTitle );
 
   /**
