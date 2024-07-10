@@ -19,7 +19,7 @@
 #include "VTKOutput.hpp"
 
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyVTKOutputType.hpp"
 #endif
 
@@ -157,7 +157,7 @@ bool VTKOutput::execute( real64 const time_n,
   return false;
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * VTKOutput::getPythonType() const
 {
   return python::getPyVTKOutputType();

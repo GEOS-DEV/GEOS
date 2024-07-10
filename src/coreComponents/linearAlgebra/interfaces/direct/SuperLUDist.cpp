@@ -436,15 +436,15 @@ real64 SuperLUDist< LAI >::estimateConditionNumberAdvanced() const
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class SuperLUDist< TrilinosInterface >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class SuperLUDist< HypreInterface >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class SuperLUDist< PetscInterface >;
 #endif
 

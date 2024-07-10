@@ -147,17 +147,17 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class BicgstabSolver< TrilinosInterface::ParallelVector >;
 template class BicgstabSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class BicgstabSolver< HypreInterface::ParallelVector >;
 template class BicgstabSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class BicgstabSolver< PetscInterface::ParallelVector >;
 template class BicgstabSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif

@@ -625,7 +625,7 @@ PackSize( VARPACK && ... pack )
   return Pack< false >( junk, pack ... );
 }
 
-#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
+#ifdef GEOS_USE_ARRAY_BOUNDS_CHECK
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !is_packable_by_index< T > &&
@@ -662,7 +662,7 @@ Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< INDEX_TYPE > const & indices,
         INDEX_TYPE & length );
 
-#endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
+#endif /* GEOS_USE_ARRAY_BOUNDS_CHECK */
 
 } /* namespace bufferOps */
 } /* namespace geos */

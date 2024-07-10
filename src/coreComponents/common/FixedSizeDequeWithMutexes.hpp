@@ -50,7 +50,7 @@ public:
    * @param space          Space used to store que queue.
    */
   FixedSizeDequeWithMutexes( int maxEntries, int valuesPerEntry, LvArray::MemorySpace space ): FixedSizeDeque< T, INDEX_TYPE >( maxEntries, valuesPerEntry, space,
-#ifdef GEOSX_USE_CUDA
+#ifdef GEOS_USE_CUDA
                                                                                                                                 camp::resources::Resource{ camp::resources::Cuda{} }
 #else
                                                                                                                                 camp::resources::Resource{ camp::resources::Host{} }

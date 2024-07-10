@@ -45,7 +45,7 @@
 #include <camp/camp.hpp>
 
 // System includes
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   #include <mpi.h>
 #endif
 
@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 }
 
 /// Global MPI communicator used by GEOSX.
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
 extern int MPI_COMM_GEOSX;
@@ -149,7 +149,7 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef GEOSX_USE_CHAI
+#ifdef GEOS_USE_CHAI
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else

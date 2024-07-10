@@ -32,7 +32,7 @@ namespace conduit
 class Node;
 }
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
 //Forward declaration of cali::ConfigManager.
 namespace cali
 {
@@ -234,7 +234,7 @@ private:
   /// The CommunicationTools.
   std::unique_ptr< CommunicationTools > m_commTools;
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
   /// The Caliper ConfigManager.
   std::unique_ptr< cali::ConfigManager > m_caliperManager;
 #endif

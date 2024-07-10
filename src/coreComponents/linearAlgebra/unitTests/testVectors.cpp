@@ -364,15 +364,15 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              norm2,
                              normInf );
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, VectorTest, TrilinosInterface, );
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, VectorTest, HypreInterface, );
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, VectorTest, PetscInterface, );
 #endif
 

@@ -23,7 +23,7 @@
 // TPL includes
 #include <conduit.hpp>
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
   #include <caliper/cali-manager.h>
 #endif
 
@@ -83,7 +83,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   m_rootNode( std::make_unique< conduit::Node >() ),
   m_problemManager( nullptr ),
   m_commTools( std::make_unique< CommunicationTools >() ),
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
   m_caliperManager( std::make_unique< cali::ConfigManager >() ),
 #endif
   m_initTime(),
@@ -91,7 +91,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
 {
   Timer timer( m_initTime );
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
   setupCaliper( *m_caliperManager, getCommandLineOptions() );
 #endif
 
@@ -111,7 +111,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState::~GeosxState()
 {
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
   m_caliperManager->flush();
 #endif
 

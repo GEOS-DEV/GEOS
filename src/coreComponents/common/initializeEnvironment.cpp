@@ -30,9 +30,9 @@
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "umpire/util/Platform.hpp"
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
 #include <caliper/cali-manager.h>
-#if defined( GEOSX_USE_ADIAK )
+#if defined( GEOS_USE_ADIAK )
 #include <adiak.hpp>
 #endif
 #endif
@@ -40,11 +40,11 @@
 // System includes
 #include <iomanip>
 
-#if defined( GEOSX_USE_MKL )
+#if defined( GEOS_USE_MKL )
 #include <mkl.h>
 #endif
 
-#if defined( GEOSX_USE_OPENMP )
+#if defined( GEOS_USE_OPENMP )
 #include <omp.h>
 #endif
 
@@ -63,7 +63,7 @@ namespace geos
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLogger()
 {
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
   logger::InitializeLogger();
@@ -81,7 +81,7 @@ void setupLvArray()
 {
   LvArray::system::setErrorHandler( []()
   {
-  #if defined( GEOSX_USE_MPI )
+  #if defined( GEOS_USE_MPI )
     int mpi = 0;
     MPI_Initialized( &mpi );
     if( mpi )
@@ -94,7 +94,7 @@ void setupLvArray()
 
   LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
 
-#if defined(GEOSX_USE_FPE)
+#if defined(GEOS_USE_FPE)
   LvArray::system::setFPE();
 #else
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
@@ -104,7 +104,7 @@ void setupLvArray()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMKL()
 {
-#ifdef GEOSX_USE_MKL
+#ifdef GEOS_USE_MKL
   GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
 #endif
 }
@@ -112,7 +112,7 @@ void setupMKL()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupOpenMP()
 {
-#ifdef GEOSX_USE_OPENMP
+#ifdef GEOS_USE_OPENMP
   GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
 #endif
 }
@@ -141,7 +141,7 @@ void finalizeMPI()
   MpiWrapper::finalize();
 }
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupCaliper( cali::ConfigManager & caliperManager,
@@ -151,8 +151,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
   caliperManager.start();
 
-#if defined( GEOSX_USE_ADIAK )
-#if defined( GEOSX_USE_MPI )
+#if defined( GEOS_USE_ADIAK )
+#if defined( GEOS_USE_MPI )
   adiak::init( &MPI_COMM_GEOSX );
 #else
   adiak::init( nullptr );
@@ -173,7 +173,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value( "Problem name", commandLineOptions.problemName );
 
   // MPI info
-#if defined( GEOSX_USE_MPI )
+#if defined( GEOS_USE_MPI )
   adiak::value( "MPI", "On" );
   adiak::value( "mpi ranks", MpiWrapper::commSize() );
 #else
@@ -200,7 +200,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value( "compilation date", __DATE__ );
 
   // OpenMP info
-#if defined( GEOSX_USE_OPENMP )
+#if defined( GEOS_USE_OPENMP )
   std::int64_t const numThreads = omp_get_max_threads();
   adiak::value( "OpenMP", "On" );
 #else
@@ -234,14 +234,14 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 #endif
   adiak::value( "HIP runtime version", hipRuntimeVersion );
   adiak::value( "HIP driver version", hipDriverVersion );
-#endif // defined( GEOSX_USE ADIAK )
+#endif // defined( GEOS_USE ADIAK )
 }
-#endif // defined( GEOSX_USE_CALIPER )
+#endif // defined( GEOS_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
-#if defined( GEOSX_USE_CALIPER )and defined( GEOSX_USE_ADIAK )
+#if defined( GEOS_USE_CALIPER )and defined( GEOS_USE_ADIAK )
   adiak::fini();
 #endif
 }

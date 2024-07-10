@@ -20,7 +20,7 @@
 
 #include "common/DataTypes.hpp"
 
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 #include <Epetra_MpiComm.h>
 #else
 #include <Epetra_SerialComm.h>
@@ -43,7 +43,7 @@ static_assert( std::is_signed< long long >::value == std::is_signed< geos::globa
 static_assert( std::is_same< double, geos::real64 >::value,
                "double and geos::real64 must be the same type" );
 
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 /// Alias for Epetra communicator
 using EpetraComm = Epetra_MpiComm;
 #else

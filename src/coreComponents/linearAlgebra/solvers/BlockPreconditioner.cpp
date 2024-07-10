@@ -247,15 +247,15 @@ void BlockPreconditioner< LAI >::clear()
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class BlockPreconditioner< TrilinosInterface >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class BlockPreconditioner< HypreInterface >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class BlockPreconditioner< PetscInterface >;
 #endif
 

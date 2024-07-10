@@ -33,7 +33,7 @@
 #include "common/Span.hpp"
 #include "codingUtilities/traits.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
 #endif
 
@@ -825,7 +825,7 @@ UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelD
   return 0;
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >

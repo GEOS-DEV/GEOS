@@ -18,7 +18,7 @@
 #include "mesh/generators/VTKUtilities.hpp"
 
 #include "mesh/generators/ParMETISInterface.hpp"
-#ifdef GEOSX_USE_SCOTCH
+#ifdef GEOS_USE_SCOTCH
 #include "mesh/generators/PTScotchInterface.hpp"
 #endif
 
@@ -60,7 +60,7 @@
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
 
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
 #include <vtkMPI.h>
 #else
@@ -401,7 +401,7 @@ splitMeshByPartition( vtkSmartPointer< vtkDataSet > mesh,
 
 vtkSmartPointer< vtkMultiProcessController > getController()
 {
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   vtkNew< vtkMPIController > controller;
   vtkMPICommunicatorOpaqueComm vtkGeosxComm( &MPI_COMM_GEOSX );
   vtkNew< vtkMPICommunicator > communicator;
@@ -641,7 +641,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
       }
       case PartitionMethod::ptscotch:
       {
-#ifdef GEOSX_USE_SCOTCH
+#ifdef GEOS_USE_SCOTCH
         GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
         return ptscotch::partition( graph.toViewConst(), numRanks, comm );
 #else

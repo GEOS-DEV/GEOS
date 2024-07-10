@@ -19,7 +19,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
 
@@ -705,7 +705,7 @@ localIndex Group::getSubGroupIndex( keyType const & key ) const
   return getSubGroups().getIndex( key );
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
 { return geos::python::getPyGroupType(); }
 #endif

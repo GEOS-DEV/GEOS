@@ -162,7 +162,7 @@ bool EventManager::run( DomainPartition & domain )
       }
       m_currentSubEvent = 0;
 
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
       // Find the min dt across processes
       real64 dt_global;
       MPI_Allreduce( &m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX );

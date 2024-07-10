@@ -289,7 +289,7 @@ globalIndex EpetraVector::iupper() const
 MPI_Comm EpetraVector::comm() const
 {
   GEOS_LAI_ASSERT( created() );
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   return dynamicCast< Epetra_MpiComm const & >( m_vec->Map().Comm() ).Comm();
 #else
   return MPI_COMM_GEOSX;

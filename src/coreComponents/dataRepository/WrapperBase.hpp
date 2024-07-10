@@ -26,7 +26,7 @@
 #include "HistoryDataSpec.hpp"
 #include "DataContext.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
 #endif
 
@@ -653,7 +653,7 @@ public:
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
 #endif
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   /**
    * @brief Return a Python object representing the wrapped object.
    * @return A Python object representing the wrapped object.

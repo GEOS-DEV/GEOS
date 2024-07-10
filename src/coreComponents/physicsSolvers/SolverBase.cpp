@@ -21,7 +21,7 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
 #endif
 
@@ -1402,7 +1402,7 @@ void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PAR
   GEOS_ERROR( "Call to SolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * SolverBase::getPythonType() const
 { return python::getPySolverType(); }
 #endif

@@ -102,7 +102,7 @@ static constexpr int ACCELERATION_USD = LvArray::typeManipulation::getStrideOneD
 namespace particles
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
 
 /// Particle reference position permutation when using cuda.
 using REFERENCE_POSITION_PERM = RAJA::PERM_JI;

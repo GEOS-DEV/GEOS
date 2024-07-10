@@ -1491,7 +1491,7 @@ public:
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const;
 #endif
 

@@ -24,7 +24,7 @@
 
 namespace geos
 {
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 MPI_Comm MPI_COMM_GEOSX;
 #else
 int MPI_COMM_GEOSX = 0;

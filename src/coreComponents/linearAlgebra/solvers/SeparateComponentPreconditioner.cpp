@@ -66,15 +66,15 @@ void SeparateComponentPreconditioner< LAI >::clear()
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class SeparateComponentPreconditioner< TrilinosInterface >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class SeparateComponentPreconditioner< HypreInterface >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class SeparateComponentPreconditioner< PetscInterface >;
 #endif
 

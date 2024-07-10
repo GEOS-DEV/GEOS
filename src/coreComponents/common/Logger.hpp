@@ -28,7 +28,7 @@
 // System includes
 #include <stdexcept>
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   #include <mpi.h>
 #endif
 
@@ -536,12 +536,12 @@ extern int n_ranks;
 
 extern std::ostream * rankStream;
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
 extern MPI_Comm comm;
 #endif
 } // namespace internal
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
 /**
  * @brief Initialize the logger in a parallel build.
  * @param comm global MPI communicator

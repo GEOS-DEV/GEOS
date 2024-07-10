@@ -21,7 +21,7 @@
 
 #include "common/GeosxConfig.hpp"
 
-#ifdef GEOSX_USE_CHAI
+#ifdef GEOS_USE_CHAI
 #include <umpire/ResourceManager.hpp>
 #include <umpire/TypedAllocator.hpp>
 

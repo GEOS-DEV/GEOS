@@ -370,15 +370,15 @@ real64 SuiteSparse< LAI >::estimateConditionNumberAdvanced() const
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class SuiteSparse< TrilinosInterface >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class SuiteSparse< HypreInterface >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class SuiteSparse< PetscInterface >;
 #endif
 

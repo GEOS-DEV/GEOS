@@ -663,7 +663,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 

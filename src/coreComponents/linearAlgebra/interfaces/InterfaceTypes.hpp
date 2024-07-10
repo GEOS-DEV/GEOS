@@ -21,15 +21,15 @@
 
 #include "common/GeosxConfig.hpp"
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 #include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
@@ -50,13 +50,13 @@ using ParallelVector = LAInterface::ParallelVector;
  */
 inline void setupLAI()
 {
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
   TrilinosInterface::initialize();
 #endif
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
   HypreInterface::initialize();
 #endif
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
   PetscInterface::initialize();
 #endif
 }
@@ -66,13 +66,13 @@ inline void setupLAI()
  */
 inline void finalizeLAI()
 {
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
   TrilinosInterface::finalize();
 #endif
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
   HypreInterface::finalize();
 #endif
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
   PetscInterface::finalize();
 #endif
 }

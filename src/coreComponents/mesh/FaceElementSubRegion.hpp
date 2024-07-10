@@ -176,7 +176,7 @@ public:
     /// @return String key to collocated nodes buckets.
     static constexpr char const * elem2dToCollocatedNodesBucketsString() { return "elem2dToCollocatedNodesBuckets"; }
 
-#if GEOSX_USE_SEPARATION_COEFFICIENT
+#if GEOS_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
     constexpr static char const * separationCoeffString() { return "separationCoeff"; }
     /// dSepCoeffdAper string.
@@ -224,7 +224,7 @@ public:
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
   /**
    * @brief Get separation coefficient.
    * @return the separation coefficient
@@ -338,7 +338,7 @@ private:
    */
   ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient
   array1d< real64 > m_separationCoefficient;
 #endif

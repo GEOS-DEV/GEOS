@@ -18,10 +18,10 @@
 #include <type_traits>
 
 #if __cplusplus < 202002L
-#define GEOSX_USE_FMT
+#define GEOS_USE_FMT
 #endif
 
-#ifdef GEOSX_USE_FMT
+#ifdef GEOS_USE_FMT
 #define FMT_HEADER_ONLY
 // Differentiate between standalone fmt path and umpire's fmt path
 #include "../include/fmt/core.h"
@@ -34,7 +34,7 @@
 #define GEOS_FMT_NS std
 #endif
 
-#ifdef GEOSX_USE_FMT
+#ifdef GEOS_USE_FMT
 /**
  * @brief fmtlib formatter for enum classes.
  * @tparam T The type of the object being formatted. This should be an

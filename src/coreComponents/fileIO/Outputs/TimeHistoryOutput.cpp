@@ -16,7 +16,7 @@
 
 #include "fileIO/timeHistory/HDFFile.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
 #endif
 
@@ -189,7 +189,7 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
   }
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * TimeHistoryOutput::getPythonType() const
 { return python::getPyHistoryOutputType(); }
 #endif

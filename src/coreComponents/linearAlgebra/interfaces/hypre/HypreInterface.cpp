@@ -24,7 +24,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
-#if defined(GEOSX_USE_SUPERLU_DIST)
+#if defined(GEOS_USE_SUPERLU_DIST)
 #include "linearAlgebra/interfaces/direct/SuperLUDist.hpp"
 #endif
 
@@ -61,7 +61,7 @@ HypreInterface::createSolver( LinearSolverParameters params )
   {
     if( params.direct.parallel )
     {
-#if defined(GEOSX_USE_SUPERLU_DIST)
+#if defined(GEOS_USE_SUPERLU_DIST)
       return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
 #else
       GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );

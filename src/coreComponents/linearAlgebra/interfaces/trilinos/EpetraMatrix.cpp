@@ -1038,7 +1038,7 @@ localIndex EpetraMatrix::numLocalRows() const
 MPI_Comm EpetraMatrix::comm() const
 {
   GEOS_LAI_ASSERT( created() );
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   return dynamicCast< Epetra_MpiComm const & >( m_matrix->RowMap().Comm() ).Comm();
 #else
   return MPI_COMM_GEOSX;

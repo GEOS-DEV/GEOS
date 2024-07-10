@@ -1877,15 +1877,15 @@ void DofManager::printFieldInfo( std::ostream & os ) const
                                             bool const transpose, \
                                             LAI::ParallelMatrix & restrictor ) const;
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 MAKE_DOFMANAGER_METHOD_INST( TrilinosInterface )
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 MAKE_DOFMANAGER_METHOD_INST( HypreInterface )
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 MAKE_DOFMANAGER_METHOD_INST( PetscInterface )
 #endif
 

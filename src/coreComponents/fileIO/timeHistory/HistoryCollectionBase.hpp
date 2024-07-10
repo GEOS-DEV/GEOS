@@ -17,7 +17,7 @@
 
 #include "HistoryCollection.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryCollectionType.hpp"
 #endif
 
@@ -60,7 +60,7 @@ public:
 
   HistoryCollection & getMetaDataCollector( localIndex metaIdx ) override;
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   /**
    * @brief Return PyHistoryCollection type.
    * @return Return PyHistoryCollection type.

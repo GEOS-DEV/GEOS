@@ -136,17 +136,17 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class CgSolver< TrilinosInterface::ParallelVector >;
 template class CgSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class CgSolver< HypreInterface::ParallelVector >;
 template class CgSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class CgSolver< PetscInterface::ParallelVector >;
 template class CgSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif

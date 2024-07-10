@@ -171,7 +171,7 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
 
     // Because the function applied to an object may differ by rank, synchronize
     // (Note: this shouldn't occur very often, since it is only called if the base forecast <= 0)
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
     real64 result_global;
     switch( m_functionStatOption )
     {

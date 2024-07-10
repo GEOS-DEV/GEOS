@@ -100,17 +100,17 @@ void KrylovSolver< VECTOR >::logResult() const
 // -----------------------
 // Explicit Instantiations
 // -----------------------
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 template class KrylovSolver< TrilinosInterface::ParallelVector >;
 template class KrylovSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 template class KrylovSolver< HypreInterface::ParallelVector >;
 template class KrylovSolver< BlockVectorView< HypreInterface::ParallelVector > >;
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 template class KrylovSolver< PetscInterface::ParallelVector >;
 template class KrylovSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif

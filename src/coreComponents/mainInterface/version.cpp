@@ -80,7 +80,7 @@ void outputVersionInfo()
   GEOS_LOG_RANK_0( "  - openmp version: " << _OPENMP );
 #endif
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   {
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     int len;
@@ -163,7 +163,7 @@ void outputVersionInfo()
 
 #if \
   defined(GEOS_USE_DEVICE) && \
-  defined(GEOSX_USE_HYPRE) && \
+  defined(GEOS_USE_HYPRE) && \
   ( GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CPU )
   GEOS_LOG_RANK_0( "" );
   GEOS_LOG_RANK_0( "**************************************************" );

@@ -1,7 +1,7 @@
 #include "BufferAllocator.hpp"
 #include "DataTypes.hpp"
 
-#ifdef GEOSX_USE_CHAI
+#ifdef GEOS_USE_CHAI
 namespace geos
 {
 

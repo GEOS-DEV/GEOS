@@ -111,7 +111,7 @@ struct StateUpdateKernel
 
       // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for
       // some reason
-      #if defined(GEOSX_USE_CUDA)
+      #if defined(GEOS_USE_CUDA)
       LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
       #endif
 

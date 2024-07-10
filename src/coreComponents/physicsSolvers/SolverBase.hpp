@@ -740,7 +740,7 @@ public:
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override;
 #endif
 

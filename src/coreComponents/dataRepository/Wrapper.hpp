@@ -940,7 +940,7 @@ public:
 //  void tvTemplateInstantiation();
 #endif
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyObject * createPythonObject( ) override
   { return wrapperHelpers::createPythonObject( reference() ); }
 #endif

@@ -22,7 +22,7 @@
 #include "functions/MultivariableTableFunctionKernels.hpp"
 //#include "mainInterface/GeosxState.hpp"
 
-#ifdef GEOSX_USE_MATHPRESSO
+#ifdef GEOS_USE_MATHPRESSO
   #include "functions/SymbolicFunction.hpp"
 #endif
 
@@ -539,7 +539,7 @@ TEST( FunctionTests, 4DTable_derivatives )
   }
 }
 
-#ifdef GEOSX_USE_MATHPRESSO
+#ifdef GEOS_USE_MATHPRESSO
 
 TEST( FunctionTests, 4DTable_symbolic )
 {

@@ -88,7 +88,7 @@ namespace timingHelpers
 #endif /* USE_CUDA */
 
 
-#ifdef GEOSX_USE_CALIPER
+#ifdef GEOS_USE_CALIPER
 #include <caliper/cali.h>
 #include <sys/time.h>
 #include <string>
@@ -112,7 +112,7 @@ namespace timingHelpers
 /// Mark the end of function, only useful when you don't want to or can't mark the whole function.
 #define GEOS_CALIPER_MARK_FUNCTION_END CALI_MARK_FUNCTION_END
 
-#else // GEOSX_USE_CALIPER
+#else // GEOS_USE_CALIPER
 
 /// @cond DO_NOT_DOCUMENT
 #define GEOS_CALIPER_MARK_SCOPE(name)
@@ -125,7 +125,7 @@ namespace timingHelpers
 #define GEOS_CALIPER_MARK_FUNCTION_END
 /// @endcond
 
-#endif // GEOSX_USE_CALIPER
+#endif // GEOS_USE_CALIPER
 
 /// Mark scope with both Caliper and NVTX if enabled
 #define GEOS_MARK_SCOPE(name) GEOS_CALIPER_MARK_SCOPE(name); GEOS_NVTX_MARK_SCOPE(name)
@@ -141,7 +141,7 @@ namespace timingHelpers
 #define GEOS_MARK_END(name) GEOS_CALIPER_MARK_END(name)
 
 /// Get current time of day as a floating point number of seconds in a variable @p time.
-#ifdef GEOSX_USE_TIMERS
+#ifdef GEOS_USE_TIMERS
 #define GEOS_GET_TIME( time )                                                 \
   real64 time;                                                                 \
   do                                                                           \

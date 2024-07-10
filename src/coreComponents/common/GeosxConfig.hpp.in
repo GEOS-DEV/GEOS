@@ -9,28 +9,28 @@
 #define GEOS_COMMON_CONFIG_HPP
 
 /// Enables floating point exceptions
-#cmakedefine GEOSX_USE_FPE
+#cmakedefine GEOS_USE_FPE
 
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
-#cmakedefine GEOSX_USE_ARRAY_BOUNDS_CHECK
+#cmakedefine GEOS_USE_ARRAY_BOUNDS_CHECK
 
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
-#cmakedefine GEOSX_USE_CALIPER
+#cmakedefine GEOS_USE_CALIPER
 
 /// Enables use of Caliper (CMake option ENABLE_ADIAK)
-#cmakedefine GEOSX_USE_ADIAK
+#cmakedefine GEOS_USE_ADIAK
 
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
-#cmakedefine GEOSX_USE_CHAI
+#cmakedefine GEOS_USE_CHAI
 
 /// Enables use of Mathpresso library (CMake option ENABLE_MATHPRESSO)
-#cmakedefine GEOSX_USE_MATHPRESSO
+#cmakedefine GEOS_USE_MATHPRESSO
 
 /// Enables use of MPI (CMake option ENABLE_MPI)
-#cmakedefine GEOSX_USE_MPI
+#cmakedefine GEOS_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#cmakedefine GEOSX_USE_OPENMP
+#cmakedefine GEOS_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOS_USE_CUDA
@@ -45,28 +45,28 @@
 #cmakedefine GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
-#cmakedefine GEOSX_USE_PVTPackage
+#cmakedefine GEOS_USE_PVTPackage
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
-#cmakedefine GEOSX_USE_PYGEOSX
+#cmakedefine GEOS_USE_PYGEOSX
 
 /// Enables use of RAJA (CMake option ENABLE_RAJA)
-#cmakedefine GEOSX_USE_RAJA
+#cmakedefine GEOS_USE_RAJA
 
 /// Enables use of sys/time.h based timers (CMake option ENABLE_TIMERS)
-#cmakedefine GEOSX_USE_TIMERS
+#cmakedefine GEOS_USE_TIMERS
 
 /// Enables use of additional debugging interface for TotalView (Cmake option ENABLE_TOTALVIEW_OUTPUT)
-#cmakedefine GEOSX_USE_TOTALVIEW_OUTPUT
+#cmakedefine GEOS_USE_TOTALVIEW_OUTPUT
 
 /// Enables use of Intel MKL (CMake option ENABLE_MKL)
-#cmakedefine GEOSX_USE_MKL
+#cmakedefine GEOS_USE_MKL
 
 /// Enables use of Trilinos library (CMake option ENABLE_TRILINOS)
-#cmakedefine GEOSX_USE_TRILINOS
+#cmakedefine GEOS_USE_TRILINOS
 
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
-#cmakedefine GEOSX_USE_HYPRE
+#cmakedefine GEOS_USE_HYPRE
 
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
@@ -78,13 +78,13 @@
 #cmakedefine GEOS_USE_HYPRE_DEVICE @GEOS_USE_HYPRE_DEVICE@
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
-#cmakedefine GEOSX_USE_SUPERLU_DIST
+#cmakedefine GEOS_USE_SUPERLU_DIST
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
-#cmakedefine GEOSX_USE_PETSC
+#cmakedefine GEOS_USE_PETSC
 
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
-#cmakedefine GEOSX_USE_SCOTCH
+#cmakedefine GEOS_USE_SCOTCH
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
@@ -99,7 +99,7 @@
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
 /// USE OF SEPARATION COEFFICIENT IN FRACTURE FLOW
-#cmakedefine GEOSX_USE_SEPARATION_COEFFICIENT
+#cmakedefine GEOS_USE_SEPARATION_COEFFICIENT
 
 /// CMake option CMAKE_BUILD_TYPE
 #cmakedefine GEOSX_CMAKE_BUILD_TYPE @GEOSX_CMAKE_BUILD_TYPE@

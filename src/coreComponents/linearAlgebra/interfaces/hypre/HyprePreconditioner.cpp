@@ -415,7 +415,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
       {
         m_precond->destroy( m_precond->ptr );
       }
-#if defined(GEOSX_USE_SUPERLU_DIST)
+#if defined(GEOS_USE_SUPERLU_DIST)
       hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
 #endif
     }

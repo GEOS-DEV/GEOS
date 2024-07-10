@@ -64,7 +64,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "A map eventually containing all the collocated nodes." ).
     setSizedFromParent( 1 );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString(), &m_separationCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).

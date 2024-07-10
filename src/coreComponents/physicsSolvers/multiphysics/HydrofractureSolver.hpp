@@ -176,7 +176,7 @@ public:
 
     static constexpr char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
     constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
 #endif

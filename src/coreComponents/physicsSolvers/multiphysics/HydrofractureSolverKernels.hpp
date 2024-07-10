@@ -45,7 +45,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
           arrayView1d< real64 > const & hydraulicAperture
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
           ,
           arrayView1d< real64 const > const & apertureAtFailure,
           arrayView1d< real64 > const & separationCoeff,
@@ -101,7 +101,7 @@ struct DeformationUpdateKernel
                                                                             dHydraulicAperture_dNormalJump,
                                                                             jump, traction );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
       if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
       {

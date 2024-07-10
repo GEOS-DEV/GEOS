@@ -65,7 +65,7 @@ void HaltEvent::estimateEventTiming( real64 const GEOS_UNUSED_PARAM( time ),
 
   // The timing for the ranks may differ slightly, so synchronize
   // TODO: Only do the communication when you are close to the end?
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
   integer forecast_global;
   MPI_Allreduce( &forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
   forecast = forecast_global;

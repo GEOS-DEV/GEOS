@@ -823,15 +823,15 @@ REGISTER_TYPED_TEST_SUITE_P( DofManagerSparsityTest,
                              FEM_TPFA_Full,
                              FEM_TPFA_Partial );
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface, );
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerSparsityTest, HypreInterface, );
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerSparsityTest, PetscInterface, );
 #endif
 
@@ -1061,15 +1061,15 @@ REGISTER_TYPED_TEST_SUITE_P( DofManagerRestrictorTest,
                              MultiBlock_Second,
                              MultiBlock_Both );
 
-#ifdef GEOSX_USE_TRILINOS
+#ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface, );
 #endif
 
-#ifdef GEOSX_USE_HYPRE
+#ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerRestrictorTest, HypreInterface, );
 #endif
 
-#ifdef GEOSX_USE_PETSC
+#ifdef GEOS_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface, );
 #endif
 
