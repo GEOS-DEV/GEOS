@@ -538,7 +538,7 @@ int lexicographicalCompareTriangle( POINT_TYPE const ax, POINT_TYPE const ay, PO
   return 0;
 }
 /**
- * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosent.
+ * @brief Method to find the reference element touching a vertex. The element with the lowest global ID is chosen
  * list.
  * @param[in] nodeElements the list of elements adjacent to the vertex
  * @param[in] elementGlobalIndex the global IDs for elements
@@ -564,7 +564,7 @@ int findVertexRefElement( arraySlice1d< localIndex const > const & nodeElements,
 }
 
 /**
- * @brief Method to find the reference element for an edge. The element with the lowest global ID is chosen.
+ * @brief Method to find the reference element for an edge. The element with the lowest global ID is chosen
  * list.
  * @param[in] nodeElements1 the list of elements adjacent to the first node
  * @param[in] nodeElements2 the list of elements adjacent to the second node
@@ -646,7 +646,6 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
  *  to avoid ambiguity when the point lies on an interface.
  *  This method is based on the following method:
  *  - the winding number omega of the point with respect to the cell is used to determine if the point is inside (omega=1) or not (omega=0)
- * point is
  *  - corner cases (point lying on a face, edge or vertex of the cell) are detected using a robust method based on lexicographical
  * comparisons
  *  - these comparisons are made consistent across MPI ranks by consistently arranging items based on global indices (GIDs). In particular:
@@ -732,7 +731,7 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
         LvArray::tensorOps::crossProduct( norm, vv1, vv2 );
         // check if face is oriented coherently, and change sign otherwise
         int sign = LvArray::tensorOps::AiBi< 3 >( norm, dist ) > 0 ? -1 : +1;
-        // Compute the winding nuber contributed by this triangle
+        // Compute the winding number contributed by this triangle
         int cmp1 = lexicographicalCompareVertex( point[ 0 ], point[ 1 ], point[ 2 ], v1x, v1y, v1z );
         if( cmp1 == 0 )
         {
