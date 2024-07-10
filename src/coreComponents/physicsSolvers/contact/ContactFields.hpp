@@ -52,7 +52,7 @@ struct FractureState
 DECLARE_FIELD( penalty,
                "penalty",
                array2d< real64 >,
-               0,
+               1.e5,
                LEVEL_0,
                WRITE_AND_READ,
                "Penalty coefficients" );

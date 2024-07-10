@@ -79,7 +79,8 @@ public:
        CRSMatrixView< real64, globalIndex const > const inputMatrix,
        arrayView1d< real64 > const inputRhs,
        real64 const inputDt,
-       arrayView1d< localIndex const > const & faceElementList ):
+       arrayView1d< localIndex const > const & faceElementList,
+       bool const isStickState ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -94,7 +95,8 @@ public:
           inputRhs,
           inputDt,
           faceElementList ),
-    m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst())
+    m_traction( elementSubRegion.getField< fields::contact::traction >().toViewConst()),
+    m_isStickState( isStickState)
   {}
 
   //***************************************************************************
@@ -224,15 +226,31 @@ public:
 
     // The minus sign is consistent with the sign of the Jacobian
     stack.localPenalty[0][0] = -m_penalty( k, 0 );
-    stack.localPenalty[1][1] = -m_penalty( k, 1 );
-    stack.localPenalty[2][2] = -m_penalty( k, 1 );
+    if (m_isStickState)
+    {
+      stack.localPenalty[1][1] = -m_penalty( k, 1 );
+      stack.localPenalty[2][2] = -m_penalty( k, 1 );
+    }
+    else
+    {
+      stack.localPenalty[1][1] = 0.0;
+      stack.localPenalty[2][2] = 0.0;
+    }
 
     for( int i=0; i<numTdofs; ++i )
     {
       stack.tLocal[i] = m_traction( k, i );
       stack.dispJumpLocal[i] = m_dispJump( k, i );
-      stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
+      if (m_isStickState)
+      {
+        stack.oldDispJumpLocal[i] = m_oldDispJump( k, i );
+      }
+      else
+      {
+        stack.oldDispJumpLocal[i] = 0.0;
+      }
     }
+    stack.oldDispJumpLocal[0] = 0.0;
 
     for( int i=0; i<3; ++i )
     {
@@ -368,6 +386,8 @@ protected:
 
   arrayView2d< real64 const > const m_traction;
 
+  bool const m_isStickState;
+
 };
 
 /// The factory used to construct the kernel.
@@ -378,8 +398,8 @@ using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
                                                           CRSMatrixView< real64, globalIndex const > const,
                                                           arrayView1d< real64 > const,
                                                           real64 const,
-                                                          arrayView1d< localIndex const > const >;
-
+                                                          arrayView1d< localIndex const > const,
+                                                          bool const >;
 
 /**
  * @brief A struct to compute rotation matrices
