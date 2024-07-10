@@ -28,7 +28,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
-    if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
+    if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOS_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
@@ -40,7 +40,7 @@ set( STRICT_PPD OPENMP )
 
 # only activate these options if they are ENABLED AND FOUND, not if either
 foreach( DEP in ${STRICT_PPD} )
-    if( ${DEP}_FOUND AND ( ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} ) )
+    if( ${DEP}_FOUND AND ( ENABLE_${DEP} OR GEOS_ENABLE_${DEP} ) )
         set( USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )
