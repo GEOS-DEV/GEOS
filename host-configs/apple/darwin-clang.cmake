@@ -30,9 +30,9 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 #set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
 #set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )
 
-set(GEOSX_TPL_DIR "/usr/local/GEOSX/GEOSX_TPL" CACHE PATH "" FORCE )
-if(NOT ( EXISTS "${GEOSX_TPL_DIR}" AND IS_DIRECTORY "${GEOSX_TPL_DIR}" ) )
-    set(GEOSX_TPL_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs/install-darwin-clang-release" CACHE PATH "" FORCE )
+set(GEOS_TPL_DIR "/usr/local/GEOSX/GEOS_TPL" CACHE PATH "" FORCE )
+if(NOT ( EXISTS "${GEOS_TPL_DIR}" AND IS_DIRECTORY "${GEOS_TPL_DIR}" ) )
+    set(GEOS_TPL_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs/install-darwin-clang-release" CACHE PATH "" FORCE )
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)

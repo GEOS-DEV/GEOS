@@ -117,7 +117,7 @@ macro(mandatory_tpl_doesnt_exist
 
     message(FATAL_ERROR
             "GEOSX requires ${CURRENT_TPL_NAME}, either :\n"
-            "  - Verify that you provided a valid TPL installation directory (GEOSX_TPL_DIR = \"${GEOSX_TPL_DIR}\"),\n"
+            "  - Verify that you provided a valid TPL installation directory (GEOS_TPL_DIR = \"${GEOS_TPL_DIR}\"),\n"
             "  - Or set ${CURRENT_TPL_DIR_VAR} to the ${CURRENT_TPL_NAME} installation directory (${CURRENT_TPL_DIR_VAR} = \"${${CURRENT_TPL_DIR_VAR}}\").\n")
 
 endmacro(mandatory_tpl_doesnt_exist)

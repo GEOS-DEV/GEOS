@@ -46,5 +46,5 @@ if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
   set(GEOS_LA_INTERFACE "Hypre" CACHE STRING "")
 endif()
 
-set(GEOSX_TPL_DIR /home/groups/tchelepi/geosx/thirdPartyLibs/install-${CONFIG_NAME}-release CACHE PATH "")
+set(GEOS_TPL_DIR /home/groups/tchelepi/geosx/thirdPartyLibs/install-${CONFIG_NAME}-release CACHE PATH "")
 include(/home/groups/tchelepi/geosx/GEOSX/host-configs/tpls.cmake)
