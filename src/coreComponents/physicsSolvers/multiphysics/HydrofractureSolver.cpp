@@ -27,6 +27,7 @@
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "mesh/MeshFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 
 namespace geos
 {
@@ -1020,10 +1021,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
-      ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
-      arrayView2d< real64 const > const fluidDensity_n =  fluid.getField<fields::singlefluid::density_n>();
-
-      arrayView1d< real64 > const fluidDensity_n = subRegion.getField< fields::flow::density_n >();
+      string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) 
+      SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+      arrayView2d< real64 const > const fluidDensity_n = fluid.density_n();
       arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
       arrayView1d< real64 > const mass_n  = subRegion.getField< fields::flow::mass_n >();
 
