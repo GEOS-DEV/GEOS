@@ -87,14 +87,14 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print the residual values" );
-  appendLogLevelDescription( "logLevel >= 1 and non first nonlinear iteration", "Information on the face boundary conditions log" );
-  appendLogLevelDescription( "logLevel >= 1", "Information about max pressure/max component density change" );
-  appendLogLevelDescription( "logLevel >= 1 and thermal simulation", "Information about temperature changes" );
-  appendLogLevelDescription( "logLevel >= 1 and scaling type is local", "Print scaling factors" );
-  appendLogLevelDescription( "logLevel >= 1 and negative pressure", "Information on negative pressure values" );
-  appendLogLevelDescription( "logLevel >= 1 and negative density", "Information on negative density values" );
-  appendLogLevelDescription( "logLevel >= 1 and total density > 0", "Information on total density values" );
+  addLogLevel( "logLevel >= 1", "Print the residual values" );
+  addLogLevel( "logLevel >= 1 and non first nonlinear iteration", "Information on the face boundary conditions log" );
+  addLogLevel( "logLevel >= 1", "Information about max pressure/max component density change" );
+  addLogLevel( "logLevel >= 1 and thermal simulation", "Information about temperature changes" );
+  addLogLevel( "logLevel >= 1 and scaling type is local", "Print scaling factors" );
+  addLogLevel( "logLevel >= 1 and negative pressure", "Information on negative pressure values" );
+  addLogLevel( "logLevel >= 1 and negative density", "Information on negative density values" );
+  addLogLevel( "logLevel >= 1 and total density > 0", "Information on total density values" );
 }
 
 void CompositionalMultiphaseFVM::postProcessInput()

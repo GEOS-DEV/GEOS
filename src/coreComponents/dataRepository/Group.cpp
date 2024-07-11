@@ -79,7 +79,7 @@ void Group::deregisterWrapper( string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::appendLogLevelDescription( string_view levelCondition, string_view logDescription )
+void Group::addLogLevel( string_view levelCondition, string_view logDescription )
 {
   Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
   if( wrapper == nullptr )

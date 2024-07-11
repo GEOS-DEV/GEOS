@@ -116,8 +116,8 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print the residuals values" );
-  //appendLogLevelDescription( "logLevel >= 1 first nonlinear iteration", "Information on the source flux boundary conditions" );
+  addLogLevel( "logLevel >= 1", "Print the residuals values" );
+  //addLogLevel( "logLevel >= 1 first nonlinear iteration", "Information on the source flux boundary conditions" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
 }

@@ -80,7 +80,7 @@ EventManager::EventManager( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information about current sub-event" );
+  addLogLevel( "logLevel >= 1", "Information about current sub-event" );
 }
 
 

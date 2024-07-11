@@ -75,9 +75,9 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  Base::appendLogLevelDescription( "logLevel >= 1", "Output whether or not we Re-entering Newton Solve" );
-  Base::appendLogLevelDescription( "logLevel >= 1", "Information on aperture and hydraulic aperture" );
-  Base::appendLogLevelDescription( "logLevel >= 3", "Print time stepping" );
+  Base::addLogLevel( "logLevel >= 1", "Output whether or not we Re-entering Newton Solve" );
+  Base::addLogLevel( "logLevel >= 1", "Information on aperture and hydraulic aperture" );
+  Base::addLogLevel( "logLevel >= 3", "Print time stepping" );
 
 
   m_numResolves[0] = 0;

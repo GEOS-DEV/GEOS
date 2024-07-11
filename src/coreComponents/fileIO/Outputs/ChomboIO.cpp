@@ -61,7 +61,7 @@ ChomboIO::ChomboIO( string const & name, Group * const parent ):
     setDefaultValue( 0 ).
     setDescription( "True iff geosx should use the pressures chombo writes out." );
 
-  appendLogLevelDescription( "logLevel == 1", "Indicate chombo initializing" );
+  addLogLevel( "logLevel == 1", "Indicate chombo initializing" );
 }
 
 ChomboIO::~ChomboIO()

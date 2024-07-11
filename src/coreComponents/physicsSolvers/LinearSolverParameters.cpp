@@ -199,29 +199,29 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
 
-  appendLogLevelDescription( "logLevel >= 2", "Print information about symbolic and numeric factorization." );
-  appendLogLevelDescription( "logLevel >= 2", "Set UMFPACK_PRL to 6" );
-  appendLogLevelDescription( "logLevel == 1", "Set UMFPACK_PRL to 1" );
-  appendLogLevelDescription( "logLevel >= 1 and incorrect final relative residual norm", "Warning about residual reduction" );
-  appendLogLevelDescription( "logLevel >= 1", "Linear solver informations" );
-  appendLogLevelDescription( "logLevel >= 1 and incorrect SuperLU residual reduction", "Warning about residual reduction" );
-  appendLogLevelDescription( "logLevel >= 1 and SuperLU solver", "Information on result" );
-  appendLogLevelDescription( "logLevel >= 2 and SuperLU solver", "Print the statistics." );
-  appendLogLevelDescription( "logLevel >= 1 and SuperLU solver", "Print the blocking parameters and options setting" );
-  appendLogLevelDescription( "logLevel >= 1 and HypreSolver", "Set print level for mgr solver" );
-  appendLogLevelDescription( "logLevel >= 1 and HypreSolver", "Information on MGR preconditioner" );
-  appendLogLevelDescription( "logLevel == 2 or logLevel == 4 and HypreSolver", "Set print level for BoomerAMG" );
-  appendLogLevelDescription( "logLevel >= 1 and HyprePreconditioner setup not existing", "Indicate arror" );
-  appendLogLevelDescription( "logLevel >= 3 and Hypre", "Print convergence + iteration info" );
-  appendLogLevelDescription( "logLevel >= 1 and Hypre", "Print results" );
-  appendLogLevelDescription( "logLevel >= 3 and PetscSolver ", "Informations on PetscSolver result" );
-  appendLogLevelDescription( "logLevel >= 1 and PetscSolver ", "Print the residual/error" );
-  appendLogLevelDescription( "logLevel == 1 and TrilinosSover ", "Sets SetAztecOption to AZ_summary" );
-  appendLogLevelDescription( "logLevel == 2 and TrilinosSover ", "Sets SetAztecOption to AZ_all" );
-  appendLogLevelDescription( "logLevel >= 3 and TrilinosSover ", "Sets SetAztecOption to AZ_none" );
-  appendLogLevelDescription( "logLevel >= 2 and KrylovSolver ", "Print residual norms" );
-  appendLogLevelDescription( "logLevel >= 2 and KrylovSolver ", "Print the results" );
-  appendLogLevelDescription( "logLevel >= 2 and value too close to zero. ", "Information about exit solver iteration" );
+  addLogLevel( "logLevel >= 2", "Print information about symbolic and numeric factorization." );
+  addLogLevel( "logLevel >= 2", "Set UMFPACK_PRL to 6" );
+  addLogLevel( "logLevel == 1", "Set UMFPACK_PRL to 1" );
+  addLogLevel( "logLevel >= 1 and incorrect final relative residual norm", "Warning about residual reduction" );
+  addLogLevel( "logLevel >= 1", "Linear solver informations" );
+  addLogLevel( "logLevel >= 1 and incorrect SuperLU residual reduction", "Warning about residual reduction" );
+  addLogLevel( "logLevel >= 1 and SuperLU solver", "Information on result" );
+  addLogLevel( "logLevel >= 2 and SuperLU solver", "Print the statistics." );
+  addLogLevel( "logLevel >= 1 and SuperLU solver", "Print the blocking parameters and options setting" );
+  addLogLevel( "logLevel >= 1 and HypreSolver", "Set print level for mgr solver" );
+  addLogLevel( "logLevel >= 1 and HypreSolver", "Information on MGR preconditioner" );
+  addLogLevel( "logLevel == 2 or logLevel == 4 and HypreSolver", "Set print level for BoomerAMG" );
+  addLogLevel( "logLevel >= 1 and HyprePreconditioner setup not existing", "Indicate arror" );
+  addLogLevel( "logLevel >= 3 and Hypre", "Print convergence + iteration info" );
+  addLogLevel( "logLevel >= 1 and Hypre", "Print results" );
+  addLogLevel( "logLevel >= 3 and PetscSolver ", "Informations on PetscSolver result" );
+  addLogLevel( "logLevel >= 1 and PetscSolver ", "Print the residual/error" );
+  addLogLevel( "logLevel == 1 and TrilinosSover ", "Sets SetAztecOption to AZ_summary" );
+  addLogLevel( "logLevel == 2 and TrilinosSover ", "Sets SetAztecOption to AZ_all" );
+  addLogLevel( "logLevel >= 3 and TrilinosSover ", "Sets SetAztecOption to AZ_none" );
+  addLogLevel( "logLevel >= 2 and KrylovSolver ", "Print residual norms" );
+  addLogLevel( "logLevel >= 2 and KrylovSolver ", "Print the results" );
+  addLogLevel( "logLevel >= 2 and value too close to zero. ", "Information about exit solver iteration" );
 }
 
 void LinearSolverParametersInput::postProcessInput()

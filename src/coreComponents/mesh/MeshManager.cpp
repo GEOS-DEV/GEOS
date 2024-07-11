@@ -37,7 +37,7 @@ MeshManager::MeshManager( string const & name,
 
   setInputFlags( InputFlags::REQUIRED );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on imported field name on region/subRegion" );
+  addLogLevel( "logLevel >= 1", "Information on imported field name on region/subRegion" );
 }
 
 MeshManager::~MeshManager()

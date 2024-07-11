@@ -46,11 +46,11 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
   WellSolverBase( name, parent )
 {
-  appendLogLevelDescription( "logLevel >= 1", "Infos on residual values" );
-  appendLogLevelDescription( "logLevel >= 1", "Output well rates to a simple csv file" );
-  appendLogLevelDescription( "logLevel >= 2", "Infos on BHP pressure" );
-  appendLogLevelDescription( "logLevel >= 2", "Infos on surface density" );
-  appendLogLevelDescription( "logLevel >= 2 and use surface conditions", "Information on the phase and total density in the reference element" );
+  addLogLevel( "logLevel >= 1", "Infos on residual values" );
+  addLogLevel( "logLevel >= 1", "Output well rates to a simple csv file" );
+  addLogLevel( "logLevel >= 2", "Infos on BHP pressure" );
+  addLogLevel( "logLevel >= 2", "Infos on surface density" );
+  addLogLevel( "logLevel >= 2 and use surface conditions", "Information on the phase and total density in the reference element" );
 
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;

@@ -35,7 +35,7 @@ SinglePhaseStatistics::SinglePhaseStatistics( const string & name,
                                               Group * const parent ):
   Base( name, parent )
 {
-  appendLogLevelDescription( "logLevel >= 1", "Information on region statistics" );
+  addLogLevel( "logLevel >= 1", "Information on region statistics" );
 }
 
 void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )

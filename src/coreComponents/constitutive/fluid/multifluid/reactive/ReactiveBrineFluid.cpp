@@ -80,7 +80,7 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on phase PVT Table" );
+  addLogLevel( "logLevel >= 1", "Information on phase PVT Table" );
 }
 
 template< typename PHASE >

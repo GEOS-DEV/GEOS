@@ -86,17 +86,17 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on line search" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on global solution scaling factor" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on the timestep" );
-  appendLogLevelDescription( "logLevel >= 2", "Output to screen the assembled linear system and solutions (matrices and vectors)" );
-  appendLogLevelDescription( "logLevel >= 3", "Output to file the assembled linear system and solutions (matrices and vectors)" );
-  appendLogLevelDescription( "logLevel >= 1 and incorrect solution", "Information about line search failed" );
-  appendLogLevelDescription( "logLevel >= 1", "Print residual norm" );
-  appendLogLevelDescription( "logLevel >= 1 and configuration didn't converge", "Information about testing new configuration and print the time step" );
-  appendLogLevelDescription( "logLevel >= 1 and non linear system", "Information on each newton Iteration " );
-  appendLogLevelDescription( "logLevel >= 1 and linear system", "Information on number of iterations and residual reduction" );
-  appendLogLevelDescription( "logLevel >= 1 and residual norm above the max allowed residual norm", "Indicate allowed residual norm" );
+  addLogLevel( "logLevel >= 1", "Information on line search" );
+  addLogLevel( "logLevel >= 1", "Information on global solution scaling factor" );
+  addLogLevel( "logLevel >= 1", "Information on the timestep" );
+  addLogLevel( "logLevel >= 2", "Output to screen the assembled linear system and solutions (matrices and vectors)" );
+  addLogLevel( "logLevel >= 3", "Output to file the assembled linear system and solutions (matrices and vectors)" );
+  addLogLevel( "logLevel >= 1 and incorrect solution", "Information about line search failed" );
+  addLogLevel( "logLevel >= 1", "Print residual norm" );
+  addLogLevel( "logLevel >= 1 and configuration didn't converge", "Information about testing new configuration and print the time step" );
+  addLogLevel( "logLevel >= 1 and non linear system", "Information on each newton Iteration " );
+  addLogLevel( "logLevel >= 1 and linear system", "Information on number of iterations and residual reduction" );
+  addLogLevel( "logLevel >= 1 and residual norm above the max allowed residual norm", "Indicate allowed residual norm" );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );

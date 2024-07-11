@@ -120,7 +120,7 @@ void VTKOutput::postProcessInput()
                         catalogName(), getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print field name and cycle number during execution" );
+  addLogLevel( "logLevel >= 1", "Print field name and cycle number during execution" );
 
   GEOS_ERROR_IF( m_writeFaceElementsAs3D, GEOS_FMT( "{} `{}`: 3D vtk plot of faceElements is not yet supported.",
                                                     catalogName(), getDataContext() ) );

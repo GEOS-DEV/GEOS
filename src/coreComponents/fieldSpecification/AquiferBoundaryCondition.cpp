@@ -111,7 +111,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on boundary conditions" );
+  addLogLevel( "logLevel >= 1", "Information on boundary conditions" );
 }
 
 void AquiferBoundaryCondition::postProcessInput()

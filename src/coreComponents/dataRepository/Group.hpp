@@ -859,7 +859,7 @@ public:
    * @param levelCondition The level condition to append
    * @param logDescription The log description to append
    */
-  void appendLogLevelDescription( string_view levelCondition, string_view logDescription );
+  void addLogLevel( string_view levelCondition, string_view logDescription );
 
   /**
    * @name Schema generation methods

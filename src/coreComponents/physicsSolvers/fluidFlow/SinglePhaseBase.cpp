@@ -66,8 +66,8 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print pressure change" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on negative pressure values" );
+  addLogLevel( "logLevel >= 1", "Print pressure change" );
+  addLogLevel( "logLevel >= 1", "Information on negative pressure values" );
 }
 
 

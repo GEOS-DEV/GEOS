@@ -31,10 +31,10 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  appendLogLevelDescription( "logLevel >= 1 and first newton iteration", "Print the log message issued by the solver if the boundary condition is called" );
-  appendLogLevelDescription( "logLevel >= 1 and regions with no dof", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
-  appendLogLevelDescription( "logLevel >= 1 and first nonlinear iteration", "Information abonout the Dirichlet pressure, temperature boundary conditions" );
-  appendLogLevelDescription( "logLevel >= 1 and first nonlinear iteration and this is a thermal simulation", "Information on single phase thermal simulation" );
+  addLogLevel( "logLevel >= 1 and first newton iteration", "Print the log message issued by the solver if the boundary condition is called" );
+  addLogLevel( "logLevel >= 1 and regions with no dof", "Warnings about non-simulated region intersecting, that can cancel sourceFlux effects" );
+  addLogLevel( "logLevel >= 1 and first nonlinear iteration", "Information abonout the Dirichlet pressure, temperature boundary conditions" );
+  addLogLevel( "logLevel >= 1 and first nonlinear iteration and this is a thermal simulation", "Information on single phase thermal simulation" );
 }
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )

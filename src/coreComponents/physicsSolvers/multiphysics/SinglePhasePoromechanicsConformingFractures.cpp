@@ -42,7 +42,7 @@ SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromecha
                                                                                                          Group * const parent )
   : Base( name, parent )
 {
-  this->appendLogLevelDescription( "logLevel >= 3", "The summary of declared fields and coupling" );
+  this->addLogLevel( "logLevel >= 3", "The summary of declared fields and coupling" );
   
   LinearSolverParameters & params = this->m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;

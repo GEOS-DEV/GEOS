@@ -81,8 +81,8 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
 
-  appendLogLevelDescription( "logLevel >= 2", "Output the jacobian matrix" );
-  appendLogLevelDescription( "logLevel >= 2", "Output the residuals values" );
+  addLogLevel( "logLevel >= 2", "Output the jacobian matrix" );
+  addLogLevel( "logLevel >= 2", "Output the residuals values" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
