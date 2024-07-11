@@ -1020,8 +1020,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
+      ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
+      arrayView2d< real64 const > const fluidDensity_n =  fluid.getField<fields::singlefluid::density_n>();
+
       arrayView1d< real64 > const fluidDensity_n = subRegion.getField< fields::flow::density_n >();
       arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
+      arrayView1d< real64 > const mass_n  = subRegion.getField< fields::flow::mass_n >();
+
 
       arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
       arrayView1d< real64 > const elementArea = subRegion.getElementArea();
@@ -1071,7 +1076,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
             {
               initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
               initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
-              initialDensity  = std::min( initialDensity, fluidDensity_n[fractureElementIndex] );
+              initialDensity  = std::min( initialDensity, fluidDensity_n[fractureElementIndex][0] );
             }
           }
         }
@@ -1079,7 +1084,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         {
           fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
           fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
-          createdMass[newElemIndex] =  initialDensity * initialAperture * elementArea;
+          mass_n[newElemIndex] = initialDensity * initialAperture * elementArea[newElemIndex];
+          massCreated[newElemIndex] = mass_n[newElemIndex]; 
+
         }
         else if( m_newFractureInitializationType == InitializationType::Displacement )
         {

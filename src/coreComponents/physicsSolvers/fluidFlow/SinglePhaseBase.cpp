@@ -102,9 +102,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       }
     } );
 
-    elemManager.forElementSubRegions< FaceElmentSubRegion >( regionNames,
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
-                                                                   FaceElmentSubRegion & subRegion )
+                                                                   FaceElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::flow::massCreated >( getName() );
     } );
@@ -470,9 +470,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
-        ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
-        real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-
         subRegion.getWrapper< real64_array >( fields::flow::hydraulicAperture::key() ).
           setApplyDefaultValue( region.getDefaultAperture() );
       } );
