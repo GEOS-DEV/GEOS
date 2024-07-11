@@ -88,19 +88,10 @@ integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterP
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-// Naming conventions
-namespace compositional
-{
-template< int NP > struct PhaseName {};
-template<> struct PhaseName< 2 > { static constexpr char const * catalogName() { return "TwoPhase"; } };
-template<> struct PhaseName< 3 > { static constexpr char const * catalogName() { return "ThreePhase"; } };
-}
-
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
-  return GEOS_FMT( "Compositional{}Fluid{}{}",
-                   compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
+  return GEOS_FMT( "Compositional{}Fluid{}",
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
 }
@@ -116,9 +107,9 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateCons
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessInput()
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
@@ -178,7 +169,7 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
     }
   }
 
-  m_parameters->postProcessInput( this, *m_componentProperties );
+  m_parameters->postInputInitialization( this, *m_componentProperties );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -268,39 +259,21 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModelParame
 
 // Explicit instantiation of the model template.
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashPRPR,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
+    compositional::NegativeTwoPhaseFlashModel,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
 template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashSRKSRK,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
-template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashPRPR,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
-template class CompositionalMultiphaseFluid<
-    compositional::NegativeTwoPhaseFlashSRKSRK,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
-    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+    compositional::NegativeTwoPhaseFlashModel,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
-                        CompositionalTwoPhasePengRobinsonConstantViscosity,
+                        CompositionalTwoPhaseConstantViscosity,
                         string const &,
                         dataRepository::Group * const )
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
-                        CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
-                        string const &,
-                        dataRepository::Group * const )
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase,
-                        CompositionalTwoPhasePengRobinsonLBCViscosity,
-                        string const &,
-                        dataRepository::Group * const )
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase,
-                        CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
+                        CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                         string const &,
                         dataRepository::Group * const )
 

@@ -521,7 +521,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// Material parameter: The default value of the initial yield surface slope
   real64 m_defaultInitialFrictionAngle;

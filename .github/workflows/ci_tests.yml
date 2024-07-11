@@ -5,6 +5,7 @@ on:
     branches: 
       - develop
   pull_request:
+      types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
 # Cancels in-progress workflows for a PR when updated
@@ -15,9 +16,29 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
+  # Checks if PR title follows conventional semantics
+  semantic_pull_request:    
+    permissions:
+      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
+      statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
+      contents: read    
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check if the PR name has conventional semantics
+        uses: amannn/action-semantic-pull-request@e9fabac35e210fea40ca5b14c0da95a099eff26f # v5.4.0
+        id: lint_pr_title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          wip: true
+          # Configure that a scope doesn't need to be provided.
+          requireScope: false
+
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
+    needs: [semantic_pull_request]
     # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
     # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
@@ -238,6 +259,16 @@ jobs:
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: Runner_4core_16GB
 
+  # mac_builds:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #   runs-on: macos-14-xlarge
+  #   steps:
+  #     - run: sysctl -n hw.physicalcpu
+  #     - run: sysctl -h hw.memsize
+  #     - run: sysctl -n machdep.cpu.brand_string
+
+
   # If the 'ci: run CUDA builds' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
@@ -284,6 +315,17 @@ jobs:
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
             DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
+          
+          # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
+          # - name: Rockylinux (8, clang 17.0.6, cuda 12.5)
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.5
+          #   RUNS_ON: streak2
+          #   NPROC: 2
+          #   DOCKER_RUN_ARGS: "--cpus=1 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+          #   DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+          #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)

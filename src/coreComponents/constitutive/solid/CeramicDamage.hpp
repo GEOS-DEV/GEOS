@@ -542,7 +542,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
