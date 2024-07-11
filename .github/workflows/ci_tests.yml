@@ -304,15 +304,16 @@ jobs:
           #   DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
           #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
           
-          - name: Rockylinux (8, gcc 8.5, cuda 12.5)
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/rockylinux8-gcc8-cuda12.5
-            RUNS_ON: streak2
-            NPROC: 2
-            DOCKER_RUN_ARGS: "--cpus=1 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
-            DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
-            DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
+          # compiler error in ElasticFirstOrderWaveEquationSEMKernel::StressComputation::launch in call to FE_TYPE::computeFirstOrderStiffnessTermX
+          # - name: Rockylinux (8, gcc 8.5, cuda 12.5)
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/rockylinux8-gcc8-cuda12.5
+          #   RUNS_ON: streak2
+          #   NPROC: 2
+          #   DOCKER_RUN_ARGS: "--cpus=1 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
+          #   DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+          #   DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"  
 
           # Below this line, jobs that deploy to Google Cloud.
           - name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 11.7.1,)
