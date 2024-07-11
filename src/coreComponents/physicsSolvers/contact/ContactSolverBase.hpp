@@ -56,12 +56,13 @@ public:
   };
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 
   void computeFractureStateStatistics( MeshLevel const & mesh,
                                        globalIndex & numStick,
+                                       globalIndex & numNewSlip,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen ) const;
 

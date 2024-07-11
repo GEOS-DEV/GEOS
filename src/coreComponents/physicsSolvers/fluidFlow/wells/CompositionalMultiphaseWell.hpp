@@ -19,10 +19,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
@@ -285,6 +282,8 @@ public:
 
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
 
+    static constexpr char const * maxRelativeCompDensChangeString() { return "maxRelativeCompDensChange"; }
+
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
 
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
@@ -322,7 +321,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
 
@@ -357,9 +356,9 @@ protected:
    * @param dt the time step dt
    * @param subRegion the well subRegion
    */
-  void validateWellConstraints( real64 const & time_n,
-                                real64 const & dt,
-                                WellElementSubRegion const & subRegion );
+  virtual void validateWellConstraints( real64 const & time_n,
+                                        real64 const & dt,
+                                        WellElementSubRegion const & subRegion ) override;
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
@@ -394,6 +393,9 @@ private:
 
   /// maximum (absolute) change in pressure between two Newton iterations
   real64 m_maxAbsolutePresChange;
+
+  /// maximum (relative) change in component density between two Newton iterations
+  real64 m_maxRelativeCompDensChange;
 
   /// maximum (relative) change in temperature in a Newton iteration
   real64 m_maxRelativeTempChange;

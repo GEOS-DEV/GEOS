@@ -87,6 +87,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
 
+  this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( LvArray::NumericLimits< real64 >::max ). // disabled by default
+    setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
+
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -112,9 +118,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 }
 
-void CompositionalMultiphaseWell::postProcessInput()
+void CompositionalMultiphaseWell::postInputInitialization()
 {
-  WellSolverBase::postProcessInput();
+  WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
@@ -123,6 +129,9 @@ void CompositionalMultiphaseWell::postProcessInput()
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction must larger or equal to 0.0" );
 
+  GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
+                        ": The maximum relative change in component density must be larger than 0.0" );
 }
 
 void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
@@ -172,6 +181,8 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
                                                                    WellElementSubRegion & subRegion )
     {
       string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+      GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                                                  getDataContext(), subRegion.getName() ) );
 
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
@@ -501,28 +512,17 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
-
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-      GEOS_THROW_IF( fluidName.empty(),
-                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     InputError );
-
       string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
       GEOS_THROW_IF( relPermName.empty(),
-                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                     GEOS_FMT( "{}: Relative permeability not found on subregion {}",
                                getDataContext(), subRegion.getName() ),
                      InputError );
 
       validateInjectionStreams( subRegion );
-
-      validateWellConstraints( 0, 0, subRegion );
-
     } );
   } );
 }
@@ -765,7 +765,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         real64 const currentTotalRate = connRate[iwelemRef];
 
         // Step 2.1: compute the inverse of the total density and derivatives
-        massDensity =totalDens[iwelemRef][0];
+        massDensity = totalDens[iwelemRef][0];
         real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
 
         stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
@@ -1404,6 +1404,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                      m_maxAbsolutePresChange,
                                                      m_maxRelativeTempChange,
                                                      m_maxCompFracChange,
+                                                     m_maxRelativeCompDensChange,
                                                      pressure,
                                                      temperature,
                                                      compDens,

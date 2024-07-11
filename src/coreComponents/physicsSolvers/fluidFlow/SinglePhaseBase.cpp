@@ -334,11 +334,12 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.update( porosity );
 }
 
-void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
+real64 SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
   updateMass( subRegion );
   updateMobility( subRegion );
+  return 0.0;
 }
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
@@ -749,12 +750,13 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
 
-      arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
+      arrayView1d< real64 > const dVol = subRegion.getField< fields::flow::deltaVolume >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         vol[ei] += dVol[ei];
+        dVol[ei] = 0.0;
       } );
 
       SingleFluidBase const & fluid =
@@ -802,7 +804,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
           if( volume[ei] * density_n[ei][0] > 1.1 * creationMass[ei] )
           {
             creationMass[ei] *= 0.75;
-            if( creationMass[ei]<1.0e-20 )
+            if( creationMass[ei] < 1.0e-20 )
             {
               creationMass[ei] = 0.0;
             }
@@ -829,11 +831,22 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( dt,
-                     domain,
-                     dofManager,
-                     localMatrix,
-                     localRhs );
+  if( m_isJumpStabilized )
+  {
+    assembleStabilizedFluxTerms( dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
+  }
+  else
+  {
+    assembleFluxTerms( dt,
+                       domain,
+                       dofManager,
+                       localMatrix,
+                       localRhs );
+  }
 }
 
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
@@ -1242,9 +1255,6 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  if( m_keepFlowVariablesConstantDuringInitStep )
-    return;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

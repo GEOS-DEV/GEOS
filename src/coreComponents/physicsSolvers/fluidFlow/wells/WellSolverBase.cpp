@@ -81,9 +81,9 @@ void WellSolverBase::expandObjectCatalogs()
 
 WellSolverBase::~WellSolverBase() = default;
 
-void WellSolverBase::postProcessInput()
+void WellSolverBase::postInputInitialization()
 {
-  SolverBase::postProcessInput();
+  SolverBase::postInputInitialization();
 
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
@@ -106,14 +106,10 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  //this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
-  //setApplyDefaultValue( 0 ).
-  //setInputFlag( InputFlags::OPTIONAL ).
-  //  setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
-
-  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
-                                                   MeshLevel & meshLevel,
-                                                   arrayView1d< string const > const & regionNames )
+  // loop over the wells
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
@@ -121,6 +117,11 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                        [&]( localIndex const,
                                                                             WellElementSubRegion & subRegion )
     {
+      subRegion.registerField< fields::well::pressure >( getName() );
+      subRegion.registerField< fields::well::pressure_n >( getName() );
+
+      subRegion.registerField< fields::well::temperature >( getName() );
+      subRegion.registerField< fields::well::temperature_n >( getName() );
 
       subRegion.registerField< fields::well::gravityCoefficient >( getName() );
 
@@ -131,6 +132,23 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 
       PerforationData * const perforationData = subRegion.getPerforationData();
       perforationData->registerField< fields::well::gravityCoefficient >( getName() );
+    } );
+  } );
+}
+
+void WellSolverBase::initializePostSubGroups()
+{
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+      validateWellConstraints( 0, 0, subRegion );
     } );
   } );
 }
