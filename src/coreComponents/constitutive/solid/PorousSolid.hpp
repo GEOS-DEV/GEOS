@@ -321,9 +321,9 @@ private:
       drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();
 
-      real64 const tmpTemperatureArray[1] = {temperature}; 
+      real64 const tmpTemperatureArray[1] = {temperature};
       real64 dTEC_dT[1] = {0};
-      thermalExpansionCoefficient = TECWrapper.compute(tmpTemperatureArray, dTEC_dT);
+      thermalExpansionCoefficient = TECWrapper.compute( tmpTemperatureArray, dTEC_dT );
       dThermalExpansionCoefficient_dTemperature = dTEC_dT[0];
     }
 
