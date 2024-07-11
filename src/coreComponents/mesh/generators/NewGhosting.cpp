@@ -59,7 +59,8 @@ ElementType convertVtkToGeosxElementTypeGhosting( vtkCell *cell )
     case VTK_HEXAHEDRON:       return ElementType::Hexahedron;
     default:
     {
-      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type in ghosting.\n" );
+      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type in ghosting.\n" <<
+                  generalMeshErrorAdvice );
       return {};
     }
   }
@@ -1460,7 +1461,7 @@ void doTheNewGhosting( vtkSmartPointer< vtkDataSet > mesh,
   // By doing some clever matrix products we can figure out which ranks need what automagically
   // `ghosts` is also a MeshGraph like owned and present, but described the geometric entities which are ghosted onto the rank from another owner
   // recv and send are of type GhostRecv and GhostSend (in BuildPods.hpp) and describe what (nodes, edges, faces, cells) each rank needs to receive from and send to others
-  auto [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
+  auto const [ghosts, recv, send] = performGhosting( owned, present, matrixOffsets, curRank );
 
   // Finally, we use everything we have to populate the mappings that interface with the rest of GEOS
   // Note that we have already done the ghosting, so these mappings are set once and for all

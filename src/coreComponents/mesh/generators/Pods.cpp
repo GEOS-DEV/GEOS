@@ -91,8 +91,7 @@ ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
   return { std::move( toBlockIndex ), m_f2c };
 }
 
-CellBlkImpl::CellBlkImpl( ElementType cellType,
-                          localIndex numCells,
+CellBlkImpl::CellBlkImpl( localIndex numCells,
                           array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                           array2d< localIndex > const & c2e,
                           array2d< localIndex > const & c2f,
@@ -103,44 +102,32 @@ CellBlkImpl::CellBlkImpl( ElementType cellType,
     m_numCells( numCells ),
     m_c2n( c2n ),
     m_c2e( c2e ),
-    m_c2f( c2f ),
-    m_cellType( cellType )
+    m_c2f( c2f )
 { }
 
 ElementType CellBlkImpl::getElementType() const
 {
-  // return m_cellType;
   return ElementType::Hexahedron;
 }
 
 localIndex CellBlkImpl::numNodesPerElement() const
 {
-  // return m_c2n.size(1);
   return 8;
 }
 
 localIndex CellBlkImpl::numEdgesPerElement() const
 {
-  // return m_c2e.size(1);
   return 12;
 }
 
 localIndex CellBlkImpl::numFacesPerElement() const
 {
-  // return m_c2f.size(1);
   return 6;
 }
 
 std::map< string, generators::CellBlk const * > CellMgrImpl::getCellBlks() const
 {
-  // std::map< string, generators::CellBlk const * > ret;
-
-  // for (auto const & [blkName, cellBlk] : m_cellBlks)
-  // {
-  //   ret[blkName] = & cellBlk;
-  // }
-
-  return { { string( "hexahedra" ), &m_cellBlk } };
+  return { { string( "hexahedra" ), &m_cellBlk } };  // TODO hard coded values.
 }
 
 } // end of namespace
