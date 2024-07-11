@@ -88,8 +88,8 @@ struct GhostRecv
 void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
-                GhostRecv const & recv,
-                GhostSend const & send,
+                GhostRecv  & recv,
+                GhostSend  & send,
                 MeshMappingImpl & meshMappings );
 
 }

@@ -209,7 +209,8 @@ class CellBlkImpl : public generators::CellBlk
 public:
   CellBlkImpl() = default;
 
-  CellBlkImpl( localIndex numCells,
+  CellBlkImpl( ElementType cellType,
+               localIndex numCells,
                array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                array2d< localIndex > const & c2e,
                array2d< localIndex > const & c2f,
@@ -266,6 +267,7 @@ private:
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_c2n;
   array2d< localIndex > m_c2e;
   array2d< localIndex > m_c2f;
+  ElementType m_cellType;
 };
 
 class CellMgrImpl : public generators::CellMgr
@@ -273,6 +275,7 @@ class CellMgrImpl : public generators::CellMgr
 public:
   CellMgrImpl() = default;
 
+  // CellMgrImpl( std::map< string, CellBlkImpl > && cellBlks )
   CellMgrImpl( CellBlkImpl && cellBlks )
     :
     m_cellBlk( cellBlks )
@@ -281,7 +284,8 @@ public:
   [[nodiscard]] std::map< string, generators::CellBlk const * > getCellBlks() const override;
 
 private:
-  CellBlkImpl m_cellBlk;
+  // std::map< string, CellBlkImpl >  m_cellBlks;
+  CellBlkImpl  m_cellBlk;
 };
 
 class MeshMappingImpl : public generators::MeshMappings
