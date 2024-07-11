@@ -82,7 +82,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< fields::well::temperature_n >( getName() );
       subRegion.registerField< fields::well::temperature >( getName() );
-      
+
       subRegion.registerField< fields::well::connectionRate_n >( getName() );
       subRegion.registerField< fields::well::connectionRate >( getName() );
 
