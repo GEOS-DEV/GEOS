@@ -30,7 +30,7 @@ Preprints and Early-Views
        | `doi.org/10.1016/j.ijhydene.2023.09.165 <https://doi.org/10.1016/j.ijhydene.2023.09.165>`_ 
 
    * - | **Constrained pressure-temperature residual (CPTR) preconditioner performance for large-scale thermal CO2 injection simulation**
-       | MA Cremon, J Franc, PF Hamon
+       | MA Cremon, J Franc, FP Hamon
        | Computational Geosciences
        | `doi.org/10.1007/s10596-024-10292-z <https://doi.org/10.1007/s10596-024-10292-z>`_ 
 
