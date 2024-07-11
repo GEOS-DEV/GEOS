@@ -14,10 +14,30 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
+   * - | **A benchmark study on reactive two-phase flow in porous media: Part II - results and discussion**
+       | E Ahusborde, B Amaziane, S de Hoop, M El Ossmani, E Flauraud, FP Hamon, M Kern, A Socié, D Su, KU Mayer, M Tóth, D Voskov
+       | Computational Geosciences
+       | `doi.org/10.1007/s10596-024-10269-y <https://doi.org/10.1007/s10596-024-10269-y>`_ 
+
    * - | **Pressure-stabilized fixed-stress iterative solutions of compositional poromechanics**
        | RM Aronson, N Castelletto, FP Hamon, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
-       | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_ 
+       | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_
+
+   * - | **Managing reservoir dynamics when converting natural gas fields to underground hydrogen storage**
+       | JT Camargo, JA White, FP Hamon, V Fakeye, TA Buscheck, N Huerta
+       | International Journal of Hydrogen Energy
+       | `doi.org/10.1016/j.ijhydene.2023.09.165 <https://doi.org/10.1016/j.ijhydene.2023.09.165>`_ 
+
+   * - | **Constrained pressure-temperature residual (CPTR) preconditioner performance for large-scale thermal CO2 injection simulation**
+       | MA Cremon, J Franc, PF Hamon
+       | Computational Geosciences
+       | `doi.org/10.1007/s10596-024-10292-z <https://doi.org/10.1007/s10596-024-10292-z>`_ 
+
+   * - | **Surrogate model for geological CO2 storage and its use in hierarchical MCMC history matching**
+       | Y Han, FP Hamon, S Jiang, LJ Durlofsky
+       | Advances in Water Resources
+       | `doi:10.1016/j.advwatres.2024.104678 <https://doi.org/10.1016/j.advwatres.2024.104678>`_
 
    * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
        | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
