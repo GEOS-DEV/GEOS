@@ -16,8 +16,8 @@
  * @file ToParticleRelation.hpp
  */
 
-#ifndef GEOSX_MESH_TOPARTICLERELATION_HPP_
-#define GEOSX_MESH_TOPARTICLERELATION_HPP_
+#ifndef GEOS_MESH_TOPARTICLERELATION_HPP_
+#define GEOS_MESH_TOPARTICLERELATION_HPP_
 
 #include "InterObjectRelation.hpp"
 
@@ -185,4 +185,4 @@ void reserveNeighbors( OrderedVariableToManyParticleRelation & relation,
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_TOPARTICLERELATION_HPP_ */
+#endif /* GEOS_MESH_TOPARTICLERELATION_HPP_ */

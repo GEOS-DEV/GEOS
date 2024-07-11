@@ -102,22 +102,22 @@
 #cmakedefine GEOS_USE_SEPARATION_COEFFICIENT
 
 /// CMake option CMAKE_BUILD_TYPE
-#cmakedefine GEOSX_CMAKE_BUILD_TYPE @GEOSX_CMAKE_BUILD_TYPE@
+#cmakedefine GEOS_CMAKE_BUILD_TYPE @GEOS_CMAKE_BUILD_TYPE@
 
 /// The type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE @GEOSX_LOCALINDEX_TYPE@
+#define GEOS_LOCALINDEX_TYPE @GEOS_LOCALINDEX_TYPE@
 
 /// An integer flag representing the type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE_FLAG @GEOSX_LOCALINDEX_TYPE_FLAG@
+#define GEOS_LOCALINDEX_TYPE_FLAG @GEOS_LOCALINDEX_TYPE_FLAG@
 
 /// The type that globalIndex will be aliased to.
-#define GEOSX_GLOBALINDEX_TYPE @GEOSX_GLOBALINDEX_TYPE@
+#define GEOS_GLOBALINDEX_TYPE @GEOS_GLOBALINDEX_TYPE@
 
 /// An integer flag representing the type that globalIndex will be aliased to.
-#define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
+#define GEOS_GLOBALINDEX_TYPE_FLAG @GEOS_GLOBALINDEX_TYPE_FLAG@
 
 /// The default block size for GEOSX on this platform
-#cmakedefine GEOSX_BLOCK_SIZE @GEOSX_BLOCK_SIZE@
+#cmakedefine GEOS_BLOCK_SIZE @GEOS_BLOCK_SIZE@
 
 /// Version information for HDF5
 #cmakedefine HDF5_VERSION @HDF5_VERSION@

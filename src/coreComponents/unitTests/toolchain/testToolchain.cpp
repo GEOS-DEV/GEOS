@@ -23,7 +23,7 @@ TEST( Toolchain, NDEBUGfromTPls )
    * we check that we are in RelWithDebInfo or Release build type when NDEBUG is defined and in Debug
    * configuration when NDEBUG is not defined: thus, LvArray assertions remain in Debug builds.
    */
-  bool constexpr isDebug = std::string_view( GEOSX_CMAKE_BUILD_TYPE ) == std::string_view( "Debug" );
+  bool constexpr isDebug = std::string_view( GEOS_CMAKE_BUILD_TYPE ) == std::string_view( "Debug" );
 
 #ifdef NDEBUG
   ASSERT_FALSE( isDebug );  // RelWithDebInfo or Release builds only

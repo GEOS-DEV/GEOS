@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_WELLBLOCKABC_HPP
-#define GEOSX_WELLBLOCKABC_HPP
+#ifndef GEOS_WELLBLOCKABC_HPP
+#define GEOS_WELLBLOCKABC_HPP
 
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
@@ -165,4 +165,4 @@ public:
 
 }
 
-#endif //GEOSX_WELLBLOCKABC_HPP
+#endif //GEOS_WELLBLOCKABC_HPP

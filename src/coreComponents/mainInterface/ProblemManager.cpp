@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+#define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 // Source includes
 #include "ProblemManager.hpp"

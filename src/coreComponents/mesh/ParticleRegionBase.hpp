@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_PARTICLEREGIONBASE_HPP
-#define GEOSX_MESH_PARTICLEREGIONBASE_HPP
+#ifndef GEOS_MESH_PARTICLEREGIONBASE_HPP
+#define GEOS_MESH_PARTICLEREGIONBASE_HPP
 
 #include "ParticleSubRegion.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -350,4 +350,4 @@ string_array ParticleRegionBase::getConstitutiveNames() const
 
 
 
-#endif /* GEOSX_MESH_PARTICLEREGIONBASE_HPP */
+#endif /* GEOS_MESH_PARTICLEREGIONBASE_HPP */

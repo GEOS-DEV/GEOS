@@ -51,7 +51,7 @@ endforeach( )
 set( GEOS_USE_HYPRE_DEVICE "GEOS_USE_HYPRE_${ENABLE_HYPRE_DEVICE}" )
 message( STATUS "GEOS_USE_HYPRE_DEVICE = ${GEOS_USE_HYPRE_DEVICE}")
 
-set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
+set( GEOS_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                 ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp )

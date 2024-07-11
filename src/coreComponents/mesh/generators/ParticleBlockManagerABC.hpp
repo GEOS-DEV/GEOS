@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PARTICLEBLOCKMANAGERABC_HPP
-#define GEOSX_PARTICLEBLOCKMANAGERABC_HPP
+#ifndef GEOS_PARTICLEBLOCKMANAGERABC_HPP
+#define GEOS_PARTICLEBLOCKMANAGERABC_HPP
 
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"

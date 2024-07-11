@@ -16,7 +16,7 @@
  * @file SolidMechanicsLagrangeContact.cpp
  *
  */
-#define GEOSX_DISPATCH_VEM
+#define GEOS_DISPATCH_VEM
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"

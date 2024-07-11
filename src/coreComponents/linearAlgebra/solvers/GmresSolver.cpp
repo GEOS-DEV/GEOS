@@ -165,7 +165,7 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
       }
 
       H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
+      GEOS_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column

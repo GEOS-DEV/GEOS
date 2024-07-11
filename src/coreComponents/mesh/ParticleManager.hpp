@@ -16,8 +16,8 @@
  * @file ParticleManager.hpp
  */
 
-#ifndef GEOSX_MESH_PARTICLEREGIONMANAGER_HPP
-#define GEOSX_MESH_PARTICLEREGIONMANAGER_HPP
+#ifndef GEOS_MESH_PARTICLEREGIONMANAGER_HPP
+#define GEOS_MESH_PARTICLEREGIONMANAGER_HPP
 
 #include "generators/ParticleBlock.hpp"
 #include "generators/ParticleBlockManager.hpp"
@@ -1518,4 +1518,4 @@ ParticleManager::constructFullConstitutiveAccessor( constitutive::ConstitutiveMa
 }
 
 }
-#endif /* GEOSX_MESH_PARTICLEREGIONMANAGER_HPP */
+#endif /* GEOS_MESH_PARTICLEREGIONMANAGER_HPP */

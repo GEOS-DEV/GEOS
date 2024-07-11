@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_WELLBLOCK_HPP
-#define GEOSX_WELLBLOCK_HPP
+#ifndef GEOS_WELLBLOCK_HPP
+#define GEOS_WELLBLOCK_HPP
 
 #include "mesh/generators/LineBlockABC.hpp"
 

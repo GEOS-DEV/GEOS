@@ -29,7 +29,7 @@
 
 // Pre-define some suitesparse variables since they are not properly defined
 // in the header for alternate index types.
-//#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+//#if GEOS_GLOBALINDEX_TYPE_FLAG==0
 #if 0
 /// Set alias for SuiteSparse_long
 #define SuiteSparse_long int

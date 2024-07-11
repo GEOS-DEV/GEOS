@@ -70,10 +70,10 @@ void RAJA_INLINE parallelHostSync() { }
 #if defined( GEOS_USE_CUDA )
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
-template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOS_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
 
-template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOS_BLOCK_SIZE >
 using parallelDeviceAsyncPolicy = RAJA::cuda_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Cuda;
@@ -96,7 +96,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
-template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOS_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
 
@@ -109,7 +109,7 @@ using parallelDeviceAtomic = RAJA::hip_atomic;
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
 
 // the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
-template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOS_BLOCK_SIZE >
 using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >; // RAJA::hip_exec_async< BLOCK_SIZE >;
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >

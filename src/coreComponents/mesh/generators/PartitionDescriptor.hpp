@@ -16,8 +16,8 @@
  * @file PartitionDescriptor.hpp
  */
 
-#ifndef GEOSX_MESH_PARTITIONDESCRIPTOR_H_
-#define GEOSX_MESH_PARTITIONDESCRIPTOR_H_
+#ifndef GEOS_MESH_PARTITIONDESCRIPTOR_H_
+#define GEOS_MESH_PARTITIONDESCRIPTOR_H_
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
@@ -94,4 +94,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_PARTITIONDESCRIPTOR_H_ */
+#endif /* GEOS_MESH_PARTITIONDESCRIPTOR_H_ */

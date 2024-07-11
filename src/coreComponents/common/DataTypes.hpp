@@ -123,10 +123,10 @@ using size_t      = std::size_t;
 using integer     = std::int32_t;
 
 /// Local index type (for indexing objects within an MPI partition).
-using localIndex  = GEOSX_LOCALINDEX_TYPE;
+using localIndex  = GEOS_LOCALINDEX_TYPE;
 
 /// Global index type (for indexing objects across MPI partitions).
-using globalIndex = GEOSX_GLOBALINDEX_TYPE;
+using globalIndex = GEOS_GLOBALINDEX_TYPE;
 
 /// String type.
 using string      = std::string;

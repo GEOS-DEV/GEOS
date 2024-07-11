@@ -45,7 +45,7 @@
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
 
-#if defined( GEOSX_DISPATCH_VEM )
+#if defined( GEOS_DISPATCH_VEM )
 
 #define VEM_1_TYPES \
   finiteElement::H1_Tetrahedron_VEM_Gauss1, \

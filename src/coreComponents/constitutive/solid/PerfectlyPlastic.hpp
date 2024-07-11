@@ -16,8 +16,8 @@
  *  @file PerfectlyPlastic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP
+#define GEOS_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -337,4 +337,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_PERFECTLYPLASTIC_HPP_ */

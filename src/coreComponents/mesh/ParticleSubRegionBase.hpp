@@ -16,8 +16,8 @@
  * @file ParticleSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_
-#define GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_
+#ifndef GEOS_MESH_PARTICLESUBREGIONBASE_HPP_
+#define GEOS_MESH_PARTICLESUBREGIONBASE_HPP_
 
 #include "mesh/ParticleType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -483,4 +483,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_ */
+#endif /* GEOS_MESH_PARTICLESUBREGIONBASE_HPP_ */

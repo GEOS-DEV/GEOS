@@ -102,22 +102,22 @@
 /* #undef GEOS_USE_SEPARATION_COEFFICIENT */
 
 /// CMake option CMAKE_BUILD_TYPE
-#define GEOSX_CMAKE_BUILD_TYPE "Release"
+#define GEOS_CMAKE_BUILD_TYPE "Release"
 
 /// The type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE int
+#define GEOS_LOCALINDEX_TYPE int
 
 /// An integer flag representing the type that localIndex will be aliased to.
-#define GEOSX_LOCALINDEX_TYPE_FLAG 0
+#define GEOS_LOCALINDEX_TYPE_FLAG 0
 
 /// The type that globalIndex will be aliased to.
-#define GEOSX_GLOBALINDEX_TYPE long long int
+#define GEOS_GLOBALINDEX_TYPE long long int
 
 /// An integer flag representing the type that globalIndex will be aliased to.
-#define GEOSX_GLOBALINDEX_TYPE_FLAG 2
+#define GEOS_GLOBALINDEX_TYPE_FLAG 2
 
 /// The default block size for GEOSX on this platform
-#define GEOSX_BLOCK_SIZE 32
+#define GEOS_BLOCK_SIZE 32
 
 /// Version information for HDF5
 #define HDF5_VERSION 1.12.1

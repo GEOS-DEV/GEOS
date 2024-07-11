@@ -16,8 +16,8 @@
  * @file ParticleType.hpp
  */
 
-#ifndef GEOSX_MESH_PARTICLETYPE_HPP
-#define GEOSX_MESH_PARTICLETYPE_HPP
+#ifndef GEOS_MESH_PARTICLETYPE_HPP
+#define GEOS_MESH_PARTICLETYPE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 
@@ -44,4 +44,4 @@ ENUM_STRINGS( ParticleType,
 
 } // namespace geos
 
-#endif //GEOSX_MESH_PARTICLETYPE_HPP
+#endif //GEOS_MESH_PARTICLETYPE_HPP

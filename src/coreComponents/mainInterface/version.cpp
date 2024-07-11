@@ -21,10 +21,10 @@ namespace geos
 
 std::string getVersion()
 {
-#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
-  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
+#if defined(GEOS_GIT_BRANCH) && defined(GEOS_GIT_HASH)
+  return GEOS_VERSION_FULL " (" GEOS_GIT_BRANCH ", sha1: " GEOS_GIT_HASH ")";
 #else
-  return GEOSX_VERSION_FULL;
+  return GEOS_VERSION_FULL;
 #endif
 }
 

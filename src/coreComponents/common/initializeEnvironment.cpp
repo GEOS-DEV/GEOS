@@ -196,7 +196,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   adiak::value ( "compiler version", "unknown" );
 #endif
 
-  adiak::value( "build type", GEOSX_CMAKE_BUILD_TYPE );
+  adiak::value( "build type", GEOS_CMAKE_BUILD_TYPE );
   adiak::value( "compilation date", __DATE__ );
 
   // OpenMP info
@@ -227,8 +227,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   int hipDriverVersion = 0;
 #if defined( GESOX_USE_HIP )
   adiak::value( "HIP", "On" )
-  GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
-  GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
+  GEOS_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
+  GEOS_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
 #else
   adiak::value( "HIP", "Off" );
 #endif

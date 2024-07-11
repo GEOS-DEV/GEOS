@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_PARTICLEBLOCK_HPP_
-#define GEOSX_MESH_PARTICLEBLOCK_HPP_
+#ifndef GEOS_MESH_PARTICLEBLOCK_HPP_
+#define GEOS_MESH_PARTICLEBLOCK_HPP_
 
 #include "mesh/generators/ParticleBlockABC.hpp"
 #include "mesh/ParticleType.hpp"
@@ -271,4 +271,4 @@ private:
 
 }
 
-#endif /* GEOSX_MESH_CELLBLOCK_HPP_ */
+#endif /* GEOS_MESH_CELLBLOCK_HPP_ */
