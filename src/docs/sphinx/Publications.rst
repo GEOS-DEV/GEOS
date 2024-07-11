@@ -29,6 +29,7 @@ Preprints and Early-Views
        | Journal of Computational Physics
        | `doi:10.1016/j.jcp.2024.113163 <https://doi.org/10.1016/j.jcp.2024.113163>`_
 
+
 2023
 ====
 
@@ -40,6 +41,11 @@ Preprints and Early-Views
        | F Fei, A Costa, JE Dolbow, R Settgast, M Cusini
        | International Journal for Numerical and Analytical Methods in Geomechanics
        | `doi.org/10.1002/nag.3612 <https://doi.org/10.1002/nag.3612>`_
+
+   * - | **Validation and Application of a Three-Dimensional Model for Simulating Proppant Transport and Fracture Conductivity**
+       | J Huang, Y Hao, RR Settgast, JA White, K Mateen, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_ 
 
 
 2022
@@ -78,11 +84,6 @@ Preprints and Early-Views
        | M Frigo, N Castelletto, M Ferronato
        | Computers & Mathematics with Applications
        | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_ 
-
-   * - | **Validation and Application of a Three-Dimensional Model for Simulating Proppant Transport and Fracture Conductivity**
-       | J Huang, Y Hao, RR Settgast, JA White, K Mateen, H Gross
-       | Rock Mechanics and Rock Engineering
-       | `doi:10.1007/s00603-022-03092-3 <https://doi.org/10.1007/s00603-022-03092-3>`_ 
 
    * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
        | CS Lee, FP Hamon, N Castelletto, PS Vassilevski, JA White
