@@ -137,7 +137,8 @@ public:
    * By default it displays the axis value.
    * I.E to display a customized axis to show the pressures in y axis, a rowFmt value can be : "pressure [K] = {}"
    */
-  TableDataHolder buildTableData( string_view dataDescription, string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
+  TableDataHolder buildTableData( string_view dataDescription,
+                                  string_view rowFmt = "{}", string_view columnFmt = "{}" ) const;
 
 private:
   /// @brief all cell values by their [ row ][ column ]
