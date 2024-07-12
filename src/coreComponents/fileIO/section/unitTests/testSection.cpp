@@ -13,7 +13,7 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "codingUtilities/Section.hpp"
+#include "fileIO/section/Section.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -24,17 +24,17 @@ TEST( testSection, sectionWithTitle )
   Section section( "section name" );
   section.beginSection( oss );
   EXPECT_EQ( oss.str(),
-             "\n##########################\n"
-             "##     section name     ##\n"
-             "##########################\n\n"
+             "\n######################################################################\n"
+             "##                           section name                           ##\n"
+             "######################################################################\n\n"
              );
   oss.clear();
   oss.str( "" );
 
   section.endSection( oss );
   EXPECT_EQ( oss.str(),
-             "\n##  End : section name  ##\n"
-             "##########################\n\n"
+             "\n##                        End : section name                        ##\n"
+             "######################################################################\n\n"
              );
   oss.clear();
 }
@@ -46,10 +46,10 @@ TEST( testSection, sectionWithTitleAndOneDescription )
   section.addDescription( "description name" );
   section.beginSection( oss );
   EXPECT_EQ( oss.str(),
-             "\n##########################\n"
-             "##     section name     ##\n"
-             "##########################\n"
-             "##  description name    ##\n\n"
+             "\n######################################################################\n"
+             "##                           section name                           ##\n"
+             "######################################################################\n"
+             "##  description name                                                ##\n\n"
              );
   oss.clear();
 }

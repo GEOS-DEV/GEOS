@@ -70,12 +70,12 @@ public:
 private:
 
   /**
-   * @brief Compute the max string size (m_rowLength) between title and the description(s)
+   * @brief Compute the max string size (m_sectionWidth) between title and the description(s)
    * @param m_sectionTitle The table title
    * @param descriptions The descriptions vector
    * @return The max row length of the section
    */
-  void computeMaxWidth( string_view m_sectionTitle,
+  void computeWidth( string_view m_sectionTitle,
                         std::vector< string > const & descriptions );
 
   /**
@@ -92,7 +92,7 @@ private:
   /// title of section
   string m_sectionTitle;
   /// section length
-  integer m_rowLength;
+  integer m_sectionWidth;
   /// min width of section length
   integer m_rowMinWidth;
 
@@ -100,6 +100,9 @@ private:
   static constexpr integer m_marginBorder = 2;
   /// numbers of character used as border
   static constexpr integer m_nbSpecialChar = 2;
+
+  /// Start title footer string
+  static string_view constexpr m_footerTitle = "End : ";
 
 };
 

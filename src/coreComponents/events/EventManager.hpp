@@ -18,7 +18,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
-#include "codingUtilities/Section.hpp"
+#include "fileIO/section/Section.hpp"
 
 namespace geos
 {

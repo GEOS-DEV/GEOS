@@ -24,7 +24,7 @@ namespace geos
 
 Section::Section( string_view sectionTitle ):
   m_sectionTitle( string( sectionTitle ) ),
-  m_rowMinWidth( 20 )
+  m_rowMinWidth( 70 )
 {}
 
 void Section::addDescription( string_view description )
@@ -37,13 +37,12 @@ void Section::setMinWidth( integer const & minWidth )
   m_rowMinWidth = minWidth;
 }
 
-void Section::computeMaxWidth( string_view title,
+void Section::computeWidth( string_view title,
                                std::vector< string > const & rowsDescription )
 {
-  string const footerStr = "End : ";
-  integer const titleLength = footerStr.length() + title.length() + m_marginBorder * 2 + m_nbSpecialChar * 2;
+  integer const titleLength = m_footerTitle.length() + title.length() + m_marginBorder * 2 + m_nbSpecialChar * 2;
 
-  m_rowLength = std::max( m_rowMinWidth, titleLength );
+  m_sectionWidth = std::max( m_rowMinWidth, titleLength );
 
   if( rowsDescription.size() == 0 )
   {
@@ -60,7 +59,7 @@ void Section::computeMaxWidth( string_view title,
   integer const maxDescriptionLength = integer( maxDescriptionSize.length()) +
                                        m_marginBorder * 2 + m_nbSpecialChar * 2;
 
-  m_rowLength = std::max( maxDescriptionLength, m_rowLength );
+  m_sectionWidth = std::max( maxDescriptionLength, m_sectionWidth );
 }
 
 void Section::formatAndInsertDescriptions( string_view descriptionName,
@@ -79,12 +78,12 @@ void Section::formatAndInsertDescriptions( string_view descriptionName,
 
 void Section::beginSection( std::ostream & oss )
 {
-  computeMaxWidth( m_sectionTitle, m_descriptions );
+  computeWidth( m_sectionTitle, m_descriptions );
 
-  string const lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_rowLength );
+  string const lineSection =  GEOS_FMT( "{:#>{}}\n", "", m_sectionWidth );
   string const horizontalChars =  GEOS_FMT( "{:#<{}}", "", m_nbSpecialChar );
-  integer const titleLength = m_rowLength - m_nbSpecialChar * 2;
-  integer const descriptionLength = m_rowLength - m_nbSpecialChar * 2 - m_marginBorder;
+  integer const titleLength = m_sectionWidth - m_nbSpecialChar * 2;
+  integer const descriptionLength = m_sectionWidth - m_nbSpecialChar * 2 - m_marginBorder;
 
   //build section title
   oss << '\n';
@@ -109,10 +108,10 @@ void Section::beginSection( std::ostream & oss )
 
 void Section::endSection( std::ostream & oss ) const
 {
-  string const footerTitle = GEOS_FMT( "{} {}", "End :", m_sectionTitle );
-  string const lineSection = GEOS_FMT( "{:#^{}}\n", "", m_rowLength );
+  string const footerTitle = GEOS_FMT( "{}{}", m_footerTitle, m_sectionTitle );
+  string const lineSection = GEOS_FMT( "{:#^{}}\n", "", m_sectionWidth );
   string const horizontalChars =  GEOS_FMT( "{:#<{}}", "", m_nbSpecialChar );
-  integer const titleLength = m_rowLength - m_nbSpecialChar * 2;
+  integer const titleLength = m_sectionWidth - m_nbSpecialChar * 2;
 
   oss << '\n';
   oss << GEOS_FMT( "{}{:^{}}{}\n", horizontalChars, footerTitle, titleLength, horizontalChars );

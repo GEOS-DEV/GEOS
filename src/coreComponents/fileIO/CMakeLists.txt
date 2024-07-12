@@ -6,6 +6,7 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     section/Section.hpp
      Table/TableLayout.hpp
      Table/TableFormatter.hpp
      Table/TableData.hpp
@@ -25,6 +26,7 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     section/Section.cpp
      Table/TableLayout.cpp
      Table/TableFormatter.cpp
      Table/TableData.cpp
@@ -96,6 +98,7 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( Table/unitTests )
+  add_subdirectory( section/unitTests )
 endif()
 
 
