@@ -68,6 +68,9 @@ public:
               std::is_same_v< typename PHASE2::Enthalpy, PVTProps::NoOpPVTFunction > );
   }
 
+  static constexpr integer min_n_components = 2;
+  static constexpr integer max_n_components = 2;
+
   virtual bool isThermal() const override
   {
     return thermal();

@@ -23,7 +23,7 @@
 #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/CO2BrineFluid.hpp"
 
-#include "common/GeosxConfig.hpp"
+#include "common/TypeDispatch.hpp"
 #ifdef GEOSX_USE_PVTPackage
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp"
 #endif
@@ -81,46 +81,6 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 
 namespace detail
 {
-
-// Lists the possible numbers of components supported by a fluid type
-// Most of the fluid types support only 2 components so this is the default
-template< typename FLUID_TYPE >
-struct Components
-{
-  using type = camp::int_seq< integer, 2 >;
-};
-
-// Dead oil fluid model supports 2 or 3 components
-template<>
-struct Components< DeadOilFluid >
-{
-  using type = camp::int_seq< integer, 2, 3 >;
-};
-
-// Blackoil fluid model supports 3 components
-template<>
-struct Components< BlackOilFluid >
-{
-  using type = camp::int_seq< integer, 3 >;
-};
-
-// Compositional fluid models support anything from 2 to 5 components
-template<>
-struct Components< CompositionalMultiphaseFluidPVTPackage >
-{
-  using type = camp::int_seq< integer, 2, 3, 4, 5 >;
-};
-template<>
-struct Components< CompositionalTwoPhaseLohrenzBrayClarkViscosity >
-{
-  using type = camp::int_seq< integer, 2, 3, 4, 5 >;
-};
-template<>
-struct Components< CompositionalTwoPhaseConstantViscosity >
-{
-  using type = camp::int_seq< integer, 2, 3, 4, 5 >;
-};
-
 /**
  * @brief Structure to execute a lambda on a fluid model depending on the number of components
  * @tparam THERMAL_ACTIVE Determines if the call has been deactivated due to the lambda being thermal
@@ -128,8 +88,7 @@ struct Components< CompositionalTwoPhaseConstantViscosity >
  * @tparam COMPONENT_LIST Type listing the components to expand over
  */
 template< bool THERMAL_ACTIVE, typename COMPONENT_LIST >
-struct ComponentSelector
-{};
+struct ComponentSelector;
 
 /** @brief If the call is deactivated due to the fluid not being thermal
  */
@@ -143,8 +102,8 @@ struct ComponentSelector< false, COMPONENT_LIST >
   {}
 };
 
-template< integer ... Is >
-struct ComponentSelector< true, camp::int_seq< integer, Is ... > >
+template< camp::idx_t ... Is >
+struct ComponentSelector< true, camp::idx_seq< Is ... > >
 {
   template< typename FluidType, typename LAMBDA >
   static void execute( int numComps, FluidType & fluid, LAMBDA && lambda )
@@ -178,7 +137,8 @@ void constitutiveComponentUpdatePassThru( MultiFluidBase & fluidBase,
   constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
   {
     using FluidType = TYPEOFREF( fluid );
-    using Components = typename detail::Components< FluidType >::type;
+    static_assert( FluidType::min_n_components <= FluidType::max_n_components );
+    using Components = typename types::IntegerSequence< FluidType::min_n_components, FluidType::max_n_components >::type;
     constexpr bool active = !THERMAL || FluidType::thermal();
     detail::ComponentSelector< active, Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
   } );
