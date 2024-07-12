@@ -288,10 +288,14 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     }
   }
 
+
   if( m_useTaper==1 )
   {
+    real32 vMax;
+    vMax = getGlobalMaxWavespeed( mesh, regionNames );
+
     arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), X, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, 1500.0, m_reflectivityCoeff, taperCoeff );
+    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), X, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff, taperCoeff );
   }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
