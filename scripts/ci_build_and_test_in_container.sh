@@ -257,6 +257,7 @@ else
     echo "DATA_BASENAME_WE=${DATA_BASENAME_WE}"
     echo "GEOS_TPL_DIR=${GEOS_TPL_DIR}"
     echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}"
+    GEOS_TPL_DIR=${GEOSX_TPL_DIR}
     echo tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
