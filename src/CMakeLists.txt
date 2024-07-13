@@ -144,7 +144,7 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} )
+                               ${externalComponentsLinkList} fmt::fmt-header-only )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )

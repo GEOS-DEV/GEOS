@@ -34,7 +34,7 @@ set( fileIO_sources
      timeHistory/PackCollection.cpp
      timeHistory/HDFHistoryIO.cpp )
 
-set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
+set( dependencyList ${parallelDeps} mesh constitutive HDF5::HDF5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp
