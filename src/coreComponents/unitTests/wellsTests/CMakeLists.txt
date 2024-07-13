@@ -6,9 +6,9 @@ set( gtest_geosx_tests
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core ${parallelDeps} )
+  list( APPEND dependencyList geosx_core ${parallelDeps} HDF::HDF5 )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} ${parallelDeps} )
+  list( APPEND dependencyList ${geosx_core_libs} ${parallelDeps} HDF::HDF5 )
 endif()
 
 if( ENABLE_PVTPackage )

@@ -19,9 +19,9 @@ set( multi_files
 set( dependencyList ${parallelDeps} gtest optionparser HDF5::HDF5 )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core )
+  list( APPEND dependencyList geosx_core HDF::HDF5 )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} HDF::HDF5 )
 endif()
 
 if (TARGET pugixml::pugixml)
