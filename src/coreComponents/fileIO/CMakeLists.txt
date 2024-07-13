@@ -50,13 +50,13 @@ endif()
 
 if( ENABLE_MPI )
   add_subdirectory( coupling/hdf5_interface )
-  list( APPEND dependencyList mpi hdf5_interface )
+  list( APPEND dependencyList mpi hdf5_interface HDF5::HDF5 )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
 endif()
 
 if( ENABLE_SILO )
-  list( APPEND dependencyList silo )
+  list( APPEND dependencyList silo HDF5::HDF5)
   list( APPEND fileIO_headers 
                silo/SiloFile.hpp 
                Outputs/SiloOutput.hpp )
