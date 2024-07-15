@@ -80,10 +80,10 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testInvalidComponents )
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testThermal )
 {
-  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, []( auto &, auto )
+  EXPECT_THROW( constitutiveComponentUpdatePassThru< true >( getFluid(), 2, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } );
+  } ), InputError );
 }
 
 TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testValidComponents )
@@ -151,15 +151,8 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testInvali
 
 TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testThermal )
 {
-  constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto )
+  EXPECT_THROW( constitutiveComponentUpdatePassThru< true >( getFluid(), 2, [&]( auto &, auto )
   {
     FAIL(); // Shouldn't be called
-  } );
-}
-
-int main( int argc, char * * argv )
-{
-  ::testing::InitGoogleTest( &argc, argv );
-  int const result = RUN_ALL_TESTS();
-  return result;
+  } ), InputError );
 }

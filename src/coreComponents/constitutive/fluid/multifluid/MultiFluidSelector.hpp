@@ -83,27 +83,13 @@ namespace detail
 {
 /**
  * @brief Structure to execute a lambda on a fluid model depending on the number of components
- * @tparam THERMAL_ACTIVE Determines if the call has been deactivated due to the lambda being thermal
- *         but the fluid model not being thermal
  * @tparam COMPONENT_LIST Type listing the components to expand over
  */
-template< bool THERMAL_ACTIVE, typename COMPONENT_LIST >
+template< typename COMPONENT_LIST >
 struct ComponentSelector;
 
-/** @brief If the call is deactivated due to the fluid not being thermal
- */
-template< typename COMPONENT_LIST >
-struct ComponentSelector< false, COMPONENT_LIST >
-{
-  template< typename FluidType, typename LAMBDA >
-  static void execute( int GEOS_UNUSED_PARAM( numComps ),
-                       FluidType & GEOS_UNUSED_PARAM( fluid ),
-                       LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
-  {}
-};
-
 template< camp::idx_t ... Is >
-struct ComponentSelector< true, camp::idx_seq< Is ... > >
+struct ComponentSelector< camp::idx_seq< Is ... > >
 {
   template< typename FluidType, typename LAMBDA >
   static void execute( int numComps, FluidType & fluid, LAMBDA && lambda )
@@ -139,8 +125,15 @@ void constitutiveComponentUpdatePassThru( MultiFluidBase & fluidBase,
     using FluidType = TYPEOFREF( fluid );
     static_assert( FluidType::min_n_components <= FluidType::max_n_components );
     using Components = typename types::IntegerSequence< FluidType::min_n_components, FluidType::max_n_components >::type;
-    constexpr bool active = !THERMAL || FluidType::thermal();
-    detail::ComponentSelector< active, Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
+    if constexpr (!THERMAL || FluidType::thermal())
+    {
+      detail::ComponentSelector< Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
+    }
+    else
+    {
+      GEOS_THROW( "Unsupported thermal call for fluid " << FluidType::catalogName(),
+                  InputError );
+    }
   } );
 }
 
