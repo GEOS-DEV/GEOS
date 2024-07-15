@@ -30,25 +30,18 @@ struct TaperKernel
 {
 
   /**
-   * @brief Launches the computation of field gradients and divergence for PML region
+   * @brief Compute coefficients for the taper layers
    * @tparam EXEC_POLICY the execution policy
-   * @tparam ATOMIC_POLICY the atomic policy
-   * @param[in] targetSet list of cells in the target set
-   * @param[in] nodeCoords coordinates of the nodes
-   * @param[in] elemToNodes constant array view of map from element to nodes
-   * @param[in] velocity cell-wise velocity
-   * @param[in] p_n pressure field at time n
-   * @param[in] v_n PML auxiliary field at time n
-   * @param[in] u_n PML auxiliary field at time n
-   * @param[in] xMin coordinate limits of the inner PML boundaries, left-front-top
-   * @param[in] xMax coordinate limits of the inner PML boundaries, right-back-bottom
-   * @param[in] xMin PML thickness, left-front-top
-   * @param[in] xMax PML thickness, right-back-bottom
-   * @param[in] cMin PML wave speed, left-front-top
-   * @param[in] cMax PML wave speed, right-back-bottom
-   * @param[in] r desired reflectivity of the PML
-   * @param[out] grad_n array holding the gradients at time n
-   * @param[out] divV_n array holding the divergence at time n
+   * @param[in] size the number of nodes
+   * @param[in] xMin coordinate limits of the inner taper boundaries, left-front-top
+   * @param[in] xMax coordinate limits of the inner taper boundaries, right-back-bottom
+   * @param[in] dMin Taper thickness, left-front-top
+   * @param[in] dMax Taper thickness, right-back-bottom
+   * @param[in] dt time-step
+   * @param[in] vMax
+   * @param[in] r desired reflectivity of the Taper
+   * @param[out] taperCoeff array which contains the taper coefficient on each node (which will be equal to 1 when we are outside of the
+   *taper layers)
    */
   template< typename EXEC_POLICY >
   static void
@@ -102,6 +95,15 @@ struct TaperKernel
     } );
   }
 
+
+  /**
+   * @brief Multiply an array with the taper coefficients
+   * @tparam EXEC_POLICY the execution policy
+   * @param[in] size the number of nodes
+   * @param[in] taperCoeff array which contains the taper coefficient on each node (which will be equal to 1 when we are outside of the
+   *taper layers)
+   * @param[inout] vector array which is multiplied by the taper array
+   */
   template< typename EXEC_POLICY >
   static void
   multiplyByTaperCoeff( localIndex const size,

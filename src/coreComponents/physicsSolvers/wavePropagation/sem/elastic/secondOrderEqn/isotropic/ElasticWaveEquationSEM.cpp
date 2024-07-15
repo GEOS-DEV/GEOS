@@ -249,7 +249,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X =
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 =
     nodeManager.getField< fields::referencePosition32 >().toViewConst();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
@@ -295,7 +295,8 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
     vMax = getGlobalMaxWavespeed( mesh, regionNames );
 
     arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
-    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), X, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff, taperCoeff );
+    TaperKernel::computeTaperCoeff< EXEC_POLICY >( nodeManager.size(), nodeCoords32, m_xMinTaper, m_xMaxTaper, m_thicknessMinXYZTaper, m_thicknessMaxXYZTaper, dt, vMax, m_reflectivityCoeff,
+                                                   taperCoeff );
   }
 
   mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -323,7 +324,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       < EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         numFacesPerElem,
-        X,
+        nodeCoords32,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
