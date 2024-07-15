@@ -66,7 +66,7 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * solverNameString() { return "flowSolverName"; }
-    static constexpr char const * meshNameString() { return "meshName"; }
+    static constexpr char const * meshNameString() { return "meshBody"; }
     static constexpr char const * cellAGlobalIdString() { return "cellAGlobalId"; }
     static constexpr char const * cellBGlobalIdString() { return "cellBGlobalId"; }
     static constexpr char const * transmissibilityABString() { return "transmissibilityAB"; }

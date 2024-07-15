@@ -92,18 +92,12 @@ void StencilDataCollection::postProcessInput()
                             getDataContext(), catalogName(), TwoPointFluxApproximation::catalogName() ) );
     }
   }
-
-  { // count the available CellElementStencilTPFA
-    integer foundStencil = 0;
-    m_discretization->forStencils< CellElementStencilTPFA >( *m_meshLevel,
-                                                             [&]( auto const & ) { ++foundStencil; } );
-    GEOS_ERROR_IF( foundStencil == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
-    GEOS_ERROR_IF( foundStencil > 1, GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
-  }
 }
 
 void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
 {
+  // asserting that there is exactly one supported stencil
+  integer supportedStencilCount = 0;
   m_discretization->forStencils< CellElementStencilTPFA >( *m_meshLevel, [&]( auto const & stencil )
   {
     globalIndex connCount = stencil.size();
@@ -113,7 +107,10 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
     m_transmissibilityBA.resize( connCount );
     GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
                                          getDataContext(), connCount, m_discretization->getName() ) );
+    ++supportedStencilCount;
   } );
+  GEOS_ERROR_IF( supportedStencilCount == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
+  GEOS_ERROR_IF( supportedStencilCount > 1, GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
 }
 
 

@@ -3824,8 +3824,8 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => When higher than 1: Display store events details.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meshName => Name of the target -->
-		<xsd:attribute name="meshName" type="groupNameRef" use="required" />
+		<!--meshBody => Name of the target -->
+		<xsd:attribute name="meshBody" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
