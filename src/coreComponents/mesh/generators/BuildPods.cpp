@@ -81,6 +81,7 @@ struct DownwardMappings
   std::map< CellLocIdx, std::vector< NodeLocIdx > > c2n;
   std::map< CellLocIdx, std::vector< FaceLocIdx > > c2f;
   std::map< CellLocIdx, std::vector< EdgeLocIdx > > c2e;
+  std::map< CellGlbIdx, ElementType > c2t;
 };
 
 struct UpwardMappings
@@ -90,6 +91,7 @@ struct UpwardMappings
   std::map< NodeLocIdx, std::vector< EdgeLocIdx > > n2e;
   std::map< NodeLocIdx, std::vector< FaceLocIdx > > n2f;
   std::map< NodeLocIdx, std::vector< CellLocIdx > > n2c;
+  std::map< ElementType, std::vector< CellGlbIdx > > t2c;
 };
 
 // converts generic map to arrayOfArrays
@@ -262,7 +264,8 @@ NodeMgrImpl makeFlavorlessNodeMgrImpl( std::size_t const & numNodes,
                       toFlavorlessMapping( recv ) );
 }
 
-CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
+CellBlkImpl makeFlavorlessCellBlkImpl( ElementType cellType,
+                                       std::size_t const & numCells,
                                        std::map< CellLocIdx, std::vector< NodeLocIdx > > const & c2n,
                                        std::map< CellLocIdx, std::vector< EdgeLocIdx > > const & c2e,
                                        std::map< CellLocIdx, std::vector< FaceLocIdx > > const & c2f,
@@ -275,10 +278,11 @@ CellBlkImpl makeFlavorlessCellBlkImpl( std::size_t const & numCells,
   GEOS_ASSERT_EQ( numCells, std::size( c2f ) );
   GEOS_ASSERT_EQ( numCells, std::size( cg2l ) );
 
-  return CellBlkImpl( intConv< localIndex >( numCells ),
-                      convertToA2d< CellLocIdx, NodeLocIdx, cells::NODE_MAP_PERMUTATION >( c2n, 8 ),
-                      convertToA2d( c2e, 12 ),
-                      convertToA2d( c2f, 6 ),
+  return CellBlkImpl( cellType,
+                      intConv< localIndex >( numCells ),
+                      convertToA2d< CellLocIdx, NodeLocIdx, cells::NODE_MAP_PERMUTATION >( c2n, getNumNodes3D(cellType) ),
+                      convertToA2d( c2e, getNumEdges3D(cellType)  ),
+                      convertToA2d( c2f, getNumFaces3D(cellType)  ),
                       convertGlobalToLocalMap( cg2l ),
                       toFlavorlessMapping( send ),
                       toFlavorlessMapping( recv ) );
@@ -329,6 +333,8 @@ DownwardMappings buildDownwardMappings( GlobalToLocal const & g2l,
   {
     geos::ElementType const & cellType = std::get<0>(typeAndFaces);
     std::vector<FaceInfo> const & faceInfos = std::get<1>(typeAndFaces);
+
+    res.c2t[cgi] = cellType;
 
     // convert to cell local index
     CellLocIdx const & cli = g2l.cells.at( cgi );
@@ -453,6 +459,12 @@ UpwardMappings buildUpwardMappings( DownwardMappings const & downwardMappings )
     }
   }
 
+   // Filling `t2c`
+  for( auto const & [cgi, cellType]: downwardMappings.c2t )
+  {
+    res.t2c[cellType].emplace_back(cgi);
+  }
+
   return res;
 }
 
@@ -535,6 +547,63 @@ std::map< MpiRank, std::vector< LI > > invertGhostRecv( std::map< GI, MpiRank > 
   return output;
 }
 
+std::vector<CellBlkImpl> makeFlavorlessCellBlkImpls(std::size_t const & numCells,
+                                       std::map< CellLocIdx, std::vector< NodeLocIdx > > const & c2n,
+                                       std::map< CellLocIdx, std::vector< EdgeLocIdx > > const & c2e,
+                                       std::map< CellLocIdx, std::vector< FaceLocIdx > > const & c2f,
+                                       std::map< CellGlbIdx, CellLocIdx > const & cg2l,
+                                       std::map< CellGlbIdx, std::set< MpiRank > > const & send,
+                                       std::map< CellGlbIdx, MpiRank > const & recv,
+                                       std::map< CellGlbIdx, ElementType > const & c2t,
+                                       std::map< ElementType, std::vector< CellGlbIdx > > const & t2c )
+{
+
+  std::vector<CellBlkImpl> ret;
+
+  for (auto & [cellType, cgis] : t2c)
+  {
+
+    std::cout << "creating block of type " << cellType << std::endl;
+
+    std::size_t numCells_blk = cgis.size();
+
+    std::map< CellLocIdx, std::vector< NodeLocIdx > > c2n_blk;
+    std::map< CellLocIdx, std::vector< EdgeLocIdx > > c2e_blk;
+    std::map< CellLocIdx, std::vector< FaceLocIdx > > c2f_blk;
+    std::map< CellGlbIdx, CellLocIdx > cg2l_blk;
+    std::map< CellGlbIdx, std::set< MpiRank > > send_blk;
+    std::map< CellGlbIdx, MpiRank > recv_blk;
+
+    for (auto cgi : cgis)
+    {
+      CellLocIdx cli = cg2l.at(cgi);
+      c2n_blk[cli] = c2n.at(cli);
+      c2e_blk[cli] = c2e.at(cli);
+      c2f_blk[cli] = c2f.at(cli);
+      cg2l_blk[cgi] = cli;
+      if (send.count(cgi))
+      {
+        send_blk[cgi] = send.at(cgi);
+      }
+      if (recv.count(cgi))
+      { 
+        recv_blk[cgi] = recv.at(cgi);
+      }
+    }
+
+    ret.emplace_back( makeFlavorlessCellBlkImpl( cellType,
+                                    std::size( cg2l_blk ),
+                                    c2n_blk,
+                                    c2e_blk,
+                                    c2f_blk,
+                                    cg2l_blk,
+                                    invertGhostSend(send_blk, cg2l_blk),
+                                    invertGhostRecv(recv_blk, cg2l_blk) ) );
+  }
+
+  return ret;
+}
+
 void buildPods( MeshGraph const & owned,
                 MeshGraph const & present,
                 MeshGraph const & ghosts,
@@ -593,13 +662,15 @@ void buildPods( MeshGraph const & owned,
                                                       g2l.nodes,
                                                       invertGhostSend( send.nodes, g2l.nodes ),
                                                       invertGhostRecv( recv.nodes, g2l.nodes ) ) );
-  meshMappings.setCellMgr( CellMgrImpl( makeFlavorlessCellBlkImpl( std::size( g2l.cells ),
+  meshMappings.setCellMgr( CellMgrImpl( makeFlavorlessCellBlkImpls(std::size( g2l.cells ),
                                                                    downwardMappings.c2n,
                                                                    downwardMappings.c2e,
                                                                    downwardMappings.c2f,
                                                                    g2l.cells,
-                                                                   invertGhostSend( send.cells, g2l.cells ),
-                                                                   invertGhostRecv( recv.cells, g2l.cells ) ) ) );
+                                                                   send.cells,
+                                                                   recv.cells,
+                                                                   downwardMappings.c2t,
+                                                                   upwardMappings.t2c) ) );
 
   meshMappings.setNeighbors( getNeighbors( recv, send ) );
 

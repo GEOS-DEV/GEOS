@@ -209,7 +209,8 @@ class CellBlkImpl : public generators::CellBlk
 public:
   CellBlkImpl() = default;
 
-  CellBlkImpl( localIndex numCells,
+  CellBlkImpl( ElementType cellType,
+               localIndex numCells,
                array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                array2d< localIndex > const & c2e,
                array2d< localIndex > const & c2f,
@@ -262,6 +263,7 @@ public:
 
 private:
   GhostMapping m_ghost; // Diamond
+  ElementType m_cellType;
   localIndex m_numCells;
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > m_c2n;
   array2d< localIndex > m_c2e;
@@ -273,15 +275,21 @@ class CellMgrImpl : public generators::CellMgr
 public:
   CellMgrImpl() = default;
 
-  CellMgrImpl( CellBlkImpl && cellBlks )
+  CellMgrImpl( std::vector< CellBlkImpl > && cellBlks )
     :
     m_cellBlk( cellBlks )
-  { }
+  { 
+    std::cout << "CellMgr has blocks of:" << std::endl;
+    for (size_t i = 0; i < m_cellBlk.size(); ++i)
+    {
+      std::cout << m_cellBlk[i].getElementType() << std::endl;
+    }  
+  }
 
   [[nodiscard]] std::map< string, generators::CellBlk const * > getCellBlks() const override;
 
 private:
-  CellBlkImpl m_cellBlk;
+  std::vector< CellBlkImpl > m_cellBlk;
 };
 
 class MeshMappingImpl : public generators::MeshMappings

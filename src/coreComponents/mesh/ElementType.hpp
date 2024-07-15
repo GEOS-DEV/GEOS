@@ -119,6 +119,66 @@ inline int getNumFaces3D( ElementType const elementType )
   return -1;
 }
 
+/**
+ * @brief Get number of edges for 3D elements
+ * @param elementType type of element
+ * @return number of edges for 3D elements (-1 if not a 3D element)
+ */
+inline int getNumEdges3D( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Vertex:        
+    case ElementType::Line:          
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Polygon:       return -1;
+    case ElementType::Tetrahedron: return 6;
+    case ElementType::Pyramid: return 8;
+    case ElementType::Wedge: return 9;
+    case ElementType::Hexahedron: return 12;
+    case ElementType::Prism5: return -1;
+    case ElementType::Prism6: return -1;
+    case ElementType::Prism7: return -1;
+    case ElementType::Prism8: return -1;
+    case ElementType::Prism9: return -1;
+    case ElementType::Prism10: return -1;
+    case ElementType::Prism11: return -1;
+    case ElementType::Polyhedron:    return -1;
+  }
+  return -1;
+}
+
+/**
+ * @brief Get number of nodes for 3D elements
+ * @param elementType type of element
+ * @return number of modes for 3D elements (-1 if not a 3D element)
+ */
+inline int getNumNodes3D( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Vertex:        
+    case ElementType::Line:          
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Polygon:       return -1;
+    case ElementType::Tetrahedron: return 4;
+    case ElementType::Pyramid: return 5;
+    case ElementType::Wedge: return 6;
+    case ElementType::Hexahedron: return 8;
+    case ElementType::Prism5: return -1;
+    case ElementType::Prism6: return -1;
+    case ElementType::Prism7: return -1;
+    case ElementType::Prism8: return -1;
+    case ElementType::Prism9: return -1;
+    case ElementType::Prism10: return -1;
+    case ElementType::Prism11: return -1;
+    case ElementType::Polyhedron:    return -1;
+  }
+  return -1;
+}
+
 /// Strings for ElementType
 ENUM_STRINGS( ElementType,
               "Vertex",

@@ -17,6 +17,20 @@
 namespace geos
 {
 
+std::string convertGeosxElementStringVtkStringGhosting( ElementType const & cellType)
+{
+  switch( cellType)
+  {
+    case ElementType::Hexahedron:            return string("hexahedra");
+    case ElementType::Wedge:                 return string("wedges");
+    default:
+    {
+      GEOS_ERROR( cellType << " is not a recognized cell type in ghosting.\n" );
+      return {};
+    }
+  }
+}
+
 NodeMgrImpl::NodeMgrImpl( localIndex numNodes,
                           array2d< real64, nodes::REFERENCE_POSITION_PERM > && positions,
                           ArrayOfArrays< localIndex > const & n2e,
@@ -91,7 +105,8 @@ ToCellRelation< array2d< localIndex > > FaceMgrImpl::getFaceToElements() const
   return { std::move( toBlockIndex ), m_f2c };
 }
 
-CellBlkImpl::CellBlkImpl( localIndex numCells,
+CellBlkImpl::CellBlkImpl( ElementType cellType,
+                          localIndex numCells,
                           array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & c2n,
                           array2d< localIndex > const & c2e,
                           array2d< localIndex > const & c2f,
@@ -99,6 +114,7 @@ CellBlkImpl::CellBlkImpl( localIndex numCells,
                           std::map< integer, array1d< localIndex > > && send,
                           std::map< integer, array1d< localIndex > > && recv )
   : m_ghost{ std::move( g2l ), std::move( send ), std::move( recv ) },
+    m_cellType( cellType ),
     m_numCells( numCells ),
     m_c2n( c2n ),
     m_c2e( c2e ),
@@ -107,27 +123,33 @@ CellBlkImpl::CellBlkImpl( localIndex numCells,
 
 ElementType CellBlkImpl::getElementType() const
 {
-  return ElementType::Hexahedron;
+  return m_cellType;
 }
 
 localIndex CellBlkImpl::numNodesPerElement() const
 {
-  return 8;
+  return getNumNodes3D(m_cellType);
 }
 
 localIndex CellBlkImpl::numEdgesPerElement() const
 {
-  return 12;
+  return getNumEdges3D(m_cellType);
 }
 
 localIndex CellBlkImpl::numFacesPerElement() const
 {
-  return 6;
+  return getNumFaces3D(m_cellType);
 }
 
 std::map< string, generators::CellBlk const * > CellMgrImpl::getCellBlks() const
 {
-  return { { string( "hexahedra" ), &m_cellBlk } };  // TODO hard coded values.
+  std::map< string, generators::CellBlk const * > ret;
+  for (size_t i = 0; i < m_cellBlk.size(); ++i)
+  {
+    ret[convertGeosxElementStringVtkStringGhosting(m_cellBlk[i].getElementType())] = &m_cellBlk[i]; 
+  } 
+
+  return ret;
 }
 
 } // end of namespace
