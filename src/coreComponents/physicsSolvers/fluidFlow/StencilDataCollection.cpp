@@ -20,6 +20,7 @@
 
 #include "common/Units.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
@@ -44,7 +45,11 @@ StencilDataCollection::StencilDataCollection( const string & name,
   registerWrapper( viewKeyStruct::solverNameString(), &m_solverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the flow solver" );
+    setDescription( "Name of the flow solver, to get the permeabilities." );
+  registerWrapper( viewKeyStruct::meshNameString(), &m_meshName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setDescription( "Name of the target " );
 
   // registerWrapper( viewKeyStruct::connectionDataString(), &m_currentConnData );
   registerWrapper( viewKeyStruct::cellAGlobalIdString(), &m_cellAGlobalId );
@@ -53,7 +58,7 @@ StencilDataCollection::StencilDataCollection( const string & name,
   registerWrapper( viewKeyStruct::transmissibilityBAString(), &m_transmissibilityBA );
 }
 
-void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
+void StencilDataCollection::postProcessInput()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
 
@@ -68,41 +73,47 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
                    InputError );
   }
 
-  { // pre-allocate buffers
-    bool foundStencil = false;
+  { // find mesh & discretization
     DomainPartition & domain = problemManager.getDomainPartition();
 
-    m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                              [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+    MeshBody const & meshBody = domain.getMeshBody( m_meshName );
+    m_meshLevel = &meshBody.getBaseDiscretization();
+
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    try
     {
-      NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-      FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-      FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_solver->getDiscretizationName() );
-
-      fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
-      {
-        if( foundStencil )
-        {
-          GEOS_WARNING( GEOS_FMT( "{}: A target was already found, and multiple target is not currently supported, so '{}' will be ignored.",
-                                  getDataContext(), fluxApprox.getName() ) );
-        }
-        else
-        {
-          globalIndex connCount = stencil.size();
-          m_cellAGlobalId.resize( connCount );
-          m_cellBGlobalId.resize( connCount );
-          m_transmissibilityAB.resize( connCount );
-          m_transmissibilityBA.resize( connCount );
-          GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                               getDataContext(), connCount, fluxApprox.getName() ) );
-        }
-      } );
-    } );
-
-
+      string const discretizationName = m_solver->getDiscretizationName();
+      m_discretization = &fvManager.getFluxApproximation( discretizationName );
+    } catch( BadTypeError const & e )
+    {
+      // only TPFA is supported for now
+      GEOS_ERROR( GEOS_FMT( "{}: target discretization is not supported by {} (for now, only '{}' is).",
+                            getDataContext(), catalogName(), TwoPointFluxApproximation::catalogName() ) );
+    }
   }
+
+  { // count the available CellElementStencilTPFA
+    integer foundStencil = 0;
+    m_discretization->forStencils< CellElementStencilTPFA >( *m_meshLevel,
+                                                             [&]( auto const & ) { ++foundStencil; } );
+    GEOS_ERROR_IF( foundStencil == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
+    GEOS_ERROR_IF( foundStencil > 1, GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
+  }
+}
+
+void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
+{
+  m_discretization->forStencils< CellElementStencilTPFA >( *m_meshLevel, [&]( auto const & stencil )
+  {
+    globalIndex connCount = stencil.size();
+    m_cellAGlobalId.resize( connCount );
+    m_cellBGlobalId.resize( connCount );
+    m_transmissibilityAB.resize( connCount );
+    m_transmissibilityBA.resize( connCount );
+    GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
+                                         getDataContext(), connCount, m_discretization->getName() ) );
+  } );
 }
 
 
@@ -111,31 +122,17 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                      integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                      integer const GEOS_UNUSED_PARAM( eventCounter ),
                                      real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                                     DomainPartition & domain )
+                                     DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  bool foundStencil = false;
-  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                            [&] ( string const &,
-                                                  MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+  m_discretization->forStencils< CellElementStencilTPFA >( *m_meshLevel, [&]( auto const & stencil )
   {
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_solver->getDiscretizationName() );
-
-    fluxApprox.forStencils< CellElementStencilTPFA >( mesh, [&]( auto const & stencil )
-    {
-      if( !foundStencil )
-      {
-        foundStencil=true;
-        // gather
-        auto const stencilWrapper = stencil.createKernelWrapper();
-        array1d< KernelConnectionData > const kernelData = gatherConnectionData( mesh, stencilWrapper );
-        // output
-        storeConnectionData( mesh, fluxApprox.getName(), kernelData.toView() );
-      }
-    } );
+    // gather
+    auto const stencilWrapper = stencil.createKernelWrapper();
+    array1d< KernelConnectionData > const kernelData = gatherConnectionData( stencilWrapper );
+    // output
+    storeConnectionData( m_discretization->getName(), kernelData.toView() );
   } );
+
   return false;
 }
 
@@ -192,12 +189,11 @@ private:
 
 template< typename STENCILWRAPPER_T >
 array1d< StencilDataCollection::KernelConnectionData >
-StencilDataCollection::gatherConnectionData( MeshLevel const & mesh,
-                                             STENCILWRAPPER_T const & stencilWrapper ) const
+StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWrapper ) const
 {
-  ElementRegionManager const & elemManager = mesh.getElemManager();
+  ElementRegionManager const & elemManager = m_meshLevel->getElemManager();
 
-  // allocate a big enough buffer to store all connection data
+  // allocate a large enough buffer to store all connection data
   array1d< KernelConnectionData > kernelData{ stencilWrapper.size() };
   typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
 
@@ -222,15 +218,15 @@ StencilDataCollection::ConnectionData::fromKernel( KernelConnectionData const & 
 }
 
 
-void StencilDataCollection::storeConnectionData( MeshLevel const & mesh,
-                                                 string_view stencilName,
+void StencilDataCollection::storeConnectionData( string_view stencilName,
                                                  arrayView1d< KernelConnectionData > const & kernelData )
 {
   std::set< ConnectionData > sortedData;
 
   { // data extraction
-    LocalToGlobalMap localToGlobalMap = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >(
-      ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+    ElementRegionManager const & elemManager = m_meshLevel->getElemManager();
+    string const & mapVKStr = ObjectManagerBase::viewKeyStruct::localToGlobalMapString();
+    LocalToGlobalMap localToGlobalMap = elemManager.constructArrayViewAccessor< globalIndex, 1 >( mapVKStr );
 
     std::transform( kernelData.begin(), kernelData.end(),
                     std::inserter( sortedData, sortedData.end() ),

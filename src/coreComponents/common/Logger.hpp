@@ -517,6 +517,23 @@ struct SimulationError : public std::runtime_error
 };
 
 /**
+ * @brief Exception class used to report errors from type conversion
+ * @todo (ErrorManager EPIC #2940) Consider adding a way to precise custom exception parameters, to add
+ * expected & encountered typeid for this one (in order to manage the exception output more precisely).
+ * We could also manage this by having:    BadTypeErrorABC <|--- BadTypeError< T >      /!\ compilation time
+ */
+struct BadTypeError : public std::runtime_error
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  BadTypeError( std::string const & what ):
+    std::runtime_error( what )
+  {}
+};
+
+/**
  * @brief Exception class used for special control flow.
  */
 class NotAnError : public std::exception

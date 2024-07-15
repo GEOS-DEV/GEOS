@@ -66,7 +66,7 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * solverNameString() { return "flowSolverName"; }
-    // static constexpr char const * connectionDataString() { return "connectionData"; }
+    static constexpr char const * meshNameString() { return "meshName"; }
     static constexpr char const * cellAGlobalIdString() { return "cellAGlobalId"; }
     static constexpr char const * cellBGlobalIdString() { return "cellBGlobalId"; }
     static constexpr char const * transmissibilityABString() { return "transmissibilityAB"; }
@@ -122,16 +122,26 @@ private:
     }
   };
 
-  /// Pointer to the physics solver
-  FlowSolverBase * m_solver;
-
   array1d< globalIndex > m_cellAGlobalId;
   array1d< globalIndex > m_cellBGlobalId;
   array1d< real64 > m_transmissibilityAB;
   array1d< real64 > m_transmissibilityBA;
 
-  /// Name of the solver
+  /// Name of the target mesh body
+  string m_meshName;
+  /// Name of the target discretization
   string m_solverName;
+
+  /// Pointer to the target flow solver
+  FlowSolverBase const * m_solver = nullptr;
+  /// Pointer to the target mesh body
+  MeshLevel const * m_meshLevel = nullptr;
+  /// Pointer to the target discretization
+  FluxApproximationBase const * m_discretization = nullptr;
+
+
+
+  void postProcessInput() override;
 
   /**
    * @brief Initialization of the internal buffers, must happen:
@@ -148,8 +158,7 @@ private:
    * @return Return the gathered data in an LvArray
    */
   template< typename STENCILWRAPPER_T >
-  array1d< KernelConnectionData > gatherConnectionData( MeshLevel const & mesh,
-                                                        STENCILWRAPPER_T const & stencilWrapper ) const;
+  array1d< KernelConnectionData > gatherConnectionData( STENCILWRAPPER_T const & stencilWrapper ) const;
 
   /**
    * @brief Output the element-element connection data of the current timestep.
@@ -157,7 +166,7 @@ private:
    * @param stencil the specific mesh for which we output the data.
    * @param kernelData the connection data, gathered by a kernel.
    */
-  void storeConnectionData( MeshLevel const & mesh, string_view stencilName,
+  void storeConnectionData( string_view stencilName,
                             arrayView1d< KernelConnectionData > const & kernelData );
 
   void logStoredConnections( string_view stencilName );
