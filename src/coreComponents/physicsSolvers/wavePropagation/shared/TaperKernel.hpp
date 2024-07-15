@@ -41,7 +41,7 @@ struct TaperKernel
    * @param[in] vMax
    * @param[in] r desired reflectivity of the Taper
    * @param[out] taperCoeff array which contains the taper coefficient on each node (which will be equal to 1 when we are outside of the
-   *taper layers)
+   * taper layers)
    */
   template< typename EXEC_POLICY >
   static void
@@ -101,7 +101,7 @@ struct TaperKernel
    * @tparam EXEC_POLICY the execution policy
    * @param[in] size the number of nodes
    * @param[in] taperCoeff array which contains the taper coefficient on each node (which will be equal to 1 when we are outside of the
-   *taper layers)
+   * taper layers)
    * @param[inout] vector array which is multiplied by the taper array
    */
   template< typename EXEC_POLICY >
