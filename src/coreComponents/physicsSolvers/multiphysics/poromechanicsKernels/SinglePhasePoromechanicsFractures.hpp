@@ -58,6 +58,7 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
+          arrayView1d< real64 const > const & minimumHydraulicAperture,
           arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 const > const & fractureTraction )
@@ -69,7 +70,7 @@ struct StateUpdateKernel
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
       real64 dHydraulicAperture_dNormalJump = 0.0;
-      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], dHydraulicAperture_dNormalJump );
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k], minimumHydraulicAperture[k], dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 

@@ -176,6 +176,14 @@ DECLARE_FIELD( gravityCoefficient,
                WRITE_AND_READ,
                "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
+DECLARE_FIELD( minimumHydraulicAperture,
+                "minimumHydraulicAperture",
+                array1d< real64 >,
+                0,
+                LEVEL_0,
+                WRITE_AND_READ,
+                "minimum value of the hydraulic aperture" );
+
 DECLARE_FIELD( mimGravityCoefficient,
                "mimGravityCoefficient",
                array1d< real64 >,
