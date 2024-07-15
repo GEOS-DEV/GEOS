@@ -154,9 +154,9 @@ class StencilWrapperBase< TRAITS > {
 note right of StencilWrapperBase
   Class to provide access to the computation of stencil weights that may be called from a kernel function.
 end note
-note left of StencilWrapperBase::"computeWeights(iconn, coefficient, weight)"
-  Présent dans les templates sous différentes signatures.
-  Calcule les transmissibilité pour le lien inter-cellule "iconn" à partir du "coefficient" (= permeabilité) et de la valeur du stencil dans la valeur de "weight" :
+note left of StencilWrapperBase::"computeWeights(iconn, coefficient, weight, [...])"
+  Present in the inheriting classes with different signatures.
+  Compute transmissibility for the "iconn" cell-cell connection taking the "coefficient" (= permeability) and the stencil value into account to compute "weight":
   transmissibility = stencilWeight * permeability
 end note
 StencilTraits <|-d- StencilWrapperBase : TRAITS : StencilTraits
@@ -251,7 +251,7 @@ package singlePhaseFVMKernels {
   end note
   note right of FaceBasedAssemblyKernel::computeFlux
     Compute the local flux contributions.
-    - Dépend de StencilWrapperBase::computeWeights() pour calculer la transmissibilité sur le timestep courant (vu que la permeabilité évolue)
+    - Depends on StencilWrapperBase::computeWeights() to compute the transmissibility for the current timestep (because permeability can change)
   end note
   FaceBasedAssemblyKernelBase <|-- FaceBasedAssemblyKernel
   FaceBasedAssemblyKernel *-- StencilWrapperBase : contains a << STENCIL_WRAPPER : StencilWrapperBase >>
@@ -271,7 +271,7 @@ package singlePhaseFVMKernels {
     {static} createAndLaunch([...], STENCIL_WRAPPER stencilWrapper, [...])
   }
   note right of FaceBasedAssemblyKernelFactory::createAndLaunch
-    Créé et lance un FaceBasedAssemblyKernel en fonction du StencilWrapperBase et des autres paramètres
+    Create and call a FaceBasedAssemblyKernel after the StencilWrapperBase
   end note
   FaceBasedAssemblyKernelFactory ..> FaceBasedAssemblyKernel : creates a
   FaceBasedAssemblyKernelFactory ..> StencilWrapperBase : depends on << STENCIL_WRAPPER : StencilWrapperBase >>
@@ -293,14 +293,10 @@ package fields {
 
   package permeability {
     class permeability
-    note right : Rock permeability\n Ce field nous intéresse pour le calcul de la transmissibilité
-
     class permeabilityMultiplier
-    note right : Rock permeability multiplier\n Utile ?
-
 '    class dPerm_dPressure
   }
-  note "Dans constitutive/permeability/PermeabilityFields.hpp" as permeabilityN
+  note "constitutive/permeability/PermeabilityFields.hpp" as permeabilityN
   permeabilityN .. permeability
 
   package flow {
@@ -313,12 +309,12 @@ package fields {
 '    class gravityCoefficient
 
     class transMultiplier
-    note right of transMultiplier : Permeability transmissibility multipliers\n Utile ?
+    note right of transMultiplier : Permeability multiplier in transmissibility calculation
   }
-  note "Dans physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" as flowN
+  note "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" as flowN
   flowN .. flow
 }
-note top of fields : Dans mesh/MeshFields.hpp
+note top of fields : mesh/MeshFields.hpp
 
 
 ' #############################
@@ -338,19 +334,19 @@ note top of FluxApproximationBase
   Stores the main and boundary stencils, construction is implemented in derived classes.
 end note
 note right of FluxApproximationBase::initializePostInitialConditionsPreSubGroups
-  lance les :
+  Call :
   - computeCellStencil()
   - computeBoundaryStencil()
   - computeAquiferStencil()
 end note
 note right of FluxApproximationBase::computeCellStencil
-  Calcule le "Main stencil" **(=CellElementStencilXPFA)** pour les flux cell-cell.
+  Compute the "Main stencil" **(=CellElementStencilXPFA)** for cell-cell fluxes.
 end note
 note right of FluxApproximationBase::computeBoundaryStencil
   Boundary stencils are for Dirichlet boundary conditions
 end note
 note right of FluxApproximationBase::computeAquiferStencil
-  Executé pour chaque "Aquifer"
+  Called for each "Aquifer"
 end note
 
 class TwoPointFluxApproximation {
