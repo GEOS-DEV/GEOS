@@ -91,6 +91,7 @@ constexpr string_view xmlInputCommon =
     <CellToCellDataCollection
       name="cellToCellDataCollection"
       flowSolverName="singlePhaseFlow"
+      meshBody="mesh"
       logLevel="1" />
   </Tasks>
 
@@ -151,7 +152,7 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   static string_view constexpr meshInput =
     R"xml(
   <Mesh>
-    <InternalMesh name="mesh1"
+    <InternalMesh name="mesh"
                   elementTypes="{C3D8}"
                   xCoords="{0, 30}"
                   yCoords="{0, 30}"
@@ -179,7 +180,7 @@ TEST( TransmissibilityTest, StencilOutputVerificationAniso )
   static string_view constexpr meshInput =
     R"xml(
   <Mesh>
-    <InternalMesh name="mesh1"
+    <InternalMesh name="mesh"
                   elementTypes="{C3D8}"
                   xCoords="{0, 70.0}"
                   yCoords="{0, 10.0}"
