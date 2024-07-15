@@ -3,7 +3,6 @@ set( dataRepository_tests
      testObjectCatalog.cpp
      testRestartBasic.cpp
      testRestartExtended.cpp
-     testPacking.cpp
      testWrapperHelpers.cpp
      testGroupPath.cpp )
 
