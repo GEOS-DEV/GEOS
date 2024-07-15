@@ -58,7 +58,7 @@ StencilDataCollection::StencilDataCollection( const string & name,
   registerWrapper( viewKeyStruct::transmissibilityBAString(), &m_transmissibilityBA );
 }
 
-void StencilDataCollection::postProcessInput()
+void StencilDataCollection::postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
 

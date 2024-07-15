@@ -141,7 +141,7 @@ private:
 
 
 
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   /**
    * @brief Initialization of the internal buffers, must happen:
