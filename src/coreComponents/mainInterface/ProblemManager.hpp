@@ -229,8 +229,8 @@ public:
     dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
-                                                                                     ///< memory key
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned memory key
+    dataRepository::ViewKey useNewGhosting           = {"useNewGhosting"};           ///< Flag to use new ghosting strategies
   } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys

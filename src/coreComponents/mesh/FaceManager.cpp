@@ -206,6 +206,31 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   }
 }
 
+void FaceManager::setGeometricalRelations( generators::FaceMgr const & faceMgr,
+                                           arrayView2d< localIndex const > const & cb2sr,
+                                           NodeManager const & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+  resize( faceMgr.numFaces() );
+
+  m_toNodesRelation.base() = faceMgr.getFaceToNodes();
+  m_toEdgesRelation.base() = faceMgr.getFaceToEdges();
+
+  // TODO This is new
+  m_globalToLocalMap = faceMgr.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
+
+  // TODO not for there, but it's convenient
+  copyExchangeInfo( faceMgr.getSend(), faceMgr.getRecv() );
+
+  ToCellRelation< array2d< localIndex > > const toCellBlock = faceMgr.getFaceToElements();
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( cb2sr.toViewConst(),
+                                                                         toCellBlock,
+                                                                         m_toElements );
+  // TODO add the fracture stuff
+  computeGeometry( nodeManager );
+}
+
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                                   EdgeManager const & edgeManager,
                                                   ElementRegionManager const & elemRegionManager )

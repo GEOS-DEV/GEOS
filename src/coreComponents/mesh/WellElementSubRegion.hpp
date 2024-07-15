@@ -18,7 +18,7 @@
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
 #include "mesh/PerforationData.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 namespace geos
 {

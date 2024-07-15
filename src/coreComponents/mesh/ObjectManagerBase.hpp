@@ -924,6 +924,20 @@ public:
   }
 
 protected:
+  /**
+   * @brief Copy the ghosting exchange information for the entities (e.g. nodes, edges...) held by the current manager.
+   * @param[in] send The entities to send to which neighbors.
+   * @param[in] recv The entities that will be received from which neighbor.
+   */
+  void copyExchangeInfo( std::map< integer, array1d< localIndex > > const & send,
+                         std::map< integer, array1d< localIndex > > const & recv );
+
+
+  /**
+   * @brief Constructs the global to local map from the local to global map.
+   */
+  void constructLocalToGlobalMap();
+
   /// Group that holds object sets.
   Group m_sets;
 

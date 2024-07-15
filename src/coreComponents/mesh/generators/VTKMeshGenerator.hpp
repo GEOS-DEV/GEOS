@@ -98,6 +98,8 @@ public:
   virtual void freeResources() override;
 
 private:
+  void fillMeshMappings( MeshMappingImpl & meshMappings,
+                         SpatialPartition & partition ) override;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct

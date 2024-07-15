@@ -203,6 +203,14 @@ void ObjectManagerBase::constructGlobalToLocalMap()
   }
 }
 
+void ObjectManagerBase::constructLocalToGlobalMap()
+{
+  for( auto const & [gi, li]: m_globalToLocalMap )
+  {
+    m_localToGlobalMap[li] = gi;
+  }
+}
+
 localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
@@ -1041,6 +1049,45 @@ void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
     SortedArray< localIndex > & set = wrapper.reference();
     set.move( targetSpace );
   } );
+}
+
+void ObjectManagerBase::copyExchangeInfo( std::map< integer, array1d< localIndex > > const & send,
+                                          std::map< integer, array1d< localIndex > > const & recv )
+{
+  // Build the ghost rank from the `send` and `recv` information.
+  m_ghostRank.setValues< serialPolicy >( -2 );
+  for( auto const & [_, lis]: send )
+  {
+    for( localIndex const & li: lis )
+    {
+      m_ghostRank[li] = -1;
+    }
+  }
+  for( auto const & [rank, lis]: recv )
+  {
+    for( localIndex const & li: lis )
+    {
+      m_ghostRank[li] = rank;
+    }
+  }
+
+  // Compute the neighbors of the current instance from the `send` and `recv` information.
+  std::set< integer > neighbors_;
+  neighbors_.merge( mapKeys< std::set >( send ) );
+  neighbors_.merge( mapKeys< std::set >( recv ) );
+
+  for( integer const & rank: neighbors_ )
+  {
+    addNeighbor( rank );
+  }
+  for( auto const & [rank, lis]: send )
+  {
+    m_neighborData.at( rank ).ghostsToSend() = lis;
+  }
+  for( auto const & [rank, lis]: recv)
+  {
+    m_neighborData.at( rank ).ghostsToReceive() = lis;
+  }
 }
 
 

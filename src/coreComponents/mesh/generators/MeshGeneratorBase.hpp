@@ -21,6 +21,8 @@
 
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
+#include "mesh/generators/Pods.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -78,7 +80,7 @@ public:
    * @param parent The parent group of the CellBlockManager.
    * @param[in] partition The reference to spatial partition
    */
-  void generateMesh( Group & parent, SpatialPartition & partition );
+  void generateMesh( bool useNewGhosting, Group & parent, SpatialPartition & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -142,6 +144,14 @@ private:
     GEOS_UNUSED_VAR( cellBlockManager );
     GEOS_UNUSED_VAR( partition );
     GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
+  }
+
+  virtual void fillMeshMappings( MeshMappingImpl & meshMappings,
+                                 SpatialPartition & partition )
+  {
+    GEOS_UNUSED_VAR( meshMappings );
+    GEOS_UNUSED_VAR( partition );
+    GEOS_ERROR( "Not Implemented, you should not be there!" );
   }
 
   void attachWellInfo( CellBlockManager & cellBlockManager );

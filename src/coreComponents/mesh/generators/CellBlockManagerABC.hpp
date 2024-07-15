@@ -17,7 +17,7 @@
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
-#include "LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 #include <map>
 

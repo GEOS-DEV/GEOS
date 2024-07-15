@@ -23,6 +23,7 @@
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -147,6 +148,15 @@ public:
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
   void generateMesh( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Fill the regions from the geometries defined in @c meshMappings, and produce a map from cell block indices to element region and subregion indices.
+   * @param meshMappings Contains the geometry mappings.
+   * @return A (numBlock x 2) array with each row corresponding to a cell block and containing
+   *         region (first entry) and subregion (second entry) indices, or -1 if block was not used.
+   * @see getCellBlockToSubRegionMap
+   */
+  array2d< localIndex > generateMesh( generators::MeshMappings const & meshMappings );
 
   /**
    * @brief Generate the wells.
@@ -1122,6 +1132,14 @@ public:
 
 
 private:
+
+  /**
+   * @brief Produce a map from cell block indices to element region and subregion indices
+   * @param[in] cb Maps names to the cell blocks.
+   * @return a (numBlock x 2) array with each row corresponding to a cell block and containing
+   *         region (first entry) and subregion (second entry) indices, or -1 if block was not used.
+   */
+  array2d< localIndex > getCellBlockToSubRegionMap( std::map< string, generators::CellBlk const * > const & cb ) const;
 
   /**
    * @brief Pack a list of wrappers or get the buffer size needed to pack.

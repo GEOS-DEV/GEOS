@@ -20,6 +20,8 @@
 #define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
+
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "dataRepository/KeyNames.hpp"
 
 namespace geos
@@ -188,6 +190,11 @@ public:
   CellBlockManagerABC const & getCellBlockManager() const
   {
     return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
+  }
+
+  generators::MeshMappings const & getMeshMappings() const
+  {
+    return this->getGroup< generators::MeshMappings >( "MeshMappingImpl" );
   }
 
   /**

@@ -26,7 +26,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 
 namespace geos
 {
@@ -151,6 +151,16 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
                                                                            relation );
   } );
 
+}
+
+array2d< localIndex > ElementRegionManager::generateMesh( generators::MeshMappings const & meshMappings )
+{
+  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+  {
+    elemRegion.generateMesh( meshMappings.getCellMgr().getCellBlks() );
+  } );
+  // TODO finish the work for fractures.
+  return this->getCellBlockToSubRegionMap( meshMappings.getCellMgr().getCellBlks() );
 }
 
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
@@ -668,6 +678,34 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
   {
     GEOS_UNUSED_VAR( region ); // unused if geos_error_if is nulld
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
+    GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
+                   GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
+                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
+    GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
+                   GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
+                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
+
+    blockMap( blockIndex, 0 ) = er;
+    blockMap( blockIndex, 1 ) = esr;
+  } );
+
+  return blockMap;
+}
+
+array2d< localIndex >
+ElementRegionManager::getCellBlockToSubRegionMap( std::map< string, generators::CellBlk const * > const & cb ) const
+{
+  array2d< localIndex > blockMap( std::size( cb ), 2 );
+  blockMap.setValues< serialPolicy >( -1 );
+
+  forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
+                                                          &cb]( localIndex const er,
+                                                                localIndex const esr,
+                                                                ElementRegionBase const & region,
+                                                                CellElementSubRegion const & subRegion )
+  {
+    GEOS_UNUSED_VAR( region ); // unused if geos_error_if is null
+    localIndex const blockIndex = std::distance( std::cbegin( cb ), cb.find( subRegion.getName() ) );
     GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
                    GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
                              region.getDataContext().toString(), subRegion.getName(), blockIndex ) );

@@ -15,11 +15,12 @@
 #ifndef GEOS_FACEBLOCKABC_HPP
 #define GEOS_FACEBLOCKABC_HPP
 
-#include "CellBlockUtilities.hpp"
+#include "../CellBlockUtilities.hpp"  // TODO make at least part of this public
+
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geos
+namespace geos  // TODO eventually add the `generators` namespace
 {
 
 /**

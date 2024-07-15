@@ -40,12 +40,17 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/include/MeshMappings.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
+
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 // System includes
 #include <vector>
@@ -137,6 +142,11 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+  commandLine.registerWrapper< integer >( viewKeys.useNewGhosting.key( ) ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Whether to use new ghosting strategy" );
+
 }
 
 ProblemManager::~ProblemManager()
@@ -162,7 +172,8 @@ void ProblemManager::problemSetup()
 
   initialize();
 
-  importFields();
+  // TODO Import the fields back!
+//  importFields();
 }
 
 
@@ -180,6 +191,7 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
   commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
+  commandLine.getReference< integer >( viewKeys.useNewGhosting ) = opts.useNewGhosting;
 
   string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
@@ -566,19 +578,72 @@ void ProblemManager::initializationOrder( string_array & order )
 }
 
 
+void generateMeshLevelFreeFct( generators::MeshMappings const & meshMappings,
+                               GeometricObjectManager const & geometries,
+                               MeshLevel & meshLevel )
+{
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+
+  array2d< localIndex > const cb2sr = elemRegionManager.generateMesh( meshMappings );
+  nodeManager.setGeometricalRelations( meshMappings.getNodeMgr(), cb2sr.toViewConst() );
+  edgeManager.setGeometricalRelations( meshMappings.getEdgeMgr() );
+  faceManager.setGeometricalRelations( meshMappings.getFaceMgr(), cb2sr.toViewConst(), nodeManager );
+//  nodeManager.constructGlobalToLocalMap( cellBlockManager );
+// TODO Still need to work on the sets.
+//  // Edge, face and element region managers rely on the sets provided by the node manager.
+//  // This is why `nodeManager.buildSets` is called first.
+//  nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+  nodeManager.buildGeometricSets( geometries );
+  edgeManager.buildSets( nodeManager );
+  faceManager.buildSets( nodeManager );
+  elemRegionManager.buildSets( nodeManager );
+  // The edge manager do not hold any information related to the regions nor the elements.
+  // This is why the element region manager is not provided.
+  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
+  edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
+  // FIXME Boundary markers should now be obsolete
+//  // Node and edge managers rely on the boundary information provided by the face manager.
+//  // This is why `faceManager.setDomainBoundaryObjects` is called first.
+//  faceManager.setDomainBoundaryObjects( elemRegionManager );
+//  edgeManager.setDomainBoundaryObjects( faceManager );
+//  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+//
+  meshLevel.generateSets();
+//
+  elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+  {
+    subRegion.setupRelatedObjectsInRelations( meshLevel );
+    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
+    // in order to compute the geometric quantities.
+    // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
+    // can have no neighbor. Making impossible the computation, which is therefore postponed to after the ghosting.
+    subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+//      subRegion.setMaxGlobalIndex();  // FIXME This should be useless for static meshes (maybe needed for surface generator).
+  } );
+//  elemRegionManager.setMaxGlobalIndex();
+
+//  GEOS_ERROR( "Implementation in progress" );
+}
+
 void ProblemManager::generateMesh()
 {
   GEOS_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
 
+  Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
+
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-  meshManager.generateMeshes( domain );
+  GEOS_LOG_RANK( "useNewGhosting = " << commandLine.getReference< integer >( viewKeys.useNewGhosting ) );
+  meshManager.generateMeshes( commandLine.getReference< integer >( viewKeys.useNewGhosting ), domain );
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
-  discretizations = getDiscretizations();
+  map< std::pair< string, Group const * const >, arrayView1d< string const > const > discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
@@ -596,21 +661,35 @@ void ProblemManager::generateMesh()
     }
     else
     {
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      if( commandLine.getReference< integer >( viewKeys.useNewGhosting ) )
+      {
+        GEOS_LOG_RANK_0( "Generating the mesh levels for the new ghosting." );
+        generateMeshLevelFreeFct( meshBody.getMeshMappings(),
+                                  this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ),
+                                  baseMesh );
+        // TODO add wells
+        for( integer const & neighbor: meshBody.getMeshMappings().getNeighbors() )
+        {
+          domain.getNeighbors().emplace_back( neighbor );
+        }
+      }
+      else
+      {
+        CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
-      this->generateMeshLevel( baseMesh,
-                               cellBlockManager,
-                               nullptr,
-                               junk.toViewConst() );
+        this->generateMeshLevel( baseMesh,
+                                 cellBlockManager,
+                                 nullptr,
+                                 junk.toViewConst() );
 
-      ElementRegionManager & elemManager = baseMesh.getElemManager();
-      elemManager.generateWells( cellBlockManager, baseMesh );
+        ElementRegionManager & elemManager = baseMesh.getElemManager();
+        elemManager.generateWells( cellBlockManager, baseMesh );
+      }
     }
   } );
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupBaseLevelMeshGlobalInfo();
+//  domain.setupBaseLevelMeshGlobalInfo();
 
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
@@ -622,7 +701,7 @@ void ProblemManager::generateMesh()
     {                                                                          // particle mesh bodies don't have a finite element
                                                                                // discretization
       FiniteElementDiscretization const * const
-      feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
+        feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
 
       // if the discretization is a finite element discretization
       if( feDiscretization != nullptr )
@@ -630,14 +709,13 @@ void ProblemManager::generateMesh()
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
         arrayView1d< string const > const regionNames = discretizationPair.second;
-        CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
         if( order > 1 )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
-
+          CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
           this->generateMeshLevel( mesh,
                                    cellBlockManager,
                                    feDiscretization,
@@ -704,7 +782,6 @@ void ProblemManager::generateMesh()
       edgeManager.setIsExternal( faceManager );
     } );
   } );
-
 }
 
 

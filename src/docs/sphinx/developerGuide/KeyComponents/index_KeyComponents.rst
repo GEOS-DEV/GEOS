@@ -18,6 +18,8 @@ The main code components are described here.
 
    ./../../../../coreComponents/mesh/docs/meshDeveloperGuide
 
+   ./../../../../coreComponents/mesh/docs/Ghosting/ghosting.rst
+
    ./../../../../coreComponents/linearAlgebra/docs/DofManager.rst
 
    ./LvArray

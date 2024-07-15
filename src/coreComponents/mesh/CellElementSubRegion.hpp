@@ -16,7 +16,8 @@
 #ifndef GEOS_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOS_MESH_CELLELEMENTSUBREGION_HPP_
 
-#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlk.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -83,6 +84,12 @@ public:
    * @param cellBlock the CellBlock which properties (connectivity info) will be copied.
    */
   void copyFromCellBlock( CellBlockABC const & cellBlock );
+
+  /**
+   * @brief Fill the current @c CellElementSubRegion using the @c cellBlock information
+   * @param[in] cellBlock The cell block with all the mappings and ghosting information.
+   */
+  void copyFromCellBlock( generators::CellBlk const & cellBlock );
 
   ///@}
 

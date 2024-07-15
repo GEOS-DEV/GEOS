@@ -20,7 +20,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
-#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlockABC.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
 // special CMake-generated include
@@ -71,7 +71,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
   meshManager.postInputInitializationRecursive();
   DomainPartition domain( "domain", &root );
-  meshManager.generateMeshes( domain );
+  meshManager.generateMeshes( false, domain );
 
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
 

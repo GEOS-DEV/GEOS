@@ -42,25 +42,29 @@ set( mesh_headers
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
-     generators/CellBlockABC.hpp
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
-     generators/LineBlock.hpp
-     generators/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
-     generators/FaceBlockABC.hpp
+     generators/Indices.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
+     generators/LineBlock.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
      generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
+     generators/Pods.hpp
      generators/PrismUtilities.hpp
      generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
+     generators/include/CellBlk.hpp
+     generators/include/CellBlockABC.hpp
+     generators/include/FaceBlockABC.hpp
+     generators/include/GhostExchange.hpp
+     generators/include/LineBlockABC.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
@@ -130,6 +134,7 @@ set( mesh_sources
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
      generators/ParticleMeshGenerator.cpp
+     generators/Pods.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
@@ -150,10 +155,39 @@ set( mesh_sources
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
+include( FetchContent )
+
+FetchContent_Declare(
+  NamedType
+  GIT_REPOSITORY https://github.com/joboccara/NamedType.git
+  GIT_TAG master
+)
+
+FetchContent_GetProperties( NamedType )
+#FetchContent_MakeAvailable( namedtype )
+if( NOT namedtype_POPULATED )
+  message( STATUS "Fetching NamedType..." )
+  FetchContent_Populate( NamedType )
+  add_subdirectory( ${namedtype_SOURCE_DIR} ${namedtype_BINARY_DIR} )
+endif()
+
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+#target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+
+list( APPEND dependencyList NamedType nlohmann_json::nlohmann_json trilinos )
+
+
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
+         generators/BuildPods.hpp
          generators/CollocatedNodes.hpp
+         generators/NewGhosting.hpp
+         generators/NewGlobalNumbering.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
@@ -161,7 +195,10 @@ if( ENABLE_VTK )
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
+         generators/BuildPods.cpp
          generators/CollocatedNodes.cpp
+         generators/NewGhosting.cpp
+         generators/NewGlobalNumbering.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp

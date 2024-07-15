@@ -58,7 +58,7 @@ void MeshManager::expandObjectCatalogs()
 }
 
 
-void MeshManager::generateMeshes( DomainPartition & domain )
+void MeshManager::generateMeshes( bool useNewGhosting, DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
@@ -66,9 +66,9 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
-    meshGen.generateMesh( meshBody, partition );
+    meshGen.generateMesh( useNewGhosting, meshBody, partition );
 
-    if( !meshBody.hasParticles() )
+    if( !meshBody.hasParticles() && !useNewGhosting )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 

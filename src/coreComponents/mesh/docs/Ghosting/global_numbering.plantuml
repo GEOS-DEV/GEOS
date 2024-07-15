@@ -1,0 +1,46 @@
+@startuml
+
+<style>
+.invisible {
+  arrow {
+    LineColor white
+    LineThickness 0
+  }
+}
+</style>
+
+
+participant "Rank k" as rk
+
+activate rk #WhiteSmoke
+
+rk -> rk++ #LimeGreen: Format mesh information
+deactivate rk
+
+rk -> rk++ #tomato: Exchange mesh information
+[<--> rk: Communications with neighbor\n(mpi send/recv)
+deactivate rk
+
+rk -> rk++ #LimeGreen: Compute intersections\nof edges and faces
+rk -> rk++ #SpringGreen: Sort edges and faces\nfor efficient access
+rk -> rk--++ #SpringGreen: Associate edges and faces\nto neighbor ranks
+rk -> rk--++ #SpringGreen: Invert and sort associations
+|||
+rk -\ rk-- <<invisible>>
+rk -\ rk-- <<invisible>>
+
+'deactivate rk
+
+[--> rk++ #tomato: Receive offsets\nfrom previous ranks (mpi scan)
+rk -> rk++ #coral: Compute offsets
+deactivate rk
+rk -->]: Send updated offsets\nto next ranks (mpi scan)
+
+deactivate rk
+
+rk -> rk++ #DeepSkyBlue: Number edges and faces\nconsistently accros ranks
+
+|||
+|||
+
+@enduml

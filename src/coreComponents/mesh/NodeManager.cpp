@@ -193,6 +193,33 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connectNodesTo2dElements );
 }
 
+void NodeManager::setGeometricalRelations( generators::NodeMgr const & nodeMgr,
+                                           arrayView2d< localIndex const > const & cb2sr )
+{
+  GEOS_MARK_FUNCTION;
+  resize( nodeMgr.numNodes() );
+
+  m_referencePosition = nodeMgr.getNodePositions();
+
+  // TODO I add the copy of the g2l and l2g mappings here. This is new
+  m_globalToLocalMap = nodeMgr.getGlobalToLocal();
+  this->constructLocalToGlobalMap();
+
+  // TODO not for there, but it's convenient
+  copyExchangeInfo( nodeMgr.getSend(), nodeMgr.getRecv() );
+
+  m_toEdgesRelation.base().assimilate< parallelHostPolicy >( nodeMgr.getNodeToEdges(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+  m_toFacesRelation.base().assimilate< parallelHostPolicy >( nodeMgr.getNodeToFaces(),
+                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+
+  ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = nodeMgr.getNodeToElements();
+  meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( cb2sr.toViewConst(),
+                                                                         toCellBlock,
+                                                                         m_toElements );
+  // TODO add the fracture component
+}
+
 void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
                                                   FaceManager const & faceManager,
                                                   ElementRegionManager const & elemRegionManager )

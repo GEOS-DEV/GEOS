@@ -1,8 +1,9 @@
 # Specify list of tests
 set( mesh_tests
-     testMeshObjectPath.cpp
      testComputationalGeometry.cpp
-     testGeometricObjects.cpp )
+     testGeometricObjects.cpp
+     testMeshObjectPath.cpp
+     testReorderFaceNodes.cpp )
 
 set( dependencyList blas lapack gtest mesh ${parallelDeps} )
 

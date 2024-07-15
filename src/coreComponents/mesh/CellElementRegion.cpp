@@ -14,7 +14,7 @@
 
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
-#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/include/CellBlockABC.hpp"
 
 namespace geos
 {
@@ -44,6 +44,18 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
     CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
     CellBlockABC const & source = cellBlocks.getGroup< CellBlockABC >( subRegion.getName() );
     subRegion.copyFromCellBlock( source );
+  }
+}
+
+void CellElementRegion::generateMesh( std::map< string, generators::CellBlk const * > const & cellBlks )
+{
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
+
+  for( string const & cellBlockName: this->m_cellBlockNames )
+  {
+    CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
+    generators::CellBlk const * source = cellBlks.at( cellBlockName );
+    subRegion.copyFromCellBlock( *source );
   }
 }
 

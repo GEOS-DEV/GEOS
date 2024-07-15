@@ -15,6 +15,7 @@
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
+#include "mesh/generators/Pods.hpp"
 
 namespace geos
 {
@@ -48,7 +49,7 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
+void MeshGeneratorBase::generateMesh( bool useNewGhosting, Group & parent, SpatialPartition & partition )
 {
   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
   if( meshBody.hasParticles() )
@@ -62,11 +63,20 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
   }
   else
   {
-    CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+    if( useNewGhosting )
+    {
+      MeshMappingImpl & mm = parent.registerGroup< MeshMappingImpl >( "MeshMappingImpl" );
 
-    fillCellBlockManager( cellBlockManager, partition );
+      fillMeshMappings( mm, partition );
+    }
+    else
+    {
+      CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-    this->attachWellInfo( cellBlockManager );
+      fillCellBlockManager( cellBlockManager, partition );
+
+      this->attachWellInfo( cellBlockManager );
+    }
   }
 }
 

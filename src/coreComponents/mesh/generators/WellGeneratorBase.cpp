@@ -15,7 +15,7 @@
 #include "WellGeneratorBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/Perforation.hpp"
-#include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/include/LineBlockABC.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "fileIO/Table/TableLayout.hpp"
 #include "fileIO/Table/TableData.hpp"

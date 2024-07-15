@@ -21,6 +21,8 @@
 
 #include "ElementRegionBase.hpp"
 
+#include "mesh/generators/include/CellBlk.hpp"
+
 namespace geos
 {
 
@@ -114,6 +116,12 @@ public:
   }
 
   virtual void generateMesh( Group const & cellBlocks ) override;
+
+  /**
+   * @brief Fill the current @c CellElementRegion with the cell blocks.
+   * @param cellBlks All the cell blocks. It's the role of the current @c CellElementRegion to pick the one it needs.
+   */
+  void generateMesh( std::map< string, generators::CellBlk const * > const & cellBlks );
 
   ///@}
 
