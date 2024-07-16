@@ -87,7 +87,7 @@ template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDataDevice( buffer_unit_type * & buffer,
                 ArrayView< T const, NDIM, USD > const & var,
-                parallelDeviceEvents & GEOS_UNUSED_PARAM(events) )
+                parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
   if( DO_PACKING )
   {

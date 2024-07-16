@@ -114,7 +114,7 @@ TEST( testPacking, testTensorPacking )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
-// void printArray( arrayView1d< R1Tensor const > const & arr, 
+// void printArray( arrayView1d< R1Tensor const > const & arr,
 //                  arrayView1d< R1Tensor const > const & unpackArray )
 // {
 //   printf( "arr.size() = %d\n", arr.size() );
@@ -163,7 +163,8 @@ TEST( testPacking, testPackingDevice )
   // R1Tensor const * const castedBuffer = reinterpret_cast< R1Tensor const * >( &buf[16] );
   // for( localIndex ii = 0; ii < size; ++ii )
   // {
-  //   printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0], castedBuffer[ii][1], castedBuffer[ii][2] );
+  //   printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0],
+  // castedBuffer[ii][1], castedBuffer[ii][2] );
   // }
 
   buffer_unit_type const * cbuffer = &buf[0];
