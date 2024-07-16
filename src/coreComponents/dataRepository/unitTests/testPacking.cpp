@@ -114,31 +114,31 @@ TEST( testPacking, testTensorPacking )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
-void printArray( arrayView1d< R1Tensor const > const & arr, 
-                 arrayView1d< R1Tensor const > const & unpackArray )
-{
-  printf( "arr.size() = %d\n", arr.size() );
-  printf( "unpackArray.size() = %d\n", unpackArray.size() );
+// void printArray( arrayView1d< R1Tensor const > const & arr, 
+//                  arrayView1d< R1Tensor const > const & unpackArray )
+// {
+//   printf( "arr.size() = %d\n", arr.size() );
+//   printf( "unpackArray.size() = %d\n", unpackArray.size() );
 
-  for( localIndex ii = 0; ii < unpackArray.size(); ++ii )
-  {
-    if( !( arr[ii] == unpackArray[ii] ) )
-    {
-      printf( "arr[%d]         = ( %f, %f, %f )\n", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
-      printf( "unPackarray[%d] = ( %f, %f, %f ) : ", ii, unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+//   for( localIndex ii = 0; ii < unpackArray.size(); ++ii )
+//   {
+//     if( !( arr[ii] == unpackArray[ii] ) )
+//     {
+//       printf( "arr[%d]         = ( %f, %f, %f )\n", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
+//       printf( "unPackarray[%d] = ( %f, %f, %f ) : ", ii, unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
 
-      forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
-      {
-        printf( "( %f, %f, %f ) : ", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
-      } );
+//       forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
+//       {
+//         printf( "( %f, %f, %f ) : ", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+//       } );
 
-      forAll< serialPolicy >( 1, [=]( localIndex )
-      {
-        printf( "( %f, %f, %f )\n", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
-      } );
-      }
-  }
-}
+//       forAll< serialPolicy >( 1, [=]( localIndex )
+//       {
+//         printf( "( %f, %f, %f )\n", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+//       } );
+//       }
+//   }
+// }
 
 TEST( testPacking, testPackingDevice )
 {
@@ -157,29 +157,22 @@ TEST( testPacking, testPackingDevice )
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  localIndex packedSize = bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
-  waitAllDeviceEvents( packEvents );
-  sleep( 2 );
-  std::cout<< "packedSize = " << packedSize << std::endl;
+  bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
+  // waitAllDeviceEvents( packEvents );
 
-
-  R1Tensor const * const castedBuffer = reinterpret_cast< R1Tensor const * >( &buf[16] );
-  for( localIndex ii = 0; ii < size; ++ii )
-  {
-    printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0], castedBuffer[ii][1], castedBuffer[ii][2] );
-  }
-
-
+  // R1Tensor const * const castedBuffer = reinterpret_cast< R1Tensor const * >( &buf[16] );
+  // for( localIndex ii = 0; ii < size; ++ii )
+  // {
+  //   printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0], castedBuffer[ii][1], castedBuffer[ii][2] );
+  // }
 
   buffer_unit_type const * cbuffer = &buf[0];
   parallelDeviceEvents unpackEvents;
-  localIndex unpackedSize = bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
+  bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-  std::cout<< "unpackedSize = " << unpackedSize << std::endl;
 
   unpacked.move( hostMemorySpace );
 
-  sleep( 2 );
 //  printArray( veloc, unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
