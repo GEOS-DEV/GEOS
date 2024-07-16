@@ -82,11 +82,11 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
-  Group & defaultIncluded = registerGroup< Included< typename inputParsing::input_document_type > >( Included< typename inputParsing::input_document_type >::CatalogName() );
-  defaultIncluded.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  // Group & defaultIncluded = registerGroup< Included< typename inputParsing::input_document_type > >( Included< typename inputParsing::input_document_type >::CatalogName() );
+  // defaultIncluded.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerGroup< ElementRegionManager >( MeshLevel::groupStructKeys::elemManagerString() );
-  registerGroup< ParticleRegionManager >( MeshLevel::groupStructKeys::particleManagerString() );
+  registerGroup< ParticleManager >( MeshLevel::groupStructKeys::particleManagerString() );
 
   // Command line entries
   commandLine.registerWrapper< string >( viewKeys.inputFileName.key() ).
@@ -174,13 +174,6 @@ void ProblemManager::problemSetup()
   initialize();
 
   importFields();
-}
-
-void ProblemManager::postInputInitialization()
-{
-  // relies on depth-first recursion, otherwise these would be used *after* they are deregistered/deleted
-  deregisterGroup( MeshLevel::groupStructKeys::elemManagerString() );
-  deregisterGroup( MeshLevel::groupStructKeys::particleManagerString() );
 }
 
 void ProblemManager::parseCommandLineInput()
@@ -399,6 +392,10 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::postInputInitialization()
 {
+  // relies on depth-first recursion, otherwise these would be used *after* they are deregistered/deleted
+  deregisterGroup( MeshLevel::groupStructKeys::elemManagerString() );
+  deregisterGroup( MeshLevel::groupStructKeys::particleManagerString() );
+
   DomainPartition & domain = getDomainPartition();
 
   Group const & commandLine = getGroup< Group >( groupKeys.commandLine );

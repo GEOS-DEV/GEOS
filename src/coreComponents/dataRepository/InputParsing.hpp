@@ -47,7 +47,7 @@ constexpr char const filePathString[] = "__filePath__";
  */
 constexpr char const charOffsetString[] = "__charOffset__";
 
-string mergeInputDocuments( string_array const & inputFileList, string const & outputDir = {} )
+inline string mergeInputDocuments( string_array const & inputFileList, string const & outputDir = {} )
 {
   // TODO: handle different document types
   return xmlWrapper::mergeInputDocuments( inputFileList, outputDir );
@@ -71,6 +71,7 @@ bool isDocMetadataAttribute( string const & attributeName )
   }
   return false;
 }
+
 template < typename Document, typename T, typename U >
 bool readAttributeAsType( T & rval, string const & name, Regex const & regex, typename Document::node_type const & docNode, U const & lastArg )
 {

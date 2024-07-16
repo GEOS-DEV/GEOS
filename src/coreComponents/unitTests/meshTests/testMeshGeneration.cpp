@@ -111,18 +111,18 @@ protected:
     dataRepository::testing::setupProblemFromXML( &problemManager, inputStream.c_str() );
     // problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
-    // // Open mesh levels
-    // DomainPartition & domain = problemManager.getDomainPartition();
-    // MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-    // meshManager.generateMeshLevels( domain );
+    // Open mesh levels
+    DomainPartition & domain = problemManager.getDomainPartition();
+    MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+    meshManager.generateMeshLevels( domain );
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
     elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
     elementManager.postInputInitializationRecursive();
 
-    // problemManager.problemSetup();
-    // problemManager.applyInitialConditions();
+    problemManager.problemSetup();
+    problemManager.applyInitialConditions();
   }
 };
 

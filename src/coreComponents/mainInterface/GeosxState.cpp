@@ -193,17 +193,17 @@ void GeosxState::parseInputFiles()
   map<string, string> argMap =
   {
     { "problemTag", dataRepository::keys::ProblemManager },
-    { "includedTag", dataRepository::Included< document_type >::CatalogName() },
-    { "fileTag", dataRepository::Included< document_type >::groupKeysStruct::fileString() },
+    { "includedTag", xmlWrapper::includedFileTag },
+    { "fileTag", xmlWrapper::includedFileTag },
     { "fileName", inputFileName },
     { "filePathAttribute", inputParsing::filePathString }
   };
 
   string includeBootstrap = GEOS_FMT(
     "<{problemTag}>\n"
-    "  <{includedTag}>\n"
+    "  <Include>\n"
     "    <{fileTag} name=\"{fileName}\" {filePathAttribute}=\"__internal__\">\n"
-    "  </{includedTag}>\n"
+    "  </Include>\n"
     "</{problemTag}>",
     argMap
   );

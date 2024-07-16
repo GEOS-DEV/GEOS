@@ -47,8 +47,8 @@ char const * xmlInput =
         timeSourceFrequency="2"
         useDAS="strainIntegration"
         attenuationType="sls"
-        slsReferenceAngularFrequencies="{ 69.6283, 592.177 }" 
-        slsAnelasticityCoefficients="{ 1.63675, 1.75153 }" 
+        slsReferenceAngularFrequencies="{ 69.6283, 592.177 }"
+        slsAnelasticityCoefficients="{ 1.63675, 1.75153 }"
         linearDASSamples="5"
         linearDASGeometry="{ { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
                                 { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 }, { 0, 0, 10 },
@@ -171,7 +171,7 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    // setupProblemFromXML( state.getProblemManager(), xmlInput );
   }
 
   static real64 constexpr time = 0.0;

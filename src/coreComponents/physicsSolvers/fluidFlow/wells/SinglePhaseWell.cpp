@@ -99,22 +99,6 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
         outputFile.close();
       }
-    }
-
-void SinglePhaseWell::initializePostSubGroups()
-{
-  WellSolverBase::initializePostSubGroups();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion & subRegion )
-    {
-      validateWellConstraints( 0, 0, subRegion );
     } );
   } );
 }

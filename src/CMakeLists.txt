@@ -149,7 +149,7 @@ blt_add_executable( NAME geos
 
 # geos alias for geosx target
 add_custom_target( geosx ALL
-                   COMMAND ${CMAKE_COMMAND} -E echo "WARNING: The target 'geosx' is deprecated and will be removed in a future release. Please use 'geos' instead."
+                   COMMAND ${CMAKE_COMMAND} -E echo "WARNING: The target \'geosx\' is deprecated and will be removed in a future release. Please use \'geos\' instead."
                    DEPENDS geos )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
