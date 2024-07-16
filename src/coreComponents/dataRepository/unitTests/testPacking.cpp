@@ -157,20 +157,30 @@ TEST( testPacking, testPackingDevice )
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
+  localIndex packedSize = bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
   waitAllDeviceEvents( packEvents );
   sleep( 2 );
+  std::cout<< "packedSize = " << packedSize << std::endl;
+
+
+  R1Tensor const * const castedBuffer = reinterpret_cast< R1Tensor const * >( &buf[16] );
+  for( localIndex ii = 0; ii < size; ++ii )
+  {
+    printf( " %d = ( %f, %f, %f ) != ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2], castedBuffer[ii][0], castedBuffer[ii][1], castedBuffer[ii][2] );
+  }
+
+
 
   buffer_unit_type const * cbuffer = &buf[0];
   parallelDeviceEvents unpackEvents;
-  bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
+  localIndex unpackedSize = bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-  
+  std::cout<< "unpackedSize = " << unpackedSize << std::endl;
 
   unpacked.move( hostMemorySpace );
 
   sleep( 2 );
-  printArray( veloc, unpacked.toViewConst() );
+//  printArray( veloc, unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
   {
