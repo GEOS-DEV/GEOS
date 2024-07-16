@@ -115,6 +115,7 @@ TEST( testPacking, testTensorPacking )
 
 void printArray( arrayView1d< R1Tensor const > const & arr )
 {
+  printf( "arr.size() = %d\n", arr.size() );
   for( localIndex ii = 0; ii < arr.size(); ++ii )
   {
     printf( "arr[%d] = ( %f, %f, %f ) : ", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
@@ -163,7 +164,11 @@ TEST( testPacking, testPackingDevice )
   printArray( unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
+  {
+    printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
+    printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
     EXPECT_EQ( veloc[ii], unpacked[ii] );
+  }
 }
 
 TEST( testPacking, testPackingDeviceHelper )
