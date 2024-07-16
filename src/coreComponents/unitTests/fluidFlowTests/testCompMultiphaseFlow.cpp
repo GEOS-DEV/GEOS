@@ -21,6 +21,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geos;
@@ -214,7 +216,7 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();

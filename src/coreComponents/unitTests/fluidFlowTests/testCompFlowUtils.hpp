@@ -51,45 +51,6 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
   } );
 }
 
-void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
-{
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
-  if( !xmlResult )
-  {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
-
-  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-
-  dataRepository::Group & commandLine =
-    problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
-
-  commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
-    setApplyDefaultValue( mpiSize );
-
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
-  problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
-
-  DomainPartition & domain = problemManager.getDomainPartition();
-
-  constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
-  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
-
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
-  meshManager.generateMeshLevels( domain );
-
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
-  topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
-
-  problemManager.problemSetup();
-  problemManager.applyInitialConditions();
-}
-
 void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                                           DomainPartition & domain,
                                           real64 const perturbParameter,

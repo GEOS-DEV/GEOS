@@ -35,7 +35,7 @@ public:
 
   static string catalogName() { return "DeadOilFluid"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Kernel wrapper class for DeadOilFluid

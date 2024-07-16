@@ -71,6 +71,10 @@ struct CommandLineOptions
   /// Generally only used by the integration tests.
   integer suppressPinned = false;
 
+  /// True if we only want to preprocess the input file
+  /// and write the result to the output directory
+  integer preprocessOnly = false;
+
   /// The name of the schema.
   string schemaName;
 

@@ -18,6 +18,8 @@
 
 #include "TriaxialDriver.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -396,7 +398,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
 
   SolidBase & baseSolid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
 

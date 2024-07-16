@@ -39,67 +39,10 @@ DataContext::ToStringInfo::ToStringInfo( string const & targetName, string const
   m_filePath( filePath ),
   m_line( line )
 {}
+
 DataContext::ToStringInfo::ToStringInfo( string const & targetName ):
   m_targetName( targetName )
 {}
-
-
-/**
- * @return the node 'name' attribute if it exists, return the node tag name otherwise.
- * @param node the target node.
- */
-string getNodeName( xmlWrapper::xmlNode const & node )
-{
-  xmlWrapper::xmlAttribute const nameAtt = node.attribute( "name" );
-  if( !nameAtt.empty() )
-  {
-    return string( node.attribute( "name" ).value() );
-  }
-  else
-  {
-    return string( node.name() );
-  }
-}
-
-DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
-                                  xmlWrapper::xmlNodePos const & nodePos ):
-  DataContext( getNodeName( targetNode ) ),
-  m_typeName( targetNode.name() ),
-  m_filePath( nodePos.filePath ),
-  m_line( nodePos.line ),
-  m_offsetInLine( nodePos.offsetInLine ),
-  m_offset( nodePos.offset )
-{}
-
-DataFileContext::DataFileContext( xmlWrapper::xmlNode const & targetNode,
-                                  xmlWrapper::xmlAttribute const & att,
-                                  xmlWrapper::xmlAttributePos const & attPos ):
-  DataContext( getNodeName( targetNode ) + '/' + att.name() ),
-  m_typeName( att.name() ),
-  m_filePath( attPos.filePath ),
-  m_line( attPos.line ),
-  m_offsetInLine( attPos.offsetInLine ),
-  m_offset( attPos.offset )
-{}
-
-string DataFileContext::toString() const
-{
-  if( m_line != xmlWrapper::xmlDocument::npos )
-  {
-    return GEOS_FMT( "{} ({}, l.{})", m_targetName, splitPath( m_filePath ).second, m_line );
-  }
-  else if( m_offset != xmlWrapper::xmlDocument::npos )
-  {
-    return GEOS_FMT( "{} ({}, offset {})", m_targetName, splitPath( m_filePath ).second, m_offset );
-  }
-  else
-  {
-    return GEOS_FMT( "{} (Source file not found)", m_targetName );
-  }
-}
-
-DataContext::ToStringInfo DataFileContext::getToStringInfo() const
-{ return ToStringInfo( m_targetName, m_filePath, m_line ); }
 
 
 

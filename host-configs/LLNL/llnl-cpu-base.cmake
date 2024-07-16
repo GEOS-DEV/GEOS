@@ -9,6 +9,7 @@
 
 # Fortran
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
+set(DISABLE_KERNEL_COMPILATION OFF CACHE BOOL "")
 
 # Fortran
 set(CMAKE_Fortran_COMPILER /usr/tce/packages/gcc/gcc-12.1.1-magic/bin/gfortran CACHE PATH "")

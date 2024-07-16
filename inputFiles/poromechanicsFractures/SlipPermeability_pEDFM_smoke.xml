@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./SlipPermeability_pEDFM_base.xml"/>
   </Included>
@@ -53,13 +53,13 @@
     maxTime="0.1">
     <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>  
-   
+      target="/Solvers/SurfaceGenerator"/>
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="0.1"
       target="/Outputs/vtkOutput"/>
-   
+
     <PeriodicEvent
       name="solverApplication"
       beginTime="0.0"
@@ -68,7 +68,7 @@
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
-      name="timeHistoryCollection"      
+      name="timeHistoryCollection"
       target="/Tasks/tractionCollection" />
 
     <PeriodicEvent
@@ -83,7 +83,7 @@
     <PeriodicEvent
       name="timeHistoryOutput1"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput1"/> 
+      target="/Outputs/timeHistoryOutput1"/>
 
     <PeriodicEvent
       name="timeHistoryCollection2"
@@ -92,7 +92,7 @@
     <PeriodicEvent
       name="timeHistoryOutput2"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput2"/>   
+      target="/Outputs/timeHistoryOutput2"/>
 
     <PeriodicEvent
       name="timeHistoryCollection3"
@@ -101,7 +101,7 @@
     <PeriodicEvent
       name="timeHistoryOutput3"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput3"/>  
+      target="/Outputs/timeHistoryOutput3"/>
 
     <PeriodicEvent
       name="timeHistoryCollection4"
@@ -110,12 +110,12 @@
     <PeriodicEvent
       name="timeHistoryOutput4"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput4"/>  
+      target="/Outputs/timeHistoryOutput4"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
-      target="/Outputs/restartOutput"/>   
+      target="/Outputs/restartOutput"/>
   </Events>
 
 </Problem>

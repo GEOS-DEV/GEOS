@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./deadOilEgg_base_iterative.xml"/>
   </Included>

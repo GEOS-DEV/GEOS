@@ -1,14 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ThermoPoroElastic_consolidation_benchmark_base.xml" />
   </Included>
 
   <Solvers
   gravityVector="{ 0.0, 0.0, 0.0 }">
-  
-  <!-- SPHINX_POROMECHANICSSOLVER -->    
+
+  <!-- SPHINX_POROMECHANICSSOLVER -->
   <SinglePhasePoromechanics
     name="thermoPoroSolver"
     solidSolverName="solidMechSolver"
@@ -26,7 +26,7 @@
       directParallel="0"/>
   </SinglePhasePoromechanics>
   <!-- SPHINX_POROMECHANICSSOLVER_END -->
-  <!-- SPHINX_MECHANICALSOLVER -->    
+  <!-- SPHINX_MECHANICALSOLVER -->
   <SolidMechanicsLagrangianSSLE
     name="solidMechSolver"
     timeIntegrationOption="QuasiStatic"
@@ -41,7 +41,7 @@
       directParallel="0"/>
   </SolidMechanicsLagrangianSSLE>
   <!-- SPHINX_MECHANICALSOLVER_END -->
-  <!-- SPHINX_SINGLEPHASEFVM -->    
+  <!-- SPHINX_SINGLEPHASEFVM -->
   <SinglePhaseFVM
     name="flowSolver"
     logLevel="1"
@@ -56,7 +56,7 @@
     <LinearSolverParameters
       directParallel="0"/>
   </SinglePhaseFVM>
-  <!-- SPHINX_SINGLEPHASEFVM_END -->    
+  <!-- SPHINX_SINGLEPHASEFVM_END -->
  </Solvers>
 
 </Problem>

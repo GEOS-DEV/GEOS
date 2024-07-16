@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ThermoPoroElastic_consolidation_base.xml" />
   </Included>
 
@@ -19,7 +19,7 @@
   </Mesh>
 
   <Events
-    maxTime="100001"> 
+    maxTime="100001">
 
     <PeriodicEvent
       name="outputs0"
@@ -122,7 +122,7 @@
       endTime="1"
       forceDt="0.99"
       target="/Outputs/displacementHistoryOutput"/>
-    
+
     <PeriodicEvent
       name="pressureHistoryCollection2"
       beginTime="1"
@@ -233,7 +233,7 @@
       endTime="100001"
       forceDt="1000"
       target="/Outputs/displacementHistoryOutput"/>
-    
+
     <PeriodicEvent
       name="solverApplication0"
       endTime="1e-2"

@@ -235,7 +235,7 @@ public:
 
   static string catalogName() { return "BiotPorosity"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {

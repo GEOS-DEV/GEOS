@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pennyShapedToughnessDominated_base.xml"/>
   </Included>
-  
+
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
@@ -43,13 +43,13 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="3.0e6"
       mpiCommOrder="1"/>
-  </Solvers> 
- 
+  </Solvers>
+
   <Mesh>
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ -25, 0, 25 }"
@@ -63,7 +63,7 @@
       zBias="{ 0.0, -0.6 }"
       cellBlockNames="{cb1}"/>
   </Mesh>
- 
+
   <Geometry>
     <Box
       name="fracture"
@@ -112,7 +112,7 @@
       name="vtk"
       target="/Outputs/vtkOutput"/> -->
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="restarts"
       timeFrequency="0.5"
       targetExactTimestep="0"

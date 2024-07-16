@@ -12,9 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-// using some utility classes from the following unit test
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
-
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -23,6 +20,9 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -150,7 +150,7 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
   }
 
   static real64 constexpr time = 0.0;

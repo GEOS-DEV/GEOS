@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="grav_seg_c1ppu_base.xml"/>
   </Included>
 
@@ -24,7 +24,7 @@
       voxelFile="tables/imbibitionRelPerm_gas.txt"/>
   </Functions>
 
-  <!-- SPHINX_OUTPUT -->  
+  <!-- SPHINX_OUTPUT -->
   <Outputs>
     <VTK
       name="vtkOutput_hyst"/>
@@ -35,40 +35,40 @@
       filename="saturationHistory_hyst" />
 
     <Restart
-      name="restartOutput_hyst"/> 
+      name="restartOutput_hyst"/>
   </Outputs>
   <!-- SPHINX_OUTPUT_END -->
 
   <Events
     maxTime="10000000">
-    
+
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="10" 
+      cycleFrequency="10"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput_hyst"/>
 
     <PeriodicEvent
       name="restart"
-      cycleFrequency="100" 
+      cycleFrequency="100"
       targetExactTimestep="1"
       target="/Outputs/restartOutput_hyst"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
-      cycleFrequency="10" 
+      cycleFrequency="10"
       targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput" />
 
     <PeriodicEvent
       name="timeHistoryCollection"
-      cycleFrequency="10" 
+      cycleFrequency="10"
       targetExactTimestep="1"
       target="/Tasks/phaseVolumeFractionCollection" />
 
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="10000000"
-      target="/Solvers/compflow"/>    
+      target="/Solvers/compflow"/>
   </Events>
 </Problem>

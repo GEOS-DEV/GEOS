@@ -11,7 +11,7 @@ set( parallel_tests
 
 set( nranks 2 )
 
-set( dependencyList gtest linearAlgebra ${parallelDeps} )
+set( dependencyList gtest gmock linearAlgebra ${parallelDeps} )
 
 foreach(test ${serial_tests})
   get_filename_component( test_name ${test} NAME_WE )

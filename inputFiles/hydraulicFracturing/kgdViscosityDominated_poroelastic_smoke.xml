@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./kgdViscosityDominated_poroelastic_base.xml"/>
   </Included>
-  
+
   <Mesh>
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ -100, 0, 100 }"
@@ -72,7 +72,7 @@
       name="output"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/vtkOutput"/>  
-  </Events> 
+      target="/Outputs/vtkOutput"/>
+  </Events>
 
 </Problem>

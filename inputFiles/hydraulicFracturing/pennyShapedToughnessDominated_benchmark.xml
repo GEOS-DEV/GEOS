@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pennyShapedToughnessDominated_base.xml"/>
   </Included>
-  
+
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
   <!-- SPHINX_HYDROFRACSOLVER -->
@@ -66,12 +66,12 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="3.0e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>
- 
+
   <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh
@@ -86,7 +86,7 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
- 
+
   <Geometry>
   <!-- SPHINX_INITIALFRAC -->
     <Box
@@ -142,21 +142,21 @@
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/hydraulicApertureCollection" /> 
+      target="/Tasks/hydraulicApertureCollection" />
 
     <PeriodicEvent
       name="timeHistoryCollection3"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/areaCollection" />      
+      target="/Tasks/areaCollection" />
 
     <PeriodicEvent
       name="timeHistoryOutput"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
+      target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -209,7 +209,7 @@
 
     <PeriodicEvent
       name="solverApplications8"
-      beginTime="200.0"      
+      beginTime="200.0"
       forceDt="20.0"
       target="/Solvers/hydrofracture"/>
   </Events>

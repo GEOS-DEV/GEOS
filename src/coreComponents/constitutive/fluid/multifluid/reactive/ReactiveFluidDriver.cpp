@@ -21,6 +21,8 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
 #include "functions/TableFunction.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -77,7 +79,7 @@ void ReactiveFluidDriver::postInputInitialization()
 {
   // get number of phases and components
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   ReactiveMultiFluid & fluid = constitutiveManager.getGroup< ReactiveMultiFluid >( m_fluidName );
 
   m_numPhases = fluid.numFluidPhases();
@@ -131,7 +133,7 @@ bool ReactiveFluidDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager , ProblemManager::groupKeysStruct::domainString() , DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   ReactiveMultiFluid & baseFluid = constitutiveManager.getGroup< ReactiveMultiFluid >( m_fluidName );
 
   // depending on logLevel, print some useful info

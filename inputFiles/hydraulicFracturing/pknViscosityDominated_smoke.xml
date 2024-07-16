@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pknViscosityDominated_base.xml"/>
   </Included>
@@ -30,19 +30,19 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">     
+      contactRelationName="fractureContact">
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }">     
+      targetRegions="{ Fracture }">
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="1e4"
       mpiCommOrder="1"/>
   </Solvers>
@@ -60,10 +60,10 @@
       xBias="{ 0, -0.5 }"
       yBias="{ 0.5, -0.5 }"
       zBias="{ 0, -0.5 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
- 
-  <Geometry> 
+
+  <Geometry>
     <Box
       name="fracture"
       xMin="{ -0.1, -0.1, -0.1 }"
@@ -111,11 +111,11 @@
       name="vtk"
       target="/Outputs/vtkOutput"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="restarts"
       timeFrequency="0.75"
       targetExactTimestep="0"
       target="/Outputs/restartOutput" />
   </Events>
- 
+
 </Problem>

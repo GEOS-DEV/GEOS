@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_efem-edfm_inclinedFrac_base.xml" />
   </Included>
 
@@ -27,7 +27,7 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 8, 4 }"/>
   </Geometry>
-  
+
   <Events
     maxTime="8.64e6">
     <PeriodicEvent
@@ -36,7 +36,7 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="pressureCollection" 
+      name="pressureCollection"
       timeFrequency="8.64e4"
       target="/Tasks/pressureCollection"/>
 
@@ -46,14 +46,14 @@
       target="/Outputs/pressureHistoryOutput"/>
 
     <PeriodicEvent
-      name="apertureCollection" 
+      name="apertureCollection"
       timeFrequency="8.64e4"
       target="/Tasks/apertureCollection" />
 
     <PeriodicEvent
       name="apertureOutput"
       timeFrequency="8.64e4"
-      target="/Outputs/apertureOutput" /> 
+      target="/Outputs/apertureOutput" />
 
     <PeriodicEvent
       name="solverApplication0"
@@ -66,8 +66,8 @@
       beginTime="100.0"
       endTime="1000.0"
       forceDt="100.0"
-      target="/Solvers/poroSolver"/> 
-  
+      target="/Solvers/poroSolver"/>
+
     <PeriodicEvent
       name="solverApplication2"
       beginTime="1000.0"
@@ -80,7 +80,7 @@
       beginTime="8.64e4"
       endTime="8.64e6"
       forceDt="8.64e4"
-      target="/Solvers/poroSolver"/> 
+      target="/Solvers/poroSolver"/>
   </Events>
 
 </Problem>

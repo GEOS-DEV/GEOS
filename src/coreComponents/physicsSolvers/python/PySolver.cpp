@@ -75,7 +75,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   int cycleNumber = int(round( time/dt ));
 
@@ -108,7 +108,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   self->group->cleanup( time, 0, 0, 0.0, domain );
 
   Py_RETURN_NONE;

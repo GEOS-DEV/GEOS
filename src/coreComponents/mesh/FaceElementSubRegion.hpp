@@ -56,7 +56,7 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual string getCatalogName() const override
+  virtual string const getCatalogName() const override
   {
     return catalogName();
   }

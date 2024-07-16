@@ -26,6 +26,7 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/Patterns.hpp"
 
 // TPL includes
 #include <pugixml.hpp>
@@ -144,6 +145,12 @@ struct xmlNodePos : xmlAttributePos
 class xmlDocument
 {
 public:
+  using read_result_type = xmlResult;
+  using node_type = xmlNode;
+  using node_pos_type = xmlNodePos;
+  using attribute_type = xmlAttribute;
+  using attribute_pos_type = xmlAttributePos;
+
   /// Error value for when an offset / line position is undefined.
   static constexpr size_t npos = string::npos;
 
@@ -248,7 +255,7 @@ public:
    * the targetNode.
    * Each found includes are added to xmlDocument::m_originalBuffers.
    */
-  void addIncludedXML( xmlNode & targetNode, int level = 0 );
+  void processIncludes( xmlNode & targetNode, int level = 0 );
 
   /**
    * @return True if loadNodeFileInfo was true during the last load_X call.
@@ -265,25 +272,8 @@ private:
   string m_rootFilePath;
 };
 
-/**
- * @brief constexpr variable to hold name for inserting the file path into the xml file.
- *
- * This is used because we would like the option to hold the file path in the xml structure.
- * The name is uglified with underscores to avoid collisions with real attribute names.
- */
-constexpr char const filePathString[] = "__filePath__";
-
-/**
- * @brief constexpr variable to hold node character offset from the start of the xml file.
- *
- * This is used because we would like the option to hold the offset in the xml structure.
- * The name is uglified with underscores to avoid collisions with real attribute names.
- */
-constexpr char const charOffsetString[] = "__charOffset__";
-
 /// XML tag name for included sections
 constexpr char const includedListTag[] = "Included";
-
 /// XML tag name for included files
 constexpr char const includedFileTag[] = "File";
 
@@ -296,8 +286,7 @@ constexpr char const includedFileTag[] = "File";
  * This function checks for multiple xml files, and will build
  * a new input xml file with an included block if neccesary
  */
-string buildMultipleInputXML( string_array const & inputFileList,
-                              string const & outputDir = {} );
+string mergeInputDocuments( string_array const & inputFileList, string const & outputDir = {} );
 
 /**
  * @return true if the attribute with the specified name declares metadata relative to the xml
@@ -561,8 +550,8 @@ readAttributeAsType( T & rval,
 
 ///@}
 
-}
+} // namespace xmlWrapper
 
-} /* namespace geos */
+} // namespace geos
 
 #endif /*GEOS_DATAREPOSITORY_XMLWRAPPER_HPP_ */

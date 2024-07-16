@@ -2,10 +2,10 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_hybridHexPrism_co2_base.xml" />
   </Included>
-  
+
   <Solvers>
 
     <MultiphasePoromechanics

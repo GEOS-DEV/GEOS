@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./ContactMechanics_slippingFault_base.xml"/>
   </Included>
 
@@ -35,7 +35,7 @@
       lengthVector="{0.0, 1.0, 0.0}"
       widthVector="{0.0, 0.0, 1.0}"
       dimensions="{ 180, 10 }"/>
-    
+
   </Geometry>
 
   <FieldSpecifications>
@@ -79,7 +79,7 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification 
+    <FieldSpecification
       name="Sigmax"
       initialCondition="1"
       setNames="{ all }"
@@ -104,6 +104,6 @@
       plotFileRoot="faultSlip_vertical"/>
 
     <Restart
-      name="restartOutput"/>      
+      name="restartOutput"/>
     </Outputs>
 </Problem>

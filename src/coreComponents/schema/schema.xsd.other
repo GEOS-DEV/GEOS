@@ -176,7 +176,7 @@
 			<xsd:element name="FieldSpecifications" type="FieldSpecificationsType" maxOccurs="1" />
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1" />
 			<xsd:element name="Geometry" type="GeometryType" maxOccurs="1" />
-			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />
+			<xsd:element name="Included" type="IncludedType" />
 			<xsd:element name="Mesh" type="MeshType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="NumericalMethods" type="NumericalMethodsType" maxOccurs="1" />
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
@@ -1370,6 +1370,8 @@
 		<xsd:attribute name="outputDirectory" type="string" />
 		<!--overridePartitionNumbers => Flag to indicate partition number override-->
 		<xsd:attribute name="overridePartitionNumbers" type="integer" />
+		<!--preprocessOnly => Whether to only preprocess the input deck for verification and write the resulting modified deck to the output directory.-->
+		<xsd:attribute name="preprocessOnly" type="integer" />
 		<!--problemName => Used in writing the output files, if not specified defaults to the name of the input file.-->
 		<xsd:attribute name="problemName" type="string" />
 		<!--restartFileName => Name of the restart file.-->

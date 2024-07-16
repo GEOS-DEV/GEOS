@@ -85,7 +85,7 @@ public:
 
   static string catalogName() { return "LinearIsotropicDispersion"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   virtual void initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const override;
 

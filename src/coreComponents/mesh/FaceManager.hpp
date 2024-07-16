@@ -68,7 +68,7 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the catalog name of the FaceManager
    */
-  virtual string getCatalogName() const override
+  virtual const string getCatalogName() const override
   { return catalogName(); }
   ///@}
 

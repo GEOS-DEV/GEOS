@@ -17,6 +17,8 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 
+#include "unitTests/dataRepositoryTests/utils.hpp"
+
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -76,7 +78,7 @@ TEST( testXML, testXMLString )
     </Problem>
     )xml";
 
-  geos::getGlobalState().getProblemManager().parseInputString( xmlInput );
+  geos::dataRepository::testing::setupProblemFromXML( &geos::getGlobalState().getProblemManager(), xmlInput );
 }
 
 TEST( testXML, testXMLStringExpectedFail )
@@ -89,7 +91,7 @@ TEST( testXML, testXMLStringExpectedFail )
     </Problem>
     )xml";
 
-  EXPECT_THROW( geos::getGlobalState().getProblemManager().parseInputString( xmlInput ), geos::InputError );
+  EXPECT_THROW( geos::dataRepository::testing::setupProblemFromXML( &geos::getGlobalState().getProblemManager(), xmlInput ), geos::InputError );
 }
 
 

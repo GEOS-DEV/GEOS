@@ -24,6 +24,8 @@
 #include "mesh/FaceManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 
+#include "unitTests/dataRepositoryTests/utils.hpp"
+
 
 using namespace geos;
 
@@ -105,9 +107,9 @@ protected:
     xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
     ASSERT_TRUE( xmlResult );
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
     ProblemManager & problemManager = getGlobalState().getProblemManager();
-    problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
+    dataRepository::testing::setupProblemFromXML( &problemManager, inputStream.c_str() );
+    // problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
     // Open mesh levels
     DomainPartition & domain = problemManager.getDomainPartition();

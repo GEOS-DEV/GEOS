@@ -25,6 +25,7 @@
 #include "RestartFlags.hpp"
 #include "HistoryDataSpec.hpp"
 #include "DataContext.hpp"
+#include "InputParsing.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
@@ -208,8 +209,8 @@ public:
    * @param nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
    * @return True if the wrapper initialized itself from the file.
    */
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
-                                 xmlWrapper::xmlNodePos const & nodePos ) = 0;
+  virtual bool initFromInput( typename inputParsing::input_document_type::node_type const & docNode,
+                              typename inputParsing::input_document_type::node_pos_type const & docNodePos ) = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit blueprint field.
@@ -677,8 +678,16 @@ protected:
    * @param targetNode the node containing this wrapper source attribute.
    * @param nodePos the xml node position of the node
    */
-  void createDataContext( xmlWrapper::xmlNode const & targetNode,
-                          xmlWrapper::xmlNodePos const & nodePos );
+  void createDataContext( typename inputParsing::input_document_type::node_type const & targetNode,
+                          typename inputParsing::input_document_type::node_pos_type const & nodePos )
+  {
+    auto att = targetNode.attribute( m_name.c_str() );
+    auto attPos = nodePos.getAttributeLine( m_name );
+    if( nodePos.isFound() && attPos.isFound() && !att.empty() )
+    {
+      m_dataContext = std::make_unique< DataFileContext< decltype(targetNode), decltype(nodePos), decltype(att), decltype(attPos) > >( targetNode, att, attPos );
+    }
+  }
 
 protected:
 

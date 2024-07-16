@@ -19,6 +19,8 @@
 #include <regex>
 
 #include "xmlWrapper.hpp"
+#include "InputParsing.hpp"
+#include "InputExtensionGroup.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/MpiWrapper.hpp"
@@ -121,8 +123,8 @@ template void stringToInputVariable( Tensor< real64, 3 > & target, string const 
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, Regex const & regex );
 
 /**
- * @brief Adds the filePath and character offset info on the node in filePathString
- * and charOffsetString attributes. This function allow to keep track of the source
+ * @brief Adds the filePath and character offset info on the node in inputParsing::filePathString
+ * and inputParsing::charOffsetString attributes. This function allow to keep track of the source
  * filename & offset of each node.
  * @param targetNode the target node to add the informations on.
  * @param filePath the absolute path of the xml file containing the node.
@@ -131,8 +133,8 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
 {
   // we keep the file path and the character offset on each node so we keep track of these
   // informations, even if the nodes are manipulated within the xml hierarchy.
-  targetNode.append_attribute( filePathString ).set_value( filePath.c_str() );
-  targetNode.append_attribute( charOffsetString ).set_value( targetNode.offset_debug() );
+  targetNode.append_attribute( inputParsing::filePathString ).set_value( filePath.c_str() );
+  targetNode.append_attribute( inputParsing::charOffsetString ).set_value( targetNode.offset_debug() );
 
   for( xmlNode subNode : targetNode.children() )
   {
@@ -143,72 +145,10 @@ void addNodeFileInfo( xmlNode targetNode, string const & filePath )
  * @brief Returns true if the addNodeFileInfo() command has been called of the specified node.
  */
 bool xmlDocument::hasNodeFileInfo() const
-{ return !getFirstChild().attribute( filePathString ).empty(); }
-
-void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
-{
-  GEOS_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
-
-  string const currentFilePath = targetNode.attribute( filePathString ).value();
-
-  // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
-  for( xmlNode includedNode : targetNode.children( includedListTag ) )
-  {
-    for( xmlNode fileNode : includedNode.children() )
-    {
-      // Extract the file name and construct full includedDirPath
-      string const includedFilePath = [&]()
-      {
-        GEOS_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
-                              GEOS_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
-                              InputError );
-        xmlAttribute const nameAttr = fileNode.attribute( "name" );
-        string const fileName = nameAttr.value();
-        GEOS_THROW_IF( !nameAttr || fileName.empty(),
-                       GEOS_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
-                       InputError );
-        return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
-      }();
-
-      GEOS_LOG_RANK_0( "Included additionnal XML file: " << getAbsolutePath( includedFilePath ) );
-
-      xmlDocument includedXmlDocument;
-      xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
-      GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing included XML file {}\n"
-                                        "Description: {}\nOffset: {}",
-                                        includedFilePath, result.description(), result.offset ),
-                     InputError );
+{ return !getFirstChild().attribute( inputParsing::filePathString ).empty(); }
 
 
-      // All included files must contain a root node that must match the target node.
-      // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
-      // We then proceed to merge each nested node from included file with the one in main.
-
-      xmlNode includedRootNode = includedXmlDocument.getFirstChild();
-      GEOS_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
-                            "Included document root does not match the including XML node", InputError );
-
-      // Process potential includes in the included file to allow nesting
-      addIncludedXML( includedRootNode, level + 1 );
-
-      // Add each top level tag of imported document to current
-      // This may result in repeated XML blocks, which will be implicitly merged when processed
-      for( xmlNode importedNode : includedRootNode.children() )
-      {
-        targetNode.append_copy( importedNode );
-      }
-
-      m_originalBuffers[includedXmlDocument.getFilePath()] = includedXmlDocument.getOriginalBuffer();
-    }
-  }
-
-  // Just in case, remove <Included> tags that have been processed
-  while( targetNode.remove_child( includedListTag ) )
-  {}
-}
-
-string buildMultipleInputXML( string_array const & inputFileList,
-                              string const & outputDir )
+string mergeInputDocuments( string_array const & inputFileList, string const & outputDir )
 {
   if( inputFileList.empty() )
   {
@@ -246,7 +186,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
 bool isFileMetadataAttribute( string const & name )
 {
   static const std::set< string > fileMetadataAttributes {
-    "name", "xmlns:xsi", "xsi:noNamespaceSchemaLocation", xmlWrapper::filePathString, xmlWrapper::charOffsetString
+    "name", "xmlns:xsi", "xsi:noNamespaceSchemaLocation", inputParsing::filePathString, inputParsing::charOffsetString
   };
   return fileMetadataAttributes.find( name ) != fileMetadataAttributes.end();
 }
@@ -331,8 +271,8 @@ xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const
   size_t line = npos;
   size_t offsetInLine = npos;
   size_t offset = npos;
-  xmlAttribute filePathAtt = node.attribute( filePathString );
-  xmlAttribute charOffsetAtt = node.attribute( charOffsetString );
+  xmlAttribute filePathAtt = node.attribute( inputParsing::filePathString );
+  xmlAttribute charOffsetAtt = node.attribute( inputParsing::charOffsetString );
   string filePath;
 
   if( filePathAtt && charOffsetAtt )

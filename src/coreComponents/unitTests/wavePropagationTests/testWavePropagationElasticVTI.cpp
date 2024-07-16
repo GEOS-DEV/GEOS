@@ -133,29 +133,29 @@ char const * xmlInput =
         fieldName="elasticDensity"
         scale="1"
         setNames="{ all }"/>
-      <FieldSpecification                                                         
-       name="cellDelta"                                                          
-       initialCondition="1"                                                      
-       objectPath="ElementRegions/Region/cb"                                     
-       fieldName="delta"                                                         
-       scale="0.1"                                                               
-       setNames="{ all }"/>                                                      
-                                                                                 
-     <FieldSpecification                                                         
-       name="cellGamma"                                                          
-       initialCondition="1"                                                      
-       objectPath="ElementRegions/Region/cb"                                     
-       fieldName="gamma"                                                         
-       scale="0.08"                                                              
-       setNames="{ all }"/>                                                      
-                                                                                 
-     <FieldSpecification                                                         
-       name="cellEpsilon"                                                        
-       initialCondition="1"                                                      
-       objectPath="ElementRegions/Region/cb"                                     
-       fieldName="epsilon"                                                       
-       scale="0.2"                                                               
-       setNames="{ all }"/>  
+      <FieldSpecification
+       name="cellDelta"
+       initialCondition="1"
+       objectPath="ElementRegions/Region/cb"
+       fieldName="delta"
+       scale="0.1"
+       setNames="{ all }"/>
+
+     <FieldSpecification
+       name="cellGamma"
+       initialCondition="1"
+       objectPath="ElementRegions/Region/cb"
+       fieldName="gamma"
+       scale="0.08"
+       setNames="{ all }"/>
+
+     <FieldSpecification
+       name="cellEpsilon"
+       initialCondition="1"
+       objectPath="ElementRegions/Region/cb"
+       fieldName="epsilon"
+       scale="0.2"
+       setNames="{ all }"/>
 
       <FieldSpecification
         name="zposFreeSurface"
@@ -179,7 +179,7 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    // setupProblemFromXML( state.getProblemManager(), xmlInput );
   }
 
   static real64 constexpr time = 0.0;

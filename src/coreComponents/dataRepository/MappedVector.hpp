@@ -415,12 +415,18 @@ public:
   { return this->m_constValues; }
 
   /**
+   * @brief access for const key value container
+   * @return reference to const key valueContainer
+   */
+  inline constKeyValueContainer & constKeyValues()
+  { return this->m_constKeyValues; }
+
+  /**
    * @brief access for key lookup
    * @return reference lookup map
    */
   inline LookupMapType const & keys() const
   { return m_keyLookup; }
-
 
 private:
 

@@ -84,7 +84,7 @@ public:
 //START_SPHINX_INCLUDE_00
   static string catalogName() { return "BrooksCoreyRelativePermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyRelativePermeabilityUpdate;

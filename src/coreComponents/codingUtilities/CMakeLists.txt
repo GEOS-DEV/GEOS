@@ -2,8 +2,10 @@
 # Specify all headers
 #
 set( codingUtilities_headers
+     ConstexprConstructs.hpp
      EnumStrings.hpp
      Parsing.hpp
+     Patterns.hpp
      SFINAE_Macros.hpp
      StringUtilities.hpp
      UnitTestUtilities.hpp

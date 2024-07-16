@@ -81,7 +81,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  updateState( this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) ) );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,

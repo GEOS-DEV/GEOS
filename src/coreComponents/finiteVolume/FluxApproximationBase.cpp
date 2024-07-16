@@ -70,7 +70,7 @@ FluxApproximationBase::getCatalog()
 
 void FluxApproximationBase::initializePreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
@@ -113,7 +113,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOS_MARK_FUNCTION;
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )

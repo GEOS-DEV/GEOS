@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
   <File name="./egsCollab_thermalFlow_injection_base.xml"/>
   </Included>
   <Solvers
@@ -46,5 +46,5 @@
        nz="{ 1, 100, 20 }"
        cellBlockNames="{ cb }"/>
    </Mesh>
-   
+
 </Problem>

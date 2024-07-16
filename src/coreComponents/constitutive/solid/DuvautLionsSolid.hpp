@@ -156,7 +156,7 @@ public:
    */
 
   static string catalogName() { return string( "Visco" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   real64 relaxationTime() const { return m_relaxationTime; }
 

@@ -112,7 +112,7 @@ public:
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual string getCatalogName() const override final
+  virtual string const getCatalogName() const override final
   { return catalogName(); }
 
   /**
@@ -185,6 +185,8 @@ public:
   virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
+
+  virtual void postInputInitialization( ) override;
 
   using Group::resize;
 

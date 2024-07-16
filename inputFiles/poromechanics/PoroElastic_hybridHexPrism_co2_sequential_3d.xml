@@ -2,10 +2,10 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_hybridHexPrism_co2_base.xml" />
   </Included>
-  
+
   <Solvers>
 
     <MultiphasePoromechanics
@@ -17,7 +17,7 @@
       targetRegions="{ reservoir }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
-	couplingType="Sequential"  
+	couplingType="Sequential"
         lineSearchAction="None"
 	subcycling="1"
         newtonMaxIter="40"/>
@@ -35,7 +35,7 @@
         newtonTol="1.0e-9"
         lineSearchAction="None"
         newtonMaxIter="40"/>
-    </SolidMechanicsLagrangianSSLE>      
+    </SolidMechanicsLagrangianSSLE>
 
     <CompositionalMultiphaseFVM
       name="twoPhaseFlow"
@@ -48,8 +48,8 @@
         newtonTol="1.0e-9"
         lineSearchAction="None"
         newtonMaxIter="40"/>
-    </CompositionalMultiphaseFVM>      
-      
+    </CompositionalMultiphaseFVM>
+
   </Solvers>
 
 </Problem>

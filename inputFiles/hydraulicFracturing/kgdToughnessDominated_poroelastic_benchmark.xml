@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./kgdToughnessDominated_poroelastic_base.xml"/>
   </Included>
-  
+
   <Mesh>
     <!-- Sphinx_Mesh_InternalMesh -->
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ -100, 0, 100 }"
@@ -51,7 +51,7 @@
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-    
+
     <PeriodicEvent
       name="outputs"
       beginTime="2.0"
@@ -78,22 +78,22 @@
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/hydraulicApertureCollection" /> 
+      target="/Tasks/hydraulicApertureCollection" />
 
     <PeriodicEvent
       name="timeHistoryCollection3"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/areaCollection" />      
+      target="/Tasks/areaCollection" />
 
     <PeriodicEvent
       name="timeHistoryOutput"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
-  
+      target="/Outputs/timeHistoryOutput"/>
+
     <PeriodicEvent
       name="solverApplications0"
       beginTime="0.0"
@@ -110,8 +110,8 @@
 
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="20.0"      
+      beginTime="20.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
-  </Events>  
+  </Events>
 </Problem>

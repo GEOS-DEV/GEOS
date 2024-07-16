@@ -49,12 +49,6 @@ public:
   SolverBase & operator=( SolverBase const & ) = delete;
   SolverBase & operator=( SolverBase && ) = delete;
 
-  /**
-   * @return Get the final class Catalog name
-   */
-  virtual string getCatalogName() const = 0;
-
-
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   virtual void initialize_postMeshGeneration() override;

@@ -6,16 +6,16 @@
    <TriaxialDriver
       name="triaxialDriver"
       material="ViscoModifiedCamClay"
-      mode="strainControl" 
+      mode="strainControl"
       axialControl="strainFunction"
       radialControl="zeroStrain"
       initialStress="-1e5"
-      steps="200" 
+      steps="200"
       output="ViscoModifiedCamClayResults.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./triaxialDriver_base.xml"/>
   </Included>
 </Problem>

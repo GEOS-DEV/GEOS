@@ -40,7 +40,7 @@
       cellBlockNames="{ solid1, fluid1, solid2, fluid2 }"/>
   </Mesh>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./acouselas3D_layers_base.xml"/>
   </Included>
 </Problem>

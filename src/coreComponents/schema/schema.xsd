@@ -168,7 +168,12 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:element name="Problem" type="ProblemType" />
+	<xsd:element name="Problem" type="ProblemType">
+		<xsd:unique name="IncludedUniqueName">
+			<xsd:selector xpath="Included" />
+			<xsd:field xpath="@name" />
+		</xsd:unique>
+	</xsd:element>
 	<xsd:complexType name="ProblemType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Events" type="EventsType" minOccurs="1" maxOccurs="1">
@@ -256,6 +261,12 @@
 				</xsd:unique>
 				<xsd:unique name="GeometryThickPlaneUniqueName">
 					<xsd:selector xpath="ThickPlane" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="Included" type="IncludedType">
+				<xsd:unique name="IncludedFileUniqueName">
+					<xsd:selector xpath="File" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
@@ -876,12 +887,6 @@
 			</xsd:element>
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="ParticleRegions" type="ParticleRegionsType" maxOccurs="1" />
-			<xsd:element name="Included" type="IncludedType" maxOccurs="1">
-				<xsd:unique name="IncludedFileUniqueName">
-					<xsd:selector xpath="File" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-			</xsd:element>
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1">
 				<xsd:unique name="ParametersParameterUniqueName">
 					<xsd:selector xpath="Parameter" />
@@ -1462,6 +1467,17 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="thickness" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="IncludedType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="File" type="FileType" />
+		</xsd:choice>
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FileType">
+		<!--name => The relative file path.-->
+		<xsd:attribute name="name" type="path" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -5788,15 +5804,6 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="particleBlocks" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="IncludedType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="File" type="FileType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="FileType">
-		<!--name => The relative file path.-->
-		<xsd:attribute name="name" type="path" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./deadOilSpe10Layers84_85_base_iterative.xml"/>
   </Included>
@@ -23,7 +23,7 @@
   </Mesh>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
 
-  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->  
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->
   <Geometry>
 
     <Box
@@ -46,9 +46,9 @@
       name="sink4"
       xMin="{ 359.634, 667.482, -0.01 }"
       xMax="{ 365.8, 670.60, 2.00 }"/>
-    
-  </Geometry>
-  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->  
 
-  
+  </Geometry>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->
+
+
 </Problem>

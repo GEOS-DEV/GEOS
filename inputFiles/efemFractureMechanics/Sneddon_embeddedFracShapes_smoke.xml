@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+ <Included name="primary_includes">
     <File
       name="./Sneddon_embeddedFracShapes_base.xml"/>
   </Included>
 
   <!-- SPHINX_SNEDDON_MESH -->
-  <Mesh>  
+  <Mesh>
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
@@ -17,10 +17,10 @@
       nx="{ 10, 11, 10 }"
       ny="{ 10, 31, 10 }"
       nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
-  <!-- SPHINX_SNEDDON_MESH_END -->  
-  
+  <!-- SPHINX_SNEDDON_MESH_END -->
+
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="1.0">
@@ -50,13 +50,13 @@
       name="timeHistoryOutput"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
-      
+      target="/Outputs/timeHistoryOutput"/>
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.0"
-      target="/Outputs/restartOutput"/>    
+      target="/Outputs/restartOutput"/>
   </Events>
   <!-- SPHINX_SNEDDON_EVENTS_END -->
- 
+
 </Problem>

@@ -27,6 +27,8 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
 
 namespace geos
 {
@@ -116,6 +118,51 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   for( string const & name: names )
   {
     schemaUtilities::SchemaConstruction( getRegion( name ), schemaRoot, targetChoiceNode, documentationType );
+  }
+}
+
+void ElementRegionManager::postInputInitialization( )
+{
+  Group & parent = getParent();
+  ProblemManager & problemManager = getGroupByPath< ProblemManager >( GEOS_FMT("/{}", dataRepository::keys::ProblemManager ) );
+  if( &parent == &problemManager )
+  {
+    DomainPartition & domain = problemManager.getDomainPartition( );
+    MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+    meshManager.generateMeshLevels( domain );
+    Group & meshBodies = domain.getMeshBodies();
+
+    this->forElementRegions( [&]( ElementRegionBase & region )
+    {
+      string const regionName = region.getName( );
+      string const regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies, region.getWrapper< string >( ElementRegionBase::viewKeyStruct::meshBodyString() ).reference() );
+      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      {
+        ElementRegionManager & elementManager = meshLevel.getElemManager();
+
+        // Copy the subtree of this element manager onto the element manager for each mesh-level
+        Group * subTreeRoot = elementManager.createChild( region.getCatalogName(), regionName );
+
+        std::map< Group *, Group * > base2subTree;
+        base2subTree[ &region ] = subTreeRoot;
+
+        Group * subTreeParent = nullptr;
+        StaticTreeIteration< SubgroupChildAccessor >::processTree( static_cast< Group & >( region ), [&] ( Group & baseGroup )
+        {
+          subTreeParent = base2subTree.at( &baseGroup );
+          for( auto & subTreeWrapper : subTreeParent->wrappers( ) )
+          {
+            subTreeWrapper.second->copyData( baseGroup.getWrapperBase( subTreeWrapper.first ) );
+          }
+          baseGroup.forSubGroups( [&] ( Group & baseSubgroup )
+          {
+            Group * subTreeChild = subTreeParent->createChild( baseSubgroup.getCatalogName(), baseSubgroup.getName() );
+            base2subTree[ &baseSubgroup ] = subTreeChild;
+          } );
+        } );
+      } );
+    } );
   }
 }
 

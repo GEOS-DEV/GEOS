@@ -130,8 +130,7 @@ public:
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
                    InputError );
-
-    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) );
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,

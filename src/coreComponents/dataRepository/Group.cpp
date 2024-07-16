@@ -134,114 +134,6 @@ string Group::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
-void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                       xmlWrapper::xmlNode & targetNode )
-{
-  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
-  processInputFileRecursive( xmlDocument, targetNode, nodePos );
-}
-void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                       xmlWrapper::xmlNode & targetNode,
-                                       xmlWrapper::xmlNodePos const & nodePos )
-{
-  xmlDocument.addIncludedXML( targetNode );
-
-  // Handle the case where the node was imported from a different input file
-  // Set the path prefix to make sure all relative Path variables are interpreted correctly
-  string const oldPrefix = std::string( Path::getPathPrefix() );
-  xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
-  if( filePath )
-  {
-    Path::setPathPrefix( getAbsolutePath( splitPath( filePath.value() ).first ) );
-  }
-
-  // Loop over the child nodes of the targetNode
-  array1d< string > childNames;
-  for( xmlWrapper::xmlNode childNode : targetNode.children() )
-  {
-    xmlWrapper::xmlNodePos childNodePos = xmlDocument.getNodePosition( childNode );
-
-    // Get the child tag and name
-    string childName;
-
-    try
-    {
-      xmlWrapper::readAttributeAsType( childName, "name",
-                                       rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName ),
-                                       childNode, string( "" ) );
-    } catch( std::exception const & ex )
-    {
-      xmlWrapper::processInputException( ex, "name", childNode, childNodePos );
-    }
-
-    if( childName.empty() )
-    {
-      childName = childNode.name();
-    }
-    else
-    {
-      // Make sure child names are not duplicated
-      GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
-                               "Error detected at node {} with name = {} ({}:l.{})",
-                               childNode.path(), childName, xmlDocument.getFilePath(),
-                               xmlDocument.getNodePosition( childNode ).line ) );
-
-      childNames.emplace_back( childName );
-    }
-
-    // Create children
-    Group * newChild = createChild( childNode.name(), childName );
-    if( newChild == nullptr )
-    {
-      newChild = getGroupPointer( childName );
-    }
-    if( newChild != nullptr )
-    {
-      newChild->processInputFileRecursive( xmlDocument, childNode, childNodePos );
-    }
-  }
-
-  processInputFile( targetNode, nodePos );
-
-  // Restore original prefix once the node is processed
-  Path::setPathPrefix( oldPrefix );
-}
-
-void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
-                              xmlWrapper::xmlNodePos const & nodePos )
-{
-  if( nodePos.isFound() )
-  {
-    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
-  }
-
-
-  std::set< string > processedAttributes;
-  for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
-  {
-    if( pair.second->processInputFile( targetNode, nodePos ) )
-    {
-      processedAttributes.insert( pair.first );
-    }
-  }
-
-  for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
-  {
-    string const attributeName = attribute.name();
-    if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
-    {
-      GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
-                               "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
-                               "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), m_dataContext->toString(), attributeName,
-                               dumpInputOptions() ),
-                     InputError );
-    }
-  }
-}
-
 void Group::postInputInitializationRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
@@ -330,6 +222,20 @@ void Group::deregisterGroup( string const & name )
   GEOS_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
   m_subGroups.erase( name );
   m_conduitNode.remove( name );
+}
+
+void Group::deregisterAllRecursive( )
+{
+  for( auto & keyGroupPair : m_subGroups )
+  {
+    keyGroupPair.second->deregisterAllRecursive();
+  }
+  m_wrappers.clear();
+  m_subGroups.clear();
+  for( int ii = 0; ii < m_conduitNode.number_of_children(); ++ii )
+  {
+    m_conduitNode.remove( ii );
+  }
 }
 
 void Group::initializationOrder( string_array & order )

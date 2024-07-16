@@ -116,7 +116,7 @@ public:
 
   static string catalogName() { return "BrooksCoreyStone2RelativePermeability"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyStone2RelativePermeabilityUpdate;

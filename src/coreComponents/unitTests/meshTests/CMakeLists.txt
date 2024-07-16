@@ -19,7 +19,7 @@ if( ENABLE_VTK )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()
 
-set( dependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest gmock )
 
 if( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )

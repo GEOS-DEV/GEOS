@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+ <Included name="primary_includes">
     <File
       name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
@@ -60,8 +60,8 @@
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 2, 2 }"/>
   </Geometry>
-  <!-- SPHINX_SNEDDON_MESH_END -->  
-  
+  <!-- SPHINX_SNEDDON_MESH_END -->
+
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="1.0">
@@ -92,12 +92,12 @@
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-      
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.0"
-      target="/Outputs/restartOutput"/>    
+      target="/Outputs/restartOutput"/>
   </Events>
   <!-- SPHINX_SNEDDON_EVENTS_END -->
- 
+
 </Problem>

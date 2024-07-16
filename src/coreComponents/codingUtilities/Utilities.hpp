@@ -101,22 +101,22 @@ bool executeOnMapValue( mapBase< T1, T2, SORTED > const & Map, const T1 & key, L
   return rval;
 }
 
-template< typename T_KEY, typename T_VALUE, typename SORTED >
-T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
-                       T_KEY const & key,
-                       T_VALUE const failValue )
+template< typename T_KEY,
+          typename T_VALUE,
+          typename MAP_TYPE >
+T_VALUE softMapLookup( const MAP_TYPE & theMap,
+                       const T_KEY & key,
+                       const T_VALUE failValue )
 {
-  T_VALUE rvalue;
-  typename mapBase< T_KEY, T_VALUE, SORTED >::const_iterator iter = theMap.find( key );
-  if( iter==theMap.end() )
+  typename MAP_TYPE::const_iterator iter = theMap.find(key);
+  if (iter == theMap.end())
   {
-    rvalue = failValue;
+    return failValue;
   }
   else
   {
-    rvalue = iter->second;
+    return iter->second;
   }
-  return rvalue;
 }
 
 /**
@@ -295,7 +295,7 @@ void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func, std::index_sequ
 template< class F, class ... Ts >
 void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
 {
-  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+  geos::internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
 }
 
 /**
@@ -311,7 +311,7 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
 template< class F, class ... Ts >
 void forEachArgInTuple( std::tuple< Ts ... > & tuple, F && func )
 {
-  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+  geos::internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
 }
 
 /**
@@ -354,7 +354,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void copy( integer const N,
            VEC1 const & v1,
-           VEC2 const & v2,
+           VEC2 & v2,
            integer const offset = 0 )
 {
   for( integer i = 0; i < N; ++i )

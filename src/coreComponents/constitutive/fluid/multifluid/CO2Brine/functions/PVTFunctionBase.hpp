@@ -124,7 +124,7 @@ public:
     return catalog;
   }
 
-  virtual string getCatalogName() const = 0;
+  virtual string const getCatalogName() const = 0;
 
   string const & functionName() const { return m_functionName; }
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_Mandel_base.xml"/>
-  </Included>  
+  </Included>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
@@ -17,7 +17,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="100"
         newtonTol="1.0e-9"
-	couplingType="Sequential"  
+	couplingType="Sequential"
         lineSearchAction="None"
 	subcycling="1"
         maxTimeStepCuts="1"
@@ -39,7 +39,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanicsLagrangianSSLE>      
+    </SolidMechanicsLagrangianSSLE>
     <!-- SPHINX_MECHANICALSOLVER_END -->
 
     <!-- SPHINX_SINGLEPHASEFVM -->
@@ -56,7 +56,7 @@
     </SinglePhaseFVM>
     <!-- SPHINX_SINGLEPHASEFVM_END -->
   </Solvers>
-  
+
   <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh
@@ -74,7 +74,7 @@
 
   <Events
     maxTime="10.0">
-  
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="5.0e-01"
@@ -85,10 +85,10 @@
       beginTime="0.0"
       endTime="10.0"
       forceDt="0.025"
-      target="/Solvers/poroSolve"/> 
+      target="/Solvers/poroSolve"/>
 
     <PeriodicEvent
-      name="pressureCollection" 
+      name="pressureCollection"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -97,13 +97,13 @@
       target="/Outputs/pressureHistoryOutput"/>
 
     <PeriodicEvent
-      name="displacementCollection" 
+      name="displacementCollection"
       target="/Tasks/displacementCollection" />
 
     <PeriodicEvent
       name="displacementOutput"
-      targetExactTimestep="0" 
-      target="/Outputs/displacementHistoryOutput" />   
+      targetExactTimestep="0"
+      target="/Outputs/displacementHistoryOutput" />
   </Events>
- 
+
 </Problem>

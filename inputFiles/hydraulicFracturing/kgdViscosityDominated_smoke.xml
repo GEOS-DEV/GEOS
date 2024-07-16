@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./kgdViscosityDominated_base.xml"/>
   </Included>
-  
+
 <Mesh>
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ -50, 0, 50 }"
@@ -78,6 +78,6 @@
       timeFrequency="20.0"
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
-  </Events> 
+  </Events>
 
 </Problem>

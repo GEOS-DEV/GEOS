@@ -73,7 +73,7 @@ public:
 
   static string catalogName() { return "SinglePhaseConstantThermalConductivity"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
 
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;

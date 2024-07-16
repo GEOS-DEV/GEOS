@@ -1,5 +1,11 @@
+#ifndef GEOS_CORECOMPONENTS_UNITTESTS_DATAREPOSITORYUNITTESTS_UTILS_HPP
+#define GEOS_CORECOMPONENTS_UNITTESTS_DATAREPOSITORYUNITTESTS_UTILS_HPP
+
 /// Source includes
 #include "common/DataTypes.hpp"
+
+#include "dataRepository/xmlWrapper.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 /// TPL includes
 #include <gtest/gtest.h>
@@ -13,6 +19,50 @@ namespace dataRepository
 {
 namespace testing
 {
+
+/**
+ * @brief Set up a problem from an xml input buffer
+ * @param problemManager the target problem manager
+ * @param xmlInput       the XML input string
+ */
+void setupProblemFromXML( ProblemManager * const problemManager, char const * const xmlInput )
+{
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
+  if( !xmlResult )
+  {
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+  }
+
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  dataRepository::Group & commandLine =
+    problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
+  commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
+    setApplyDefaultValue( mpiSize );
+
+  // Locate mergable Groups
+  // problemManager->generateDataStructureSkeleton( 0 );
+  std::vector< dataRepository::Group const * > containerGroups;
+  problemManager->discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  std::set< string > mergableNodes;
+  for( dataRepository::Group const * group : containerGroups )
+  {
+    mergableNodes.insert( group->getCatalogName() );
+  }
+  // problemManager->deregisterAllRecursive( );
+
+
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
+  processor.execute( *problemManager, xmlProblemNode );
+  problemManager->applyStaticExtensions( xmlDocument, processor );
+
+  problemManager->problemSetup();
+  problemManager->applyInitialConditions();
+}
+
 
 int rand( int const min, int const max )
 {
@@ -132,3 +182,5 @@ void compare( SortedArray< T > const & val,
 } // namespace testing
 } // namespace dataRepository
 } // namesapce geosx
+
+#endif

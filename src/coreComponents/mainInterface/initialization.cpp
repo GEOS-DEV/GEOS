@@ -97,6 +97,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     SCHEMA,
     NONBLOCKING_MPI,
     SUPPRESS_PINNED,
+    PREPROCESS_ONLY,
     PROBLEMNAME,
     OUTPUTDIR,
     TIMERS,
@@ -117,7 +118,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
-    { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
+    { SUPPRESS_PINNED, 0, "", "suppress-pinned", Arg::None, "\t--suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
+    { PREPROCESS_ONLY, 0, "", "preprocess-only", Arg::None, "\t--preprocess-only, \t Only preprocess the input file and write the result to the output directory."},
     { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output" },
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
@@ -197,6 +199,11 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case SUPPRESS_PINNED:
       {
         commandLineOptions->suppressPinned = true;
+      }
+      break;
+      case PREPROCESS_ONLY:
+      {
+        commandLineOptions->preprocessOnly = true;
       }
       break;
       case SCHEMA:

@@ -1,14 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./PoroElastic_conformingFracture_2d_faultSlip_sequential_solvers.xml"/>
-  </Included> 
-  <Included>
+  </Included>
+  <Included name="secondary_includes">
     <File
       name="./PoroElastic_conformingFracture_2d_faultSlip_base.xml"/>
-  </Included> 
+  </Included>
 
   <Mesh>
     <InternalMesh
@@ -44,11 +44,11 @@
       name="outputs"
       cycleFrequency="1"
       target="/Outputs/vtkOutput"/>
-      
+
     <PeriodicEvent
       name="restarts"
       cycleFrequency="1"
-      target="/Outputs/restarts"/>  
+      target="/Outputs/restarts"/>
   </Events>
 
 </Problem>

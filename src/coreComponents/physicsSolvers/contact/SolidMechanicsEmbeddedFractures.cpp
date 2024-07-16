@@ -94,7 +94,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
   SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups();
-  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  updateState( this->getGroupByPath< DomainPartition >( GEOS_FMT("/{}/domain", dataRepository::keys::ProblemManager ) ) );
 }
 
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )

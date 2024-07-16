@@ -2,7 +2,7 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
   <File
   name = "./egsCollab_thermalFlow_base.xml"/>
   </Included>
@@ -57,7 +57,7 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 1.0e-6, 1.0e-4 }"/>        
+      values="{ 1.0e-6, 1.0e-4 }"/>
   </Functions>
 
   <FieldSpecifications>
@@ -109,21 +109,21 @@
       fieldName="temperature"
       scale="296.0153"
       setNames="{ zpos }"
-      logLevel="0"/>   
+      logLevel="0"/>
 
     <FieldSpecification
       name="botTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="303.012"
-      setNames="{ bottomBoundary }"/> 
-      
+      setNames="{ bottomBoundary }"/>
+
     <FieldSpecification
       name="DriftTemperature"
       objectPath="ElementRegions/matrix"
       fieldName="temperature"
       scale="291.65"
-      setNames="{ Drift }"/>    
+      setNames="{ Drift }"/>
   </FieldSpecifications>
 
   <Outputs>

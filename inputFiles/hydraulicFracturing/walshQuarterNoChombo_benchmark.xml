@@ -1,5 +1,5 @@
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./walshQuarterNoChombo_base.xml"/>
   </Included>

@@ -64,7 +64,7 @@ public:
    * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
    */
-  virtual string getCatalogName() const override
+  virtual const string getCatalogName() const override
   { return catalogName(); }
 
   ///@}

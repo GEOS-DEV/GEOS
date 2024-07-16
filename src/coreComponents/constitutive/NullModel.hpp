@@ -44,7 +44,7 @@ public:
    */
   static string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.

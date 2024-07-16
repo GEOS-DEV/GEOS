@@ -120,7 +120,7 @@ public:
 
   static string catalogName() { return "CO2Solubility"; }
 
-  virtual string getCatalogName() const final { return catalogName(); }
+  virtual string const getCatalogName() const final { return catalogName(); }
 
   /**
    * @copydoc FlashModelBase::checkTablesParameters( real64 pressure, real64 temperature )

@@ -1,14 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./PoroElastic_conformingFracture_2d_openingFrac_solvers.xml"/>
-  </Included> 
-  <Included>
+  </Included>
+  <Included name="secondary_includes">
     <File
       name="./PoroElastic_conformingFracture_2d_openingFrac_base.xml"/>
-  </Included> 
+  </Included>
 
   <Mesh>
     <InternalMesh
@@ -34,15 +34,15 @@
       xMin="{ -0.01, -0.61, -0.01 }"
       xMax="{ 0.01,  0.8,  1.01 }"/>
 
-    <Box name="bottomFace" 
-         xMax="{1.01, 1.01,  0.01 }" 
+    <Box name="bottomFace"
+         xMax="{1.01, 1.01,  0.01 }"
          xMin="{-1.01, -1.01, -0.01 }"/>
 
-    <Box name="topFace" 
-         xMax="{1.01, 1.01,   1.01 }" 
-         xMin="{-1.01, -1.01, 0.99 }"/>     
+    <Box name="topFace"
+         xMax="{1.01, 1.01,   1.01 }"
+         xMin="{-1.01, -1.01, 0.99 }"/>
   </Geometry>
-  
+
   <Events
     maxTime="10.0">
     <SoloEvent
@@ -66,7 +66,7 @@
     <PeriodicEvent
       name="restart"
       cycleFrequency="5"
-      target="/Outputs/restarts"/>  
+      target="/Outputs/restarts"/>
   </Events>
 
   <FieldSpecifications>
@@ -77,11 +77,11 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
-      
+
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{ fracture, fractureTip}" 
+      setNames="{ fracture, fractureTip}"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -101,7 +101,7 @@
       fieldName="pressure"
       scale="1.0e5"/>
 
-    <FieldSpecification 
+    <FieldSpecification
       name="initialStress"
       initialCondition="1"
       setNames="{ all }"
@@ -148,7 +148,7 @@
       plotFileRoot="poroElastic_openingFrac_vertical"/>
 
     <Restart
-    name="restarts"/>  
+    name="restarts"/>
   </Outputs>
 
 </Problem>

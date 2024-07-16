@@ -307,7 +307,7 @@ public:
 
 
   static string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
 
   KernelWrapper createKernelUpdates() const

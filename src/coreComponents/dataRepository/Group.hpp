@@ -20,13 +20,13 @@
 #ifndef GEOS_DATAREPOSITORY_GROUP_HPP_
 #define GEOS_DATAREPOSITORY_GROUP_HPP_
 
+#include "InputExtension.hpp"
 #include "InputFlags.hpp"
 #include "ObjectCatalog.hpp"
 #include "MappedVector.hpp"
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
-
 
 #include <iostream>
 
@@ -149,6 +149,8 @@ public:
 
   ///@}
 
+  virtual const string getCatalogName() const { return ""; }
+
   /**
    * @name Miscellaneous
    */
@@ -269,6 +271,11 @@ public:
    * @param name the name of the child group to remove from this group.
    */
   void deregisterGroup( string const & name );
+
+  /**
+   * @brief Recursively removes all children of this group from the bottom-up.
+   */
+  void deregisterAllRecursive( );
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
@@ -623,6 +630,18 @@ public:
   }
   ///@}
 
+  void discoverGroupsRecursively( std::vector< Group const * > & selectedGroups, std::function< bool( const Group & ) > predicate ) const
+  {
+    if( predicate( *this ) )
+    {
+      selectedGroups.push_back( this );
+    }
+    this->forSubGroups( [&] ( auto & subgroup )
+    {
+      subgroup.discoverGroupsRecursively( selectedGroups, predicate );
+    } );
+  }
+
   /**
    * @name Functor-based wrapper iteration
    *
@@ -757,26 +776,6 @@ public:
    * at any depth, providing a capability to add custom post-restart initialization.
    */
   void postRestartInitializationRecursive();
-
-  /**
-   * @brief Recursively read values using ProcessInputFile() from the input
-   * file and put them into the wrapped values for this group.
-   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
-   * @param[in] xmlDocument the XML document that contains the targetNode.
-   * @param[in] targetNode the XML node that to extract input values from.
-   */
-  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                  xmlWrapper::xmlNode & targetNode );
-  /**
-   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
-   * but allow to reuse an existing xmlNodePos.
-   * @param[in] xmlDocument the XML document that contains the targetNode.
-   * @param[in] targetNode the XML node that to extract input values from.
-   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
-   */
-  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
-                                  xmlWrapper::xmlNode & targetNode,
-                                  xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Recursively call postInputInitialization() to apply post processing after
@@ -1487,6 +1486,14 @@ public:
    */
   virtual void reinit() {}
 
+  using callback_coordinator = typename inputExtension::InputExtender< >::super;
+  virtual std::vector< inputExtension::Rule< > > getInputExtensionRules( callback_coordinator & callbackCoordinator ) const { return std::vector< inputExtension::Rule< > >(); };
+
+  void registerDataContext( std::unique_ptr< DataContext > context )
+  {
+    m_dataContext = std::move( context );
+  }
+
   /**
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
@@ -1541,20 +1548,9 @@ protected:
   virtual void postRestartInitialization()
   {}
 
-
-
   ///@}
 
 private:
-  /**
-   * @brief Read values from the input file and put them into the
-   *   wrapped values for this group.
-   * @param[in] xmlDocument the XML document that contains the targetNode
-   * @param[in] targetNode the XML node that to extract input values from
-   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
-   */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
-                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1702,6 +1698,15 @@ Wrapper< T > & Group::registerWrapper( string const & name,
   }
   return rval;
 }
+
+// used for tree iterator over groups
+struct SubgroupChildAccessor
+{
+  auto operator()( Group & group ) const -> decltype(auto)
+  {
+    return ItemView< 1, typename Group::subGroupMap::constKeyValueContainer >( group.getSubGroups().constKeyValues() );
+  }
+};
 
 } /* end namespace dataRepository */
 } /* end namespace geos */

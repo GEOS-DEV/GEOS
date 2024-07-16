@@ -12,7 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
@@ -28,6 +27,10 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+
+#include "unitTests/dataRepositoryTests/utils.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+
 
 using namespace geos;
 using namespace geos::dataRepository;
@@ -470,8 +473,8 @@ protected:
 
   void SetUp() override
   {
-    setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells<> >( "reservoirSystem" );
+    dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells< > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

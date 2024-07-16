@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 
+#include "dataRepository/InputProcessing.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/DruckerPrager.hpp"
 #include "constitutive/solid/DruckerPragerExtended.hpp"
@@ -80,8 +81,20 @@ void testDruckerPragerDriver()
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
+  // Locate mergable Groups
+  constitutiveManager.generateDataStructureSkeleton( 0 );
+  std::vector< dataRepository::Group const * > containerGroups;
+  constitutiveManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  constitutiveManager.deregisterAllRecursive( );
+  std::set< string > mergableNodes;
+  for( dataRepository::Group const * group : containerGroups )
+  {
+    mergableNodes.insert( group->getCatalogName() );
+  }
+
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
+  dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
+  processor.execute( constitutiveManager, xmlConstitutiveNode );
   constitutiveManager.postInputInitializationRecursive();
 
   localIndex constexpr numElem = 2;
@@ -196,8 +209,21 @@ void testDruckerPragerExtendedDriver()
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
+  // Locate mergable Groups
+  constitutiveManager.generateDataStructureSkeleton( 0 );
+  std::vector< dataRepository::Group const * > containerGroups;
+  constitutiveManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  constitutiveManager.deregisterAllRecursive( );
+  std::set< string > mergableNodes;
+  for( dataRepository::Group const * group : containerGroups )
+  {
+    mergableNodes.insert( group->getCatalogName() );
+  }
+
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
+  dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
+  processor.execute( constitutiveManager, xmlConstitutiveNode );
+
   constitutiveManager.postInputInitializationRecursive();
 
   localIndex constexpr numElem = 2;

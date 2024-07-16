@@ -2,12 +2,12 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./thermalLeakyWell_base_iterative.xml"/>
   </Included>
-  
-  <!-- SPHINX_MESH -->  
+
+  <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -18,18 +18,18 @@
       nx="{ 50, 1, 20, 1, 40 }"
       ny="{ 50, 1, 50 }"
       nz="{ 20, 30, 10 }"
-      cellBlockNames="{ aquiferBottom00, aquiferBottom10, aquiferBottom20, aquiferBottom30, aquiferBottom40, 
-                        aquiferBottom01, aquiferBottom11, aquiferBottom21, aquiferBottom31, aquiferBottom41, 
-                        aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42, 
-                             aquitard00,      aquitard10,      aquitard20,      aquitard30,      aquitard40, 
-                             aquitard01,      aquitard11,      aquitard21,      aquitard31,      aquitard41, 
-                             aquitard02,      aquitard12,      aquitard22,      aquitard32,      aquitard42, 
+      cellBlockNames="{ aquiferBottom00, aquiferBottom10, aquiferBottom20, aquiferBottom30, aquiferBottom40,
+                        aquiferBottom01, aquiferBottom11, aquiferBottom21, aquiferBottom31, aquiferBottom41,
+                        aquiferBottom02, aquiferBottom12, aquiferBottom22, aquiferBottom32, aquiferBottom42,
+                             aquitard00,      aquitard10,      aquitard20,      aquitard30,      aquitard40,
+                             aquitard01,      aquitard11,      aquitard21,      aquitard31,      aquitard41,
+                             aquitard02,      aquitard12,      aquitard22,      aquitard32,      aquitard42,
                            aquiferTop00,    aquiferTop10,    aquiferTop20,    aquiferTop30,    aquiferTop40,
                            aquiferTop01,    aquiferTop11,    aquiferTop21,    aquiferTop31,    aquiferTop41,
 			                     aquiferTop02,    aquiferTop12,    aquiferTop22,    aquiferTop32,    aquiferTop42 }"/>
   </Mesh>
-  <!-- SPHINX_MESH_END -->  
-  
+  <!-- SPHINX_MESH_END -->
+
   <Geometry>
     <Box
       name="source"
@@ -52,7 +52,7 @@
       name="south"
       xMin="{ -500.01, 489.99, -801 }"
       xMax="{  500.01, 500.01, -639 }"/>
-    
+
   </Geometry>
-  
+
 </Problem>

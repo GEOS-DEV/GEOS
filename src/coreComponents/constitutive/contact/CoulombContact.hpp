@@ -134,7 +134,7 @@ public:
    */
   static string catalogName() { return "Coulomb"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   ///@}
 

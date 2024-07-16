@@ -17,6 +17,8 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 
+#include "unitTests/dataRepositoryTests/utils.hpp"
+
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -89,7 +91,7 @@ TEST( testGroupPath, testGlobalPaths )
   };
 
   ProblemManager & problem = getGlobalState().getProblemManager();
-  problem.parseInputString( xmlInput );
+  dataRepository::testing::setupProblemFromXML( &problem, xmlInput );
 
   for( string const & path : groupPaths )
   {

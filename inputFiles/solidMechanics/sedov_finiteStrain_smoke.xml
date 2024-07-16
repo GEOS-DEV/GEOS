@@ -2,12 +2,12 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./sedov_base.xml"/>
   </Included>
-  
-  
+
+
   <Mesh>
   <InternalMesh
     name="mesh1"
@@ -20,7 +20,7 @@
     nz="{ 10 }"
     cellBlockNames="{ cb1 }"/>
   </Mesh>
-  
+
   <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   <Solvers>
     <SolidMechanics_LagrangianFEM
@@ -33,8 +33,8 @@
   </Solvers>
 
   <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
-  
-  
+
+
   <Events
     maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
@@ -47,7 +47,7 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       target="/Tasks/velocityCollection"/>
-      
+
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="5.0e-4"
@@ -58,7 +58,7 @@
       name="restarts"
       timeFrequency="5.0e-4"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>  
+      target="/Outputs/restartOutput"/>
   </Events>
-  
+
 </Problem>

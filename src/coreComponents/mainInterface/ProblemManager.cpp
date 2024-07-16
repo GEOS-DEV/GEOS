@@ -82,6 +82,12 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
+  // Group & defaultIncluded = registerGroup< Included< typename inputParsing::input_document_type > >( Included< typename inputParsing::input_document_type >::CatalogName() );
+  // defaultIncluded.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  registerGroup< ElementRegionManager >( MeshLevel::groupStructKeys::elemManagerString() );
+  registerGroup< ParticleManager >( MeshLevel::groupStructKeys::particleManagerString() );
+
   // Command line entries
   commandLine.registerWrapper< string >( viewKeys.inputFileName.key() ).
     setRestartFlags( RestartFlags::WRITE ).
@@ -137,6 +143,11 @@ ProblemManager::ProblemManager( conduit::Node & root ):
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
 
+  commandLine.registerWrapper< integer >( viewKeys.preprocessOnly.key( ) ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Whether to only preprocess the input deck for verification and write the resulting modified deck to the output directory." );
+
 }
 
 ProblemManager::~ProblemManager()
@@ -165,7 +176,6 @@ void ProblemManager::problemSetup()
   importFields();
 }
 
-
 void ProblemManager::parseCommandLineInput()
 {
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
@@ -180,6 +190,7 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
   commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
+  commandLine.getReference< integer >( viewKeys.preprocessOnly ) = opts.preprocessOnly;
 
   string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
@@ -193,7 +204,7 @@ void ProblemManager::parseCommandLineInput()
     GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
   }
 
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
+  inputFileName = inputParsing::mergeInputDocuments( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -322,20 +333,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   schemaUtilities::SchemaConstruction( particleManager, schemaRoot, targetChoiceNode, documentationType );
 
 
-  // Add entries that are only used in the pre-processor
-  Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag );
-  IncludedList.setInputFlags( InputFlags::OPTIONAL );
-
-  Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
-  includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  // the name of includedFile is actually a Path.
-  includedFile.registerWrapper< string >( "name" ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
-    setDescription( "The relative file path." );
-
-  schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
-
+  // TODO (wrt) : are these schema deviations needed? They don't seeme to be *used* anywhere
   Group & parameterList = this->registerGroup< Group >( "Parameters" );
   parameterList.setInputFlags( InputFlags::OPTIONAL );
 
@@ -392,106 +390,12 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   schemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );
 }
 
-
-void ProblemManager::parseInputFile()
-{
-  Group & commandLine = getGroup( groupKeys.commandLine );
-  string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-
-  // Load preprocessed xml file
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName, true );
-  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
-                                       inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
-
-  // Parse the results
-  parseXMLDocument( xmlDocument );
-}
-
-
-void ProblemManager::parseInputString( string const & xmlString )
-{
-  // Load preprocessed xml file
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlString, true );
-  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
-                                       xmlResult.description(), xmlResult.offset ), InputError );
-
-  // Parse the results
-  parseXMLDocument( xmlDocument );
-}
-
-
-void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
-{
-  // Extract the problem node and begin processing the user inputs
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( this->getName().c_str() );
-  processInputFileRecursive( xmlDocument, xmlProblemNode );
-
-  // The objects in domain are handled separately for now
-  {
-    DomainPartition & domain = getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( groupKeys.constitutiveManager );
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-    constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
-
-    // Open mesh levels
-    MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-    meshManager.generateMeshLevels( domain );
-    Group & meshBodies = domain.getMeshBodies();
-
-    // Parse element regions
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
-    {
-      string const regionName = regionNode.attribute( "name" ).value();
-      try
-      {
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                    regionNode.attribute( "meshBody" ).value() );
-
-        MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-        meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-        {
-          ElementRegionManager & elementManager = meshLevel.getElemManager();
-          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( xmlDocument, regionNode );
-        } );
-      }
-      catch( InputError const & e )
-      {
-        string const nodePosString = xmlDocument.getNodePosition( regionNode ).toString();
-        throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
-      }
-    }
-
-    // Parse particle regions
-    xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
-    {
-      string const regionName = regionNode.attribute( "name" ).value();
-      string const
-      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                  regionNode.attribute( "meshBody" ).value() );
-
-      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-      meshBody.setHasParticles( true );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-        ParticleManager & particleManager = meshLevel.getParticleManager();
-        Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
-        newRegion->processInputFileRecursive( xmlDocument, regionNode );
-      } );
-    }
-  }
-}
-
-
 void ProblemManager::postInputInitialization()
 {
+  // relies on depth-first recursion, otherwise these would be used *after* they are deregistered/deleted
+  deregisterGroup( MeshLevel::groupStructKeys::elemManagerString() );
+  deregisterGroup( MeshLevel::groupStructKeys::particleManagerString() );
+
   DomainPartition & domain = getDomainPartition();
 
   Group const & commandLine = getGroup< Group >( groupKeys.commandLine );

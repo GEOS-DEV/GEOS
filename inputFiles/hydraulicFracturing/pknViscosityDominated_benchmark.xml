@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pknViscosityDominated_base.xml"/>
   </Included>
@@ -43,7 +43,7 @@
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-10"/>    
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
   <!-- SPHINX_MECHANICALSOLVER_END -->
 
@@ -57,7 +57,7 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"/>     
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
   <!-- SPHINX_SINGLEPHASEFVM_END -->
 
@@ -65,7 +65,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="0.1e6"
       mpiCommOrder="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
@@ -82,11 +82,11 @@
       nx="{ 75, 10, 20 }"
       ny="{ 75, 10, 20 }"
       nz="{ 10, 10, 20, 10, 10 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
- 
-  <Geometry> 
+
+  <Geometry>
   <!-- SPHINX_INITIALFRAC -->
     <Box
       name="fracture"
@@ -110,7 +110,7 @@
   </Geometry>
 
   <Events
-    maxTime="200.1"> 
+    maxTime="200.1">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -141,22 +141,22 @@
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/hydraulicApertureCollection" /> 
+      target="/Tasks/hydraulicApertureCollection" />
 
     <PeriodicEvent
       name="timeHistoryCollection3"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Tasks/areaCollection" />      
+      target="/Tasks/areaCollection" />
 
     <PeriodicEvent
       name="timeHistoryOutput"
       beginTime="2.0"
       timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
- 
+      target="/Outputs/timeHistoryOutput"/>
+
     <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
@@ -204,5 +204,5 @@
       beginTime="100.0"
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
-  </Events> 
+  </Events>
 </Problem>

@@ -27,6 +27,8 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #include <fstream>
 
@@ -363,7 +365,7 @@ void PVTDriver::compareWithBaseline()
 constitutive::MultiFluidBase &
 PVTDriver::getFluid()
 {
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( GEOS_FMT("/{}/{}/{}", dataRepository::keys::ProblemManager, ProblemManager::groupKeysStruct::domainString(), DomainPartition::groupKeysStruct::constitutiveManagerString() ) );
   MultiFluidBase & baseFluid = constitutiveManager.getGroup< MultiFluidBase >( m_fluidName );
   return baseFluid;
 }

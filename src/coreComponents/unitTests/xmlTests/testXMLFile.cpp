@@ -33,12 +33,9 @@ using namespace xmlWrapper;
 // Tests if the xml file parsing works with one file, one file with nested includes, and multiple files
 TEST( testXML, testXMLFile )
 {
-  geos::ProblemManager & problemManager = geos::getGlobalState().getProblemManager();
-  problemManager.parseCommandLineInput();
-  problemManager.parseInputFile();
-
+  geos::getGlobalState().initializeInputParsing();
   // Check that we've read the full XML with all nested includes by inspecting boundary conditions
-  EXPECT_TRUE( problemManager.getFieldSpecificationManager().hasGroup< FieldSpecificationBase >( "v0" ) );
+  EXPECT_TRUE( geos::getGlobalState().getProblemManager().getFieldSpecificationManager().hasGroup< FieldSpecificationBase >( "v0" ) );
 }
 
 /**
@@ -85,21 +82,21 @@ void getElementsRecursive( xmlDocument const & document, xmlNode const & targetN
 }
 /**
  * @brief Calls a lambda for the DataContext of this Group and the ones of its children Group and
- * Wrapper if they can be casted to a DataFileContext type.
+ * Wrapper if they can be casted to a DefaultDataFileContext type.
  * @tparam LAMBDA the type of functor to call. The functor takes in parameter a DataContext of
  * TARGET_DC type.
- * @param func the functor to call for each DataFileContext of the group and its children
+ * @param func the functor to call for each DefaultDataFileContext of the group and its children
  */
 template< typename FUNC >
-void forAllDataFileContext( Group const & group, FUNC func )
+void forAllDefaultDataFileContext( Group const & group, FUNC func )
 {
-  if( auto * groupCtx = dynamic_cast< DataFileContext const * >( &group.getDataContext() ) )
+  if( auto * groupCtx = dynamic_cast< DefaultDataFileContext const * >( &group.getDataContext() ) )
   {
     func( *groupCtx );
   }
   for( auto const & wrapperIterator : group.wrappers() )
   {
-    auto * wrapperCtx = dynamic_cast< DataFileContext const * >( &wrapperIterator.second->getDataContext() );
+    auto * wrapperCtx = dynamic_cast< DefaultDataFileContext const * >( &wrapperIterator.second->getDataContext() );
     if( wrapperCtx )
     {
       func( *wrapperCtx );
@@ -107,16 +104,16 @@ void forAllDataFileContext( Group const & group, FUNC func )
   }
   for( auto subGroup : group.getSubGroups() )
   {
-    forAllDataFileContext( *subGroup.second, func );
+    forAllDefaultDataFileContext( *subGroup.second, func );
   }
 }
 /**
- * @brief Verify if the DataFileContext data correctly locates from where the object comes from (in the
+ * @brief Verify if the DefaultDataFileContext data correctly locates from where the object comes from (in the
  * correct document/include, at the correct line and at the correct character offset).
  * @param document root xml document (which potentially contains includes).
- * @param fileContext the DataFileContext to verify.
+ * @param fileContext the DefaultDataFileContext to verify.
  */
-void verifyDataFileContext( DataFileContext const & fileContext,
+void verifyDefaultDataFileContext( DefaultDataFileContext const & fileContext,
                             xmlDocument const & document,
                             std::set< string > & verifications )
 {
@@ -125,7 +122,7 @@ void verifyDataFileContext( DataFileContext const & fileContext,
   string const & strToVerify = fileContext.getTypeName();
   string const & errInfo = "Verifying " + strToVerify + " in " + fileContext.toString();
 
-  // verifying if all DataFileContext data have been found
+  // verifying if all DefaultDataFileContext data have been found
   EXPECT_FALSE( fileContext.getFilePath().empty() ) << errInfo;
   EXPECT_FALSE( fileContext.getTargetName().empty() ) << errInfo;
   EXPECT_FALSE( fileContext.getTypeName().empty() ) << errInfo;
@@ -144,7 +141,7 @@ void verifyDataFileContext( DataFileContext const & fileContext,
   EXPECT_LT( fileContext.getOffset() + strToVerify.size(), buffer->size() ) << errInfo;
   EXPECT_EQ( strToVerify, buffer->substr( fileContext.getOffset(), strToVerify.size() ) ) << errInfo;
 
-  // Were trying to reach the line return by DataFileContext::getLine()
+  // Were trying to reach the line return by DefaultDataFileContext::getLine()
   for( size_t offset=0;
        offset < buffer->size() && curLine < fileContext.getLine();
        ++offset )
@@ -188,15 +185,16 @@ std::set< string > getDifference( std::set< string > const & setA,
 TEST( testXML, testXMLFileLines )
 {
   xmlDocument xmlDoc;
+  getGlobalState().initializeInputParsing();
   ProblemManager & problemManager = getGlobalState().getProblemManager();
 
-  {
-    problemManager.parseCommandLineInput();
-    Group & commandLine = problemManager.getGroup( problemManager.groupKeys.commandLine );
-    string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.inputFileName );
-    xmlDoc.loadFile( inputFileName, true );
-    problemManager.parseXMLDocument( xmlDoc );
-  }
+  // {
+  //   problemManager.parseCommandLineInput();
+  //   Group & commandLine = problemManager.getGroup( problemManager.groupKeys.commandLine );
+  //   string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.inputFileName );
+  //   xmlDoc.loadFile( inputFileName, true );
+  //   problemManager.parseXMLDocument( xmlDoc );
+  // }
 
   GEOS_LOG( "Loaded files : " );
   for( auto const & buffer: xmlDoc.getOriginalBuffers() )
@@ -208,9 +206,9 @@ TEST( testXML, testXMLFileLines )
   getElementsRecursive( xmlDoc, xmlDoc.getFirstChild(), expectedElements );
 
   std::set< string > verifiedElements;
-  forAllDataFileContext( problemManager, [&]( DataFileContext const & ctx )
+  forAllDefaultDataFileContext( problemManager, [&]( DefaultDataFileContext const & ctx )
   {
-    verifyDataFileContext( ctx, xmlDoc, verifiedElements );
+    verifyDefaultDataFileContext( ctx, xmlDoc, verifiedElements );
   } );
 
   std::set< string > const notFound = getDifference( expectedElements, verifiedElements );
@@ -220,7 +218,7 @@ TEST( testXML, testXMLFileLines )
 
   std::set< string > const notExpected = getDifference( verifiedElements, expectedElements );
   EXPECT_TRUE( notExpected.empty() ) << "Info : There should not exist an object in the Group "
-                                        "hierarchy that contains a DataFileContext but which were not "
+                                        "hierarchy that contains a DefaultDataFileContext but which were not "
                                         "declared in the Xml.\nElements not found in XML hierarchy : {"
                                      << stringutilities::join( notExpected, "," ) << "}";
 }

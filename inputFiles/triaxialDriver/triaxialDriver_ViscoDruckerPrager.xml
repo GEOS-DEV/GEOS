@@ -6,16 +6,16 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="ViscoDruckerPrager"
-      mode="mixedControl" 
+      mode="mixedControl"
       axialControl="strainFunction"
       radialControl="stressFunction"
       initialStress="-10.e6"
-      steps="200" 
+      steps="200"
       output="ViscoDruckerPragerResults.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./triaxialDriver_base.xml"/>
   </Included>
 </Problem>

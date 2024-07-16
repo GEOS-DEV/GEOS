@@ -45,7 +45,7 @@ public:
 
   static string catalogName() { return "PoreVolumeCompressibleSolid"; }
 
-  virtual string getCatalogName() const override { return catalogName(); }
+  virtual string const getCatalogName() const override { return catalogName(); }
 
   virtual void stateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,

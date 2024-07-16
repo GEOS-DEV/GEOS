@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
- <Included>
+ <Included name="primary_includes">
     <File
       name="./EmbFrac_Compression_CoulombFriction_base.xml"/>
   </Included>
@@ -48,7 +48,7 @@
       xMin="{-0.5, -40.1, -0.001}"
       xMax="{ 0.5, -39.9,  1.001}"/>
   </Geometry>
-  
+
   <Events
     maxTime="1.0">
     <SoloEvent
@@ -77,11 +77,11 @@
       name="timeHistoryOutput"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/> 
-      
+      target="/Outputs/timeHistoryOutput"/>
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.0"
-      target="/Outputs/restartOutput"/>    
-  </Events> 
+      target="/Outputs/restartOutput"/>
+  </Events>
 </Problem>

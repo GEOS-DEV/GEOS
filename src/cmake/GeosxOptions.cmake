@@ -1,10 +1,12 @@
-message( "\nProcessing GeosxOptions.cmake" )
-message( "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}" )
-message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
-message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
+message(STATUS "===================================================")
+message(STATUS "Processing GeosxOptions.cmake" )
+message(STATUS "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}" )
+message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
+message(STATUS "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
 option( GEOS_ENABLE_TESTS "" ON )
+option( DISABLE_KERNEL_COMPILATION "" OFF )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
@@ -116,7 +118,7 @@ if( NOT BLT_CXX_STD STREQUAL c++17 )
     MESSAGE( FATAL_ERROR "c++17 is NOT enabled. GEOSX requires c++17" )
 endif( NOT BLT_CXX_STD STREQUAL c++17 )
 
-message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
+message(STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
@@ -199,13 +201,13 @@ if( ENABLE_HIP )
   set( GEOSX_BLOCK_SIZE 64 )
 endif()
 
-message( "localIndex is an alias for ${GEOSX_LOCALINDEX_TYPE}" )
-message( "globalIndex is an alias for ${GEOSX_GLOBALINDEX_TYPE}" )
-message( "GEOSX_LOCALINDEX_TYPE_FLAG = ${GEOSX_LOCALINDEX_TYPE_FLAG}" )
-message( "GEOSX_GLOBALINDEX_TYPE_FLAG = ${GEOSX_GLOBALINDEX_TYPE_FLAG}" )
+message(STATUS "localIndex is an alias for ${GEOSX_LOCALINDEX_TYPE}" )
+message(STATUS "globalIndex is an alias for ${GEOSX_GLOBALINDEX_TYPE}" )
+message(STATUS "GEOSX_LOCALINDEX_TYPE_FLAG = ${GEOSX_LOCALINDEX_TYPE_FLAG}" )
+message(STATUS "GEOSX_GLOBALINDEX_TYPE_FLAG = ${GEOSX_GLOBALINDEX_TYPE_FLAG}" )
 
-
-message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
-message( "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
-message( "GEOSX_LINK_POSTPEND_FLAG=${GEOSX_LINK_POSTPEND_FLAG}" )
-message( "Leaving GeosxOptions.cmake\n" )
+message(STATUS "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
+message(STATUS "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
+message(STATUS "GEOSX_LINK_POSTPEND_FLAG=${GEOSX_LINK_POSTPEND_FLAG}" )
+message(STATUS "Leaving GeosxOptions.cmake" )
+message(STATUS "===================================================")

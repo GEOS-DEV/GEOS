@@ -2,7 +2,7 @@
 set( gtest_geosx_tests testToolchain.cpp )
 
 # NOTE: we explicitly depend on internal libraries in order to check for the spurious addition of -DNDEBUG flag
-set( dependencyList ${parallelDeps} gtest physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
+set( dependencyList ${parallelDeps} gtest gmock physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})

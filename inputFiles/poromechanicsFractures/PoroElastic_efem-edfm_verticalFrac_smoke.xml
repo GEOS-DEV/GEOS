@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_efem-edfm_verticalFrac_base.xml" />
   </Included>
-  
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -28,7 +28,7 @@
       dimensions="{ 12, 4 }"/>
   </Geometry>
 
-  
+
   <Events
     maxTime="100">
     <SoloEvent
@@ -45,7 +45,7 @@
       endTime="100.0"
       forceDt="10.0"
       target="/Solvers/poroSolver"/>
- 
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="100"

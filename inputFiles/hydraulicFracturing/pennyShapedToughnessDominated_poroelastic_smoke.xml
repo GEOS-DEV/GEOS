@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./pennyShapedToughnessDominated_poroelastic_base.xml"/>
   </Included>
-  
+
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
@@ -43,12 +43,12 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      nodeBasedSIF="1"      
+      nodeBasedSIF="1"
       rockToughness="3.0e6"
       mpiCommOrder="1"
       isPoroelastic="1"/>
-  </Solvers> 
- 
+  </Solvers>
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -59,9 +59,9 @@
       nx="{ 10, 1, 2 }"
       ny="{ 10, 1, 2 }"
       nz="{ 1, 1, 2, 1, 1 }"
-      cellBlockNames="{ cb1 }"/> 
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
- 
+
   <Geometry>
      <Box
       name="fracture"
@@ -92,7 +92,7 @@
       forceDt="1.0"
       target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="restarts"
       timeFrequency="5.0"
       targetExactTimestep="0"

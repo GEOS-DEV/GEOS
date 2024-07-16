@@ -123,30 +123,116 @@ GeosxState::~GeosxState()
 bool GeosxState::initializeDataRepository()
 {
   GEOS_MARK_FUNCTION;
-  Timer timer( m_initTime );
-
-  GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
-
-  getProblemManager().parseCommandLineInput();
-
-  if( !getProblemManager().getSchemaFileName().empty() )
+  if ( ! initializeInputParsing( ) )
   {
-    getProblemManager().generateDocumentation();
-    m_state = State::INITIALIZED;
-    return false;
+    return false; // Early exit if initialization fails or is complete at the parsing stage.
   }
 
-  getProblemManager().parseInputFile();
-  getProblemManager().problemSetup();
-
+  // setup the problem after input parsing
+  auto & problemManager = getProblemManager();
+  problemManager.problemSetup();
   m_state = State::INITIALIZED;
 
   if( m_commandLineOptions->printMemoryUsage >= 0.0 )
   {
-    dataRepository::printMemoryAllocation( getProblemManager(), 0, m_commandLineOptions->printMemoryUsage );
+    dataRepository::printMemoryAllocation( problemManager, 0, m_commandLineOptions->printMemoryUsage );
   }
 
   return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool GeosxState::initializeInputParsing()
+{
+  GEOS_MARK_FUNCTION;
+  Timer timer( m_initTime );
+
+  GEOS_THROW_IF_NE(m_state, State::UNINITIALIZED, std::logic_error);
+
+  auto& problemManager = getProblemManager();
+
+  problemManager.parseCommandLineInput(); // this currently merges multiple input files
+
+  if (!problemManager.getSchemaFileName().empty())
+  {
+    problemManager.generateDocumentation();
+    m_state = State::INITIALIZED;
+    return false;
+  }
+
+  parseInputFiles();
+
+  if (m_commandLineOptions->preprocessOnly)
+  {
+    return false;
+  }
+
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void GeosxState::parseInputFiles()
+{
+  using namespace dataRepository::inputProcessing;
+  using document_type = typename inputParsing::input_document_type;
+  auto & problemManager = getProblemManager();
+
+  // Locate mergable Groups
+  problemManager.generateDataStructureSkeleton( 0 );
+  std::vector< dataRepository::Group const * > containerGroups;
+  problemManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  problemManager.deregisterAllRecursive( );
+  std::set< string > mergableNodes;
+  for( dataRepository::Group const * group : containerGroups )
+  {
+    mergableNodes.insert( group->getCatalogName() );
+  }
+
+  // we get the input file name from the problem manager instead of the m_commandLineOptions because we have merged multiple -i options into a single file at this point
+  string const & inputFileName = problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine ).getReference< string >( problemManager.viewKeys.inputFileName );
+  map<string, string> argMap =
+  {
+    { "problemTag", dataRepository::keys::ProblemManager },
+    { "includedTag", xmlWrapper::includedFileTag },
+    { "fileTag", xmlWrapper::includedFileTag },
+    { "fileName", inputFileName },
+    { "filePathAttribute", inputParsing::filePathString }
+  };
+
+  string includeBootstrap = GEOS_FMT(
+    "<{problemTag}>\n"
+    "  <Include>\n"
+    "    <{fileTag} name=\"{fileName}\" {filePathAttribute}=\"__internal__\">\n"
+    "  </Include>\n"
+    "</{problemTag}>",
+    argMap
+  );
+  document_type inputDocument;
+  typename document_type::read_result_type readResult = inputDocument.loadString( includeBootstrap, true );
+  GEOS_THROW_IF( !readResult, GEOS_FMT( "Errors found while parsing bootstrap string\nDescription: {}\nOffset: {}",
+                                       readResult.description(), readResult.offset ), InputError );
+
+  // Extract the problem node and begin processing the user inputs
+  typename document_type::node_type docRoot = inputDocument.getFirstChild();
+  if( m_commandLineOptions->preprocessOnly )
+  {
+    // by performing Declaration and TerseSyntax expansion we allow preprocessing to capture e.g. the application of Deprecations
+    PreprocessOnly processor( inputDocument, mergableNodes );
+    processor.execute( problemManager, docRoot );
+    // Remove all the created Groups from preprocessing phases (only Declaration actually creates Groups)
+    problemManager.deregisterAllRecursive( );
+    if ( MpiWrapper::commRank() == 0 )
+    {
+      string const & outputDirectory = m_commandLineOptions->outputDirectory;
+      dataRepository::reconstructIncludesAndSave< document_type >( inputDocument, outputDirectory );
+    }
+  }
+  else
+  {
+    AllProcessingPhases processor( inputDocument, mergableNodes );
+    processor.execute( problemManager, docRoot );
+    // problemManager.applyStaticExtensions( inputDocument, processor ); // TODO (wrt) : port these extensions to use InputExtensions
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

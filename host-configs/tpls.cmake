@@ -1,7 +1,8 @@
 #
 # Performance portability
 #
-message("in tpls.cmake GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+message(STATUS "===================================================")
+message(STATUS "Entering tpls.cmake GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
 #
 # General TPL Folder verifications
@@ -108,3 +109,6 @@ endif()
 if(EXISTS ${GEOSX_TPL_DIR}/mathpresso)
   set(MATHPRESSO_DIR ${GEOSX_TPL_DIR}/mathpresso CACHE PATH "" FORCE)
 endif()
+
+message( STATUS "Exiting tpls.cmake" )
+message( STATUS "===================================================" )

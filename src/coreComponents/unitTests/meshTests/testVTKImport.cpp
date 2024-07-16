@@ -15,6 +15,7 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "dataRepository/InputProcessing.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -68,8 +69,21 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   Group root( "root", node );
 
   MeshManager meshManager( "mesh", &root );
-  meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
+  // Locate mergable Groups
+  meshManager.generateDataStructureSkeleton( 0 );
+  std::vector< dataRepository::Group const * > containerGroups;
+  meshManager.discoverGroupsRecursively( containerGroups, []( dataRepository::Group const & group ) { return group.numWrappers() == 0 && group.numSubGroups() > 0; } );
+  meshManager.deregisterAllRecursive( );
+  std::set< string > mergableNodes;
+  for( dataRepository::Group const * group : containerGroups )
+  {
+    mergableNodes.insert( group->getCatalogName() );
+  }
+  dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
+  processor.execute( meshManager, xmlMeshNode );
+
   meshManager.postInputInitializationRecursive();
+
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
 

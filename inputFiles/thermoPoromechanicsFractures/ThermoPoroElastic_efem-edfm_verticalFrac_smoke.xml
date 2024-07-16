@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File
       name="./ThermoPoroElastic_efem-edfm_verticalFrac_base.xml"/>
   </Included>
@@ -50,7 +50,7 @@
       timeFrequency="5e5"
       target="/Outputs/restartOutput"/>
   </Events>
-  
+
   <FieldSpecifications>
     <FieldSpecification
       name="fracPorosity"

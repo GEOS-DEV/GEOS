@@ -1,5 +1,5 @@
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./ModifiedCamClayWellbore_base.xml"/>
   </Included>
 
@@ -21,7 +21,7 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_WELLBORE_MESH_END -->
-  
+
   <!-- SPHINX_WELLBORE_EXECUTION -->
   <Events
     maxTime="1.0">

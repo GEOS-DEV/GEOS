@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
+  <Included name="primary_includes">
     <File name="./kgdToughnessDominated_poroelastic_base.xml"/>
   </Included>
-  
+
   <Mesh>
-    <InternalMesh 
+    <InternalMesh
       name="mesh1"
       elementTypes="{C3D8}"
       xCoords="{ -100, 0, 100 }"
@@ -38,7 +38,7 @@
 
   <Events
     maxTime="100.0">
- 
+
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>

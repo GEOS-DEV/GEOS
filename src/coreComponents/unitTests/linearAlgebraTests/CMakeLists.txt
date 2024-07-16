@@ -6,7 +6,7 @@ set( LAI_tests
 set( nranks 2 )
 
 # Add gtest C++ based tests
-set( dependencyList ${parallelDeps} gtest )
+set( dependencyList ${parallelDeps} gtest gmock )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )

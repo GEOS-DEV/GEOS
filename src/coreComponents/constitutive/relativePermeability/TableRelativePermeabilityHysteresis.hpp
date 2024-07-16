@@ -76,7 +76,7 @@ public:
   static std::string catalogName()
   { return "TableRelativePermeabilityHysteresis"; }
 
-  virtual string getCatalogName() const override
+  virtual string const getCatalogName() const override
   { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update

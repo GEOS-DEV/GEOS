@@ -2,9 +2,9 @@
 
 <Problem>
 
-  <Included>
+  <Included name="primary_includes">
     <File name="./PoroElastic_staircase_co2_3d_base.xml"/>
-  </Included>  
+  </Included>
 
   <Solvers>
 
@@ -21,7 +21,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </MultiphasePoromechanicsReservoir>
-    
+
     <MultiphasePoromechanics
       name="multiphasePoroelasticity"
       solidSolverName="linearElasticity"
@@ -56,7 +56,7 @@
       useMass="1">
       <WellControls
         name="wellControls1"
-        logLevel="1"  
+        logLevel="1"
         type="producer"
         control="BHP"
         referenceElevation="62.5"
@@ -65,7 +65,7 @@
         targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
-        logLevel="1"      
+        logLevel="1"
         type="injector"
         control="totalVolRate"
         referenceElevation="250"
@@ -77,13 +77,13 @@
         injectionTemperature="355"
         injectionStream="{ 1.0, 0.0 }"/>
     </CompositionalMultiphaseWell>
-    
+
   </Solvers>
 
   <Events
-    minTime="-1e11"  
+    minTime="-1e11"
     maxTime="1e7">
-    
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
@@ -113,7 +113,7 @@
       name="twoPhaseFlowStatistics"
       timeFrequency="1e6"
       target="/Tasks/twoPhaseFlowStatistics"/>
-    
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e6"
@@ -129,7 +129,7 @@
   </Outputs>
 
   <Tasks>
-    
+
     <SolidMechanicsStatistics
       name="linearElasticityStatistics"
       solidSolverName="linearElasticity"
@@ -141,12 +141,12 @@
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
 
-    <MultiphasePoromechanicsInitialization 
-      logLevel="1"      
+    <MultiphasePoromechanicsInitialization
+      logLevel="1"
       name="multiphasePoroelasticityEquilibrationStep"
       poromechanicsSolverName="multiphasePoroelasticity"
       solidMechanicsStatisticsName="linearElasticityStatistics"/>
-    
+
   </Tasks>
-  
+
 </Problem>
