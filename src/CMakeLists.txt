@@ -150,7 +150,10 @@ blt_print_target_properties(TARGET               geosx
                             CHILDREN             TRUE
                             PROPERTY_NAME_REGEX  "LINK_LIBRARIES"
                             PROPERTY_VALUE_REGEX "HDF5")
-                            
+
+blt_print_target_properties(TARGET               HDF5::HDF5
+                            CHILDREN             TRUE )
+
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
