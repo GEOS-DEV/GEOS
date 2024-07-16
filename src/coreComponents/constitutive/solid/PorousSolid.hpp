@@ -23,7 +23,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/permeability/ConstantPermeability.hpp"
+#include "constitutive/permeability/PressurePermeability.hpp"
 
 namespace geos
 {
@@ -37,7 +37,7 @@ namespace constitutive
  * @tparam SOLID_TYPE type of the porosity model
  */
 template< typename SOLID_TYPE >
-class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >
 {
 public:
 
@@ -48,8 +48,8 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      ConstantPermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
+                      PressurePermeability const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >( solidModel, porosityModel, permModel )
   {}
 
   GEOS_HOST_DEVICE
@@ -67,6 +67,9 @@ public:
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q ); // this porosity is actually not being used 
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE
@@ -116,6 +119,9 @@ public:
                      dPorosity_dVolStrain,
                      dPorosity_dPressure,
                      dPorosity_dTemperature );
+
+    // Compute permeability 
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
 
     // skip porosity update when doing poromechanics initialization
     if( performStressInitialization )
@@ -213,9 +219,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_permUpdate;
 
 
   GEOS_HOST_DEVICE
@@ -326,7 +332,7 @@ class PorousSolidBase
  * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE >
-class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >
 {
 public:
 
@@ -410,9 +416,9 @@ public:
 
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getPermModel;
 };
 
 
