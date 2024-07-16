@@ -19,6 +19,7 @@
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
@@ -454,10 +455,15 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -488,10 +494,9 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
       Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
       Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
-
-      globalIndex rowDOF[12];
-      real64 nodeRHS[12];
-      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+      globalIndex rowDOF[3 * m_maxFaceNodes]; // this needs to be changed when dealing with arbitrary element types
+      real64 nodeRHS[3 * m_maxFaceNodes];
+      stackArray1d< real64, 3 * m_maxFaceNodes > dRdP( 3*m_maxFaceNodes );
       globalIndex colDOF[1];
       colDOF[0] = presDofNumber[kfe];
 
@@ -499,14 +504,21 @@ assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
       {
         localIndex const faceIndex = elemsToFaces[kfe][kf];
 
+        // Compute local area contribution for each node
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+        this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
+                                                            nodePosition,
+                                                            faceToNodeMap,
+                                                            faceToEdgeMap,
+                                                            edgeToNodeMap,
+                                                            faceCenters,
+                                                            faceNormal,
+                                                            faceAreas,
+                                                            nodalArea );
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
-
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
-          array1d< real64 > globalNodalForce( 3 );
+          real64 globalNodalForce[ 3 ];
           LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
           for( localIndex i=0; i<3; ++i )
@@ -550,10 +562,15 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
@@ -588,7 +605,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
     {
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      globalIndex nodeDOF[24];
+      globalIndex nodeDOF[2*3*m_maxFaceNodes];
       globalIndex elemDOF[1];
       elemDOF[0] = presDofNumber[kfe];
 
@@ -598,7 +615,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
       Nbar[ 2 ] = faceNormal[kf0][2] - faceNormal[kf1][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
+      stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
 
       bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
 
@@ -608,8 +625,16 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
         for( localIndex kf=0; kf<2; ++kf )
         {
           // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+          this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
 
           // TODO: move to something like this plus a static method.
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
@@ -658,9 +683,17 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
         for( localIndex kf=0; kf<2; ++kf )
         {
-          // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          this->solidMechanicsSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
+          //TODO: We should avoid allocating LvArrays inside kernel
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+          this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
@@ -729,7 +762,6 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
       arrayView1d< real64 const > const pressure           = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< fields::flow::aperture0 >();
-      arrayView1d< real64 const > const minimumHydraulicAperture = subRegion.getField< flow::minimumHydraulicAperture >();
 
       arrayView1d< real64 > const aperture                 = subRegion.getElementAperture();
       arrayView1d< real64 > const hydraulicAperture        = subRegion.getField< flow::hydraulicAperture >();
@@ -738,25 +770,33 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::updateHydraulic
       string const porousSolidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      string const & contactRelationName = subRegion.template getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::contactRelationNameString() );
+      ContactBase const & contact = subRegion.getConstitutiveModel< ContactBase >( contactRelationName );
+
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+        constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+        {
+          typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        poromechanicsFracturesKernels::StateUpdateKernel::
-          launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            porousMaterialWrapper,
-                                            dispJump,
-                                            pressure,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            minimumHydraulicAperture,
-                                            oldHydraulicAperture,
-                                            hydraulicAperture,
-                                            fractureTraction );
+          poromechanicsFracturesKernels::StateUpdateKernel::
+            launch< parallelDevicePolicy<> >( subRegion.size(),
+                                              porousMaterialWrapper,
+                                              contactWrapper,
+                                              dispJump,
+                                              pressure,
+                                              area,
+                                              volume,
+                                              deltaVolume,
+                                              aperture,
+                                              oldHydraulicAperture,
+                                              hydraulicAperture,
+                                              fractureTraction );
 
+        } );
       } );
     } );
   } );

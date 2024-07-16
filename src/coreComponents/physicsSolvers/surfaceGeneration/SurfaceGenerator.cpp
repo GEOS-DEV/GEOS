@@ -228,7 +228,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
 }
 
-void SurfaceGenerator::postProcessInput()
+void SurfaceGenerator::postInputInitialization()
 {
   static const std::set< integer > binaryOptions = { 0, 1 };
 

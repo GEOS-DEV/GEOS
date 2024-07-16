@@ -224,7 +224,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
 
 }
 
-void LinearSolverParametersInput::postProcessInput()
+void LinearSolverParametersInput::postInputInitialization()
 {
   m_parameters.logLevel = getLogLevel();
 

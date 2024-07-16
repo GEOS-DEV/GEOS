@@ -780,10 +780,10 @@ public:
                                   xmlWrapper::xmlNodePos const & nodePos );
 
   /**
-   * @brief Recursively call postProcessInput() to apply post processing after
+   * @brief Recursively call postInputInitialization() to apply post processing after
    * reading input values.
    */
-  void postProcessInputRecursive();
+  void postInputInitializationRecursive();
 
   ///@}
 
@@ -1515,7 +1515,7 @@ protected:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void postProcessInput() {}
+  virtual void postInputInitialization() {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.

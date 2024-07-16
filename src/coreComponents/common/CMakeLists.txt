@@ -10,6 +10,7 @@ set( common_headers
      Format.hpp
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
+     MemoryInfos.hpp
      Logger.hpp
      MpiWrapper.hpp
      Path.hpp
@@ -40,6 +41,7 @@ endif( )
 set( common_sources
      BufferAllocator.cpp
      DataTypes.cpp
+     MemoryInfos.cpp
      Logger.cpp
      MpiWrapper.cpp
      Path.cpp
@@ -57,8 +59,8 @@ if (TARGET conduit)
   set( dependencyList ${dependencyList} conduit )
 endif()
 
-if (TARGET fmt::fmt)
-  set( dependencyList ${dependencyList} fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  set( dependencyList ${dependencyList} fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)
@@ -92,6 +94,8 @@ if( ENABLE_CALIPER )
     list( APPEND dependencyList adiak )
   endif()
 endif()
+
+set( dependencyList ${dependencyList} fileIO codingUtilities )
 
 blt_add_library( NAME       common
                  SOURCES    ${common_sources}

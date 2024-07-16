@@ -83,7 +83,7 @@ public:
 
 protected:
 
-  void postProcessInput() override
+  void postInputInitialization() override
   {
     ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
     PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();

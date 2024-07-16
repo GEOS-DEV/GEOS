@@ -65,9 +65,9 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
 
 }
 
-void CompositionalMultiphaseStatistics::postProcessInput()
+void CompositionalMultiphaseStatistics::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {

@@ -65,7 +65,7 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::~PoromechanicsInitializatio
 template< typename POROMECHANICS_SOLVER >
 void
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
-postProcessInput()
+postInputInitialization()
 {
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
@@ -94,7 +94,7 @@ postProcessInput()
 
   m_solidMechanicsStateResetTask.setLogLevel( getLogLevel());
   m_solidMechanicsStateResetTask.m_solidSolverName = m_poromechanicsSolver->solidMechanicsSolver()->getName();
-  m_solidMechanicsStateResetTask.postProcessInput();
+  m_solidMechanicsStateResetTask.postInputInitialization();
 }
 
 template< typename POROMECHANICS_SOLVER >

@@ -115,9 +115,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
 
 }
 
-void CompositionalMultiphaseWell::postProcessInput()
+void CompositionalMultiphaseWell::postInputInitialization()
 {
-  WellSolverBase::postProcessInput();
+  WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<

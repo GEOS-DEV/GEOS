@@ -59,9 +59,9 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanicsEmbeddedFractures::postProcessInput()
+void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
-  SolidMechanicsLagrangianFEM::postProcessInput();
+  SolidMechanicsLagrangianFEM::postInputInitialization();
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
 
