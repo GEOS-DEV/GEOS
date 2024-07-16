@@ -224,7 +224,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   addLogLevel( "logLevel >= 2 and value too close to zero. ", "Information about exit solver iteration" );
 }
 
-void LinearSolverParametersInput::postProcessInput()
+void LinearSolverParametersInput::postInputInitialization()
 {
   m_parameters.logLevel = getLogLevel();
 

@@ -13,7 +13,7 @@
  */
 
 /*
- * PVTDriverRunTestCompositionalSRKLBC.cpp
+ * PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
  */
 
 #include "constitutive/fluid/multifluid/PVTDriverRunTest.hpp"
@@ -21,6 +21,6 @@
 
 namespace geos
 {
-template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity >(
-  constitutive::CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseConstantViscosity >(
+  constitutive::CompositionalTwoPhaseConstantViscosity &, arrayView2d< real64 > const & );
 }

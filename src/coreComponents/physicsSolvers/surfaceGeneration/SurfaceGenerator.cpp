@@ -228,7 +228,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   addLogLevel( "logLevel >= 3", "Print rupture rate" );
 }
 
-void SurfaceGenerator::postProcessInput()
+void SurfaceGenerator::postInputInitialization()
 {
   static const std::set< integer > binaryOptions = { 0, 1 };
 

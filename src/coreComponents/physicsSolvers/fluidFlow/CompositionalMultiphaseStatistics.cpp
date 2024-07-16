@@ -65,9 +65,9 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
   addLogLevel( "logLevel >= 1", "Information on CFL numbers" );
 }
 
-void CompositionalMultiphaseStatistics::postProcessInput()
+void CompositionalMultiphaseStatistics::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {

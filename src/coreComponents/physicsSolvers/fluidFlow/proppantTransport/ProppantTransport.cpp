@@ -83,9 +83,9 @@ ProppantTransport::ProppantTransport( const string & name,
   addLogLevel( "logLevel >= 1", "Infos on residual norm values" );
 }
 
-void ProppantTransport::postProcessInput()
+void ProppantTransport::postInputInitialization()
 {
-  FlowSolverBase::postProcessInput();
+  FlowSolverBase::postInputInitialization();
 }
 
 void ProppantTransport::registerDataOnMesh( Group & meshBodies )

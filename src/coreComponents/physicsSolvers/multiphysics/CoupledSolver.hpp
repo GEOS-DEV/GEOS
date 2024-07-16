@@ -662,7 +662,7 @@ protected:
   }
 
   virtual void
-  postProcessInput() override
+  postInputInitialization() override
   {
     setSubSolvers();
 

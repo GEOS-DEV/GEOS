@@ -97,9 +97,9 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
   addLogLevel( "logLevel >= 1 and total density > 0", "Information on total density values" );
 }
 
-void CompositionalMultiphaseFVM::postProcessInput()
+void CompositionalMultiphaseFVM::postInputInitialization()
 {
-  CompositionalMultiphaseBase::postProcessInput();
+  CompositionalMultiphaseBase::postInputInitialization();
 
   if( m_scalingType == ScalingType::Local && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {

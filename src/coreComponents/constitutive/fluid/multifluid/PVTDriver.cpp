@@ -93,7 +93,7 @@ PVTDriver::PVTDriver( const string & name,
   addLogLevel( "logLevel >= 1", "Indicate consistency of results" );
 }
 
-void PVTDriver::postProcessInput()
+void PVTDriver::postInputInitialization()
 {
   // Validate some inputs
   GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,

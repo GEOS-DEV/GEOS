@@ -286,6 +286,14 @@ else()
 endif()
 
 ################################
+# CUDA
+################################
+if ( ENABLE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  message( " ----> $CUDAToolkit_VERSION = ${CUDAToolkit_VERSION}")
+endif()
+
+################################
 # CAMP ( required before raja on crusher / using spack installed tpls )
 ################################
 if(DEFINED CAMP_DIR)
@@ -328,6 +336,31 @@ if(DEFINED CAMP_DIR)
         get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
         set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
     endif()
+endif()
+
+################################
+# FMT
+################################
+if(DEFINED FMT_DIR)
+    message(STATUS "FMT_DIR = ${FMT_DIR}")
+
+    find_package(fmt REQUIRED
+                 PATHS ${FMT_DIR}
+                 NO_DEFAULT_PATH)
+
+    message( " ----> fmt_VERSION = ${fmt_VERSION}")
+
+    get_target_property(includeDirs fmt::fmt-header-only INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET fmt::fmt-header-only
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
+
+    set(ENABLE_FMT ON CACHE BOOL "")
+
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt-header-only )
+else()
+    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
 endif()
 
 ################################
@@ -631,41 +664,45 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-    set( HYPRE_DEPENDS blas lapack umpire)
+    set( HYPRE_DEPENDS blas lapack umpire )
     if( ENABLE_SUPERLU_DIST )
-        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
+        list( APPEND HYPRE_DEPENDS superlu_dist )
     endif()
     if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} ${CUDA_cusolver_LIBRARY} )
+        list( APPEND HYPRE_DEPENDS CUDA::cusparse CUDA::cublas CUDA::curand CUDA::cusolver )
+
+        # Add libnvJitLink when using CUDA >= 12.2.2. Note: requires cmake >= 3.26
+        if( CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.2.2" )
+           list( APPEND HYPRE_DEPENDS CUDA::nvJitLink )
+        endif()
     elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         find_package( rocblas REQUIRED )
         find_package( rocsolver REQUIRED )
         find_package( rocsparse REQUIRED )
         find_package( rocrand REQUIRED )
-        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
+        append( APPEND HYPRE_DEPENDS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
     endif( )
 
-    find_and_import(NAME hypre
-                      INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
-                      HEADER HYPRE.h
-                      LIBRARIES HYPRE
-                      EXTRA_LIBRARIES ${EXTRA_LIBS}
-                      DEPENDS ${HYPRE_DEPENDS})
+    find_and_import( NAME hypre
+                     INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
+                     LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                     HEADER HYPRE.h
+                     LIBRARIES HYPRE
+                     DEPENDS ${HYPRE_DEPENDS} )
 
     extract_version_from_header( NAME hypre
                                  HEADER "${HYPRE_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
 
     # Extract some additional information about development version of hypre
-    file(READ ${HYPRE_DIR}/include/HYPRE_config.h header_file)
-    if("${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"")
-        set(hypre_dev_string "${CMAKE_MATCH_1}")
-        if("${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"")
-            set(hypre_dev_branch "${CMAKE_MATCH_1}")
+    file( READ ${HYPRE_DIR}/include/HYPRE_config.h header_file )
+    if( "${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"" )
+        set( hypre_dev_string "${CMAKE_MATCH_1}" )
+        if( "${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"" )
+            set( hypre_dev_branch "${CMAKE_MATCH_1}" )
         endif()
-        set(hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE)
-        message(" ----> hypre_VERSION = ${hypre_VERSION}")
+        set( hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE )
+        message( " ----> hypre_VERSION = ${hypre_VERSION}" )
     endif()
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
@@ -682,8 +719,8 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     #   set(ENABLE_HYPRE ON CACHE BOOL "")
     # endif()
 
-    set(ENABLE_HYPRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} hypre ${HYPRE_DEPENDS} )
+    set( ENABLE_HYPRE ON CACHE BOOL "" )
+    set( thirdPartyLibs ${thirdPartyLibs} hypre ${HYPRE_DEPENDS} )
 else()
     if(ENABLE_HYPRE)
         message(WARNING "ENABLE_HYPRE is ON but HYPRE_DIR isn't defined.")
@@ -699,7 +736,7 @@ endif()
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
@@ -801,30 +838,6 @@ else()
     message(STATUS "Not using VTK")
 endif()
 
-################################
-# FMT
-################################
-if(DEFINED FMT_DIR)
-    message(STATUS "FMT_DIR = ${FMT_DIR}")
-
-    find_package(fmt REQUIRED
-                 PATHS ${FMT_DIR}
-                 NO_DEFAULT_PATH)
-
-    message( " ----> fmt_VERSION = ${fmt_VERSION}")
-
-    get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
-
-    set_property(TARGET fmt::fmt
-                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-                 ${includeDirs})
-
-    set(ENABLE_FMT ON CACHE BOOL "")
-
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
-else()
-    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
-endif()
 
 ################################
 # uncrustify
@@ -907,12 +920,7 @@ message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 # NvToolExt
 ###############################
 if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
-  find_package(CUDAToolkit REQUIRED)
-
-  message( " ----> $CUDAToolkit_VERSION = ${CUDAToolkit_VERSION}")
-
   set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
-
