@@ -37,7 +37,7 @@ VTKWellGenerator::VTKWellGenerator( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to the well file" );
 
-  appendLogLevelDescription( "logLevel >= 2", "Indicate the dataset reading" );
+
 }
 
 void VTKWellGenerator::fillPolylineDataStructure( )

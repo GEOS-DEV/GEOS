@@ -524,21 +524,19 @@ public:
    */
   void buildLogLevelDescription( std::map< std::string, std::vector< std::string > > const & logLevelsDescriptions )
   {
-    string descriptionToBuild;
-    descriptionToBuild.append( "Sets the level of information to write in the standard output (the console typically).\n"
-                               "A level of 0 outputs minimal information, higher levels require more." );
+    std::ostringstream description;
+    description << "Sets the level of information to write in the standard output (the console typically).\n"
+                   "A level of 0 outputs minimal information, higher levels require more.";
     for( auto const & [logLevel, logDescriptions] : logLevelsDescriptions )
     {
-      descriptionToBuild.append( GEOS_FMT( "\n{}\n", logLevel ) );
-      size_t idxDescription = 0;
-      for( const auto & description : logDescriptions )
+      description << GEOS_FMT( "\n{}\n", logLevel );
+      for( size_t idxDesc = 0; idxDesc< logDescriptions.size(); idxDesc++ )
       {
-        idxDescription == logDescriptions.size() - 1 ? descriptionToBuild.append( " - " + description ) 
-                                                     : descriptionToBuild.append( GEOS_FMT( " - {}\n", description ) );
-        idxDescription++;
+        description << " - " << logDescriptions[idxDesc];
+        if( idxDesc != logDescriptions.size() - 1 ) description << '\n';
       }
     }
-    appendDescription( descriptionToBuild );
+    appendDescription( description.str() );
   }
 
 

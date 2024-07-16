@@ -220,12 +220,12 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print splitting node along separation plane faces" );
-  appendLogLevelDescription( "logLevel >= 1", "Print splitting edge and face" );
-  appendLogLevelDescription( "logLevel >= 2", "Print all elements attached to the nodeID" );
-  appendLogLevelDescription( "logLevel >= 2", "Print all faces on their element" );
-  appendLogLevelDescription( "logLevel >= 3", "Information on the consistency checking of the maps" );
-  appendLogLevelDescription( "logLevel >= 3", "Print rupture rate" );
+
+
+
+
+
+
 }
 
 void SurfaceGenerator::postProcessInput()

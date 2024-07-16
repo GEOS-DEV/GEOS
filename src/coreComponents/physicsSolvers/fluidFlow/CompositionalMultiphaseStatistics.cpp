@@ -60,9 +60,9 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
 
-  appendLogLevelDescription( "logLevel >= 1 and pore volume equal 0", "Warning on the impossibility to compute pressure" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on the regions statistics" );
-  appendLogLevelDescription( "logLevel >= 1", "Information on CFL numbers" );
+
+
+
 }
 
 void CompositionalMultiphaseStatistics::postProcessInput()

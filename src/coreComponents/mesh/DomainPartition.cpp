@@ -46,7 +46,7 @@ DomainPartition::DomainPartition( string const & name,
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 
-  appendLogLevelDescription( "logLevel >= 3", "Indication about setup communication" );
+
 }
 
 

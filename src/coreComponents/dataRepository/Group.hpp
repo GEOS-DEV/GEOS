@@ -26,6 +26,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "LogLevelsRegistry.hpp"
 
 
 #include <iostream>
@@ -859,7 +860,8 @@ public:
    * @param levelCondition The level condition to append
    * @param logDescription The log description to append
    */
-  void appendLogLevelDescription( string_view levelCondition, string_view logDescription );
+  template< typename LOG_LEVEL_INFO >
+  void addLogLevel();
 
   /**
    * @name Schema generation methods
@@ -1611,9 +1613,7 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  /// Map for building the log level string for each wrapper
-  /// key : a logLevel condition, values : a set of description for a corresponding loglevel
-  std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
+  std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
 
   //END_SPHINX_INCLUDE_02
 
@@ -1710,6 +1710,21 @@ Wrapper< T > & Group::registerWrapper( string const & name,
     rval.resize( size());
   }
   return rval;
+}
+
+template< typename LOG_LEVEL_INFO >
+void Group::addLogLevel()
+{
+  Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
+  if( wrapper == nullptr )
+  {
+    wrapper = &registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel );
+    wrapper->setApplyDefaultValue( 0 );
+    wrapper->setInputFlag( InputFlags::OPTIONAL );
+  }
+  m_logLevelsRegistry.addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
+                                LOG_LEVEL_INFO::getDescription());
+  m_logLevelsRegistry.buildLogLevelDescription();
 }
 
 } /* end namespace dataRepository */

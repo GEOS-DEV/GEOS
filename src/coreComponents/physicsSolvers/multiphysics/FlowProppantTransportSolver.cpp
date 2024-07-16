@@ -33,7 +33,7 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const string & name,
                                                           Group * const parent ):
   Base( name, parent )
 {
-  appendLogLevelDescription( "logLevel >= 1", "Informations about convergance and iterations " );
+
 }
 
 void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,

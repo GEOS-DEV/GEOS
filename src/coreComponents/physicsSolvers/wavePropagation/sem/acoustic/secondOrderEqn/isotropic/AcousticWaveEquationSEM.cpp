@@ -50,7 +50,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Print PML parameters" );
+
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()

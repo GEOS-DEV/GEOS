@@ -84,9 +84,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  appendLogLevelDescription( "logLevel >= 1 and regions with no dof", "Warning about non simulated region" );
-  appendLogLevelDescription( "logLevel >= 1 first nonlinear iteration", "Print boundary conditions log messages" );
-  appendLogLevelDescription( "logLevel >= 1 and first nonlinear iteration", "Information on the face boundary condition defined with pressure and temperature" );
+
+
+
 }
 
 

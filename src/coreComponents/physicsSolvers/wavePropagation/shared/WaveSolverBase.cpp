@@ -219,7 +219,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Flag to indicate which attenuation model to use: \"none\" for no attenuation, \"sls\\" " for the standard-linear-solid (SLS) model (Fichtner, 2014)." );
 
 
-  appendLogLevelDescription( "logLevel >= 1", "Information about linear DAS" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()

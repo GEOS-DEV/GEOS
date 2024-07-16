@@ -45,7 +45,7 @@ MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanic
   : Base( name, parent )
 {
 
-  Base::appendLogLevelDescription( "logLevel >= 1", "Print phase volume fraction" );
+  Base::addLogLevel( "logLevel >= 1", "Print phase volume fraction" );
 
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;

@@ -51,8 +51,8 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable/disable inelastic behavior" );
 
-  appendLogLevelDescription( "logLevel >= 1 and reset displacements", "Information about physics solver during task" );
-  appendLogLevelDescription( "logLevel >= 2", "Information about solid model during task" );
+
+
 }
 
 SolidMechanicsStateReset::~SolidMechanicsStateReset()

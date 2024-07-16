@@ -60,8 +60,8 @@ public:
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "Write statistics into a CSV file" );
 
-    appendLogLevelDescription( "logLevel == 1 and pore volume is zero", "Display warning message" );
-    appendLogLevelDescription( "logLevel == 1 ", "Dipslay Indicative message" );
+
+
 
   }
 

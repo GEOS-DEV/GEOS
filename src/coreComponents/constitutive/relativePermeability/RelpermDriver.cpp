@@ -51,8 +51,8 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on RelpermDriver" );
-  appendLogLevelDescription( "logLevel >= 1", "Indicate if the internal results are consistent" );
+
+
 }
 
 

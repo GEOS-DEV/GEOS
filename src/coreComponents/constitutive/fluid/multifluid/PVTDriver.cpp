@@ -89,8 +89,8 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Informations about PVT Driver" );
-  appendLogLevelDescription( "logLevel >= 1", "Indicate consistency of results" );
+
+
 }
 
 void PVTDriver::postProcessInput()

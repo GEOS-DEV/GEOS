@@ -66,8 +66,8 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Information on TriaxialDriver" );
-  appendLogLevelDescription( "logLevel >= 1", "Indicate if the internal results are consistent" );
+
+
 }
 
 

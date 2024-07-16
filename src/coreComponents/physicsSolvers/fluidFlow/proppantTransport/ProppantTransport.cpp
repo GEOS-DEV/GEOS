@@ -80,7 +80,7 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
-  appendLogLevelDescription( "logLevel >= 1", "Infos on residual norm values" );
+
 }
 
 void ProppantTransport::postProcessInput()

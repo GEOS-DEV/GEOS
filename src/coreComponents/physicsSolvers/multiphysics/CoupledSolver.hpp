@@ -55,10 +55,10 @@ public:
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    appendLogLevelDescription( "logLevel >= 1", "Print solvers name" );
-    appendLogLevelDescription( "logLevel >= 1", "Print residual norm" );
-    appendLogLevelDescription( "logLevel >= 1", "Print time stepping" );
-    appendLogLevelDescription( "logLevel >= 1", "Information on each iteration" );
+
+
+
+
   }
 
   /// deleted copy constructor
