@@ -223,6 +223,7 @@ void testDruckerPragerExtendedDriver()
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
   dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
   processor.execute( constitutiveManager, xmlConstitutiveNode );
+
   constitutiveManager.postInputInitializationRecursive();
 
   localIndex constexpr numElem = 2;

@@ -59,6 +59,8 @@ public:
   /// Postprocessing of input
   virtual void postInputInitialization() override;
 
+  void print();
+
   LinearSolverParameters const & get() const
   { return m_parameters; }
 

@@ -18,7 +18,8 @@ set( codingUtilities_headers
 #
 set( codingUtilities_sources
      Parsing.cpp
-     StringUtilities.cpp )
+     StringUtilities.cpp
+     )
 
 set( dependencyList ${parallelDeps} common fast_float )
 

@@ -121,6 +121,8 @@ public:
     static constexpr char const * sourceForceString() { return "sourceForce"; }
     static constexpr char const * sourceMomentString() { return "sourceMoment"; }
 
+    static constexpr char const * useVtiString() { return "useVTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -152,6 +154,13 @@ public:
                             arrayView1d< string const > const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
+
+  /**
+   * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
+   * are usually global parameters
+   */
+  real32 computeGlobalMinQFactor();
+
 protected:
 
   virtual void postInputInitialization() override final;
@@ -213,6 +222,9 @@ private:
 
   /// Symmetric tensor describing the moment of the source
   R2SymTensor m_sourceMoment;
+
+  /// Flag to appliy VTI anisotropy
+  integer m_useVTI;
 
 };
 

@@ -69,7 +69,6 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   Group root( "root", node );
 
   MeshManager meshManager( "mesh", &root );
-
   // Locate mergable Groups
   meshManager.generateDataStructureSkeleton( 0 );
   std::vector< dataRepository::Group const * > containerGroups;
@@ -80,9 +79,10 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   {
     mergableNodes.insert( group->getCatalogName() );
   }
-
   dataRepository::inputProcessing::AllProcessingPhases processor( xmlDocument, mergableNodes );
   processor.execute( meshManager, xmlMeshNode );
+
+  meshManager.postInputInitializationRecursive();
 
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );

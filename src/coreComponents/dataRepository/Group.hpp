@@ -1413,6 +1413,15 @@ public:
    */
   void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
 
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    /// @return String for the logLevel wrapper
+    static constexpr char const * logLevelString() { return "logLevel"; }
+  };
+
   ///@}
 
   /**

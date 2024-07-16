@@ -364,6 +364,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
 
   DomainPartition & domain  = problemManager.getDomainPartition();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+
   // Test computed projectors for all cells in MeshLevel
   testCellsInMeshLevel< 8, 9 >( mesh );
 }

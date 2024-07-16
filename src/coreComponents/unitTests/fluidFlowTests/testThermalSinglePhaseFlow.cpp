@@ -96,7 +96,7 @@ char const * xmlInput =
                         referencePressure="0.0"
                         compressibility="1.0e-9" />
       <SolidInternalEnergy name="rockInternalEnergy"
-                           volumetricHeatCapacity="1.95e6"
+                           referenceVolumetricHeatCapacity="1.95e6"
                            referenceTemperature="368.15"
                            referenceInternalEnergy="0" />
       <ConstantPermeability name="rockPerm"
@@ -152,7 +152,7 @@ char const * xmlInput =
 // Sphinx end before input XML
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseFVM< SinglePhaseBase > & solver,
+void testNumericalJacobian( SinglePhaseFVM<> & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
@@ -211,9 +211,8 @@ protected:
 
   void SetUp() override
   {
-
     dataRepository::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "singleflow" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseFVM< > >( "singleflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -231,7 +230,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseFVM< SinglePhaseBase > * solver;
+  SinglePhaseFVM<> * solver;
 };
 
 real64 constexpr ThermalSinglePhaseFlowTest::time;

@@ -88,6 +88,14 @@ DECLARE_FIELD( facePressure_n,
                NO_WRITE,
                "Face pressure at the previous converged time step" );
 
+DECLARE_FIELD( pressureGradient,
+               "pressureGradient",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Pressure gradient" );
+
 DECLARE_FIELD( temperature,
                "temperature",
                array1d< real64 >,
@@ -159,14 +167,6 @@ DECLARE_FIELD( hydraulicAperture,
                LEVEL_0,
                WRITE_AND_READ,
                "Hydraulic aperture" );
-
-DECLARE_FIELD( minimumHydraulicAperture,
-               "minimumHydraulicAperture",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "minimum value of the hydraulic aperture" );
 
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",

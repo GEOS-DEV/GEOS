@@ -15,6 +15,12 @@ set( physicsSolvers_headers
      contact/SolidMechanicsEFEMKernelsHelper.hpp
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
+     contact/SolidMechanicsAugmentedLagrangianContact.hpp
+     contact/SolidMechanicsALMKernelsBase.hpp
+     contact/SolidMechanicsALMKernels.hpp
+     contact/SolidMechanicsALMKernelsHelper.hpp
+     contact/SolidMechanicsALMJumpUpdateKernels.hpp
+     contact/SolidMechanicsALMBubbleKernels.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
@@ -50,6 +56,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/SinglePhaseProppantFluxKernels.hpp
      fluidFlow/StabilizedCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/StabilizedSinglePhaseFVMKernels.hpp
      fluidFlow/StencilAccessors.hpp
      fluidFlow/ThermalSinglePhaseBaseKernels.hpp
      fluidFlow/ThermalSinglePhaseFVMKernels.hpp
@@ -107,6 +114,7 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
+     solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsMPM.hpp
@@ -149,6 +157,8 @@ set( physicsSolvers_headers
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIFields.hpp
+     wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp
@@ -167,6 +177,7 @@ set( physicsSolvers_sources
      contact/ContactSolverBase.cpp
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
+     contact/SolidMechanicsAugmentedLagrangianContact.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp

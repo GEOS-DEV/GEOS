@@ -24,6 +24,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "testFlowUtils.hpp"
 
 namespace geos
 {
@@ -32,29 +33,6 @@ namespace testing
 {
 
 using namespace geos::constitutive;
-
-void checkDerivative( real64 const valueEps,
-                      real64 const value,
-                      real64 const deriv,
-                      real64 const eps,
-                      real64 const relTol,
-                      real64 const absTol,
-                      string const & name,
-                      string const & var )
-{
-  real64 const numDeriv = (valueEps - value) / eps;
-  checkRelativeError( deriv, numDeriv, relTol, absTol, "d(" + name + ")/d(" + var + ")" );
-}
-
-void checkDerivative( real64 const valueEps,
-                      real64 const value,
-                      real64 const deriv,
-                      real64 const eps,
-                      real64 const relTol,
-                      string const & name,
-                      string const & var )
-{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var ); }
-
 
 void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
@@ -72,7 +50,46 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
   } );
 }
 
-void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solver,
+// void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
+// {
+//   xmlWrapper::xmlDocument xmlDocument;
+//   xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
+//   if( !xmlResult )
+//   {
+//     GEOS_LOG_RANK_0( "XML parsed with errors!" );
+//     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+//     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+//   }
+
+//   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+
+//   dataRepository::Group & commandLine =
+//     problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+
+//   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
+//     setApplyDefaultValue( mpiSize );
+
+//   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+//   problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
+
+//   DomainPartition & domain = problemManager.getDomainPartition();
+
+//   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+//   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+//   constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
+
+//   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+//   meshManager.generateMeshLevels( domain );
+
+//   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
+//   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
+//   elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
+
+//   problemManager.problemSetup();
+//   problemManager.applyInitialConditions();
+// }
+
+void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
                                        DomainPartition & domain,
                                        bool const isThermal,
                                        real64 const perturbParameter,

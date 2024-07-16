@@ -4,6 +4,8 @@ set( gtest_geosx_tests
      testWavePropagationQ2.cpp
      testWavePropagationElasticFirstOrder.cpp
      testWavePropagationDAS.cpp
+     testWavePropagationElasticVTI.cpp
+     testWavePropagationAttenuation.cpp
      testWavePropagationAcousticFirstOrder.cpp )
 
 set( dependencyList ${parallelDeps} gtest gmock )
@@ -22,8 +24,8 @@ if (TARGET pugixml)
   list( APPEND dependencyList pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  list( APPEND dependencyList fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)

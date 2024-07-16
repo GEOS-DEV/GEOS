@@ -33,6 +33,45 @@ namespace testing
 {
 
 /**
+ * @brief Set up a problem from an xml input buffer
+ * @param problemManager the target problem manager
+ * @param xmlInput       the XML input string
+ */
+// void setupProblemFromXML( ProblemManager * const problemManager, char const * const xmlInput )
+// {
+//   xmlWrapper::xmlDocument xmlDocument;
+//   xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
+//   if( !xmlResult )
+//   {
+//     GEOS_LOG_RANK_0( "XML parsed with errors!" );
+//     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+//     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+//   }
+
+//   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+//   dataRepository::Group & commandLine =
+//     problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
+//   commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
+//     setApplyDefaultValue( mpiSize );
+
+//   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+//   problemManager->processInputFileRecursive( xmlDocument, xmlProblemNode );
+
+//   // Open mesh levels
+//   DomainPartition & domain = problemManager->getDomainPartition();
+//   MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
+//   meshManager.generateMeshLevels( domain );
+
+//   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
+//   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
+//   elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
+//   elementManager.postInputInitializationRecursive();
+
+//   problemManager->problemSetup();
+//   problemManager->applyInitialConditions();
+// }
+
+/**
  * @brief Get a region list from an input list (empty region lists to mean all regions in the mesh).
  * @param mesh  pointer to the mesh
  * @param input input list of region names (may be empty)

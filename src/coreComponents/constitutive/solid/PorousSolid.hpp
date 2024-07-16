@@ -127,7 +127,7 @@ public:
     }
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
-    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
+    dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
 
   GEOS_HOST_DEVICE
@@ -366,6 +366,11 @@ public:
                           getPorosityModel(),
                           getPermModel() );
   }
+
+  /**
+   * @brief initialize the constitutive models fields.
+   */
+  virtual void initializeState() const override final;
 
   /**
    * @brief Const/non-mutable accessor for density

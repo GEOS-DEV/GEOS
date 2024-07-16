@@ -134,7 +134,6 @@ string Group::getPath() const
   return noProblem.empty() ? "/" : noProblem;
 }
 
-
 void Group::postInputInitializationRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
@@ -143,7 +142,6 @@ void Group::postInputInitializationRecursive()
   }
   postInputInitialization();
 }
-
 
 void Group::registerDataOnMeshRecursive( Group & meshBodies )
 {
@@ -154,7 +152,6 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
   }
 }
 
-
 Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
@@ -163,7 +160,6 @@ Group * Group::createChild( string const & childKey, string const & childName )
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
-
 
 void Group::printDataHierarchy( integer const indent ) const
 {
@@ -550,9 +546,8 @@ void Group::postRestartInitializationRecursive()
 
 void Group::enableLogLevelInput()
 {
-  string const logLevelString = "logLevel";
-
-  registerWrapper( logLevelString, &m_logLevel ).
+  // TODO : Improve the Log Level description to clearly assign a usecase per log level (incoming PR).
+  registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Log level" );
