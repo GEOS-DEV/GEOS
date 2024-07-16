@@ -49,6 +49,9 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
+    //deprecated
+  enableLogLevelInput();
+
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
       setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -59,10 +62,6 @@ public:
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "Write statistics into a CSV file" );
-
-
-
-
   }
 
   /**

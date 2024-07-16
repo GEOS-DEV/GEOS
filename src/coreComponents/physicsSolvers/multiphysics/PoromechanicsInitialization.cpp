@@ -45,6 +45,9 @@ PoromechanicsInitialization( const string & name,
   m_solidMechanicsStatistics(),
   m_solidMechanicsStateResetTask( name, parent )
 {
+  //deprecated
+  enableLogLevelInput();
+  
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -55,7 +58,6 @@ PoromechanicsInitialization( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics" );
-
 
 }
 

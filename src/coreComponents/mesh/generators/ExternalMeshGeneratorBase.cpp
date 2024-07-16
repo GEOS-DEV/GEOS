@@ -23,6 +23,9 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
                                                       dataRepository::Group * const parent )
   : MeshGeneratorBase( name, parent )
 {
+  //deprecated
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).

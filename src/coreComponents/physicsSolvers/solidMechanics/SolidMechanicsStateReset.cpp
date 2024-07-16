@@ -35,6 +35,8 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   TaskBase( name, parent ),
   m_solidSolverName()
 {
+  //deprecated
+  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -50,9 +52,6 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable/disable inelastic behavior" );
-
-
-
 }
 
 SolidMechanicsStateReset::~SolidMechanicsStateReset()

@@ -29,6 +29,9 @@ TriaxialDriver::TriaxialDriver( const string & name,
                                 Group * const parent ):
   TaskBase( name, parent )
 {
+  //deprecated
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -65,9 +68,6 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
-
-
-
 }
 
 

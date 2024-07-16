@@ -42,6 +42,9 @@ EventManager::EventManager( string const & name,
   // TODO: default to TimeOutputFormat::full?
   m_timeOutputFormat( TimeOutputFormat::seconds )
 {
+  //deprecated
+  enableLogLevelInput();
+
   setInputFlags( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
@@ -79,8 +82,6 @@ EventManager::EventManager( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
-
-
 }
 
 

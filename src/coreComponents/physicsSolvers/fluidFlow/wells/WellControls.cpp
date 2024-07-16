@@ -48,6 +48,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHPTable( nullptr ),
   m_statusTable( nullptr )
 {
+  //deprecated
+  enableLogLevelInput();
+
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).

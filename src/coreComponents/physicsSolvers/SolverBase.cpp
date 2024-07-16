@@ -44,6 +44,9 @@ SolverBase::SolverBase( string const & name,
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
 {
+  //deprecated
+  enableLogLevelInput();
+
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   // This sets a flag to indicate that this object is going to select the time step size

@@ -31,6 +31,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_recordCount( 0 ),
   m_io( )
 {
+  //deprecated
   enableLogLevelInput();
 
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).

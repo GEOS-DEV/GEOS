@@ -26,6 +26,9 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
+   //deprecated
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::polylineNodeCoordsString(), &m_polyNodeCoords ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
