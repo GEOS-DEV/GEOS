@@ -92,10 +92,12 @@ PackDataDevice( buffer_unit_type * & buffer,
   if( DO_PACKING )
   {
     parallelDeviceStream stream;
-    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+//    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
     {
       reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
-    } ) );
+    } );
+    //);
   }
   localIndex packedSize = var.size() * sizeof(T);
   if( DO_PACKING )
