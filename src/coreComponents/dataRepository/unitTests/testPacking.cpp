@@ -144,6 +144,8 @@ TEST( testPacking, testPackingDevice )
     for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
 
+  veloc.move( parallelDeviceMemorySpace );
+
   buffer_unit_type * null_buf = NULL;
   parallelDeviceEvents packEvents;
   localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst(), packEvents );
@@ -161,7 +163,7 @@ TEST( testPacking, testPackingDevice )
 
   unpacked.move( hostMemorySpace );
 
-  printArray( unpacked.toViewConst() );
+//  printArray( unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
   {
