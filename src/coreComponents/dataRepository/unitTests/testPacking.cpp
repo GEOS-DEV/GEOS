@@ -113,23 +113,29 @@ TEST( testPacking, testTensorPacking )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
-void printArray( arrayView1d< R1Tensor const > const & arr )
+void printArray( arrayView1d< R1Tensor const > const & arr, 
+                 arrayView1d< R1Tensor const > const & unpackArray )
 {
   printf( "arr.size() = %d\n", arr.size() );
-  for( localIndex ii = 0; ii < arr.size(); ++ii )
+  printf( "unpackArray.size() = %d\n", unpackArray.size() );
+
+  for( localIndex ii = 0; ii < unpackArray.size(); ++ii )
   {
-    printf( "arr[%d] = ( %f, %f, %f ) : ", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
-
-    forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
+    if( !( arr[ii] == unpackArray[ii] ) )
     {
-      printf( "( %f, %f, %f ) : ", arr[ii][0], arr[ii][1], arr[ii][2] );
-    } );
+      printf( "arr[%d]         = ( %f, %f, %f ) : ", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
+      printf( "unPackarray[%d] = ( %f, %f, %f ) : ", ii, unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
 
-    forAll< serialPolicy >( 1, [=]( localIndex )
-    {
-      printf( "( %f, %f, %f )\n", arr[ii][0], arr[ii][1], arr[ii][2] );
-    } );
+      forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
+      {
+        printf( "( %f, %f, %f ) : ", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+      } );
 
+      forAll< serialPolicy >( 1, [=]( localIndex )
+      {
+        printf( "( %f, %f, %f )\n", unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
+      } );
+      }
   }
 }
 
@@ -143,8 +149,6 @@ TEST( testPacking, testPackingDevice )
   for( localIndex ii = 0; ii < size; ++ii )
     for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
-
-  veloc.move( parallelDeviceMemorySpace );
 
   buffer_unit_type * null_buf = NULL;
   parallelDeviceEvents packEvents;
@@ -163,13 +167,16 @@ TEST( testPacking, testPackingDevice )
 
   unpacked.move( hostMemorySpace );
 
-//  printArray( unpacked.toViewConst() );
+  printArray( veloc, unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
   {
-    printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
-    printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
     EXPECT_EQ( veloc[ii], unpacked[ii] );
+    if( !(veloc[ii] == unpacked[ii]) )
+    {
+      printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
+      printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
+    }
   }
 }
 
