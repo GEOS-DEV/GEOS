@@ -141,7 +141,7 @@ inline string getElementTypeName( ElementType const type )
 
 /// String available for mesh errors
 inline auto constexpr generalMeshErrorAdvice = "Consider checking the validity of your mesh with "
-                                               "the `mesh_doctor` GEOS python tools (documentation at"
+                                               "the `mesh_doctor` GEOS python tools (documentation at "
                                                "https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/pythonTools/mesh_doctor.html).";
 
 } // namespace geos

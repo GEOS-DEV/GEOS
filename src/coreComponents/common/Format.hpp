@@ -22,7 +22,9 @@
 #endif
 
 #ifdef GEOSX_USE_FMT
+#ifndef FMT_HEADER_ONLY
 #define FMT_HEADER_ONLY
+#endif
 // Differentiate between standalone fmt path and umpire's fmt path
 #include "../include/fmt/core.h"
 #include "../include/fmt/chrono.h"
@@ -63,7 +65,7 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
    * @return An iterator pointing to the end of the formatted string.
    */
   template< typename FormatContext >
-  auto format( const T & value, FormatContext & ctx )
+  auto format( const T & value, FormatContext & ctx ) const
   {
     return fmt::format_to( ctx.out(), "{}", static_cast< std::underlying_type_t< T > >( value ) );
   }
@@ -101,7 +103,20 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
 {
   return true;
 }
+#endif // End of the workaround for fmt compilation issues
+
+/**
+ * Evaluates at compile time if a fmt::formatter exists for a given type
+ */
+#if __cplusplus < 202002L
+template< class T >
+static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
+#else
+template< typename T >
+concept has_formatter_v = requires ( T& v, std::format_context ctx )
+{
+  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
+};
 #endif
-// End of the workaround for fmt compilation issues
 
 #endif //GEOS_COMMON_FORMAT_HPP_

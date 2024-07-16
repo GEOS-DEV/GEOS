@@ -238,7 +238,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   /**
    * @name Helper functions to construct the geometry of the well
@@ -295,7 +295,8 @@ protected:
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void debugWellGeometry() const;
+  void logInternalWell() const;
+  void logPerforationTable() const;
   /// @endcond
 
   /// Global number of perforations

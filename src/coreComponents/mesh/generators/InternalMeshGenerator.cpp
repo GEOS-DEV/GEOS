@@ -128,7 +128,7 @@ static int getNumElemPerBox( ElementType const elementType )
   }
 }
 
-void InternalMeshGenerator::postProcessInput()
+void InternalMeshGenerator::postInputInitialization()
 {
   m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
 

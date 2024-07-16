@@ -136,9 +136,9 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 }
 
 
-void AcousticFirstOrderWaveEquationSEM::postProcessInput()
+void AcousticFirstOrderWaveEquationSEM::postInputInitialization()
 {
-  WaveSolverBase::postProcessInput();
+  WaveSolverBase::postInputInitialization();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
@@ -457,6 +457,10 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
+        //Modification of cycleNember useful when minTime < 0
+        EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+        real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
+        integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
 
 
         acousticFirstOrderWaveEquationSEMKernels::
@@ -490,7 +494,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           sourceElem,
           sourceRegion,
           dt,
-          cycleNumber,
+          cycleForSource,
           p_np1 );
       } );
       arrayView2d< real32 > const uxReceivers = m_uxNp1AtReceivers.toView();
