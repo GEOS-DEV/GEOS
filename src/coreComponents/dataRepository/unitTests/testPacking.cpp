@@ -113,6 +113,25 @@ TEST( testPacking, testTensorPacking )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
+void printArray( arrayView1d< R1Tensor const > const & arr )
+{
+  for( localIndex ii = 0; ii < arr.size(); ++ii )
+  {
+    printf( "arr[%d] = ( %f, %f, %f ) : ", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
+
+    forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
+    {
+      printf( "( %f, %f, %f ) : ", arr[ii][0], arr[ii][1], arr[ii][2] );
+    } );
+
+    forAll< serialPolicy >( 1, [=]( localIndex )
+    {
+      printf( "( %f, %f, %f )\n", arr[ii][0], arr[ii][1], arr[ii][2] );
+    } );
+
+  }
+}
+
 TEST( testPacking, testPackingDevice )
 {
   std::srand( std::time( nullptr ));
@@ -137,7 +156,12 @@ TEST( testPacking, testPackingDevice )
   parallelDeviceEvents unpackEvents;
   bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
+  
+
   unpacked.move( hostMemorySpace );
+
+  printArray( unpacked.toViewConst() );
+
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
