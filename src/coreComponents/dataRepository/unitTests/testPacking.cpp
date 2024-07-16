@@ -170,7 +170,6 @@ TEST( testPacking, testPackingDevice )
   parallelDeviceEvents unpackEvents;
   bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-
   unpacked.move( hostMemorySpace );
 
 //  printArray( veloc, unpacked.toViewConst() );
@@ -178,11 +177,11 @@ TEST( testPacking, testPackingDevice )
   for( localIndex ii = 0; ii < size; ++ii )
   {
     EXPECT_EQ( veloc[ii], unpacked[ii] );
-    if( !(veloc[ii] == unpacked[ii]) )
-    {
-      printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
-      printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
-    }
+//    if( !(veloc[ii] == unpacked[ii]) )
+//    {
+//      printf( " veloc[%d]    = ( %f, %f, %f )\n", ii, veloc[ii][0], veloc[ii][1], veloc[ii][2] );
+//      printf( " unpacked[%d] = ( %f, %f, %f )\n", ii, unpacked[ii][0], unpacked[ii][1], unpacked[ii][2] );
+//    }
   }
 }
 
