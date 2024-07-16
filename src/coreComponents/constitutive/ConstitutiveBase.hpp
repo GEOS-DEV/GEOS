@@ -81,7 +81,7 @@ public:
    * @brief function to return the catalog name of the derived class
    * @return a string that contains the catalog name of the derived class
    */
-  virtual string const getCatalogName() const = 0;
+  // virtual string const getCatalogName() const = 0;
 
   /**
    * @brief Get full name of the model.

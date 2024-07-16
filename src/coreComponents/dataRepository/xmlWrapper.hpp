@@ -272,6 +272,11 @@ private:
   string m_rootFilePath;
 };
 
+/// XML tag name for included sections
+constexpr char const includedListTag[] = "Included";
+/// XML tag name for included files
+constexpr char const includedFileTag[] = "File";
+
 /**
  * @brief Function to handle multiple input xml files.
  * @param inputFileList the list of input xml files
@@ -281,8 +286,7 @@ private:
  * This function checks for multiple xml files, and will build
  * a new input xml file with an included block if neccesary
  */
-string buildMultipleInputXML( string_array const & inputFileList,
-                              string const & outputDir = {} );
+string mergeInputDocuments( string_array const & inputFileList, string const & outputDir = {} );
 
 /**
  * @return true if the attribute with the specified name declares metadata relative to the xml

@@ -46,24 +46,6 @@ struct NameAttrAsIdentity
   }
 };
 
-// struct ChildrenNotInBlacklist
-// {
-//   ChildrenNotInBlacklist( std::set< string > const & blacklist )
-//     : m_blacklist( blacklist )
-//   { }
-
-//   template < typename Node >
-//   auto operator()( Node & node ) const -> decltype(auto)
-//   {
-//     decltype(auto) children = node.children();
-//     decltype(children) filtered;
-//     std::copy_if(children.begin(), children.end(), std::back_inserter(filtered), []( Node & child ){ return m_blacklist.find( child.name() ) == m_blacklist.end(); } );
-//     return filtered;
-//   }
-
-//   std::set< string > const m_blacklist;
-// };
-
 template < typename DocumentType, typename DataNode >
 class InputProcessingPhase
 {
@@ -127,7 +109,7 @@ public:
         for( auto riter = pathToKnownAncestor.rbegin(); riter != pathToKnownAncestor.rend(); ++riter )
         {
           std::cout << "  walking to " << *riter << std::endl;
-          currentDataNode = currentDataNode->getGroupPointer( *riter );
+          currentDataNode = &dereference( currentDataNode->getGroupPointer( *riter ) );
         }
         dataParent = currentDataNode;
         std::cout << "  found parent: " << dataParent->getName() << std::endl;
@@ -135,16 +117,18 @@ public:
         // process the current node
         validateUniqueChildren( *dataParent, docNode, dataNodeName, childNamesMap );
         dataNode = &this->retrieveOrCreateDataNode( dataParent, dataNodeName, docNode.name() );
-        doc2data[ docNode ] = dataNode;
+        if ( dataNode != dataParent ) // this is a bit hacky, don't really like it
+        {
+          doc2data[ docNode ] = dataNode;
+          this->processNode( dataNode, docNode );
+        }
       }
       else
       {
         std::cout << " root " << docNode.name() << std::endl;
-        dataParent = &dataRoot;
-        validateUniqueChildren( *dataParent, docNode, dataNodeName, childNamesMap );
+        validateUniqueChildren( dataRoot, docNode, dataNodeName, childNamesMap );
+        this->processNode( &dataRoot, docNode );
       }
-
-      this->processNode( dataNode, docNode );
       restorePathPrefix( oldPrefix );
     } );
   }
@@ -308,7 +292,7 @@ protected:
 
   virtual data_node & retrieveOrCreateDataNode( data_node * parent, string const & dataNodeName, string const & GEOS_UNUSED_PARAM( _ ) )
   {
-    return nullptr;
+    return *parent;
   }
 
   virtual void processNode( data_node * GEOS_UNUSED_PARAM( _ ), document_node & docNode ) override

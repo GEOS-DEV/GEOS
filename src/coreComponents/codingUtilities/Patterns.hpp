@@ -183,7 +183,7 @@ template< typename T >
 struct is_any_pointer< std::unique_ptr< T > > : std::true_type {};
 
 template < typename T >
-constexpr bool is_any_pointer_v = is_any_pointer< T >::value;
+constexpr bool is_any_pointer_v = is_any_pointer< std::remove_reference_t< T > >::value;
 
 // This trait ensures that we only change the type if the node can actually be dereferenced.
 template< typename T, bool = is_any_pointer_v< std::remove_cv_t< std::remove_reference_t< T > > > >
@@ -203,7 +203,7 @@ template< typename T >
 using nested_dereference_t = typename nested_dereference< T >::type;
 
 template < typename NODE >
-decltype(auto) inline dereference( NODE & node )
+decltype(auto) inline dereference( NODE && node )
 {
   if constexpr ( is_any_pointer_v< NODE > )
   {
@@ -249,7 +249,7 @@ struct StaticTreeIteration
   {
     static_checks< NODE, LAMBDA >( );
     lambda( dereference( node ) );
-    for ( auto & child : getChildren( node ) )
+    for ( decltype(auto) child : getChildren( node ) )
     {
       processTree( dereference( child ), std::forward< LAMBDA >( lambda ) );
     }

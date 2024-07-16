@@ -25,23 +25,24 @@ namespace geos
 {
 
 // ItemIterator to iterate over the N-th element of iterators of tuple-like structures
-template <typename Iterator, std::size_t N>
+template < typename Iterator, std::size_t N >
 class ItemIterator
 {
 public:
   using iterator_category = std::forward_iterator_tag;
-  using value_type = decltype(std::get<N>(std::declval<typename std::iterator_traits<Iterator>::value_type>()));
+  using base_value_type = typename std::iterator_traits<Iterator>::value_type;
+  using value_type = std::remove_reference_t<decltype(std::get<N>(std::declval<base_value_type>()))>;
   using difference_type = std::ptrdiff_t;
+  using reference = decltype(std::get<N>(*std::declval<Iterator>()));
   using pointer = value_type*;
-  using reference = value_type&;
 
-  explicit ItemIterator(Iterator it) : m_iter(it) {}
+  explicit ItemIterator( Iterator it ) : m_iter(it) {}
 
   reference operator*() const { return std::get<N>(*m_iter); }
   pointer operator->() const { return &std::get<N>(*m_iter); }
 
   // Prefix increment
-  ItemIterator& operator++()
+  ItemIterator & operator++()
   {
     ++m_iter;
     return *this;
@@ -74,16 +75,16 @@ template < std::size_t N, class Container >
 class ItemView
 {
 public:
-    using container_type = Container;
-    using iterator = ItemIterator<typename container_type::iterator, N>;
+  using container_type = Container;
+  using iterator = ItemIterator< typename container_type::iterator, N >;
 
-    ItemView(container_type& container) : m_container(container) {}
+  ItemView( container_type & container ) : m_container( container ) {}
 
-    iterator begin() { return iterator(m_container.begin()); }
-    iterator end() { return iterator(m_container.end()); }
+  iterator begin() { return iterator( m_container.begin() ); }
+  iterator end() { return iterator( m_container.end() ); }
 
 private:
-    container_type & m_container;
+  container_type & m_container;
 };
 
 }

@@ -73,7 +73,7 @@ public:
    * @brief return the catalog name
    * @return the catalog name
    */
-  virtual const string getCatalogName() const
+  virtual const string getCatalogName() const override
   {
     return FieldSpecificationBase::catalogName();
   }

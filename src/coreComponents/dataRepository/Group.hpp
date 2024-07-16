@@ -1695,7 +1695,7 @@ struct SubgroupChildAccessor
 {
   auto operator()( Group & group ) const -> decltype(auto)
   {
-    return ItemView< 1, typename Group::subGroupMap::constValueContainer const >( group.getSubGroups().values() );
+    return ItemView< 1, typename Group::subGroupMap::constKeyValueContainer >( group.getSubGroups().constKeyValues() );
   }
 };
 

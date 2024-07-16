@@ -148,8 +148,7 @@ bool xmlDocument::hasNodeFileInfo() const
 { return !getFirstChild().attribute( inputParsing::filePathString ).empty(); }
 
 
-string buildMultipleInputXML( string_array const & inputFileList,
-                              string const & outputDir )
+string mergeInputDocuments( string_array const & inputFileList, string const & outputDir )
 {
   if( inputFileList.empty() )
   {
@@ -167,11 +166,11 @@ string buildMultipleInputXML( string_array const & inputFileList,
   {
     xmlWrapper::xmlDocument compositeTree;
     xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( dataRepository::keys::ProblemManager );
-    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( Included< xmlDocument >::CatalogName().c_str() );
+    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
 
     for( auto & fileName: inputFileList )
     {
-      xmlWrapper::xmlNode fileNode = includedRoot.append_child( Included< xmlDocument >::CatalogName().c_str() );
+      xmlWrapper::xmlNode fileNode = includedRoot.append_child( includedFileTag );
       fileNode.append_attribute( "name" ) = fileName.c_str();
     }
 

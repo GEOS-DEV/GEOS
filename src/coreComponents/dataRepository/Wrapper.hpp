@@ -711,7 +711,7 @@ public:
   }
 
   virtual bool initFromInput( typename inputParsing::input_document_type::node_type const & docNode,
-                              typename inputParsing::input_document_type::node_pos_type const & docNodePos )
+                              typename inputParsing::input_document_type::node_pos_type const & docNodePos ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )

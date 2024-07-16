@@ -211,7 +211,7 @@ void ProblemManager::parseCommandLineInput()
     GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
   }
 
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
+  inputFileName = inputParsing::mergeInputDocuments( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;

@@ -147,10 +147,10 @@ void ParticleManager::postInputInitialization( )
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
 
-    this->forParticleRegions( [&]( ElementRegionBase & region )
+    this->forParticleRegions( [&]( ParticleRegionBase & region )
     {
       string const regionName = region.getName( );
-      string const regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies, region.getWrapper< string >( ElementRegionBase::viewKeyStruct::meshBodyString() ).reference() );
+      string const regionMeshBodyName = ParticleRegionBase::verifyMeshBodyName( meshBodies, region.getWrapper< string >( ParticleRegionBase::viewKeyStruct::meshBodyString() ).reference() );
 
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
       meshBody.setHasParticles( true );

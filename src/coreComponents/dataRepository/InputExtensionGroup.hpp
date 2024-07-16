@@ -53,10 +53,8 @@ public:
 
   virtual std::vector< inputExtension::Rule<> > inputExtensionRules( callback_coordinator & ) const = 0;
 };
-
 namespace internal
 {
-
 template < typename Base, typename DocNode = inputExtension::default_document_node >
 class InputRemovalGroup : public Base
 {
@@ -77,138 +75,6 @@ public:
 };
 
 } // namespace internal
-
-template < typename Document >
-class Included : public InputExtensionGroup< internal::InputRemovalGroup< Group > >
-{
-public:
-  using super = InputExtensionGroup< internal::InputRemovalGroup< Group > >;
-  using document_type = Document;
-  using typename super::callback_coordinator;
-  using typename super::remove_callback_coordinator;
-
-  using typename super::document_node;
-  using parsing_context = inputExtension::StaticParsingContext< document_node, inputExtension::SingleNodePolicy >;
-
-  enum Flags
-  {
-    Applied // Flag for when the inclusion rule is applied
-  };
-
-  Included( string const & name, Group * const parent )
-    : super( name, parent )
-  {
-    Group & includedFile = registerGroup< Group >( groupKeys.file );
-    includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-    includedFile.registerWrapper< string >( "name" ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
-      setDescription( "The relative file path." );
-  }
-
-  static string const CatalogName( ) { return "Included"; } // TODO (wrt) handle template value
-  struct groupKeysStruct
-  {
-    static string const fileString( ) { return "File"; }
-    dataRepository::GroupKey file = { fileString() };
-  } groupKeys;
-
-  std::vector< inputExtension::Rule<> > inputExtensionRules( callback_coordinator & callbackCoordinator ) const
-  {
-    inputExtension::Rule< document_node > includeRule;
-    includeRule.appliesWhen = inputExtension::singletonParsingContext::isNamed< document_node >( Included::CatalogName() );
-    includeRule.determineRoot = inputExtension::singletonParsingContext::root< document_node >();
-
-    std::function< void( inputExtension::Node< document_node > &, parsing_context &, document_node & ) > mapBuilder = []( inputExtension::Node< > & extension, parsing_context & context, document_node & node )
-    {
-      std::string parentFilePath = context.getNode(0).parent().attribute( inputParsing::filePathString ).value();
-      std::string includedFilePath = context.getNode(0).attribute("name").value();
-      Included::addToFileMap( parentFilePath, includedFilePath );
-    };
-    callbackCoordinator.registerCallback( Flags::Applied, mapBuilder );
-
-    inputExtension::Node< document_node > problem;
-    problem.identifier = string( dataRepository::keys::ProblemManager );
-    problem.dynamicSubNodes = [this]( parsing_context & context ) -> std::vector< inputExtension::Node< document_node > >
-    {
-      std::vector< inputExtension::Node< document_node > > subNodes;
-      for( document_node const & filenode : context.getNode( 0 ).children( groupKeys.file.key().c_str() ) )
-      {
-        std::string filePath = resolveFilePath( filenode.attribute("name").value(), filenode.attribute( inputParsing::filePathString ).value() );
-        document_type document;
-        auto result = document.loadFile( filePath, true );
-        GEOS_THROW_IF( !result, GEOS_FMT( "Errors found while parsing Input string\nDescription: {}\nOffset: {}",
-                                          result.description(), result.offset ), InputError );
-        document_node externalProblem = document.getFirstChild();
-        for( auto & child : externalProblem.children() )
-        {
-          auto converted = xmlWrapper::InputExtensionConverter< document_type >::convert( child );
-          subNodes.insert( subNodes.end(), converted.begin(), converted.end() );
-        }
-      }
-      return subNodes;
-    };
-
-    includeRule.subTrees = { problem };
-    return { includeRule };
-  }
-
-  std::vector< inputExtension::Rule< > > inputRemovalRules( remove_callback_coordinator & callbackCoordinator  ) const
-  {
-    inputExtension::Rule< document_node > removeIncludeRule;
-    removeIncludeRule.appliesWhen = [] ( parsing_context & context )
-    {
-      auto checkValid = inputExtension::singletonParsingContext::isValid< document_node >( );
-      return ( checkValid( context )  && inputExtension::isApplicableRule::whenTagIs< Included >( context ) );
-    };
-    // removeIncludeRule.determineRoot = inputExtension::singletonParsingContext::thisNodesParent< document_node >();
-    inputExtension::Node< document_node > includedNode;
-    includedNode.identifier = Included::CatalogName();
-    includedNode.dynamicSubNodes = [this] ( parsing_context & context )
-    {
-      std::vector< inputExtension::Node< document_node > > fileNodes;
-      for( auto & child : context.getNode( 0 ).children() )
-      {
-        // TODO (wrt) : fix templating
-        auto converted = xmlWrapper::InputExtensionConverter< document_type >::convert( child );
-        fileNodes.insert( fileNodes.end(), converted.begin(), converted.end() );
-      }
-      return fileNodes;
-    };
-    removeIncludeRule.subTrees = { includedNode };
-    return { removeIncludeRule };
-  }
-
-  static std::map< std::string, std::vector< std::string > > & getIncludeMap()
-  {
-    static std::map< std::string, std::vector< std::string > > includeMap;
-    return includeMap;
-  };
-
-private:
-  string resolveFilePath( string const & filename, string const & contextualFilePath ) const
-  {
-    return isAbsolutePath( filename ) ? filename : joinPath( splitPath( contextualFilePath ).first, filename );
-  }
-
-  void addNodeFileInfo( document_node & externalNode, string const & filePath )
-  {
-    externalNode.append_attribute( inputParsing::filePathString ).set_value( filePath.c_str() );
-    externalNode.append_attribute( inputParsing::charOffsetString ).set_value( externalNode.offset_debug() );
-    for( document_node & subNode : externalNode.children() )
-    {
-      addNodeFileInfo( subNode, filePath );
-    }
-  }
-
-  // this allows the callback lambda to avoid capturing the includeMap which has static storage duration and
-  //  prevents the lambda from being convertible to an std::function
-  static void addToFileMap(string const & parentPath, string const & childPath)
-  {
-    auto & includeMap = getIncludeMap();
-    includeMap[ parentPath ].push_back( childPath );
-  }
-};
 
 template < typename Base, typename... StubWrapperInfos >
 class DeprecatedGroup : public StubGroup< InputExtensionGroup< Base >, StubWrapperInfos... >
@@ -453,16 +319,6 @@ void reconstructIncludesAndSave( Document & document, const std::string & output
     }
 
     // TODO (wrt) : add -preprocessed suffix
-
-    // Add include elements according to includeMap
-    doc_node includeNode = newRoot.prepend_child( geos::dataRepository::Included< Document >::CatalogName().c_str());
-    const auto & includeMap = geos::dataRepository::Included< Document >::getIncludeMap();
-    for ( const std::string & include : includeMap.at(filepath) )
-    {
-      doc_node fileNode = includeNode.append_child("File");
-      std::string includeFullpath = joinPath( outputDirectory, include );
-      fileNode.append_attribute("name").set_value( includeFullpath.c_str() );
-    }
 
     // Save the file
     std::string fullpath = joinPath( outputDirectory, filepath );
