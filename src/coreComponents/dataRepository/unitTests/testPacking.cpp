@@ -21,6 +21,7 @@
 
 #include <ctime>
 #include <cstdlib>
+#include <unistd.h>
 
 using namespace geos;
 
@@ -123,7 +124,7 @@ void printArray( arrayView1d< R1Tensor const > const & arr,
   {
     if( !( arr[ii] == unpackArray[ii] ) )
     {
-      printf( "arr[%d]         = ( %f, %f, %f ) : ", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
+      printf( "arr[%d]         = ( %f, %f, %f )\n", ii, arr[ii][0], arr[ii][1], arr[ii][2] );
       printf( "unPackarray[%d] = ( %f, %f, %f ) : ", ii, unpackArray[ii][0], unpackArray[ii][1], unpackArray[ii][2] );
 
       forAll< geos::parallelDevicePolicy<1> >( 1, [=] GEOS_DEVICE ( localIndex )
@@ -158,6 +159,7 @@ TEST( testPacking, testPackingDevice )
   buffer_unit_type * buffer = &buf[0];
   bufferOps::PackDevice< true >( buffer, veloc.toViewConst(), packEvents );
   waitAllDeviceEvents( packEvents );
+  sleep( 2 );
 
   buffer_unit_type const * cbuffer = &buf[0];
   parallelDeviceEvents unpackEvents;
@@ -167,6 +169,7 @@ TEST( testPacking, testPackingDevice )
 
   unpacked.move( hostMemorySpace );
 
+  sleep( 2 );
   printArray( veloc, unpacked.toViewConst() );
 
   for( localIndex ii = 0; ii < size; ++ii )
