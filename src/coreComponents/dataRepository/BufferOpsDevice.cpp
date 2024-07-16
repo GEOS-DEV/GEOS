@@ -87,11 +87,11 @@ template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackDataDevice( buffer_unit_type * & buffer,
                 ArrayView< T const, NDIM, USD > const & var,
-                parallelDeviceEvents & events )
+                parallelDeviceEvents & GEOS_UNUSED_PARAM(events) )
 {
   if( DO_PACKING )
   {
-    parallelDeviceStream stream;
+//    parallelDeviceStream stream;
 //    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
     forAll< parallelDevicePolicy<> >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
     {
