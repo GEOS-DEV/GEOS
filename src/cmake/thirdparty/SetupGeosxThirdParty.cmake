@@ -222,8 +222,7 @@ if(DEFINED HDF5_DIR)
 
     message( " ----> HDF5 version ${HDF5_VERSION}")
 
-    get_target_property(HDF5_INCLUDE_DIRS HDF5::HDF5 INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(HDF5::HDF5 PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${HDF5_INCLUDE_DIRS}")
+    blt_convert_to_system_includes(TARGET HDF5::HDF5)
 
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} HDF5::HDF5 )
