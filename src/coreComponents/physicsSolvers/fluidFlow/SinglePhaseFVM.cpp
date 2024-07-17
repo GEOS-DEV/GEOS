@@ -60,7 +60,7 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
 {
-  SinglePhaseBase::addLogLevel( "logLevel >= 1", "Print the residual values" );
+  SinglePhaseBase::addLogLevel< logInfo::ResidualValues >();
 }
 
 template< typename BASE >

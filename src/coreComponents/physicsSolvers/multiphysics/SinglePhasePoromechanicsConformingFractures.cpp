@@ -18,6 +18,7 @@
 
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
 
+#include "common/LogLevelsInfo.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
@@ -43,8 +44,8 @@ SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::SinglePhasePoromecha
                                                                                                          Group * const parent )
   : Base( name, parent )
 {
-  this->addLogLevel( "logLevel >= 3", "The summary of declared fields and coupling" );
-  
+  Base::template addLogLevel< logInfo::Dof >();
+
   LinearSolverParameters & params = this->m_linearSolverParameters.get();
   params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
   params.mgr.separateComponents = false;

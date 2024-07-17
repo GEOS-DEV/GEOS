@@ -1478,6 +1478,9 @@ public:
    */
   void loadFromConduit();
 
+  /// [DEPRECATED] Enable verbosity input for object
+  void enableLogLevelInput();
+
   /**
    * @brief Set verbosity level
    * @param logLevel new verbosity level value
@@ -1613,7 +1616,7 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
+  LogLevelsRegistry m_logLevelsRegistry;
 
   //END_SPHINX_INCLUDE_02
 
@@ -1723,8 +1726,8 @@ void Group::addLogLevel()
     wrapper->setInputFlag( InputFlags::OPTIONAL );
   }
   m_logLevelsRegistry.addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
-                                LOG_LEVEL_INFO::getDescription());
-  m_logLevelsRegistry.buildLogLevelDescription();
+                                LOG_LEVEL_INFO::getDescription() );
+  wrapper->appendDescription( m_logLevelsRegistry.buildLogLevelDescription());
 }
 
 } /* end namespace dataRepository */

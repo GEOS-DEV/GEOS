@@ -20,7 +20,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
-#include "common/LogLevels.hpp"
+#include "common/LogLevelsInfo.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -96,16 +96,16 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
-  addLogLevel< LineSearchLogLevel >();
-  addLogLevel< LineSearchFailedLogLevel >();
-  addLogLevel< ScalingFactorLogLevel >();
-  addLogLevel< TimeStepLogLevel >();
-  addLogLevel< SolverTimersLogLevel >();
-  addLogLevel< ScreenLinearSystemLogLevel >();
-  addLogLevel< FileLinearSystemLogLevel >();
-  addLogLevel< SolverConfigLogLevel >();
-  addLogLevel< ResidualNormLogLevel >();
-  addLogLevel< LinearSystemLogLevel >();
+  addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::LineSearchFailed >();
+  addLogLevel< logInfo::ScalingFactor >();
+  addLogLevel< logInfo::TimeStep >();
+  addLogLevel< logInfo::SolverTimers >();
+  addLogLevel< logInfo::ScreenLinearSystem >();
+  addLogLevel< logInfo::FileLinearSystem >();
+  addLogLevel< logInfo::SolverConfig >();
+  addLogLevel< logInfo::ResidualNorm >();
+  addLogLevel< logInfo::LinearSystem >();
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -303,7 +303,7 @@ bool SolverBase::execute( real64 const time_n,
       }
     }
 
-    if( isLogLevelActive< TimeStepLogLevel >( getLogLevel() ) && dtRemaining > 0.0 )
+    if( isLogLevelActive< logInfo::TimeStep>( getLogLevel() ) && dtRemaining > 0.0 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
@@ -545,10 +545,10 @@ bool SolverBase::lineSearch( real64 const & time_n,
     localScaleFactor *= lineSearchCutFactor;
     cumulativeScale += localScaleFactor;
 
-    if( isLogLevelActive< LineSearchFailedLogLevel >( getLogLevel() )
+    if( isLogLevelActive< logInfo::LineSearchFailed>( getLogLevel() )
         && !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
       continue;
     }
 
@@ -566,16 +566,16 @@ bool SolverBase::lineSearch( real64 const & time_n,
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( isLogLevelActive< LineSearchLogLevel >( getLogLevel() ) && logger::internal::rank==0 )
+    if( isLogLevelActive< logInfo::LineSearch>( getLogLevel() ) && logger::internal::rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
     residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    if( isLogLevelActive< ResidualNormLogLevel >( getLogLevel() ) )
+    if( isLogLevelActive< logInfo::ResidualNorm>( getLogLevel() ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -641,10 +641,10 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
     cumulativeScale += deltaLocalScaleFactor;
 
-    if( isLogLevelActive< LineSearchFailedLogLevel >( getLogLevel()) &&
+    if( isLogLevelActive< logInfo::LineSearchFailed>( getLogLevel()) &&
         !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( "        Line search " << lineSearchIteration << ", solution check failed" );
+      GEOS_LOG_RANK_0( "        Line search " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
@@ -667,16 +667,16 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( isLogLevelActive< LineSearchLogLevel >( getLogLevel() ) && logger::internal::rank==0 )
+    if( isLogLevelActive< logInfo::LineSearch>( getLogLevel() ) && logger::internal::rank==0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    if( isLogLevelActive< ResidualNormLogLevel >( getLogLevel() ) )
+    if( isLogLevelActive< logInfo::ResidualNorm>( getLogLevel() ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
     }
 
     ffm = ffT;
@@ -802,9 +802,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         {
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
-          if( isLogLevelActive< SolverConfigLogLevel >( getLogLevel()) )
+          if( isLogLevelActive< logInfo::SolverConfig>( getLogLevel()) )
           {
-            GEOS_LOG_LEVEL_RANK_0( "---------- Configuration did not converge. Testing new configuration. ----------" );
+            GEOS_LOG_RANK_0( "---------- Configuration did not converge. Testing new configuration. ----------" );
           }
         }
       }
@@ -929,9 +929,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      if( isLogLevelActive< ResidualNormLogLevel >( getLogLevel() ) )
+      if( isLogLevelActive< logInfo::ResidualNorm>( getLogLevel() ) )
       {
-        GEOS_LOG_LEVEL_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
       }
     }
 
@@ -992,16 +992,16 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       if( !lineSearchSuccess )
       {
-        if( isLogLevelActive< LineSearchLogLevel >( getLogLevel())
+        if( isLogLevelActive< logInfo::LineSearch>( getLogLevel())
             && m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
         {
-          GEOS_LOG_LEVEL_RANK_0( "        Line search failed to produce reduced residual. Accepting iteration." );
+          GEOS_LOG_RANK_0( "        Line search failed to produce reduced residual. Accepting iteration." );
         }
-        else if( isLogLevelActive< LineSearchLogLevel >( getLogLevel())
+        else if( isLogLevelActive< logInfo::LineSearch>( getLogLevel())
                  && m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
         {
           // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-          GEOS_LOG_LEVEL_RANK_0( "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+          GEOS_LOG_RANK_0( "        Line search failed to produce reduced residual. Exiting Newton Loop." );
           break;
         }
       }
@@ -1050,7 +1050,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // Compute the scaling factor for the Newton update
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
-      if( isLogLevelActive< ScalingFactorLogLevel >( getLogLevel() ) )
+      if( isLogLevelActive< logInfo::ScalingFactor>( getLogLevel() ) )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
       }
@@ -1207,8 +1207,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       isLogLevelActive< ScreenLinearSystemLogLevel >( getLogLevel() ),
-                       isLogLevelActive< FileLinearSystemLogLevel >( getLogLevel() ) );
+                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
+                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1216,8 +1216,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       isLogLevelActive< ScreenLinearSystemLogLevel >( getLogLevel() ),
-                       isLogLevelActive< FileLinearSystemLogLevel >( getLogLevel() ) );
+                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
+                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1235,8 +1235,8 @@ void SolverBase::debugOutputSolution( real64 const & time,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       isLogLevelActive< ScreenLinearSystemLogLevel >( getLogLevel() ),
-                       isLogLevelActive< FileLinearSystemLogLevel >( getLogLevel() ) );
+                       isLogLevelActive< logInfo::ScreenLinearSystem >( getLogLevel() ),
+                       isLogLevelActive< logInfo::FileLinearSystem >( getLogLevel() ) );
 }
 
 real64
@@ -1290,9 +1290,9 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
     m_linearSolverResult = solver->result();
   }
 
-  if( isLogLevelActive< LinearSystemLogLevel >( getLogLevel() ) )
+  if( isLogLevelActive< logInfo::LinearSystem>( getLogLevel() ) )
   {
-    GEOS_LOG_LEVEL_RANK_0( GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
+    GEOS_LOG_RANK_0( GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
                                      m_linearSolverResult.numIterations,
                                      m_linearSolverResult.residualReduction ) );
   }
@@ -1377,7 +1377,7 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   m_solverStatistics.outputStatistics();
 
-  if( isLogLevelActive< SolverTimersLogLevel >( getLogLevel() ))
+  if( isLogLevelActive< logInfo::SolverTimers>( getLogLevel() ))
   {
     for( auto & timer : m_timers )
     {

@@ -16,31 +16,40 @@
  * @file LogLevelsRegistry.hpp
  */
 
-#include "common/LogLevels.hpp"
+#ifndef GEOS_COMMON_LOGLEVELSREGISTRY_HPP
+#define GEOS_COMMON_LOGLEVELSREGISTRY_HPP
+
+#include "common/LogLevelsInfo.hpp"
+
+namespace geos
+{
 
 class LogLevelsRegistry
 {
 public:
 
-  void addEntry( string level, string description );
+  void addEntry( integer level, std::string_view description );
 
   /**
    * @brief Construct the log level string description for a wrapper
    */
-  void buildLogLevelDescription( std::map< std::string, std::vector< std::string > > const & logLevelsDescriptions );
+  string buildLogLevelDescription();
 
 private:
 
 
   /// Map for building the log level string for each wrapper
   /// key : a logLevel condition, values : a set of description for a corresponding loglevel
-  std::map< std::string, std::vector< std::string > > m_logLevelsDescriptions;
+  std::map< integer, std::vector< std::string > > m_logLevelsDescriptions;
 
-}
+};
 
 template< typename LOG_LEVEL_INFO >
-std::enable_if_t< is_log_level_info< LOG_LEVEL_INFO >, bool >
+std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
 isLogLevelActive( int level )
 {
   return level >= LOG_LEVEL_INFO::getMinLogLevel();
 }
+}
+
+#endif

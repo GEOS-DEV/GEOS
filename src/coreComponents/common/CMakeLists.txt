@@ -12,6 +12,7 @@ set( common_headers
      GeosxMacros.hpp
      MemoryInfos.hpp
      Logger.hpp
+     LogLevelsInfo.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp

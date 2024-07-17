@@ -50,9 +50,10 @@ EventBase::EventBase( const string & name,
   m_currentEventDtRequest( 0.0 ),
   m_target( nullptr )
 {
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  
   //deprecated
   enableLogLevelInput();
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::eventTargetString(), &m_eventTarget ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).

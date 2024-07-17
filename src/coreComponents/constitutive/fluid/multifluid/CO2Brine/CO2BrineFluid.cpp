@@ -102,12 +102,6 @@ CO2BrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of solubility tables for each phase" );
 
-  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Write PVT tables into a CSV file" ).
-    setDefaultValue( 0 );
-
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {

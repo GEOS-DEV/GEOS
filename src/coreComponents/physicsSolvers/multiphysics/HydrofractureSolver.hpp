@@ -23,6 +23,7 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "common/LogLevelsInfo.hpp"
 
 namespace geos
 {

@@ -20,6 +20,7 @@
 
 #include "MultiphasePoromechanics.hpp"
 
+#include "common/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -45,7 +46,7 @@ MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanic
   : Base( name, parent )
 {
 
-  Base::addLogLevel( "logLevel >= 1", "Print phase volume fraction" );
+  Base::template addLogLevel< logInfo::PoromechanicsPhaseFraction >();
 
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
@@ -245,8 +246,13 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( Doma
   } );
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}",
-                                      this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
+
+  if( isLogLevelActive< logInfo::PoromechanicsPhaseFraction >( getLogLevel() ))
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Max phase volume fraction change = {}",
+                               this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
+  }
+
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
