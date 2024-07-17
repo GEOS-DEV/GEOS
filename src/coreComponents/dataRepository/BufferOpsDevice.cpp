@@ -97,7 +97,6 @@ PackDataDevice( buffer_unit_type * & buffer,
     {
       reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
     } );
-    //);
   }
   localIndex packedSize = var.size() * sizeof(T);
   if( DO_PACKING )
@@ -123,7 +122,7 @@ template< typename T, int NDIM, int USD >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
-                  parallelDeviceEvents & events )
+                  parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
   // parallelDeviceStream stream;
   // events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
