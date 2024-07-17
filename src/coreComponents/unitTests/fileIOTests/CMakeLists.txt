@@ -1,7 +1,7 @@
 # Specify list of tests
 set( geosx_fileio_tests testHDFFile.cpp )
 
-set( dependencyList ${parallelDeps} gtest hdf5 )
+set( dependencyList ${parallelDeps} gtest HDF5::HDF5 )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )
