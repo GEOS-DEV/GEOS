@@ -245,9 +245,9 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -j $NPROC geosx
+  or_die ninja -j $NPROC -v geosx
 else
-  or_die ninja -j $NPROC
+  or_die ninja -j $NPROC -v
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
