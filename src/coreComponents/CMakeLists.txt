@@ -73,7 +73,7 @@ if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
-                    DEPENDS_ON  mainInterface physicsSolvers
+                    DEPENDS_ON  mainInterface physicsSolvers HDF5::HDF5
                     SHARED TRUE )
 
 elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
