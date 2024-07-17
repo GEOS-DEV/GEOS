@@ -170,8 +170,8 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 #endif
 
 #if defined(GEOS_USE_CUDA)
-template< typename X, typename Y, size_t BLOCK_SIZE, bool ASYNC >
-struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, BLOCK_SIZE, ASYNC > >
+template< typename X, typename Y, typename C, size_t BLOCK_SIZE, bool ASYNC >
+struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, ASYNC > >
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;

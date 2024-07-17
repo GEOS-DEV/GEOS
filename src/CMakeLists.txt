@@ -144,16 +144,21 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} )
+                               ${externalComponentsLinkList} fmt::fmt-header-only HDF5::HDF5 )
+
+# blt_print_target_properties(TARGET               geosx
+#                             CHILDREN             TRUE
+#                             PROPERTY_NAME_REGEX  "LINK_LIBRARIES"
+#                             )
+
+# blt_print_target_properties(TARGET               HDF5::HDF5
+#                             CHILDREN             TRUE )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
-# Removing all transitive link dependencies from geosx_core target to circumvent
-# the BLT behavior which imposes all dependencies to be public
-#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
