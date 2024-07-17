@@ -9,9 +9,9 @@ set( nranks 2 )
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
 endif()
 
 if (TARGET pugixml::pugixml)
@@ -22,8 +22,8 @@ if (TARGET pugixml)
   set( dependencyList ${dependencyList} pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  set( dependencyList ${dependencyList} fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  set( dependencyList ${dependencyList} fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)

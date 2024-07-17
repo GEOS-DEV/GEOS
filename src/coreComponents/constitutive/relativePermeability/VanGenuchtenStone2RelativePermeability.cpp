@@ -67,9 +67,9 @@ VanGenuchtenStone2RelativePermeability::VanGenuchtenStone2RelativePermeability( 
 
 }
 
-void VanGenuchtenStone2RelativePermeability::postProcessInput()
+void VanGenuchtenStone2RelativePermeability::postInputInitialization()
 {
-  RelativePermeabilityBase::postProcessInput();
+  RelativePermeabilityBase::postInputInitialization();
   m_volFracScale.resize( 3 /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,

@@ -3,16 +3,15 @@ set( dataRepository_tests
      testObjectCatalog.cpp
      testRestartBasic.cpp
      testRestartExtended.cpp
-     testPacking.cpp
      testWrapperHelpers.cpp
      testGroupPath.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core )
+  list( APPEND dependencyList geosx_core HDF5::HDF5 )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} HDF5::HDF5 )
 endif()
 
 if (TARGET pugixml::pugixml)
@@ -23,8 +22,8 @@ if (TARGET pugixml)
   list( APPEND dependencyList pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  list( APPEND dependencyList fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)

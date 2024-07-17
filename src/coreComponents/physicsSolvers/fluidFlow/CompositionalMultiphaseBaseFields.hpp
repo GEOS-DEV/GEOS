@@ -122,6 +122,7 @@ DECLARE_FIELD( dPhaseMobility,
                NO_WRITE,
                "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
 
+// this is needed for time step selector
 DECLARE_FIELD( phaseVolumeFraction_n,
                "phaseVolumeFraction_n",
                array2dLayoutPhase,
@@ -177,6 +178,22 @@ DECLARE_FIELD( globalCompDensityScalingFactor,
                NOPLOT,
                NO_WRITE,
                "Scaling factors for global component densities" );
+
+DECLARE_FIELD( compAmount,
+               "compAmount",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount" );
+
+DECLARE_FIELD( compAmount_n,
+               "compAmount_n",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount at the previous converged time step" );
 
 }
 

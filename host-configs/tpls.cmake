@@ -3,6 +3,14 @@
 #
 message("in tpls.cmake GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
+#
+# General TPL Folder verifications
+#
+if(NOT EXISTS ${GEOSX_TPL_DIR})
+  message(WARNING "'GEOSX_TPL_DIR' does not exist.\n")
+endif()
+
+
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()
@@ -45,11 +53,9 @@ if(EXISTS ${GEOSX_TPL_DIR}/vtk)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/fmt)
-  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
-endif()
-
-if(EXISTS ${GEOSX_TPL_DIR}/fesapi)
-  set(FESAPI_DIR ${GEOSX_TPL_DIR}/fesapi CACHE PATH "" FORCE)
+#  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
+  set(FMT_DIR ${GEOSX_TPL_DIR}/chai CACHE PATH "" FORCE)
+#  /Users/settgast1/Codes/geos/thirdPartyLibs/install-macOS_arm-release/chai/lib/cmake/fmt/fmt-targets.cmake
 endif()
 
 #

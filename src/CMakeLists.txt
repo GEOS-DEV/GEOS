@@ -127,7 +127,7 @@ if( ENABLE_CUDA )
   list( APPEND extraComponentsLinkList cuda )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
 endif()
 
@@ -144,16 +144,21 @@ endif()
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
-                               ${externalComponentsLinkList} )
+                               ${externalComponentsLinkList} fmt::fmt-header-only HDF5::HDF5 )
+
+# blt_print_target_properties(TARGET               geosx
+#                             CHILDREN             TRUE
+#                             PROPERTY_NAME_REGEX  "LINK_LIBRARIES"
+#                             )
+
+# blt_print_target_properties(TARGET               HDF5::HDF5
+#                             CHILDREN             TRUE )
 
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
-# Removing all transitive link dependencies from geosx_core target to circumvent
-# the BLT behavior which imposes all dependencies to be public
-#set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
@@ -232,6 +237,10 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
+# message(WARNING "Temporarily changing the geosPythonBranch to feature/packaging")
+# set(GEOS_PYTHON_PACKAGES_BRANCH "feature/packaging" CACHE STRING "" FORCE)
+
+
 if ( Python3_EXECUTABLE )
     message(STATUS "Found python version ${Python3_VERSION}")
     if (${Python3_VERSION} VERSION_LESS "3.6.0")

@@ -26,6 +26,7 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "mesh/MeshFields.hpp"
 
 namespace geos
 {
@@ -33,39 +34,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-
-
-namespace
-{
-
-// This is meant to be specialized to work, see below
-template< typename POROMECHANICS_SOLVER > class
-  HydrofractureSolverCatalogNames {};
-
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
-{
-public:
-  static string name() { return "Hydrofracture"; }
-};
-
-// Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
-{
-public:
-  static string name() { return "MultiphaseHydrofracture"; }
-};
-}
-
-// provide a definition for catalogName()
-template< typename POROMECHANICS_SOLVER >
-string
-HydrofractureSolver< POROMECHANICS_SOLVER >::
-catalogName()
-{
-  return HydrofractureSolverCatalogNames< POROMECHANICS_SOLVER >::name();
-}
-
 
 template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
@@ -107,6 +75,11 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
+  registerWrapper( viewKeyStruct::isLaggingFractureStencilWeightsUpdateString(), &m_isLaggingFractureStencilWeightsUpdate ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to determine whether or not to apply lagging update for the fracture stencil weights. " );
+
   m_numResolves[0] = 0;
 
   // This may need to be different depending on whether poroelasticity is on or not.
@@ -144,6 +117,11 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
     } );
   } );
 #endif
+
+  if( m_isLaggingFractureStencilWeightsUpdate )
+  {
+    flowSolver()->enableLaggingFractureStencilWeightsUpdate();
+  }
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -176,9 +154,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::postProcessInput()
+void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
 {
-  Base::postProcessInput();
+  Base::postInputInitialization();
 
   static const std::set< integer > binaryOptions = { 0, 1 };
   GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );
@@ -235,7 +213,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
 
-    if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+    if( !this->m_performStressInitialization && m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
     {
       locallyFractured = 1;
     }
@@ -258,7 +236,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
 
       fieldsToBeSync.addElementFields( { flow::pressure::key(),
                                          flow::pressure_n::key(),
-                                         SurfaceElementSubRegion::viewKeyStruct::elementApertureString() },
+                                         fields::elementAperture::key() },
                                        { m_surfaceGenerator->getFractureRegionName() } );
 
       fieldsToBeSync.addFields( FieldLocation::Node,
@@ -880,13 +858,19 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
 
   Base::updateState( domain );
 
-  // remove the contribution of the hydraulic aperture from the stencil weights
-  flowSolver()->prepareStencilWeights( domain );
+  if( !m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // remove the contribution of the hydraulic aperture from the stencil weights
+    flowSolver()->prepareStencilWeights( domain );
+  }
 
   updateHydraulicApertureAndFracturePermeability( domain );
 
-  // update the stencil weights using the updated hydraulic aperture
-  flowSolver()->updateStencilWeights( domain );
+  if( !m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // update the stencil weights using the updated hydraulic aperture
+    flowSolver()->updateStencilWeights( domain );
+  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -902,6 +886,23 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition &
       flowSolver()->updateFluidState( subRegion );
     } );
   } );
+}
+
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepComplete( real64 const & time_n,
+                                                                        real64 const & dt,
+                                                                        DomainPartition & domain )
+{
+  Base::implicitStepComplete( time_n, dt, domain );
+
+  if( m_isLaggingFractureStencilWeightsUpdate )
+  {
+    // remove the contribution of the hydraulic aperture from the stencil weights
+    flowSolver()->prepareStencilWeights( domain );
+
+    // update the stencil weights using the updated hydraulic aperture
+    flowSolver()->updateStencilWeights( domain );
+  }
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -1020,7 +1021,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       arrayView1d< real64 > const fluidPressure_n = subRegion.getField< fields::flow::pressure_n >();
       arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
 
-      arrayView1d< real64 > const aperture = subRegion.getReference< array1d< real64 > >( "elementAperture" );
+      arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
 
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
@@ -1156,9 +1157,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
 
 namespace
 {
-typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
-// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
+typedef HydrofractureSolver<> SinglePhaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
+// typedef HydrofractureSolver< MultiphasePoromechanics<> > MultiphaseHydrofracture;
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }
 

@@ -39,12 +39,6 @@ public:
                      Group * const parent );
   virtual ~TaskBase( ) override;
 
-  /**
-   * @brief Catalog name interface
-   * @return This type's catalog name
-   */
-  static string catalogName() { return "TaskBase"; }
-
   /// The catalog interface type for TaskBase
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, string const &, Group * const >;
   /**
@@ -71,8 +65,8 @@ public:
     return false;
   }
 
-  /// @copydoc geos::dataRepository::Group::postProcessInput( )
-  void postProcessInput() override;
+  /// @copydoc geos::dataRepository::Group::postInputInitialization( )
+  void postInputInitialization() override;
 };
 
 } /* namespace */

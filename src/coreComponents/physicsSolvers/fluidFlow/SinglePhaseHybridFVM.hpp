@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 namespace geos
 {
@@ -127,6 +126,13 @@ public:
                      arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void
   assembleEDFMFluxTerms( real64 const time_n,
                          real64 const dt,
                          DomainPartition const & domain,
@@ -156,6 +162,8 @@ public:
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,
                              DomainPartition & domain ) override;
+
+  virtual void updatePressureGradient( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces

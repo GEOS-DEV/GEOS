@@ -111,9 +111,9 @@ integer ReactiveBrineFluid< PHASE > ::getWaterPhaseIndex() const
 
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::postProcessInput()
+void ReactiveBrineFluid< PHASE > ::postInputInitialization()
 {
-  ReactiveMultiFluid::postProcessInput();
+  ReactiveMultiFluid::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
@@ -214,7 +214,8 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
     m_phase->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error (in table from {}).\n",
+                                      stringutilities::join( m_phasePVTParaFiles ) );
     throw SimulationError( ex, errorMsg );
   }
 }

@@ -38,46 +38,40 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( stri
   registerWrapper( viewKeyStruct::waterOilRelPermExponentString(), &m_waterOilRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation\n"
-    "The expected format is \"{ waterExp, oilExp }\", in that order" );
+    setDescription( "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterExp, oilExp }\", in that order" );
 
   registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString(), &m_waterOilRelPermMaxValue ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation\n"
-    "The expected format is \"{ waterMax, oilMax }\", in that order" );
+    setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation\n"
+                    "The expected format is \"{ waterMax, oilMax }\", in that order" );
 
   registerWrapper( viewKeyStruct::gasOilRelPermExponentString(), &m_gasOilRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation\n"
-    "The expected format is \"{ gasExp, oilExp }\", in that order" );
+    setDescription( "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasExp, oilExp }\", in that order" );
 
   registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString(), &m_gasOilRelPermMaxValue ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription(
-    "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation\n"
-    "The expected format is \"{ gasMax, oilMax }\", in that order" );
+    setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation\n"
+                    "The expected format is \"{ gasMax, oilMax }\", in that order" );
 
   registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
     setApplyDefaultValue( 1.0 ).
-    setDescription(
-    "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
 
-void BrooksCoreyBakerRelativePermeability::postProcessInput()
+void BrooksCoreyBakerRelativePermeability::postInputInitialization()
 {
-  RelativePermeabilityBase::postProcessInput();
+  RelativePermeabilityBase::postInputInitialization();
   m_volFracScale.resize( 3 /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
-                 GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model",
-                           getFullName()),
+                 GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName()),
                  InputError );
 
   auto const checkInputSize = [&]( auto const & array, localIndex const expected, auto const & attribute ) {

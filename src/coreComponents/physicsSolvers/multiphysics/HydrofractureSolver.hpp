@@ -29,7 +29,7 @@ namespace geos
 
 using dataRepository::Group;
 
-template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics< SinglePhaseBase > >
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics<> >
 class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
@@ -68,7 +68,19 @@ public:
   /// Destructor for the class
   ~HydrofractureSolver() override {}
 
-  static string catalogName();
+  static string catalogName()
+  {
+    // single phase
+    if constexpr ( std::is_same_v< POROMECHANICS_SOLVER, SinglePhasePoromechanics< SinglePhaseBase > > )
+    {
+      return "Hydrofracture";
+    }
+//  // multi phase (TODO)
+//  else if constexpr ( std::is_same_v< POROMECHANICS_SOLVER, MultiphasePoromechanics< CompositionalMultiphaseBase > > )
+//  {
+//    return "MultiphaseHydrofracture";
+//  }
+  }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -111,6 +123,10 @@ public:
                             DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
+
+  virtual void implicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override final;
 
   /**@}*/
 
@@ -158,6 +174,8 @@ public:
 
     constexpr static char const * useQuasiNewtonString() { return "useQuasiNewton"; }
 
+    static constexpr char const * isLaggingFractureStencilWeightsUpdateString() { return "isLaggingFractureStencilWeightsUpdate"; }
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
     constexpr static char const * apertureAtFailureString() { return "apertureAtFailure"; }
@@ -166,7 +184,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -230,6 +248,9 @@ private:
   InitializationType m_newFractureInitializationType;
 
   integer m_useQuasiNewton;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
+
+  // flag to determine whether or not to apply lagging update for the fracture stencil weights
+  integer m_isLaggingFractureStencilWeightsUpdate;
 
 };
 

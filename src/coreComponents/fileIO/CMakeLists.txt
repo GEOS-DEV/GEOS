@@ -6,6 +6,9 @@ set( fileIO_headers
      Outputs/OutputUtilities.hpp
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
+     Table/TableLayout.hpp
+     Table/TableFormatter.hpp
+     Table/TableData.hpp
      Outputs/TimeHistoryOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
@@ -22,13 +25,16 @@ set( fileIO_sources
      Outputs/OutputUtilities.cpp
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
+     Table/TableLayout.cpp
+     Table/TableFormatter.cpp
+     Table/TableData.cpp
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/HDFHistoryIO.cpp )
 
-set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
+set( dependencyList ${parallelDeps} mesh constitutive HDF5::HDF5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp
@@ -44,13 +50,13 @@ endif()
 
 if( ENABLE_MPI )
   add_subdirectory( coupling/hdf5_interface )
-  list( APPEND dependencyList mpi hdf5_interface )
+  list( APPEND dependencyList mpi hdf5_interface HDF5::HDF5 )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
 endif()
 
 if( ENABLE_SILO )
-  list( APPEND dependencyList silo )
+  list( APPEND dependencyList silo HDF5::HDF5)
   list( APPEND fileIO_headers 
                silo/SiloFile.hpp 
                Outputs/SiloOutput.hpp )
@@ -75,7 +81,7 @@ if( ENABLE_VTK )
     list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
@@ -87,5 +93,10 @@ blt_add_library( NAME       fileIO
 
 
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( Table/unitTests )
+endif()
+
 
 
