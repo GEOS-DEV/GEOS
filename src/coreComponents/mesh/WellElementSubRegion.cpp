@@ -119,7 +119,8 @@ void collectLocalAndBoundaryNodes( LineBlockABC const & lineBlock,
  * @param[in] ei the index of the reservoir element
  * @param[inout] nodes the nodes that have already been visited
  */
-void collectElementNodes( CellElementSubRegion const & subRegion,
+template < typename SUBREGION_TYPE >
+void collectElementNodes( SUBREGION_TYPE const & subRegion,
                           localIndex ei,
                           SortedArray< localIndex > & nodes )
 {
@@ -306,39 +307,42 @@ bool searchLocalElements( MeshLevel const & mesh,
   // the assumption here is that perforations have been entered in order of depth
   bool resElemFound = false;
 
-  CellElementRegion const & region = mesh.getElemManager().getRegion< CellElementRegion >( erInit );
-  CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esrInit );
+  ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( erInit );
 
-  SortedArray< localIndex >  nodes;
-  SortedArray< globalIndex > elements;
-
-  // here is how the search is done:
-  //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
-  //   2 - If yes, stop
-  //     - If not, a) collect the nodes of the reservoir element defined by (erInit,esrMatched,eiMatched)
-  //               b) use these nodes to grab the neighbors of (erInit,esrMatched,eiMatched)
-  //               c) check if "location" is within the neighbors. If not, grab the neighbors of the neighbors, and so
-  // on...
-
-  // collect the nodes of the current element
-  // they will be used to access the neighbors and check if they contain the perforation
-  collectElementNodes( subRegion, eiInit, nodes );
-
-  // if no match is found, enlarge the neighborhood m_searchDepth'th times
-  for( localIndex d = 0; d < searchDepth; ++d )
+  region.forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( [&] ( auto & subRegion )
   {
-    localIndex nNodes = nodes.size();
+    SortedArray< localIndex >  nodes;
+    SortedArray< globalIndex > elements;
 
-    // search the reservoir elements that can be accessed from the set "nodes"
-    // stop if a reservoir element containing the perforation is found
-    // if not, enlarge the set "nodes"
-    resElemFound = visitNeighborElements( mesh, location, nodes, elements,
-                                          erMatched, esrMatched, eiMatched );
-    if( resElemFound || nNodes == nodes.size())
+    // here is how the search is done:
+    //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
+    //   2 - If yes, stop
+    //     - If not, a) collect the nodes of the reservoir element defined by (erInit,esrMatched,eiMatched)
+    //               b) use these nodes to grab the neighbors of (erInit,esrMatched,eiMatched)
+    //               c) check if "location" is within the neighbors. If not, grab the neighbors of the neighbors, and so
+    // on...
+
+    // collect the nodes of the current element
+    // they will be used to access the neighbors and check if they contain the perforation
+    collectElementNodes( subRegion, eiInit, nodes );
+
+    // if no match is found, enlarge the neighborhood m_searchDepth'th times
+    for( localIndex d = 0; d < searchDepth; ++d )
     {
-      break;
+      localIndex nNodes = nodes.size();
+
+      // search the reservoir elements that can be accessed from the set "nodes"
+      // stop if a reservoir element containing the perforation is found
+      // if not, enlarge the set "nodes"
+      resElemFound = visitNeighborElements( mesh, location, nodes, elements,
+                                            erMatched, esrMatched, eiMatched );
+      if( resElemFound || nNodes == nodes.size())
+      {
+        break;
+      }
     }
-  }
+  } );
+
   return resElemFound;
 }
 
