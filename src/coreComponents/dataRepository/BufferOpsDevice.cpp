@@ -125,11 +125,12 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
                   parallelDeviceEvents & events )
 {
-  parallelDeviceStream stream;
-  events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+  // parallelDeviceStream stream;
+  // events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
+  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOS_DEVICE ( localIndex ii )
   {
     var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
-  } ) );
+  } );
   localIndex packedSize = var.size() * sizeof(T);
   buffer += var.size() * sizeof(T);
   return packedSize;
