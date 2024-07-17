@@ -149,7 +149,7 @@ blt_add_executable( NAME geosx
 blt_print_target_properties(TARGET               geosx
                             CHILDREN             TRUE
                             PROPERTY_NAME_REGEX  "LINK_LIBRARIES"
-                            PROPERTY_VALUE_REGEX "HDF5")
+                            )
 
 blt_print_target_properties(TARGET               HDF5::HDF5
                             CHILDREN             TRUE )
