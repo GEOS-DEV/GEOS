@@ -53,7 +53,9 @@ if(EXISTS ${GEOSX_TPL_DIR}/vtk)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/fmt)
-  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
+#  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
+  set(FMT_DIR ${GEOSX_TPL_DIR}/chai CACHE PATH "" FORCE)
+#  /Users/settgast1/Codes/geos/thirdPartyLibs/install-macOS_arm-release/chai/lib/cmake/fmt/fmt-targets.cmake
 endif()
 
 #
