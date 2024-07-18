@@ -302,11 +302,11 @@ private:
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    string const drainedLinearTECTableName = m_solidUpdate.getDrainedLinearTECTableName();
+    string const drainedTECTableName = m_solidUpdate.getDrainedTECTableName();
     real64 dThermalExpansionCoefficient_dTemperature;
     real64 thermalExpansionCoefficient;
 
-    if( drainedLinearTECTableName.empty() )
+    if( drainedTECTableName.empty() )
     {
       real64 const defaultThermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
       real64 const referenceTemperature = m_solidUpdate.getReferenceTemperature();
@@ -317,7 +317,7 @@ private:
     else
     {
       FunctionManager & functionManager = FunctionManager::getInstance();
-      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( drainedLinearTECTableName );
+      TableFunction & drainedLinearTECTable = functionManager.getGroup< TableFunction >( drainedTECTableName );
       drainedLinearTECTable.setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper TECWrapper = drainedLinearTECTable.createKernelWrapper();
 

@@ -69,7 +69,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Reference temperature at which the default Thermal Expansion Coefficient is defined [K]" );
 
-  registerWrapper( viewKeyStruct::drainedLinearTECTableNameString(), &m_drainedLinearTECTableName ).
+  registerWrapper( viewKeyStruct::drainedTECTableNameString(), &m_drainedTECTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the Thermal Expansion Coefficient table" );
 
