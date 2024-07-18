@@ -125,7 +125,7 @@ void constitutiveComponentUpdatePassThru( MultiFluidBase & fluidBase,
     using FluidType = TYPEOFREF( fluid );
     static_assert( FluidType::min_n_components <= FluidType::max_n_components );
     using Components = typename types::IntegerSequence< FluidType::min_n_components, FluidType::max_n_components >::type;
-    if constexpr (!THERMAL || FluidType::thermal())
+    if constexpr (!THERMAL || FluidType::isThermalType())
     {
       detail::ComponentSelector< Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
     }

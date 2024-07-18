@@ -62,7 +62,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  static constexpr bool thermal()
+  static constexpr bool isThermalType()
   {
     return !( std::is_same_v< typename PHASE1::Enthalpy, PVTProps::NoOpPVTFunction > ||
               std::is_same_v< typename PHASE2::Enthalpy, PVTProps::NoOpPVTFunction > );
@@ -73,7 +73,7 @@ public:
 
   virtual bool isThermal() const override
   {
-    return thermal();
+    return isThermalType();
   }
 
   /**
