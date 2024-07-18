@@ -283,7 +283,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       penalty[k] [0] = 1.e+7;
-      //penalty[k] [1] = 1.e+6;
+      //penalty[k] [1] = 1.e+7;
 
       //penalty[k] [0] = normalTractionTolerance[k]/(normalDisplacementTolerance[k]);
       penalty[k] [1] = penalty[k] [0] / 10;
@@ -908,6 +908,9 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         arrayView1d< real64 const > const normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
 
+        arrayView1d< real64 const > const normalDisplacementTolerance =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+
         arrayView1d< real64 const > const slidingTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
@@ -941,6 +944,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                             contactWrapper, 
                                                             normalTractionTolerance, slidingTolerance,
+                                                            normalDisplacementTolerance,
                                                             slidingCheckTolerance,
                                                             dispJumpUpdPenalty, penalty,
                                                             fractureState,
@@ -978,13 +982,20 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                 else
                 {
                   traction[kfe][0] = traction_new_v( kfe, 0 );
+
                   // Update the penalty coefficient to accelerate the convergence
-                  /*
-                  if (std::abs(dispJump[kfe][0]) > 0.25 * std::abs(dispJumpUpdPenalty[kfe][0]))
+                  if ((std::abs(dispJump[kfe][0]) > normalDisplacementTolerance[kfe] ) && 
+                     (std::abs(dispJump[kfe][0]) > 0.25 * std::abs(dispJumpUpdPenalty[kfe][0])))
                   {
                     penalty[kfe][0] *= 10.0;
+
+                    real64 const eps_N_lim = normalTractionTolerance[kfe]/normalDisplacementTolerance[kfe];
+                    if (penalty[kfe][0] > eps_N_lim )
+                    {
+                      penalty[kfe][0] = eps_N_lim;
+                    }
+                    //std::cout << "Upd penalty_N: " << kfe << " " << penalty[kfe][0] << " " << eps_N_lim << std::endl;
                   }
-                  */
        
                   real64 currentTau = sqrt( pow(traction_new_v[kfe][1], 2 ) +
                                             pow(traction_new_v[kfe][2], 2 ) );
@@ -1032,18 +1043,26 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                     traction[kfe][2] = traction_new_v( kfe, 2 );
        
                     // Update the penalty coefficient to accelerate the convergence
-                    /*
+                    
                     real64 const deltaDisp = sqrt( pow( deltaDispJump[kfe][1], 2 ) + 
                                                    pow( deltaDispJump[kfe][2], 2 ));
                     real64 const deltaDispUpdPenalty = sqrt( pow( dispJumpUpdPenalty[kfe][1], 2 ) + 
                                                              pow( dispJumpUpdPenalty[kfe][2], 2 )); 
        
-                    if ( deltaDisp > 0.25 * deltaDispUpdPenalty)
+                    if (( deltaDisp > slidingTolerance[kfe] ) && 
+                        ( deltaDisp > 0.25 * deltaDispUpdPenalty))
                     {
-                      //std::cout << kfe << " " << deltaDisp << " " << deltaDisp << " " << slidingTolerance[kfe] << " " << penalty[kfe][1]<< std::endl;
                       penalty[kfe][1] *= 10.0; 
+
+                      real64 const eps_T_lim = normalTractionTolerance[kfe]/(slidingTolerance[kfe]*10);
+                      if (penalty[kfe][1] > eps_T_lim )
+                      {
+                        penalty[kfe][1] = eps_T_lim;
+                      }
+                      //std::cout << "Upd penalty T: " << kfe << " " << deltaDisp <<  " " << slidingTolerance[kfe] << " " << penalty[kfe][1]<< std::endl;
                     }
-                    */
+                    
+                    
                   }
                 }
               }    
@@ -1252,6 +1271,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    // Array to store face indexes
     array1d< localIndex > tmpSpace( 2*subRegion.size());
     SortedArray< localIndex > faceIdList;
 
@@ -1337,6 +1357,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       forAll< parallelDevicePolicy<> >( nBubElems, [ bubbleElemsList_v, keys_v ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
+        //std::cout << bubbleElemsList_v[k] << std::endl;
       } );
       cellElementSubRegion.setBubbleElementsList( bubbleElemsList.toViewConst());
 
@@ -1765,7 +1786,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             // Finally, compute tolerances for the given fracture element
             normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
             slidingTolerance[kfe] = sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
-                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+6;
+                                          rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
             normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe];
           }
         } );
