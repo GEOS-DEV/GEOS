@@ -861,7 +861,8 @@ public:
    * @param logDescription The log description to append
    */
   template< typename LOG_LEVEL_INFO >
-  void addLogLevel();
+  std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, void >
+  addLogLevel();
 
   /**
    * @name Schema generation methods
@@ -1716,7 +1717,8 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 }
 
 template< typename LOG_LEVEL_INFO >
-void Group::addLogLevel()
+std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, void >
+Group::addLogLevel()
 {
   Wrapper< integer > * wrapper = getWrapperPointer< integer >( viewKeyStruct::logLevelString() );
   if( wrapper == nullptr )

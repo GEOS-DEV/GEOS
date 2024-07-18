@@ -27,7 +27,7 @@ namespace geos
 class LogLevelsRegistry
 {
 public:
-
+  
   void addEntry( integer level, std::string_view description );
 
   /**

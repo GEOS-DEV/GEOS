@@ -52,7 +52,7 @@ RelpermDriver::RelpermDriver( const geos::string & name,
     setDescription( "Baseline file" );
 
 
-
+  addLogLevel< logInfo::LineSearch >();
 }
 
 
