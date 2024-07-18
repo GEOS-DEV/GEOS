@@ -23,6 +23,9 @@
 #
 # Modified from an initial script by P. Sinha
 
+# this is a handy command to check if there are any files that have not be changed from HEAD
+# git ls-files --full-name | grep -v "$(git diff --name-only HEAD)"
+
 import os
 import sys
 import argparse
