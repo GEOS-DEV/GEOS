@@ -112,6 +112,6 @@ private:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_DISC_HPP_*/

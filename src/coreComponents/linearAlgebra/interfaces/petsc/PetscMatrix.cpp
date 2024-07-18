@@ -1287,4 +1287,4 @@ void PetscMatrix::write( string const & filename,
   GEOS_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
 }
 
-} // end geosx namespace
+} // end geos namespace

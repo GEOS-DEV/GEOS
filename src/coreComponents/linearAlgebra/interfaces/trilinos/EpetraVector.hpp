@@ -190,6 +190,6 @@ private:
   std::unique_ptr< Epetra_Vector > m_vec;
 };
 
-} // end geosx namespace
+} // end geos namespace
 
 #endif /*GEOS_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_*/

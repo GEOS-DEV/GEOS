@@ -24,7 +24,7 @@
 #include <petscvec.h>
 #include <petscksp.h>
 
-// Put everything under the geosx namespace.
+// Put everything under the geos namespace.
 namespace geos
 {
 
@@ -165,4 +165,4 @@ void PetscSolver::clear()
   }
 }
 
-} // end geosx namespace
+} // end geos namespace

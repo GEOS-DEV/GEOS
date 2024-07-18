@@ -1100,4 +1100,4 @@ void EpetraMatrix::multiply( bool const transA,
   C.m_assembled = true;
 }
 
-} // end geosx namespace
+} // end geos namespace

@@ -86,6 +86,6 @@ private:
   KSP m_solver{};
 };
 
-} // end geosx namespace
+} // end geos namespace
 
 #endif /* PETSCSOLVER_HPP_ */

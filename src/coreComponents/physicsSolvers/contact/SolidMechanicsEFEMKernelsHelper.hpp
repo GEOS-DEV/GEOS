@@ -148,7 +148,7 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
 }
 
 }
-} // geosx
+} // geos
 
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_CONTACT_EFEMKERNELSHELPER_HPP_ */

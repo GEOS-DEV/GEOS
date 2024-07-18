@@ -89,6 +89,6 @@ private:
   real64 * m_result{};
 };
 
-} // end geosx
+} // end geos
 
 #endif

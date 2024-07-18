@@ -99,6 +99,6 @@ private:
   real64 m_computeAuuTime;
 };
 
-} // end geosx namespace
+} // end geos namespace
 
 #endif /* HYPRESOLVER_HPP_ */

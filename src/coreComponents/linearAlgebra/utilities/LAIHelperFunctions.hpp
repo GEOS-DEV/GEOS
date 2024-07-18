@@ -347,6 +347,6 @@ void computeRigidBodyModes( MeshLevel const & mesh,
 
 } // LAIHelperFunctions namespace
 
-} // geosx namespace
+} // geos namespace
 
 #endif /*GEOS_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/

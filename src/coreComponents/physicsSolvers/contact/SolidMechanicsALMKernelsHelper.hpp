@@ -77,6 +77,6 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 
 } // solidMechanicsALMKernelsHelper
 
-} // geosx
+} // geos
 
 #endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSALMKERNELSHELPER_HPP_ */

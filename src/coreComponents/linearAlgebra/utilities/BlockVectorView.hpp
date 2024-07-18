@@ -405,7 +405,7 @@ std::ostream & operator<<( std::ostream & os,
   return os;
 }
 
-} // end geosx namespace
+} // end geos namespace
 
 
 #endif /* GEOS_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_ */

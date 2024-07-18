@@ -164,4 +164,4 @@ void TrilinosSolver::solve( EpetraVector const & rhs,
   }
 }
 
-} // end geosx namespace
+} // end geos namespace

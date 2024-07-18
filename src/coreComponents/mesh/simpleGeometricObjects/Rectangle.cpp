@@ -170,4 +170,4 @@ bool Rectangle::isCoordInObject( real64 const ( &coord ) [3] ) const
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Rectangle, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

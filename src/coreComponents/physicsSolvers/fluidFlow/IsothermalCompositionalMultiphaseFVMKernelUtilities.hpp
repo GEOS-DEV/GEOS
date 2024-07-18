@@ -2480,7 +2480,7 @@ struct IHUPhaseFlux
 
 } // namespace isothermalCompositionalMultiPhaseFVMKernelUtilities
 
-} // namespace geosx
+} // namespace geos
 
 
 #endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEFVMKERNELUTILITIES_HPP_

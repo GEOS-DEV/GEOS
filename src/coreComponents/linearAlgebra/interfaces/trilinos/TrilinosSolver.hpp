@@ -88,6 +88,6 @@ private:
   std::unique_ptr< AztecOO > m_solver;
 };
 
-} // end geosx namespace
+} // end geos namespace
 
 #endif /* TRILINOSSOLVER_HPP_ */

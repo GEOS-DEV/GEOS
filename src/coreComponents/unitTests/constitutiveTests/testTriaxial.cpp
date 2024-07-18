@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-// this unit test basically launches a full geosx instance, and then uses the
+// this unit test basically launches a full geos instance, and then uses the
 // input xml to drive a triaxial (or similar) loading test
 
 TEST( testTriaxial, testTriaxial )

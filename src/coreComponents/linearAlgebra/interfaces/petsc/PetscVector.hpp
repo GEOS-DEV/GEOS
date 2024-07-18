@@ -210,6 +210,6 @@ private:
   Vec m_vec;
 };
 
-} // end geosx namespace
+} // end geos namespace
 
 #endif /*GEOS_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_*/

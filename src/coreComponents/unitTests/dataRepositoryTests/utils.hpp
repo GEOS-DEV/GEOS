@@ -131,4 +131,4 @@ void compare( SortedArray< T > const & val,
 
 } // namespace testing
 } // namespace dataRepository
-} // namesapce geosx
+} // namespace geos

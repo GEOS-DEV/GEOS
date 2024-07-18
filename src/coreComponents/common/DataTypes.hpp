@@ -65,7 +65,7 @@
 #include <vector>
 
 /*
- * top level geosx namespace contains all code that is specific to GEOSX
+ * top level geos namespace contains all code that is specific to GEOSX
  */
 namespace geos
 {

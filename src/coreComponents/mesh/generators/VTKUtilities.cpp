@@ -973,7 +973,7 @@ redistributeMeshes( integer const logLevel,
  * @brief Identify the GEOSX type of the polyhedron
  *
  * @param cell The vtk cell VTK_POLYHEDRON
- * @return The geosx element type associated to VTK_POLYHEDRON
+ * @return The geos element type associated to VTK_POLYHEDRON
  */
 geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
 {
@@ -1698,7 +1698,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     default:
     {
-      GEOS_ERROR( "Cannot get vtk to geosx node ordering based on geosx element type " << elemType );
+      GEOS_ERROR( "Cannot get vtk to geos node ordering based on geos element type " << elemType );
       break;
     }
   }
@@ -1722,7 +1722,7 @@ std::vector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
     case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
     default:
     {
-      GEOS_ERROR( "Cannot get vtk to geosx node ordering based on vtk cell type " << vtkType );
+      GEOS_ERROR( "Cannot get vtk to geos node ordering based on vtk cell type " << vtkType );
       break;
     }
   }

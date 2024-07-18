@@ -139,6 +139,6 @@ private:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_CustomPolarObject_HPP_*/

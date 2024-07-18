@@ -147,6 +147,6 @@ protected:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_PLANARGEOMETRICOBJECT_HPP_*/

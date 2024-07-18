@@ -339,7 +339,7 @@ auto BlockOperatorView< VECTOR, OPERATOR >::computeColSize( FUNC func ) const ->
   return colSize;
 }
 
-}// end geosx namespace
+}// end geos namespace
 
 
 #endif /*GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_*/

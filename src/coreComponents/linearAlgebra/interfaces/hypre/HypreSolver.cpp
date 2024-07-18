@@ -297,4 +297,4 @@ void HypreSolver::clear()
   m_solver.reset();
 }
 
-} // end geosx namespace
+} // end geos namespace

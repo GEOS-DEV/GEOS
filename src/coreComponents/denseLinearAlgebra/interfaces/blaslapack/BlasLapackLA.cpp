@@ -24,7 +24,7 @@
 
 #include <random>
 
-// Put everything under the geosx namespace.
+// Put everything under the geos namespace.
 namespace geos
 {
 
@@ -1115,4 +1115,4 @@ void BlasLapackLA::matrixLeastSquaresSolutionSolve( arraySlice2d< real64 const, 
   detail::matrixLeastSquaresSolutionSolve( ACOPY.toSlice(), BCOPY.toSlice(), X );
 }
 
-} // end geosx namespace
+} // end geos namespace

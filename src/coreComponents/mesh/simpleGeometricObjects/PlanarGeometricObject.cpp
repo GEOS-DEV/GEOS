@@ -47,4 +47,4 @@ PlanarGeometricObject::~PlanarGeometricObject()
 
 //REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, PlanarGeometricObject, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

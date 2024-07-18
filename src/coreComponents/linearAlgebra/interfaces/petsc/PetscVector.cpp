@@ -385,4 +385,4 @@ MPI_Comm PetscVector::comm() const
   return comm;
 }
 
-} // end geosx
+} // end geos

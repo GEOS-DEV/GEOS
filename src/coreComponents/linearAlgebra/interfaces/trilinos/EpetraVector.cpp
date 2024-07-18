@@ -296,4 +296,4 @@ MPI_Comm EpetraVector::comm() const
 #endif
 }
 
-} // end geosx
+} // end geos

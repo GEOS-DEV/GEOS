@@ -39,7 +39,7 @@
 
 
 /**
- * @namespace the geosx namespace that encapsulates the majority of the code
+ * @namespace the geos namespace that encapsulates the majority of the code
  */
 namespace geos
 {

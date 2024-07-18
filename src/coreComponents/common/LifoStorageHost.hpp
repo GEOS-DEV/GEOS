@@ -74,7 +74,7 @@ public:
 
       if( baseLifo::m_maxNumberOfBuffers - pushId > (int)baseLifo::m_hostDeque.capacity() )
       {
-        LIFO_MARK_SCOPE( geosx::lifoStorage::pushAddTasks );
+        LIFO_MARK_SCOPE( geos::lifoStorage::pushAddTasks );
         // This buffer will go to host memory, and maybe on disk
         std::packaged_task< void() > t2( std::bind( &LifoStorageHost< T, INDEX_TYPE >::hostToDisk, this, baseLifo::m_bufferToDiskCount++ ) );
         {
@@ -117,7 +117,7 @@ public:
 
       if( baseLifo::m_bufferToDiskCount > 0 )
       {
-        LIFO_MARK_SCOPE( geosx::LifoStorageHost::popAddTasks );
+        LIFO_MARK_SCOPE( geos::LifoStorageHost::popAddTasks );
         // Trigger pull one buffer from host, and maybe from disk
         std::packaged_task< void() > task2( std::bind( &LifoStorageHost< T, INDEX_TYPE >::diskToHost, this, --baseLifo::m_bufferToDiskCount ) );
         {

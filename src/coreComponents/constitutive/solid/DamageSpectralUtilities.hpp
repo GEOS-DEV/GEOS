@@ -413,6 +413,6 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
   LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
 }
 
-} //namespacegeosx
+} //namespacegeos
 
 #endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGESPECTRALUTILITIES_HPP_ */

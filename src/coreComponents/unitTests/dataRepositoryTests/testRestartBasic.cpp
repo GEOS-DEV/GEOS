@@ -67,7 +67,7 @@ public:
     writeTree( m_fileName, *m_node );
     m_group->finishWriting();
 
-    // Delete geosx tree and reset the conduit tree.
+    // Delete geos tree and reset the conduit tree.
     m_group = nullptr;
     m_node = std::make_unique< conduit::Node >();
 

@@ -40,7 +40,7 @@ ChomboIO::ChomboIO( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::outputPathString(), &m_outputPath ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Path at which the geosx to chombo file will be written." );
+    setDescription( "Path at which the geos to chombo file will be written." );
 
   registerWrapper( viewKeyStruct::beginCycleString(), &m_beginCycle ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -49,17 +49,17 @@ ChomboIO::ChomboIO( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::inputPathString(), &m_inputPath ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( "/INVALID_INPUT_PATH" ).
-    setDescription( "Path at which the chombo to geosx file will be written." );
+    setDescription( "Path at which the chombo to geos file will be written." );
 
   registerWrapper( viewKeyStruct::waitForInputString(), &m_waitForInput ).
     setInputFlag( InputFlags::REQUIRED ).
     setDefaultValue( 0 ).
-    setDescription( "True iff geosx should wait for chombo to write out a file. When true the inputPath must be set." );
+    setDescription( "True iff geos should wait for chombo to write out a file. When true the inputPath must be set." );
 
   registerWrapper( viewKeyStruct::useChomboPressuresString(), &m_useChomboPressures ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
-    setDescription( "True iff geosx should use the pressures chombo writes out." );
+    setDescription( "True iff geos should use the pressures chombo writes out." );
 }
 
 ChomboIO::~ChomboIO()
