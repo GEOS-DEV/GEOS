@@ -806,8 +806,8 @@ PerforationKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dResPhaseVisc,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & resPhaseCompFrac,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dResPhaseCompFrac,
-           arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & resPhaseRelPerm,
-           arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
+           arraySlice2d< real64 const, relperm::USD_RELPERM - 2 > const & resPhaseRelPerm,
+           arraySlice3d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPres,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
@@ -941,7 +941,10 @@ PerforationKernel::
                       Deriv::dC );
 
       // relative permeability
-      real64 const resRelPerm = resPhaseRelPerm[ip];
+
+      //then for well make is an average of direction as there is no normal avail
+      real64 faceNormal[3] = {.33, .33, .33};
+      real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >( resPhaseRelPerm[ip], faceNormal );
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
@@ -950,7 +953,7 @@ PerforationKernel::
 
       for( integer jp = 0; jp < NP; ++jp )
       {
-        real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[ip][jp];
+        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( dResPhaseRelPerm_dPhaseVolFrac[ip][jp], faceNormal );
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < NC; ++jc )
@@ -1037,7 +1040,9 @@ PerforationKernel::
                       Deriv::dC );
 
       // relative permeability
-      real64 const resRelPerm = resPhaseRelPerm[ip];
+      //FIXME (jacques) then as no normal avail, make it an average of directions
+      real64 faceNormal[3] = {.33, .33, .33};
+      real64 const resRelPerm = LvArray::tensorOps::AiBi< 3 >( resPhaseRelPerm[ip], faceNormal );
       real64 dResRelPerm_dP = 0.0;
       for( integer jc = 0; jc < NC; ++jc )
       {
@@ -1046,7 +1051,7 @@ PerforationKernel::
 
       for( integer jp = 0; jp < NP; ++jp )
       {
-        real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[ip][jp];
+        real64 const dResRelPerm_dS = LvArray::tensorOps::AiBi< 3 >( dResPhaseRelPerm_dPhaseVolFrac[ip][jp], faceNormal );
         dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dP];
 
         for( integer jc = 0; jc < NC; ++jc )
@@ -1121,8 +1126,8 @@ PerforationKernel::
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseVisc,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & resPhaseCompFrac,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dResPhaseCompFrac,
-          ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & resPhaseRelPerm,
-          ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
+          ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM > > const & resPhaseRelPerm,
+          ElementViewConst< arrayView5d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
@@ -1199,8 +1204,8 @@ PerforationKernel::
                       ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseVisc, \
                       ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & resPhaseCompFrac, \
                       ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dResPhaseCompFrac, \
-                      ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & resPhaseRelPerm, \
-                      ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac, \
+                      ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM > > const & resPhaseRelPerm, \
+                      ElementViewConst< arrayView5d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac, \
                       arrayView1d< real64 const > const & wellElemGravCoef, \
                       arrayView1d< real64 const > const & wellElemPres, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens, \

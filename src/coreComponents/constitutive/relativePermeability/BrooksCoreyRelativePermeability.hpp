@@ -30,15 +30,15 @@ class BrooksCoreyRelativePermeabilityUpdate final : public RelativePermeabilityB
 {
 public:
 
-  BrooksCoreyRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                                         arrayView1d< real64 const > const & phaseRelPermExponent,
-                                         arrayView1d< real64 const > const & phaseRelPermMaxValue,
-                                         real64 const volFracScale,
+  BrooksCoreyRelativePermeabilityUpdate( arrayView2d< real64 const > const & phaseMinVolumeFraction,
+                                         arrayView2d< real64 const > const & phaseRelPermExponent,
+                                         arrayView2d< real64 const > const & phaseRelPermMaxValue,
+                                         arrayView1d< real64 const > const & volFracScale,
                                          arrayView1d< integer const > const & phaseTypes,
                                          arrayView1d< integer const > const & phaseOrder,
-                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                         arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
+                                         arrayView4d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                         arrayView5d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                         arrayView3d< real64, relperm::USD_PHASE > const & phaseTrappedVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -52,9 +52,9 @@ public:
 
   GEOS_HOST_DEVICE
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
-                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
+                arraySlice1d< real64, relperm::USD_PHASE - 2 > const & phaseTrappedVolFrac,
+                arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -69,10 +69,10 @@ public:
 
 private:
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > m_phaseRelPermExponent;
-  arrayView1d< real64 const > m_phaseRelPermMaxValue;
-  real64 m_volFracScale;
+  arrayView2d< real64 const > m_phaseMinVolumeFraction;
+  arrayView2d< real64 const > m_phaseRelPermExponent;
+  arrayView2d< real64 const > m_phaseRelPermMaxValue;
+  arrayView1d< real64 const > m_volFracScale;
 };
 
 class BrooksCoreyRelativePermeability : public RelativePermeabilityBase
@@ -105,18 +105,18 @@ public:
   } vieKeysBrooksCoreyRelativePermeability;
 //END_SPHINX_INCLUDE_01
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+  arrayView2d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
 protected:
 
   virtual void postInputInitialization() override;
 
 //START_SPHINX_INCLUDE_02
-  array1d< real64 > m_phaseMinVolumeFraction;
-  array1d< real64 > m_phaseRelPermExponent;
-  array1d< real64 > m_phaseRelPermMaxValue;
+  array2d< real64 > m_phaseMinVolumeFraction;
+  array2d< real64 > m_phaseRelPermExponent;
+  array2d< real64 > m_phaseRelPermMaxValue;
 
-  real64 m_volFracScale;
+  array1d< real64 > m_volFracScale;
 //END_SPHINX_INCLUDE_02
 };
 
@@ -124,35 +124,39 @@ GEOS_HOST_DEVICE
 inline void
 BrooksCoreyRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
-           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+           arraySlice1d< real64, relperm::USD_PHASE - 2 > const & phaseTrappedVolFrac,
+           arraySlice2d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice3d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
-  real64 const satScaleInv = 1.0 / m_volFracScale;
 
-  for( localIndex ip = 0; ip < numPhases(); ++ip )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
-    real64 const exponent  = m_phaseRelPermExponent[ip];
-    real64 const scale     = m_phaseRelPermMaxValue[ip];
+    real64 const satScaleInv = 1.0 / m_volFracScale[dir];
 
-    if( satScaled > 0.0 && satScaled < 1.0 )
+    for( localIndex ip = 0; ip < numPhases(); ++ip )
     {
-      // intermediate value
-      real64 const v = scale * pow( satScaled, exponent - 1.0 );
+      real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[dir][ip]) * satScaleInv;
+      real64 const exponent  = m_phaseRelPermExponent[dir][ip];
+      real64 const scale     = m_phaseRelPermMaxValue[dir][ip];
 
-      phaseRelPerm[ip] = v * satScaled;
-      dPhaseRelPerm_dPhaseVolFrac[ip][ip] = v * exponent * satScaleInv;
+      if( satScaled > 0.0 && satScaled < 1.0 )
+      {
+        // intermediate value
+        real64 const v = scale * pow( satScaled, exponent - 1.0 );
+
+        phaseRelPerm[ip][dir] = v * satScaled;
+        dPhaseRelPerm_dPhaseVolFrac[ip][ip][dir] = v * exponent * satScaleInv;
+      }
+      else
+      {
+        phaseRelPerm[ip][dir] = (satScaled <= 0.0) ? 0.0 : scale;
+      }
+
+      phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[dir][ip] );
+
     }
-    else
-    {
-      phaseRelPerm[ip] = (satScaled <= 0.0) ? 0.0 : scale;
-    }
-
-    phaseTrappedVolFrac[ip] = LvArray::math::min( phaseVolFraction[ip], m_phaseMinVolumeFraction[ip] );
-
   }
 }
 

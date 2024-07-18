@@ -283,6 +283,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
   // n_c components + one pressure ( + one temperature if needed )
   m_numDofPerCell = m_isThermal ? m_numComponents + 2 : m_numComponents + 1;
+  const localIndex numDir = 3;
 
   // 2. Register and resize all fields as necessary
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
@@ -386,13 +387,15 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< phaseMobility >( getName() ).
         setDimLabels( 1, fluid.phaseNames() ).
-        reference().resizeDimension< 1 >( m_numPhases );
+        reference().resizeDimension< 1, 2 >( m_numPhases, numDir );
       subRegion.registerField< dPhaseMobility >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents + 2 ); // dP, dT, dC
+        reference().resizeDimension< 1, 2, 3 >( m_numPhases, m_numComponents + 2, numDir ); // dP, dT, dC
 
       // needed for time step selector
       subRegion.registerField< phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
+      subRegion.registerField< phaseMobility_n >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numPhases, numDir );
 
       subRegion.registerField< compAmount >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
@@ -1346,6 +1349,12 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
       arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac_n =
         subRegion.template getField< fields::flow::phaseVolumeFraction_n >();
       phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
+
+      arrayView3d< real64 const, constitutive::relperm::USD_MOB > const phaseMob =
+        subRegion.template getField< fields::flow::phaseMobility >();
+      arrayView3d< real64, constitutive::relperm::USD_MOB > const phaseMob_n =
+        subRegion.template getField< fields::flow::phaseMobility_n >();
+      phaseMob_n.setValues< parallelDevicePolicy<> >( phaseMob );
 
     } );
   } );
@@ -2326,8 +2335,8 @@ void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & dom
 
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-      arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-      arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+      arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
       string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );

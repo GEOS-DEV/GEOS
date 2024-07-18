@@ -45,18 +45,17 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
   m_dt( dt ),
-  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
-  m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-  m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
-  m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
-  m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
-  m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
-  m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+  m_dofNumber( dofNumberAccessor.toNestedViewConst()),
+  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} )),
+  m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} )),
+  m_pres( compFlowAccessors.get( fields::flow::pressure {} )),
+  m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} )),
+  m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} )),
+  m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} )),
+  m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} )),
   m_localMatrix( localMatrix ),
   m_localRhs( localRhs ),
-  m_kernelFlags( kernelFlags )
-{}
+  m_kernelFlags( kernelFlags ) {}
 
 /******************************** CFLFluxKernel ********************************/
 
@@ -68,6 +67,7 @@ CFLFluxKernel::
   compute( integer const numPhases,
            localIndex const stencilSize,
            real64 const dt,
+           real64 const (&faceNormal)[3],
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
@@ -75,7 +75,7 @@ CFLFluxKernel::
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
-           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
+           ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -97,9 +97,9 @@ CFLFluxKernel::
     // calculate quantities on primary connected cells
     for( localIndex i = 0; i < NUM_ELEMS; ++i )
     {
-      localIndex const er  = seri[i];
+      localIndex const er = seri[i];
       localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
+      localIndex const ei = sei[i];
 
       // average density across the face
       densMean += 0.5 * phaseMassDens[er][esr][ei][0][ip];
@@ -110,9 +110,9 @@ CFLFluxKernel::
     // compute potential difference MPFA-style
     for( localIndex i = 0; i < stencilSize; ++i )
     {
-      localIndex const er  = seri[i];
+      localIndex const er = seri[i];
       localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
+      localIndex const ei = sei[i];
 
       presGrad += transmissibility[i] * pres[er][esr][ei];
       gravHead += transmissibility[i] * densMean * gravCoef[er][esr][ei];
@@ -126,9 +126,9 @@ CFLFluxKernel::
     // choose upstream cell
     localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-    localIndex const er_up  = seri[k_up];
+    localIndex const er_up = seri[k_up];
     localIndex const esr_up = sesri[k_up];
-    localIndex const ei_up  = sei[k_up];
+    localIndex const ei_up = sei[k_up];
 
     // compute the phase flux only if the phase is present
     bool const phaseExists = (phaseVolFrac[er_up][esr_up][ei_up][ip] > 0);
@@ -137,7 +137,9 @@ CFLFluxKernel::
       continue;
     }
 
-    real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
+    real64 const mobility =
+      LvArray::tensorOps::AiBi< 3 >( phaseRelPerm[er_up][esr_up][ei_up][0][ip], faceNormal ) /
+      phaseVisc[er_up][esr_up][ei_up][0][ip];
 
     // increment the phase (volumetric) outflux of the upstream cell
     real64 const absPhaseFlux = LvArray::math::abs( dt * mobility * potGrad );
@@ -165,7 +167,7 @@ CFLFluxKernel::
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
+          ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -180,8 +182,7 @@ CFLFluxKernel::
   localIndex constexpr numElems = STENCILWRAPPER_TYPE::maxNumPointsInFlux;
   localIndex constexpr maxStencilSize = STENCILWRAPPER_TYPE::maxStencilSize;
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-  {
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
     // compute transmissibility
     real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
     real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
@@ -192,9 +193,13 @@ CFLFluxKernel::
                                    transmissibility,
                                    dTrans_dPres );
 
+    real64 faceNormal[3];
+    stencilWrapper.getFaceNormal( iconn, faceNormal );
+
     CFLFluxKernel::compute< NC, numElems, maxStencilSize >( numPhases,
                                                             sei[iconn].size(),
                                                             dt,
+                                                            faceNormal,
                                                             seri[iconn],
                                                             sesri[iconn],
                                                             sei[iconn],
@@ -223,7 +228,7 @@ CFLFluxKernel::
                                        ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
                                        ElementViewConst< arrayView3d< real64 const > > const & permeability, \
                                        ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres, \
-                                       ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
+                                       ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
                                        ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
                                        ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                                        ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
@@ -265,80 +270,88 @@ void
 CFLKernel::
   computePhaseCFL( real64 const poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
-                   arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
-                   arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
+                   arraySlice2d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
+                   arraySlice3d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseVisc,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
                    real64 & phaseCFLNumber )
 {
-  // first, check which phases are mobile in the cell
-  real64 mob[NP]{};
-  localIndex mobilePhases[NP]{};
-  localIndex numMobilePhases = 0;
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    if( phaseVolFrac[ip] > 0 )
-    {
-      mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
-      if( mob[ip] > minPhaseMobility )
-      {
-        mobilePhases[numMobilePhases] = ip;
-        numMobilePhases++;
-      }
-    }
-  }
-
   // then, depending on the regime, apply the appropriate CFL formula
   phaseCFLNumber = 0;
 
-  // single-phase flow regime
-  if( numMobilePhases == 1 )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    phaseCFLNumber = phaseOutflux[mobilePhases[0]] / poreVol;
-  }
-  // two-phase flow regime
-  else if( numMobilePhases == 2 )
-  {
-    // from Hui Cao's PhD thesis
-    localIndex const ip0 = mobilePhases[0];
-    localIndex const ip1 = mobilePhases[1];
-    real64 const dMob_dVolFrac[2] = { dPhaseRelPerm_dPhaseVolFrac[ip0][ip0] / phaseVisc[ip0],
-                                      -dPhaseRelPerm_dPhaseVolFrac[ip1][ip1] / phaseVisc[ip1] }; // using S0 = 1 - S1
-    real64 const denom = 1. / ( poreVol * ( mob[ip0] + mob[ip1] ) );
-    real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
-    real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
+    // first, check which phases are mobile in the cell
+    real64 mob[NP]{};
+    localIndex mobilePhases[NP]{};
+    localIndex numMobilePhases{};
 
-    phaseCFLNumber = LvArray::math::abs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
-  }
-  // three-phase flow regime
-  else if( numMobilePhases == 3 )
-  {
-    // from Keith Coats, IMPES stability: Selection of stable timesteps (2003)
-    real64 totalMob = 0.0;
-    for( integer ip = 0; ip < numMobilePhases; ++ip )
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
-      totalMob += mob[ip];
-    }
-
-    real64 f[2][2]{};
-    for( integer i = 0; i < 2; ++i )
-    {
-      for( integer j = 0; j < 2; ++j )
+      if( phaseVolFrac[ip] > 0 )
       {
-        f[i][j]  = ( i == j )*totalMob - mob[i];
-        f[i][j] /= (totalMob * mob[j]);
-        real64 sum = 0;
-        for( integer k = 0; k < 3; ++k )
+        mob[ip] = phaseRelPerm[ip][dir] / phaseVisc[ip];
+        if( mob[ip] > minPhaseMobility )
         {
-          sum += dPhaseRelPerm_dPhaseVolFrac[k][j] / phaseVisc[k]
-                 * phaseOutflux[j];
+          mobilePhases[numMobilePhases] = ip;
+          numMobilePhases++;
         }
-        f[i][j] *= sum;
       }
     }
-    phaseCFLNumber = f[0][0] + f[1][1];
-    phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
-    phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
+
+
+
+    // single-phase flow regime
+    if( numMobilePhases == 1 )
+    {
+      phaseCFLNumber = LvArray::math::max( phaseCFLNumber, phaseOutflux[mobilePhases[0]] / poreVol );
+    }
+    // two-phase flow regime
+    else if( numMobilePhases == 2 )
+    {
+      // from Hui Cao's PhD thesis
+      localIndex const ip0 = mobilePhases[0];
+      localIndex const ip1 = mobilePhases[1];
+      real64 const dMob_dVolFrac[2] = {dPhaseRelPerm_dPhaseVolFrac[ip0][ip0][dir] / phaseVisc[ip0],
+                                       -dPhaseRelPerm_dPhaseVolFrac[ip1][ip1][dir] /
+                                       phaseVisc[ip1]};               // using S0 = 1 - S1
+      real64 const denom = 1. / (poreVol * (mob[ip0] + mob[ip1]));
+      real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
+      real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
+
+      phaseCFLNumber = LvArray::math::max( phaseCFLNumber, LvArray::math::abs( coef0 * phaseOutflux[ip0] + coef1 * phaseOutflux[ip1] ));
+    }
+    // three-phase flow regime
+    else if( numMobilePhases == 3 )
+    {
+      // from Keith Coats, IMPES stability: Selection of stable timesteps (2003)
+      real64 totalMob = 0.0;
+      for( integer ip = 0; ip < numMobilePhases; ++ip )
+      {
+        totalMob += mob[ip];
+      }
+
+      real64 f[2][2]{};
+      for( integer i = 0; i < 2; ++i )
+      {
+        for( integer j = 0; j < 2; ++j )
+        {
+          f[i][j] = (i == j) * totalMob - mob[i];
+          f[i][j] /= (totalMob * mob[j]);
+          real64 sum = 0;
+          for( integer k = 0; k < 3; ++k )
+          {
+            sum += dPhaseRelPerm_dPhaseVolFrac[k][j][dir] / phaseVisc[k]
+                   * phaseOutflux[j];
+          }
+          f[i][j] *= sum;
+        }
+      }
+      auto tmp = f[0][0] + f[1][1];
+      tmp += sqrt(
+        tmp * tmp - 4 * (f[0][0] * f[1][1] - f[1][0] * f[0][1]));
+      phaseCFLNumber = LvArray::math::max( phaseCFLNumber, 0.5 * LvArray::math::abs( tmp ) / poreVol );
+    }
   }
 }
 
@@ -379,8 +392,8 @@ CFLKernel::
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
-          arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
+          arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux,
           arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux,
@@ -392,8 +405,7 @@ CFLKernel::
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionPhaseCFLNumber( 0.0 );
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionCompCFLNumber( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei ) {
     real64 const poreVol = volume[ei] * porosity[ei][0];
 
     // phase CFL number
@@ -432,8 +444,8 @@ CFLKernel::
                       arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
-                      arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
-                      arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
+                      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux, \
@@ -441,16 +453,25 @@ CFLKernel::
                       arrayView1d< real64 > const & compCFLNumber, \
                       real64 & maxPhaseCFLNumber, \
                       real64 & maxCompCFLNumber )
+
 INST_CFLKernel( 1, 2 );
+
 INST_CFLKernel( 2, 2 );
+
 INST_CFLKernel( 3, 2 );
+
 INST_CFLKernel( 4, 2 );
+
 INST_CFLKernel( 5, 2 );
 
 INST_CFLKernel( 1, 3 );
+
 INST_CFLKernel( 2, 3 );
+
 INST_CFLKernel( 3, 3 );
+
 INST_CFLKernel( 4, 3 );
+
 INST_CFLKernel( 5, 3 );
 
 #undef INST_CFLKernel
@@ -477,14 +498,14 @@ AquiferBCKernel::
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
            real64 const dt,
            real64 (& localFlux)[NC],
-           real64 (& localFluxJacobian)[NC][NC+1] )
+           real64 (& localFluxJacobian)[NC][NC + 1] )
 {
   using Deriv = multifluid::DerivativeOffset;
 
   real64 dProp_dC[NC]{};
   real64 dPhaseFlux_dCompDens[NC]{};
 
-  if( aquiferVolFlux > 0 ) // aquifer is upstream
+  if( aquiferVolFlux > 0 )          // aquifer is upstream
   {
     // in this case, we assume that:
     //    - only the water phase is present in the aquifer
@@ -494,10 +515,11 @@ AquiferBCKernel::
     {
       real64 const phaseFlux = aquiferVolFlux * aquiferWaterPhaseDens;
       localFlux[ic] -= dt * phaseFlux * aquiferWaterPhaseCompFrac[ic];
-      localFluxJacobian[ic][0] -= dt * dAquiferVolFlux_dPres * aquiferWaterPhaseDens * aquiferWaterPhaseCompFrac[ic];
+      localFluxJacobian[ic][0] -=
+        dt * dAquiferVolFlux_dPres * aquiferWaterPhaseDens * aquiferWaterPhaseCompFrac[ic];
     }
   }
-  else // reservoir is upstream
+  else             // reservoir is upstream
   {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
@@ -513,23 +535,30 @@ AquiferBCKernel::
         real64 const phaseDensVolFrac = phaseDens[ip] * phaseVolFrac[ip];
         real64 const phaseFlux = aquiferVolFlux * phaseDensVolFrac;
         real64 const dPhaseFlux_dPres = dAquiferVolFlux_dPres * phaseDensVolFrac
-                                        + aquiferVolFlux * ( dPhaseDens[ip][Deriv::dP] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dP] );
+                                        + aquiferVolFlux *
+                                        (dPhaseDens[ip][Deriv::dP] * phaseVolFrac[ip] +
+                                         phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dP]);
 
         applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens[ip], dProp_dC, Deriv::dC );
         for( integer ic = 0; ic < NC; ++ic )
         {
-          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+ic] );
+          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * (dProp_dC[ic] * phaseVolFrac[ip] +
+                                                       phaseDens[ip] *
+                                                       dPhaseVolFrac[ip][Deriv::dC + ic]);
         }
 
         for( integer ic = 0; ic < NC; ++ic )
         {
           localFlux[ic] -= dt * phaseFlux * phaseCompFrac[ip][ic];
-          localFluxJacobian[ic][0] -= dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac[ip][ic][Deriv::dP] );
+          localFluxJacobian[ic][0] -= dt * (dPhaseFlux_dPres * phaseCompFrac[ip][ic] +
+                                            phaseFlux * dPhaseCompFrac[ip][ic][Deriv::dP]);
 
           applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dProp_dC, Deriv::dC );
           for( integer jc = 0; jc < NC; ++jc )
           {
-            localFluxJacobian[ic][jc+1] -= dt * ( dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
+            localFluxJacobian[ic][jc + 1] -= dt *
+                                             (dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] +
+                                              phaseFlux * dProp_dC[jc]);
           }
         }
       }
@@ -575,8 +604,7 @@ AquiferBCKernel::
   BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
   BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-  {
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
     constexpr integer NDOF = NC + 1;
 
     // working arrays
@@ -584,9 +612,9 @@ AquiferBCKernel::
     real64 localFlux[NC]{};
     real64 localFluxJacobian[NC][NDOF]{};
 
-    localIndex const er  = seri( iconn, Order::ELEM );
+    localIndex const er = seri( iconn, Order::ELEM );
     localIndex const esr = sesri( iconn, Order::ELEM );
-    localIndex const ei  = sefi( iconn, Order::ELEM );
+    localIndex const ei = sefi( iconn, Order::ELEM );
     real64 const areaFraction = weight( iconn, Order::ELEM );
 
     // compute the aquifer influx rate using the pressure influence function and the aquifer props
@@ -683,13 +711,17 @@ AquiferBCKernel::
                   arrayView1d< real64 > const & localRhs )
 
 INST_AquiferBCKernel( 1 );
+
 INST_AquiferBCKernel( 2 );
+
 INST_AquiferBCKernel( 3 );
+
 INST_AquiferBCKernel( 4 );
+
 INST_AquiferBCKernel( 5 );
 
 #undef INST_AquiferBCKernel
 
-} // namespace isothermalCompositionalMultiphaseFVMKernels
+}     // namespace isothermalCompositionalMultiphaseFVMKernels
 
 } // namespace geos

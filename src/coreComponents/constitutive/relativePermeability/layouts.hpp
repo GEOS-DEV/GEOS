@@ -32,23 +32,33 @@ namespace relperm
 {
 
 #if defined( GEOS_USE_DEVICE )
-
+/// Constitutive model phase array layout
+using LAYOUT_PHASE = RAJA::PERM_JKI;
 /// Constitutive model phase relative permeability array layout
-using LAYOUT_RELPERM = RAJA::PERM_JKI;
+using LAYOUT_RELPERM = RAJA::PERM_JKLI;
 /// Constitutive model phase relative permeability saturation derivative array layout
-using LAYOUT_RELPERM_DS = RAJA::PERM_JKLI;
+using LAYOUT_RELPERM_DS = RAJA::PERM_JKLIM;//FIX ME don't know really
 
 #else
 
+/// Constitutive model phase array layout
+using LAYOUT_PHASE = RAJA::PERM_IJK;
+using LAYOUT_MOB = RAJA::PERM_IJK;
 /// Constitutive model phase relative permeability array layout
-using LAYOUT_RELPERM = RAJA::PERM_IJK;
+using LAYOUT_RELPERM = RAJA::PERM_IJKL;
+using LAYOUT_MOB_DC = RAJA::PERM_IJKL;
 /// Constitutive model phase relative permeability saturation derivative array layout
-using LAYOUT_RELPERM_DS = RAJA::PERM_IJKL;
+using LAYOUT_RELPERM_DS = RAJA::PERM_IJKLM;
+
 
 #endif
 
 /// Constitutive model phase relative permeability unit stride dimension
+static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE {} );
+static constexpr int USD_MOB = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_MOB {} );
+/// Constitutive model phase relative permeability unit stride dimension
 static constexpr int USD_RELPERM = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_RELPERM{} );
+static constexpr int USD_MOB_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_MOB_DC{} );
 /// Constitutive model phase relative permeability saturation derivative unit stride dimension
 static constexpr int USD_RELPERM_DS = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_RELPERM_DS{} );
 

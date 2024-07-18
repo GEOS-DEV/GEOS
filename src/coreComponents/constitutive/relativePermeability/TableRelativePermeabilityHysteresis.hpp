@@ -442,7 +442,7 @@ private:
     static constexpr char const * threePhaseInterpolatorString() { return "threePhaseInterpolator"; }
   };
 
-  arrayView1d< real64 const > getPhaseMinVolumeFraction() const override
+  arrayView2d< real64 const > getPhaseMinVolumeFraction() const override
   { return m_imbibitionPhaseMinVolFraction; };
 
 private:
@@ -539,10 +539,10 @@ private:
   array1d< real64 > m_landParam;
 
   /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
-  array1d< real64 > m_drainagePhaseMinVolFraction;
+  array2d< real64 > m_drainagePhaseMinVolFraction;
 
   /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
-  array1d< real64 > m_imbibitionPhaseMinVolFraction;
+  array2d< real64 > m_imbibitionPhaseMinVolFraction;
 
   /// Relperm endpoint for each phase in drainage (deduced from the drainage table)
   array1d< real64 > m_drainagePhaseRelPermEndPoint;

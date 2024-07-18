@@ -70,6 +70,7 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
 void VanGenuchtenBakerRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
+  m_volFracScale.resize( 3 /*ndims*/ );
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
@@ -81,79 +82,86 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
   };
-  checkInputSize( m_phaseMinVolumeFraction, numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString() );
 
-  if( m_phaseOrder[PhaseType::WATER] >= 0 )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    checkInputSize( m_waterOilRelPermExponentInv, 2, viewKeyStruct::waterOilRelPermExponentInvString() );
-    checkInputSize( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() );
-  }
-
-  if( m_phaseOrder[PhaseType::GAS] >= 0 )
-  {
-    checkInputSize( m_gasOilRelPermExponentInv, 2, viewKeyStruct::gasOilRelPermExponentInvString() );
-    checkInputSize( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() );
-  }
-
-  m_volFracScale = 1.0;
-  for( integer ip = 0; ip < numFluidPhases(); ++ip )
-  {
-    auto const errorMsg = [&]( auto const & attribute )
+    checkInputSize( m_phaseMinVolumeFraction[dir], numFluidPhases(), viewKeyStruct::phaseMinVolumeFractionString());
+    m_volFracScale[dir] = 1.0;
+    for( integer ip = 0; ip < numFluidPhases(); ++ip )
     {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
-    };
-    GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
-    GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
-                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
-    m_volFracScale -= m_phaseMinVolumeFraction[ip];
-  }
-
-  GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
-                        InputError );
-
-  for( integer ip = 0; ip < 2; ++ip )
-  {
-    auto const errorMsg = [&]( auto const & attribute )
-    {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
-    };
-    if( m_phaseOrder[PhaseType::WATER] >= 0 )
-    {
-      GEOS_THROW_IF_LT_MSG( m_waterOilRelPermExponentInv[ip], 0.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermExponentInvString() ),
+      auto const errorMsg = [&]( auto const & attribute ) {
+        return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      };
+      GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[dir][ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
                             InputError );
-      GEOS_THROW_IF_LT_MSG( m_waterOilRelPermMaxValue[ip], 0.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermMaxValueString() ),
+      GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[dir][ip], 1.0,
+                            errorMsg( viewKeyStruct::phaseMinVolumeFractionString()),
                             InputError );
-      GEOS_THROW_IF_GT_MSG( m_waterOilRelPermMaxValue[ip], 1.0,
-                            errorMsg( viewKeyStruct::waterOilRelPermMaxValueString() ),
-                            InputError );
+      m_volFracScale[dir] -= m_phaseMinVolumeFraction[dir][ip];
     }
 
-    if( m_phaseOrder[PhaseType::GAS] >= 0 )
-    {
-      GEOS_THROW_IF_LT_MSG( m_gasOilRelPermExponentInv[ip], 0.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermExponentInvString() ),
-                            InputError );
-      GEOS_THROW_IF_LT_MSG( m_gasOilRelPermMaxValue[ip], 0.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermMaxValueString() ),
-                            InputError );
-      GEOS_THROW_IF_GT_MSG( m_gasOilRelPermMaxValue[ip], 1.0,
-                            errorMsg( viewKeyStruct::gasOilRelPermMaxValueString() ),
-                            InputError );
-    }
+    GEOS_THROW_IF_LT_MSG( m_volFracScale[dir], 0.0,
+                          GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName()),
+                          InputError );
   }
 
-  if( m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0 )
+  for( int dir = 0; dir < 3; ++dir )
   {
-    real64 const mean = 0.5 * ( m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]
-                                + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
-    m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]     = mean;
-    m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] = mean;
+
+    for( integer ip = 0; ip < 2; ++ip )
+    {
+      if( m_phaseOrder[PhaseType::WATER] >= 0 )
+      {
+        checkInputSize( m_waterOilRelPermExponentInv[dir], 2,
+                        viewKeyStruct::waterOilRelPermExponentInvString());
+        checkInputSize( m_waterOilRelPermMaxValue[dir], 2, viewKeyStruct::waterOilRelPermMaxValueString());
+      }
+
+      if( m_phaseOrder[PhaseType::GAS] >= 0 )
+      {
+        checkInputSize( m_gasOilRelPermExponentInv[dir], 2, viewKeyStruct::gasOilRelPermExponentInvString());
+        checkInputSize( m_gasOilRelPermMaxValue[dir], 2, viewKeyStruct::gasOilRelPermMaxValueString());
+      }
+
+
+      auto const errorMsg = [&]( auto const & attribute ) {
+        return GEOS_FMT( "{}: invalid value at {}[{}][{}]", getFullName(), attribute, ip, dir );
+      };
+      if( m_phaseOrder[PhaseType::WATER] >= 0 )
+      {
+        GEOS_THROW_IF_LT_MSG( m_waterOilRelPermExponentInv[dir][ip], 0.0,
+                              errorMsg( viewKeyStruct::waterOilRelPermExponentInvString()),
+                              InputError );
+        GEOS_THROW_IF_LT_MSG( m_waterOilRelPermMaxValue[dir][ip], 0.0,
+                              errorMsg( viewKeyStruct::waterOilRelPermMaxValueString()),
+                              InputError );
+        GEOS_THROW_IF_GT_MSG( m_waterOilRelPermMaxValue[dir][ip], 1.0,
+                              errorMsg( viewKeyStruct::waterOilRelPermMaxValueString()),
+                              InputError );
+      }
+
+      if( m_phaseOrder[PhaseType::GAS] >= 0 )
+      {
+        GEOS_THROW_IF_LT_MSG( m_gasOilRelPermExponentInv[dir][ip], 0.0,
+                              errorMsg( viewKeyStruct::gasOilRelPermExponentInvString()),
+                              InputError );
+        GEOS_THROW_IF_LT_MSG( m_gasOilRelPermMaxValue[dir][ip], 0.0,
+                              errorMsg( viewKeyStruct::gasOilRelPermMaxValueString()),
+                              InputError );
+        GEOS_THROW_IF_GT_MSG( m_gasOilRelPermMaxValue[dir][ip], 1.0,
+                              errorMsg( viewKeyStruct::gasOilRelPermMaxValueString()),
+                              InputError );
+      }
+    }
+
+    if( m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0 )
+    {
+      real64 const mean = 0.5 * (m_gasOilRelPermMaxValue[dir][GasOilPairPhaseType::OIL]
+                                 + m_waterOilRelPermMaxValue[dir][WaterOilPairPhaseType::OIL]);
+      m_gasOilRelPermMaxValue[dir][GasOilPairPhaseType::OIL] = mean;
+      m_waterOilRelPermMaxValue[dir][WaterOilPairPhaseType::OIL] = mean;
+    }
   }
 
 }
@@ -175,6 +183,6 @@ VanGenuchtenBakerRelativePermeability::createKernelWrapper()
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, string const &, Group * const )
-} // namespace constitutive
+}     // namespace constitutive
 
 } // namespace geos
