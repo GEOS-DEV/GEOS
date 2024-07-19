@@ -515,7 +515,7 @@ public:
    */
   WrapperBase & appendDescription( string const & description )
   {
-    m_description = description;
+    m_description += description;
     return *this;
   }
 

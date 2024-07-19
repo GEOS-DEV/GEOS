@@ -432,6 +432,7 @@
     }                                                                          \
   } while( false )
 
+//[DEPRECATED]
 /**
  * @brief Output messages based on current Group's log level.
  * @param[in] minLevel minimum log level
@@ -439,6 +440,7 @@
  */
 #define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
 
+//[DEPRECATED]
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
  * @param[in] minLevel minimum log level
@@ -446,6 +448,7 @@
  */
 #define GEOS_LOG_LEVEL_RANK_0( minLevel, msg ) GEOS_LOG_RANK_0_IF( this->getLogLevel() >= minLevel, msg )
 
+//[DEPRECATED]
 /**
  * @brief Output messages (with one line per rank) based on current Group's log level.
  * @param[in] minLevel minimum log level

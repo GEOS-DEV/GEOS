@@ -31,6 +31,30 @@ static constexpr bool is_log_level_info =
   std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
   std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
 
+/** This 3 method would replace the ones in Logger.hpp  */
+/**
+ * @brief Output messages based on current Group's log level.
+ * @param[in] logInfo Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_INFO_LEVEL( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (only on rank 0) based on current Group's log level.
+ * @param[in] logInfo Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_RANK_0( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
+
+/**
+ * @brief Output messages (with one line per rank) based on current Group's log level.
+ * @param[in] logInfo Strut containing log level desscription
+ * @param[in] msg a message to log (any expression that can be stream inserted)
+ */
+#define GEOS_LOG_LEVEL_INFO_BY_RANK( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
+
+
+
 struct LineSearch
 {
   static constexpr int getMinLogLevel() { return 1; }

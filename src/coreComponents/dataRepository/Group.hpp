@@ -1617,7 +1617,6 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  LogLevelsRegistry m_logLevelsRegistry;
 
   //END_SPHINX_INCLUDE_02
 
@@ -1630,6 +1629,7 @@ private:
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
 
+  std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
   /// A DataContext object used to provide contextual information on this Group,
   /// if it is created from an input XML file, the line or offset in that file.
   std::unique_ptr< DataContext > m_dataContext;
@@ -1727,9 +1727,9 @@ Group::addLogLevel()
     wrapper->setApplyDefaultValue( 0 );
     wrapper->setInputFlag( InputFlags::OPTIONAL );
   }
-  m_logLevelsRegistry.addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
+  m_logLevelsRegistry->addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
                                 LOG_LEVEL_INFO::getDescription() );
-  wrapper->appendDescription( m_logLevelsRegistry.buildLogLevelDescription());
+  wrapper->setDescription( m_logLevelsRegistry->buildLogLevelDescription());
 }
 
 } /* end namespace dataRepository */

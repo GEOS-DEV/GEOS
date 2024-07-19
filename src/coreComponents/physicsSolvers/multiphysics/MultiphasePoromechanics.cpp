@@ -247,11 +247,9 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( Doma
 
   maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
-  if( isLogLevelActive< logInfo::PoromechanicsPhaseFraction >( getLogLevel() ))
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Max phase volume fraction change = {}",
-                               this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
-  }
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::PoromechanicsPhaseFraction,
+                              GEOS_FMT( "        {}: Max phase volume fraction change = {}",
+                                        this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 
 }
 

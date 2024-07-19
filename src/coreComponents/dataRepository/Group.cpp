@@ -49,6 +49,7 @@ Group::Group( string const & name,
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
   m_conduitNode( rootNode[ name ] ),
+  m_logLevelsRegistry( std::make_unique< LogLevelsRegistry >() ),
   m_dataContext( std::make_unique< GroupContext >( *this ) )
 {}
 
@@ -248,6 +249,7 @@ void Group::postInputInitializationRecursive()
     subGroupIter.second->postInputInitializationRecursive();
   }
   postInputInitialization();
+  m_logLevelsRegistry = nullptr;
 }
 
 void Group::registerDataOnMeshRecursive( Group & meshBodies )
