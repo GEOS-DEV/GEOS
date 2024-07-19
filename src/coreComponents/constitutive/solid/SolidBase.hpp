@@ -135,7 +135,7 @@ public:
    * @return the thermalExpansionCoefficient of element k
    */
   GEOS_HOST_DEVICE
-  real64 getThermalExpansionCoefficient( localIndex const k ) const
+  virtual real64 getThermalExpansionCoefficient( localIndex const k ) const
   {
     return m_thermalExpansionCoefficient[k];
   }
@@ -145,7 +145,7 @@ public:
    * @return the derivative of Thermal Expansion Coefficient w.r.t. temperature
    */
   GEOS_HOST_DEVICE
-  real64 getDThermalExpansionCoefficient_dTemperature() const
+  virtual  real64 getDThermalExpansionCoefficient_dTemperature() const
   {
     return m_dThermalExpansionCoefficient_dTemperature;
   }
@@ -155,7 +155,7 @@ public:
    * @return the reference temperature
    */
   GEOS_HOST_DEVICE
-  real64 getReferenceTemperature() const
+  virtual  real64 getReferenceTemperature() const
   {
     return m_referenceTemperature;
   }
@@ -165,7 +165,7 @@ public:
    * @return the Thermal Expansion Coefficient table name
    */
   GEOS_HOST_DEVICE
-  string getDrainedTECTableName() const
+  virtual  string getDrainedTECTableName() const
   {
     return m_drainedTECTableName;
   }
