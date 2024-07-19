@@ -61,6 +61,11 @@ public:
     return std::make_unique< EquationOfState >( std::move( parameters ) );
   }
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
+  };
+
   string_array m_equationsOfStateNames;
 
 protected:
@@ -89,11 +94,6 @@ protected:
       EnumStrings< EquationOfStateType >::fromString( eos );
     }
   }
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
-  };
 };
 
 } // end namespace compositional
