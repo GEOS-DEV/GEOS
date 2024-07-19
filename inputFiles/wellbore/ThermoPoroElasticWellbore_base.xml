@@ -110,7 +110,7 @@
       defaultDensity="2700"
       defaultBulkModulus="20.7e9"
       defaultShearModulus="12.4e9"
-      defaultDrainedLinearTEC="4e-5"/>
+      defaultDrainedTEC="4e-5"/>
     <!-- SPHINX_ThermoElasticPropertiesEnd -->
     
   </Constitutive>

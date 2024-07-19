@@ -35,7 +35,7 @@
       defaultDensity="2400"
       defaultBulkModulus="1e4"
       defaultShearModulus="2.143e3"
-      defaultDrainedLinearTEC="3e-7"/>
+      defaultDrainedTEC="3e-7"/>
     <!-- SPHINX_SOLID_END -->
 
     <!-- SPHINX_POROSITY -->    
