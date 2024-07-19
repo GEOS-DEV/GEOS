@@ -140,12 +140,12 @@ jobs:
 
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
-        script_args+=(--install-dir-basename GEOSX-${SHORT_COMMIT})
+        script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
         # All the data exchanged with the docker container is eventually meant to be sent to the cloud. 
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
-            DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
+            DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
           elif [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]; then
             DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
             script_args+=(--run-integrated-tests)

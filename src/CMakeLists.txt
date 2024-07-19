@@ -106,7 +106,7 @@ install( DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . )
 # Generate version information
 ################################
 include( cmake/GeosxVersion.cmake )
-message( STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}" )
+message( STATUS "Configuring GEOSX version ${GEOS_VERSION_FULL}" )
 
 
 ################################
@@ -135,7 +135,7 @@ if( ENABLE_HIP )
   list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
-if ( GEOSX_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_LIBS )
   list( APPEND extraComponentsLinkList geosx_core )
 else()
   list( APPEND extraComponentsLinkList ${geosx_core_libs} )
@@ -226,7 +226,7 @@ add_custom_target( geosx_generate_install_schema
          COMMENT "Generating XML schema to install"
          )
 
-if( NOT GEOSX_INSTALL_SCHEMA )
+if( NOT GEOS_INSTALL_SCHEMA )
   set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif()
 
@@ -270,19 +270,19 @@ if ( Python3_EXECUTABLE )
       set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
     endif()
 
-    set( GEOSX_PYTHON_TOOLS_BINS
+    set( GEOS_PYTHON_TOOLS_BINS
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
-    add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
+    add_custom_command( OUTPUT ${GEOS_PYTHON_TOOLS_BINS}
                         COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
     add_custom_target( geosx_python_tools
-                       DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+                       DEPENDS ${GEOS_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_clean
-                       COMMAND rm ${GEOSX_PYTHON_TOOLS_BINS} )
+                       COMMAND rm ${GEOS_PYTHON_TOOLS_BINS} )
 
     add_custom_target( geosx_python_tools_test
                        COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools

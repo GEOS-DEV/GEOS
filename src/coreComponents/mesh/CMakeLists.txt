@@ -184,7 +184,7 @@ blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

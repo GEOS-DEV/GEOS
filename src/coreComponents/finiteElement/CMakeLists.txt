@@ -46,7 +46,7 @@ blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
                  HEADERS    ${finiteElement_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
