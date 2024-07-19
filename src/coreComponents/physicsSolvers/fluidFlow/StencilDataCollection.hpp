@@ -73,11 +73,6 @@ public:
     static constexpr char const * transmissibilityBAString() { return "transmissibilityBA"; }
   };
 
-private:
-
-  using Base = TaskBase;
-  using LocalToGlobalMap = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
-
   class Kernel;
 
   /**
@@ -90,6 +85,11 @@ private:
     localIndex m_subRegionId[2];
     localIndex m_elementId[2];
   };
+
+private:
+
+  using Base = TaskBase;
+  using LocalToGlobalMap = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   /**
    * @brief Element-element connection data to be output by the class.
