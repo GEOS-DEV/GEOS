@@ -324,7 +324,7 @@ blt_add_library( NAME       constitutive
                  SOURCES    ${constitutive_sources}
                  HEADERS    ${constitutive_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

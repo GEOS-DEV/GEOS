@@ -9,7 +9,7 @@ set( componentSources NewComponent.cpp )
 unset( dependencyList )
 
 # Specify dependencies
-if ( GEOSX_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core)
 else()
   list( APPEND dependencyList ${geosx_core_libs} )
@@ -21,6 +21,6 @@ blt_add_library( NAME             newComponentTemplate
                  SOURCES          ${componentSources}
                  HEADERS          ${componentHeaders}
                  DEPENDS_ON       ${dependencyList}
-                 OBJECT           ${GEOSX_BUILD_OBJ_LIBS} )
+                 OBJECT           ${GEOS_BUILD_OBJ_LIBS} )
 
 target_include_directories( newComponentTemplate PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
