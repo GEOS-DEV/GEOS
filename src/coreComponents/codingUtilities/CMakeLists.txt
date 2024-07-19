@@ -25,7 +25,7 @@ blt_add_library( NAME       codingUtilities
                  SOURCES    ${codingUtilities_sources}
                  HEADERS    ${codingUtilities_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 # Avoid compiling with nvcc which sometimes crashes on fast_float
