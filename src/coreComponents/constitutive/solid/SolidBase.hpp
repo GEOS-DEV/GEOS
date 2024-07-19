@@ -165,7 +165,7 @@ public:
    * @return the Thermal Expansion Coefficient table name
    */
   GEOS_HOST_DEVICE
-  virtual string getDrainedTECTableName() const override
+  static string getDrainedTECTableName()
   {
     return m_drainedTECTableName;
   }
