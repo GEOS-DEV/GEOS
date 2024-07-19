@@ -25,7 +25,11 @@ namespace geos
 
 namespace logInfo
 {
-  
+
+/**
+ * @brief Trait used to check whether a LOG_LEVEL_INFO structure is valid.
+ * @tparam LOG_LEVEL_INFO The log level structure to check.
+ */
 template< typename LOG_LEVEL_INFO >
 static constexpr bool is_log_level_info =
   std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&

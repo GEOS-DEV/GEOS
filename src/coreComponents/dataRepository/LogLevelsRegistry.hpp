@@ -28,6 +28,11 @@ class LogLevelsRegistry
 {
 public:
   
+  /**
+   * @brief Add a log description for a wrapper
+   * @param level The minimum log level
+   * @param description The description for the log level
+   */
   void addEntry( integer level, std::string_view description );
 
   /**
@@ -44,6 +49,14 @@ private:
 
 };
 
+/**
+ * @brief Verify if a log level is active
+ * @tparam LOG_LEVEL_INFO The structure containing log level information.
+ * @param level Log level to be checked.
+ * @return `true` if the log level is active, `false` otherwise.
+ * @pre `LOG_LEVEL_INFO` must satisfy `logInfo::is_log_level_info`.
+ *
+ */
 template< typename LOG_LEVEL_INFO >
 std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, bool >
 isLogLevelActive( int level )

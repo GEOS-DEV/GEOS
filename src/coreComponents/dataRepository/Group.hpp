@@ -1629,7 +1629,9 @@ private:
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
 
+  // Keep track of log levels & descriptions 
   std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
+
   /// A DataContext object used to provide contextual information on this Group,
   /// if it is created from an input XML file, the line or offset in that file.
   std::unique_ptr< DataContext > m_dataContext;
