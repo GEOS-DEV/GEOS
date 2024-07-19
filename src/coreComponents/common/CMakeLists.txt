@@ -101,7 +101,7 @@ blt_add_library( NAME       common
                  SOURCES    ${common_sources}
                  HEADERS    ${common_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
