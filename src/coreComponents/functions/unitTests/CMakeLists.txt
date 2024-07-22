@@ -5,7 +5,7 @@ set( gtest_geosx_tests
 
 set( dependencyList ${parallelDeps} gtest functions )
 
-# if ( GEOSX_BUILD_SHARED_LIBS )
+# if ( GEOS_BUILD_SHARED_LIBS )
 #   list( APPEND dependencyList geosx_core )
 # else()
 #   list( APPEND dependencyList ${geosx_core_libs} )
@@ -19,8 +19,8 @@ if (TARGET pugixml)
   list( APPEND dependencyList pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  list( APPEND dependencyList fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)

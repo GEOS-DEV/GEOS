@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -91,7 +92,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_isThermal( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_isFixedStressPoromechanicsUpdate( false ),
-  m_isJumpStabilized( false )
+  m_isJumpStabilized( false ),
+  m_isLaggingFractureStencilWeightsUpdate( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -182,9 +184,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
       subRegion.registerField< fields::flow::hydraulicAperture >( getName() ).
-        setApplyDefaultValue( faceRegion.getDefaultAperture() );
-
-      subRegion.registerField< fields::flow::minimumHydraulicAperture >( getName() ).
         setApplyDefaultValue( faceRegion.getDefaultAperture() );
 
     } );
@@ -754,6 +753,8 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( getDiscretizationName() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > hydraulicAperture =
+      m_isLaggingFractureStencilWeightsUpdate ?
+      mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::aperture0::key() ) :
       mesh.getElemManager().constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::hydraulicAperture::key() );
 
     fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )

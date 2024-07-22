@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,7 +22,7 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
 #endif
 
@@ -88,6 +89,12 @@ SolverBase::SolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
+
+  registerWrapper( viewKeyStruct::writeLinearSystemString(), &m_writeLinearSystem ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Write matrix, rhs, solution to screen ( = 1) or file ( = 2)." );
 
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
@@ -1002,13 +1009,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // Solve the linear system
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+      // Increment the solver statistics for reporting purposes
+      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
+      // Output the linear system solution for debugging purposes
+      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
     }
-
-    // Increment the solver statistics for reporting purposes
-    m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
-
-    // Output the linear system solution for debugging purposes
-    debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
     {
       Timer timer( m_timers["apply solution"] );
@@ -1163,14 +1170,18 @@ void SolverBase::debugOutputSystem( real64 const & time,
                                     ParallelMatrix const & matrix,
                                     ParallelVector const & rhs ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( matrix,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_mat",
                        "System matrix",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 
   debugOutputLAObject( rhs,
                        time,
@@ -1178,8 +1189,8 @@ void SolverBase::debugOutputSystem( real64 const & time,
                        nonlinearIteration,
                        getName() + "_rhs",
                        "System right-hand side",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 void SolverBase::debugOutputSolution( real64 const & time,
@@ -1187,14 +1198,18 @@ void SolverBase::debugOutputSolution( real64 const & time,
                                       integer const nonlinearIteration,
                                       ParallelVector const & solution ) const
 {
+  // special case when flag value > 2
+  if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
+    return;
+
   debugOutputLAObject( solution,
                        time,
                        cycleNumber,
                        nonlinearIteration,
                        getName() + "_sol",
                        "System solution",
-                       getLogLevel() == 2,
-                       getLogLevel() >= 3 );
+                       m_writeLinearSystem == 1,
+                       m_writeLinearSystem >= 2 );
 }
 
 real64
@@ -1388,7 +1403,7 @@ void SolverBase::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PAR
   GEOS_ERROR( "Call to SolverBase::saveSequentialIterationState. Method should be overloaded by the solver" );
 }
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
 PyTypeObject * SolverBase::getPythonType() const
 { return python::getPySolverType(); }
 #endif
