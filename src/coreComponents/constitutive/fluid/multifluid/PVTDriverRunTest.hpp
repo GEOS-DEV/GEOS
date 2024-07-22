@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -63,17 +64,23 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   // perform fluid update using table (P,T) and save resulting total density, etc.
   // note: column indexing should be kept consistent with output file header below.
 
+  bool const outputMassDensity = (m_outputMassDensity != 0);
+  bool const outputCompressibility = (m_outputCompressibility != 0);
+  bool const outputPhaseComposition = (m_outputPhaseComposition != 0);
+
   integer const numSteps = m_numSteps;
-  integer const outputCompressibility = m_outputCompressibility;
-  integer const outputPhaseComposition = m_outputPhaseComposition;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [ outputCompressibility, outputPhaseComposition, numPhases, numComponents, numSteps, kernelWrapper,
-                          table, composition]
+                        [outputMassDensity, outputCompressibility, outputPhaseComposition,
+                         numPhases, numComponents, numSteps, kernelWrapper,
+                         table, composition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     // Index for start of phase properties
-    integer const PHASE = outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
+    integer const PHASE_FRACTION = outputCompressibility ? TEMP + 3 : TEMP + 2;
+    integer const PHASE_DENSITY = PHASE_FRACTION + numPhases;
+    integer const PHASE_VISCOSITY = outputMassDensity ? PHASE_DENSITY + 2*numPhases : PHASE_DENSITY + numPhases;
+    integer const PHASE_COMP = PHASE_VISCOSITY + numPhases;
 
     // Temporary space for phase mole fractions
     stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
@@ -83,22 +90,29 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
       table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
-      if( outputCompressibility != 0 )
+      if( outputCompressibility )
       {
         table( n, TEMP + 2 ) = kernelWrapper.totalCompressibility( i, 0 );
       }
 
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, PHASE + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-        table( n, PHASE + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
-        table( n, PHASE + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+        table( n, PHASE_FRACTION + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+        table( n, PHASE_DENSITY + p ) = kernelWrapper.phaseDensity()( i, 0, p );
+        table( n, PHASE_VISCOSITY + p ) = kernelWrapper.phaseViscosity()( i, 0, p );
       }
-      if( outputPhaseComposition != 0 )
+      if( outputMassDensity )
       {
         for( integer p = 0; p < numPhases; ++p )
         {
-          integer const compStartIndex = PHASE + 3 * numPhases + p * numComponents;
+          table( n, PHASE_DENSITY + numPhases + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
+        }
+      }
+      if( outputPhaseComposition )
+      {
+        for( integer p = 0; p < numPhases; ++p )
+        {
+          integer const compStartIndex = PHASE_COMP + p * numComponents;
 
           kernelWrapper.phaseCompMoleFraction( i, 0, p, phaseComposition );
           for( integer ic = 0; ic < numComponents; ++ic )
