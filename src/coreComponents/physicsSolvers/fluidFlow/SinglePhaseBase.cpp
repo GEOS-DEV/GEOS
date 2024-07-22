@@ -102,7 +102,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       }
     } );
 
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+    elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
