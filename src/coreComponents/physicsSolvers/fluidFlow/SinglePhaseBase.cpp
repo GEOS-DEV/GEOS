@@ -105,7 +105,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
-                                                                   FaceElementSubRegion & subRegion )
+                                                                   SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::flow::massCreated >( getName() );
     } );
