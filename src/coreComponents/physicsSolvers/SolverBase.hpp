@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -740,7 +741,7 @@ public:
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override;
 #endif
 
@@ -774,8 +775,6 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle
-                                                                                                                          // overload
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -840,7 +839,6 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,

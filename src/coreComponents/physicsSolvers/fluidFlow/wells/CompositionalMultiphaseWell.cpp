@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -109,9 +110,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 }
 
-void CompositionalMultiphaseWell::postProcessInput()
+void CompositionalMultiphaseWell::postInputInitialization()
 {
-  WellSolverBase::postProcessInput();
+  WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<

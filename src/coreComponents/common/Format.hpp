@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -18,11 +19,13 @@
 #include <type_traits>
 
 #if __cplusplus < 202002L
-#define GEOSX_USE_FMT
+#define GEOS_USE_FMT
 #endif
 
-#ifdef GEOSX_USE_FMT
+#ifdef GEOS_USE_FMT
+#ifndef FMT_HEADER_ONLY
 #define FMT_HEADER_ONLY
+#endif
 // Differentiate between standalone fmt path and umpire's fmt path
 #include "../include/fmt/core.h"
 #include "../include/fmt/chrono.h"
@@ -34,7 +37,7 @@
 #define GEOS_FMT_NS std
 #endif
 
-#ifdef GEOSX_USE_FMT
+#ifdef GEOS_USE_FMT
 /**
  * @brief fmtlib formatter for enum classes.
  * @tparam T The type of the object being formatted. This should be an
@@ -63,7 +66,7 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
    * @return An iterator pointing to the end of the formatted string.
    */
   template< typename FormatContext >
-  auto format( const T & value, FormatContext & ctx )
+  auto format( const T & value, FormatContext & ctx ) const
   {
     return fmt::format_to( ctx.out(), "{}", static_cast< std::underlying_type_t< T > >( value ) );
   }
