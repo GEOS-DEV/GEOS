@@ -18,7 +18,7 @@ blt_add_library( NAME       schema
                  SOURCES    ${schema_sources}
                  HEADERS    ${schema_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 
