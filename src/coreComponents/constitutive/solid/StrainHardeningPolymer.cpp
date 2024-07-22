@@ -110,9 +110,9 @@ void StrainHardeningPolymer::allocateConstitutiveData( dataRepository::Group & p
 }
 
 
-void StrainHardeningPolymer::postProcessInput()
+void StrainHardeningPolymer::postInputInitialization()
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropic::postInputInitialization();
 
   // CC: need checks for strain hardening and softening inputs
   GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these are the rules for inputs

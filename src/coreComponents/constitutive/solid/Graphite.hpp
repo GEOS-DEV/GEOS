@@ -1507,7 +1507,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.

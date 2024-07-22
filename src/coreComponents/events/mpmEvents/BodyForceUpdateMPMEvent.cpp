@@ -37,7 +37,7 @@ namespace geos
   BodyForceUpdateMPMEvent::~BodyForceUpdateMPMEvent() 
   {}
 
-  void BodyForceUpdateMPMEvent::postProcessInput()
+  void BodyForceUpdateMPMEvent::postInputInitialization()
   {
     GEOS_ERROR_IF( m_bodyForce.size() != 3 && m_bodyForce.size() > 0,
                    "bodyForce must be of length 3. ");

@@ -47,7 +47,7 @@ namespace geos
   CrystalHealMPMEvent::~CrystalHealMPMEvent() 
   {}
 
-  void CrystalHealMPMEvent::postProcessInput()
+  void CrystalHealMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "CrystalHealEvent: " << 
                      "Time=" << m_time << ", " << 

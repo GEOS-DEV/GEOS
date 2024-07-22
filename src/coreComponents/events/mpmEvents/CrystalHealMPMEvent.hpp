@@ -63,7 +63,7 @@ public:
   void setMarkedParticlesToHeal(int markedParticlesToHeal ) { m_markedParticlesToHeal = markedParticlesToHeal; }
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   string m_targetRegion;

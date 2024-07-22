@@ -49,7 +49,7 @@ namespace geos
   DeformationUpdateMPMEvent::~DeformationUpdateMPMEvent() 
   {}
 
-  void DeformationUpdateMPMEvent::postProcessInput()
+  void DeformationUpdateMPMEvent::postInputInitialization()
   {
     GEOS_ERROR_IF( m_stressControl.size() != 3 && m_stressControl.size() > 0,
                    "stressControl must be of length 3. ");

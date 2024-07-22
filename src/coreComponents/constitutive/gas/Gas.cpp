@@ -70,9 +70,9 @@ void Gas::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 
-void Gas::postProcessInput()
+void Gas::postInputInitialization()
 {
-  ContinuumBase::postProcessInput();
+  ContinuumBase::postInputInitialization();
 
   GEOS_THROW_IF( m_referencePressure < 0.0, "Reference pressure must be greater than 0.0", InputError );
   GEOS_THROW_IF( m_referenceTemperature < 0.0, "Reference temperature must be greater than 0.0", InputError );

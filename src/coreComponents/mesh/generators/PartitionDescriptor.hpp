@@ -158,8 +158,5 @@ private:
 };
 
 }
-<<<<<<< HEAD
-#endif // Include guard
-=======
+
 #endif /* GEOS_MESH_PARTITIONDESCRIPTOR_H_ */
->>>>>>> develop

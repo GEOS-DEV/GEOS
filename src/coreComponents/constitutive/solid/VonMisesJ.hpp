@@ -660,7 +660,7 @@ public:
 protected:
 
   /// Post-process XML data
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the yield strength for any new allocations
   real64 m_defaultYieldStrength;

@@ -582,7 +582,7 @@ public:
 protected:
 
   /// Post-process XML data
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the first Lame constant for any new allocations.
   real64 m_defaultLambda;

@@ -64,7 +64,7 @@ ContinuumBase::~ContinuumBase()
 {}
 
 
-void ContinuumBase::postProcessInput()
+void ContinuumBase::postInputInitialization()
 {
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
     setApplyDefaultValue( m_defaultDensity );

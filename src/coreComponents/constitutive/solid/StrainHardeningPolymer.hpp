@@ -700,7 +700,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
   /// State variable: The deformation gradient values for each element/particle.
   array3d< real64 > m_deformationGradient;
 
