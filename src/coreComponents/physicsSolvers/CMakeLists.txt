@@ -250,7 +250,7 @@ blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}
                  HEADERS    ${physicsSolvers_headers}
                  DEPENDS_ON ${dependencyList} ${externalComponentDeps}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )

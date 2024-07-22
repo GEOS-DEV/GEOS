@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -95,7 +96,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::registerDataOnMesh( dataReposi
 {
   Base::registerDataOnMesh( meshBodies );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = *meshBody.getBaseDiscretization();
@@ -132,7 +133,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
   Base::implicitStepSetup( time_n, dt, domain );
   updateHydraulicApertureAndFracturePermeability( domain );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & faceElemRegion )
@@ -298,7 +299,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
     arrayView1d< real64 const > const &
     apertureF = subRegion.getReference< array1d< real64 > >( viewKeyStruct::apertureAtFailureString() );
 
@@ -332,7 +333,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
                                                                       deltaVolume,
                                                                       aperture,
                                                                       hydraulicAperture
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+#ifdef GEOS_USE_SEPARATION_COEFFICIENT
                                                                       ,
                                                                       apertureF,
                                                                       separationCoeff,
@@ -1026,7 +1027,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
       // Get the list of newFractureElements
       SortedArrayView< localIndex const > const newFractureElements = subRegion.m_newFaceElements.toViewConst();
 
-  #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  #ifdef GEOS_USE_SEPARATION_COEFFICIENT
       arrayView1d< real64 > const apertureF = subRegion.getReference< array1d< real64 > >( "apertureAtFailure" );
   #endif
 
@@ -1038,7 +1039,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         localIndex const newElemIndex = newFractureElements[k];
         real64 initialPressure = 1.0e99;
         real64 initialAperture = 1.0e99;
-  #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  #ifdef GEOS_USE_SEPARATION_COEFFICIENT
         apertureF[newElemIndex] = aperture[newElemIndex];
   #endif
         if( m_newFractureInitializationType == InitializationType::Displacement )
