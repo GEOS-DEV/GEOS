@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -28,7 +29,7 @@
 // System includes
 #include <stdexcept>
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   #include <mpi.h>
 #endif
 
@@ -553,12 +554,12 @@ extern int n_ranks;
 
 extern std::ostream * rankStream;
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
 extern MPI_Comm comm;
 #endif
 } // namespace internal
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
 /**
  * @brief Initialize the logger in a parallel build.
  * @param comm global MPI communicator
