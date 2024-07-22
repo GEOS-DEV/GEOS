@@ -36,7 +36,7 @@ namespace geos
   AnnealMPMEvent::~AnnealMPMEvent() 
   {}
 
-  void AnnealMPMEvent::postProcessInput()
+  void AnnealMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "AnnealEvent: " << 
                      "Time=" << m_time << ", " << 

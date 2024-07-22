@@ -504,7 +504,7 @@ public:
 protected:
 
   /// Post-process XML data
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The reference value of the pressure.
   real64 m_referencePressure;

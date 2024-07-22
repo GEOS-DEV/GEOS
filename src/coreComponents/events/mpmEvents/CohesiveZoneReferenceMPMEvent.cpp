@@ -32,7 +32,7 @@ namespace geos
   CohesiveZoneReferenceMPMEvent::~CohesiveZoneReferenceMPMEvent() 
   {}
 
-  void CohesiveZoneReferenceMPMEvent::postProcessInput()
+  void CohesiveZoneReferenceMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "CohesiveZoneReferenceEvent: " << 
                      "Time=" << m_time << ", " << 

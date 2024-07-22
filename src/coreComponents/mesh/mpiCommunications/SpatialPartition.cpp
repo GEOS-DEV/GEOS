@@ -124,9 +124,9 @@ SpatialPartition::SpatialPartition( string const & name,
 SpatialPartition::~SpatialPartition()
 {}
 
-void SpatialPartition::postProcessInput()
+void SpatialPartition::postInputInitialization()
 {
-  PartitionBase::postProcessInput();
+  PartitionBase::postInputInitialization();
 
     // Do LvArrays explicitly need to be resized to 0?
     if( m_partitionLocations.size() == 0)

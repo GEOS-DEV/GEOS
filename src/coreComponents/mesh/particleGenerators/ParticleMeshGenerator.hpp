@@ -123,7 +123,7 @@ private:
   };
   /// @endcond
 
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   /// Path to the particle file
   Path m_particleFilePath;

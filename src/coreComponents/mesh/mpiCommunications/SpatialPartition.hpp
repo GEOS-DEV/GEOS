@@ -129,7 +129,7 @@ public:
   
   virtual string getCatalogName() const override { return catalogName(); }
 
-  void postProcessInput() override; 
+  void postInputInitialization() override; 
 
   bool isCoordInPartition( const real64 & coord, const int dir ) const override;
 

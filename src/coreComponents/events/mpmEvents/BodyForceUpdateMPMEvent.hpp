@@ -55,7 +55,7 @@ public:
   array1d< real64 > getBodyForce() const { return m_bodyForce; } 
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   array1d< real64 > m_bodyForce;

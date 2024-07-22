@@ -59,7 +59,7 @@ public:
   array1d< int > getStressControl() const { return m_stressControl; } 
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   int m_prescribedFTable;

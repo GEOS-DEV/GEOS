@@ -58,7 +58,7 @@ public:
     array2d< real64 > getFrictionCoefficientTable() const { return m_frictionCoefficientTable; }
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   real64 m_frictionCoefficient;
