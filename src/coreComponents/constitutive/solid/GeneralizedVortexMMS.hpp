@@ -382,7 +382,7 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// State variable: The jacobian of the deformation
   array2d< real64 > m_jacobian;

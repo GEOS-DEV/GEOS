@@ -60,9 +60,9 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
   return nullptr;
 }
 
-void ParticleMeshGenerator::postProcessInput()
+void ParticleMeshGenerator::postInputInitialization()
 {
-  ParticleMeshGeneratorBase::postProcessInput();
+  ParticleMeshGeneratorBase::postInputInitialization();
 
   GEOS_ERROR_IF(m_blockNames.size() == 0, "No particle blocks were specified! Must specify at least one particle block.");
   GEOS_ERROR_IF(m_blockNames.size() != m_particleTypes.size(), "The particle block and type lists must have the same size.");

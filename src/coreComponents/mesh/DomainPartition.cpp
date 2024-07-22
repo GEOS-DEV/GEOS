@@ -80,7 +80,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
 
-#if defined(GEOSX_USE_MPI)
+#if defined(GEOS_USE_MPI)
   // PartitionBase & partition1 = getReference< PartitionBase >( groupKeys.partitionManager ); //keys::partitionManager );
   // SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) );

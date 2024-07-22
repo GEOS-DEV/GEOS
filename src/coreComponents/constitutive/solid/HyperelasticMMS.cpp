@@ -68,11 +68,11 @@ HyperelasticMMS::HyperelasticMMS( string const & name, Group * const parent ):
 HyperelasticMMS::~HyperelasticMMS()
 {}
 
-void HyperelasticMMS::postProcessInput()
+void HyperelasticMMS::postInputInitialization()
 {
   // check what constants the user actually input, and do conversions as needed
 
-  SolidBase::postProcessInput();
+  SolidBase::postInputInitialization();
 
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
   real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungModulusString() );

@@ -71,9 +71,9 @@ void VonMisesJ::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 
-void VonMisesJ::postProcessInput()
+void VonMisesJ::postInputInitialization()
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropic::postInputInitialization();
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).
     setApplyDefaultValue( m_defaultYieldStrength );

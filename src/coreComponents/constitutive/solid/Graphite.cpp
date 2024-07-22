@@ -228,9 +228,9 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 
-void Graphite::postProcessInput()
+void Graphite::postInputInitialization()
 {
-  SolidBase::postProcessInput();
+  SolidBase::postInputInitialization();
 
   // GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
   //                  "Ep: " << m_defaultYoungModulusTransverse << "\n" << 

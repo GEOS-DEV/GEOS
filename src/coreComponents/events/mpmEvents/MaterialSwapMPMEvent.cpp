@@ -41,7 +41,7 @@ namespace geos
   MaterialSwapMPMEvent::~MaterialSwapMPMEvent() 
   {}
 
-  void MaterialSwapMPMEvent::postProcessInput()
+  void MaterialSwapMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "MaterialSwapEvent: " << 
                      "Time=" << m_time << ", " << 

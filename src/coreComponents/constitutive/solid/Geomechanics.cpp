@@ -229,9 +229,9 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
 }
 
 
-void Geomechanics::postProcessInput()
+void Geomechanics::postInputInitialization()
 {
-    SolidBase::postProcessInput();
+    SolidBase::postInputInitialization();
 
     // GEOS_THROW_IF( m_b0 <= 0.0, "b0 must be greater than 0", InputError );
     // GEOS_THROW_IF( m_b1 <= 0.0, "b1 must be greater than 0", InputError );

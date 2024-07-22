@@ -683,7 +683,7 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
   /// The default value of the transverse Young's modulus pressure derivative for new allocations.
   real64 m_defaultYoungModulusTransversePressureDerivative;
 

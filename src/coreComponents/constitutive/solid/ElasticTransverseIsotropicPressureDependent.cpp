@@ -131,9 +131,9 @@ void ElasticTransverseIsotropicPressureDependent::allocateConstitutiveData( data
   ElasticTransverseIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );  
 }
 
-void ElasticTransverseIsotropicPressureDependent::postProcessInput()
+void ElasticTransverseIsotropicPressureDependent::postInputInitialization()
 {
-  ElasticTransverseIsotropic::postProcessInput();
+  ElasticTransverseIsotropic::postInputInitialization();
   
   real64 & refC11 = getReference< real64 >( viewKeyStruct::refC11String() );
   real64 & refC13 = getReference< real64 >( viewKeyStruct::refC13String() );

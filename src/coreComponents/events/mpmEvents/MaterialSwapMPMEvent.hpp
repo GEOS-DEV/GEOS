@@ -61,7 +61,7 @@ public:
   string getDestinationRegion() const { return m_destinationRegion; }
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   // Event variables
   string m_sourceRegion;

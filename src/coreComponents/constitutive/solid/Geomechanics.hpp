@@ -2479,7 +2479,7 @@ public:
   arrayView1d< real64 const > getShearModulus() const override { return m_shearModulus; }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   // Tangent elastic bulk modulus parameters
   real64 m_b0;

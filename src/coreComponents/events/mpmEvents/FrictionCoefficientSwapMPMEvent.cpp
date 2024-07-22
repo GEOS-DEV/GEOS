@@ -42,7 +42,7 @@ namespace geos
   FrictionCoefficientSwapMPMEvent::~FrictionCoefficientSwapMPMEvent() 
   {}
 
-  void FrictionCoefficientSwapMPMEvent::postProcessInput()
+  void FrictionCoefficientSwapMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "FrictionCoefficientSwapEvent: " << 
                      "Time=" << m_time << ", " << 

@@ -139,8 +139,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_boxAverageHistory( 0 ),
   m_boxAverageWriteInterval( 0.0 ),
   m_reactionHistory( 0 ),
-  m_writeParticleData( 0 ).
   m_reactionWriteInterval( 0.0 ),
+  m_writeParticleData( 0 ),
   m_particleDataWriteInterval( 0.0 ),
   m_explicitSurfaceNormalInfluence( 0.0 ),
   m_computeSurfaceNormalsOnlyOnInitialization( 0 ),
@@ -2638,7 +2638,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     if( time_n + dt >= m_nextParticleDataWriteTime )
     {
-      writeParticleData( dt, particleManager );
+      writeParticleData( time_n, particleManager );
       m_nextParticleDataWriteTime += m_particleDataWriteInterval;
     }
   }
@@ -5796,8 +5796,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   }
 }
 
-void SolidMechanicsMPM::writeParticleData( const real64, time_n, 
-                                           ParticleManager & particleManager )
+void SolidMechanicsMPM::writeParticleData( const real64 GEOS_UNUSED_PARAM( time_n ), 
+                                           ParticleManager & GEOS_UNUSED_PARAM( particleManager ) )
 {
   GEOS_LOG_RANK_0( "Particle data writing to file is not currently implemented!" );
   // // Each particle writes to separate file to avoid race condition (only one rank should possess the particle as a master)

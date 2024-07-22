@@ -50,7 +50,7 @@ SolidBase::~SolidBase()
 
 void SolidBase::postInputInitialization()
 {
-  ContinuumBase::postProcessInput();
+  ContinuumBase::postInputInitialization();
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );

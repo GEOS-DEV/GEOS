@@ -61,7 +61,7 @@ namespace geos
   MachineSampleMPMEvent::~MachineSampleMPMEvent() 
   {}
 
-  void MachineSampleMPMEvent::postProcessInput()
+  void MachineSampleMPMEvent::postInputInitialization()
   {
     if( m_sampleType == "dogbone" )
     {

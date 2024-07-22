@@ -47,7 +47,7 @@ namespace geos
   TemperatureRampMPMEvent::~TemperatureRampMPMEvent() 
   {}
 
-  void TemperatureRampMPMEvent::postProcessInput()
+  void TemperatureRampMPMEvent::postInputInitialization()
   {
     GEOS_ERROR_IF( m_startTemperature < 0.0 || m_endTemperature < 0.0  , "Temperatures must be positive!");
 

@@ -504,7 +504,7 @@ public:
                                   const real64 time_n,
                                   ParticleManager & particleManager );
 
-  void writeParticleData( const real64, time_n, 
+  void writeParticleData( const real64 time_n, 
                           ParticleManager & particleManager );
 
   void computeBoxMetrics( ParticleManager & particleManager,
@@ -942,7 +942,8 @@ private:
     }
   };
 
-  void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
+  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
+  // void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
