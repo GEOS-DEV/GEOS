@@ -157,14 +157,18 @@ public:
                       STENCILWRAPPER_T const & stencilWrapper,
                       ElementViewConst< arrayView3d< real64 const > > const & permeability )
   {
+    using IndexContainerType = typename STENCILWRAPPER_T::IndexContainerViewConstType;
+    IndexContainerType const & elemRegionIndices = stencilWrapper.getElementRegionIndices();
+    IndexContainerType const & elemSubRegionIndices = stencilWrapper.getElementSubRegionIndices();
+    IndexContainerType const & elementIndices = stencilWrapper.getElementIndices();
+
     forAll< POLICY >( stencilWrapper.size(), [stencilWrapper,
+                                              elemRegionIndices,
+                                              elemSubRegionIndices,
+                                              elementIndices,
                                               permeability,
                                               connData] GEOS_HOST_DEVICE ( localIndex const iConn )
     {
-      using IndexContainerType = typename STENCILWRAPPER_T::IndexContainerViewConstType const &;
-      IndexContainerType elemRegionIndices = stencilWrapper.getElementRegionIndices();
-      IndexContainerType elemSubRegionIndices = stencilWrapper.getElementSubRegionIndices();
-      IndexContainerType elementIndices = stencilWrapper.getElementIndices();
       real64 transmissibility[1][2];
       real64 dummy[1][2];
 
@@ -178,9 +182,9 @@ public:
       for( localIndex i = 0; i < 2; ++i )
       {
         connData[iConn].m_transmissibility[i] = transmissibility[0][i];
-        connData[iConn].m_regionId[i] = elemRegionIndices[iConn][i];
-        connData[iConn].m_subRegionId[i] = elemSubRegionIndices[iConn][i];
-        connData[iConn].m_elementId[i] = elementIndices[iConn][i];
+        connData[iConn].m_regionId[i] = elemRegionIndices( iConn, i );
+        connData[iConn].m_subRegionId[i] = elemSubRegionIndices( iConn, i );
+        connData[iConn].m_elementId[i] = elementIndices( iConn, i );
       }
     } );
   }
