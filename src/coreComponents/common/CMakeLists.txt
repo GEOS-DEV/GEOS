@@ -59,8 +59,8 @@ if (TARGET conduit)
   set( dependencyList ${dependencyList} conduit )
 endif()
 
-if (TARGET fmt::fmt)
-  set( dependencyList ${dependencyList} fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  set( dependencyList ${dependencyList} fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)
@@ -101,7 +101,7 @@ blt_add_library( NAME       common
                  SOURCES    ${common_sources}
                  HEADERS    ${common_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )

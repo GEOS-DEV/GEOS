@@ -24,7 +24,7 @@ blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}
                  HEADERS    ${mainInterface_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 add_dependencies( mainInterface generate_version )

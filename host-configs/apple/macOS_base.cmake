@@ -41,15 +41,15 @@ set( LAPACK_LIBRARIES /Users/byer3/apps/opt/lapack-3.11/liblapack.dylib CACHE PA
 
 set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE )
-#set(GEOSX_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE)
+#set(GEOS_BUILD_OBJ_LIBS ON CACHE BOOL "" FORCE)
 
 
 
 #set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
 #set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )
 
-if(NOT ( EXISTS "${GEOSX_TPL_DIR}" AND IS_DIRECTORY "${GEOSX_TPL_DIR}" ) )
-   set(GEOSX_TPL_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs/install-${CONFIG_NAME}-release" CACHE PATH "" FORCE )
+if(NOT ( EXISTS "${GEOS_TPL_DIR}" AND IS_DIRECTORY "${GEOS_TPL_DIR}" ) )
+   set(GEOS_TPL_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs/install-${CONFIG_NAME}-release" CACHE PATH "" FORCE )
 endif()
 
 # ATS

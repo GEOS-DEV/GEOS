@@ -5,10 +5,10 @@ set( gtest_geosx_tests
 
 set( dependencyList ${parallelDeps} gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  list( APPEND dependencyList geosx_core ${parallelDeps} )
+if ( GEOS_BUILD_SHARED_LIBS )
+  list( APPEND dependencyList geosx_core ${parallelDeps} HDF5::HDF5 )
 else()
-  list( APPEND dependencyList ${geosx_core_libs} ${parallelDeps} )
+  list( APPEND dependencyList ${geosx_core_libs} ${parallelDeps} HDF5::HDF5 )
 endif()
 
 if( ENABLE_PVTPackage )
@@ -30,8 +30,8 @@ if (TARGET pugixml)
   list( APPEND dependencyList pugixml )
 endif()
 
-if (TARGET fmt::fmt)
-  list( APPEND dependencyList fmt::fmt )
+if (TARGET fmt::fmt-header-only)
+  list( APPEND dependencyList fmt::fmt-header-only )
 endif()
 
 if (TARGET fmt)
