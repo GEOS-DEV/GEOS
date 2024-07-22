@@ -95,7 +95,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< fields::flow::mass >( getName() );
       subRegion.registerField< fields::flow::mass_n >( getName() );
-      
+
 
       if( m_isThermal )
       {
@@ -104,8 +104,8 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     } );
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   SurfaceElementSubRegion & subRegion )
+                                                                 [&]( localIndex const,
+                                                                      SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::flow::massCreated >( getName() );
     } );

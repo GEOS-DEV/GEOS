@@ -279,7 +279,7 @@ DECLARE_FIELD( massCreated,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "The amount of remaining mass that was introduced when the SurfaceElement was created." );                  
+               "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
 }
 
