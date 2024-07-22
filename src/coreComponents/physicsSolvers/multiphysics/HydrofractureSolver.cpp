@@ -1015,7 +1015,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
                                                                  SurfaceElementRegion & region )
     {
       real64 const defaultAperture = region.getDefaultAperture();
-      region.forElementSubRegions< FaceElementSubRegion >( [=, &faceManager]( FaceElementSubRegion & subRegion )
+      region.forElementSubRegions< FaceElementSubRegion >( [=]( FaceElementSubRegion & subRegion )
       {
         ArrayOfArraysView< localIndex const > const facesToEdges = subRegion.edgeList().toViewConst();
         ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
