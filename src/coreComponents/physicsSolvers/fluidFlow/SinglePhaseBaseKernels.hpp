@@ -374,7 +374,6 @@ public:
       if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
       {
         stack.localResidual[0] += m_creationMass[ei] * 0.25;
-        std::cout << "mass creation: " << m_creationMass[ei] << std::endl;
       }
     } );
   }

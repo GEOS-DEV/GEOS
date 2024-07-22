@@ -1027,9 +1027,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         arrayView1d< real64 > const fluidPressure = subRegion.getField< fields::flow::pressure >();
         string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-        arrayView2d< real64 const > const fluidDensity_n = fluid.density_n();
+        // arrayView2d< real64 const > const fluidDensity_n = fluid.density_n();
+        real64 const defaultDensity = fluid.defaultDensity();
         arrayView1d< real64 > const massCreated  = subRegion.getField< fields::flow::massCreated >();
-        arrayView1d< real64 > const mass_n  = subRegion.getField< fields::flow::mass_n >();
+        // arrayView1d< real64 > const mass_n  = subRegion.getField< fields::flow::mass_n >();
 
 
         arrayView1d< real64 > const aperture = subRegion.getField< fields::elementAperture >();
@@ -1050,7 +1051,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
           localIndex const newElemIndex = newFractureElements[k];
           real64 initialPressure = 1.0e99;
           real64 initialAperture = 1.0e99;
-          real64 initialDensity = 1.0e99;
+          // real64 initialDensity = 1.0e99;
   #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
           apertureF[newElemIndex] = aperture[newElemIndex];
   #endif
@@ -1080,7 +1081,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
               {
                 initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
                 initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
-                initialDensity  = std::min( initialDensity, fluidDensity_n[fractureElementIndex][0] );
+                // initialDensity  = std::min( initialDensity, fluidDensity_n[fractureElementIndex][0] );
               }
             }
           }
@@ -1088,9 +1089,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
           {
             fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
             fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
-            mass_n[newElemIndex] = initialDensity * defaultAperture * elementArea[newElemIndex];
-            massCreated[newElemIndex] = mass_n[newElemIndex];
-
+            massCreated[newElemIndex] = defaultDensity * defaultAperture * elementArea[newElemIndex];
           }
           else if( m_newFractureInitializationType == InitializationType::Displacement )
           {
