@@ -1055,10 +1055,6 @@ MultiFluidBase::KernelWrapper::
     bool const phaseExists = (phaseFrac.value[ip] > 0);
     if( !phaseExists )
     {
-      for( integer idof = 0; idof < numDOF; ++idof )
-      {
-        phaseInternalEnergy.derivs[ip][idof] = 0.0;
-      }
       continue;
     }
 
