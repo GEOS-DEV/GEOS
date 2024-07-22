@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -651,7 +652,7 @@ protected:
    */
   virtual void resizeFields( localIndex const size, localIndex const numPts );
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
@@ -1047,6 +1048,7 @@ MultiFluidBase::KernelWrapper::
 {
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
+  integer const numDOF = numComp + 2;
   for( integer ip = 0; ip < numPhase; ++ip )
   {
 
@@ -1059,7 +1061,7 @@ MultiFluidBase::KernelWrapper::
     real64 const densInv = 1.0 / phaseMassDens.value[ip];
     real64 const densInvSquared = densInv * densInv;
     phaseInternalEnergy.value[ip] = phaseEnthalpy.value[ip] - pressure * densInv;
-    for( integer idof = 0; idof < numComp; ++idof )
+    for( integer idof = 0; idof < numDOF; ++idof )
     {
       phaseInternalEnergy.derivs[ip][idof] = phaseEnthalpy.derivs[ip][idof] + pressure * phaseMassDens.derivs[ip][idof] * densInvSquared;
     }

@@ -41,7 +41,7 @@
     <!-- SPHINX_POROSITY -->    
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"
       defaultPorosityTEC="3e-7"/>
     <!-- SPHINX_POROSITY_END -->        
@@ -49,7 +49,7 @@
     <!-- SPHINX_INTERNAL_ENERGY -->            
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1.672e5"
+      referenceVolumetricHeatCapacity="1.672e5"
       referenceTemperature="0.0"
       referenceInternalEnergy="0.0"/>
     <!-- SPHINX_INTERNAL_ENERGY_END -->        

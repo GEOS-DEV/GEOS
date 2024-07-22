@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -28,35 +29,47 @@ namespace compositional
 {
 
 // Naming conventions
-template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
-string NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::catalogName()
+string NegativeTwoPhaseFlashModel::catalogName()
 {
-  return EOS_TYPE_LIQUID::catalogName();
+  return "TwoPhase";
 }
 
-template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
-NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
-NegativeTwoPhaseFlashModel( string const & name,
-                            ComponentProperties const & componentProperties ):
+NegativeTwoPhaseFlashModel::NegativeTwoPhaseFlashModel( string const & name,
+                                                        ComponentProperties const & componentProperties,
+                                                        ModelParameters const & modelParameters ):
   FunctionBase( name, componentProperties )
-{}
-
-template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
-typename NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::KernelWrapper
-NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties.getNumberOfComponents() );
+  m_parameters = modelParameters.get< EquationOfState >();
 }
 
-template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
-NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
-NegativeTwoPhaseFlashModelUpdate( integer const numComponents ):
-  m_numComponents( numComponents )
+NegativeTwoPhaseFlashModel::KernelWrapper
+NegativeTwoPhaseFlashModel::createKernelWrapper() const
+{
+  constexpr integer liquidIndex = 0;
+  constexpr integer vapourIndex = 1;
+  EquationOfStateType const liquidEos =  EnumStrings< EquationOfStateType >::fromString( m_parameters->m_equationsOfStateNames[liquidIndex] );
+  EquationOfStateType const vapourEos =  EnumStrings< EquationOfStateType >::fromString( m_parameters->m_equationsOfStateNames[vapourIndex] );
+  return KernelWrapper( m_componentProperties.getNumberOfComponents(), liquidIndex, vapourIndex, liquidEos, vapourEos );
+}
+
+NegativeTwoPhaseFlashModelUpdate::NegativeTwoPhaseFlashModelUpdate(
+  integer const numComponents,
+  integer const liquidIndex,
+  integer const vapourIndex,
+  EquationOfStateType const liquidEos,
+  EquationOfStateType const vapourEos ):
+  m_numComponents( numComponents ),
+  m_liquidIndex( liquidIndex ),
+  m_vapourIndex( vapourIndex ),
+  m_liquidEos( liquidEos ),
+  m_vapourEos( vapourEos )
 {}
 
-// Explicit instantiation of the model template.
-template class NegativeTwoPhaseFlashModel< CubicEOSPhaseModel< PengRobinsonEOS >, CubicEOSPhaseModel< PengRobinsonEOS > >;
-template class NegativeTwoPhaseFlashModel< CubicEOSPhaseModel< SoaveRedlichKwongEOS >, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+std::unique_ptr< ModelParameters >
+NegativeTwoPhaseFlashModel::createParameters( std::unique_ptr< ModelParameters > parameters )
+{
+  return EquationOfState::create( std::move( parameters ) );
+}
 
 } // end namespace compositional
 

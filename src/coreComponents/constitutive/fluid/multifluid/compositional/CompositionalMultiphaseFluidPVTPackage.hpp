@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -64,6 +65,7 @@ public:
     static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
+    static constexpr char const * constantPhaseViscosityString() { return "constantPhaseViscosity"; }
   };
 
   /**
@@ -98,6 +100,7 @@ private:
 
     KernelWrapper( pvt::MultiphaseSystem & fluid,
                    arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+                   arrayView1d< real64 const > const & constantPhaseViscosity,
                    arrayView1d< real64 const > const & componentMolarWeight,
                    bool const useMass,
                    PhaseProp::ViewType phaseFraction,
@@ -112,6 +115,7 @@ private:
     pvt::MultiphaseSystem & m_fluid;
 
     arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
+    arrayView1d< real64 const > m_constantPhaseViscosity;
   };
 
   /**
@@ -122,7 +126,7 @@ private:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
 
@@ -138,6 +142,9 @@ private:
 
   // names of equations of state to use for each phase
   string_array m_equationsOfState;
+
+  // Phase viscosity
+  array1d< real64 > m_constantPhaseViscosity;
 
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
@@ -239,7 +246,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
     phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
 
     // TODO
-    phaseViscosity.value[ip] = 0.001;
+    phaseViscosity.value[ip] = m_constantPhaseViscosity[ip];
     phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
 

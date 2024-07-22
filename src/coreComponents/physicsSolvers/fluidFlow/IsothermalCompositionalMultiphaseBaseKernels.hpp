@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -1156,7 +1157,9 @@ public:
   /**
    * @brief Create a new kernel instance
    * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
    * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] maxRelativeCompDensChange the max allowed comp density change
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
    * @param[in] dofKey the dof key to get dof numbers
@@ -1170,6 +1173,7 @@ public:
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
                                   real64 const maxAbsolutePresChange,
                                   real64 const maxCompFracChange,
+                                  real64 const maxRelativeCompDensChange,
                                   globalIndex const rankOffset,
                                   integer const numComp,
                                   string const dofKey,
@@ -1190,7 +1194,8 @@ public:
             compDensScalingFactor ),
     m_maxRelativePresChange( maxRelativePresChange ),
     m_maxAbsolutePresChange( maxAbsolutePresChange ),
-    m_maxCompFracChange( maxCompFracChange )
+    m_maxCompFracChange( maxCompFracChange ),
+    m_maxRelativeCompDensChange( maxRelativeCompDensChange )
   {}
 
   /**
@@ -1379,17 +1384,32 @@ public:
         stack.localMaxDeltaCompDens = absCompDensChange;
       }
 
-      real64 const maxAbsCompDensChange = m_maxCompFracChange * prevTotalDens;
-
       // This actually checks the change in component fraction, using a lagged total density
       // Indeed we can rewrite the following check as:
       //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
       // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
       // because I found it more robust than using directly newTotalDens (which can vary also
       // wildly when the compDens change is large)
+      real64 const maxAbsCompDensChange = m_maxCompFracChange * prevTotalDens;
       if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
       {
         real64 const compScalingFactor = maxAbsCompDensChange / absCompDensChange;
+        m_compDensScalingFactor[ei] = LvArray::math::min( m_compDensScalingFactor[ei], compScalingFactor );
+        if( stack.localMinVal > compScalingFactor )
+        {
+          stack.localMinVal = compScalingFactor;
+        }
+        if( stack.localMinCompDensScalingFactor > compScalingFactor )
+        {
+          stack.localMinCompDensScalingFactor = compScalingFactor;
+        }
+      }
+
+      // switch from relative to absolute when value is < 1.0
+      real64 const maxRelCompDensChange = m_maxRelativeCompDensChange * LvArray::math::max( m_compDens[ei][ic], 1.0 );
+      if( absCompDensChange > maxRelCompDensChange && absCompDensChange > eps )
+      {
+        real64 const compScalingFactor = maxRelCompDensChange / absCompDensChange;
         m_compDensScalingFactor[ei] = LvArray::math::min( m_compDensScalingFactor[ei], compScalingFactor );
         if( stack.localMinVal > compScalingFactor )
         {
@@ -1412,6 +1432,7 @@ protected:
   real64 const m_maxRelativePresChange;
   real64 const m_maxAbsolutePresChange;
   real64 const m_maxCompFracChange;
+  real64 const m_maxRelativeCompDensChange;
 
 };
 
@@ -1426,7 +1447,9 @@ public:
    * @brief Create and launch the kernel computing the scaling factor
    * @tparam POLICY the kernel policy
    * @param[in] maxRelativePresChange the max allowed relative pressure change
+   * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
    * @param[in] maxCompFracChange the max allowed comp fraction change
+   * @param[in] maxRelativeCompDensChange the max allowed comp density change
    * @param[in] rankOffset the rank offset
    * @param[in] numComp the number of components
    * @param[in] dofKey the dof key to get dof numbers
@@ -1439,6 +1462,7 @@ public:
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
+                   real64 const maxRelativeCompDensChange,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
@@ -1453,7 +1477,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, maxRelativeCompDensChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }

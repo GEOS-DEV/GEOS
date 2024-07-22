@@ -22,6 +22,7 @@ set( finiteElement_headers
      elementFormulations/LagrangeBasis2.hpp
      elementFormulations/LagrangeBasis3GL.hpp
      elementFormulations/LagrangeBasis5GL.hpp
+     kernelInterface/InterfaceKernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/SparsityKernelBase.hpp
@@ -45,7 +46,7 @@ blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
                  HEADERS    ${finiteElement_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
