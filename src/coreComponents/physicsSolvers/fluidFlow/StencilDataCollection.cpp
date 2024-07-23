@@ -106,7 +106,7 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
     m_transmissibilityAB.resize( connCount );
     m_transmissibilityBA.resize( connCount );
     GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                         getDataContext(), connCount, m_discretization->getName() ) );
+                                         getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
   GEOS_ERROR_IF( supportedStencilCount == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
@@ -263,7 +263,7 @@ void StencilDataCollection::logStoredConnections( string_view stencilName )
 {
   integer const connCount = MpiWrapper::sum( m_cellAGlobalId.size() );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: {} connections stored for '{}'.",
-                                      getDataContext(), connCount, stencilName ) );
+                                      getName(), connCount, stencilName ) );
 }
 
 
