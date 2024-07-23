@@ -166,7 +166,7 @@ The value of :math:`V` corresponding to a given set of K-values is determined by
 so called Rachford and-Rice equation:
 
 .. math::
-    F(V) = \Sum_{i=1}^{N_c} \left(x_i - y_i\right) = \Sum_{i=1}^{N_c} \frac{z_i(1 - K_i)}{1 + (K_i - 1)V} = 0
+    F(V) = \sum_{i=1}^{N_c} \left(x_i - y_i\right) = \sum_{i=1}^{N_c} \frac{z_i(1 - K_i)}{1 + (K_i - 1)V} = 0
 
 The flash calculation process is as follows:
 
