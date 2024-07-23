@@ -394,6 +394,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                           << ": Cannot compute average pressure because region pore volume is zero." );
     }
 
+
     // helpers to report statistics
     array1d< real64 > nonTrappedPhaseMass( numPhases );
     array1d< real64 > mobilePhaseMass( numPhases );

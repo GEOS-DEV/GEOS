@@ -110,6 +110,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
+
 }
 
 void AquiferBoundaryCondition::postInputInitialization()
