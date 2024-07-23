@@ -407,8 +407,6 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< elasticfields::ElasticVelocityVp >();
       arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
 
-      real64 dtCompute=0.0;
-
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
@@ -436,28 +434,6 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              dampingx,
                                                                              dampingy,
                                                                              dampingz );
-        //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
-        // if( m_preComputeDt==1 )
-        // {
-        //   elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-
-        //   dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                                      nodeManager.size(),
-        //                                                                      nodeCoords,
-        //                                                                      density,
-        //                                                                      velocityVp,
-        //                                                                      velocityVs,
-        //                                                                      elemsToNodes,
-        //                                                                      mass );
-
-
-        //   real64 globaldt = MpiWrapper::min( dtCompute );
-
-        //   printf( "dt=%f\n", globaldt );
-
-        //   exit( 2 );
-
-        // }
       } );
     } );
 
@@ -520,7 +496,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const sizeNode = nodeManager.size();
 
         real64 const epsilon = 0.00001;

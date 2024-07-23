@@ -398,7 +398,6 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const sizeNode = nodeManager.size();
 
         real64 const epsilon = 0.00001;
