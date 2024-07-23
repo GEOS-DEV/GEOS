@@ -433,8 +433,8 @@ void NegativeTwoPhaseFlash::computeDerivatives(
 
     constexpr integer maxNumVals = 2*MultiFluidConstants::MAX_NUM_COMPONENTS+1;
     integer const numVals = 2*numComps;
-    StackArray< real64, 2, maxNumVals *maxNumVals, MatrixLayout::COL_MAJOR_PERM > A( numVals + 1, numVals + 1 );
-    StackArray< real64, 2, maxNumVals *maxNumVals, MatrixLayout::COL_MAJOR_PERM > X( numVals + 1, numVals + 1 );
+    StackArray< real64, 2, maxNumVals * maxNumVals, MatrixLayout::COL_MAJOR_PERM > A( numVals + 1, numVals + 1 );
+    StackArray< real64, 2, maxNumVals * maxNumVals, MatrixLayout::COL_MAJOR_PERM > X( numVals + 1, numVals + 1 );
 
     LvArray::forValuesInSlice( A.toSlice(), setZero );
     LvArray::forValuesInSlice( X.toSlice(), setZero );
