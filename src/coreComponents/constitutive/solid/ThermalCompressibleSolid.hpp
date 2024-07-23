@@ -15,14 +15,16 @@
 
 
 /**
- * @file CompressibleSolid.hpp
+ * @file ThermalCompressibleSolid.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
-#define GEOS_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_THERMALCOMPRESSIBLESOLILD_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_THERMALCOMPRESSIBLESOLILD_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
+#include "constitutive/thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {
@@ -35,20 +37,24 @@ namespace constitutive
  *
  * @tparam PORO_TYPE type of the porosity model
  * @tparam PERM_TYPE type of the permeability model
+ * @tparam THERMAL_COND_TYPE type of the thermal conductivity model
  */
 template< typename PORO_TYPE,
-          typename PERM_TYPE >
-class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >
+          typename PERM_TYPE,
+          typename THERMAL_COND_TYPE >
+class ThermalCompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
 
   /**
    * @brief Constructor
    */
-  CompressibleSolidUpdates( NullModel const & solidModel,
+  ThermalCompressibleSolidUpdates( NullModel const & solidModel,
                             PORO_TYPE const & porosityModel,
-                            PERM_TYPE const & permModel ):
-    CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
+                            PERM_TYPE const & permModel,
+                            THERMAL_COND_TYPE const & condModel ):
+    CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel ),
+    m_condUpdate( condModel.createKernelWrapper() )
   {}
 
   GEOS_HOST_DEVICE
@@ -64,6 +70,9 @@ public:
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
+
+    // update thermal conductivity of the solid phase w.r.t. temperature change
+    m_condUpdate.updateFromTemperature( k, q, temperature );
   }
 
   GEOS_HOST_DEVICE
@@ -98,13 +107,15 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
+protected:
+  typename THERMAL_COND_TYPE::KernelWrapper const m_condUpdate;
 };
 
 
 /**
- * @brief CompressibleSolidBase class used for dispatch of all Compressible solids.
+ * @brief ThermalCompressibleSolidBase class used for dispatch of all Compressible solids.
  */
-class CompressibleSolidBase
+class ThermalCompressibleSolidBase
 {};
 
 
@@ -118,30 +129,31 @@ class CompressibleSolidBase
  */
 
 template< typename PORO_TYPE,
-          typename PERM_TYPE >
-class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >
+          typename PERM_TYPE,
+          typename THERMAL_COND_TYPE >
+class ThermalCompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
 
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >;
+  using KernelWrapper = ThermalCompressibleSolidUpdates< PORO_TYPE, PERM_TYPE, THERMAL_COND_TYPE >;
 
   /**
    * @brief Constructor
    * @param name Object name
    * @param parent Object's parent group
    */
-  CompressibleSolid( string const & name, dataRepository::Group * const parent );
+  ThermalCompressibleSolid( string const & name, dataRepository::Group * const parent );
 
   /// Destructor
-  virtual ~CompressibleSolid() override;
+  virtual ~ThermalCompressibleSolid() override;
 
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "CompressibleSolid" ) + PERM_TYPE::catalogName(); }
+  static string catalogName() { return string( "ThermalCompressibleSolid" ) + PERM_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
@@ -151,22 +163,28 @@ public:
 
 
   /**
-   * @brief Create a instantiation of the CompressibleSolidUpdates class
+   * @brief Create a instantiation of the ThermalCompressibleSolidUpdates class
    *        that refers to the data in this.
-   * @return An instantiation of CompressibleSolidUpdates.
+   * @return An instantiation of ThermalCompressibleSolidUpdates.
    */
   KernelWrapper createKernelUpdates() const
   {
-
-    return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( getSolidModel(),
+     
+    return ThermalCompressibleSolidUpdates< PORO_TYPE, PERM_TYPE, THERMAL_COND_TYPE >( getSolidModel(),
                                                              getPorosityModel(),
-                                                             getPermModel() );
+                                                             getPermModel(),
+                                                             getCondModel() );
   }
 private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getSolidModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPorosityModel;
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPermModel;
-
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_thermalConductivityModelName;
+protected:
+  THERMAL_COND_TYPE const & getCondModel() const
+  { 
+     return this->getParent().template getGroup< THERMAL_COND_TYPE >( m_thermalConductivityModelName ); 
+  }
 };
 
 }

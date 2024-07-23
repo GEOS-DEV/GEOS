@@ -84,12 +84,12 @@ char const * xmlInput =
                          materialList="{ water, rock }" />
     </ElementRegions>
     <Constitutive>
-      <CompressibleSolidConstantPermeability name="rock"
+      <ThermalCompressibleSolidConstantPermeability name="rock"
                                              solidModelName="nullSolid"
                                              porosityModelName="rockPorosity"
                                              permeabilityModelName="rockPerm"
                                              solidInternalEnergyModelName="rockInternalEnergy"
-                                             singlePhaseThermalConductivityModelName="thermalCond" />
+                                             thermalConductivityModelName="thermalCond" />
       <NullModel name="nullSolid" />
       <PressurePorosity name="rockPorosity"
                         defaultReferencePorosity="0.05"

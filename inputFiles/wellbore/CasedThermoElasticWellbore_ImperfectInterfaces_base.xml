@@ -107,13 +107,13 @@
       apertureTableName="apertureTable"/>
 
     <!-- SPHINX_ContactFlowProperties -->
-    <CompressibleSolidParallelPlatesPermeability
+    <ThermalCompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"
       solidInternalEnergyModelName="rockInternalEnergy"
-      singlePhaseThermalConductivityModelName="contactThermalCond"/>
+      thermalConductivityModelName="contactThermalCond"/>
 
     <NullModel
       name="nullSolid"/>
@@ -134,7 +134,7 @@
       porosityModelName="casingPorosity"
       permeabilityModelName="casingPerm"
       solidInternalEnergyModelName="casingInternalEnergy"
-      singlePhaseThermalConductivityModelName="casingThermalCond"/>
+      thermalConductivityModelName="casingThermalCond"/>
 
     <PorousElasticIsotropic
       name="cement"
@@ -142,7 +142,7 @@
       porosityModelName="cementPorosity"
       permeabilityModelName="cementPerm"
       solidInternalEnergyModelName="cementInternalEnergy"
-      singlePhaseThermalConductivityModelName="cementThermalCond"/>
+      thermalConductivityModelName="cementThermalCond"/>
 
     <PorousElasticIsotropic
       name="rock"
@@ -150,7 +150,7 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy"
-      singlePhaseThermalConductivityModelName="rockThermalCond"/>
+      thermalConductivityModelName="rockThermalCond"/>
 
     <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity

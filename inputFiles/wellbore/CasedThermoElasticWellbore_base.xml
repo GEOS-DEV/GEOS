@@ -75,7 +75,7 @@
       porosityModelName="casingPorosity"
       permeabilityModelName="casingPerm"
       solidInternalEnergyModelName="casingInternalEnergy"
-      singlePhaseThermalConductivityModelName="casingThermalCond"/>
+      thermalConductivityModelName="casingThermalCond"/>
 
     <PorousElasticIsotropic
       name="cement"
@@ -83,7 +83,7 @@
       porosityModelName="cementPorosity"
       permeabilityModelName="cementPerm"
       solidInternalEnergyModelName="cementInternalEnergy"
-      singlePhaseThermalConductivityModelName="cementThermalCond"/>
+      thermalConductivityModelName="cementThermalCond"/>
 
     <PorousElasticIsotropic
       name="rock"
@@ -91,7 +91,7 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy"
-      singlePhaseThermalConductivityModelName="rockThermalCond"/>
+      thermalConductivityModelName="rockThermalCond"/>
 
     <!-- SPHINX_PoroElasticProperties -->
     <BiotPorosity

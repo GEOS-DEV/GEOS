@@ -37,6 +37,7 @@
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
+#include "solid/ThermalCompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/CeramicDamage.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
@@ -49,7 +50,8 @@
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
-
+#include "thermalConductivity/SinglePhaseThermalConductivity.hpp"
+#include "thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {
@@ -321,6 +323,55 @@ struct ConstitutivePassThru< CompressibleSolidBase >
 };
 
 /**
+ * Specialization for the ThermalCompressibleSolid models.
+ */
+template<>
+struct ConstitutivePassThru< ThermalCompressibleSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,                              
+                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,                              
+                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
  * Specialization for the ProppantModel.
  */
 template<>
@@ -359,7 +410,21 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
-                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >, 
+                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,                              
+                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -386,7 +451,21 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
-                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 CompressibleSolid< PressurePorosity, WillisRichardsPermeability >, 
+ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,                              
+                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,

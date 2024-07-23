@@ -58,7 +58,7 @@ void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::G
   SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void SinglePhaseThermalConductivity::postProcessInput()
+void SinglePhaseThermalConductivity::postInputInitialization()
 {
   GEOS_THROW_IF( m_defaultThermalConductivityComponents[0] <= 0 ||
                  m_defaultThermalConductivityComponents[1] <= 0 ||

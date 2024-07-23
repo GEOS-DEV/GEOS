@@ -1326,6 +1326,55 @@ Element: ThermalCompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid.rst
 
 
+.. _XML_ThermalCompressibleSolidCarmanKozenyPermeability:
+
+Element: ThermalCompressibleSolidCarmanKozenyPermeability
+=========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidCarmanKozenyPermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidConstantPermeability:
+
+Element: ThermalCompressibleSolidConstantPermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidConstantPermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidExponentialDecayPermeability:
+
+Element: ThermalCompressibleSolidExponentialDecayPermeability
+=============================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidExponentialDecayPermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidParallelPlatesPermeability:
+
+Element: ThermalCompressibleSolidParallelPlatesPermeability
+===========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidParallelPlatesPermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidPressurePermeability:
+
+Element: ThermalCompressibleSolidPressurePermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidPressurePermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidSlipDependentPermeability:
+
+Element: ThermalCompressibleSolidSlipDependentPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidSlipDependentPermeability.rst
+
+
+.. _XML_ThermalCompressibleSolidWillisRichardsPermeability:
+
+Element: ThermalCompressibleSolidWillisRichardsPermeability
+===========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidWillisRichardsPermeability.rst
+
+
 .. _XML_ThickPlane:
 
 Element: ThickPlane
@@ -2812,6 +2861,55 @@ Datastructure: Tasks
 Datastructure: ThermalCompressibleSinglePhaseFluid
 ==================================================
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSinglePhaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidCarmanKozenyPermeability:
+
+Datastructure: ThermalCompressibleSolidCarmanKozenyPermeability
+===============================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidCarmanKozenyPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidConstantPermeability:
+
+Datastructure: ThermalCompressibleSolidConstantPermeability
+===========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidExponentialDecayPermeability:
+
+Datastructure: ThermalCompressibleSolidExponentialDecayPermeability
+===================================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidExponentialDecayPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidParallelPlatesPermeability:
+
+Datastructure: ThermalCompressibleSolidParallelPlatesPermeability
+=================================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidParallelPlatesPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidPressurePermeability:
+
+Datastructure: ThermalCompressibleSolidPressurePermeability
+===========================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidPressurePermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidSlipDependentPermeability:
+
+Datastructure: ThermalCompressibleSolidSlipDependentPermeability
+================================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidSlipDependentPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermalCompressibleSolidWillisRichardsPermeability:
+
+Datastructure: ThermalCompressibleSolidWillisRichardsPermeability
+=================================================================
+.. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidWillisRichardsPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ThickPlane:

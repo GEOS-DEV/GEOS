@@ -45,13 +45,13 @@
 
   <Constitutive>
 
-    <CompressibleSolidConstantPermeability
+    <ThermalCompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       solidInternalEnergyModelName="rockInternalEnergy"
-      singlePhaseThermalConductivityModelName="thermalCond"/>
+      thermalConductivityModelName="thermalCond"/>
 
     <NullModel
       name="nullSolid"/>

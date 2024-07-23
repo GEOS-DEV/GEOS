@@ -27,8 +27,7 @@
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"
-      singlePhaseThermalConductivityModelName="thermalCond"/>
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <!-- SPHINX_SOLID -->
     <ElasticIsotropic

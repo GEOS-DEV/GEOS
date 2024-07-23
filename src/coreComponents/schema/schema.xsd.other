@@ -1475,6 +1475,13 @@
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
+			<xsd:element name="ThermalCompressibleSolidCarmanKozenyPermeability" type="ThermalCompressibleSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidConstantPermeability" type="ThermalCompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidExponentialDecayPermeability" type="ThermalCompressibleSolidExponentialDecayPermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidParallelPlatesPermeability" type="ThermalCompressibleSolidParallelPlatesPermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidPressurePermeability" type="ThermalCompressibleSolidPressurePermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidSlipDependentPermeability" type="ThermalCompressibleSolidSlipDependentPermeabilityType" />
+			<xsd:element name="ThermalCompressibleSolidWillisRichardsPermeability" type="ThermalCompressibleSolidWillisRichardsPermeabilityType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="VanGenuchtenStone2RelativePermeability" type="VanGenuchtenStone2RelativePermeabilityType" />
@@ -2773,6 +2780,13 @@
 		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="ThermalCompressibleSolidCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidConstantPermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidExponentialDecayPermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidParallelPlatesPermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidPressurePermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidSlipDependentPermeabilityType" />
+	<xsd:complexType name="ThermalCompressibleSolidWillisRichardsPermeabilityType" />
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
