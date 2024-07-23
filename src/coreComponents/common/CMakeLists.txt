@@ -95,6 +95,9 @@ if( ENABLE_CALIPER )
   endif()
 endif()
 
+ # TODO: remove codingUtilities (move StringUtilities in common)
+ # remove fileIO (move "Table/*" into a "format/table/*" package)
+ # add basicIO/* and put Logger in it
 set( dependencyList ${dependencyList} fileIO codingUtilities )
 
 blt_add_library( NAME       common
