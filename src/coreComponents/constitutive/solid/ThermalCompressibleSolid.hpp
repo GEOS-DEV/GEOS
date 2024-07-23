@@ -50,9 +50,9 @@ public:
    * @brief Constructor
    */
   ThermalCompressibleSolidUpdates( NullModel const & solidModel,
-                            PORO_TYPE const & porosityModel,
-                            PERM_TYPE const & permModel,
-                            THERMAL_COND_TYPE const & condModel ):
+                                   PORO_TYPE const & porosityModel,
+                                   PERM_TYPE const & permModel,
+                                   THERMAL_COND_TYPE const & condModel ):
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_condUpdate( condModel.createKernelWrapper() )
   {}
@@ -169,11 +169,11 @@ public:
    */
   KernelWrapper createKernelUpdates() const
   {
-     
+
     return ThermalCompressibleSolidUpdates< PORO_TYPE, PERM_TYPE, THERMAL_COND_TYPE >( getSolidModel(),
-                                                             getPorosityModel(),
-                                                             getPermModel(),
-                                                             getCondModel() );
+                                                                                       getPorosityModel(),
+                                                                                       getPermModel(),
+                                                                                       getCondModel() );
   }
 private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getSolidModel;
@@ -182,8 +182,8 @@ private:
   using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_thermalConductivityModelName;
 protected:
   THERMAL_COND_TYPE const & getCondModel() const
-  { 
-     return this->getParent().template getGroup< THERMAL_COND_TYPE >( m_thermalConductivityModelName ); 
+  {
+    return this->getParent().template getGroup< THERMAL_COND_TYPE >( m_thermalConductivityModelName );
   }
 };
 
