@@ -42,9 +42,10 @@ EventManager::EventManager( string const & name,
   // TODO: default to TimeOutputFormat::full?
   m_timeOutputFormat( TimeOutputFormat::seconds )
 {
-  enableLogLevelInput();
-
   setInputFlags( InputFlags::REQUIRED );
+
+  // This enables logLevel filtering
+  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
     setApplyDefaultValue( 0 ).
