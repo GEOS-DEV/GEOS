@@ -163,12 +163,17 @@ public:
     IndexContainerType const & elemSubRegionIndices = stencilWrapper.getElementSubRegionIndices();
     IndexContainerType const & elementIndices = stencilWrapper.getElementIndices();
 
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elemRegionIndices size", elemRegionIndices.size() ) );
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elemSubRegionIndices size", elemSubRegionIndices.size() ) );
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elementIndices size", elementIndices.size() ) );
+    RAJA::ReduceSum< parallelDeviceReduce, int > runCount( 0 );
     forAll< POLICY >( stencilWrapper.size(), [stencilWrapper,
                                               elemRegionIndices,
                                               elemSubRegionIndices,
                                               elementIndices,
                                               permeability,
-                                              connData] GEOS_HOST_DEVICE ( localIndex const iConn )
+                                              connData,
+                                              runCount] GEOS_HOST_DEVICE ( localIndex const iConn )
     {
       real64 transmissibility[1][2];
       real64 dummy[1][2];
@@ -186,7 +191,9 @@ public:
         connData[iConn].m_subRegionId[i] = elemSubRegionIndices( iConn, i );
         connData[iConn].m_elementId[i] = elementIndices( iConn, i );
       }
+      runCount+=1;
     } );
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "run count", runCount.get() ) );
   }
 
 private:
@@ -227,9 +234,6 @@ StencilDataCollection::ConnectionData::fromKernel( KernelConnectionData const & 
 string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnectionData > const & kernelData,
                               globalIndex maxLines = std::numeric_limits< globalIndex >::max() )
 {
-  std::ostringstream oss;
-  oss << GEOS_FMT( "(kernel stencil size = {})\n", kernelData.size() );
-
   TableData tableData;
   auto kernelIterator = kernelData.begin();
   for( int iConn=0; iConn < maxLines && kernelIterator != kernelData.end(); ++iConn, ++kernelIterator )
@@ -242,12 +246,10 @@ string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnecti
                         kernelIterator->m_elementId[i] );
     }
   }
-
   TableLayout const tableLayout{ { "transmissibility", "regionId", "subRegionId", "elementId" },
-    "Kernel data" };
+    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() ) };
   TableTextFormatter const tableFormatter{ tableLayout };
-  oss << tableFormatter.toString( tableData );
-  return oss.str();
+  return tableFormatter.toString( tableData );
 }
 
 void StencilDataCollection::storeConnectionData( string_view stencilName,
