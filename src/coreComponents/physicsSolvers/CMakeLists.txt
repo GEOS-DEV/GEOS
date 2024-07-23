@@ -21,7 +21,7 @@ set( physicsSolvers_sources
     include( contact/CMakeLists.txt )
   endif()
 
-  if( GEOS_ENABLE_FLUID_FLOW )
+  if( GEOS_ENABLE_FLUIDFLOW )
     include( fluidFlow/CMakeLists.txt )
   endif()
 
