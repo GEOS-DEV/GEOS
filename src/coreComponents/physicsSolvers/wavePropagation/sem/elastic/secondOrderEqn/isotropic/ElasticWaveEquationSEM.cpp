@@ -494,7 +494,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
 
         localIndex const sizeNode = nodeManager.size();
 

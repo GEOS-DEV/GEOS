@@ -297,8 +297,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       grad.zero();
 
-      real64 dtCompute=0.0;
-
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
@@ -322,40 +320,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              density,
                                                                              damping );
 
-        //AcousticMatricesSEM::computeDampingMatrix<FE_TYPE,EXEC_POLICY,ATOMIC_POLICY>(finiteElement,
-        //                                                                             elementSubRegion.size(),
-        //
-        //
-        //
-        //
-        //
-        //
-        //                                                                                                                      nodeCoords,
-        //                                                                             elemsToFaces,
-        //                                                                             facesToNodes,
-        //                                                                             facesDomainBoundaryIndicator,
-        //                                                                             freeSurfaceFaceIndicator,
-        //                                                                             velocity,
-        //                                                                             density,
-        //damping );
-
-        // if( m_preComputeDt==1 )
-        // {
-        //   acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-
-        //   dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                                      nodeManager.size(),
-        //                                                                      nodeCoords,
-        //                                                                      elemsToNodes,
-        //                                                                      mass );
-
-        //   real64 globaldt = MpiWrapper::min( dtCompute );
-
-        //   printf( "dt=%f\n", globaldt );
-
-        //   exit( 2 );
-
-        // }
 
       } );
     } );
@@ -396,7 +360,6 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
 
         localIndex const sizeNode = nodeManager.size();
 
