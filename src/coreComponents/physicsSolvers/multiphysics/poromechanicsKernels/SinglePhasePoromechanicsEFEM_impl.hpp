@@ -282,15 +282,112 @@ complete( localIndex const k,
 
   globalIndex matrixPressureColIndex = m_matrixPresDofNumber[k];
 
+  // rm later!!
+  std::cout << "printing localJumpResidual: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localJumpResidual[" << i << "] = " << stack.localJumpResidual[i] << std::endl;
+  }
+
+  std::cout << "printing localKww: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      std::cout << "localKww[" << i << "," << j << "] = " << stack.localKww[i][j] << std::endl;
+    }
+  }
+
+  std::cout << "printing localKwu: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      std::cout << "localKwu[" << i << "," << j << "] = " << stack.localKwu[i][j] << std::endl;
+    }
+  }
+
+  std::cout << "printing localKuw: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      std::cout << "localKuw[" << i << "," << j << "] = " << stack.localKuw[i][j] << std::endl;
+    }
+  }
+
+  std::cout << "printing wLocal: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "wLocal[" << i << "] = " << stack.wLocal[i] << std::endl;
+  }
+
+  std::cout << "printing localDispResidual: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localDispResidual[" << i << "] = " << stack.localDispResidual[i] << std::endl;
+  }
+
+  std::cout << "printing dispLocal: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "dispLocal[" << i << "] = " << stack.dispLocal[i] << std::endl;
+  }
+
   // Compute the local residuals
   LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localJumpResidual, stack.localKww, stack.wLocal );
   LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localJumpResidual, stack.localKwu, stack.dispLocal );
   LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localDispResidual, stack.localKuw, stack.wLocal );
 
+    // rm later!!
+  std::cout << "printing localJumpResidual: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localJumpResidual[" << i << "] = " << stack.localJumpResidual[i] << std::endl;
+  }
+
+  std::cout << "printing localDispResidual: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localDispResidual[" << i << "] = " << stack.localDispResidual[i] << std::endl;
+  }
+
+  std::cout << "printing m_matrixPressure[ k ]: " << std::endl;
+  std::cout << "m_matrixPressure[" << k << "] = " << m_matrixPressure[ k ] << std::endl;
+  
+  std::cout << "printing localKwpm: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localKwpm[" << i << "] = " << stack.localKwpm[i] << std::endl;
+  }
+
   // add pore pressure contribution
   LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] );
 
+  // rm later!!
+  std::cout << "printing localJumpResidual: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "localJumpResidual[" << i << "] = " << stack.localJumpResidual[i] << std::endl;
+  }
+
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
+  // rm later!!
+  std::cout << "printing tractionVec: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "tractionVec[" << i << "] = " << stack.tractionVec[i] << std::endl;
+  }
+
+  std::cout << "printing dTractiondw: " << std::endl;
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      std::cout << "dTractiondw[" << i << "," << j << "] = " << stack.localKuw[i][j] << std::endl;
+    }
+  }
 
   // Add traction contribution tranction
   LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.tractionVec, -1 );

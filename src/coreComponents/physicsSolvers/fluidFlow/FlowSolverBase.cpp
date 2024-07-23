@@ -271,6 +271,11 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
           pres_k[ei] = pres[ei];
           subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_k[ei] ) );
           temp_k[ei] = temp[ei];
+     
+          if (ei == 0)
+          {
+            std::cout << "pres[ " << ei << "] = " << pres[ei] << std::endl;
+          }
         }
       } );
 

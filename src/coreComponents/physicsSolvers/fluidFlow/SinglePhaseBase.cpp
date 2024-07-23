@@ -826,6 +826,9 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In SinglePhaseBase::assembleSystem " << std::endl;
+  std::cout <<"size of localRhs = " << localRhs.size() << std::endl;
+
   assembleAccumulationTerms( domain,
                              dofManager,
                              localMatrix,

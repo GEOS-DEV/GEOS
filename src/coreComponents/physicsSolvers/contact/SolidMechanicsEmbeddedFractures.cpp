@@ -256,6 +256,9 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
+  std::cout << "In SolidMechanicsEmbeddedFractures::assembleSystem " << std::endl;
+  std::cout <<"size of localRhs = " << localRhs.size() << std::endl;
+
   SolidMechanicsLagrangianFEM::assembleSystem( time,
                                                dt,
                                                domain,

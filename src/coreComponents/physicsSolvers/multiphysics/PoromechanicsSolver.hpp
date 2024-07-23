@@ -499,6 +499,8 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    std::cout << "In PoromechanicsSolver::mapSolutionBetweenSolvers " << std::endl;
+
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {

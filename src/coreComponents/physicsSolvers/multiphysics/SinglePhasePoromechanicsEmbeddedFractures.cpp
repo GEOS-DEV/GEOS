@@ -403,6 +403,9 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
 
   //updateState( domain );
 
+  std::cout << "In SinglePhasePoromechanicsEmbeddedFractures::assembleSystem " << std::endl;
+  std::cout <<"size of localrhs = " << localRhs.size() << std::endl;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
