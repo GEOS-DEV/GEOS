@@ -1769,6 +1769,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 // >("usedFaces")[newNodeIndex];
 //  usedFacesNew = usedFaces[nodeID];
 
+
   if( getLogLevel() > 0 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
