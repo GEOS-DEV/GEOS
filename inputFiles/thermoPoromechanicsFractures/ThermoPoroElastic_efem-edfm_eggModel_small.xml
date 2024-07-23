@@ -247,7 +247,7 @@
       defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.2"/>
 
-    <CompressibleSolidParallelPlatesPermeability
+    <ThermalCompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
