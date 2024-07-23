@@ -857,8 +857,8 @@ public:
 
   /**
    * @brief Append a levelCondition and a log description to the description of the wrapped object
-   * @param levelCondition The level condition to append
-   * @param logDescription The log description to append
+   * @tparam LOG_LEVEL_INFO The log documentation to add 
+   * @return void if the trait is verified
    */
   template< typename LOG_LEVEL_INFO >
   std::enable_if_t< logInfo::is_log_level_info< LOG_LEVEL_INFO >, void >

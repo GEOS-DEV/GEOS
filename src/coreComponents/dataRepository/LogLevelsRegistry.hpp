@@ -24,6 +24,9 @@
 namespace geos
 {
 
+/**
+ * @brief Keep track of log level documention for a group
+ */
 class LogLevelsRegistry
 {
 public:
@@ -37,6 +40,7 @@ public:
 
   /**
    * @brief Construct the log level string description for a wrapper
+   * @return The log level string description
    */
   string buildLogLevelDescription();
 
