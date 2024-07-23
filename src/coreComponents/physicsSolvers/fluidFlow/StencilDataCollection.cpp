@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "fileIO/Table/TableFormatter.hpp"
 
 namespace geos
 {
@@ -172,7 +173,6 @@ public:
       real64 transmissibility[1][2];
       real64 dummy[1][2];
 
-
       stencilWrapper.computeWeights( iConn,
                                      permeability,
                                      permeability,      // we don't need derivatives
@@ -224,6 +224,32 @@ StencilDataCollection::ConnectionData::fromKernel( KernelConnectionData const & 
 }
 
 
+string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnectionData > const & kernelData,
+                              globalIndex maxLines = std::numeric_limits< globalIndex >::max() )
+{
+  std::ostringstream oss;
+  oss << GEOS_FMT( "(kernel stencil size = {})\n", kernelData.size() );
+
+  TableData tableData;
+  auto kernelIterator = kernelData.begin();
+  for( int iConn=0; iConn < maxLines && kernelIterator != kernelData.end(); ++iConn, ++kernelIterator )
+  {
+    for( int i=0; i < 2; ++i )
+    {
+      tableData.addRow( kernelIterator->m_transmissibility[i],
+                        kernelIterator->m_regionId[i],
+                        kernelIterator->m_subRegionId[i],
+                        kernelIterator->m_elementId[i] );
+    }
+  }
+
+  TableLayout const tableLayout{ { "transmissibility", "regionId", "subRegionId", "elementId" },
+    "Kernel data" };
+  TableTextFormatter const tableFormatter{ tableLayout };
+  oss << tableFormatter.toString( tableData );
+  return oss.str();
+}
+
 void StencilDataCollection::storeConnectionData( string_view stencilName,
                                                  arrayView1d< KernelConnectionData > const & kernelData )
 {
@@ -244,8 +270,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 
   { // data storing
     GEOS_ERROR_IF_NE_MSG( size_t( m_cellAGlobalId.size() ), size_t( sortedData.size() ),
-                          GEOS_FMT( "{}: Unexpected stencil size! (kernel stencil size = {})",
-                          getDataContext(), kernelData.size() ) );
+                          GEOS_FMT( "{}: Unexpected stencil size!\n{}",
+                                    getDataContext(), showKernelDataExtract( kernelData, 8 ) ) );
     globalIndex i = 0;
     for( ConnectionData const & conn : sortedData )
     {
