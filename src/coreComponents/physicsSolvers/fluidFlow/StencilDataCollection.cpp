@@ -166,15 +166,17 @@ public:
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elemRegionIndices size", elemRegionIndices.size() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elemSubRegionIndices size", elemSubRegionIndices.size() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "elementIndices size", elementIndices.size() ) );
-    RAJA::ReduceSum< parallelDeviceReduce, int > runCount( 0 );
-    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minLclId( std::numeric_limits< localIndex >::max() );
-    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxLclId( std::numeric_limits< localIndex >::min() );
-    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minRegId( std::numeric_limits< localIndex >::max() );
-    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxRegId( std::numeric_limits< localIndex >::min() );
-    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minSubRegId( std::numeric_limits< localIndex >::max() );
-    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxSubRegId( std::numeric_limits< localIndex >::min() );
-    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minElemId( std::numeric_limits< localIndex >::max() );
-    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxElemId( std::numeric_limits< localIndex >::min() );
+    RAJA::ReduceSum< parallelDeviceReduce, int > runCount( 0 ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minLclId( std::numeric_limits< localIndex >::max() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxLclId( std::numeric_limits< localIndex >::min() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minRegId( std::numeric_limits< localIndex >::max() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxRegId( std::numeric_limits< localIndex >::min() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minSubRegId( std::numeric_limits< localIndex >::max() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxSubRegId( std::numeric_limits< localIndex >::min() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMin< parallelDeviceReduce, localIndex > minElemId( std::numeric_limits< localIndex >::max() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxElemId( std::numeric_limits< localIndex >::min() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minTransmiId( std::numeric_limits< real64 >::max() ); // FOR DEBUG OUTPUT
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > maxTransmiId( std::numeric_limits< real64 >::min() ); // FOR DEBUG OUTPUT
     forAll< POLICY >( stencilWrapper.size(), [stencilWrapper,
                                               elemRegionIndices,
                                               elemSubRegionIndices,
@@ -189,7 +191,9 @@ public:
                                               minSubRegId,
                                               maxSubRegId,
                                               minElemId,
-                                              maxElemId] GEOS_HOST_DEVICE ( localIndex const iConn )
+                                              maxElemId,
+                                              minTransmiId,
+                                              maxTransmiId] GEOS_HOST_DEVICE ( localIndex const iConn )
     {
       real64 transmissibility[1][2];
       real64 dummy[1][2];
@@ -206,27 +210,30 @@ public:
         connData[iConn].m_regionId[i] = elemRegionIndices( iConn, i );
         connData[iConn].m_subRegionId[i] = elemSubRegionIndices( iConn, i );
         connData[iConn].m_elementId[i] = elementIndices( iConn, i );
-        minRegId.min( elemRegionIndices( iConn, i ) );
-        maxRegId.max( elemRegionIndices( iConn, i ) );
-        minSubRegId.min( elemSubRegionIndices( iConn, i ) );
-        maxSubRegId.max( elemSubRegionIndices( iConn, i ) );
-        minElemId.min( elementIndices( iConn, i ) );
-        maxElemId.max( elementIndices( iConn, i ) );
+        minRegId.min( elemRegionIndices( iConn, i ) );       maxRegId.max( elemRegionIndices( iConn, i ) );
+        minSubRegId.min( elemSubRegionIndices( iConn, i ) ); maxSubRegId.max( elemSubRegionIndices( iConn, i ) );
+        minElemId.min( elementIndices( iConn, i ) );         maxElemId.max( elementIndices( iConn, i ) );
+        minTransmiId.min( transmissibility[0][i] );          maxTransmiId.max( transmissibility[0][i] );
       }
       runCount+=1;
       minLclId.min( iConn );
       maxLclId.max( iConn );
     } );
+    // DEBUG OUTPUTS
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} = {}", "run count", runCount.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "lcl ids         ", minLclId.get(), maxLclId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem reg ids    ", minRegId.get(), maxRegId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem sub reg ids", minSubRegId.get(), maxSubRegId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem ids        ", minElemId.get(), maxElemId.get() ) );
-    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel first line : transmi[{},{},{}] = {}",
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel first line : transmi[{},{},{},0] = {} ; transmi[{},{},{},1] = {}",
                         connData[0].m_regionId[0],
                         connData[0].m_subRegionId[0],
                         connData[0].m_elementId[0],
-                        connData[0].m_transmissibility[0] ) );
+                        connData[0].m_transmissibility[0],
+                        connData[0].m_regionId[1],
+                        connData[0].m_subRegionId[1],
+                        connData[0].m_elementId[1],
+                        connData[0].m_transmissibility[1] ) );
   }
 
 private:
