@@ -471,7 +471,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 

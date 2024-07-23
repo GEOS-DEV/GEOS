@@ -342,7 +342,6 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
