@@ -489,7 +489,6 @@ void NegativeTwoPhaseFlash::computeDerivatives(
       for( integer ic = 0; ic < numComps; ++ic )
       {
         X( ic, idof ) = -composition[ic];
-        X( ic + numComps, idof ) = 0.0;
       }
       X( kc, idof ) += 1.0;
     }
