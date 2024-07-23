@@ -343,10 +343,6 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
-    // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
     arrayView1d< real32 > const p   = nodeManager.getField< acousticfields::Pressure_n >();
     arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();

@@ -472,8 +472,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
-
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
     arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< elasticfields::StiffnessVectorx >();
