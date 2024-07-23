@@ -26,7 +26,7 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  //deprecated
+
   enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).
@@ -174,8 +174,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( NonlinearAccelerationType::None ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
-
-
 
 }
 

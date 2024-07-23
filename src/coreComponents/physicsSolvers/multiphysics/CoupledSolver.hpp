@@ -68,6 +68,7 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
+
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
    */
@@ -577,6 +578,7 @@ protected:
   {
     NonlinearSolverParameters const & params = getNonlinearSolverParameters();
     bool isConverged = true;
+
     if( params.m_subcyclingOption == 0 )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****" );
@@ -648,6 +650,7 @@ protected:
       {
         GEOS_ERROR( getDataContext() << ": Invalid sequential convergence criterion." );
       }
+      
       if( isConverged )
       {
         GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );

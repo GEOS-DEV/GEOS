@@ -29,7 +29,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  //deprecated
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solverTypeString(), &m_parameters.solverType ).
@@ -200,9 +199,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
-
-
-
 }
 
 void LinearSolverParametersInput::postInputInitialization()

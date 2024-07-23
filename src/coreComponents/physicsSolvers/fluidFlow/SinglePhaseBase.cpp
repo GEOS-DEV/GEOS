@@ -1053,7 +1053,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         return;
       }
-
       if( !subRegion.hasWrapper( dofKey ) )
       {
         if( fs.getLogLevel() >= 1 )

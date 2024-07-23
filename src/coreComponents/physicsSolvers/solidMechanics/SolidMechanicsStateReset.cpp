@@ -35,7 +35,6 @@ SolidMechanicsStateReset::SolidMechanicsStateReset( const string & name,
   TaskBase( name, parent ),
   m_solidSolverName()
 {
-  //deprecated
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).

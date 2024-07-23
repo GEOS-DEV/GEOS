@@ -80,9 +80,6 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
-
-
-
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()

@@ -35,9 +35,7 @@ using namespace fields;
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
-{
-
-}
+{}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {

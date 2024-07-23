@@ -219,13 +219,6 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
-
-
-
-
-
-
-
 }
 
 void SurfaceGenerator::postInputInitialization()

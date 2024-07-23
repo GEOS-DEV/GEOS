@@ -218,8 +218,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( WaveSolverUtils::AttenuationType::none ).
     setDescription( "Flag to indicate which attenuation model to use: \"none\" for no attenuation, \"sls\\" " for the standard-linear-solid (SLS) model (Fichtner, 2014)." );
 
-
-
 }
 
 WaveSolverBase::~WaveSolverBase()

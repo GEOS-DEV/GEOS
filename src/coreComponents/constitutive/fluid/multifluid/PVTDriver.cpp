@@ -90,9 +90,6 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
-
-
-
 }
 
 void PVTDriver::postInputInitialization()

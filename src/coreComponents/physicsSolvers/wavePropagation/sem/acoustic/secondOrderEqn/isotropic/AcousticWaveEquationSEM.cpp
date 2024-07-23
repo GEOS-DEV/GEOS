@@ -49,8 +49,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Pressure value at each receiver for each timestep" );
-
-
+    
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
