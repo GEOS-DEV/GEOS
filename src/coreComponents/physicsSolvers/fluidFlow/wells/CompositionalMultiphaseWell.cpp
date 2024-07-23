@@ -187,14 +187,6 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-
-
-      subRegion.registerField< fields::well::pressure >( getName() );
-      subRegion.registerField< fields::well::pressure_n >( getName() );
-
-      subRegion.registerField< fields::well::temperature >( getName() );
-      subRegion.registerField< fields::well::temperature_n >( getName() );
-
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
 
