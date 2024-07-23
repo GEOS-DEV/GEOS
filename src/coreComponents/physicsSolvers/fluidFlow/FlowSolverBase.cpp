@@ -792,6 +792,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 
 bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
+
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
                                       getName(), fmt::format( "{:.{}f}", m_sequentialPresChange, 3 ) ) );
 

@@ -36,6 +36,7 @@ VTKWellGenerator::VTKWellGenerator( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to the well file" );
+
 }
 
 void VTKWellGenerator::fillPolylineDataStructure( )

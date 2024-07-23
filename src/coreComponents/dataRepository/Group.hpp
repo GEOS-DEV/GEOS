@@ -1481,7 +1481,7 @@ public:
 
   /**
    * @deprecated will be remove and replace by addLogLevel
-  */
+   */
   void enableLogLevelInput();
 
   /**
@@ -1631,7 +1631,7 @@ private:
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
 
-  // Keep track of log levels & descriptions 
+  // Keep track of log levels & descriptions
   std::unique_ptr< LogLevelsRegistry > m_logLevelsRegistry;
 
   /// A DataContext object used to provide contextual information on this Group,
@@ -1732,7 +1732,7 @@ Group::addLogLevel()
     wrapper->setInputFlag( InputFlags::OPTIONAL );
   }
   m_logLevelsRegistry->addEntry( LOG_LEVEL_INFO::getMinLogLevel(),
-                                LOG_LEVEL_INFO::getDescription() );
+                                 LOG_LEVEL_INFO::getDescription() );
   wrapper->setDescription( m_logLevelsRegistry->buildLogLevelDescription());
 }
 

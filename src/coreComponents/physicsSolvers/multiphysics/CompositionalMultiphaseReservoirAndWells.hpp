@@ -38,7 +38,7 @@ public:
   using Base::getLogLevel;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
-  
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository

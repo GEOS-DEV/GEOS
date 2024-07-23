@@ -326,6 +326,7 @@ void SuperLUDist< LAI >::setOptions()
   m_data->options.ParSymbFact = m_params.direct.colPerm == LinearSolverParameters::Direct::ColPerm::parmetis ? YES : NO;
   m_data->options.ReplaceTinyPivot = m_params.direct.replaceTinyPivot ? YES : NO;
   m_data->options.IterRefine = m_params.direct.iterativeRefine ? SLU_DOUBLE : NOREFINE;
+
   if( m_params.logLevel > 0 )
   {
     print_sp_ienv_dist( &m_data->options );

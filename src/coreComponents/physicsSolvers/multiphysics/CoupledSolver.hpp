@@ -650,7 +650,7 @@ protected:
       {
         GEOS_ERROR( getDataContext() << ": Invalid sequential convergence criterion." );
       }
-      
+
       if( isConverged )
       {
         GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );
