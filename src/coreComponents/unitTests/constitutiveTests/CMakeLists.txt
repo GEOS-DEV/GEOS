@@ -69,7 +69,7 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${dependencyList} )
+                        DEPENDS_ON ${dependencyList} physicsSolvers )
 
     geos_add_test( NAME ${test_name}
                    COMMAND ${test_name} )
