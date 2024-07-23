@@ -244,7 +244,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 
   { // data storing
     GEOS_ERROR_IF_NE_MSG( size_t( m_cellAGlobalId.size() ), size_t( sortedData.size() ),
-                          GEOS_FMT( "{}: Unexpected stencil size!", getDataContext() ) );
+                          GEOS_FMT( "{}: Unexpected stencil size! (kernel stencil size = {})",
+                          getDataContext(), kernelData.size() ) );
     globalIndex i = 0;
     for( ConnectionData const & conn : sortedData )
     {
