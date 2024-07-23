@@ -2061,6 +2061,8 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
         }
       }
 
+
+
       // 2b) loop over all faces on element.
       if( getLogLevel() > 1 )
       {
@@ -2358,6 +2360,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
       std::cout << std::endl;
 
       std::cout << " elementToFaces->edges->nodes = ";
+
 
       // Now we do a loop over the facelist and process all the faces
       for( int kf=0; kf<elemSubRegion.numFacesPerElement(); ++kf )
