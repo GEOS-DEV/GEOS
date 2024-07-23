@@ -48,9 +48,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHPTable( nullptr ),
   m_statusTable( nullptr )
 {
-  enableLogLevelInput();
-
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
