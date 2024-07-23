@@ -434,12 +434,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-
-    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-    {
-      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                             coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
-    }
+    GEOS_LOG_INFO_LEVEL( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                          coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
   }
   else
   {

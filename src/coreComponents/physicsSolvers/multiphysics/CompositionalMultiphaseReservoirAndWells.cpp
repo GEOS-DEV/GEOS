@@ -414,10 +414,10 @@ assembleCouplingTerms( real64 const time_n,
         globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations.get() );
         if( totalNumCrossflowPerforations > 0 )
         {
-          GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
-                                              "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
-                                              this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                              WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
+          GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::CrossflowWarning, GEOS_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                                                           "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                                                           this->getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                                                           WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
         }
       }
     } );

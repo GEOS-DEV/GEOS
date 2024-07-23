@@ -330,17 +330,17 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     if( nextDtNewton > currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be increased based on number of iterations.",
-                                                          getName() ) );
+                                                               getName() ) );
     }
     else if( nextDtNewton < currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be decreased based on number of iterations.",
-                                                          getName() ) );
+                                                               getName() ) );
     }
     else
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be kept the same based on number of iterations.",
-                                                          getName() ) );
+                                                               getName() ) );
     }
   }
   else         // time step size decided based on state change
@@ -348,17 +348,17 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
     if( nextDtStateChange > currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be increased based on state change.",
-                                                          getName()));
+                                                               getName()));
     }
     else if( nextDtStateChange < currentDt )
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be decreased based on state change.",
-                                                          getName()));
+                                                               getName()));
     }
     else
     {
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::TimeStep, GEOS_FMT( "{}: time-step required will be kept the same based on state change.",
-                                                          getName()));
+                                                               getName()));
     }
   }
 
@@ -933,8 +933,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
       GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverTimeStep, GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
-                                          maxAllowedResidualNormString,
-                                          m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+                                                                     maxAllowedResidualNormString,
+                                                                     m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
       break;
     }
@@ -1270,8 +1270,8 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   }
 
   GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::LinearSystem, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
-                                                          m_linearSolverResult.numIterations,
-                                                          m_linearSolverResult.residualReduction ) );
+                                                               m_linearSolverResult.numIterations,
+                                                               m_linearSolverResult.residualReduction ) );
 
   if( params.stopIfError )
   {
