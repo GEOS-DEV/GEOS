@@ -1110,7 +1110,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( D
         GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::HydraulicAperture,
                                     GEOS_FMT( "New elem index = {:4d} , init aper = {:4.2e}, init press = {:4.2e} ",
                                               newElemIndex, aperture[newElemIndex], fluidPressure[newElemIndex] ) );
-
       } );
 
       if( m_newFractureInitializationType == InitializationType::Displacement )

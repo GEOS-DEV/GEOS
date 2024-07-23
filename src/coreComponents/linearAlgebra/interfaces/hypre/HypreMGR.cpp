@@ -70,11 +70,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
-  if( params.logLevel >= 1 )
+  if( params.logLevel >= 1024 )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
   }
-  if( params.logLevel >= 1 )
+  if( params.logLevel >= 1024 )
   {
     GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
   }

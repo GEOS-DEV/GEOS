@@ -42,15 +42,11 @@ ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
-
-
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
-
-
 }
 
 void ContactSolverBase::postInputInitialization()

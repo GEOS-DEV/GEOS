@@ -27,7 +27,7 @@ namespace geos
 class LogLevelsRegistry
 {
 public:
-  
+
   /**
    * @brief Add a log description for a wrapper
    * @param level The minimum log level

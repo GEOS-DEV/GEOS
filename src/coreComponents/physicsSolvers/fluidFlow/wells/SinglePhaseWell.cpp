@@ -46,12 +46,6 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
   WellSolverBase( name, parent )
 {
-
-
-
-
-
-
   m_numDofPerWellElement = 2;
   m_numDofPerResElement = 1;
 }

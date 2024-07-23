@@ -65,9 +65,6 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
                                  "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
-
-
-
 }
 
 

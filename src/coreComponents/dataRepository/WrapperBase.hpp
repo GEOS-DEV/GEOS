@@ -782,7 +782,7 @@ private:
                                              parallelDeviceEvents & events ) const = 0;
 };
 
-}   /// namespace dataRepository
+} /// namespace dataRepository
 } /// namespace geos
 
 #endif /* GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_ */

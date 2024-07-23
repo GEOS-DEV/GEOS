@@ -42,7 +42,6 @@ EventManager::EventManager( string const & name,
   // TODO: default to TimeOutputFormat::full?
   m_timeOutputFormat( TimeOutputFormat::seconds )
 {
-  //deprecated
   enableLogLevelInput();
 
   setInputFlags( InputFlags::REQUIRED );

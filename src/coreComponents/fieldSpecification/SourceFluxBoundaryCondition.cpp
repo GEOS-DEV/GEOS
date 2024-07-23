@@ -30,11 +30,6 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
-
-
-
-
-
 }
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )

@@ -1479,7 +1479,9 @@ public:
    */
   void loadFromConduit();
 
-  /// [DEPRECATED] Enable verbosity input for object
+  /**
+   * @deprecated will be remove and replace by addLogLevel
+  */
   void enableLogLevelInput();
 
   /**

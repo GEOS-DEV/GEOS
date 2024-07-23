@@ -34,10 +34,7 @@ MeshManager::MeshManager( string const & name,
                           Group * const parent ):
   Group( name, parent )
 {
-
   setInputFlags( InputFlags::REQUIRED );
-
-
 }
 
 MeshManager::~MeshManager()

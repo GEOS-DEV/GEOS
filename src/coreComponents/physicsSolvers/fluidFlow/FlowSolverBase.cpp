@@ -122,8 +122,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0.1 ).
     setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
 
-
-
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }

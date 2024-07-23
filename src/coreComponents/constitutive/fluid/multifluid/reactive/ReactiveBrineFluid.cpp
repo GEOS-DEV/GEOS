@@ -79,8 +79,6 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
-
-
 }
 
 template< typename PHASE >

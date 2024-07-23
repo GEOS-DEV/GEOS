@@ -80,7 +80,6 @@ ProppantTransport::ProppantTransport( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
 
-
 }
 
 void ProppantTransport::postInputInitialization()

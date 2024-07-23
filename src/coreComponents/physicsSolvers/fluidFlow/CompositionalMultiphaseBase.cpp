@@ -170,13 +170,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
-
-
-
-
-
-
-
 }
 
 void CompositionalMultiphaseBase::postInputInitialization()

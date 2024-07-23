@@ -84,7 +84,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  //deprecated
   enableLogLevelInput();
 }
 

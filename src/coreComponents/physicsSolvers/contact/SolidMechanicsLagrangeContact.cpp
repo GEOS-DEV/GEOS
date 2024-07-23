@@ -70,8 +70,6 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setApplyDefaultValue( 1.0 ).
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
-
-
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;

@@ -107,12 +107,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
-
-
-
-
-
-
 }
 
 void CompositionalMultiphaseWell::postInputInitialization()

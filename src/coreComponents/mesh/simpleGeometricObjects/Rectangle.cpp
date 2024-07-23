@@ -43,7 +43,6 @@ Rectangle::Rectangle( const string & name, Group * const parent ):
                     "It is relative to the maximum dimension of the plane." );
 
 
-
   m_points.resize( 4, 3 );
 }
 

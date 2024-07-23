@@ -29,7 +29,6 @@ TriaxialDriver::TriaxialDriver( const string & name,
                                 Group * const parent ):
   TaskBase( name, parent )
 {
-  //deprecated
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialName ).

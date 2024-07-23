@@ -34,9 +34,7 @@ using namespace dataRepository;
 SinglePhaseStatistics::SinglePhaseStatistics( const string & name,
                                               Group * const parent ):
   Base( name, parent )
-{
-
-}
+{}
 
 void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
 {

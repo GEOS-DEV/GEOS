@@ -45,7 +45,6 @@ PoromechanicsInitialization( const string & name,
   m_solidMechanicsStatistics(),
   m_solidMechanicsStateResetTask( name, parent )
 {
-  //deprecated
   enableLogLevelInput();
   
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).

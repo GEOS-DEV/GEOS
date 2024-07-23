@@ -86,15 +86,6 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setApplyDefaultValue( ScalingType::Global ).
     setDescription( "Solution scaling type."
                     "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
-
-
-
-
-
-
-
-
-
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()

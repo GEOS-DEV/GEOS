@@ -54,11 +54,6 @@ public:
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
-
-
-
-
-
   }
 
   /// deleted copy constructor
