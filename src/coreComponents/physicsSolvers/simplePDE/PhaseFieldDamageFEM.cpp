@@ -451,9 +451,8 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   {
     applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
   }
-  // Display jacobian matrix
-  // Display residuals values
-  if( getLogLevel() >= 2 )
+
+  if( getLogLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
     GEOS_LOG_RANK_0( "\nJacobian:\n" );

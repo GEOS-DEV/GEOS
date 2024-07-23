@@ -49,8 +49,7 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
-    //deprecated
-  enableLogLevelInput();
+    enableLogLevelInput();
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
