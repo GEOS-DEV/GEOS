@@ -32,7 +32,7 @@ set( physicsSolvers_headers
 
 # Specify solver sources
 set( physicsSolvers_sources
-     ${physicsSolvers_headers}
+     ${physicsSolvers_sources}
      wavePropagation/shared/WaveSolverBase.cpp
      wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
      wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp

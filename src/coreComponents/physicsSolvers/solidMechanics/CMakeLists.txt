@@ -25,12 +25,12 @@ set( physicsSolvers_headers
 
 # Specify solver sources
 set( physicsSolvers_sources
-     ${physicsSolvers_headers}
+     ${physicsSolvers_sources}
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsMPM.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
      solidMechanics/SolidMechanicsStatistics.cpp
-    PARENT_SCOPE )
+     PARENT_SCOPE )
 
 #include( solidMechanics/kernels/SolidMechanicsKernels.cmake)

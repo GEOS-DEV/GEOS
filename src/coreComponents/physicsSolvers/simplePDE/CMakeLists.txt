@@ -10,7 +10,7 @@ set( physicsSolvers_headers
 
 # Specify solver sources
 set( physicsSolvers_sources
-      ${physicsSolvers_headers}
+      ${physicsSolvers_sources}
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp 
