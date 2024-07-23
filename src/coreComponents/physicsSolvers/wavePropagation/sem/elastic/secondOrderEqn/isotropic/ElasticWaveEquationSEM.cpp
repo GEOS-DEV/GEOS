@@ -484,8 +484,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
- real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
- {
+real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
+{
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -501,6 +501,14 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< elasticfields::ElasticMassVector >();
+    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< elasticfields::StiffnessVectorx >();
+    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< elasticfields::StiffnessVectory >();
+    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< elasticfields::StiffnessVectorz >();
+
+    arrayView1d< real32 > const ux_n = nodeManager.getField< elasticfields::Displacementx_n >();
+    arrayView1d< real32 > const uy_n = nodeManager.getField< elasticfields::Displacementy_n >();
+    arrayView1d< real32 > const uz_n = nodeManager.getField< elasticfields::Displacementz_n >();
+
 
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 CellElementSubRegion & elementSubRegion )
@@ -508,38 +516,188 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-
-      arrayView1d< real32 const > const density = elementSubRegion.getField< elasticfields::ElasticDensity >();
-      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< elasticfields::ElasticVelocityVp >();
-      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< elasticfields::ElasticVelocityVs >();
-
-      real64 dtCompute=0.0;
-
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        //elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        localIndex const sizeNode = nodeManager.size();
 
-        // dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                                    nodeManager.size(),
-        //                                                                    nodeCoords,
-        //                                                                    density,
-        //                                                                    velocityVp,
-        //                                                                    velocityVs,
-        //                                                                    elemsToNodes,
-        //                                                                    mass );
+        real64 const epsilon = 0.00001;
+        localIndex const nIterMax = 10000;
+        localIndex numberIter = 0;
+        localIndex counter = 0;
+        real64 lambdaNew = 0.0;
+
+        //Randomize p values
+        srand( time( NULL ));
+        for( localIndex a = 0; a < sizeNode; ++a )
+        {
+          ux_n[a] = (real64)rand()/(real64) RAND_MAX;
+          uy_n[a] = (real64)rand()/(real64) RAND_MAX;
+          uy_n[a] = (real64)rand()/(real64) RAND_MAX;
+        }
+
+        //Step 1: Normalize randomized pressure
+        real64 normUx= 0.0;
+        real64 normUy= 0.0;
+        real64 normUz= 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, ux_n, ux_n, normUx );
+        WaveSolverUtils::dotProduct( sizeNode, uy_n, uy_n, normUy );
+        WaveSolverUtils::dotProduct( sizeNode, uz_n, uz_n, normUz );
+        real64 normUtot = normUx+normUy+normUz;
+
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          ux_n[a]/= sqrt( normUtot );
+          uy_n[a]/= sqrt( normUtot );
+          uz_n[a]/= sqrt( normUtot );
+        } );
+
+        //Step 2: Initial iteration of (M^{-1}K)p
+        stiffnessVectorx.zero();
+        stiffnessVectory.zero();
+        stiffnessVectorz.zero();
+        auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dtOut );
+
+        finiteElement::
+          regionBasedKernelApplication< EXEC_POLICY,
+                                        constitutive::NullModel,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                getDiscretizationName(),
+                                                                "",
+                                                                kernelFactory );
 
 
-        dtOut = MpiWrapper::min( dtCompute );
 
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          stiffnessVectorx[a]/= mass[a];
+          stiffnessVectory[a]/= mass[a];
+          stiffnessVectorz[a]/= mass[a];
+        } );
+        real64 lambdaOld = lambdaNew;
+
+        //Compute lambdaNew using two dotProducts
+        real64 dotProductUxUxaux = 0.0;
+        real64 dotProductUyUyaux = 0.0;
+        real64 dotProductUzUzaux = 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorx, dotProductUxUxaux );
+        WaveSolverUtils::dotProduct( sizeNode, uy_n, stiffnessVectory, dotProductUyUyaux );
+        WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorz, dotProductUzUzaux );
+        real64 dotProductUtotUtotAux = dotProductUxUxaux+dotProductUyUyaux+dotProductUzUzaux;
+
+        lambdaNew = dotProductUtotUtotAux/normUtot;
+
+        real64 normUxaux = 0.0;
+        real64 normUyaux = 0.0;
+        real64 normUzaux = 0.0;
+        WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorx, stiffnessVectorx, normUxaux );
+        WaveSolverUtils::dotProduct( sizeNode, stiffnessVectory, stiffnessVectory, normUyaux );
+        WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorz, stiffnessVectorz, normUzaux );
+
+        real64 normUtotAux = normUxaux+normUyaux+normUzaux;
+
+        forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          ux_n[a] = stiffnessVectorx[a]/( normUtotAux );
+          uy_n[a] = stiffnessVectory[a]/( normUtotAux );
+          uz_n[a] = stiffnessVectorz[a]/( normUtotAux );
+        } );
+
+        //Step 3: Do previous algorithm until we found the max eigenvalues
+        do
+        {
+
+          stiffnessVectorx.zero();
+          stiffnessVectory.zero();
+          stiffnessVectorz.zero();
+
+          finiteElement::
+            regionBasedKernelApplication< EXEC_POLICY,
+                                          constitutive::NullModel,
+                                          CellElementSubRegion >( mesh,
+                                                                  regionNames,
+                                                                  getDiscretizationName(),
+                                                                  "",
+                                                                  kernelFactory );
+
+
+
+          forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+          {
+            stiffnessVectorx[a]/= mass[a];
+            stiffnessVectory[a]/= mass[a];
+            stiffnessVectorz[a]/= mass[a];
+          } );
+          lambdaOld = lambdaNew;
+
+          //Compute lambdaNew using two dotProducts
+          dotProductUzUzaux = 0.0;
+          dotProductUxUxaux = 0.0;
+          dotProductUyUyaux = 0.0;
+          WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorx, dotProductUxUxaux );
+          WaveSolverUtils::dotProduct( sizeNode, uy_n, stiffnessVectory, dotProductUyUyaux );
+          WaveSolverUtils::dotProduct( sizeNode, ux_n, stiffnessVectorz, dotProductUzUzaux );
+          dotProductUtotUtotAux = dotProductUxUxaux+dotProductUyUyaux+dotProductUzUzaux;
+
+          lambdaNew = dotProductUtotUtotAux/normUtot;
+
+          normUxaux = 0.0;
+          normUyaux = 0.0;
+          normUzaux = 0.0;
+          WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorx, stiffnessVectorx, normUxaux );
+          WaveSolverUtils::dotProduct( sizeNode, stiffnessVectory, stiffnessVectory, normUyaux );
+          WaveSolverUtils::dotProduct( sizeNode, stiffnessVectorz, stiffnessVectorz, normUzaux );
+
+          normUtotAux = normUxaux+normUyaux+normUzaux;
+
+          forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
+          {
+            ux_n[a] = stiffnessVectorx[a]/( normUtotAux );
+            uy_n[a] = stiffnessVectory[a]/( normUtotAux );
+            uz_n[a] = stiffnessVectorz[a]/( normUtotAux );
+          } );
+
+          if( LvArray::math::abs( lambdaNew-lambdaOld )/LvArray::math::abs( lambdaNew )<= epsilon )
+          {
+            counter++;
+          }
+          else
+          {
+            counter=0;
+          }
+
+          numberIter++;
+
+
+        }
+        while (counter < 10 && numberIter < nIterMax);
+
+        GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+
+        real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
+
+        printf( "lam=%f\n", lambdaNew );
+
+        dtOut = MpiWrapper::min( dt );
+
+        printf( "dtinside=%f\n", dtOut );
 
       } );
+
+
     } );
+    stiffnessVectorx.zero();
+    stiffnessVectory.zero();
+    stiffnessVectorz.zero();
+    ux_n.zero();
+    uy_n.zero();
+    uz_n.zero();
   } );
   return dtOut;
- }
+}
 
 real32 ElasticWaveEquationSEM::computeGlobalMinQFactor()
 {

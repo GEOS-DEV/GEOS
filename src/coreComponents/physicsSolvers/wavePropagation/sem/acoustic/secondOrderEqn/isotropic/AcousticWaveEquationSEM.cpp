@@ -394,21 +394,9 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-
-      real64 dtCompute=0.0;
-
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-
-        // acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-
-        // dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-        //                                                                    nodeManager.size(),
-        //                                                                    nodeCoords,
-        //                                                                    elemsToNodes,
-        //                                                                    mass );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const sizeNode = nodeManager.size();
@@ -440,13 +428,13 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
         auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dtOut );
 
         finiteElement::
-        regionBasedKernelApplication< EXEC_POLICY,
-                                      constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              getDiscretizationName(),
-                                                              "",
-                                                              kernelFactory );
+          regionBasedKernelApplication< EXEC_POLICY,
+                                        constitutive::NullModel,
+                                        CellElementSubRegion >( mesh,
+                                                                regionNames,
+                                                                getDiscretizationName(),
+                                                                "",
+                                                                kernelFactory );
 
 
 
@@ -477,13 +465,13 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
           stiffnessVector.zero();
 
           finiteElement::
-          regionBasedKernelApplication< EXEC_POLICY,
-                                      constitutive::NullModel,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              getDiscretizationName(),
-                                                              "",
-                                                              kernelFactory );
+            regionBasedKernelApplication< EXEC_POLICY,
+                                          constitutive::NullModel,
+                                          CellElementSubRegion >( mesh,
+                                                                  regionNames,
+                                                                  getDiscretizationName(),
+                                                                  "",
+                                                                  kernelFactory );
 
           forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
           {
@@ -526,11 +514,11 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
         real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
-        printf("lam=%f\n",lambdaNew);
+        printf( "lam=%f\n", lambdaNew );
 
         dtOut = MpiWrapper::min( dt );
 
-        printf("dtinside=%f\n",dtOut);
+        printf( "dtinside=%f\n", dtOut );
 
       } );
     } );
@@ -964,7 +952,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
-  printf("dtOut=%f\n",dtOut);
+  printf( "dtOut=%f\n", dtOut );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&] ( string const &,
@@ -1143,7 +1131,7 @@ void AcousticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
 }
 
 void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
-                                               real64  const & dt,
+                                               real64 const & dt,
                                                integer cycleNumber,
                                                DomainPartition & domain,
                                                MeshLevel & mesh,
@@ -1164,7 +1152,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
-  printf("dtlowlevel=%f\n",dt);
+  printf( "dtlowlevel=%f\n", dt );
   finiteElement::
     regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
@@ -1300,7 +1288,7 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 }
 
 real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                      real64  const & dt,
+                                                      real64 const & dt,
                                                       integer const cycleNumber,
                                                       DomainPartition & domain )
 {
