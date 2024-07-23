@@ -225,6 +225,7 @@ public:
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem reg ids    ", minRegId.get(), maxRegId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem sub reg ids", minSubRegId.get(), maxSubRegId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "elem ids        ", minElemId.get(), maxElemId.get() ) );
+    GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel {} : {} -> {}", "transmissibility", minTransmiId.get(), maxTransmiId.get() ) );
     GEOS_LOG( GEOS_FMT( "StencilDataCollection::Kernel first line : transmi[{},{},{},0] = {} ; transmi[{},{},{},1] = {}",
                         connData[0].m_regionId[0],
                         connData[0].m_subRegionId[0],
