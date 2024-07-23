@@ -13,7 +13,7 @@
  */
 
 /**
- * @file LogLevels.hpp
+ * @file LogLevelsInfo.hpp
  */
 #ifndef GEOS_COMMON_LOGLEVELSINFO_HPP
 #define GEOS_COMMON_LOGLEVELSINFO_HPP
@@ -64,6 +64,7 @@ struct LineSearch
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on line search"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct LineSearchFailed
@@ -71,6 +72,7 @@ struct LineSearchFailed
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "On Incorrect solution, Information on failed line search"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct ScalingFactor
@@ -78,6 +80,7 @@ struct ScalingFactor
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on global solution scaling factor"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct TimeStep
@@ -85,6 +88,7 @@ struct TimeStep
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on the timestep"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct SolverTimers
@@ -92,6 +96,7 @@ struct SolverTimers
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on solver timers"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct ScreenLinearSystem
@@ -100,6 +105,7 @@ struct ScreenLinearSystem
   static constexpr std::string_view getDescription() { return "Output to screen the assembled linear system and solutions (matrices and vectors)"; }
 
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct FileLinearSystem
@@ -107,6 +113,7 @@ struct FileLinearSystem
   static constexpr int getMinLogLevel() { return 3; }
   static constexpr std::string_view getDescription() { return "Output to file the assembled linear system and solutions (matrices and vectors)"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct SolverConfig
@@ -114,6 +121,7 @@ struct SolverConfig
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "On non convergance, Information about testing new configuration and print the time step"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct ResidualNorm
@@ -121,6 +129,7 @@ struct ResidualNorm
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print residual norm"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct ResidualValues
@@ -128,6 +137,7 @@ struct ResidualValues
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print the residual values"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct LinearSystem
@@ -135,6 +145,7 @@ struct LinearSystem
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information oon linear system"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct CrossflowWarning
@@ -142,6 +153,7 @@ struct CrossflowWarning
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "If the well is injector and crossflow enabled, display informations about crossflow for injectors"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct HydraulicAperture
@@ -149,6 +161,7 @@ struct HydraulicAperture
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on aperture and hydraulic aperture"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct SolverTimeStep
@@ -156,6 +169,7 @@ struct SolverTimeStep
   static constexpr int getMinLogLevel() { return 3; }
   static constexpr std::string_view getDescription() { return "Informations on solver time step"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct Dof
@@ -163,6 +177,7 @@ struct Dof
   static constexpr int getMinLogLevel() { return 3; }
   static constexpr std::string_view getDescription() { return "The summary of declared fields and coupling"; }
 };
+/// @endcond
 
 /// @cond DO_NOT_DOCUMENT
 struct PoromechanicsPhaseFraction
@@ -170,6 +185,7 @@ struct PoromechanicsPhaseFraction
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print phase volume fraction"; }
 };
+/// @endcond
 
 }
 
