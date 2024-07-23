@@ -2,17 +2,18 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+#define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 // Source includes
 #include "ProblemManager.hpp"
@@ -79,7 +80,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  registerGroup< TasksManager >( groupKeys.tasksManager );
+  m_tasksManager = &registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
@@ -150,7 +151,7 @@ Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
-  postProcessInputRecursive();
+  postInputInitializationRecursive();
 
   generateMesh();
 
@@ -490,7 +491,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 }
 
 
-void ProblemManager::postProcessInput()
+void ProblemManager::postInputInitialization()
 {
   DomainPartition & domain = getDomainPartition();
 
@@ -683,13 +684,21 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
+      ElementRegionManager & elementManager = meshLevel.getElemManager();
 
-      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
-      // because the ghosting ensures that the neighbor cells of the fracture elements are available.
-      // These neighbor cells are providing the node information to the fracture elements.
-      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        /// 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
+        // because the ghosting ensures that the neighbor cells of the fracture elements are available.
+        // These neighbor cells are providing the node information to the fracture elements.
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+        // 2. Reorder the face map based on global numbering of neighboring cells
+        subRegion.flipFaceMap( faceManager, elementManager );
+
+        // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
+        // direction of the fracture.
+        subRegion.fixNeighboringFacesNormals( faceManager, elementManager );
       } );
 
       faceManager.setIsExternal();

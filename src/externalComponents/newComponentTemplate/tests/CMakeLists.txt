@@ -1,7 +1,7 @@
 # Specify list of tests
 set( dependencyList gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
+if ( GEOS_BUILD_SHARED_LIBS )
   list( APPEND dependencyList geosx_core )
 else()
   list( APPEND dependencyList ${geosx_core_libs} )

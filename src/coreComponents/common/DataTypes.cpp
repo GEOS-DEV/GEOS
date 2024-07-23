@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -24,7 +25,7 @@
 
 namespace geos
 {
-#ifdef GEOSX_USE_MPI
+#ifdef GEOS_USE_MPI
 MPI_Comm MPI_COMM_GEOSX;
 #else
 int MPI_COMM_GEOSX = 0;
@@ -185,8 +186,8 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
 
   string_view const groupNameDesc = "Input value must be a string that cannot be empty and contains only upper/lower letters, digits, and the characters  . - _";
   string_view const groupNameRegex = "[a-zA-Z0-9.\\-_]+";
-  string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ /";
-  string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/]*";
+  string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ / *";
+  string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/*]*";
 
 
   // Build master list of regexes

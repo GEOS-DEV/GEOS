@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -44,7 +45,7 @@ public:
 
   static string catalogName() { return "PVTDriver"; }
 
-  void postProcessInput() override;
+  void postInputInitialization() override;
 
   virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                         real64 const GEOS_UNUSED_PARAM( dt ),
@@ -90,6 +91,7 @@ private:
     constexpr static char const * outputString() { return "output"; }
     constexpr static char const * baselineString() { return "baseline"; }
     constexpr static char const * feedString() { return "feedComposition"; }
+    constexpr static char const * outputMassDensityString() { return "outputMassDensity"; }
     constexpr static char const * outputCompressibilityString() { return "outputCompressibility"; }
     constexpr static char const * outputPhaseCompositionString() { return "outputPhaseComposition"; }
   };
@@ -102,6 +104,7 @@ private:
   string m_pressureFunctionName;        ///< Time-dependent function controlling pressure
   string m_temperatureFunctionName;     ///< Time-dependent function controlling temperature
   string m_outputFile;                  ///< Output file (optional, no output if not specified)
+  integer m_outputMassDensity{0};       ///< Flag to indicate that the mass density of each phase should be output
   integer m_outputCompressibility{0};   ///< Flag to indicate that the total compressibility should be output
   integer m_outputPhaseComposition{0};  ///< Flag to indicate that phase compositions should be output
 
