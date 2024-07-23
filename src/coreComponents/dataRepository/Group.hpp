@@ -856,8 +856,8 @@ public:
   //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
   /**
-   * @brief Append a levelCondition and a log description to the description of the wrapped object
-   * @tparam LOG_LEVEL_INFO The log documentation to add 
+   * @brief Append a levelCondition and a log description to the description of the wrapped object given a log info struct
+   * @tparam LOG_LEVEL_INFO The log documentation to add
    * @return void if the trait is verified
    */
   template< typename LOG_LEVEL_INFO >
