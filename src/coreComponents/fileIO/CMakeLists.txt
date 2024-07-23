@@ -34,7 +34,7 @@ set( fileIO_sources
      timeHistory/PackCollection.cpp
      timeHistory/HDFHistoryIO.cpp )
 
-set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
+set( dependencyList ${parallelDeps} mesh constitutive HDF5::HDF5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp
@@ -50,13 +50,13 @@ endif()
 
 if( ENABLE_MPI )
   add_subdirectory( coupling/hdf5_interface )
-  list( APPEND dependencyList mpi hdf5_interface )
+  list( APPEND dependencyList mpi hdf5_interface HDF5::HDF5 )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
 endif()
 
 if( ENABLE_SILO )
-  list( APPEND dependencyList silo )
+  list( APPEND dependencyList silo HDF5::HDF5)
   list( APPEND fileIO_headers 
                silo/SiloFile.hpp 
                Outputs/SiloOutput.hpp )
@@ -89,7 +89,7 @@ blt_add_library( NAME       fileIO
                  SOURCES    ${fileIO_sources}
                  HEADERS    ${fileIO_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
+                 OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
 
 
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
