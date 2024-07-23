@@ -15,6 +15,7 @@ componentVolumeShift         real64_array       {0}             Component volume
 equationsOfState             string_array       required        | List of equation of state types for each phase. Valid options:                                                            
                                                                 | * pr                                                                                                                      
                                                                 | * srk                                                                                                                     
+                                                                | * immiscibleWater                                                                                                         
 name                         groupName          required        A name is required for any non-unique nodes                                                                               
 phaseNames                   groupNameRef_array required        List of fluid phases                                                                                                      
 viscosityMixingRule          string             HerningZipperer | Viscosity mixing rule to be used for Lohrenz-Bray-Clark computation. Valid options:                                       

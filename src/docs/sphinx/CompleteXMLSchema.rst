@@ -227,6 +227,13 @@ Element: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
 
 
+.. _XML_CompositionalThreePhaseFluidLohrenzBrayClark:
+
+Element: CompositionalThreePhaseFluidLohrenzBrayClark
+=====================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalThreePhaseFluidLohrenzBrayClark.rst
+
+
 .. _XML_CompositionalTwoPhaseFluid:
 
 Element: CompositionalTwoPhaseFluid
@@ -1685,6 +1692,13 @@ Datastructure: CompositionalMultiphaseStatistics
 Datastructure: CompositionalMultiphaseWell
 ==========================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalThreePhaseFluidLohrenzBrayClark:
+
+Datastructure: CompositionalThreePhaseFluidLohrenzBrayClark
+===========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalThreePhaseFluidLohrenzBrayClark_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalTwoPhaseFluid:

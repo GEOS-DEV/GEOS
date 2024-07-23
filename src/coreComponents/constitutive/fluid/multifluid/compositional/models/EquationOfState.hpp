@@ -37,12 +37,14 @@ namespace compositional
 enum class EquationOfStateType : integer
 {
   PengRobinson,
-  SoaveRedlichKwong
+  SoaveRedlichKwong,
+  ImmiscibleWater
 };
 
 ENUM_STRINGS( EquationOfStateType,
               "pr",
-              "srk" );
+              "srk",
+              "immiscibleWater" );
 
 class EquationOfState : public ModelParameters
 {
