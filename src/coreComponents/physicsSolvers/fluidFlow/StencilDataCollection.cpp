@@ -238,7 +238,7 @@ public:
                         connData[0].m_subRegionId[1],
                         connData[0].m_elementId[1],
                         connData[0].m_transmissibility[1] ) );
-    GEOS_LOG( showKernelDataExtract(connData,8) );
+    GEOS_LOG( showKernelDataExtract( connData, 8 ) );
   }
 
 private:
@@ -283,16 +283,16 @@ string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnecti
   auto kernelIterator = kernelData.begin();
   for( int iConn=0; iConn < maxLines && kernelIterator != kernelData.end(); ++iConn, ++kernelIterator )
   {
-    for( int i=0; i < 2; ++i )
-    {
-      tableData.addRow( kernelIterator->m_transmissibility[i],
-                        kernelIterator->m_regionId[i],
-                        kernelIterator->m_subRegionId[i],
-                        kernelIterator->m_elementId[i] );
-    }
+    tableData.addRow( GEOS_FMT( "{} / {}", kernelIterator->m_regionId[0], kernelIterator->m_regionId[1] ),
+                      GEOS_FMT( "{} / {}", kernelIterator->m_subRegionId[0], kernelIterator->m_subRegionId[1] ),
+                      GEOS_FMT( "{} / {}", kernelIterator->m_elementId[0], kernelIterator->m_elementId[1] ),
+                      kernelIterator->m_transmissibility[0],
+                      kernelIterator->m_transmissibility[1] );
   }
-  TableLayout const tableLayout{ { "transmissibility", "regionId", "subRegionId", "elementId" },
-    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() ) };
+  TableLayout const tableLayout{
+    { "regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA" },
+    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() )
+  };
   TableTextFormatter const tableFormatter{ tableLayout };
   return tableFormatter.toString( tableData );
 }
