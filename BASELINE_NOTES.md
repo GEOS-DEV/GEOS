@@ -10,6 +10,13 @@ PR #3215 (2024-07-23)
 ======================
 Changed the default value for massCreation and name of the wrapper.
 
+PR #3194 (2024-07-10)
+======================
+Use aperture table in poromechanics with conforming fractures. Rebaseline the corresponding cases.
+
+======================
+Changed the default value for massCreation and name of the wrapper.
+
 PR #3006 (2024-07-01)
 ======================
 Added baselines for new tests. Relaxing tolerances for singlePhasePoromechanics_FaultModel_smoke.
