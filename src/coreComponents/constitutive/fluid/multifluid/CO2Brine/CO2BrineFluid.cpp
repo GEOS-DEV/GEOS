@@ -116,14 +116,6 @@ CO2BrineFluid( string const & name, Group * const parent ):
 }
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
-bool CO2BrineFluid< PHASE1, PHASE2, FLASH >::isThermal() const
-{
-  return ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() &&
-           PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
-}
-
-
-template< typename PHASE1, typename PHASE2, typename FLASH >
 std::unique_ptr< ConstitutiveBase >
 CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 deliverClone( string const & name, Group * const parent ) const
