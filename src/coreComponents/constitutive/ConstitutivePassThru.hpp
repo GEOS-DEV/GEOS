@@ -36,6 +36,7 @@
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/PorousSolid.hpp"
+#include "solid/ThermoPoroMechanics.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ThermalCompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
@@ -51,7 +52,6 @@
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "thermalConductivity/SinglePhaseThermalConductivity.hpp"
-#include "thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {
@@ -285,6 +285,74 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPrager > >,
+                                 PorousSolid< DuvautLionsSolid< DruckerPragerExtended > >,
+                                 PorousSolid< DuvautLionsSolid< ModifiedCamClay > >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+
+/**
+ * Specialization for the ThermoPoroMechanics models.
+ */
+template<>
+struct ConstitutivePassThru< ThermoPoroMechanicsBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticTransverseIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropicPressureDependent, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticOrthotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticTransverseIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropicPressureDependent, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticOrthotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
 };
 
 /**
@@ -337,14 +405,7 @@ struct ConstitutivePassThru< ThermalCompressibleSolidBase >
                                  ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -358,14 +419,7 @@ struct ConstitutivePassThru< ThermalCompressibleSolidBase >
                                  ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >
+                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -418,13 +472,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -438,7 +485,21 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                 PorousSolid< Damage< ElasticIsotropic > >,
+ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticTransverseIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropicPressureDependent, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticOrthotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
 
@@ -459,13 +520,6 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  ThermalCompressibleSolid< PressurePorosity, PressurePermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, SinglePhaseThermalConductivity >,
                                  ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, SinglePhaseThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity >,
-                                 ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -479,7 +533,21 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                 PorousSolid< Damage< ElasticIsotropic > >,
+                                 ThermoPoroMechanics< DruckerPragerExtended, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ModifiedCamClay, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DelftEgg, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DruckerPrager, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPrager >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< DruckerPragerExtended >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DuvautLionsSolid< ModifiedCamClay >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticTransverseIsotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticIsotropicPressureDependent, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< ElasticOrthotropic, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageSpectral< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< DamageVolDev< ElasticIsotropic >, SinglePhaseThermalConductivity >,
+                                 ThermoPoroMechanics< Damage< ElasticIsotropic >, SinglePhaseThermalConductivity > >::execute( constitutiveRelation,
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
 };

@@ -148,6 +148,7 @@ set( constitutive_headers
      solid/InvariantDecompositions.hpp
      solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
+     solid/ThermoPoroMechanics.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
@@ -288,6 +289,7 @@ set( constitutive_sources
      solid/ElasticOrthotropic.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
+     solid/ThermoPoroMechanics.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
      solid/CeramicDamage.cpp

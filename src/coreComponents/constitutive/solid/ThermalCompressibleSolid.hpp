@@ -24,7 +24,6 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {

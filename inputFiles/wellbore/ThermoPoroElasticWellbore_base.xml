@@ -51,11 +51,11 @@
     <CellElementRegion
       name="rock"
       cellBlocks="{ rock }"
-      materialList="{ fluid, rock, rockThermalCond }"/>
+      materialList="{ fluid, rock }"/>
   </ElementRegions>
 
   <Constitutive>
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"

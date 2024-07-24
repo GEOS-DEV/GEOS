@@ -195,12 +195,12 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, fractureContact, thermalCond }"
+      materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
   <Constitutive>
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"

@@ -28,7 +28,6 @@
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
 #include "constitutive/permeability/WillisRichardsPermeability.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivity.hpp"
-#include "constitutive/thermalConductivity/MultiPhaseConstantThermalConductivity.hpp"
 
 namespace geos
 {
@@ -66,22 +65,5 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRockSinglePhaseThermalCond, st
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultEDSinglePhaseThermalCond, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultSinglePhaseThermalCond, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWRSinglePhaseThermalCond, string const &, Group * const )
-
-// Register all ThermalCompressibleSolid model types with multi phase flow.
-typedef ThermalCompressibleSolid< PressurePorosity, ConstantPermeability, MultiPhaseConstantThermalConductivity > CompressibleRockConstantMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, CarmanKozenyPermeability, MultiPhaseConstantThermalConductivity > CompressibleRockCKMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, PressurePermeability, MultiPhaseConstantThermalConductivity > CompressibleRockPressurePermMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, ExponentialDecayPermeability, MultiPhaseConstantThermalConductivity > FaultEDMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, ParallelPlatesPermeability, MultiPhaseConstantThermalConductivity > FractureRockMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, SlipDependentPermeability, MultiPhaseConstantThermalConductivity > FaultMultiPhaseThermalCond;
-typedef ThermalCompressibleSolid< PressurePorosity, WillisRichardsPermeability, MultiPhaseConstantThermalConductivity > FaultWRMultiPhaseThermalCond;
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstantMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCKMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockPressurePermMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRockMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultEDMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultMultiPhaseThermalCond, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWRMultiPhaseThermalCond, string const &, Group * const )
 }
 } /* namespace geos */

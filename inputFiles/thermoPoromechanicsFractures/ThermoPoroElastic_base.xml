@@ -2,7 +2,7 @@
 
 <Problem>
   <Constitutive>
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"

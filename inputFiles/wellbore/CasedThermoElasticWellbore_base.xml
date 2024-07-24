@@ -54,22 +54,22 @@
     <CellElementRegion
       name="casing"
       cellBlocks="{ casing }"
-      materialList="{ fluid, casing, casingThermalCond }"/>
+      materialList="{ fluid, casing }"/>
 
     <CellElementRegion
       name="cement"
       cellBlocks="{ cement }"
-      materialList="{ fluid, cement, cementThermalCond }"/>
+      materialList="{ fluid, cement }"/>
 
     <CellElementRegion
       name="rock"
       cellBlocks="{ rock }"
-      materialList="{ fluid, rock, rockThermalCond }"/>
+      materialList="{ fluid, rock }"/>
   </ElementRegions>
 
   <Constitutive>
 
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="casing"
       solidModelName="casingSolid"
       porosityModelName="casingPorosity"
@@ -77,7 +77,7 @@
       solidInternalEnergyModelName="casingInternalEnergy"
       thermalConductivityModelName="casingThermalCond"/>
 
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="cement"
       solidModelName="cementSolid"
       porosityModelName="cementPorosity"
@@ -85,7 +85,7 @@
       solidInternalEnergyModelName="cementInternalEnergy"
       thermalConductivityModelName="cementThermalCond"/>
 
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"

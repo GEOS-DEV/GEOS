@@ -18,16 +18,17 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water, thermalCond }"/>
+      materialList="{ rock, water }"/>
   </ElementRegions>
 
   <Constitutive>
-    <PorousElasticIsotropic
+    <ThermoPoroElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
-      solidInternalEnergyModelName="rockInternalEnergy"/>
+      solidInternalEnergyModelName="rockInternalEnergy"
+      thermalConductivityModelName="thermalCond"/>
 
     <!-- SPHINX_SOLID -->
     <ElasticIsotropic

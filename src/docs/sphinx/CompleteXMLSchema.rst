@@ -1375,6 +1375,97 @@ Element: ThermalCompressibleSolidWillisRichardsPermeability
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidWillisRichardsPermeability.rst
 
 
+.. _XML_ThermoPoroDamageElasticIsotropic:
+
+Element: ThermoPoroDamageElasticIsotropic
+=========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageElasticIsotropic.rst
+
+
+.. _XML_ThermoPoroDamageSpectralElasticIsotropic:
+
+Element: ThermoPoroDamageSpectralElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageSpectralElasticIsotropic.rst
+
+
+.. _XML_ThermoPoroDamageVolDevElasticIsotropic:
+
+Element: ThermoPoroDamageVolDevElasticIsotropic
+===============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageVolDevElasticIsotropic.rst
+
+
+.. _XML_ThermoPoroDelftEgg:
+
+Element: ThermoPoroDelftEgg
+===========================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDelftEgg.rst
+
+
+.. _XML_ThermoPoroDruckerPrager:
+
+Element: ThermoPoroDruckerPrager
+================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDruckerPrager.rst
+
+
+.. _XML_ThermoPoroElasticIsotropic:
+
+Element: ThermoPoroElasticIsotropic
+===================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticIsotropic.rst
+
+
+.. _XML_ThermoPoroElasticOrthotropic:
+
+Element: ThermoPoroElasticOrthotropic
+=====================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticOrthotropic.rst
+
+
+.. _XML_ThermoPoroElasticTransverseIsotropic:
+
+Element: ThermoPoroElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticTransverseIsotropic.rst
+
+
+.. _XML_ThermoPoroExtendedDruckerPrager:
+
+Element: ThermoPoroExtendedDruckerPrager
+========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroExtendedDruckerPrager.rst
+
+
+.. _XML_ThermoPoroModifiedCamClay:
+
+Element: ThermoPoroModifiedCamClay
+==================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroModifiedCamClay.rst
+
+
+.. _XML_ThermoPoroViscoDruckerPrager:
+
+Element: ThermoPoroViscoDruckerPrager
+=====================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoDruckerPrager.rst
+
+
+.. _XML_ThermoPoroViscoExtendedDruckerPrager:
+
+Element: ThermoPoroViscoExtendedDruckerPrager
+=============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoExtendedDruckerPrager.rst
+
+
+.. _XML_ThermoPoroViscoModifiedCamClay:
+
+Element: ThermoPoroViscoModifiedCamClay
+=======================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoModifiedCamClay.rst
+
+
 .. _XML_ThickPlane:
 
 Element: ThickPlane
@@ -2910,6 +3001,97 @@ Datastructure: ThermalCompressibleSolidSlipDependentPermeability
 Datastructure: ThermalCompressibleSolidWillisRichardsPermeability
 =================================================================
 .. include:: ../../coreComponents/schema/docs/ThermalCompressibleSolidWillisRichardsPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroDamageElasticIsotropic:
+
+Datastructure: ThermoPoroDamageElasticIsotropic
+===============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroDamageSpectralElasticIsotropic:
+
+Datastructure: ThermoPoroDamageSpectralElasticIsotropic
+=======================================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroDamageVolDevElasticIsotropic:
+
+Datastructure: ThermoPoroDamageVolDevElasticIsotropic
+=====================================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDamageVolDevElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroDelftEgg:
+
+Datastructure: ThermoPoroDelftEgg
+=================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDelftEgg_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroDruckerPrager:
+
+Datastructure: ThermoPoroDruckerPrager
+======================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroElasticIsotropic:
+
+Datastructure: ThermoPoroElasticIsotropic
+=========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroElasticOrthotropic:
+
+Datastructure: ThermoPoroElasticOrthotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticOrthotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroElasticTransverseIsotropic:
+
+Datastructure: ThermoPoroElasticTransverseIsotropic
+===================================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroExtendedDruckerPrager:
+
+Datastructure: ThermoPoroExtendedDruckerPrager
+==============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroModifiedCamClay:
+
+Datastructure: ThermoPoroModifiedCamClay
+========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroViscoDruckerPrager:
+
+Datastructure: ThermoPoroViscoDruckerPrager
+===========================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroViscoExtendedDruckerPrager:
+
+Datastructure: ThermoPoroViscoExtendedDruckerPrager
+===================================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ThermoPoroViscoModifiedCamClay:
+
+Datastructure: ThermoPoroViscoModifiedCamClay
+=============================================
+.. include:: ../../coreComponents/schema/docs/ThermoPoroViscoModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_ThickPlane:
