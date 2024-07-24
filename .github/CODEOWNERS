@@ -21,19 +21,19 @@
 /src/coreComponents/fieldSpecification                @rrsettgast @CusiniM @corbett5
 /src/coreComponents/fileIO                            @rrsettgast @wrtobin @MelReyCG @untereiner
 /src/coreComponents/finiteElement                     @rrsettgast @castelletto1
-/src/coreComponents/finiteVolume                      @rrsettgast @castelletto1
-/src/coreComponents/functions                         @cssherman  @wrtobin
+/src/coreComponents/finiteVolume                      @rrsettgast @castelletto1 @CusiniM
+/src/coreComponents/functions                         @cssherman  @wrtobin @rrsettgast
 /src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm 
-/src/coreComponents/mainInterface                     @rrsettgast @corbett5
-/src/coreComponents/math                              @rrsettgast @corbett5
+/src/coreComponents/mainInterface                     @rrsettgast @corbett5 @wrtobin 
+/src/coreComponents/math                              @rrsettgast @corbett5 @wrtobin 
 /src/coreComponents/mesh                              @rrsettgast @wrtobin @untereiner @CusiniM 
-/src/coreComponents/physicsSolvers                    @rrsettgast
+/src/coreComponents/physicsSolvers                    @rrsettgast @CusiniM
 /src/coreComponents/physicsSolvers/contact            @CusiniM @rrsettgast
 /src/coreComponents/physicsSolvers/fluidFlow          @CusiniM @paveltomin @klevzoff @francoishamon
 /src/coreComponents/physicsSolvers/inducedSeismicity  @CusiniM @rrsettgast
-/src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 
+/src/coreComponents/physicsSolvers/multiphysics       @CusiniM @paveltomin @castelletto1 @rrsettgast
 /src/coreComponents/physicsSolvers/python             @cssherman @corbett5
-/src/coreComponents/physicsSolvers/simplePDE          @castelletto1 @rrsettgast
+/src/coreComponents/physicsSolvers/simplePDE          @castelletto1 @rrsettgast @CusiniM 
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @CusiniM 
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
 /src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
