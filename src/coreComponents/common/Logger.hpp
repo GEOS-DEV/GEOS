@@ -436,7 +436,7 @@
  * @brief Output messages based on current Group's log level.
  * @param[in] minLevel minimum log level
  * @param[in] msg a message to log (any expression that can be stream inserted)
- * @deprecated Will be replaced by GEOS_LOG_INFO_LEVEL
+ * @deprecated Will be replaced by GEOS_LOG_LEVEL_INFO
  */
 #define GEOS_LOG_LEVEL( minLevel, msg ) GEOS_INFO_IF( this->getLogLevel() >= minLevel, msg );
 

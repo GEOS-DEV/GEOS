@@ -79,6 +79,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   Base::template addLogLevel< logInfo::CrossflowWarning >();
   Base::template addLogLevel< logInfo::HydraulicAperture >();
   Base::template addLogLevel< logInfo::SolverTimeStep >();
+  Base::template addLogLevel< logInfo::SolverNextDt >();
 
   registerWrapper( viewKeyStruct::isLaggingFractureStencilWeightsUpdateString(), &m_isLaggingFractureStencilWeightsUpdate ).
     setApplyDefaultValue( 0 ).
@@ -924,7 +925,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & cu
   {
     nextDt = m_surfaceGenerator->getTimestepRequest() < 1e99 ? m_surfaceGenerator->getTimestepRequest() : currentDt;
   }
-  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverTimeStep, this->getName() << ": nextDt request is "  << nextDt );
+  GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverNextDt, this->getName() << ": nextDt request is "  << nextDt );
 
   return nextDt;
 }

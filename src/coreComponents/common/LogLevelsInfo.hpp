@@ -35,13 +35,13 @@ static constexpr bool is_log_level_info =
   std::is_same_v< int, decltype(LOG_LEVEL_INFO::getMinLogLevel()) > &&
   std::is_same_v< std::string_view, decltype(LOG_LEVEL_INFO::getDescription()) >;
 
-/** This 3 method would replace the ones in Logger.hpp  */
+/** ThOSE 3 macros would replace the ones in Logger.hpp  */
 /**
  * @brief Output messages based on current Group's log level.
  * @param[in] logInfo Strut containing log level desscription
  * @param[in] msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_LOG_INFO_LEVEL( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
+#define GEOS_LOG_LEVEL_INFO( logInfo, msg ) GEOS_INFO_IF( isLogLevelActive< logInfo >( this->getLogLevel() ), msg );
 
 /**
  * @brief Output messages (only on rank 0) based on current Group's log level.
@@ -64,122 +64,98 @@ struct LineSearch
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on line search"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct LineSearchFailed
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "On Incorrect solution, Information on failed line search"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct ScalingFactor
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on global solution scaling factor"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct TimeStep
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on the timestep"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct SolverTimers
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on solver timers"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct ScreenLinearSystem
 {
-  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Output to screen the assembled linear system and solutions (matrices and vectors)"; }
 
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct FileLinearSystem
 {
-  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr int getMinLogLevel() { return 2; }
   static constexpr std::string_view getDescription() { return "Output to file the assembled linear system and solutions (matrices and vectors)"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct SolverConfig
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "On non convergance, Information about testing new configuration and print the time step"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct ResidualNorm
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print residual norm"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct ResidualValues
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print the residual values"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct LinearSystem
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information oon linear system"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct CrossflowWarning
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "If the well is injector and crossflow enabled, display informations about crossflow for injectors"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct HydraulicAperture
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Information on aperture and hydraulic aperture"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct SolverTimeStep
 {
-  static constexpr int getMinLogLevel() { return 3; }
+  static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Informations on solver time step"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
-struct Dof
+struct SolverNextDt
 {
   static constexpr int getMinLogLevel() { return 3; }
+  static constexpr std::string_view getDescription() { return "Informations on changing DT"; }
+};
+
+struct Dof
+{
+  static constexpr int getMinLogLevel() { return 2; }
   static constexpr std::string_view getDescription() { return "The summary of declared fields and coupling"; }
 };
-/// @endcond
 
-/// @cond DO_NOT_DOCUMENT
 struct PoromechanicsPhaseFraction
 {
   static constexpr int getMinLogLevel() { return 1; }

@@ -932,9 +932,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::SolverTimeStep, GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
-                                                                     maxAllowedResidualNormString,
-                                                                     m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
+      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::ResidualNorm, GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                                                   maxAllowedResidualNormString,
+                                                                   m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
       break;
     }

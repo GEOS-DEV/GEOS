@@ -84,10 +84,9 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::setupSystem( Do
   this->setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  if( this->getLogLevel() > 2 )
-  {
-    dofManager.printFieldInfo();
-  }
+  std::ostringstream oss;
+  dofManager.printFieldInfo( oss );
+  GEOS_LOG_LEVEL_INFO( logInfo::SolverNextDt, oss.str())
 
   /// 2. Add coupling terms not added by the DofManager.
   localIndex const numLocalRows = dofManager.numLocalDofs();
