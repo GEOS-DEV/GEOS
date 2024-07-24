@@ -17,43 +17,49 @@ set( physicsSolvers_sources
      SolverBase.cpp
      SolverStatistics.cpp )
 
-  if( GEOS_ENABLE_CONTACT )
-    include( contact/CMakeLists.txt )
-  endif()
+if( GEOS_ENABLE_CONTACT )
+  add_subdirectory( contact )
+endif()
 
-  if( GEOS_ENABLE_FLUIDFLOW )
-    include( fluidFlow/CMakeLists.txt )
-  endif()
+if( GEOS_ENABLE_FLUIDFLOW )
+  add_subdirectory( fluidFlow )
+endif()
 
-  if( GEOS_ENABLE_INDUCEDSEISMICITY )
-    include( inducedSeismicity/CMakeLists.txt )
-  endif()
+if( GEOS_ENABLE_INDUCEDSEISMICITY )
+  add_subdirectory( inducedSeismicity )
+endif()
 
-  if( GEOS_ENABLE_MULTIPHYSICS )
-    include( multiphysics/CMakeLists.txt )
-    include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
-  endif()
+if( GEOS_ENABLE_MULTIPHYSICS )
+  add_subdirectory( multiphysics )
+  include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
+endif()
 
-  include( python/CMakeLists.txt )
+if( GEOS_ENABLE_SIMPLEPDE )
+  add_subdirectory( simplePDE )
+endif()
+  
+if( GEOS_ENABLE_SOLIDMECHANICS )
+  add_subdirectory( solidMechanics )
+  include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
+endif()
 
-  if( GEOS_ENABLE_SIMPLEPDE )
-    include( simplePDE/CMakeLists.txt )
-  endif()
+if( GEOS_ENABLE_SURFACEGENERATION )
+  add_subdirectory( surfaceGeneration )
+endif()
 
-  if( GEOS_ENABLE_SOLIDMECHANICS )
-    include( solidMechanics/CMakeLists.txt )
-    include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
-    endif()
-
-  if( GEOS_ENABLE_SURFACEGENERATION )
-    include( surfaceGeneration/CMakeLists.txt )
-  endif()
-
-  if( GEOS_ENABLE_WAVEPROPAGATION )
-    include( wavePropagation/CMakeLists.txt )
-  endif()
+if( GEOS_ENABLE_WAVEPROPAGATION )
+  add_subdirectory( wavePropagation )
+endif()
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
+if( ENABLE_PYGEOSX )
+  list( APPEND physicsSolvers_headers
+  python/PySolver.hpp
+  python/PySolverType.hpp )
+  list( APPEND physicsSolvers_sources
+        python/PySolver.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray )
+endif()
 
 blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}

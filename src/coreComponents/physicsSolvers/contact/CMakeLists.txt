@@ -14,8 +14,9 @@ set( physicsSolvers_headers
      contact/SolidMechanicsALMKernels.hpp
      contact/SolidMechanicsALMKernelsHelper.hpp
      contact/SolidMechanicsALMJumpUpdateKernels.hpp
-     contact/SolidMechanicsALMBubbleKernels.hpp
+     contact/SolidMechanicsALMBubbleKernels.hpp 
      PARENT_SCOPE )
+
 
 # Specify solver sources
 set( physicsSolvers_sources
