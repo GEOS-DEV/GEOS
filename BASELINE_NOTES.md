@@ -10,6 +10,10 @@ PR #3194 (2024-07-22)
 ======================
 Check pore volume for all element types, also check that default aperture > 0. Rebaseline for modified tests. No real results change.
 
+PR #3213 (2024-07-12)
+======================
+Added baselines for new tests on Dirichlet boundary conditions for multiphase flow.
+
 
 PR #3194 (2024-07-10)
 ======================
