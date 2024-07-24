@@ -508,14 +508,14 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
 template< typename COMPOSITIONAL_SOLVER, typename LAMBDA >
 inline void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
-                                        DomainPartition & domain,
-                                        bool const isThermal,
-                                        real64 const perturbParameter,
-                                        arrayView1d< real64 > residual,
-                                        arrayView1d< real64 > residualOrig,
-                                        CRSMatrixView< real64, globalIndex > jacobian,
-                                        CRSMatrixView< real64, globalIndex > jacobianFD,
-                                        LAMBDA assembleFunction )
+                                               DomainPartition & domain,
+                                               bool const isThermal,
+                                               real64 const perturbParameter,
+                                               arrayView1d< real64 > residual,
+                                               arrayView1d< real64 > residualOrig,
+                                               CRSMatrixView< real64, globalIndex > jacobian,
+                                               CRSMatrixView< real64, globalIndex > jacobianFD,
+                                               LAMBDA assembleFunction )
 {
   integer const numComp = solver.numFluidComponents();
 
