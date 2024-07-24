@@ -35,7 +35,7 @@ struct StateUpdateKernel
   /**
    * @brief Launch the kernel function doing volume, aperture and fracture traction updates
    * @tparam POLICY the type of policy used in the kernel launch
-   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @tparam HYDRAULIC_APERTURE_WRAPPER the type of hydraulic aperture model wrapper doing the fracture traction updates
    * @param[in] size the size of the subregion
    * @param[in] contactWrapper the wrapper implementing the contact relationship
    * @param[in] dispJump the displacement jump
@@ -48,11 +48,11 @@ struct StateUpdateKernel
    * @param[out] hydraulicAperture the effecture aperture
    * @param[in] fractureTraction the fracture traction
    */
-  template< typename POLICY, typename POROUS_WRAPPER, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename POROUS_WRAPPER, typename HYDRAULIC_APERTURE_WRAPPER >
   static void
   launch( localIndex const size,
           POROUS_WRAPPER const & porousMaterialWrapper,
-          CONTACT_WRAPPER const & contactWrapper,
+          HYDRAULIC_APERTURE_WRAPPER const & contactWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
           arrayView1d< real64 const > const & area,

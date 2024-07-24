@@ -104,8 +104,13 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**@}*/
-
+  
 private:
+
+  struct viewKeyStruct : Base::viewKeyStruct
+  {
+    constexpr static char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; } 
+  };
 
   static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
 

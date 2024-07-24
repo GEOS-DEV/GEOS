@@ -96,6 +96,7 @@ public:
   struct viewKeyStruct : SinglePhasePoromechanics::viewKeyStruct
   {
     constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
+    constexpr static char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; } 
   };
 
 
