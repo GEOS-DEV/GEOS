@@ -44,7 +44,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
-      defaultAperture="0.0"
+      defaultAperture="1.0e-6"
       materialList="{ frictionLaw }"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
