@@ -63,7 +63,19 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual bool isThermal() const override;
+  static constexpr bool isThermalType()
+  {
+    return !( std::is_same_v< typename PHASE1::Enthalpy, PVTProps::NoOpPVTFunction > ||
+              std::is_same_v< typename PHASE2::Enthalpy, PVTProps::NoOpPVTFunction > );
+  }
+
+  static constexpr integer min_n_components = 2;
+  static constexpr integer max_n_components = 2;
+
+  virtual bool isThermal() const override
+  {
+    return isThermalType();
+  }
 
   /**
    * @brief Kernel wrapper class for CO2BrineFluid.
