@@ -261,6 +261,11 @@ public:
                                          real64 & residualNormT );
 
   /**
+   * @brief getter for the current nonlinear resolution status
+   * @return return true if the current time-step solution reached the mximum number of nonlinear iterations
+   */
+  bool hasNonlinearIssues() { return m_hasNonlinearIssues; }
+  /**
    * @brief Function for a linear implicit integration step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
@@ -416,6 +421,22 @@ public:
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs );
+
+  /**
+   * @brief function to update the residual map
+   * @param time_n time at the begining of the time step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated tieh the linear system
+   * @param localRhs the system right-hand side vector
+   */
+  virtual void
+  updateResidualField( real64 const & time_n,
+                       real64 const & dt,
+                       DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localRhs );
+
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -781,6 +802,9 @@ protected:
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
+
+  /// a boolean status-flag to signal a struggling time-step nonlinear-wise
+  bool m_hasNonlinearIssues;
 
   real64 m_cflFactor;
   real64 m_maxStableDt;

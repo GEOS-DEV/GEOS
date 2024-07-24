@@ -35,6 +35,7 @@ SolverBase::SolverBase( string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
+  m_hasNonlinearIssues( false ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
@@ -250,12 +251,12 @@ bool SolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
+  m_hasNonlinearIssues = false;
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
     m_solverStatistics.initializeTimeStepStatistics();
-
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
@@ -274,6 +275,7 @@ bool SolverBase::execute( real64 const time_n,
     if( dtRemaining > 0.0 )
     {
       nextDt = setNextDt( dtAccepted, domain );
+
       if( nextDt < dtRemaining )
       {
         // better to do two equal steps than one big and one small (even potentially tiny)
@@ -817,6 +819,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       // notify the solver statistics counter that this is a time step cut
       m_solverStatistics.logTimeStepCut();
+
+
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -908,6 +912,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -915,6 +920,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
+      //always output residual even if converged
+      if( getLogLevel()>0 && !m_hasNonlinearIssues )
+        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+
       break;
     }
 
@@ -927,55 +936,77 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                           maxAllowedResidualNormString,
                                           m_nonlinearSolverParameters.m_maxAllowedResidualNorm ) );
       isNewtonConverged = false;
+      m_hasNonlinearIssues = true;
       break;
     }
 
+
+    //if logLevel high enough and newton start having trouble converging, dumpt residual map.
+    if( newtonIter==maxNewtonIter-1 )//last but one iter-left
+    {
+      if( getLogLevel()>0 )
+        updateResidualField( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+      m_hasNonlinearIssues = true;
+    }
+
+
+
     // do line search in case residual has increased
-    if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
-        && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
-        && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
+    if( residualNorm > lastResidual )
     {
       bool lineSearchSuccess = false;
-      if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
-      {
-        residualNorm = lastResidual;
-        lineSearchSuccess = lineSearch( time_n,
-                                        stepDt,
-                                        cycleNumber,
-                                        domain,
-                                        m_dofManager,
-                                        m_localMatrix.toViewConstSizes(),
-                                        m_rhs,
-                                        m_solution,
-                                        scaleFactor,
-                                        residualNorm );
-      }
-      else
-      {
-        lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
-                                                                  stepDt,
-                                                                  cycleNumber,
-                                                                  domain,
-                                                                  m_dofManager,
-                                                                  m_localMatrix.toViewConstSizes(),
-                                                                  m_rhs,
-                                                                  m_solution,
-                                                                  scaleFactor,
-                                                                  lastResidual,
-                                                                  residualNorm );
-      }
 
-      if( !lineSearchSuccess )
+//      m_hasNonlinearIssues = true;
+
+      if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None &&
+          newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
       {
-        if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
+        if( m_nonlinearSolverParameters.m_lineSearchInterpType ==
+            NonlinearSolverParameters::LineSearchInterpolationType::Linear )
         {
-          GEOS_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
+          residualNorm = lastResidual;
+          lineSearchSuccess = lineSearch( time_n,
+                                          stepDt,
+                                          cycleNumber,
+                                          domain,
+                                          m_dofManager,
+                                          m_localMatrix.toViewConstSizes(),
+                                          m_rhs,
+                                          m_solution,
+                                          scaleFactor,
+                                          residualNorm );
         }
-        else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
+        else
         {
-          // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-          GEOS_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
-          break;
+          lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
+                                                                    stepDt,
+                                                                    cycleNumber,
+                                                                    domain,
+                                                                    m_dofManager,
+                                                                    m_localMatrix.toViewConstSizes(),
+                                                                    m_rhs,
+                                                                    m_solution,
+                                                                    scaleFactor,
+                                                                    lastResidual,
+                                                                    residualNorm );
+        }
+
+        if( !lineSearchSuccess )
+        {
+          if( m_nonlinearSolverParameters.m_lineSearchAction ==
+              NonlinearSolverParameters::LineSearchAction::Attempt )
+          {
+            GEOS_LOG_LEVEL_RANK_0( 1,
+                                   "        Line search failed to produce reduced residual. Accepting iteration." );
+          }
+          else if( m_nonlinearSolverParameters.m_lineSearchAction ==
+                   NonlinearSolverParameters::LineSearchAction::Require )
+          {
+            // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+            GEOS_LOG_LEVEL_RANK_0( 1,
+                                   "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+            break;
+          }
         }
       }
     }
@@ -1222,6 +1253,18 @@ SolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
   GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
   return 0;
 }
+
+void
+SolverBase::updateResidualField( real64 const & GEOS_UNUSED_PARAM( time ),
+                                 real64 const & GEOS_UNUSED_PARAM( dt ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                 arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) )
+{
+//                                    GEOS_ERROR( "SolverBase::calculateResidualNorm called!. Should be overridden." );
+// for PoC comment then implement it for all solvers
+}
+
 
 void SolverBase::solveLinearSystem( DofManager const & dofManager,
                                     ParallelMatrix & matrix,

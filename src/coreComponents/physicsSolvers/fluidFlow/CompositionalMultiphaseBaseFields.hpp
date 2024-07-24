@@ -169,6 +169,14 @@ DECLARE_FIELD( globalCompDensityScalingFactor,
                NO_WRITE,
                "Scaling factors for global component densities" );
 
+DECLARE_FIELD( globalResidual,
+               "globalComponentResidual",
+               array2dLayoutComp,
+               0,
+               LEVEL_1,
+               WRITE,
+               "global Component Residual" );
+
 DECLARE_FIELD( compAmount,
                "compAmount",
                array2dLayoutComp,

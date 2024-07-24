@@ -44,6 +44,7 @@ set( physicsSolvers_headers
      fluidFlow/proppantTransport/ProppantTransport.hpp
      fluidFlow/proppantTransport/ProppantTransportFields.hpp
      fluidFlow/proppantTransport/ProppantTransportKernels.hpp
+        fluidFlow/ResidualTask.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseFields.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
@@ -188,6 +189,7 @@ set( physicsSolvers_sources
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/proppantTransport/ProppantTransport.cpp
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
+        fluidFlow/ResidualTask.cpp
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseStatistics.cpp
      fluidFlow/SinglePhaseFVM.cpp
