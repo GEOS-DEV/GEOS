@@ -6,10 +6,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3194 (2024-07-10)
+PR #3215 (2024-07-23)
 ======================
-Use aperture table in poromechanics with conforming fractures. Rebaseline the corresponding cases.
-
+Changed the default value for massCreation and name of the wrapper.
 
 PR #3006 (2024-07-01)
 ======================
