@@ -180,23 +180,7 @@ public:
     RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxElemId( std::numeric_limits< localIndex >::min() ); // FOR DEBUG OUTPUT
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minTransmiId( std::numeric_limits< real64 >::max() ); // FOR DEBUG OUTPUT
     RAJA::ReduceMax< parallelDeviceReduce, real64 > maxTransmiId( std::numeric_limits< real64 >::min() ); // FOR DEBUG OUTPUT
-    forAll< POLICY >( stencilWrapper.size(), [stencilWrapper,
-                                              elemRegionIndices,
-                                              elemSubRegionIndices,
-                                              elementIndices,
-                                              permeability,
-                                              connData,
-                                              runCount,
-                                              minLclId,
-                                              maxLclId,
-                                              minRegId,
-                                              maxRegId,
-                                              minSubRegId,
-                                              maxSubRegId,
-                                              minElemId,
-                                              maxElemId,
-                                              minTransmiId,
-                                              maxTransmiId] GEOS_HOST_DEVICE ( localIndex const iConn )
+    forAll< POLICY >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iConn )
     {
       real64 transmissibility[1][2];
       real64 dummy[1][2];
