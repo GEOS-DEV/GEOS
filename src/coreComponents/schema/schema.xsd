@@ -2033,15 +2033,15 @@ the relative residual norm satisfies:
 		<xsd:attribute name="beginCycle" type="real64" use="required" />
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
-		<!--inputPath => Path at which the chombo to geosx file will be written.-->
+		<!--inputPath => Path at which the chombo to geos file will be written.-->
 		<xsd:attribute name="inputPath" type="string" default="/INVALID_INPUT_PATH" />
-		<!--outputPath => Path at which the geosx to chombo file will be written.-->
+		<!--outputPath => Path at which the geos to chombo file will be written.-->
 		<xsd:attribute name="outputPath" type="string" use="required" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--useChomboPressures => True iff geosx should use the pressures chombo writes out.-->
+		<!--useChomboPressures => True iff geos should use the pressures chombo writes out.-->
 		<xsd:attribute name="useChomboPressures" type="integer" default="0" />
-		<!--waitForInput => True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.-->
+		<!--waitForInput => True iff geos should wait for chombo to write out a file. When true the inputPath must be set.-->
 		<xsd:attribute name="waitForInput" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />

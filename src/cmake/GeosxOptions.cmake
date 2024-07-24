@@ -103,6 +103,16 @@ if( GEOS_PARALLEL_LINK_JOBS )
     set( CMAKE_JOB_POOL_LINK link_job_pool )
 endif()
 
+# Physics packages
+option( GEOS_ENABLE_CONTACT "Enables contact physics package" ON )
+option( GEOS_ENABLE_FLUIDFLOW "Enables fluid flow physics package" ON )
+option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics package" ON )
+option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" ON )
+option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" ON )
+option( GEOS_ENABLE_SOLIDMECHANICS "Enables solid mechanics physics package" ON )
+option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" ON )
+option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" ON )
+
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
