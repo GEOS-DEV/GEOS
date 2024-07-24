@@ -2125,36 +2125,33 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutive::constitutiveComponentUpdatePassThru( fluidBase, numComps, [&]( auto & fluid, auto NC )
     {
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-      {
-        integer constexpr NUM_COMP = NC();
-        integer constexpr NUM_DOF = NC() + 1;
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC() + 1;
 
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        // for now, we neglect capillary pressure in the kernel
-        BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
-        if( useTotalMassEquation )
-          kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      // for now, we neglect capillary pressure in the kernel
+      BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-        using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-        kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs, kernelFlags );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      } );
+      kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
+                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };

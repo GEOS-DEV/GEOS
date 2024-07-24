@@ -46,6 +46,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  static constexpr bool isThermalType(){ return false; }
+
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
   /**
    * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )

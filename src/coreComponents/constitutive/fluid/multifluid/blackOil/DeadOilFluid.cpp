@@ -33,6 +33,16 @@ DeadOilFluid::DeadOilFluid( string const & name,
   BlackOilFluidBase( name, parent )
 {}
 
+void DeadOilFluid::postInputInitialization()
+{
+  BlackOilFluidBase::postInputInitialization();
+
+  integer const numComps = numFluidComponents();
+  GEOS_THROW_IF( numComps != 2 && numComps != 3,
+                 GEOS_FMT( "{}: this model only supports 2 or 3 components", getFullName() ),
+                 InputError );
+}
+
 void DeadOilFluid::readInputDataFromPVTFiles()
 {
   GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),

@@ -187,6 +187,13 @@ void BlackOilFluidBase::postInputInitialization()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
+  // Number of components should be at least equal to number of phases
+  GEOS_THROW_IF_LT_MSG( numFluidComponents(), numFluidPhases(),
+                        GEOS_FMT( "{}: {} number of components ({}) must be at least number of phases ({})",
+                                  getFullName(), viewKeyStruct::componentNamesString(),
+                                  numFluidComponents(), numFluidPhases() ),
+                        InputError );
+
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),

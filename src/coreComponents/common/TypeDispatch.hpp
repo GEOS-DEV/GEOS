@@ -155,6 +155,12 @@ using Increment = typename IncrementImpl< T, N >::type;
 } // namespace internal
 
 /**
+ * @brief Generate a sequence of integers from @p Begin up to (and including) @p End.
+ */
+template< integer Begin, integer End >
+using IntegerSequence = internal::Increment< camp::make_idx_seq_t< End - Begin + 1 >, Begin >;
+
+/**
  * @brief Construct a list of types.
  */
 template< typename ... Ts >
@@ -190,10 +196,10 @@ using IntegralTypes = TypeList< integer, localIndex, globalIndex >;
 using RealTypes = TypeList< real32, real64 >;
 
 /**
- * @brief Generate a list of types representing array dimensionalities from M up to (and including) @p N.
+ * @brief Generate a list of types representing array dimensionalities from @p M up to (and including) @p N.
  */
 template< int M, int N >
-using DimsRange = camp::as_list< internal::Increment< camp::make_idx_seq_t< N - M + 1 >, M > >;
+using DimsRange = camp::as_list< IntegerSequence< M, N > >;
 
 /**
  * @brief Generate a list of types representing array dimensionality exactly @p N.
