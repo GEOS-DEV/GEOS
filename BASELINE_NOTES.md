@@ -8,7 +8,6 @@ These notes should be in reverse-chronological order, and use the following time
 
 PR #3215 (2024-07-23)
 ======================
-Changed the default value for massCreation and name of the wrapper.
 
 PR #3194 (2024-07-10)
 ======================
