@@ -135,6 +135,9 @@ bool StencilDataCollection::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 }
 
 
+string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnectionData > const & kernelData,
+                              globalIndex maxLines = std::numeric_limits< globalIndex >::max() );
+
 class StencilDataCollection::Kernel
 {
 public:
@@ -235,6 +238,7 @@ public:
                         connData[0].m_subRegionId[1],
                         connData[0].m_elementId[1],
                         connData[0].m_transmissibility[1] ) );
+    GEOS_LOG( showKernelDataExtract(connData,8) );
   }
 
 private:
@@ -273,7 +277,7 @@ StencilDataCollection::ConnectionData::fromKernel( KernelConnectionData const & 
 
 
 string showKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnectionData > const & kernelData,
-                              globalIndex maxLines = std::numeric_limits< globalIndex >::max() )
+                              globalIndex maxLines )
 {
   TableData tableData;
   auto kernelIterator = kernelData.begin();
