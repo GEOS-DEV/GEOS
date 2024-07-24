@@ -40,7 +40,6 @@ template< typename POROMECHANICS_SOLVER >
 HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string & name,
                                                                   Group * const parent )
   : Base( name, parent ),
-  m_contactRelationName(),
   m_surfaceGeneratorName(),
   m_surfaceGenerator( nullptr ),
   m_maxNumResolves( 10 ),
@@ -51,11 +50,6 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the surface generator to use in the hydrofracture solver" );
-
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
     setApplyDefaultValue( 10 ).
@@ -287,7 +281,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
 
-    HydraulicApertureBase const & contact = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, m_contactRelationName );
+    string const & hydraulicApertureRelationName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::hydraulicApertureRelationNameString()  );
+    HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const hydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
@@ -315,14 +310,14 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFrac
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( hydraulicApertureModel, [&] ( auto & castedHydraulicApertureModel )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+        typename HydraulicApertureModelType::KernelWrapper hydraulicApertureWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
         auto const statistics = hydrofractureSolverKernels::DeformationUpdateKernel
                                   ::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                      contactWrapper,
+                                                                      hydraulicApertureWrapper,
                                                                       porousMaterialWrapper,
                                                                       u,
                                                                       faceNormal,
@@ -808,7 +803,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      HydraulicApertureBase const & contact = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, m_contactRelationName );
+      string const & hydraulicApertureRelationName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::hydraulicApertureRelationNameString()  );
+      HydraulicApertureBase const & hydraulicApertureModel = this->template getConstitutiveModel< HydraulicApertureBase >( subRegion, hydraulicApertureRelationName );
 
       string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
       SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
@@ -826,15 +822,15 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 
       arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
 
-      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      constitutiveUpdatePassThru( hydraulicApertureModel, [&] ( auto & castedHydraulicApertureModel )
       {
-        using ContactType = TYPEOFREF( castedContact );
-        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+        using HydraulicApertureModelType = TYPEOFREF( castedHydraulicApertureModel );
+        typename HydraulicApertureModelType::KernelWrapper hydraulicApertureWrapper = castedHydraulicApertureModel.createKernelWrapper();
 
         hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
-                                            contactWrapper,
+                                            hydraulicApertureWrapper,
                                             m_useQuasiNewton,
                                             elemsToFaces,
                                             faceToNodeMap,

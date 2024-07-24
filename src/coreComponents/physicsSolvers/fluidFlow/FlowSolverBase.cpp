@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
+#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -338,6 +339,18 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
                    GEOS_FMT( "{}: Solid internal energy model not found on subregion {}",
                              getDataContext(), subRegion.getName() ),
                    InputError );
+  }
+  if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
+  {
+    subRegion.registerWrapper< string >( viewKeyStruct::hydraulicApertureRelationNameString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 );
+
+    string & hydraulicApertureModelName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString() );
+    hydraulicApertureModelName = SolverBase::getConstitutiveName< HydraulicApertureBase >( subRegion );
+    GEOS_ERROR_IF( hydraulicApertureModelName.empty(), GEOS_FMT( "{}: HydraulicApertureBase model not found on subregion {}",
+                                                          getDataContext(), subRegion.getDataContext() ) );
   }
 }
 

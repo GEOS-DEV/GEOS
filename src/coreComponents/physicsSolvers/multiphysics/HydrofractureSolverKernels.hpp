@@ -32,10 +32,10 @@ namespace hydrofractureSolverKernels
 struct DeformationUpdateKernel
 {
 
-  template< typename POLICY, typename CONTACT_WRAPPER, typename POROUS_WRAPPER >
+  template< typename POLICY, typename HYDRAULICAPERTURE_WRAPPER, typename POROUS_WRAPPER >
   static std::tuple< double, double, double, double, double, double >
   launch( localIndex const size,
-          CONTACT_WRAPPER const & contactWrapper,
+          HYDRAULICAPERTURE_WRAPPER const & hydraulicApertureWrapper,
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
@@ -87,7 +87,7 @@ struct DeformationUpdateKernel
       maxAperture.max( aperture[kfe] );
 
       real64 dHydraulicAperture_dNormalJump = 0;
-      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
+      real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
       real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
@@ -127,11 +127,11 @@ struct DeformationUpdateKernel
 
 struct FluidMassResidualDerivativeAssemblyKernel
 {
-  template< typename CONTACT_WRAPPER >
+  template< typename HYDRAULICAPERTURE_WRAPPER >
   GEOS_HOST_DEVICE
   inline
   static void
-  computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
+  computeAccumulationDerivative( HYDRAULICAPERTURE_WRAPPER const & hydraulicApertureWrapper,
                                  localIndex const numNodesPerFace,
                                  arraySlice1d< localIndex const > const elemsToFaces,
                                  ArrayOfArraysView< localIndex const > const faceToNodeMap,
@@ -144,7 +144,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  arraySlice1d< real64 > const dRdU )
   {
     real64 dHydraulicAperture_dNormalJump = 0;
-    real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
+    real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
     GEOS_UNUSED_VAR( hydraulicAperture );
 
     constexpr integer kfSign[2] = { -1, 1 };
@@ -201,11 +201,11 @@ struct FluidMassResidualDerivativeAssemblyKernel
     }
   }
 
-  template< typename POLICY, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename HYDRAULICAPERTURE_WRAPPER >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
-          CONTACT_WRAPPER const & contactWrapper,
+          HYDRAULICAPERTURE_WRAPPER const & hydraulicApertureWrapper,
           integer const useQuasiNewton,
           ArrayOfArraysView< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
@@ -230,7 +230,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
 //
-      computeAccumulationDerivative( contactWrapper,
+      computeAccumulationDerivative( hydraulicApertureWrapper,
                                      numNodesPerFace,
                                      elemsToFaces[ei],
                                      faceToNodeMap,

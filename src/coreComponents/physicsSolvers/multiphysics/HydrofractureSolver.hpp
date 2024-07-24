@@ -163,8 +163,6 @@ public:
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
