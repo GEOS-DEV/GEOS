@@ -52,6 +52,11 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  static constexpr bool isThermalType(){ return false; }
+
+  static constexpr integer min_n_components = 3;
+  static constexpr integer max_n_components = 3;
+
   /**
    * @brief Kernel wrapper class for BlackOilFluid
    *        This kernel can be called on the GPU
