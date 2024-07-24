@@ -44,7 +44,7 @@
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="faceElementSubRegion"
-      defaultAperture="0.0"
+      defaultAperture="1e-6"
       materialList="{ fractureMaterial }"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->

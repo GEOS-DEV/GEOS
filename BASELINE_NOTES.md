@@ -10,6 +10,17 @@ PR #3215 (2024-07-23)
 ======================
 Changed the default value for massCreation and name of the wrapper.
 
+
+PR #3194 (2024-07-22)
+======================
+Check pore volume for all element types, also check that default aperture > 0. Rebaseline for modified tests. No real results change.
+
+
+PR #3213 (2024-07-12)
+======================
+Added baselines for new tests on Dirichlet boundary conditions for multiphase flow.
+
+
 PR #3194 (2024-07-10)
 ======================
 Use aperture table in poromechanics with conforming fractures. Rebaseline the corresponding cases.
