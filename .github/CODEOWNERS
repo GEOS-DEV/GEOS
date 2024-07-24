@@ -21,7 +21,7 @@
 /src/coreComponents/events                            @rrsettgast @corbett5 @cssherman 
 /src/coreComponents/fieldSpecification                @rrsettgast @CusiniM @corbett5 @cssherman 
 /src/coreComponents/fileIO                            @rrsettgast @wrtobin @MelReyCG @untereiner
-/src/coreComponents/finiteElement                     @rrsettgast @castelletto1 @andrea-borio
+/src/coreComponents/finiteElement                     @rrsettgast @castelletto1 @andrea-borio @CusiniM
 /src/coreComponents/finiteVolume                      @rrsettgast @castelletto1 @CusiniM @paveltomin
 /src/coreComponents/functions                         @cssherman  @wrtobin @rrsettgast
 /src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm 
