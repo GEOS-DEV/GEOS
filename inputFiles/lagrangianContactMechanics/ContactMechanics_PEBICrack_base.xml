@@ -13,7 +13,7 @@
 
     <ElementRegions>
         <CellElementRegion name="Region" cellBlocks="{ hexahedra, pentagonalPrisms, hexagonalPrisms }" materialList="{ rock }"/>
-        <SurfaceElementRegion name="Fracture" faceBlock="fracture" defaultAperture="0" materialList="{ fractureMaterial }"/>
+        <SurfaceElementRegion name="Fracture" faceBlock="fracture" defaultAperture="1e-6" materialList="{ fractureMaterial }"/>
     </ElementRegions>
 
     <Geometry>
