@@ -39,7 +39,7 @@
 /src/coreComponents/physicsPackages/surfaceGeneration  @rrsettgast @CusiniM @jhuang2601
 /src/coreComponents/physicsPackages/wavePropagation    @sframba @acitrain
 /src/coreComponents/schema
-/src/coreComponents/unitTests                         @rrsettgast @corbett5 @wrtobin
+/src/coreComponents/unitTests                         @rrsettgast @CusiniM 
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name
