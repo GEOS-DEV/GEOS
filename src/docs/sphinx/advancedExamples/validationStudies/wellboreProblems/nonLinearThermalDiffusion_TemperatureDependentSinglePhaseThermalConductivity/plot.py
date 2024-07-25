@@ -122,7 +122,7 @@ def getLoadingFromXML(xmlFilePath):
 	for tree_SolidInternalEnergy in tree_SolidInternalEnergies:
 		if tree_SolidInternalEnergy.get('name') == "rockInternalEnergy_linear":
 			volumetricHeatCapacity = float( tree_SolidInternalEnergy.get('referenceVolumetricHeatCapacity') )
-			dVolumetricHeatCapacity_dTemperature = float( tree_SolidInternalEnergy.get('dVolumetricHeatCapacity_dTemperature') )
+			dVolumetricHeatCapacity_dTemperature = 0.0
 	
 	
 	permeability = float( extractDataFromXMLList( tree.find('Constitutive/ConstantPermeability').get('permeabilityComponents') )[0] )
@@ -142,7 +142,7 @@ def main():
 
 	xmlFilePath = "../../../../../../../inputFiles/singlePhaseFlow/"
 	
-	Rin, Rout = getWellboreGeometryFromXML(xmlFilePath+"thermalCompressible_nonLinear_2d_benchmark.xml")
+	Rin, Rout = getWellboreGeometryFromXML(xmlFilePath+"thermalCompressible_temperatureDependentSinglePhaseThermalConductivity_benchmark.xml")
 
 	Pin, Pout, Tin, Tout, defaultThermalConductivity, thermalConductivityGradient, referenceTemperature, volumetricHeatCapacity, dVolumetricHeatCapacity_dTemperature, permeability, porosity, fluidViscosity, fluidCompressibility, fluidThermalExpansionCoefficient = getLoadingFromXML(xmlFilePath+"thermalCompressible_2d_base.xml")
 
@@ -157,7 +157,7 @@ def main():
 		data.drop_duplicates(inplace=True)
 		data.reset_index(drop=True, inplace=True)
 		
-		radialCoordinate = data['elementCenter:0']
+		radialCoordinate = (data['elementCenter:0']**2.0 + data['elementCenter:1']**2.0)**0.5
 		temperature = data['temperature']
 		#pressure = data['pressure']
 		diffusionTime = data['Time'][0]

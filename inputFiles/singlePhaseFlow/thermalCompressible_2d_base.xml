@@ -11,7 +11,7 @@
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="10"/>
+        newtonMaxIter="100"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -96,7 +96,7 @@
 
     <!-- SPHINX_SinglePhaseThermalConductivity_linear -->
     <SinglePhaseThermalConductivity
-      name="thermalCond"
+      name="thermalCond_linear"
       defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
       thermalConductivityGradientComponents="{ 0, 0, 0 }"
       referenceTemperature="0"/>
@@ -145,21 +145,21 @@
       setNames="{ all }"
       objectPath="ElementRegions/region/cb"
       fieldName="temperature"
-      scale="0"/>
+      scale="100"/>
 
     <FieldSpecification
       name="sinkTemperature"
       setNames="{ rpos }"       
       objectPath="faceManager"
       fieldName="temperature"
-      scale="0"/>
+      scale="100"/>
 
     <FieldSpecification
       name="sourceTemperature"
       setNames="{ rneg }"     
       objectPath="faceManager"
       fieldName="temperature"
-      scale="100.0"/>
+      scale="-20.0"/>
 	<!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
 
   </FieldSpecifications>
