@@ -23,9 +23,9 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 
 namespace geos
 {

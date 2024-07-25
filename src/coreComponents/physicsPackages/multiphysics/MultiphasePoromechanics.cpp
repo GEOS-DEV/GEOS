@@ -23,14 +23,14 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
-//#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-//#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+//#include "physicsPackages/contact/SolidMechanicsLagrangeContact.hpp"
+//#include "physicsPackages/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {

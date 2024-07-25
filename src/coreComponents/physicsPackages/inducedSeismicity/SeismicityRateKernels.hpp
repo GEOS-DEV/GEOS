@@ -18,8 +18,8 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {

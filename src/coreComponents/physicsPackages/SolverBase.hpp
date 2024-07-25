@@ -23,9 +23,9 @@
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
 #include "mesh/MeshBody.hpp"
-#include "physicsSolvers/NonlinearSolverParameters.hpp"
-#include "physicsSolvers/LinearSolverParameters.hpp"
-#include "physicsSolvers/SolverStatistics.hpp"
+#include "physicsPackages/NonlinearSolverParameters.hpp"
+#include "physicsPackages/LinearSolverParameters.hpp"
+#include "physicsPackages/SolverStatistics.hpp"
 
 #include <limits>
 

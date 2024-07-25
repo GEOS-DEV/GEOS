@@ -20,10 +20,10 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/contact/SolidMechanicsLagrangeContact.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geos

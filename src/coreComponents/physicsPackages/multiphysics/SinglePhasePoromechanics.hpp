@@ -20,9 +20,9 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsSolver.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
 {

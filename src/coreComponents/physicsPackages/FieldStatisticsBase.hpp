@@ -21,7 +21,7 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"

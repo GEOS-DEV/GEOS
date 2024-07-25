@@ -21,10 +21,10 @@
 #ifndef GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
 
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 
 namespace geos
 {

@@ -27,8 +27,8 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 
 namespace geos

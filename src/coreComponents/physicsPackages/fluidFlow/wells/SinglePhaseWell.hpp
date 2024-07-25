@@ -21,8 +21,8 @@
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 
 #include "WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {

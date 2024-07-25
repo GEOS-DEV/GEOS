@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVM_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVM_HPP_
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
 {

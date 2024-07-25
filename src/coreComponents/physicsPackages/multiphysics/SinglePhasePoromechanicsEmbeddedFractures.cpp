@@ -20,14 +20,14 @@
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/contact/SolidMechanicsEFEMKernelsHelper.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 
 
 namespace geos

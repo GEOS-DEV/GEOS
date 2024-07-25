@@ -29,11 +29,11 @@
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsPackages/SolverBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {

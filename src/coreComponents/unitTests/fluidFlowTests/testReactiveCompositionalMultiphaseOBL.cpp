@@ -15,11 +15,11 @@
 
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 

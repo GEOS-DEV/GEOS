@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_SURFACEGENERATION_PARALLELTOPOLOGYCHANGE_HPP_
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_PARALLELTOPOLOGYCHANGE_HPP_
 
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsPackages/surfaceGeneration/SurfaceGenerator.hpp"
 
 namespace geos
 {

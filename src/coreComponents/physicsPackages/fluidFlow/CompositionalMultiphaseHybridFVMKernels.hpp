@@ -30,9 +30,9 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 
 
 namespace geos

@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_STABILIZEDCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geos
 {

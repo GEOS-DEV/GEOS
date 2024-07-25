@@ -17,12 +17,12 @@
 #define GEOS_PHYSICSPACKAGES_INDUCED_SEISMICITY_SEISMICITYRATE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
-#include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
+#include "physicsPackages/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
-#include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsPackages/inducedSeismicity/inducedSeismicityFields.hpp"
 
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {

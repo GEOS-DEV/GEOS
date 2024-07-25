@@ -20,9 +20,9 @@
 #include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
-#include "physicsSolvers/contact/SolidMechanicsALMKernels.hpp"
-#include "physicsSolvers/contact/SolidMechanicsALMJumpUpdateKernels.hpp"
-#include "physicsSolvers/contact/SolidMechanicsALMBubbleKernels.hpp"
+#include "physicsPackages/contact/SolidMechanicsALMKernels.hpp"
+#include "physicsPackages/contact/SolidMechanicsALMJumpUpdateKernels.hpp"
+#include "physicsPackages/contact/SolidMechanicsALMBubbleKernels.hpp"
 
 namespace geos
 {

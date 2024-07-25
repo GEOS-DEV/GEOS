@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos

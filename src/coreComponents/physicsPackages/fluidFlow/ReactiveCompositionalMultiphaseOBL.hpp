@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
 
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 
 namespace geos

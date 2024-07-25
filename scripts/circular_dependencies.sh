@@ -21,7 +21,7 @@ declare -ar coreComponents=(
  virtualElement
  discretizationMethods
  fileIO
- physicsSolvers
+ physicsPackages
  events
  mainInterface
 )

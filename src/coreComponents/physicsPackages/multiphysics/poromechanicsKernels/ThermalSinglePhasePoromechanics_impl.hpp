@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_IMPL_HPP_
 
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
 
 namespace geos
 {

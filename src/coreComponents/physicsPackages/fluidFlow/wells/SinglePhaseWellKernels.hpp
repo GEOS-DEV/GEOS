@@ -25,10 +25,10 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/fluidFlow/wells/WellControls.hpp"
+#include "physicsPackages/SolverBaseKernels.hpp"
 
 namespace geos
 {

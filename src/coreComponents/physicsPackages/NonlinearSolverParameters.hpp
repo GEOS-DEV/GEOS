@@ -18,7 +18,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsPackages/SolverBaseKernels.hpp"
 
 namespace geos
 {

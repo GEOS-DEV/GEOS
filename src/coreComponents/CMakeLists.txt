@@ -14,7 +14,7 @@ set( subdirs
      finiteVolume
      discretizationMethods
      fileIO
-     physicsSolvers
+     physicsPackages
      events
      mainInterface )
 
@@ -73,7 +73,7 @@ if( GEOS_BUILD_SHARED_LIBS AND GEOS_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
-                    DEPENDS_ON  mainInterface physicsSolvers HDF5::HDF5
+                    DEPENDS_ON  mainInterface physicsPackages HDF5::HDF5
                     SHARED TRUE )
 
 elseif( GEOS_BUILD_SHARED_LIBS AND NOT GEOS_BUILD_OBJ_LIBS )

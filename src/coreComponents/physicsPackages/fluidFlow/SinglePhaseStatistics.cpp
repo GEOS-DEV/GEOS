@@ -20,11 +20,11 @@
 #include "SinglePhaseStatistics.hpp"
 
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {

@@ -21,8 +21,8 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "mesh/DomainPartition.hpp"
 

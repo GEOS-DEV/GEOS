@@ -22,8 +22,8 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 
 namespace geos
 {

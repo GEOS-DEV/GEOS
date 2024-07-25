@@ -21,10 +21,10 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "mesh/DomainPartition.hpp"

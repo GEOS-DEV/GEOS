@@ -20,7 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSTATISTICS_HPP_
 
-#include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsPackages/FieldStatisticsBase.hpp"
 
 namespace geos
 {

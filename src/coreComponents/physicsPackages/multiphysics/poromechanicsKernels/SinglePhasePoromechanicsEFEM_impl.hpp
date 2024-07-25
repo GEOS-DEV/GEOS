@@ -20,13 +20,13 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsPackages/contact/ContactFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
+#include "physicsPackages/contact/SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geos
 {

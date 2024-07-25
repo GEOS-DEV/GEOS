@@ -33,10 +33,10 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 
 namespace geos
 {

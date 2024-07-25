@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 
 #include <tuple>
 

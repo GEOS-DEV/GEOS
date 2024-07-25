@@ -19,7 +19,7 @@
  */
 
 #include "SourceFluxBoundaryCondition.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
 {

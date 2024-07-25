@@ -1,12 +1,12 @@
 
 if( ENABLE_PYGEOSX )
-  set( physicsSolvers_headers
-       ${physicsSolvers_headers}
+  set( physicsPackages_headers
+       ${physicsPackages_headers}
        python/PySolver.hpp
        python/PySolverType.hpp
        PARENT_SCOPE )
-  set( physicsSolvers_sources
-       ${physicsSolvers_sources}
+  set( physicsPackages_sources
+       ${physicsPackages_sources}
        python/PySolver.cpp
        PARENT_SCOPE )
 

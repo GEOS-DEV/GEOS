@@ -17,8 +17,8 @@
 #include "unitTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsPackages/fluidFlow/SourceFluxStatistics.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseStatistics.hpp"
 
 #include <gtest/gtest.h>
 

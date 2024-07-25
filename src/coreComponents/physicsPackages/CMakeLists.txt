@@ -1,5 +1,5 @@
 # Specify solver headers
-set( physicsSolvers_headers
+set( physicsPackages_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
@@ -10,7 +10,7 @@ set( physicsSolvers_headers
  )
 
 # Specify solver sources
-set( physicsSolvers_sources
+set( physicsPackages_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
@@ -53,23 +53,23 @@ endif()
 
 set( dependencyList ${parallelDeps} constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
-  list( APPEND physicsSolvers_headers
+  list( APPEND physicsPackages_headers
   python/PySolver.hpp
   python/PySolverType.hpp )
-  list( APPEND physicsSolvers_sources
+  list( APPEND physicsPackages_sources
         python/PySolver.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
-blt_add_library( NAME       physicsSolvers
-                 SOURCES    ${physicsSolvers_sources}
-                 HEADERS    ${physicsSolvers_headers}
+blt_add_library( NAME       physicsPackages
+                 SOURCES    ${physicsPackages_sources}
+                 HEADERS    ${physicsPackages_headers}
                  DEPENDS_ON ${dependencyList} ${externalComponentDeps}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS} )
 
-target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( physicsPackages PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )
-  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+  target_include_directories( physicsPackages PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
 

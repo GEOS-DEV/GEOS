@@ -22,8 +22,8 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 
 
 namespace geos

@@ -18,8 +18,8 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/surfaceGeneration/SurfaceGeneratorFields.hpp"
 
 #include <cstdint>
 #include <tuple>

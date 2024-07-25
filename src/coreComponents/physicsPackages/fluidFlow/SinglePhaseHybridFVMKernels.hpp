@@ -34,12 +34,12 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/HybridFVMHelperKernels.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/SolverBaseKernels.hpp"
 
 namespace geos
 {

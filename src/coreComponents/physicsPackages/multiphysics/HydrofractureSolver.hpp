@@ -20,10 +20,10 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {

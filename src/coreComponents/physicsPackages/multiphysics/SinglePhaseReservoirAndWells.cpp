@@ -22,12 +22,12 @@
 
 #include "common/TimingMacros.hpp"
 #include "mesh/PerforationFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsPackages/fluidFlow/wells/WellControls.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 
 namespace geos
 {

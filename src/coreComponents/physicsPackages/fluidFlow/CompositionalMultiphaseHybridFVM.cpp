@@ -27,11 +27,11 @@
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code

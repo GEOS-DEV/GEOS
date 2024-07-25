@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSALMBUBBLEKERNELS_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSALMBUBBLEKERNELS_HPP_
 
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsALMKernelsHelper.hpp"
 
 // TODO: Use the bilinear form utilities

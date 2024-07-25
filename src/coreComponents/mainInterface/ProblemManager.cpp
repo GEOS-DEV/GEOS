@@ -44,8 +44,8 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
 // System includes

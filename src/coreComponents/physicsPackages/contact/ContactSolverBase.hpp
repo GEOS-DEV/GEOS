@@ -21,8 +21,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_CONTACTSOLVERBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_CONTACTSOLVERBASE_HPP_
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/contact/ContactFields.hpp"
 
 namespace geos
 {

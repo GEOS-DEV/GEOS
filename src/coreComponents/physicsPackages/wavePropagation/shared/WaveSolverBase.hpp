@@ -23,7 +23,7 @@
 
 
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 #include "common/LifoStorage.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"

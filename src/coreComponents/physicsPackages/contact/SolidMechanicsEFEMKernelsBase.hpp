@@ -21,9 +21,9 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsPackages/contact/ContactFields.hpp"
 
 namespace geos
 {

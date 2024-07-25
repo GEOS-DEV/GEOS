@@ -23,7 +23,7 @@
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 
 struct stabledt
 {

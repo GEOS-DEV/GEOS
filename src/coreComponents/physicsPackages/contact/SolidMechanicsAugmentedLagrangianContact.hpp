@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 #define GEOS_PHYSICSPACKAGES_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 
-#include "physicsSolvers/contact/ContactSolverBase.hpp"
+#include "physicsPackages/contact/ContactSolverBase.hpp"
 
 namespace geos
 {

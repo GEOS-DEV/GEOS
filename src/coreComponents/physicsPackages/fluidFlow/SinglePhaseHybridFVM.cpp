@@ -27,8 +27,8 @@
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 
 /**

@@ -14,7 +14,7 @@
  */
 
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
 #include "policies.hpp"
 
 

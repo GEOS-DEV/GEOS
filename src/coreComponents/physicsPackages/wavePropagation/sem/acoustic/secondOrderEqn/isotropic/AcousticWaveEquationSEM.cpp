@@ -27,12 +27,12 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
 #include "AcousticPMLSEMKernel.hpp"
-#include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
+#include "physicsPackages/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 
 namespace geos
 {

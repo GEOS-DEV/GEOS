@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEFEM_IMPL_HPP_
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
 
 namespace geos
 {

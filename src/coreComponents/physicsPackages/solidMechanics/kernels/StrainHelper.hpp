@@ -25,7 +25,7 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geos
 {

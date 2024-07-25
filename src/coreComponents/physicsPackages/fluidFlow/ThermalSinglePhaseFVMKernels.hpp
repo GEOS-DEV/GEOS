@@ -23,7 +23,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 namespace geos
 {

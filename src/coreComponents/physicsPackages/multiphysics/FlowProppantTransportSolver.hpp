@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
 
 namespace geos
 {

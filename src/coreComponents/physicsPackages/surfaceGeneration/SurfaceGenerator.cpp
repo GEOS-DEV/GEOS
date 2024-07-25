@@ -28,11 +28,11 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
-#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsPackages/surfaceGeneration/SurfaceGeneratorFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
 

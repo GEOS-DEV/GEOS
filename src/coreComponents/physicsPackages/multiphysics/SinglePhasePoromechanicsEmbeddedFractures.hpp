@@ -20,9 +20,9 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {

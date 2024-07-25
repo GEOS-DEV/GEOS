@@ -21,15 +21,15 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsPackages/fluidFlow/wells/WellControls.hpp"
+#include "physicsPackages/fluidFlow/wells/WellSolverBase.hpp"
 
 namespace geos
 {

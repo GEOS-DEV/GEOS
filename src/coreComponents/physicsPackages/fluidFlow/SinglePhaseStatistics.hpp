@@ -20,7 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
 
-#include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsPackages/FieldStatisticsBase.hpp"
 
 namespace geos
 {

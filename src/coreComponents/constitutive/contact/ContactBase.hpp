@@ -22,7 +22,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/contact/ContactFields.hpp"
+#include "physicsPackages/contact/ContactFields.hpp"
 
 
 namespace geos

@@ -16,7 +16,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOS_PHYSICSPACKAGES_SIMPLEPDE_LAPLACE_FEM_HPP_
 
-#include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
+#include "physicsPackages/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
 
 namespace geos
 {

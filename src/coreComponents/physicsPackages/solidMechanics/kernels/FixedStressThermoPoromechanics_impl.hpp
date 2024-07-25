@@ -21,9 +21,9 @@
 #define GEOS_PHYSICSPACKAGES_SOLIDMECHANICS_KERNELS_FIXEDSTRESSTHERMOPOROMECHANICS_IMPL_HPP_
 
 #include "FixedStressThermoPoromechanics.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geos
 {

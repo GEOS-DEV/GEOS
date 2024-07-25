@@ -21,10 +21,10 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEM_HPP_
 
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
+#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 
 namespace geos
 {

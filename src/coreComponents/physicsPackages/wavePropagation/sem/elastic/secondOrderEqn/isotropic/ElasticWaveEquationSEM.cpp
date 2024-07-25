@@ -20,17 +20,17 @@
 
 #include "ElasticWaveEquationSEM.hpp"
 #include "ElasticWaveEquationSEMKernel.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/secondOrderEqn/anisotropic/ElasticVTIWaveEquationSEMKernel.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
-#include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticTimeSchemeSEMKernel.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticMatricesSEMKernel.hpp"
 #include "events/EventManager.hpp"
 
 namespace geos

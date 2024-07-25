@@ -32,10 +32,10 @@
 #include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/utilities/CIcomputationKernel.hpp"
-#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsPackages/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/Rectangle.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
 
 
 

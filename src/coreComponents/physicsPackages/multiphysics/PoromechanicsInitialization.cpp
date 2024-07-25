@@ -19,17 +19,17 @@
 
 #include "PoromechanicsInitialization.hpp"
 
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
-#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
+#include "physicsPackages/multiphysics/HydrofractureSolver.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/SinglePhaseReservoirAndWells.hpp"
+#include "physicsPackages/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsStatistics.hpp"
 #include "events/tasks/TasksManager.hpp"
 
 namespace geos

@@ -1,6 +1,6 @@
 # Specify solver headers
-set( physicsSolvers_headers
-      ${physicsSolvers_headers}
+set( physicsPackages_headers
+      ${physicsPackages_headers}
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -9,8 +9,8 @@ set( physicsSolvers_headers
      PARENT_SCOPE )
 
 # Specify solver sources
-set( physicsSolvers_sources
-      ${physicsSolvers_sources}
+set( physicsPackages_sources
+      ${physicsPackages_sources}
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp 

@@ -23,7 +23,7 @@
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geos
 {

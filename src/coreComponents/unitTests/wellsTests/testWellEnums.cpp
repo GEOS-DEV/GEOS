@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsPackages/fluidFlow/wells/WellControls.hpp"
 
 #include <gtest/gtest.h>
 

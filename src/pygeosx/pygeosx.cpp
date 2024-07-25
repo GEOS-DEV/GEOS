@@ -21,7 +21,7 @@
 #include "pygeosx.hpp"
 #include "dataRepository/python/PyGroup.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
-#include "physicsSolvers/python/PySolverType.hpp"
+#include "physicsPackages/python/PySolverType.hpp"
 #include "fileIO/python/PyHistoryCollectionType.hpp"
 #include "fileIO/python/PyHistoryOutputType.hpp"
 #include "fileIO/python/PyVTKOutputType.hpp"

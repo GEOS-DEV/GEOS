@@ -14,8 +14,8 @@
  */
 
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
 #include "policies.hpp"
 
 

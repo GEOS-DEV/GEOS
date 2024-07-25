@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "physicsSolvers/solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp"
+#include "physicsPackages/solidMechanics/kernels/FixedStressThermoPoromechanics_impl.hpp"
 #include "policies.hpp"
 
 

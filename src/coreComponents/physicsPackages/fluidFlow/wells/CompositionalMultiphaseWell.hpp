@@ -20,8 +20,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsPackages/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geos
 {

@@ -20,7 +20,7 @@
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos

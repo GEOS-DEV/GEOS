@@ -13,10 +13,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "physicsSolvers/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp"
+#include "physicsPackages/solidMechanics/kernels/ExplicitSmallStrain_impl.hpp"
+#include "physicsPackages/solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainNewmark_impl.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic_impl.hpp"
 #include "policies.hpp"
 
 

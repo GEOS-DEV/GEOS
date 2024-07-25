@@ -2,7 +2,7 @@
 
 
 
-set( kernelPath "coreComponents/physicsSolvers/solidMechanics/kernels" )
+set( kernelPath "coreComponents/physicsPackages/solidMechanics/kernels" )
 
 set( ExplicitSmallStrainPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
 set( ExplicitFiniteStrainPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
@@ -70,7 +70,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsKernels.cpp.template
                         ${filename} )
 
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND physicsPackages_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
@@ -94,7 +94,7 @@ endif( )
         message( " -- Generating file: ${filename}")
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
                         ${filename} )
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND physicsPackages_sources ${filename} )
 
         endforeach()
       endforeach()

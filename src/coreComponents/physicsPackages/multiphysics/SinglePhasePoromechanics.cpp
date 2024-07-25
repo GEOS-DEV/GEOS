@@ -25,13 +25,13 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "physicsPackages/contact/SolidMechanicsLagrangeContact.hpp"
+#include "physicsPackages/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {

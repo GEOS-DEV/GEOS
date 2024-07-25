@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 #include "common/Units.hpp"
 
 namespace geos

@@ -21,9 +21,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
+#include "physicsPackages/PhysicsSolverManager.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 

@@ -32,16 +32,16 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
-#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+#include "physicsPackages/fluidFlow/SourceFluxStatistics.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
 
 
 namespace geos

@@ -21,11 +21,11 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 
 namespace geos
 {

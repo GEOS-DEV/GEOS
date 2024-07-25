@@ -20,8 +20,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsFields.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
 namespace geos
 {

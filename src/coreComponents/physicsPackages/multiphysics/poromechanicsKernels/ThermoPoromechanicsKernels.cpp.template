@@ -13,12 +13,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics_impl.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp"
 #include "policies.hpp"
 
 

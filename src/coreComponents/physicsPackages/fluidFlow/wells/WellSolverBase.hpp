@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 
 namespace geos
 {

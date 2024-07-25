@@ -20,9 +20,9 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_MULTIPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsSolver.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsPackages/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 
 namespace geos
 {

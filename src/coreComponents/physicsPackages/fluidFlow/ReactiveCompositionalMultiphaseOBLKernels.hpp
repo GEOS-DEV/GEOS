@@ -28,9 +28,9 @@
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 
 
 

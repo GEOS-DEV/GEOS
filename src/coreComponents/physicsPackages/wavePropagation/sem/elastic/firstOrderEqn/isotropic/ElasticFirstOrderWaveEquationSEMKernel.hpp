@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
 
 
 namespace geos

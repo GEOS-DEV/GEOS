@@ -26,8 +26,8 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
 namespace geos
 {

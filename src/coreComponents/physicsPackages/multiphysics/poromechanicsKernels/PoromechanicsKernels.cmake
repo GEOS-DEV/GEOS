@@ -1,4 +1,4 @@
-set( kernelPath "coreComponents/physicsSolvers/multiphysics/poromechanicsKernels" )
+set( kernelPath "coreComponents/physicsPackages/multiphysics/poromechanicsKernels" )
 
 set( SinglePhasePoromechanicsPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
 set( SinglePhasePoromechanicsEFEMPolicy "geos::parallelDevicePolicy< ${GEOS_BLOCK_SIZE} >" )
@@ -62,7 +62,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsKernels.cpp.template
                         ${filename} )
 
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND physicsPackages_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
@@ -105,7 +105,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/PoromechanicsEFEMKernels.cpp.template
                           ${filename} )
   
-        list( APPEND physicsSolvers_sources ${filename} )
+        list( APPEND physicsPackages_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()
@@ -148,7 +148,7 @@ endif( )
         configure_file( ${CMAKE_SOURCE_DIR}/${kernelPath}/ThermoPoromechanicsKernels.cpp.template
                         ${filename} )
 
-          list( APPEND physicsSolvers_sources ${filename} )
+          list( APPEND physicsPackages_sources ${filename} )
         endforeach()
       endforeach()
     endforeach()

@@ -1,6 +1,6 @@
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
+set( physicsPackages_headers
+     ${physicsPackages_headers}
      solidMechanics/SolidMechanicsFields.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
@@ -24,8 +24,8 @@ set( physicsSolvers_headers
      PARENT_SCOPE )
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
+set( physicsPackages_sources
+     ${physicsPackages_sources}
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      solidMechanics/SolidMechanicsMPM.cpp

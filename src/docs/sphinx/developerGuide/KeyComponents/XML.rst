@@ -75,17 +75,17 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    Below, we illustrate this with the ``CompositionalMultiphaseFlow`` solver.
    The first code listing defines the class name, which in this case is the same as the ``catalogName`` shown in the second listing.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp]*
+*[Source: src/coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseBase.hpp]*
 
 
 2. To let GEOS know where to search in the ``ObjectCatalog``, a macro needs to be added at the end of the .cpp file implementing the class.
@@ -93,12 +93,12 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    As a result of this construct, the ``ObjectCatalog`` is not a flat list of ``string`` s mapping the C++ classes.
    Instead, the ``ObjectCatalog`` forms a tree that reproduces locally the structure of the class diagram, from the base class to the derived classes.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseFVM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.cpp]*
+*[Source: src/coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseFVM.cpp]*
 
 
 .. highlights::
@@ -138,17 +138,17 @@ We have deliberately distinguished the class name from the catalog/XML name for 
 It is nevertheless a best practice to use the same name for the class and for the ``catalogName``.
 This is the case below for the existing ``CompositionalMultiphaseFVM`` class.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp]*
+*[Source: src/coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseFVM.hpp]*
 
 
 Parsing XML and searching the ObjectCatalog in scope
@@ -200,12 +200,12 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
     // hasKeyName = bool method to test if the childKey string is present in the Catalog
     // registerGroup = method to create a new instance of the solver and add it to the group tree
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/PhysicsSolverManager.cpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/PhysicsSolverManager.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: void
 
-*[Source: src/coreComponents/physicsSolvers/PhysicsSolverManager.cpp]*
+*[Source: src/coreComponents/physicsPackages/PhysicsSolverManager.cpp]*
 
 In the code listing above, we see that in the ``PhysicsSolverManager`` class, the ``ObjectCatalog`` is searched to find the ``catalogName`` "CompositionalMultiphaseFlow" in the scope of the ``SolverBase`` class.
 Then, the factory function of the base class ``SolverBase`` is called.
@@ -229,12 +229,12 @@ Here, the only data (=wrapper) that is defined at the level of our ``CppNameOfMy
 We register a property of temperature, corresponding to the member class ``m_temperature`` of ``CppNameOfMySolver``.
 The registration also checks if a property is required or optional (here, it is required), and provides a brief description that will be used in the auto-generated code documentation.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp
+.. literalinclude:: ../../../../coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: Mass
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp]*
+*[Source: src/coreComponents/physicsPackages/fluidFlow/CompositionalMultiphaseBase.cpp]*
 
 This operation is done recursively if XML tags are nested.
 

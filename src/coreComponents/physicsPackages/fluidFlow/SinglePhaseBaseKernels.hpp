@@ -26,8 +26,8 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/SolverBaseKernels.hpp"
 
 namespace geos
 {

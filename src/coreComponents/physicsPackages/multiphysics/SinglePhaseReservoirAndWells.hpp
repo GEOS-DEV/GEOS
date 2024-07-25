@@ -21,8 +21,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_SINGLEPHASERESERVOIRANDWELLS_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsPackages/multiphysics/CoupledReservoirAndWellsBase.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWell.hpp"
 
 namespace geos
 {

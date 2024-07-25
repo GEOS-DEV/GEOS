@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {

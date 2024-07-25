@@ -20,8 +20,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseProppantBase.hpp"
 
 namespace geos
 {

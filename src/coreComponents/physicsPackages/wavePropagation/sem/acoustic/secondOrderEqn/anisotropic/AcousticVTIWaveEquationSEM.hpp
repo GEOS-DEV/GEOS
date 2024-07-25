@@ -22,9 +22,9 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
+#include "physicsPackages/SolverBase.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverBase.hpp"
+#include "physicsPackages/wavePropagation/sem/acoustic/shared/AcousticFields.hpp"
 #include "AcousticVTIFields.hpp"
 
 namespace geos

@@ -42,12 +42,12 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp"
-#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsPackages/fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp"
+#include "physicsPackages/fluidFlow/StencilAccessors.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 
 namespace geos

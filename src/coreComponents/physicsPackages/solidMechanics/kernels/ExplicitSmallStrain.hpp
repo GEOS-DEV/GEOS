@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_SOLIDMECHANICS_KERNELS_EXPLICITSMALLSTRAIN_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
 
 
 namespace geos

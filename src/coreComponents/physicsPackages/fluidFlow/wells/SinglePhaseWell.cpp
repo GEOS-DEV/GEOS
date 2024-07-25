@@ -30,11 +30,11 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "physicsPackages/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsPackages/fluidFlow/wells/WellControls.hpp"
 
 namespace geos
 {

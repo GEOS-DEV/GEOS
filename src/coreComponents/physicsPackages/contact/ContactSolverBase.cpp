@@ -29,7 +29,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos

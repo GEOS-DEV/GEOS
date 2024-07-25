@@ -25,7 +25,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 
 namespace geos

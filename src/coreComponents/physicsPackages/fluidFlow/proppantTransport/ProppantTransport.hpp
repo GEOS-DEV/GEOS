@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsPackages/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SlurryFluidBase.hpp"
 

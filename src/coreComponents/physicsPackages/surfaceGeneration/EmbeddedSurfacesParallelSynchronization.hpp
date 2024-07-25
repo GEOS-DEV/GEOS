@@ -21,7 +21,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
 
-#include "physicsSolvers/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
+#include "physicsPackages/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
 
 namespace geos
 {

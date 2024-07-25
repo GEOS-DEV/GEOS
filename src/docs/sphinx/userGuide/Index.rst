@@ -13,7 +13,7 @@ Welcome to the GEOS user guide.
 
    /coreComponents/mesh/docs/Mesh
 
-   /coreComponents/physicsSolvers/PhysicsSolvers
+   /coreComponents/physicsPackages/PhysicsSolvers
 
    /coreComponents/constitutive/docs/Constitutive
 

@@ -21,9 +21,9 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_PHASEFIELDFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
+#include "physicsPackages/multiphysics/CoupledSolver.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/simplePDE/PhaseFieldDamageFEM.hpp"
 
 namespace geos
 {

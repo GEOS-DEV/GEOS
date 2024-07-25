@@ -22,8 +22,8 @@
 #define GEOS_PHYSICSPACKAGES_CONTACT_EXPLICITMPM_HPP_
 
 #include "constitutive/solid/SolidUtilities.hpp"
-#include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
-#include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+#include "physicsPackages/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
+#include "physicsPackages/solidMechanics/MPMSolverFields.hpp"
 
 namespace geos
 {

@@ -19,9 +19,9 @@
 
 #include "CompositionalMultiphaseWellKernels.hpp"
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 // TODO: move keys to WellControls
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geos
 {

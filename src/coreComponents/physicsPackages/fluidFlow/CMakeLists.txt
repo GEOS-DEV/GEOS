@@ -1,6 +1,6 @@
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
+set( physicsPackages_headers
+     ${physicsPackages_headers}
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseFields.hpp
      fluidFlow/CompositionalMultiphaseStatistics.hpp
@@ -54,8 +54,8 @@ set( physicsSolvers_headers
      PARENT_SCOPE )
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
+set( physicsPackages_sources
+     ${physicsPackages_sources}
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseStatistics.cpp

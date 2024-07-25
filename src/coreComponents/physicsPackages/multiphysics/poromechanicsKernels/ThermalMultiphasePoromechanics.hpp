@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALMULTIPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 
 namespace geos
 {

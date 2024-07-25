@@ -22,11 +22,11 @@
 
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-#include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsPackages/multiphysics/HydrofractureSolverKernels.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsPackages/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseBase.hpp"
 #include "mesh/MeshFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 

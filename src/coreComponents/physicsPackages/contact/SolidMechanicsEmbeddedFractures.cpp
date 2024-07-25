@@ -30,11 +30,11 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsPackages/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsPackages/contact/SolidMechanicsEFEMKernels.hpp"
+#include "physicsPackages/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
+#include "physicsPackages/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
 namespace geos
 {

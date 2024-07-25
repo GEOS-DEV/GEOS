@@ -21,8 +21,8 @@
 #ifndef GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIRANDWELLS_HPP_
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_COMPOSITIONALMULTIPHASERESERVOIRANDWELLS_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsPackages/multiphysics/CoupledReservoirAndWellsBase.hpp"
+#include "physicsPackages/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geos
 {

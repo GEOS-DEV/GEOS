@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSPACKAGES_FLUIDFLOW_STABILIZEDSINGLEPHASEFVMKERNELS_HPP
 #define GEOS_PHYSICSPACKAGES_FLUIDFLOW_STABILIZEDSINGLEPHASEFVMKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
+#include "physicsPackages/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 namespace geos
 {

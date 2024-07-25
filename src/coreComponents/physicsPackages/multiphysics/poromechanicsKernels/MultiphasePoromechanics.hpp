@@ -21,9 +21,9 @@
 #define GEOS_PHYSICSPACKAGES_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
-#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
+#include "physicsPackages/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsPackages/multiphysics/PoromechanicsFields.hpp"
+#include "physicsPackages/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
 namespace geos
 {

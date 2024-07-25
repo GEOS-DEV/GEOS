@@ -21,8 +21,8 @@
 #define GEOS_PHYSICSPACKAGES_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
-#include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
+#include "physicsPackages/wavePropagation/shared/WaveSolverUtils.hpp"
+#include "physicsPackages/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
 #include "ElasticVTIFields.hpp"
 
 namespace geos

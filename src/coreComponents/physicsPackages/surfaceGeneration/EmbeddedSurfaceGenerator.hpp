@@ -21,7 +21,7 @@
 #define GEOS_PHYSICSPACKAGES_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsPackages/SolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
 

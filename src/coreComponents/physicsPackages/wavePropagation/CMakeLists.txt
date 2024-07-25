@@ -1,6 +1,6 @@
 # Specify solver headers
-set( physicsSolvers_headers
-     ${physicsSolvers_headers}
+set( physicsPackages_headers
+     ${physicsPackages_headers}
      wavePropagation/shared/WaveSolverBase.hpp
      wavePropagation/shared/WaveSolverUtils.hpp
      wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp
@@ -31,8 +31,8 @@ set( physicsSolvers_headers
      PARENT_SCOPE )
 
 # Specify solver sources
-set( physicsSolvers_sources
-     ${physicsSolvers_sources}
+set( physicsPackages_sources
+     ${physicsPackages_sources}
      wavePropagation/shared/WaveSolverBase.cpp
      wavePropagation/sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
      wavePropagation/sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp
